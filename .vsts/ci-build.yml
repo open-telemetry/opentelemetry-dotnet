@@ -1,0 +1,60 @@
+# CI build. No publioshing of artifacts
+
+variables:
+  DotNetVersion: "2.2.101"
+
+pr: [ 'master', 'develop' ]
+
+jobs:
+
+- job: Windows
+  pool: Hosted VS2017
+  steps:
+  
+  - task: DotNetCoreInstaller@0
+    displayName: force use of desired dotnet version
+    inputs:
+      version: $(DotNetVersion)
+
+  # "restore" is run automatically by "build"
+  - task: DotNetCoreCLI@2
+    displayName: build solution (Release)
+    inputs:
+      command: "build"
+      projects: "OpenCensus.proj"
+      arguments: "--configuration Release"
+
+  # consider switch to https://docs.microsoft.com/vsts/pipelines/tasks/test/vstest?view=vsts
+  - task: DotNetCoreCLI@2
+    displayName: test
+    inputs:
+      command: "test"
+      projects: "test/**/*.Tests.csproj"
+      arguments: "--configuration Release"
+
+  - task: PublishTestResults@2
+
+- job: Linux
+  pool: Hosted Ubuntu 1604
+  steps:
+  - task: DotNetCoreInstaller@0
+    displayName: force use of desired dotnet version
+    inputs:
+      version: $(DotNetVersion)
+
+  # "restore" is run automatically by "build"
+  - task: DotNetCoreCLI@2
+    displayName: build
+    inputs:
+      command: "build"
+      projects: "OpenCensus.proj"
+      arguments: "--configuration Release"
+
+  - task: DotNetCoreCLI@2
+    displayName: test
+    inputs:
+      command: "test"
+      projects: "test/**/*.Tests.csproj"
+      arguments: "--configuration Release"
+
+  - task: PublishTestResults@2

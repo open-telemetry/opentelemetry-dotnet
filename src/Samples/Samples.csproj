@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.3.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.0.519" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCensus.Collector.Dependencies\OpenCensus.Collector.Dependencies.csproj" />
+    <ProjectReference Include="..\OpenCensus.Collector.StackExchangeRedis\OpenCensus.Collector.StackExchangeRedis.csproj" />
+    <ProjectReference Include="..\OpenCensus.Exporter.Stackdriver\OpenCensus.Exporter.Stackdriver.csproj" />
+    <ProjectReference Include="..\OpenCensus.Exporter.Prometheus\OpenCensus.Exporter.Prometheus.csproj" />
+    <ProjectReference Include="..\OpenCensus\OpenCensus.csproj" />
+    <ProjectReference Include="..\OpenCensus.Exporter.Zipkin\OpenCensus.Exporter.Zipkin.csproj" />
+    <ProjectReference Include="..\OpenCensus.Exporter.ApplicationInsights\OpenCensus.Exporter.ApplicationInsights.csproj" />
+  </ItemGroup>
+
+</Project>

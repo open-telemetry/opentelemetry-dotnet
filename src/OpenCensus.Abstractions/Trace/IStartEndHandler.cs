@@ -1,0 +1,36 @@
+﻿// <copyright file="IStartEndHandler.cs" company="OpenCensus Authors">
+// Copyright 2018, OpenCensus Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
+namespace OpenCensus.Trace
+{
+    /// <summary>
+    /// Start event handler.
+    /// </summary>
+    public interface IStartEndHandler
+    {
+        /// <summary>
+        /// Called when span is being started.
+        /// </summary>
+        /// <param name="span">Span that just started.</param>
+        void OnStart(ISpan span);
+
+        /// <summary>
+        /// Called when span is just ended.
+        /// </summary>
+        /// <param name="span">Span that was just ended.</param>
+        void OnEnd(ISpan span);
+    }
+}

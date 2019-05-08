@@ -1,0 +1,51 @@
+# CI build with the upload to MyGet
+
+variables:
+  DotNetVersion: "2.2.101"
+
+trigger:
+  branches:
+    include:
+    - master
+    - develop
+
+queue: Hosted VS2017
+
+steps:
+- task: DotNetCoreInstaller@0
+  displayName: force use of desired dotnet version
+  inputs:
+    version: $(DotNetVersion)
+
+# "build" and "restore" are run by "pack".
+- task: DotNetCoreCLI@2
+  displayName: pack solution with symbols (Release)
+  inputs:
+    command: "pack"
+    projects: "OpenCensus.proj"
+    configuration: 'Release'
+    packDirectory: '$(build.artifactStagingDirectory)'
+    buildProperties: "SymbolPackageFormat=snupkg"
+
+- task: DotNetCoreCLI@2
+  displayName: test
+  inputs:
+    command: "test"
+    projects: "test/**/*.Tests.csproj"
+    arguments: "--configuration Release"
+
+- task: PublishTestResults@2
+
+- task: NuGetCommand@2
+  displayName: 'Publish nugets to MyGet'
+  inputs:
+    command: push
+    nuGetFeedType: external
+    publishFeedCredentials: 'myget-open-census'
+
+# this task is required as symbols packages needs to be published manually.
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: "$(build.artifactstagingdirectory)"
+    ArtifactName: "drop"
+    ArtifactType: "Container"
