@@ -1,0 +1,158 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28407.52
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus", "src\OpenCensus\OpenCensus.csproj", "{AE3E3DF5-4083-4C6E-A840-8271B0ACDE7E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Tests", "test\OpenCensus.Tests\OpenCensus.Tests.csproj", "{CC62B3C1-5875-4986-A7F6-C4B26E42B0A1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B7408D66-487A-40E1-BDB7-BC17BD28F721}"
+	ProjectSection(SolutionItems) = preProject
+		CHANGELOG.md = CHANGELOG.md
+		CONTRIBUTING.md = CONTRIBUTING.md
+		NuGet.config = NuGet.config
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E-03FA-4FFF-89A5-C51F107623FD}"
+	ProjectSection(SolutionItems) = preProject
+		build\Common.prod.props = build\Common.prod.props
+		build\Common.test.props = build\Common.test.props
+		build\debug.snk = build\debug.snk
+		build\OpenCensus.prod.loose.ruleset = build\OpenCensus.prod.loose.ruleset
+		build\OpenCensus.prod.ruleset = build\OpenCensus.prod.ruleset
+		build\OpenCensus.test.ruleset = build\OpenCensus.test.ruleset
+		build\stylecop.json = build\stylecop.json
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Exporter.Zipkin", "src\OpenCensus.Exporter.Zipkin\OpenCensus.Exporter.Zipkin.csproj", "{7EDAE7FA-B44E-42CA-80FA-7DF2FAA2C5DD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".vsts", ".vsts", "{61188153-47FB-4567-AC9B-79B2435853EB}"
+	ProjectSection(SolutionItems) = preProject
+		.vsts\ci-build.yml = .vsts\ci-build.yml
+		.vsts\ci-myget-update.yml = .vsts\ci-myget-update.yml
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Exporter.ApplicationInsights", "src\OpenCensus.Exporter.ApplicationInsights\OpenCensus.Exporter.ApplicationInsights.csproj", "{4493F5D9-874E-4FBF-B2F3-37890BD910E0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Exporter.Stackdriver", "src\OpenCensus.Exporter.Stackdriver\OpenCensus.Exporter.Stackdriver.csproj", "{DE1B4783-C01F-4672-A6EB-695F1717105B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Samples", "src\Samples\Samples.csproj", "{C58393EB-32E2-4AC6-9170-697B36306E15}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Abstractions", "src\OpenCensus.Abstractions\OpenCensus.Abstractions.csproj", "{99F8A331-05E9-45A5-89BA-4C54E825E5B2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Exporter.Prometheus", "src\OpenCensus.Exporter.Prometheus\OpenCensus.Exporter.Prometheus.csproj", "{AD9B2B54-EC9C-448E-BD3C-EDCC3F7AD022}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Collector.Dependencies", "src\OpenCensus.Collector.Dependencies\OpenCensus.Collector.Dependencies.csproj", "{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Collector.Dependencies.Tests", "test\OpenCensus.Collector.Dependencies.Tests\OpenCensus.Collector.Dependencies.Tests.csproj", "{56E2647A-B814-4BAC-B854-BEA0051B5F2E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Collector.AspNetCore", "src\OpenCensus.Collector.AspNetCore\OpenCensus.Collector.AspNetCore.csproj", "{752D2182-A351-41D8-99EE-DD363D7D5B43}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Collector.AspNetCore.Tests", "test\OpenCensus.Collector.AspNetCore.Tests\OpenCensus.Collector.AspNetCore.Tests.csproj", "{2A47F6A8-63E5-4237-8046-94CAF321E797}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "testdata", "testdata", "{77C7929A-2EED-4AA6-8705-B5C443C8AA0F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.2.0", "test\TestApp.AspNetCore.2.0\TestApp.AspNetCore.2.0.csproj", "{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Exporter.Ocagent", "src\OpenCensus.Exporter.Ocagent\OpenCensus.Exporter.Ocagent.csproj", "{56B0ED25-8A14-4AA2-B59D-FAAFCBACDD4A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Exporter.Stackdriver.Tests", "test\OpenCensus.Exporter.Stackdriver.Tests\OpenCensus.Exporter.Stackdriver.Tests.csproj", "{6875032B-DFDC-4CDE-A283-37CA7F99926A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Exporter.ApplicationInsights.Tests", "test\OpenCensus.Exporter.ApplicationInsights.Tests\OpenCensus.Exporter.ApplicationInsights.Tests.csproj", "{1FA1F509-7722-48E3-9A35-16CBB6774957}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Collector.StackExchangeRedis", "src\OpenCensus.Collector.StackExchangeRedis\OpenCensus.Collector.StackExchangeRedis.csproj", "{6B681D72-D68A-44CC-8C75-53B9A322E6EC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCensus.Collector.StackExchangeRedis.Tests", "test\OpenCensus.Collector.StackExchangeRedis.Tests\OpenCensus.Collector.StackExchangeRedis.Tests.csproj", "{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AE3E3DF5-4083-4C6E-A840-8271B0ACDE7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE3E3DF5-4083-4C6E-A840-8271B0ACDE7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE3E3DF5-4083-4C6E-A840-8271B0ACDE7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE3E3DF5-4083-4C6E-A840-8271B0ACDE7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC62B3C1-5875-4986-A7F6-C4B26E42B0A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC62B3C1-5875-4986-A7F6-C4B26E42B0A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC62B3C1-5875-4986-A7F6-C4B26E42B0A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC62B3C1-5875-4986-A7F6-C4B26E42B0A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EDAE7FA-B44E-42CA-80FA-7DF2FAA2C5DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EDAE7FA-B44E-42CA-80FA-7DF2FAA2C5DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EDAE7FA-B44E-42CA-80FA-7DF2FAA2C5DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EDAE7FA-B44E-42CA-80FA-7DF2FAA2C5DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4493F5D9-874E-4FBF-B2F3-37890BD910E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4493F5D9-874E-4FBF-B2F3-37890BD910E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4493F5D9-874E-4FBF-B2F3-37890BD910E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4493F5D9-874E-4FBF-B2F3-37890BD910E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE1B4783-C01F-4672-A6EB-695F1717105B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE1B4783-C01F-4672-A6EB-695F1717105B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE1B4783-C01F-4672-A6EB-695F1717105B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE1B4783-C01F-4672-A6EB-695F1717105B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C58393EB-32E2-4AC6-9170-697B36306E15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C58393EB-32E2-4AC6-9170-697B36306E15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C58393EB-32E2-4AC6-9170-697B36306E15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C58393EB-32E2-4AC6-9170-697B36306E15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99F8A331-05E9-45A5-89BA-4C54E825E5B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99F8A331-05E9-45A5-89BA-4C54E825E5B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99F8A331-05E9-45A5-89BA-4C54E825E5B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99F8A331-05E9-45A5-89BA-4C54E825E5B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD9B2B54-EC9C-448E-BD3C-EDCC3F7AD022}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD9B2B54-EC9C-448E-BD3C-EDCC3F7AD022}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD9B2B54-EC9C-448E-BD3C-EDCC3F7AD022}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD9B2B54-EC9C-448E-BD3C-EDCC3F7AD022}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56E2647A-B814-4BAC-B854-BEA0051B5F2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56E2647A-B814-4BAC-B854-BEA0051B5F2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56E2647A-B814-4BAC-B854-BEA0051B5F2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56E2647A-B814-4BAC-B854-BEA0051B5F2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A47F6A8-63E5-4237-8046-94CAF321E797}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A47F6A8-63E5-4237-8046-94CAF321E797}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A47F6A8-63E5-4237-8046-94CAF321E797}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A47F6A8-63E5-4237-8046-94CAF321E797}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56B0ED25-8A14-4AA2-B59D-FAAFCBACDD4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56B0ED25-8A14-4AA2-B59D-FAAFCBACDD4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56B0ED25-8A14-4AA2-B59D-FAAFCBACDD4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56B0ED25-8A14-4AA2-B59D-FAAFCBACDD4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6875032B-DFDC-4CDE-A283-37CA7F99926A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6875032B-DFDC-4CDE-A283-37CA7F99926A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6875032B-DFDC-4CDE-A283-37CA7F99926A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6875032B-DFDC-4CDE-A283-37CA7F99926A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1FA1F509-7722-48E3-9A35-16CBB6774957}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FA1F509-7722-48E3-9A35-16CBB6774957}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FA1F509-7722-48E3-9A35-16CBB6774957}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FA1F509-7722-48E3-9A35-16CBB6774957}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B681D72-D68A-44CC-8C75-53B9A322E6EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B681D72-D68A-44CC-8C75-53B9A322E6EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B681D72-D68A-44CC-8C75-53B9A322E6EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B681D72-D68A-44CC-8C75-53B9A322E6EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7CB2F02E-03FA-4FFF-89A5-C51F107623FD} = {61188153-47FB-4567-AC9B-79B2435853EB}
+		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075} = {77C7929A-2EED-4AA6-8705-B5C443C8AA0F}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}
+	EndGlobalSection
+EndGlobal

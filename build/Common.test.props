@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="$(OS) == 'Windows_NT'">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)/debug.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>false</DelaySign>
+    <DefineConstants>$(DefineConstants);SIGNED</DefineConstants>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenCensus.sln'))\build\OpenCensus.test.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+ 
+  <ItemGroup>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)/stylecop.json" />
+  </ItemGroup>
+
+</Project>
