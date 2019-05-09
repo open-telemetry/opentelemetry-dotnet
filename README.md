@@ -1,4 +1,4 @@
-# OpenCensus .NET SDK - distributed tracing and stats collection framework
+# OpenTelemetry .NET SDK - distributed tracing and stats collection framework
 
 [![Gitter chat][gitter-image]][gitter-url]
 [![Build Status](https://opencensus.visualstudio.com/continuous-integration/_apis/build/status/ci-myget-update.yml)](https://opencensus.visualstudio.com/continuous-integration/_build/latest?definitionId=3)
