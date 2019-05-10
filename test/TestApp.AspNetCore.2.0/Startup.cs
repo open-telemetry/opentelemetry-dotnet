@@ -1,5 +1,5 @@
-﻿// <copyright file="Startup.cs" company="OpenCensus Authors">
-// Copyright 2018, OpenCensus Authors
+﻿// <copyright file="Startup.cs" company="OpenTelemetry Authors">
+// Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,14 +19,14 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OpenCensus.Collector.AspNetCore;
-using OpenCensus.Collector.Dependencies;
-using OpenCensus.Trace;
-using OpenCensus.Trace.Propagation;
-using OpenCensus.Trace.Sampler;
+using OpenTelemetry.Collector.AspNetCore;
+using OpenTelemetry.Collector.Dependencies;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Propagation;
+using OpenTelemetry.Trace.Sampler;
 using System.Net.Http;
-using OpenCensus.Exporter.Ocagent;
-using OpenCensus.Trace.Export;
+using OpenTelemetry.Exporter.Ocagent;
+using OpenTelemetry.Trace.Export;
 
 namespace TestApp.AspNetCore._2._0
 {

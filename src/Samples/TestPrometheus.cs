@@ -1,11 +1,11 @@
 ﻿namespace Samples
 {
-    using OpenCensus.Exporter.Prometheus;
-    using OpenCensus.Stats;
-    using OpenCensus.Stats.Aggregations;
-    using OpenCensus.Stats.Measures;
-    using OpenCensus.Tags;
-    using OpenCensus.Trace;
+    using OpenTelemetry.Exporter.Prometheus;
+    using OpenTelemetry.Stats;
+    using OpenTelemetry.Stats.Aggregations;
+    using OpenTelemetry.Stats.Measures;
+    using OpenTelemetry.Tags;
+    using OpenTelemetry.Trace;
     using System;
     using System.Collections.Generic;
     using System.Threading;

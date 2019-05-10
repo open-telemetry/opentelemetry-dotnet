@@ -38,8 +38,8 @@ issues or issues happening in specific production environments.
 
 1. Find or create an assembly-specific `internal` class inherited from
    `EventSource`.
-2. Prefix the name of EventSource with `OpenCensus-` using class attribute like
-   this: `[EventSource(Name = "OpenCensus-Base")]`.
+2. Prefix the name of EventSource with `OpenTelemetry-` using class attribute like
+   this: `[EventSource(Name = "OpenTelemetry-Base")]`.
 3. Create a new `Event` method with the arguments that needs to be logged. Each
    event should have index, message and event severity (level). It is a good
    practice to include event severity (level) into the method name.
