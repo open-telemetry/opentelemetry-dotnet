@@ -22,7 +22,7 @@ steps:
   displayName: pack solution with symbols (Release)
   inputs:
     command: "pack"
-    projects: "OpenCensus.proj"
+    projects: "OpenTelemetry.proj"
     configuration: 'Release'
     packDirectory: '$(build.artifactStagingDirectory)'
     buildProperties: "SymbolPackageFormat=snupkg"

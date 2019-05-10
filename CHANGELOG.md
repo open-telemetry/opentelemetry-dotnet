@@ -8,12 +8,12 @@ the release.
 ## Unreleased
 
 - API improvements - use C# native classes to measure time.
-- OpenCensus.Collectors.AspNetCore: Allow to supply custom sampler based on request properties using custom code. For instance filter out telemetry from specific path.
-- OpenCensus.Collectors.Dependencies: Allow to supply custom sampler based on request properties using custom code. By default, filter out calls to Zipkin REST endpoint from the exporter.
+- OpenTelemetry.Collectors.AspNetCore: Allow to supply custom sampler based on request properties using custom code. For instance filter out telemetry from specific path.
+- OpenTelemetry.Collectors.Dependencies: Allow to supply custom sampler based on request properties using custom code. By default, filter out calls to Zipkin REST endpoint from the exporter.
 
 ## 0.1.0-alpha-42253
 
-Release [01/18/2019](https://github.com/census-instrumentation/opencensus-csharp/releases/tag/0.1.0-alpha-42253).
+Release [01/18/2019](https://github.com/census-instrumentation/OpenTelemetry-csharp/releases/tag/0.1.0-alpha-42253).
 
 - Application Insights exporter improvements - now understands http attributes
   and process links, annotations and messages.
@@ -26,15 +26,15 @@ Release [01/18/2019](https://github.com/census-instrumentation/opencensus-csharp
 ## 0.1.0-alpha-33381
 
 Released
-[12/18/2018](https://github.com/census-instrumentation/opencensus-csharp/releases/tag/0.1.0-alpha-33381).
+[12/18/2018](https://github.com/census-instrumentation/OpenTelemetry-csharp/releases/tag/0.1.0-alpha-33381).
 
 - Collectors for ASP.NET Core and .NET Core HttpClient.
 - Initial version of Ocagent exporter implemented.
 - Initial version of StackDriver exporter implemented.
 - Support double attributes according to the [spec
-  change](https://github.com/census-instrumentation/opencensus-specs/issues/172).
+  change](https://github.com/census-instrumentation/OpenTelemetry-specs/issues/172).
 - Initial implementation of Prometheus exporter.
 - Initial version of Application Insights exporter implemented.
 - Zipkin exporter implemented.
 - Initial version of SDK published. It is based on contribution from Pivotal
-  [from](https://github.com/SteeltoeOSS/Management/tree/dev/src/Steeltoe.Management.OpenCensus).
+  [from](https://github.com/SteeltoeOSS/Management/tree/dev/src/Steeltoe.Management.OpenTelemetry).
