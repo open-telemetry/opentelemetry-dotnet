@@ -7,7 +7,6 @@ trigger:
   branches:
     include:
     - master
-    - develop
 
 queue: Hosted VS2017
 
@@ -22,7 +21,7 @@ steps:
   displayName: pack solution with symbols (Release)
   inputs:
     command: "pack"
-    projects: "OpenTelemetry.proj"
+    projects: OpenTelemetry.sln
     configuration: 'Release'
     packDirectory: '$(build.artifactStagingDirectory)'
     buildProperties: "SymbolPackageFormat=snupkg"

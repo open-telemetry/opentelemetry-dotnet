@@ -3,7 +3,7 @@
 variables:
   DotNetVersion: "2.2.101"
 
-pr: [ 'master', 'develop' ]
+pr: [ 'master' ]
 
 jobs:
 
@@ -21,7 +21,7 @@ jobs:
     displayName: build solution (Release)
     inputs:
       command: "build"
-      projects: "OpenTelemetry.proj"
+      projects: OpenTelemetry.sln
       arguments: "--configuration Release"
 
   # consider switch to https://docs.microsoft.com/vsts/pipelines/tasks/test/vstest?view=vsts
@@ -47,7 +47,7 @@ jobs:
     displayName: build
     inputs:
       command: "build"
-      projects: "OpenTelemetry.proj"
+      projects: OpenTelemetry.sln
       arguments: "--configuration Release"
 
   - task: DotNetCoreCLI@2

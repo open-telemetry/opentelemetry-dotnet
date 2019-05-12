@@ -98,11 +98,11 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             try
             {
                 string assemblyPackageVersion = typeof(StackdriverStatsExporter).GetTypeInfo().Assembly.GetCustomAttributes<AssemblyInformationalVersionAttribute>().First().InformationalVersion;
-                USER_AGENT = $"OpenTelemetry-csharp/{assemblyPackageVersion}";
+                USER_AGENT = $"OpenTelemetry-dotnet/{assemblyPackageVersion}";
             }
             catch (Exception)
             {
-                USER_AGENT = $"OpenTelemetry-csharp/{Constants.PACKAGE_VERSION_UNDEFINED}";
+                USER_AGENT = $"OpenTelemetry-dotnet/{Constants.PACKAGE_VERSION_UNDEFINED}";
             }
         }
 

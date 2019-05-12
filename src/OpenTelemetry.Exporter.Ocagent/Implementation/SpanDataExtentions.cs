@@ -76,7 +76,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                 // TODO: Is there a way to handle this better?
                 // This type of error processing is very aggressive and doesn't follow the
                 // error handling practices when smart defaults should be used when possible.
-                // See: https://github.com/census-instrumentation/OpenTelemetry-csharp/blob/develop/docs/error-handling.md
+                // See: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/docs/error-handling.md
                 ExporterOcagentEventSource.Log.FailedToConvertToProtoDefinitionError(e);
             }
 

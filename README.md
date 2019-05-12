@@ -1,17 +1,19 @@
 # OpenTelemetry .NET SDK - distributed tracing and stats collection framework
 
-[![Gitter chat][gitter-image]][gitter-url]
-[![Build Status](https://OpenTelemetry.visualstudio.com/continuous-integration/_apis/build/status/ci-myget-update.yml)](https://OpenTelemetry.visualstudio.com/continuous-integration/_build/latest?definitionId=3)
+.NET Channel: [![Gitter chat][dotnet-gitter-image]][dotnet-gitter-url]
+
+Community Channel: [![Gitter chat][main-gitter-image]][main-gitter-url]
+
+[![Build
+Status](https://dev.azure.com/opentelemetry/pipelines/_apis/build/status/open-telemetry.opentelemetry-dotnet?branchName=master)](https://dev.azure.com/opentelemetry/pipelines/_build/latest?definitionId=1&branchName=master)
 
 OpenTelemetry is a toolkit for collecting application performance and behavior
-data. It currently includes 3 APIs: stats, tracing and tags.
+data.
 
-The library is in [Beta](#versioning) stage and APIs are expected to be mostly
-stable. The library is expected to move to [GA](#versioning) stage after v1.0.0
-major release.
+The library is in [Alpha](#versioning) stage. The library is expected to move
+to [GA](#versioning) stage after v1.0.0 major release.
 
-Please join [gitter](https://gitter.im/census-instrumentation/Lobby) for help
-or feedback on this project.
+Please join [gitter][dotnet-gitter-url] for help or feedback on this project.
 
 We encourage contributions. Use tags [up-for-grabs][up-for-grabs-issues] and
 [good first issue][good-first-issues] to get started with the project. Follow
@@ -57,6 +59,7 @@ Incoming requests of ASP.NET Core app can be automatically tracked.
    [OpenTelemetry.Collector.AspNetCore][OpenTelemetry-collect-aspnetcore-nuget-url]
 
 2. Make sure `ITracer`, `ISampler`, and `IPropagationComponent` registered in DI.
+
     ``` csharp
     services.AddSingleton<ITracer>(Tracing.Tracer);
     services.AddSingleton<ISampler>(Samplers.AlwaysSample);
@@ -64,6 +67,7 @@ Incoming requests of ASP.NET Core app can be automatically tracked.
     ```
 
 3. Configure data collection singletons in ConfigureServices method:
+
     ``` csharp
     public void ConfigureServices(IServiceCollection services)
     {
@@ -73,6 +77,7 @@ Incoming requests of ASP.NET Core app can be automatically tracked.
     ```
 
 4. Initialize data collection by instantiating singleton in Configure method
+
     ``` csharp
     public void Configure(IApplicationBuilder app, /*... other arguments*/ )
     {
@@ -88,6 +93,7 @@ Outgoing http calls made by .NET Core `HttpClient` can be automatically tracked.
    [OpenTelemetry.Collector.Dependencies][OpenTelemetry-collect-deps-nuget-url]
 
 2. Make sure `ITracer`, `ISampler`, and `IPropagationComponent` registered in DI.
+
     ``` csharp
     services.AddSingleton<ITracer>(Tracing.Tracer);
     services.AddSingleton<ISampler>(Samplers.AlwaysSample);
@@ -95,6 +101,7 @@ Outgoing http calls made by .NET Core `HttpClient` can be automatically tracked.
     ```
 
 3. Configure data collection singletons in ConfigureServices method:
+
     ``` csharp
     public void ConfigureServices(IServiceCollection services)
     {
@@ -104,6 +111,7 @@ Outgoing http calls made by .NET Core `HttpClient` can be automatically tracked.
     ```
 
 4. Initiate data collection by instantiating singleton in Configure method
+
     ``` csharp
     public void Configure(IApplicationBuilder app, /*... other arguments*/ )
     {
@@ -119,6 +127,7 @@ Outgoing http calls to Redis made usign StackExchange.Redis library can be autom
    [OpenTelemetry.Collector.StackExchangeRedis][OpenTelemetry-collect-stackexchange-redis-nuget-url]
 
 2. Make sure `ITracer`, `ISampler`, and `IExportComponent` registered in DI.
+
     ``` csharp
     services.AddSingleton<ITracer>(Tracing.Tracer);
     services.AddSingleton<ISampler>(Samplers.AlwaysSample);
@@ -126,6 +135,7 @@ Outgoing http calls to Redis made usign StackExchange.Redis library can be autom
     ```
 
 3. Configure data collection singletons in ConfigureServices method:
+
     ``` csharp
     public void ConfigureServices(IServiceCollection services)
     {
@@ -135,6 +145,7 @@ Outgoing http calls to Redis made usign StackExchange.Redis library can be autom
     ```
 
 4. Initiate data collection by instantiating singleton in Configure method
+
     ``` csharp
     public void Configure(IApplicationBuilder app, /*... other arguments*/ )
     {
@@ -260,8 +271,10 @@ element is part of an API that is only meant to be used by exporters or other
 OpenTelemetry libraries, then there is no deprecation period. Otherwise, we will
 deprecate it for 18 months before removing it, if possible.
 
-[gitter-image]: https://badges.gitter.im/census-instrumentation/lobby.svg
-[gitter-url]:https://gitter.im/census-instrumentation/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+[main-gitter-image]: https://badges.gitter.im/open-telemetry/community.svg
+[main-gitter-url]:https://gitter.im/open-telemetry/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+[dotnet-gitter-image]: https://badges.gitter.im/open-telemetry/opentelemetry-dotnet.svg
+[dotnet-gitter-url]:https://gitter.im/open-telemetry/opentelemetry-dotnet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 [OpenTelemetry-myget-image]:https://img.shields.io/myget/OpenTelemetry/vpre/OpenTelemetry.svg
 [OpenTelemetry-myget-url]: https://www.myget.org/feed/OpenTelemetry/package/nuget/OpenTelemetry
 [OpenTelemetry-abs-myget-image]:https://img.shields.io/myget/OpenTelemetry/vpre/OpenTelemetry.Abstractions.svg
@@ -298,8 +311,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-collect-deps-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Collector.Dependencies
 [OpenTelemetry-collect-stackexchange-redis-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Collector.StackExchangeRedis.svg
 [OpenTelemetry-collect-stackexchange-redis-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Collector.StackExchangeRedis
-[up-for-grabs-issues]: https://github.com/census-instrumentation/OpenTelemetry-csharp/issues?q=is%3Aissue+is%3Aopen+label%3Aup-for-grabs
-[good-first-issues]: https://github.com/census-instrumentation/OpenTelemetry-csharp/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
+[up-for-grabs-issues]: https://github.com/open-telemetry/OpenTelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3Aup-for-grabs
+[good-first-issues]: https://github.com/open-telemetry/OpenTelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [zipkin-get-started]: https://zipkin.io/pages/quickstart.html
 [ai-get-started]: https://docs.microsoft.com/azure/application-insights
 [stackdriver-trace-setup]: https://cloud.google.com/trace/docs/setup/
@@ -308,8 +321,8 @@ deprecate it for 18 months before removing it, if possible.
 [GKE]: https://codelabs.developers.google.com/codelabs/cloud-kubernetes-aspnetcore/index.html?index=..%2F..index#0
 [gcp-auth]: https://cloud.google.com/docs/authentication/getting-started
 [semver]: http://semver.org/
-[ai-sample]: https://github.com/census-instrumentation/OpenTelemetry-csharp/blob/develop/src/Samples/TestApplicationInsights.cs
-[stackdriver-sample]: https://github.com/census-instrumentation/OpenTelemetry-csharp/blob/develop/src/Samples/TestStackdriver.cs
-[zipkin-sample]: https://github.com/census-instrumentation/OpenTelemetry-csharp/blob/develop/src/Samples/TestZipkin.cs
+[ai-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestApplicationInsights.cs
+[stackdriver-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestStackdriver.cs
+[zipkin-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestZipkin.cs
 [prometheus-get-started]: https://prometheus.io/docs/introduction/first_steps/
-[prometheus-sample]: https://github.com/census-instrumentation/OpenTelemetry-csharp/blob/develop/src/Samples/TestPrometheus.cs
+[prometheus-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestPrometheus.cs
