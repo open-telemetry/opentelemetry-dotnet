@@ -42,10 +42,10 @@ namespace OpenTelemetry.Trace.Test
             multipleAttributes.Add("MyLongAttributeKey", AttributeValue<long>.Create(123));
             multipleAttributes.Add("MyDoubleAttributeKey", AttributeValue<double>.Create(0.005));
             // Tests only that all the methods are not crashing/throwing errors.
-            BlankSpan.Instance.PutAttribute(
+            BlankSpan.Instance.SetAttribute(
                 "MyStringAttributeKey2", AttributeValue<string>.Create("MyStringAttributeValue2"));
-            BlankSpan.Instance.PutAttributes(attributes);
-            BlankSpan.Instance.PutAttributes(multipleAttributes);
+            BlankSpan.Instance.SetAttributes(attributes);
+            BlankSpan.Instance.SetAttributes(multipleAttributes);
             BlankSpan.Instance.AddAnnotation("MyAnnotation");
             BlankSpan.Instance.AddAnnotation("MyAnnotation", attributes);
             BlankSpan.Instance.AddAnnotation("MyAnnotation", multipleAttributes);
