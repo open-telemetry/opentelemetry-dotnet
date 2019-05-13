@@ -3,11 +3,11 @@
     using System;
     using System.Collections.Generic;
     using System.Threading;
-    using OpenCensus.Collector.StackExchangeRedis;
-    using OpenCensus.Exporter.Zipkin;
-    using OpenCensus.Trace;
-    using OpenCensus.Trace.Config;
-    using OpenCensus.Trace.Sampler;
+    using OpenTelemetry.Collector.StackExchangeRedis;
+    using OpenTelemetry.Exporter.Zipkin;
+    using OpenTelemetry.Trace;
+    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Sampler;
     using StackExchange.Redis;
 
     internal class TestRedis
@@ -70,7 +70,7 @@
             // 7. Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be
             // a child span.
-            using (OpenCensus.Common.IScope scope = tracer.SpanBuilder("DoWork").StartScopedSpan())
+            using (OpenTelemetry.Common.IScope scope = tracer.SpanBuilder("DoWork").StartScopedSpan())
             {
                 // Simulate some work.
                 ISpan span = tracer.CurrentSpan;

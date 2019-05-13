@@ -3,13 +3,13 @@
     using System;
     using System.Collections.Generic;
     using System.Threading;
-    using OpenCensus.Exporter.Stackdriver;
-    using OpenCensus.Stats;
-    using OpenCensus.Stats.Aggregations;
-    using OpenCensus.Stats.Measures;
-    using OpenCensus.Tags;
-    using OpenCensus.Trace;
-    using OpenCensus.Trace.Sampler;
+    using OpenTelemetry.Exporter.Stackdriver;
+    using OpenTelemetry.Stats;
+    using OpenTelemetry.Stats.Aggregations;
+    using OpenTelemetry.Stats.Measures;
+    using OpenTelemetry.Tags;
+    using OpenTelemetry.Trace;
+    using OpenTelemetry.Trace.Sampler;
 
     internal class TestStackdriver
     {

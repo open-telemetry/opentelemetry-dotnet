@@ -10,9 +10,9 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/test/OpenCensus.Collector.Dependencies.Tests/bin/Debug/netcoreapp2.0/OpenCensus.Collector.Dependencies.Tests.dll",
+            "program": "${workspaceFolder}/test/OpenTelemetry.Collector.Dependencies.Tests/bin/Debug/netcoreapp2.0/OpenTelemetry.Collector.Dependencies.Tests.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/test/OpenCensus.Collector.Dependencies.Tests",
+            "cwd": "${workspaceFolder}/test/OpenTelemetry.Collector.Dependencies.Tests",
             // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
             "console": "internalConsole",
             "stopAtEntry": false,

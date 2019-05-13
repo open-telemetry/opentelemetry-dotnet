@@ -2,11 +2,11 @@
 {
     using System;
     using System.Net.Http;
-    using OpenCensus.Collector.Dependencies;
-    using OpenCensus.Exporter.Zipkin;
-    using OpenCensus.Trace;
-    using OpenCensus.Trace.Propagation;
-    using OpenCensus.Trace.Sampler;
+    using OpenTelemetry.Collector.Dependencies;
+    using OpenTelemetry.Exporter.Zipkin;
+    using OpenTelemetry.Trace;
+    using OpenTelemetry.Trace.Propagation;
+    using OpenTelemetry.Trace.Sampler;
 
     internal class TestHttpClient
     {
