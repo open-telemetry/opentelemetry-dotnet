@@ -70,11 +70,11 @@ namespace OpenTelemetry.Trace.Internal
 
         public override bool HasEnded => true;
 
-        public override void PutAttributes(IDictionary<string, IAttributeValue> attributes)
+        public override void SetAttributes(IDictionary<string, IAttributeValue> attributes)
         {
         }
 
-        public override void PutAttribute(string key, IAttributeValue value)
+        public override void SetAttribute(string key, IAttributeValue value)
         {
         }
 
