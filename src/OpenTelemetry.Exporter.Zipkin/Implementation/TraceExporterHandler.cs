@@ -164,18 +164,17 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                     }
 
                     break;
-                case SpanKind.Producer:
-                    zipkinSpanKind = ZipkinSpanKind.PRODUCER;
-                    break;
                 case SpanKind.Consumer:
-
+                    zipkinSpanKind = ZipkinSpanKind.CONSUMER;
+                    break;
+                case SpanKind.Producer:
                     if (spanData.HasRemoteParent.HasValue && spanData.HasRemoteParent.Value)
                     {
-                        zipkinSpanKind = ZipkinSpanKind.PRODUCER;
+                        zipkinSpanKind = ZipkinSpanKind.CONSUMER;
                     }
                     else
                     {
-                        zipkinSpanKind = ZipkinSpanKind.CONSUMER;
+                        zipkinSpanKind = ZipkinSpanKind.PRODUCER;
                     }
 
                     break;

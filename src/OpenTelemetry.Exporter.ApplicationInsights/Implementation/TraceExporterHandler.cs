@@ -214,7 +214,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
                     // BUILDING resulting telemetry
                     OperationTelemetry result;
-                    if (resultKind == SpanKind.Client || resultKind == SpanKind.Consumer)
+                    if (resultKind == SpanKind.Client || resultKind == SpanKind.Producer)
                     {
                         var resultD = new DependencyTelemetry();
                         resultD.ResultCode = resultCode;
@@ -288,7 +288,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             resultKind = span.Kind;
 
             // TODO: Should this be a part of generic logic?
-            if (resultKind == SpanKind.Unspecified)
+            if (resultKind == SpanKind.Internal)
             {
                 if (span.HasRemoteParent.HasValue && span.HasRemoteParent.Value)
                 {
@@ -356,7 +356,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                         resultKind = SpanKind.Consumer;
                         break;
                     default:
-                        resultKind = SpanKind.Unspecified;
+                        resultKind = SpanKind.Internal;
                         break;
                 }
             }

@@ -27,12 +27,12 @@ namespace OpenTelemetry.Trace
             this.spanBuilderOptions = new SpanBuilderOptions(randomGenerator, startEndHandler, traceConfig);
         }
 
-        public override ISpanBuilder SpanBuilderWithExplicitParent(string spanName, SpanKind spanKind = SpanKind.Unspecified, ISpan parent = null)
+        public override ISpanBuilder SpanBuilderWithExplicitParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpan parent = null)
         {
             return Trace.SpanBuilder.CreateWithParent(spanName, spanKind, parent, this.spanBuilderOptions);
         }
 
-        public override ISpanBuilder SpanBuilderWithRemoteParent(string spanName, SpanKind spanKind = SpanKind.Unspecified, ISpanContext remoteParentSpanContext = null)
+        public override ISpanBuilder SpanBuilderWithRemoteParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpanContext remoteParentSpanContext = null)
         {
             return Trace.SpanBuilder.CreateWithRemoteParent(spanName, spanKind, remoteParentSpanContext, this.spanBuilderOptions);
         }

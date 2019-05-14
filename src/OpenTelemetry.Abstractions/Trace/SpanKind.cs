@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Span kind was not specified.
         /// </summary>
-        Unspecified = 0,
+        Internal = 0,
 
         /// <summary>
         /// Server span represents request incoming from external component.
