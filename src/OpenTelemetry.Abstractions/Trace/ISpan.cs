@@ -62,13 +62,13 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="key">Key of the attribute.</param>
         /// <param name="value">Attribute value.</param>
-        void PutAttribute(string key, IAttributeValue value);
+        void SetAttribute(string key, IAttributeValue value);
 
         /// <summary>
         /// Puts a list of attributes to the span.
         /// </summary>
         /// <param name="attributes">Collection of attributes name/value pairs.</param>
-        void PutAttributes(IDictionary<string, IAttributeValue> attributes);
+        void SetAttributes(IDictionary<string, IAttributeValue> attributes);
 
         /// <summary>
         /// Adds a single annotation to the span.

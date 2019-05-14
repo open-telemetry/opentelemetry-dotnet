@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace.Test
                     startEndHandler,
                     timestampConverter);
             // Check that adding trace events after Span#End() does not throw any exception.
-            span.PutAttributes(attributes);
+            span.SetAttributes(attributes);
             span.AddAnnotation(Annotation.FromDescription(ANNOTATION_DESCRIPTION));
             span.AddAnnotation(ANNOTATION_DESCRIPTION, attributes);
             span.AddMessageEvent(
@@ -101,8 +101,8 @@ namespace OpenTelemetry.Trace.Test
             span.End();
             // Check that adding trace events after Span#End() does not throw any exception and are not
             // recorded.
-            span.PutAttributes(attributes);
-            span.PutAttribute(
+            span.SetAttributes(attributes);
+            span.SetAttribute(
                 "MySingleStringAttributeKey",
                 AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
             span.AddAnnotation(Annotation.FromDescription(ANNOTATION_DESCRIPTION));
@@ -134,10 +134,10 @@ namespace OpenTelemetry.Trace.Test
                     startEndHandler,
                     timestampConverter);
    
-            span.PutAttribute(
+            span.SetAttribute(
                 "MySingleStringAttributeKey",
                 AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
-            span.PutAttributes(attributes);
+            span.SetAttributes(attributes);
             interval = TimeSpan.FromMilliseconds(100);
             span.AddAnnotation(Annotation.FromDescription(ANNOTATION_DESCRIPTION));
             interval = TimeSpan.FromMilliseconds(200);
@@ -192,10 +192,10 @@ namespace OpenTelemetry.Trace.Test
                     startEndHandler,
                     timestampConverter);
      
-            span.PutAttribute(
+            span.SetAttribute(
                 "MySingleStringAttributeKey",
                 AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
-            span.PutAttributes(attributes);
+            span.SetAttributes(attributes);
             interval = TimeSpan.FromMilliseconds(100);
             span.AddAnnotation(Annotation.FromDescription(ANNOTATION_DESCRIPTION));
             interval = TimeSpan.FromMilliseconds(200);
@@ -309,7 +309,7 @@ namespace OpenTelemetry.Trace.Test
             {
                 IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
                 attributes.Add("MyStringAttributeKey" + i, AttributeValue.LongAttributeValue(i));
-                span.PutAttributes(attributes);
+                span.SetAttributes(attributes);
             }
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfAttributes, spanData.Attributes.DroppedAttributesCount);
@@ -356,7 +356,7 @@ namespace OpenTelemetry.Trace.Test
             {
                 IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
                 attributes.Add("MyStringAttributeKey" + i, AttributeValue.LongAttributeValue(i));
-                span.PutAttributes(attributes);
+                span.SetAttributes(attributes);
             }
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfAttributes, spanData.Attributes.DroppedAttributesCount);
@@ -373,7 +373,7 @@ namespace OpenTelemetry.Trace.Test
             {
                 IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
                 attributes.Add("MyStringAttributeKey" + i, AttributeValue.LongAttributeValue(i));
-                span.PutAttributes(attributes);
+                span.SetAttributes(attributes);
             }
             spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfAttributes * 3 / 2, spanData.Attributes.DroppedAttributesCount);
