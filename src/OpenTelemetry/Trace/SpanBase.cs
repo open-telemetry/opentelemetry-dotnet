@@ -99,13 +99,13 @@ namespace OpenTelemetry.Trace
         public abstract bool HasEnded { get; }
 
         /// <inheritdoc/>
-        public virtual void PutAttribute(string key, IAttributeValue value)
+        public virtual void SetAttribute(string key, IAttributeValue value)
         {
-            this.PutAttributes(new Dictionary<string, IAttributeValue>() { { key, value } });
+            this.SetAttributes(new Dictionary<string, IAttributeValue>() { { key, value } });
         }
 
         /// <inheritdoc/>
-        public abstract void PutAttributes(IDictionary<string, IAttributeValue> attributes);
+        public abstract void SetAttributes(IDictionary<string, IAttributeValue> attributes);
 
         /// <inheritdoc/>
         public void AddAnnotation(string description)

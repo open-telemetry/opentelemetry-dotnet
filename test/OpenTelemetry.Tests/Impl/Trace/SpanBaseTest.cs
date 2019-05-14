@@ -73,9 +73,9 @@ namespace OpenTelemetry.Trace.Test
             var mockSpan = new Mock<NoopSpan>(spanContext, spanOptions) { CallBase = true };
             NoopSpan span = mockSpan.Object;
             IAttributeValue val = AttributeValue<bool>.Create(true);
-            span.PutAttribute("MyKey", val);
+            span.SetAttribute("MyKey", val);
             span.End();
-            mockSpan.Verify((s) => s.PutAttributes(It.Is<IDictionary<string, IAttributeValue>>((d) => d.ContainsKey("MyKey"))));
+            mockSpan.Verify((s) => s.SetAttributes(It.Is<IDictionary<string, IAttributeValue>>((d) => d.ContainsKey("MyKey"))));
     
         }
 

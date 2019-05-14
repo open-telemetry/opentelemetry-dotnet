@@ -4,6 +4,8 @@
 
 Community Channel: [![Gitter chat][main-gitter-image]][main-gitter-url]
 
+We hold regular meetings. See details at [community page](https://github.com/open-telemetry/community#net-sdk).
+
 [![Build
 Status](https://dev.azure.com/opentelemetry/pipelines/_apis/build/status/open-telemetry.opentelemetry-dotnet?branchName=master)](https://dev.azure.com/opentelemetry/pipelines/_build/latest?definitionId=1&branchName=master)
 
