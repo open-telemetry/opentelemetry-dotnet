@@ -214,7 +214,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
                     // BUILDING resulting telemetry
                     OperationTelemetry result;
-                    if (resultKind == SpanKind.Client)
+                    if (resultKind == SpanKind.Client || resultKind == SpanKind.Consumer)
                     {
                         var resultD = new DependencyTelemetry();
                         resultD.ResultCode = resultCode;
@@ -341,13 +341,23 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             {
                 var kind = spanKindAttr.Match((s) => s, null, null, null, null);
 
-                if (kind == "server")
+                switch (kind.ToLower(CultureInfo.InvariantCulture))
                 {
-                    resultKind = SpanKind.Server;
-                }
-                else
-                {
-                    resultKind = SpanKind.Client;
+                    case "server":
+                        resultKind = SpanKind.Server;
+                        break;
+                    case "client":
+                        resultKind = SpanKind.Client;
+                        break;
+                    case "producer":
+                        resultKind = SpanKind.Producer;
+                        break;
+                    case "consumer":
+                        resultKind = SpanKind.Consumer;
+                        break;
+                    default:
+                        resultKind = SpanKind.Unspecified;
+                        break;
                 }
             }
         }

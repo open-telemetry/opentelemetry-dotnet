@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                 return new Span
                 {
                     Name = new TruncatableString { Value = spanData.Name },
-                    Kind = spanData.Kind == SpanKind.Client ? Span.Types.SpanKind.Client : Span.Types.SpanKind.Server,
+                    Kind = spanData.Kind == SpanKind.Client || spanData.Kind == SpanKind.Consumer ? Span.Types.SpanKind.Client : Span.Types.SpanKind.Server,
                     TraceId = ByteString.CopyFrom(spanData.Context.TraceId.Bytes),
                     SpanId = ByteString.CopyFrom(spanData.Context.SpanId.Bytes),
                     ParentSpanId =
