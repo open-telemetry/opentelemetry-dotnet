@@ -146,21 +146,43 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private ZipkinSpanKind ToSpanKind(ISpanData spanData)
         {
-            if (spanData.Kind == SpanKind.Server)
-            {
-                return ZipkinSpanKind.SERVER;
-            }
-            else if (spanData.Kind == SpanKind.Client)
-            {
-                if (spanData.HasRemoteParent.HasValue && spanData.HasRemoteParent.Value)
-                {
-                    return ZipkinSpanKind.SERVER;
-                }
+            var zipkinSpanKind = ZipkinSpanKind.CLIENT;
 
-                return ZipkinSpanKind.CLIENT;
+            switch (spanData.Kind)
+            {
+                case SpanKind.Server:
+                    zipkinSpanKind = ZipkinSpanKind.SERVER;
+                    break;
+                case SpanKind.Client:
+                    if (spanData.HasRemoteParent.HasValue && spanData.HasRemoteParent.Value)
+                    {
+                        zipkinSpanKind = ZipkinSpanKind.SERVER;
+                    }
+                    else
+                    {
+                        zipkinSpanKind = ZipkinSpanKind.CLIENT;
+                    }
+
+                    break;
+                case SpanKind.Consumer:
+                    zipkinSpanKind = ZipkinSpanKind.CONSUMER;
+                    break;
+                case SpanKind.Producer:
+                    if (spanData.HasRemoteParent.HasValue && spanData.HasRemoteParent.Value)
+                    {
+                        zipkinSpanKind = ZipkinSpanKind.CONSUMER;
+                    }
+                    else
+                    {
+                        zipkinSpanKind = ZipkinSpanKind.PRODUCER;
+                    }
+
+                    break;
+                default:
+                    break;
             }
 
-            return ZipkinSpanKind.CLIENT;
+            return zipkinSpanKind;
         }
 
         private async Task SendSpansAsync(IEnumerable<ZipkinSpan> spans)

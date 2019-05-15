@@ -428,7 +428,7 @@ namespace OpenTelemetry.Trace
                 linksSpanData,
                 null, // Not supported yet.
                 this.hasBeenEnded ? this.StatusWithDefault : null,
-                this.Kind.HasValue ? this.Kind.Value : SpanKind.Client,
+                this.Kind ?? SpanKind.Internal,
                 this.hasBeenEnded ? Timestamp.FromDateTimeOffset(this.endTime) : null);
         }
 
