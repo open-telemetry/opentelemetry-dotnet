@@ -63,7 +63,7 @@ namespace OpenTelemetry.Trace.Test
         {
         }
 
-        public override void PutAttributes(IDictionary<string, IAttributeValue> attributes)
+        public override void SetAttributes(IDictionary<string, IAttributeValue> attributes)
         {
         }
 

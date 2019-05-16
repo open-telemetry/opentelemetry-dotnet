@@ -245,7 +245,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public override void PutAttribute(string key, IAttributeValue value)
+        public override void SetAttribute(string key, IAttributeValue value)
         {
             if (!this.Options.HasFlag(SpanOptions.RecordEvents))
             {
@@ -264,7 +264,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public override void PutAttributes(IDictionary<string, IAttributeValue> attributes)
+        public override void SetAttributes(IDictionary<string, IAttributeValue> attributes)
         {
             if (!this.Options.HasFlag(SpanOptions.RecordEvents))
             {
@@ -428,7 +428,7 @@ namespace OpenTelemetry.Trace
                 linksSpanData,
                 null, // Not supported yet.
                 this.hasBeenEnded ? this.StatusWithDefault : null,
-                this.Kind.HasValue ? this.Kind.Value : SpanKind.Client,
+                this.Kind ?? SpanKind.Internal,
                 this.hasBeenEnded ? Timestamp.FromDateTimeOffset(this.endTime) : null);
         }
 

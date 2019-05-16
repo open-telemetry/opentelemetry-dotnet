@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace.Test
     public class SpanBuilderBaseTest
     {
         private ITracer tracer;
-        private Mock<SpanBuilderBase> spanBuilder = new Mock<SpanBuilderBase>(SpanKind.Unspecified);
+        private Mock<SpanBuilderBase> spanBuilder = new Mock<SpanBuilderBase>(SpanKind.Internal);
         private Mock<SpanBase> span = new Mock<SpanBase>();
 
         public SpanBuilderBaseTest()

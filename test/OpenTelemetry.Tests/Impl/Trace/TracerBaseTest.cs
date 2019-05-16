@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace.Test
         private static readonly ITracer noopTracer = TracerBase.NoopTracer;
         private static readonly string SPAN_NAME = "MySpanName";
         private TracerBase tracer = Mock.Of<TracerBase>();
-        private SpanBuilderBase spanBuilder = new Mock<SpanBuilderBase>(SpanKind.Unspecified).Object;
+        private SpanBuilderBase spanBuilder = new Mock<SpanBuilderBase>(SpanKind.Internal).Object;
         private SpanBase span = Mock.Of<SpanBase>();
 
         public TracerBaseTest()
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Trace.Test
             try
             {
                 Assert.Same(span, tracer.CurrentSpan);
-                Mock.Get(tracer).Setup((tracer) => tracer.SpanBuilderWithExplicitParent(SPAN_NAME, SpanKind.Unspecified, span)).Returns(spanBuilder);
+                Mock.Get(tracer).Setup((tracer) => tracer.SpanBuilderWithExplicitParent(SPAN_NAME, SpanKind.Internal, span)).Returns(spanBuilder);
                 Assert.Same(spanBuilder, tracer.SpanBuilder(SPAN_NAME));
             }
             finally
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Trace.Test
             try
             {
                 Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
-                Mock.Get(tracer).Setup((t) => t.SpanBuilderWithExplicitParent(SPAN_NAME, SpanKind.Unspecified, BlankSpan.Instance)).Returns(spanBuilder);
+                Mock.Get(tracer).Setup((t) => t.SpanBuilderWithExplicitParent(SPAN_NAME, SpanKind.Internal, BlankSpan.Instance)).Returns(spanBuilder);
                 Assert.Same(spanBuilder, tracer.SpanBuilder(SPAN_NAME));
             }
             finally

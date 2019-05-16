@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace
         /// <param name="spanName">Span name.</param>
         /// <param name="spanKind">Span kind.</param>
         /// <returns>Span builder for the span with the given name.</returns>
-        ISpanBuilder SpanBuilder(string spanName, SpanKind spanKind = SpanKind.Unspecified);
+        ISpanBuilder SpanBuilder(string spanName, SpanKind spanKind = SpanKind.Internal);
 
         /// <summary>
         /// Gets the span builder for the span with the given name and parent.
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace
         /// <param name="spanKind">Span kind.</param>
         /// <param name="parent">Parent of the span.</param>
         /// <returns>Span builder for the span with the given name and specified parent.</returns>
-        ISpanBuilder SpanBuilderWithExplicitParent(string spanName, SpanKind spanKind = SpanKind.Unspecified, ISpan parent = null);
+        ISpanBuilder SpanBuilderWithExplicitParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpan parent = null);
 
         /// <summary>
         /// Gets the span builder for the span with the give name and remote parent context.
@@ -59,6 +59,6 @@ namespace OpenTelemetry.Trace
         /// <param name="spanKind">Span kind.</param>
         /// <param name="remoteParentSpanContext">Remote parent context extracted from the wire.</param>
         /// <returns>Span builder for the span with the given name and specified parent span context.</returns>
-        ISpanBuilder SpanBuilderWithRemoteParent(string spanName, SpanKind spanKind = SpanKind.Unspecified, ISpanContext remoteParentSpanContext = null);
+        ISpanBuilder SpanBuilderWithRemoteParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpanContext remoteParentSpanContext = null);
     }
 }
