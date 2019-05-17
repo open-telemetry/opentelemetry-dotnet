@@ -3,6 +3,9 @@
 variables:
   DotNetVersion: "2.2.101"
 
+# A pipeline with no CI trigger
+trigger: none
+
 pr: [ 'master' ]
 
 jobs:
