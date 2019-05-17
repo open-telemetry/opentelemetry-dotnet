@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Span kind was not specified.
         /// </summary>
-        Unspecified = 0,
+        Internal = 0,
 
         /// <summary>
         /// Server span represents request incoming from external component.
@@ -35,5 +35,19 @@ namespace OpenTelemetry.Trace
         /// Client span represents outgoing request to the external component.
         /// </summary>
         Client = 2,
+
+        /// <summary>
+        /// Producer span represents output provided to external components. Unlike client and
+        /// server, there is no direct critical path latency relationship between producer and consumer
+        /// spans.
+        /// </summary>
+        Producer = 3,
+
+        /// <summary>
+        /// Consumer span represents output received from an external component. Unlike client and
+        /// server, there is no direct critical path latency relationship between producer and consumer
+        /// spans.
+        /// </summary>
+        Consumer = 4,
     }
 }

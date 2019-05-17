@@ -40,7 +40,7 @@ steps:
   inputs:
     command: push
     nuGetFeedType: external
-    publishFeedCredentials: 'myget-open-census'
+    publishFeedCredentials: 'myget-opentelemetry'
 
 # this task is required as symbols packages needs to be published manually.
 - task: PublishBuildArtifacts@1
