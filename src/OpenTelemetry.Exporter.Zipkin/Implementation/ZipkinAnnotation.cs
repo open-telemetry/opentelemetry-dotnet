@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinEvent.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZipkinAnnotation.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     using Newtonsoft.Json;
 
-    internal class ZipkinEvent
+    internal class ZipkinAnnotation
     {
         [JsonProperty("timestamp")]
         public long Timestamp { get; set; }
 
-        [JsonProperty("name")]
-        public string Name { get; set; }
+        [JsonProperty("value")]
+        public string Value { get; set; }
     }
 }

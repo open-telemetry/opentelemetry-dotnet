@@ -97,14 +97,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 }
             }
 
-            foreach (var annotation in spanData.Events.Events)
+            foreach (var annotation in spanData.Annotations.Events)
             {
-                spanBuilder.AddEvent(this.ToEpochMicroseconds(annotation.Timestamp), annotation.Event.Name);
+                spanBuilder.AddAnnotation(this.ToEpochMicroseconds(annotation.Timestamp), annotation.Event.Description);
             }
 
             foreach (var networkEvent in spanData.MessageEvents.Events)
             {
-                spanBuilder.AddEvent(this.ToEpochMicroseconds(networkEvent.Timestamp), networkEvent.Event.Type.ToString());
+                spanBuilder.AddAnnotation(this.ToEpochMicroseconds(networkEvent.Timestamp), networkEvent.Event.Type.ToString());
             }
 
             return spanBuilder.Build();
@@ -146,43 +146,21 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private ZipkinSpanKind ToSpanKind(ISpanData spanData)
         {
-            var zipkinSpanKind = ZipkinSpanKind.CLIENT;
-
-            switch (spanData.Kind)
+            if (spanData.Kind == SpanKind.Server)
             {
-                case SpanKind.Server:
-                    zipkinSpanKind = ZipkinSpanKind.SERVER;
-                    break;
-                case SpanKind.Client:
-                    if (spanData.HasRemoteParent.HasValue && spanData.HasRemoteParent.Value)
-                    {
-                        zipkinSpanKind = ZipkinSpanKind.SERVER;
-                    }
-                    else
-                    {
-                        zipkinSpanKind = ZipkinSpanKind.CLIENT;
-                    }
+                return ZipkinSpanKind.SERVER;
+            }
+            else if (spanData.Kind == SpanKind.Client)
+            {
+                if (spanData.HasRemoteParent.HasValue && spanData.HasRemoteParent.Value)
+                {
+                    return ZipkinSpanKind.SERVER;
+                }
 
-                    break;
-                case SpanKind.Consumer:
-                    zipkinSpanKind = ZipkinSpanKind.CONSUMER;
-                    break;
-                case SpanKind.Producer:
-                    if (spanData.HasRemoteParent.HasValue && spanData.HasRemoteParent.Value)
-                    {
-                        zipkinSpanKind = ZipkinSpanKind.CONSUMER;
-                    }
-                    else
-                    {
-                        zipkinSpanKind = ZipkinSpanKind.PRODUCER;
-                    }
-
-                    break;
-                default:
-                    break;
+                return ZipkinSpanKind.CLIENT;
             }
 
-            return zipkinSpanKind;
+            return ZipkinSpanKind.CLIENT;
         }
 
         private async Task SendSpansAsync(IEnumerable<ZipkinSpan> spans)
