@@ -97,7 +97,7 @@
                 // 7. Annotate our span to capture metadata about our operation
                 var attributes = new Dictionary<string, IAttributeValue>();
                 attributes.Add("use", AttributeValue.StringAttributeValue("demo"));
-                span.AddAnnotation("Invoking DoWork", attributes);
+                span.AddEvent("Invoking DoWork", attributes);
             }
         }
     }

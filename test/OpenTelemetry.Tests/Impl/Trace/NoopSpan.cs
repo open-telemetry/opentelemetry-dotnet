@@ -43,11 +43,11 @@ namespace OpenTelemetry.Trace.Test
 
         public override bool HasEnded => true;
 
-        public override void AddAnnotation(string description, IDictionary<string, IAttributeValue> attributes)
+        public override void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
         {
         }
 
-        public override void AddAnnotation(IAnnotation annotation)
+        public override void AddEvent(IEvent addEvent)
         {
         }
 

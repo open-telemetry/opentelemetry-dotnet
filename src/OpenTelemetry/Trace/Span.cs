@@ -25,6 +25,7 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Utils;
 
+    /// <inheritdoc/>
     public sealed class Span : SpanBase
     {
         private readonly ISpanId parentSpanId;
@@ -35,7 +36,7 @@ namespace OpenTelemetry.Trace
         private readonly DateTimeOffset startTime;
         private readonly object @lock = new object();
         private AttributesWithCapacity attributes;
-        private TraceEvents<EventWithTime<IAnnotation>> annotations;
+        private TraceEvents<EventWithTime<IEvent>> events;
         private TraceEvents<EventWithTime<IMessageEvent>> messageEvents;
         private TraceEvents<ILink> links;
         private Status status;
@@ -84,6 +85,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override string Name { get; set; }
 
+        /// <inheritdoc/>
         public override Status Status
         {
             get
@@ -114,6 +116,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         public override SpanKind? Kind
         {
             get;
@@ -121,6 +124,7 @@ namespace OpenTelemetry.Trace
             set; // TODO: do we need to notify when attempt to set on already closed Span?
         }
 
+        /// <inheritdoc/>
         public override DateTimeOffset EndTime
         {
             get
@@ -132,6 +136,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         public override TimeSpan Latency
         {
             get
@@ -143,6 +148,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         public override bool IsSampleToLocalSpanStore
         {
             get
@@ -159,6 +165,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         public override ISpanId ParentSpanId
         {
             get
@@ -167,6 +174,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         public override bool HasEnded
         {
             get
@@ -196,17 +204,17 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        private TraceEvents<EventWithTime<IAnnotation>> InitializedAnnotations
+        private TraceEvents<EventWithTime<IEvent>> InitializedEvents
         {
             get
             {
-                if (this.annotations == null)
+                if (this.events == null)
                 {
-                    this.annotations =
-                        new TraceEvents<EventWithTime<IAnnotation>>(this.traceParams.MaxNumberOfAnnotations);
+                    this.events =
+                        new TraceEvents<EventWithTime<IEvent>>(this.traceParams.MaxNumberOfEvents);
                 }
 
-                return this.annotations;
+                return this.events;
             }
         }
 
@@ -245,6 +253,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         public override void SetAttribute(string key, IAttributeValue value)
         {
             if (!this.Options.HasFlag(SpanOptions.RecordEvents))
@@ -264,6 +273,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         public override void SetAttributes(IDictionary<string, IAttributeValue> attributes)
         {
             if (!this.Options.HasFlag(SpanOptions.RecordEvents))
@@ -283,7 +293,8 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public override void AddAnnotation(string description, IDictionary<string, IAttributeValue> attributes)
+        /// <inheritdoc/>
+        public override void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
         {
             if (!this.Options.HasFlag(SpanOptions.RecordEvents))
             {
@@ -294,15 +305,16 @@ namespace OpenTelemetry.Trace
             {
                 if (this.hasBeenEnded)
                 {
-                    // logger.log(Level.FINE, "Calling addAnnotation() on an ended Span.");
+                    // logger.log(Level.FINE, "Calling AddEvent() on an ended Span.");
                     return;
                 }
 
-                this.InitializedAnnotations.AddEvent(new EventWithTime<IAnnotation>(this.timestampConverter.Now, Annotation.FromDescriptionAndAttributes(description, attributes)));
+                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.timestampConverter.Now, Event.Create(name, attributes)));
             }
         }
 
-        public override void AddAnnotation(IAnnotation annotation)
+        /// <inheritdoc/>
+        public override void AddEvent(IEvent addEvent)
         {
             if (!this.Options.HasFlag(SpanOptions.RecordEvents))
             {
@@ -313,19 +325,20 @@ namespace OpenTelemetry.Trace
             {
                 if (this.hasBeenEnded)
                 {
-                    // logger.log(Level.FINE, "Calling addAnnotation() on an ended Span.");
+                    // logger.log(Level.FINE, "Calling AddEvent() on an ended Span.");
                     return;
                 }
 
-                if (annotation == null)
+                if (addEvent == null)
                 {
-                    throw new ArgumentNullException(nameof(annotation));
+                    throw new ArgumentNullException(nameof(addEvent));
                 }
 
-                this.InitializedAnnotations.AddEvent(new EventWithTime<IAnnotation>(this.timestampConverter.Now, annotation));
+                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.timestampConverter.Now, addEvent));
             }
         }
 
+        /// <inheritdoc/>
         public override void AddLink(ILink link)
         {
             if (!this.Options.HasFlag(SpanOptions.RecordEvents))
@@ -350,6 +363,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         public override void AddMessageEvent(IMessageEvent messageEvent)
         {
             if (!this.Options.HasFlag(SpanOptions.RecordEvents))
@@ -374,6 +388,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         public override void End(EndSpanOptions options)
         {
             if (!this.Options.HasFlag(SpanOptions.RecordEvents))
@@ -402,6 +417,7 @@ namespace OpenTelemetry.Trace
             this.startEndHandler.OnEnd(this);
         }
 
+        /// <inheritdoc/>
         public override ISpanData ToSpanData()
         {
             if (!this.Options.HasFlag(SpanOptions.RecordEvents))
@@ -412,7 +428,7 @@ namespace OpenTelemetry.Trace
             Attributes attributesSpanData = this.attributes == null ? Attributes.Create(new Dictionary<string, IAttributeValue>(), 0)
                         : Attributes.Create(this.attributes, this.attributes.NumberOfDroppedAttributes);
 
-            ITimedEvents<IAnnotation> annotationsSpanData = CreateTimedEvents(this.InitializedAnnotations, this.timestampConverter);
+            ITimedEvents<IEvent> annotationsSpanData = CreateTimedEvents(this.InitializedEvents, this.timestampConverter);
             ITimedEvents<IMessageEvent> messageEventsSpanData = CreateTimedEvents(this.InitializedMessageEvents, this.timestampConverter);
             LinkList linksSpanData = this.links == null ? LinkList.Create(new List<ILink>(), 0) : LinkList.Create(this.links.Events, this.links.NumberOfDroppedEvents);
 

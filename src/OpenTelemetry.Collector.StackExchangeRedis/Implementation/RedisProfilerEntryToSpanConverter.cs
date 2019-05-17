@@ -102,12 +102,12 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             Timestamp startTimestamp = Timestamp.FromMillis(new DateTimeOffset(command.CommandCreated).ToUnixTimeMilliseconds());
 
             var timestamp = new DateTimeOffset(command.CommandCreated).Add(command.CreationToEnqueued);
-            var annotations = TimedEvents<IAnnotation>.Create(
-                new List<ITimedEvent<IAnnotation>>()
+            var annotations = TimedEvents<IEvent>.Create(
+                new List<ITimedEvent<IEvent>>()
                 {
-                    TimedEvent<IAnnotation>.Create(Timestamp.FromMillis(timestamp.ToUnixTimeMilliseconds()), Annotation.FromDescription("Enqueued")),
-                    TimedEvent<IAnnotation>.Create(Timestamp.FromMillis((timestamp = timestamp.Add(command.EnqueuedToSending)).ToUnixTimeMilliseconds()), Annotation.FromDescription("Sent")),
-                    TimedEvent<IAnnotation>.Create(Timestamp.FromMillis((timestamp = timestamp.Add(command.SentToResponse)).ToUnixTimeMilliseconds()), Annotation.FromDescription("ResponseRecieved")),
+                    TimedEvent<IEvent>.Create(Timestamp.FromMillis(timestamp.ToUnixTimeMilliseconds()), Event.Create("Enqueued")),
+                    TimedEvent<IEvent>.Create(Timestamp.FromMillis((timestamp = timestamp.Add(command.EnqueuedToSending)).ToUnixTimeMilliseconds()), Event.Create("Sent")),
+                    TimedEvent<IEvent>.Create(Timestamp.FromMillis((timestamp = timestamp.Add(command.SentToResponse)).ToUnixTimeMilliseconds()), Event.Create("ResponseRecieved")),
                 },
                 droppedEventsCount: 0);
 

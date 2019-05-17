@@ -1,4 +1,4 @@
-﻿// <copyright file="IAnnotation.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZipkinEvent.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
-    using System.Collections.Generic;
+    using Newtonsoft.Json;
 
-    /// <summary>
-    /// Annotation associated with the span.
-    /// </summary>
-    public interface IAnnotation
+    internal class ZipkinEvent
     {
-        /// <summary>
-        /// Gets the annotation description.
-        /// </summary>
-        string Description { get; }
+        [JsonProperty("timestamp")]
+        public long Timestamp { get; set; }
 
-        /// <summary>
-        /// Gets the collection of attributes associated with the annotation.
-        /// </summary>
-        IDictionary<string, IAttributeValue> Attributes { get; }
+        [JsonProperty("name")]
+        public string Name { get; set; }
     }
 }

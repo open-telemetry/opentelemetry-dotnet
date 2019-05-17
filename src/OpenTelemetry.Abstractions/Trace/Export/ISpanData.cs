@@ -24,12 +24,12 @@ namespace OpenTelemetry.Trace.Export
     public interface ISpanData
     {
         /// <summary>
-        /// Gets the span context.
+        /// Gets the <see cref="ISpanContext"/>.
         /// </summary>
         ISpanContext Context { get; }
 
         /// <summary>
-        /// Gets the parent span id.
+        /// Gets the parent <see cref="ISpanId"/>.
         /// </summary>
         ISpanId ParentSpanId { get; }
 
@@ -44,47 +44,47 @@ namespace OpenTelemetry.Trace.Export
         string Name { get; }
 
         /// <summary>
-        /// Gets the start timestamp.
+        /// Gets the start <see cref="Timestamp"/>.
         /// </summary>
         Timestamp StartTimestamp { get; }
 
         /// <summary>
-        /// Gets the collection of attributes.
+        /// Gets the collection of <see cref="IAttributes"/> objects.
         /// </summary>
         IAttributes Attributes { get; }
 
         /// <summary>
-        /// Gets the collection of annotations.
+        /// Gets the collection of <see cref="ITimedEvents{IEvent}"/> objects.
         /// </summary>
-        ITimedEvents<IAnnotation> Annotations { get; }
+        ITimedEvents<IEvent> Events { get; }
 
         /// <summary>
-        /// Gets the collection of message events.
+        /// Gets the collection of <see cref="ITimedEvents{IMessageEvent}"/> objects.
         /// </summary>
         ITimedEvents<IMessageEvent> MessageEvents { get; }
 
         /// <summary>
-        /// Gets the links collection.
+        /// Gets the <see cref="ILinks"/> collection.
         /// </summary>
         ILinks Links { get; }
 
         /// <summary>
-        /// Gets the childer span count.
+        /// Gets the child span count.
         /// </summary>
         int? ChildSpanCount { get; }
 
         /// <summary>
-        /// Gets the span result status.
+        /// Gets the span result <see cref="OpenTelemetry.Trace.Status"/>.
         /// </summary>
         Status Status { get; }
 
         /// <summary>
-        /// Gets the span kind.
+        /// Gets the <see cref="SpanKind"/>.
         /// </summary>
         SpanKind Kind { get; }
 
         /// <summary>
-        /// Gets the end timestamp.
+        /// Gets the end <see cref="Timestamp"/>.
         /// </summary>
         Timestamp EndTimestamp { get; }
     }

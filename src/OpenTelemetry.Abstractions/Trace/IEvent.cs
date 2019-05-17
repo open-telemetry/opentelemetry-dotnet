@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinAnnotation.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="IEvent.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,23 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Zipkin.Implementation
+namespace OpenTelemetry.Trace
 {
-    using Newtonsoft.Json;
+    using System.Collections.Generic;
 
-    internal class ZipkinAnnotation
+    /// <summary>
+    /// A text annotation associated with a collection of attributes.
+    /// </summary>
+    public interface IEvent
     {
-        [JsonProperty("timestamp")]
-        public long Timestamp { get; set; }
+        /// <summary>
+        /// Gets the <see cref="IEvent"/> name.
+        /// </summary>
+        string Name { get; }
 
-        [JsonProperty("value")]
-        public string Value { get; set; }
+        /// <summary>
+        /// Gets the <see cref="IDictionary{string, IAttributeValue}"/> collection of attributes associated with the event.
+        /// </summary>
+        IDictionary<string, IAttributeValue> Attributes { get; }
     }
 }

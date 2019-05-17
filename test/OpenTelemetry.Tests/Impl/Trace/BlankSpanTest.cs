@@ -46,10 +46,10 @@ namespace OpenTelemetry.Trace.Test
                 "MyStringAttributeKey2", AttributeValue<string>.Create("MyStringAttributeValue2"));
             BlankSpan.Instance.SetAttributes(attributes);
             BlankSpan.Instance.SetAttributes(multipleAttributes);
-            BlankSpan.Instance.AddAnnotation("MyAnnotation");
-            BlankSpan.Instance.AddAnnotation("MyAnnotation", attributes);
-            BlankSpan.Instance.AddAnnotation("MyAnnotation", multipleAttributes);
-            BlankSpan.Instance.AddAnnotation(Annotation.FromDescription("MyAnnotation"));
+            BlankSpan.Instance.AddEvent("MyEvent");
+            BlankSpan.Instance.AddEvent("MyEvent", attributes);
+            BlankSpan.Instance.AddEvent("MyEvent", multipleAttributes);
+            BlankSpan.Instance.AddEvent(Event.Create("MyEvent"));
             // BlankSpan.Instance.addNetworkEvent(NetworkEvent.builder(NetworkEvent.Type.SENT, 1L).build());
             BlankSpan.Instance.AddMessageEvent(MessageEvent.Builder(MessageEventType.Sent, 1L).Build());
             BlankSpan.Instance.AddLink(

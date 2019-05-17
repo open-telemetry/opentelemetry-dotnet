@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace.Config.Test
                     .ToBuilder()
                     .SetSampler(Samplers.AlwaysSample)
                     .SetMaxNumberOfAttributes(8)
-                    .SetMaxNumberOfAnnotations(9)
+                    .SetMaxNumberOfEvents(9)
                     .SetMaxNumberOfMessageEvents(10)
                     .SetMaxNumberOfLinks(11)
                     .Build();

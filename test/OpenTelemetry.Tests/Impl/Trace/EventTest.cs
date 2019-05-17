@@ -1,4 +1,4 @@
-﻿// <copyright file="AnnotationTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="EventTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,32 +21,32 @@ namespace OpenTelemetry.Trace.Test
     using OpenTelemetry.Utils;
     using Xunit;
 
-    public class AnnotationTest
+    public class EventTest
     {
         [Fact]
         public void FromDescription_NullDescription()
         {
-            Assert.Throws<ArgumentNullException>(() => Annotation.FromDescription(null));
+            Assert.Throws<ArgumentNullException>(() => Event.Create(null));
         }
 
         [Fact]
         public void FromDescription()
         {
-            IAnnotation annotation = Annotation.FromDescription("MyAnnotationText");
-            Assert.Equal("MyAnnotationText", annotation.Description);
-            Assert.Equal(0, annotation.Attributes.Count);
+            IEvent @event = Event.Create("MyEventText");
+            Assert.Equal("MyEventText", @event.Name);
+            Assert.Equal(0, @event.Attributes.Count);
         }
 
         [Fact]
         public void FromDescriptionAndAttributes_NullDescription()
         {
-            Assert.Throws<ArgumentNullException>(() => Annotation.FromDescriptionAndAttributes(null, new Dictionary<string, IAttributeValue>()));
+            Assert.Throws<ArgumentNullException>(() => Event.Create(null, new Dictionary<string, IAttributeValue>()));
         }
 
         [Fact]
         public void FromDescriptionAndAttributes_NullAttributes()
         {
-            Assert.Throws<ArgumentNullException>(() => Annotation.FromDescriptionAndAttributes("", null));
+            Assert.Throws<ArgumentNullException>(() => Event.Create("", null));
         }
 
         [Fact]
@@ -55,23 +55,23 @@ namespace OpenTelemetry.Trace.Test
             Dictionary<string, IAttributeValue> attributes = new Dictionary<string, IAttributeValue>();
             attributes.Add(
                 "MyStringAttributeKey", AttributeValue<string>.Create("MyStringAttributeValue"));
-            IAnnotation annotation = Annotation.FromDescriptionAndAttributes("MyAnnotationText", attributes);
-            Assert.Equal("MyAnnotationText", annotation.Description);
-            Assert.Equal(attributes, annotation.Attributes);
+            IEvent @event = Event.Create("MyEventText", attributes);
+            Assert.Equal("MyEventText", @event.Name);
+            Assert.Equal(attributes, @event.Attributes);
         }
 
         [Fact]
         public void FromDescriptionAndAttributes_EmptyAttributes()
         {
-            IAnnotation annotation =
-                Annotation.FromDescriptionAndAttributes(
-                    "MyAnnotationText", new Dictionary<string, IAttributeValue>());
-            Assert.Equal("MyAnnotationText", annotation.Description);
-            Assert.Equal(0, annotation.Attributes.Count);
+            IEvent @event =
+                Event.Create(
+                    "MyEventText", new Dictionary<string, IAttributeValue>());
+            Assert.Equal("MyEventText", @event.Name);
+            Assert.Equal(0, @event.Attributes.Count);
         }
 
         [Fact]
-        public void Annotation_EqualsAndHashCode()
+        public void Event_EqualsAndHashCode()
         {
             // EqualsTester tester = new EqualsTester();
             // Map<String, AttributeValue> attributes = new HashMap<String, AttributeValue>();
@@ -79,27 +79,27 @@ namespace OpenTelemetry.Trace.Test
             //    "MyStringAttributeKey", AttributeValue.stringAttributeValue("MyStringAttributeValue"));
             // tester
             //    .addEqualityGroup(
-            //        Annotation.fromDescription("MyAnnotationText"),
-            //        Annotation.fromDescriptionAndAttributes(
-            //            "MyAnnotationText", Collections.< String, AttributeValue > emptyMap()))
+            //        Event.Create("MyEventText"),
+            //        Event.Create(
+            //            "MyEventText", Collections.< String, AttributeValue > emptyMap()))
             //    .addEqualityGroup(
-            //        Annotation.fromDescriptionAndAttributes("MyAnnotationText", attributes),
-            //        Annotation.fromDescriptionAndAttributes("MyAnnotationText", attributes))
-            //    .addEqualityGroup(Annotation.fromDescription("MyAnnotationText2"));
+            //        Event.Create("MyEventText", attributes),
+            //        Event.Create("MyEventText", attributes))
+            //    .addEqualityGroup(Event.Create("MyEventText2"));
             // tester.testEquals();
         }
 
         [Fact]
-        public void Annotation_ToString()
+        public void Event_ToString()
         {
-            IAnnotation annotation = Annotation.FromDescription("MyAnnotationText");
-            Assert.Contains("MyAnnotationText", annotation.ToString());
+            IEvent @event = Event.Create("MyEventText");
+            Assert.Contains("MyEventText", @event.ToString());
             Dictionary<string, IAttributeValue> attributes = new Dictionary<string, IAttributeValue>();
             attributes.Add(
                 "MyStringAttributeKey", AttributeValue<string>.Create("MyStringAttributeValue"));
-            annotation = Annotation.FromDescriptionAndAttributes("MyAnnotationText2", attributes);
-            Assert.Contains("MyAnnotationText2", annotation.ToString());
-            Assert.Contains(Collections.ToString(attributes), annotation.ToString());
+            @event = Event.Create("MyEventText2", attributes);
+            Assert.Contains("MyEventText2", @event.ToString());
+            Assert.Contains(Collections.ToString(attributes), @event.ToString());
         }
     }
 }

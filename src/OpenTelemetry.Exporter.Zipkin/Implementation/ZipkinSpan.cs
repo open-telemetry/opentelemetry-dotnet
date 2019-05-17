@@ -51,8 +51,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         [JsonProperty("remoteEndpoint")]
         public ZipkinEndpoint RemoteEndpoint { get; set; }
 
-        [JsonProperty("annotations")]
-        public List<ZipkinAnnotation> Annotations { get; set; }
+        [JsonProperty("events")]
+        public List<ZipkinEvent> Events { get; set; }
 
         [JsonProperty("tags")]
         public Dictionary<string, string> Tags { get; set; }
@@ -155,14 +155,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 return this;
             }
 
-            internal Builder AddAnnotation(long timestamp, string value)
+            internal Builder AddEvent(long timestamp, string name)
             {
-                if (this.result.Annotations == null)
+                if (this.result.Events == null)
                 {
-                    this.result.Annotations = new List<ZipkinAnnotation>(2);
+                    this.result.Events = new List<ZipkinEvent>(2);
                 }
 
-                this.result.Annotations.Add(new ZipkinAnnotation() { Timestamp = timestamp, Value = value });
+                this.result.Events.Add(new ZipkinEvent() { Timestamp = timestamp, Name = name });
 
                 return this;
             }

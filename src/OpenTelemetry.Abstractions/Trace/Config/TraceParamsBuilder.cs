@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace.Config
     {
         private ISampler sampler;
         private int? maxNumberOfAttributes;
-        private int? maxNumberOfAnnotations;
+        private int? maxNumberOfEvents;
         private int? maxNumberOfMessageEvents;
         private int? maxNumberOfLinks;
 
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace.Config
         {
             this.sampler = source.Sampler;
             this.maxNumberOfAttributes = source.MaxNumberOfAttributes;
-            this.maxNumberOfAnnotations = source.MaxNumberOfAnnotations;
+            this.maxNumberOfEvents = source.MaxNumberOfEvents;
             this.maxNumberOfMessageEvents = source.MaxNumberOfMessageEvents;
             this.maxNumberOfLinks = source.MaxNumberOfLinks;
         }
@@ -61,13 +61,13 @@ namespace OpenTelemetry.Trace.Config
         }
 
         /// <summary>
-        /// Sets the maximum number of annotations.
+        /// Sets the maximum number of events.
         /// </summary>
-        /// <param name="maxNumberOfAnnotations">Maximum number of annotations per span.</param>
+        /// <param name="maxNumberOfEvents">Maximum number of events per span.</param>
         /// <returns>Builder to chain operations.</returns>
-        public TraceParamsBuilder SetMaxNumberOfAnnotations(int maxNumberOfAnnotations)
+        public TraceParamsBuilder SetMaxNumberOfEvents(int maxNumberOfEvents)
         {
-            this.maxNumberOfAnnotations = maxNumberOfAnnotations;
+            this.maxNumberOfEvents = maxNumberOfEvents;
             return this;
         }
 
@@ -97,6 +97,7 @@ namespace OpenTelemetry.Trace.Config
         /// Builds trace parameters from provided arguments.
         /// </summary>
         /// <returns>Builder to chain operations.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">If maximum values are not set or set to less than one.</exception>
         public TraceParams Build()
         {
             string missing = string.Empty;
@@ -110,7 +111,7 @@ namespace OpenTelemetry.Trace.Config
                 missing += " maxNumberOfAttributes";
             }
 
-            if (!this.maxNumberOfAnnotations.HasValue)
+            if (!this.maxNumberOfEvents.HasValue)
             {
                 missing += " maxNumberOfAnnotations";
             }
@@ -133,7 +134,7 @@ namespace OpenTelemetry.Trace.Config
             return new TraceParams(
                 this.sampler,
                 this.maxNumberOfAttributes.Value,
-                this.maxNumberOfAnnotations.Value,
+                this.maxNumberOfEvents.Value,
                 this.maxNumberOfMessageEvents.Value,
                 this.maxNumberOfLinks.Value);
         }

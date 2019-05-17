@@ -1,4 +1,4 @@
-﻿// <copyright file="Annotation.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Event.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,27 +22,43 @@ namespace OpenTelemetry.Trace
     using System.Linq;
     using OpenTelemetry.Abstractions.Utils;
 
-    public sealed class Annotation : IAnnotation
+    /// <inheritdoc/>
+    public sealed class Event : IEvent
     {
         private static readonly ReadOnlyDictionary<string, IAttributeValue> EmptyAttributes =
                 new ReadOnlyDictionary<string, IAttributeValue>(new Dictionary<string, IAttributeValue>());
 
-        internal Annotation(string description, IDictionary<string, IAttributeValue> attributes)
+        internal Event(string name, IDictionary<string, IAttributeValue> attributes)
         {
-            this.Description = description ?? throw new ArgumentNullException("Null description");
+            this.Name = name ?? throw new ArgumentNullException("Null event name");
             this.Attributes = attributes ?? throw new ArgumentNullException("Null attributes");
         }
 
-        public string Description { get; }
+        /// <inheritdoc/>
+        public string Name { get; }
 
+        /// <inheritdoc/>
         public IDictionary<string, IAttributeValue> Attributes { get; }
 
-        public static IAnnotation FromDescription(string description)
+        /// <summary>
+        /// Returns a new <see cref="Event"/> with the provided name.
+        /// </summary>
+        /// <param name="name">The text name for the <see cref="Event"/>.</param>
+        /// <returns>A new <see cref="Event"/> with the provided name.</returns>
+        /// <exception cref="ArgumentNullException">If <c>name</c> is <c>null</c>.</exception>
+        public static IEvent Create(string name)
         {
-            return new Annotation(description, EmptyAttributes);
+            return new Event(name, EmptyAttributes);
         }
 
-        public static IAnnotation FromDescriptionAndAttributes(string description, IDictionary<string, IAttributeValue> attributes)
+        /// <summary>
+        /// Returns a new <see cref="Event"/> with the provided name and set of attributes.
+        /// </summary>
+        /// <param name="name">The text name for the <see cref="Event"/>.</param>
+        /// <param name="attributes">The <see cref="IDictionary{string, IAttributeValue}"/> of attributes for the <see cref="Event"/>.</param>
+        /// <returns>A new <see cref="Event"/> with the provided name and set of attributes.</returns>
+        /// <exception cref="ArgumentNullException">If <c>name</c> or <c>attributes</c> is <c>null</c>.</exception>
+        public static IEvent Create(string name, IDictionary<string, IAttributeValue> attributes)
         {
             if (attributes == null)
             {
@@ -50,7 +66,7 @@ namespace OpenTelemetry.Trace
             }
 
             IDictionary<string, IAttributeValue> readOnly = new ReadOnlyDictionary<string, IAttributeValue>(attributes);
-            return new Annotation(description, readOnly);
+            return new Event(name, readOnly);
         }
 
         /// <inheritdoc/>
@@ -61,10 +77,10 @@ namespace OpenTelemetry.Trace
                 return true;
             }
 
-            if (obj is Annotation annotation)
+            if (obj is Event @event)
             {
-                return this.Description.Equals(annotation.Description) &&
-                    this.Attributes.SequenceEqual(annotation.Attributes);
+                return this.Name.Equals(@event.Name) &&
+                    this.Attributes.SequenceEqual(@event.Attributes);
             }
 
             return false;
@@ -75,7 +91,7 @@ namespace OpenTelemetry.Trace
         {
             int h = 1;
             h *= 1000003;
-            h ^= this.Description.GetHashCode();
+            h ^= this.Name.GetHashCode();
             h *= 1000003;
             h ^= this.Attributes.GetHashCode();
             return h;
@@ -85,7 +101,7 @@ namespace OpenTelemetry.Trace
         public override string ToString()
         {
             return "Annotation{"
-                + "description=" + this.Description + ", "
+                + "description=" + this.Name + ", "
                 + "attributes=" + Collections.ToString(this.Attributes)
                 + "}";
         }

@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace.Test
     public class SpanTest
     {
         private static readonly String SPAN_NAME = "MySpanName";
-        private static readonly String ANNOTATION_DESCRIPTION = "MyAnnotation";
+        private static readonly String EVENT_DESCRIPTION = "MyEvent";
         private readonly RandomGenerator random = new RandomGenerator(1234);
         private readonly ISpanContext spanContext;
         private readonly ISpanId parentSpanId;
@@ -75,8 +75,8 @@ namespace OpenTelemetry.Trace.Test
                     timestampConverter);
             // Check that adding trace events after Span#End() does not throw any exception.
             span.SetAttributes(attributes);
-            span.AddAnnotation(Annotation.FromDescription(ANNOTATION_DESCRIPTION));
-            span.AddAnnotation(ANNOTATION_DESCRIPTION, attributes);
+            span.AddEvent(Event.Create(EVENT_DESCRIPTION));
+            span.AddEvent(EVENT_DESCRIPTION, attributes);
             span.AddMessageEvent(
                 MessageEvent.Builder(MessageEventType.Received, 1).SetUncompressedMessageSize(3).Build());
             span.AddLink(Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan));
@@ -105,15 +105,15 @@ namespace OpenTelemetry.Trace.Test
             span.SetAttribute(
                 "MySingleStringAttributeKey",
                 AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
-            span.AddAnnotation(Annotation.FromDescription(ANNOTATION_DESCRIPTION));
-            span.AddAnnotation(ANNOTATION_DESCRIPTION, attributes);
+            span.AddEvent(Event.Create(EVENT_DESCRIPTION));
+            span.AddEvent(EVENT_DESCRIPTION, attributes);
             span.AddMessageEvent(
                 MessageEvent.Builder(MessageEventType.Received, 1).SetUncompressedMessageSize(3).Build());
             span.AddLink(Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan));
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(timestamp, spanData.StartTimestamp);
             Assert.Empty(spanData.Attributes.AttributeMap);
-            Assert.Empty(spanData.Annotations.Events);
+            Assert.Empty(spanData.Events.Events);
             Assert.Empty(spanData.MessageEvents.Events);
             Assert.Empty(spanData.Links.Links);
             Assert.Equal(Status.Ok, spanData.Status);
@@ -139,9 +139,9 @@ namespace OpenTelemetry.Trace.Test
                 AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
             span.SetAttributes(attributes);
             interval = TimeSpan.FromMilliseconds(100);
-            span.AddAnnotation(Annotation.FromDescription(ANNOTATION_DESCRIPTION));
+            span.AddEvent(Event.Create(EVENT_DESCRIPTION));
             interval = TimeSpan.FromMilliseconds(200);
-            span.AddAnnotation(ANNOTATION_DESCRIPTION, attributes);
+            span.AddEvent(EVENT_DESCRIPTION, attributes);
             interval = TimeSpan.FromMilliseconds(300);
             IMessageEvent networkEvent =
                 MessageEvent.Builder(MessageEventType.Received, 1).SetUncompressedMessageSize(3).Build();
@@ -156,12 +156,12 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(spanData.HasRemoteParent);
             Assert.Equal(0, spanData.Attributes.DroppedAttributesCount);
             Assert.Equal(expectedAttributes, spanData.Attributes.AttributeMap); 
-            Assert.Equal(0, spanData.Annotations.DroppedEventsCount);
-            Assert.Equal(2, spanData.Annotations.Events.Count());
-            Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100))), spanData.Annotations.Events.ToList()[0].Timestamp);
-            Assert.Equal(Annotation.FromDescription(ANNOTATION_DESCRIPTION), spanData.Annotations.Events.ToList()[0].Event);
-            Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(200))), spanData.Annotations.Events.ToList()[1].Timestamp);
-            Assert.Equal(Annotation.FromDescriptionAndAttributes(ANNOTATION_DESCRIPTION, attributes), spanData.Annotations.Events.ToList()[1].Event);
+            Assert.Equal(0, spanData.Events.DroppedEventsCount);
+            Assert.Equal(2, spanData.Events.Events.Count());
+            Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100))), spanData.Events.Events.ToList()[0].Timestamp);
+            Assert.Equal(Event.Create(EVENT_DESCRIPTION), spanData.Events.Events.ToList()[0].Event);
+            Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(200))), spanData.Events.Events.ToList()[1].Timestamp);
+            Assert.Equal(Event.Create(EVENT_DESCRIPTION, attributes), spanData.Events.Events.ToList()[1].Event);
             Assert.Equal(0, spanData.MessageEvents.DroppedEventsCount);
             Assert.Single(spanData.MessageEvents.Events);
             Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(300))), spanData.MessageEvents.Events.First().Timestamp);
@@ -197,9 +197,9 @@ namespace OpenTelemetry.Trace.Test
                 AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
             span.SetAttributes(attributes);
             interval = TimeSpan.FromMilliseconds(100);
-            span.AddAnnotation(Annotation.FromDescription(ANNOTATION_DESCRIPTION));
+            span.AddEvent(Event.Create(EVENT_DESCRIPTION));
             interval = TimeSpan.FromMilliseconds(200);
-            span.AddAnnotation(ANNOTATION_DESCRIPTION, attributes);
+            span.AddEvent(EVENT_DESCRIPTION, attributes);
             interval = TimeSpan.FromMilliseconds(300);
             IMessageEvent networkEvent =
                 MessageEvent.Builder(MessageEventType.Received, 1).SetUncompressedMessageSize(3).Build();
@@ -216,12 +216,12 @@ namespace OpenTelemetry.Trace.Test
             Assert.False(spanData.HasRemoteParent);
             Assert.Equal(0, spanData.Attributes.DroppedAttributesCount);
             Assert.Equal(expectedAttributes, spanData.Attributes.AttributeMap);
-            Assert.Equal(0, spanData.Annotations.DroppedEventsCount);
-            Assert.Equal(2, spanData.Annotations.Events.Count());
-            Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100))), spanData.Annotations.Events.ToList()[0].Timestamp);
-            Assert.Equal(Annotation.FromDescription(ANNOTATION_DESCRIPTION), spanData.Annotations.Events.ToList()[0].Event);
-            Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(200))), spanData.Annotations.Events.ToList()[1].Timestamp);
-            Assert.Equal(Annotation.FromDescriptionAndAttributes(ANNOTATION_DESCRIPTION, attributes), spanData.Annotations.Events.ToList()[1].Event);
+            Assert.Equal(0, spanData.Events.DroppedEventsCount);
+            Assert.Equal(2, spanData.Events.Events.Count());
+            Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100))), spanData.Events.Events.ToList()[0].Timestamp);
+            Assert.Equal(Event.Create(EVENT_DESCRIPTION), spanData.Events.Events.ToList()[0].Event);
+            Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(200))), spanData.Events.Events.ToList()[1].Timestamp);
+            Assert.Equal(Event.Create(EVENT_DESCRIPTION, attributes), spanData.Events.Events.ToList()[1].Event);
             Assert.Equal(0, spanData.MessageEvents.DroppedEventsCount);
             Assert.Single(spanData.MessageEvents.Events);
             Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(300))), spanData.MessageEvents.Events.First().Timestamp);
@@ -395,11 +395,11 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void DroppingAnnotations()
+        public void DroppingEvents()
         {
-            int maxNumberOfAnnotations = 8;
+            int maxNumberOfEvents = 8;
             TraceParams traceParams =
-                TraceParams.Default.ToBuilder().SetMaxNumberOfAnnotations(maxNumberOfAnnotations).Build();
+                TraceParams.Default.ToBuilder().SetMaxNumberOfEvents(maxNumberOfEvents).Build();
             ISpan span =
                 Span.StartSpan(
                     spanContext,
@@ -410,32 +410,32 @@ namespace OpenTelemetry.Trace.Test
                     traceParams,
                     startEndHandler,
                     timestampConverter);
-            IAnnotation annotation = Annotation.FromDescription(ANNOTATION_DESCRIPTION);
+            IEvent testEvent = Event.Create(EVENT_DESCRIPTION);
             int i = 0;
-            for (i = 0; i < 2 * maxNumberOfAnnotations; i++)
+            for (i = 0; i < 2 * maxNumberOfEvents; i++)
             {
-                span.AddAnnotation(annotation);
+                span.AddEvent(testEvent);
                 interval += TimeSpan.FromMilliseconds(100);
             }
             ISpanData spanData = ((Span)span).ToSpanData();
-            Assert.Equal(maxNumberOfAnnotations, spanData.Annotations.DroppedEventsCount);
-            Assert.Equal(maxNumberOfAnnotations, spanData.Annotations.Events.Count());
+            Assert.Equal(maxNumberOfEvents, spanData.Events.DroppedEventsCount);
+            Assert.Equal(maxNumberOfEvents, spanData.Events.Events.Count());
             i = 0;
-            foreach (var te in spanData.Annotations.Events)
+            foreach (var te in spanData.Events.Events)
             {
-                Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100 * (maxNumberOfAnnotations + i)))), te.Timestamp);
-                Assert.Equal(annotation, te.Event);
+                Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100 * (maxNumberOfEvents + i)))), te.Timestamp);
+                Assert.Equal(testEvent, te.Event);
                 i++;
             }
             span.End();
             spanData = ((Span)span).ToSpanData();
-            Assert.Equal(maxNumberOfAnnotations, spanData.Annotations.DroppedEventsCount);
-            Assert.Equal(maxNumberOfAnnotations, spanData.Annotations.Events.Count());
+            Assert.Equal(maxNumberOfEvents, spanData.Events.DroppedEventsCount);
+            Assert.Equal(maxNumberOfEvents, spanData.Events.Events.Count());
             i = 0;
-            foreach (var te in spanData.Annotations.Events)
+            foreach (var te in spanData.Events.Events)
             {
-                Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100 * (maxNumberOfAnnotations + i)))), te.Timestamp);
-                Assert.Equal(annotation, te.Event);
+                Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100 * (maxNumberOfEvents + i)))), te.Timestamp);
+                Assert.Equal(testEvent, te.Event);
                 i++;
             }
         }

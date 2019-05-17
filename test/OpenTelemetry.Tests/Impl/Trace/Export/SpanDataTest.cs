@@ -29,8 +29,8 @@ namespace OpenTelemetry.Trace.Export.Test
         private static readonly Timestamp eventTimestamp3 = Timestamp.Create(123, 459);
         private static readonly Timestamp endTimestamp = Timestamp.Create(123, 460);
         private static readonly string SPAN_NAME = "MySpanName";
-        private static readonly string ANNOTATION_TEXT = "MyAnnotationText";
-        private static readonly IAnnotation annotation = Annotation.FromDescription(ANNOTATION_TEXT);
+        private static readonly string EVENT_TEXT = "MyEventText";
+        private static readonly IEvent spanEvent = Event.Create(EVENT_TEXT);
         // private static readonly NetworkEvent recvNetworkEvent =
         //    NetworkEvent.Builder(NetworkEvent.Type.RECV, 1).build();
         //      private static readonly NetworkEvent sentNetworkEvent =
@@ -44,14 +44,14 @@ namespace OpenTelemetry.Trace.Export.Test
         private readonly ISpanContext spanContext;
         private readonly ISpanId parentSpanId; 
         private readonly IDictionary<string, IAttributeValue> attributesMap = new Dictionary<string, IAttributeValue>();
-        private readonly List<ITimedEvent<IAnnotation>> annotationsList = new List<ITimedEvent<IAnnotation>>();
+        private readonly List<ITimedEvent<IEvent>> eventList = new List<ITimedEvent<IEvent>>();
         // private readonly List<TimedEvent<NetworkEvent>> networkEventsList =
         //    new List<SpanData.TimedEvent<NetworkEvent>>();
         private readonly List<ITimedEvent<IMessageEvent>> messageEventsList = new List<ITimedEvent<IMessageEvent>>();
         private readonly List<ILink> linksList = new List<ILink>();
 
         private IAttributes attributes;
-        private ITimedEvents<IAnnotation> annotations;
+        private ITimedEvents<IEvent> events;
         // private TimedEvents<NetworkEvent> networkEvents;
         private ITimedEvents<IMessageEvent> messageEvents;
         private LinkList links;
@@ -65,9 +65,9 @@ namespace OpenTelemetry.Trace.Export.Test
             attributesMap.Add("MyAttributeKey2", AttributeValue.BooleanAttributeValue(true));
             attributes = Attributes.Create(attributesMap, 1);
 
-            annotationsList.Add(TimedEvent<IAnnotation>.Create(eventTimestamp1, annotation));
-            annotationsList.Add(TimedEvent<IAnnotation>.Create(eventTimestamp3, annotation));
-            annotations = TimedEvents<IAnnotation>.Create(annotationsList, 2);
+            eventList.Add(TimedEvent<IEvent>.Create(eventTimestamp1, spanEvent));
+            eventList.Add(TimedEvent<IEvent>.Create(eventTimestamp3, spanEvent));
+            events = TimedEvents<IEvent>.Create(eventList, 2);
 
             // networkEventsList.add(SpanData.TimedEvent.Create(eventTimestamp1, recvNetworkEvent));
             // networkEventsList.add(SpanData.TimedEvent.Create(eventTimestamp2, sentNetworkEvent));
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
-                    annotations,
+                    events,
                     messageEvents,
                     links,
                     CHILD_SPAN_COUNT,
@@ -105,7 +105,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(startTimestamp, spanData.StartTimestamp);
             Assert.Equal(attributes, spanData.Attributes);
-            Assert.Equal(annotations, spanData.Annotations);
+            Assert.Equal(events, spanData.Events);
             Assert.Equal(messageEvents, spanData.MessageEvents);
             Assert.Equal(links, spanData.Links);
             Assert.Equal(CHILD_SPAN_COUNT, spanData.ChildSpanCount);
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Trace.Export.Test
         //            SPAN_NAME,
         //            startTimestamp,
         //            attributes,
-        //            annotations,
+        //            events,
         //            networkEvents,
         //            links,
         //            CHILD_SPAN_COUNT,
@@ -136,7 +136,7 @@ namespace OpenTelemetry.Trace.Export.Test
         //    Assert.Equal(spanData.getName()).isEqualTo(SPAN_NAME);
         //    Assert.Equal(spanData.getStartTimestamp()).isEqualTo(startTimestamp);
         //    Assert.Equal(spanData.getAttributes()).isEqualTo(attributes);
-        //    Assert.Equal(spanData.getAnnotations()).isEqualTo(annotations);
+        //    Assert.Equal(spanData.getEvents()).isEqualTo(events);
         //    Assert.Equal(spanData.getNetworkEvents()).isEqualTo(networkEvents);
         //    Assert.Equal(spanData.getMessageEvents()).isEqualTo(messageEvents);
         //    Assert.Equal(spanData.getLinks()).isEqualTo(links);
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
-                    annotations,
+                    events,
                     messageEvents,
                     links,
                     null,
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(startTimestamp, spanData.StartTimestamp);
             Assert.Equal(attributes, spanData.Attributes);
-            Assert.Equal(annotations, spanData.Annotations);
+            Assert.Equal(events, spanData.Events);
             Assert.Equal(messageEvents, spanData.MessageEvents);
             Assert.Equal(links, spanData.Links);
             Assert.Null(spanData.ChildSpanCount);
@@ -188,7 +188,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     SPAN_NAME,
                     startTimestamp,
                     Attributes.Create(new Dictionary<string, IAttributeValue>(), 0),
-                    TimedEvents<IAnnotation>.Create(new List<ITimedEvent<IAnnotation>>(), 0),
+                    TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>(), 0),
                     TimedEvents<IMessageEvent>.Create(new List<ITimedEvent<IMessageEvent>>(), 0),
                     LinkList.Create(new List<ILink>(), 0),
                     0,
@@ -202,7 +202,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(startTimestamp, spanData.StartTimestamp);
             Assert.Empty(spanData.Attributes.AttributeMap);
-            Assert.Empty(spanData.Annotations.Events);
+            Assert.Empty(spanData.Events.Events);
             Assert.Empty(spanData.MessageEvents.Events);
             Assert.Empty(spanData.Links.Links);
             Assert.Equal(0, spanData.ChildSpanCount);
@@ -221,7 +221,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
-                    annotations,
+                    events,
                     messageEvents,
                     links,
                     CHILD_SPAN_COUNT,
@@ -236,7 +236,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
-                    annotations,
+                    events,
                     messageEvents,
                     links,
                     CHILD_SPAN_COUNT,
@@ -251,7 +251,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     SPAN_NAME,
                     startTimestamp,
                     Attributes.Create(new Dictionary<string, IAttributeValue>(), 0),
-                    TimedEvents<IAnnotation>.Create(new List<ITimedEvent<IAnnotation>>(), 0),
+                    TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>(), 0),
                     TimedEvents<IMessageEvent>.Create(new List<ITimedEvent<IMessageEvent>>(), 0),
                     LinkList.Create(new List<ILink>(), 0),
                     0,
@@ -276,7 +276,7 @@ namespace OpenTelemetry.Trace.Export.Test
                         SPAN_NAME,
                         startTimestamp,
                         attributes,
-                        annotations,
+                        events,
                         messageEvents,
                         links,
                         CHILD_SPAN_COUNT,
@@ -289,7 +289,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Contains(SPAN_NAME, spanDataString);
             Assert.Contains(startTimestamp.ToString(), spanDataString);
             Assert.Contains(attributes.ToString(), spanDataString);
-            Assert.Contains(annotations.ToString(), spanDataString);
+            Assert.Contains(events.ToString(), spanDataString);
             Assert.Contains(messageEvents.ToString(), spanDataString);
             Assert.Contains(links.ToString(), spanDataString);
             Assert.Contains(status.ToString(), spanDataString);
