@@ -32,9 +32,9 @@ namespace OpenTelemetry.Trace.Config
         int MaxNumberOfAttributes { get; }
 
         /// <summary>
-        /// Gets that maximum Number of annotations on span.
+        /// Gets the maximum number of events on span.
         /// </summary>
-        int MaxNumberOfAnnotations { get; }
+        int MaxNumberOfEvents { get; }
 
         /// <summary>
         /// Gets the maximum number of messages on span.

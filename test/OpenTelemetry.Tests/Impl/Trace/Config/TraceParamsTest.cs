@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace.Config.Test
         {
             Assert.Equal(Samplers.GetProbabilitySampler(1e-4), TraceParams.Default.Sampler);
             Assert.Equal(32, TraceParams.Default.MaxNumberOfAttributes);
-            Assert.Equal(32, TraceParams.Default.MaxNumberOfAnnotations);
+            Assert.Equal(32, TraceParams.Default.MaxNumberOfEvents);
             Assert.Equal(128, TraceParams.Default.MaxNumberOfMessageEvents);
             Assert.Equal(128, TraceParams.Default.MaxNumberOfLinks);
         }
@@ -46,9 +46,9 @@ namespace OpenTelemetry.Trace.Config.Test
         }
 
         [Fact]
-        public void UpdateTraceParams_NonPositiveMaxNumberOfAnnotations()
+        public void UpdateTraceParams_NonPositiveMaxNumberOfEvents()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => TraceParams.Default.ToBuilder().SetMaxNumberOfAnnotations(0).Build()); 
+            Assert.Throws<ArgumentOutOfRangeException>(() => TraceParams.Default.ToBuilder().SetMaxNumberOfEvents(0).Build()); 
         }
 
 
@@ -72,14 +72,14 @@ namespace OpenTelemetry.Trace.Config.Test
                   .ToBuilder()
                   .SetSampler(Samplers.AlwaysSample)
                   .SetMaxNumberOfAttributes(8)
-                  .SetMaxNumberOfAnnotations(9)
+                  .SetMaxNumberOfEvents(9)
                   .SetMaxNumberOfMessageEvents(10)
                   .SetMaxNumberOfLinks(11)
                   .Build();
 
             Assert.Equal(Samplers.AlwaysSample, traceParams.Sampler);
             Assert.Equal(8, traceParams.MaxNumberOfAttributes);
-            Assert.Equal(9, traceParams.MaxNumberOfAnnotations);
+            Assert.Equal(9, traceParams.MaxNumberOfEvents);
             // test maxNumberOfNetworkEvent can be set via maxNumberOfMessageEvent
             Assert.Equal(10, traceParams.MaxNumberOfMessageEvents);
             Assert.Equal(11, traceParams.MaxNumberOfLinks);

@@ -214,6 +214,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("0", request.ResponseCode);  // this check doesn't match Local Forwarder Assert.AreEqual("all good", request.ResponseCode);
             Assert.Equal("all good", request.Properties["statusDescription"]);  // this check doesn't match Local Forwarder
         }
+
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestWithNonSuccessStatusAndDescription()
         {
@@ -574,6 +575,20 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var annotations, out var messageOrNetworkEvents, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("consumer") } }, 0);
+
+            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, annotations, messageOrNetworkEvents, links, childSpanCount, status, kind, endTimestamp);
+
+            var sentItems = this.ConvertSpan(span);
+
+            Assert.True(sentItems.Single() is RequestTelemetry);
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnOtherSpanKindAttribute()
+        {
+            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var annotations, out var messageOrNetworkEvents, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            kind = SpanKind.Client;
+            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("other") } }, 0);
 
             var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, annotations, messageOrNetworkEvents, links, childSpanCount, status, kind, endTimestamp);
 
@@ -1183,7 +1198,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, annotations, messageOrNetworkEvents, links, childSpanCount, status, kind, endTimestamp);
 
-            
+
             var sentItems = this.ConvertSpan(span);
 
             var dependency = sentItems.OfType<DependencyTelemetry>().Single();
@@ -1206,7 +1221,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, annotations, messageOrNetworkEvents, links, childSpanCount, status, kind, endTimestamp);
-            
+
             var sentItems = this.ConvertSpan(span);
 
             var dependency = sentItems.OfType<DependencyTelemetry>().Single();
@@ -1439,7 +1454,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             kind = SpanKind.Server;
 
             links = LinkList.Create(
-                new List<ILink>() {
+                new List<ILink>()
+                {
                     Link.FromSpanContext(
                         SpanContext.Create(
                             TraceId.FromBytes(GenerateRandomId(16).Item2),
@@ -1474,17 +1490,18 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         }
 
         [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksRequestWithAnnotations()
+        public void OpenTelemetryTelemetryConverterTests_TracksRequestWithEvents()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var annotations, out var messageOrNetworkEvents, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var annotations, out var messageEvents, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             Thread.Sleep(TimeSpan.FromTicks(10));
             name = "spanName";
             kind = SpanKind.Server;
 
-            annotations = TimedEvents<IAnnotation>.Create(
-                new List<ITimedEvent<IAnnotation>>() {
-                    TimedEvent<IAnnotation>.Create(NowTimestamp, Annotation.FromDescription("test message1")),
-                    TimedEvent<IAnnotation>.Create(null, Annotation.FromDescriptionAndAttributes("test message2", new Dictionary<string, IAttributeValue>()
+            annotations = TimedEvents<IEvent>.Create(
+                new List<ITimedEvent<IEvent>>()
+                {
+                    TimedEvent<IEvent>.Create(NowTimestamp, Event.Create("test message1")),
+                    TimedEvent<IEvent>.Create(null, Event.Create("test message2", new Dictionary<string, IAttributeValue>()
                         {
                             { "custom.stringAttribute", AttributeValue.StringAttributeValue("string") },
                             { "custom.longAttribute", AttributeValue.LongAttributeValue(long.MaxValue) },
@@ -1493,7 +1510,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 },
                 droppedEventsCount: 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, annotations, messageOrNetworkEvents, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, annotations, messageEvents, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1531,7 +1548,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
         /*
         [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksRequestWithAnnotationsAndNode()
+        public void OpenTelemetryTelemetryConverterTests_TracksRequestWithEventsAndNode()
         {
             // ARRANGE
             var now = DateTime.UtcNow;
@@ -1544,9 +1561,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     new Span.Types.TimeEvent
                     {
                         Time = now.ToTimestamp(),
-                        Annotation = new Span.Types.TimeEvent.Types.Annotation
+                        Event = new Span.Types.TimeEvent.Types.Event
                         {
-                            Description = new TruncatableString {Value = "test message1"},
+                            Name = new TruncatableString {Value = "test message1"},
                         },
                     },
                     new Span.Types.TimeEvent
@@ -1598,17 +1615,18 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         */
 
         [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksDependenciesWithAnnotations()
+        public void OpenTelemetryTelemetryConverterTests_TracksDependenciesWithEvents()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var annotations, out var messageOrNetworkEvents, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events, out var messageOrNetworkEvents, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             nowDateTimeOffset = nowDateTimeOffset.Subtract(TimeSpan.FromSeconds(1));
             name = "spanName";
             kind = SpanKind.Client;
 
-            annotations = TimedEvents<IAnnotation>.Create(
-                new List<ITimedEvent<IAnnotation>>() {
-                    TimedEvent<IAnnotation>.Create(NowTimestamp, Annotation.FromDescription("test message1")),
-                    TimedEvent<IAnnotation>.Create(null, Annotation.FromDescriptionAndAttributes("test message2", new Dictionary<string, IAttributeValue>()
+            events = TimedEvents<IEvent>.Create(
+                new List<ITimedEvent<IEvent>>()
+                {
+                    TimedEvent<IEvent>.Create(NowTimestamp, Event.Create("test message1")),
+                    TimedEvent<IEvent>.Create(null, Event.Create("test message2", new Dictionary<string, IAttributeValue>()
                         {
                             { "custom.stringAttribute", AttributeValue.StringAttributeValue("string") },
                             { "custom.longAttribute", AttributeValue.LongAttributeValue(long.MaxValue) },
@@ -1617,7 +1635,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 },
                 droppedEventsCount: 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, annotations, messageOrNetworkEvents, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, messageOrNetworkEvents, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1923,7 +1941,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             out string name,
             out Timestamp startTimestamp,
             out IAttributes attributes,
-            out ITimedEvents<IAnnotation> annotations,
+            out ITimedEvents<IEvent> events,
             out ITimedEvents<IMessageEvent> messageOrNetworkEvents,
             out ILinks links,
             out int? childSpanCount,
@@ -1937,7 +1955,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             name = "spanName";
             startTimestamp = NowTimestamp.AddDuration(Duration.Create(TimeSpan.FromSeconds(-1)));
             attributes = null;
-            annotations = null;
+            events = null;
             messageOrNetworkEvents = null;
             links = null;
             childSpanCount = null;

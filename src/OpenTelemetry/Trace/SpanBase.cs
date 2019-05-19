@@ -53,6 +53,7 @@ namespace OpenTelemetry.Trace
             this.Options = options;
         }
 
+        /// <inheritdoc/>
         public abstract string Name { get; set; }
 
         /// <inheritdoc/>
@@ -108,16 +109,16 @@ namespace OpenTelemetry.Trace
         public abstract void SetAttributes(IDictionary<string, IAttributeValue> attributes);
 
         /// <inheritdoc/>
-        public void AddAnnotation(string description)
+        public void AddEvent(string name)
         {
-            this.AddAnnotation(description, EmptyAttributes);
+            this.AddEvent(name, EmptyAttributes);
         }
 
         /// <inheritdoc/>
-        public abstract void AddAnnotation(string description, IDictionary<string, IAttributeValue> attributes);
+        public abstract void AddEvent(string name, IDictionary<string, IAttributeValue> attributes);
 
         /// <inheritdoc/>
-        public abstract void AddAnnotation(IAnnotation annotation);
+        public abstract void AddEvent(IEvent addEvent);
 
         /// <inheritdoc/>
         public abstract void AddMessageEvent(IMessageEvent messageEvent);

@@ -21,6 +21,7 @@ namespace OpenTelemetry.Trace.Export
     using System.Linq;
     using OpenTelemetry.Common;
 
+    /// <inheritdoc/>
     public sealed class SpanData : ISpanData
     {
         internal SpanData(
@@ -30,7 +31,7 @@ namespace OpenTelemetry.Trace.Export
             string name,
             Timestamp startTimestamp,
             IAttributes attributes,
-            ITimedEvents<IAnnotation> annotations,
+            ITimedEvents<IEvent> events,
             ITimedEvents<IMessageEvent> messageEvents,
             ILinks links,
             int? childSpanCount,
@@ -44,7 +45,7 @@ namespace OpenTelemetry.Trace.Export
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.StartTimestamp = startTimestamp ?? throw new ArgumentNullException(nameof(startTimestamp));
             this.Attributes = attributes ?? Export.Attributes.Create(new Dictionary<string, IAttributeValue>(), 0);
-            this.Annotations = annotations ?? TimedEvents<IAnnotation>.Create(Enumerable.Empty<ITimedEvent<IAnnotation>>(), 0);
+            this.Events = events ?? TimedEvents<IEvent>.Create(Enumerable.Empty<ITimedEvent<IEvent>>(), 0);
             this.MessageEvents = messageEvents ?? TimedEvents<IMessageEvent>.Create(Enumerable.Empty<ITimedEvent<IMessageEvent>>(), 0);
             this.Links = links ?? LinkList.Create(Enumerable.Empty<ILink>(), 0);
             this.ChildSpanCount = childSpanCount;
@@ -53,34 +54,62 @@ namespace OpenTelemetry.Trace.Export
             this.EndTimestamp = endTimestamp;
         }
 
+        /// <inheritdoc/>
         public ISpanContext Context { get; }
 
+        /// <inheritdoc/>
         public ISpanId ParentSpanId { get; }
 
+        /// <inheritdoc/>
         public bool? HasRemoteParent { get; }
 
+        /// <inheritdoc/>
         public string Name { get; }
 
-        public Timestamp Timestamp { get; }
-
+        /// <inheritdoc/>
         public IAttributes Attributes { get; }
 
-        public ITimedEvents<IAnnotation> Annotations { get; }
+        /// <inheritdoc/>
+        public ITimedEvents<IEvent> Events { get; }
 
+        /// <inheritdoc/>
         public ITimedEvents<IMessageEvent> MessageEvents { get; }
 
+        /// <inheritdoc/>
         public ILinks Links { get; }
 
+        /// <inheritdoc/>
         public int? ChildSpanCount { get; }
 
+        /// <inheritdoc/>
         public Status Status { get; }
 
+        /// <inheritdoc/>
         public SpanKind Kind { get; }
 
+        /// <inheritdoc/>
         public Timestamp EndTimestamp { get; }
 
+        /// <inheritdoc/>
         public Timestamp StartTimestamp { get; }
 
+        /// <summary>
+        /// Returns a new immutable <see cref="SpanData"/>.
+        /// </summary>
+        /// <param name="context">The <see cref="SpanContext"/> of the <see cref="ISpan"/>.</param>
+        /// <param name="parentSpanId">The parent <see cref="SpanId"/> of the <see cref="ISpan"/>. <c>null</c> if the <see cref="ISpan"/> is a root.</param>
+        /// <param name="hasRemoteParent">Indicates whether <see cref="ISpan"/> has a remote parent.</param>
+        /// <param name="name">The name of the <see cref="ISpan"/>.</param>
+        /// <param name="startTimestamp">The start <see cref="Timestamp"/> of the <see cref="ISpan"/>.</param>
+        /// <param name="attributes">The <see cref="IAttributes"/> associated with the <see cref="ISpan"/>.</param>
+        /// <param name="events">The <see cref="Events"/> associated with the <see cref="ISpan"/>.</param>
+        /// <param name="messageEvents">The <see cref="MessageEvents"/>associated with the <see cref="ISpan"/>.</param>
+        /// <param name="links">The <see cref="ILinks"/> associated with the <see cref="ISpan"/>.</param>
+        /// <param name="childSpanCount">The <see cref="ChildSpanCount"/> associated with the <see cref="ISpan"/>.</param>
+        /// <param name="status">The <see cref="Status"/> of the <see cref="ISpan"/>.</param>
+        /// <param name="kind">The <see cref="SpanKind"/> of the <see cref="ISpan"/>.</param>
+        /// <param name="endTimestamp">The end <see cref="Timestamp"/> of the <see cref="ISpan"/>.</param>
+        /// <returns>A new immutable <see cref="SpanData"/>.</returns>
         public static ISpanData Create(
                         ISpanContext context,
                         ISpanId parentSpanId,
@@ -88,26 +117,26 @@ namespace OpenTelemetry.Trace.Export
                         string name,
                         Timestamp startTimestamp,
                         IAttributes attributes,
-                        ITimedEvents<IAnnotation> annotations,
-                        ITimedEvents<IMessageEvent> messageOrNetworkEvents,
+                        ITimedEvents<IEvent> events,
+                        ITimedEvents<IMessageEvent> messageEvents,
                         ILinks links,
                         int? childSpanCount,
                         Status status,
                         SpanKind kind,
                         Timestamp endTimestamp)
         {
-            if (messageOrNetworkEvents == null)
+            if (messageEvents == null)
             {
-                messageOrNetworkEvents = TimedEvents<IMessageEvent>.Create(new List<ITimedEvent<IMessageEvent>>(), 0);
+                messageEvents = TimedEvents<IMessageEvent>.Create(new List<ITimedEvent<IMessageEvent>>(), 0);
             }
 
             var messageEventsList = new List<ITimedEvent<IMessageEvent>>();
-            foreach (ITimedEvent<IMessageEvent> timedEvent in messageOrNetworkEvents.Events)
+            foreach (ITimedEvent<IMessageEvent> timedEvent in messageEvents.Events)
             {
                 messageEventsList.Add(timedEvent);
             }
 
-            ITimedEvents<IMessageEvent> messageEvents = TimedEvents<IMessageEvent>.Create(messageEventsList, messageOrNetworkEvents.DroppedEventsCount);
+            ITimedEvents<IMessageEvent> timedMessageEvents = TimedEvents<IMessageEvent>.Create(messageEventsList, messageEvents.DroppedEventsCount);
             return new SpanData(
                 context,
                 parentSpanId,
@@ -115,8 +144,8 @@ namespace OpenTelemetry.Trace.Export
                 name,
                 startTimestamp,
                 attributes,
-                annotations,
-                messageEvents,
+                events,
+                timedMessageEvents,
                 links,
                 childSpanCount,
                 status,
@@ -134,7 +163,7 @@ namespace OpenTelemetry.Trace.Export
                 + "name=" + this.Name + ", "
                 + "startTimestamp=" + this.StartTimestamp + ", "
                 + "attributes=" + this.Attributes + ", "
-                + "annotations=" + this.Annotations + ", "
+                + "events=" + this.Events + ", "
                 + "messageEvents=" + this.MessageEvents + ", "
                 + "links=" + this.Links + ", "
                 + "childSpanCount=" + this.ChildSpanCount + ", "
@@ -159,7 +188,7 @@ namespace OpenTelemetry.Trace.Export
                      && this.Name.Equals(that.Name)
                      && this.StartTimestamp.Equals(that.StartTimestamp)
                      && this.Attributes.Equals(that.Attributes)
-                     && this.Annotations.Equals(that.Annotations)
+                     && this.Events.Equals(that.Events)
                      && this.MessageEvents.Equals(that.MessageEvents)
                      && this.Links.Equals(that.Links)
                      && ((this.ChildSpanCount == null) ? (that.ChildSpanCount == null) : this.ChildSpanCount.Equals(that.ChildSpanCount))
@@ -170,7 +199,7 @@ namespace OpenTelemetry.Trace.Export
             return false;
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             int h = 1;
@@ -187,7 +216,7 @@ namespace OpenTelemetry.Trace.Export
             h *= 1000003;
             h ^= this.Attributes.GetHashCode();
             h *= 1000003;
-            h ^= this.Annotations.GetHashCode();
+            h ^= this.Events.GetHashCode();
             h *= 1000003;
             h ^= this.MessageEvents.GetHashCode();
             h *= 1000003;

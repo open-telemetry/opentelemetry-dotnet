@@ -51,10 +51,10 @@
             {
                 using (var scopedSpan = spanBuilder.StartScopedSpan())
                 {
-                    tracer.CurrentSpan.AddAnnotation("Start processing video.");
+                    tracer.CurrentSpan.AddEvent("Start processing video.");
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));
                     statsRecorder.NewMeasureMap().Put(VideoSize, 25 * MiB).Record();
-                    tracer.CurrentSpan.AddAnnotation("Finished processing video.");
+                    tracer.CurrentSpan.AddEvent("Finished processing video.");
                 }
             }
 

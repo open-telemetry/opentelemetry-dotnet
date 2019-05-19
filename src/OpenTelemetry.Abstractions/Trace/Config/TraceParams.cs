@@ -26,24 +26,24 @@ namespace OpenTelemetry.Trace.Config
         /// Default trace parameters.
         /// </summary>
         public static readonly ITraceParams Default =
-            new TraceParams(Samplers.GetProbabilitySampler(DefaultProbability), DefaultSpanMaxNumAttributes, DefaultSpanMaxNumAnnotations, DefaultSpanMaxNumMessageEvents, DefaultSpanMaxNumLinks);
+            new TraceParams(Samplers.GetProbabilitySampler(DefaultProbability), DefaultSpanMaxNumAttributes, DefaultSpanMaxNumEvents, DefaultSpanMaxNumMessageEvents, DefaultSpanMaxNumLinks);
 
         private const double DefaultProbability = 1e-4;
         private const int DefaultSpanMaxNumAttributes = 32;
-        private const int DefaultSpanMaxNumAnnotations = 32;
+        private const int DefaultSpanMaxNumEvents = 32;
         private const int DefaultSpanMaxNumMessageEvents = 128;
         private const int DefaultSpanMaxNumLinks = 128;
 
-        internal TraceParams(ISampler sampler, int maxNumberOfAttributes, int maxNumberOfAnnotations, int maxNumberOfMessageEvents, int maxNumberOfLinks)
+        internal TraceParams(ISampler sampler, int maxNumberOfAttributes, int maxNumberOfEvents, int maxNumberOfMessageEvents, int maxNumberOfLinks)
         {
             if (maxNumberOfAttributes <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(maxNumberOfAttributes));
             }
 
-            if (maxNumberOfAnnotations <= 0)
+            if (maxNumberOfEvents <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxNumberOfAnnotations));
+                throw new ArgumentOutOfRangeException(nameof(maxNumberOfEvents));
             }
 
             if (maxNumberOfMessageEvents <= 0)
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace.Config
 
             this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             this.MaxNumberOfAttributes = maxNumberOfAttributes;
-            this.MaxNumberOfAnnotations = maxNumberOfAnnotations;
+            this.MaxNumberOfEvents = maxNumberOfEvents;
             this.MaxNumberOfMessageEvents = maxNumberOfMessageEvents;
             this.MaxNumberOfLinks = maxNumberOfLinks;
         }
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace.Config
         public int MaxNumberOfAttributes { get; }
 
         /// <inheritdoc/>
-        public int MaxNumberOfAnnotations { get; }
+        public int MaxNumberOfEvents { get; }
 
         /// <inheritdoc/>
         public int MaxNumberOfMessageEvents { get; }
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Trace.Config
             return "TraceParams{"
                 + "sampler=" + this.Sampler + ", "
                 + "maxNumberOfAttributes=" + this.MaxNumberOfAttributes + ", "
-                + "maxNumberOfAnnotations=" + this.MaxNumberOfAnnotations + ", "
+                + "maxNumberOfAnnotations=" + this.MaxNumberOfEvents + ", "
                 + "maxNumberOfMessageEvents=" + this.MaxNumberOfMessageEvents + ", "
                 + "maxNumberOfLinks=" + this.MaxNumberOfLinks
                 + "}";
@@ -108,7 +108,7 @@ namespace OpenTelemetry.Trace.Config
             {
                 return this.Sampler.Equals(that.Sampler)
                      && (this.MaxNumberOfAttributes == that.MaxNumberOfAttributes)
-                     && (this.MaxNumberOfAnnotations == that.MaxNumberOfAnnotations)
+                     && (this.MaxNumberOfEvents == that.MaxNumberOfEvents)
                      && (this.MaxNumberOfMessageEvents == that.MaxNumberOfMessageEvents)
                      && (this.MaxNumberOfLinks == that.MaxNumberOfLinks);
             }
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Trace.Config
             h *= 1000003;
             h ^= this.MaxNumberOfAttributes;
             h *= 1000003;
-            h ^= this.MaxNumberOfAnnotations;
+            h ^= this.MaxNumberOfEvents;
             h *= 1000003;
             h ^= this.MaxNumberOfMessageEvents;
             h *= 1000003;

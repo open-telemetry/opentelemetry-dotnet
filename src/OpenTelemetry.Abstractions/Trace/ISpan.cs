@@ -19,11 +19,11 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
 
     /// <summary>
-    /// Span represents the execution of the certain span of code or span of time between two events which is part of
-    /// a distributed trace and has result of execution, context of executuion and other properties.
+    /// <para>Span represents the execution of the certain span of code or span of time between two events which is part of
+    /// a distributed trace and has result of execution, context of executuion and other properties.</para>
     ///
-    /// This class is mostly write only. Span should not be used to exchange information. Only to add properties
-    /// to it for monitoring purposes. It will be converted to SpanData that is readable.
+    /// <para>This class is mostly write only. Span should not be used to exchange information. Only to add properties
+    /// to it for monitoring purposes. It will be converted to SpanData that is readable.</para>
     /// </summary>
     public interface ISpan
     {
@@ -71,23 +71,23 @@ namespace OpenTelemetry.Trace
         void SetAttributes(IDictionary<string, IAttributeValue> attributes);
 
         /// <summary>
-        /// Adds a single annotation to the span.
+        /// Adds a single <see cref="IEvent"/> to the <see cref="ISpan"/>.
         /// </summary>
-        /// <param name="description">Annotation description.</param>
-        void AddAnnotation(string description);
+        /// <param name="name">Name of the <see cref="IEvent"/>.</param>
+        void AddEvent(string name);
 
         /// <summary>
-        /// Adds a single annotation with the attributes to the span.
+        /// Adds a single <see cref="IEvent"/> with the <see cref="IDictionary{string, IAttributeValue}"/> attributes to the <see cref="ISpan"/>.
         /// </summary>
-        /// <param name="description">Annotation description.</param>
-        /// <param name="attributes">Collection of attributes name/value pairs associted with the annotation.</param>
-        void AddAnnotation(string description, IDictionary<string, IAttributeValue> attributes);
+        /// <param name="name">Event name.</param>
+        /// <param name="attributes"><see cref="IDictionary{string, IAttributeValue}"/> of attributes name/value pairs associted with the <see cref="IEvent"/>.</param>
+        void AddEvent(string name, IDictionary<string, IAttributeValue> attributes);
 
         /// <summary>
-        /// Adds an annotation to the span.
+        /// Adds an <see cref="IEvent"/> object to the <see cref="ISpan"/>.
         /// </summary>
-        /// <param name="annotation">Annotation to add to the span.</param>
-        void AddAnnotation(IAnnotation annotation);
+        /// <param name="newEvent"><see cref="IEvent"/> to add to the span.</param>
+        void AddEvent(IEvent newEvent);
 
         /// <summary>
         /// Adds the message even to the span.
