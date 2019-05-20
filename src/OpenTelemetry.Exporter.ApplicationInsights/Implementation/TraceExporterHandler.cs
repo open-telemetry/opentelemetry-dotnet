@@ -137,9 +137,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                         ++linkId;
                     }
 
-                    foreach (var t in span.Annotations.Events)
+                    foreach (var t in span.Events.Events)
                     {
-                        var log = new TraceTelemetry(t.Event.Description);
+                        var log = new TraceTelemetry(t.Event.Name);
 
                         if (t.Timestamp != null)
                         {

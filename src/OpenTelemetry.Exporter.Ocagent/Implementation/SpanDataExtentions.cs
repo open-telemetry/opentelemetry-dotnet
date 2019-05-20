@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                         !spanData.HasRemoteParent.GetValueOrDefault() && spanData.ParentSpanId != null,
                     ChildSpanCount = spanData.ChildSpanCount.HasValue ? (uint)spanData.ChildSpanCount.Value : 0,
                     Attributes = FromIAttributes(spanData.Attributes),
-                    TimeEvents = FromITimeEvents(spanData.MessageEvents, spanData.Annotations),
+                    TimeEvents = FromITimeEvents(spanData.MessageEvents, spanData.Events),
                     Links = new Span.Types.Links
                     {
                         DroppedLinksCount = spanData.Links.DroppedLinksCount,
@@ -124,16 +124,16 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             };
         }
 
-        private static Span.Types.TimeEvents FromITimeEvents(ITimedEvents<IMessageEvent> messages, ITimedEvents<IAnnotation> annotations)
+        private static Span.Types.TimeEvents FromITimeEvents(ITimedEvents<IMessageEvent> messages, ITimedEvents<IEvent> events)
         {
             var timedEvents = new Span.Types.TimeEvents
             {
                 DroppedMessageEventsCount = messages.DroppedEventsCount,
-                DroppedAnnotationsCount = annotations.DroppedEventsCount,
+                DroppedAnnotationsCount = events.DroppedEventsCount,
                 TimeEvent = { messages.Events.Select(FromITimeEvent), },
             };
 
-            timedEvents.TimeEvent.AddRange(annotations.Events.Select(FromITimeEvent));
+            timedEvents.TimeEvent.AddRange(events.Events.Select(FromITimeEvent));
 
             return timedEvents;
         }
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             };
         }
 
-        private static Span.Types.TimeEvent FromITimeEvent(ITimedEvent<IAnnotation> source)
+        private static Span.Types.TimeEvent FromITimeEvent(ITimedEvent<IEvent> source)
         {
             return new Span.Types.TimeEvent
             {
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                 },
                 Annotation = new Span.Types.TimeEvent.Types.Annotation
                 {
-                    Description = new TruncatableString { Value = source.Event.Description },
+                    Description = new TruncatableString { Value = source.Event.Name },
                     Attributes = FromIAttributeMap(source.Event.Attributes),
                 },
             };

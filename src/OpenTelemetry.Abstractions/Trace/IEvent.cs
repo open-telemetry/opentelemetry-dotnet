@@ -1,4 +1,4 @@
-﻿// <copyright file="IAnnotation.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="IEvent.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,17 +19,17 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
 
     /// <summary>
-    /// Annotation associated with the span.
+    /// A text annotation associated with a collection of attributes.
     /// </summary>
-    public interface IAnnotation
+    public interface IEvent
     {
         /// <summary>
-        /// Gets the annotation description.
+        /// Gets the <see cref="IEvent"/> name.
         /// </summary>
-        string Description { get; }
+        string Name { get; }
 
         /// <summary>
-        /// Gets the collection of attributes associated with the annotation.
+        /// Gets the <see cref="IDictionary{string, IAttributeValue}"/> collection of attributes associated with the event.
         /// </summary>
         IDictionary<string, IAttributeValue> Attributes { get; }
     }

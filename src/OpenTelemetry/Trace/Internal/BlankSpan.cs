@@ -29,7 +29,6 @@ namespace OpenTelemetry.Trace.Internal
         {
         }
 
-        /// <inheritdoc/>
         public override string Name { get; set; }
 
         public override Status Status { get; set; }
@@ -78,11 +77,11 @@ namespace OpenTelemetry.Trace.Internal
         {
         }
 
-        public override void AddAnnotation(string description, IDictionary<string, IAttributeValue> attributes)
+        public override void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
         {
         }
 
-        public override void AddAnnotation(IAnnotation annotation)
+        public override void AddEvent(IEvent addEvent)
         {
         }
 
@@ -98,7 +97,6 @@ namespace OpenTelemetry.Trace.Internal
         {
         }
 
-        /// <inheritdoc/>
         public override string ToString()
         {
             return "BlankSpan";
