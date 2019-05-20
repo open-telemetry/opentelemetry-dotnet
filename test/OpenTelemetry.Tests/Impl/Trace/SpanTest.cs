@@ -77,8 +77,6 @@ namespace OpenTelemetry.Trace.Test
             span.SetAttributes(attributes);
             span.AddEvent(Event.Create(EVENT_DESCRIPTION));
             span.AddEvent(EVENT_DESCRIPTION, attributes);
-            span.AddMessageEvent(
-                MessageEvent.Builder(MessageEventType.Received, 1).SetUncompressedMessageSize(3).Build());
             span.AddLink(Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan));
             span.End();
             // exception.expect(IllegalStateException);
@@ -107,14 +105,11 @@ namespace OpenTelemetry.Trace.Test
                 AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
             span.AddEvent(Event.Create(EVENT_DESCRIPTION));
             span.AddEvent(EVENT_DESCRIPTION, attributes);
-            span.AddMessageEvent(
-                MessageEvent.Builder(MessageEventType.Received, 1).SetUncompressedMessageSize(3).Build());
             span.AddLink(Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan));
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(timestamp, spanData.StartTimestamp);
             Assert.Empty(spanData.Attributes.AttributeMap);
             Assert.Empty(spanData.Events.Events);
-            Assert.Empty(spanData.MessageEvents.Events);
             Assert.Empty(spanData.Links.Links);
             Assert.Equal(Status.Ok, spanData.Status);
             Assert.Equal(timestamp, spanData.EndTimestamp);
@@ -143,9 +138,6 @@ namespace OpenTelemetry.Trace.Test
             interval = TimeSpan.FromMilliseconds(200);
             span.AddEvent(EVENT_DESCRIPTION, attributes);
             interval = TimeSpan.FromMilliseconds(300);
-            IMessageEvent networkEvent =
-                MessageEvent.Builder(MessageEventType.Received, 1).SetUncompressedMessageSize(3).Build();
-            span.AddMessageEvent(networkEvent);
             interval = TimeSpan.FromMilliseconds(400);
             ILink link = Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan);
             span.AddLink(link);
@@ -162,10 +154,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(Event.Create(EVENT_DESCRIPTION), spanData.Events.Events.ToList()[0].Event);
             Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(200))), spanData.Events.Events.ToList()[1].Timestamp);
             Assert.Equal(Event.Create(EVENT_DESCRIPTION, attributes), spanData.Events.Events.ToList()[1].Event);
-            Assert.Equal(0, spanData.MessageEvents.DroppedEventsCount);
-            Assert.Single(spanData.MessageEvents.Events);
-            Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(300))), spanData.MessageEvents.Events.First().Timestamp);
-            Assert.Equal(networkEvent, spanData.MessageEvents.Events.First().Event);
             Assert.Equal(0, spanData.Links.DroppedLinksCount);
             Assert.Single(spanData.Links.Links);
             Assert.Equal(link, spanData.Links.Links.First());
@@ -201,9 +189,6 @@ namespace OpenTelemetry.Trace.Test
             interval = TimeSpan.FromMilliseconds(200);
             span.AddEvent(EVENT_DESCRIPTION, attributes);
             interval = TimeSpan.FromMilliseconds(300);
-            IMessageEvent networkEvent =
-                MessageEvent.Builder(MessageEventType.Received, 1).SetUncompressedMessageSize(3).Build();
-            span.AddMessageEvent(networkEvent);
             ILink link = Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan);
             span.AddLink(link);
             interval = TimeSpan.FromMilliseconds(400);
@@ -222,10 +207,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(Event.Create(EVENT_DESCRIPTION), spanData.Events.Events.ToList()[0].Event);
             Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(200))), spanData.Events.Events.ToList()[1].Timestamp);
             Assert.Equal(Event.Create(EVENT_DESCRIPTION, attributes), spanData.Events.Events.ToList()[1].Event);
-            Assert.Equal(0, spanData.MessageEvents.DroppedEventsCount);
-            Assert.Single(spanData.MessageEvents.Events);
-            Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(300))), spanData.MessageEvents.Events.First().Timestamp);
-            Assert.Equal(networkEvent, spanData.MessageEvents.Events.First().Event);
             Assert.Equal(0, spanData.Links.DroppedLinksCount);
             Assert.Single(spanData.Links.Links);
             Assert.Equal(link, spanData.Links.Links.First());
@@ -437,53 +418,6 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100 * (maxNumberOfEvents + i)))), te.Timestamp);
                 Assert.Equal(testEvent, te.Event);
                 i++;
-            }
-        }
-
-        [Fact]
-        public void DroppingNetworkEvents()
-        {
-            int maxNumberOfNetworkEvents = 8;
-            TraceParams traceParams =
-                TraceParams.Default
-                    .ToBuilder()
-                    .SetMaxNumberOfMessageEvents(maxNumberOfNetworkEvents)
-                    .Build();
-            ISpan span =
-                Span.StartSpan(
-                    spanContext,
-                    recordSpanOptions,
-                    SPAN_NAME,
-                    parentSpanId,
-                    false,
-                    traceParams,
-                    startEndHandler,
-                    timestampConverter);
-            IMessageEvent networkEvent =
-                MessageEvent.Builder(MessageEventType.Received, 1).SetUncompressedMessageSize(3).Build();
-            for (int i = 0; i < 2 * maxNumberOfNetworkEvents; i++)
-            {
-                span.AddMessageEvent(networkEvent);
-                interval += TimeSpan.FromMilliseconds(100);
-            }
-            ISpanData spanData = ((Span)span).ToSpanData();
-            Assert.Equal(maxNumberOfNetworkEvents, spanData.MessageEvents.DroppedEventsCount);
-            Assert.Equal(maxNumberOfNetworkEvents, spanData.MessageEvents.Events.Count());
-            var list = spanData.MessageEvents.Events.ToList();
-            for (int i = 0; i < maxNumberOfNetworkEvents; i++)
-            {
-                Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100 * (maxNumberOfNetworkEvents + i)))), list[i].Timestamp);
-                Assert.Equal(networkEvent, list[i].Event);
-            }
-            span.End();
-            spanData = ((Span)span).ToSpanData();
-            Assert.Equal(maxNumberOfNetworkEvents, spanData.MessageEvents.DroppedEventsCount);
-            Assert.Equal(maxNumberOfNetworkEvents, spanData.MessageEvents.Events.Count());
-            list = spanData.MessageEvents.Events.ToList();
-            for (int i = 0; i < maxNumberOfNetworkEvents; i++)
-            {
-                Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100 * (maxNumberOfNetworkEvents + i)))), list[i].Timestamp);
-                Assert.Equal(networkEvent, list[i].Event);
             }
         }
 

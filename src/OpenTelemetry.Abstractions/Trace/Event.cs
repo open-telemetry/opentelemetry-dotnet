@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace
         /// Returns a new <see cref="Event"/> with the provided name and set of attributes.
         /// </summary>
         /// <param name="name">The text name for the <see cref="Event"/>.</param>
-        /// <param name="attributes">The <see cref="IDictionary{string, IAttributeValue}"/> of attributes for the <see cref="Event"/>.</param>
+        /// <param name="attributes">The <see cref="IDictionary{String, IAttributeValue}"/> of attributes for the <see cref="Event"/>.</param>
         /// <returns>A new <see cref="Event"/> with the provided name and set of attributes.</returns>
         /// <exception cref="ArgumentNullException">If <c>name</c> or <c>attributes</c> is <c>null</c>.</exception>
         public static IEvent Create(string name, IDictionary<string, IAttributeValue> attributes)

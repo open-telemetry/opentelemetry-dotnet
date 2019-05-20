@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace
         string Name { get; }
 
         /// <summary>
-        /// Gets the <see cref="IDictionary{string, IAttributeValue}"/> collection of attributes associated with the event.
+        /// Gets the <see cref="IDictionary{String, IAttributeValue}"/> collection of attributes associated with the event.
         /// </summary>
         IDictionary<string, IAttributeValue> Attributes { get; }
     }

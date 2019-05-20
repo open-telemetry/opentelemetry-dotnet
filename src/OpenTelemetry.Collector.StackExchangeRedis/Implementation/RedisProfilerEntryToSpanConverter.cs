@@ -27,7 +27,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
     {
         public static void DrainSession(ISpan parentSpan, IEnumerable<IProfiledCommand> sessionCommands, ISampler sampler, ICollection<ISpanData> spans)
         {
-            var parentContext = parentSpan?.Context ?? SpanContext.Invalid;
+            var parentContext = parentSpan?.Context ?? SpanContext.Blank;
 
             foreach (var command in sessionCommands)
             {
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             Timestamp startTimestamp = Timestamp.FromMillis(new DateTimeOffset(command.CommandCreated).ToUnixTimeMilliseconds());
 
             var timestamp = new DateTimeOffset(command.CommandCreated).Add(command.CreationToEnqueued);
-            var annotations = TimedEvents<IEvent>.Create(
+            var events = TimedEvents<IEvent>.Create(
                 new List<ITimedEvent<IEvent>>()
                 {
                     TimedEvent<IEvent>.Create(Timestamp.FromMillis(timestamp.ToUnixTimeMilliseconds()), Event.Create("Enqueued")),
@@ -140,7 +140,6 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 
             var attributes = Attributes.Create(attributesMap, 0);
 
-            ITimedEvents<IMessageEvent> messageOrNetworkEvents = null;
             ILinks links = null;
             int? childSpanCount = 0;
 
@@ -148,7 +147,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             Status status = Status.Ok;
             SpanKind kind = SpanKind.Client;
 
-            return SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, annotations, messageOrNetworkEvents, links, childSpanCount, status, kind, endTimestamp);
+            return SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
         }
     }
 }

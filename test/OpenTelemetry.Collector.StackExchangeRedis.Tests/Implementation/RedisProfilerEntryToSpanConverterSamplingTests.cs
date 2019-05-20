@@ -31,17 +31,17 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
         {
             var m = new Mock<ISampler>();
             m.Setup(x => x.ShouldSample(It.IsAny<ISpanContext>(), It.IsAny<bool>(), It.IsAny<ITraceId>(), It.IsAny<ISpanId>(), It.IsAny<string>(), It.IsAny<IEnumerable<ISpan>>())).Returns(true);
-            Assert.True(RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Invalid, "SET", m.Object, out var context, out var parentId));
+            Assert.True(RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Blank, "SET", m.Object, out var context, out var parentId));
 
             m = new Mock<ISampler>();
             m.Setup(x => x.ShouldSample(It.IsAny<ISpanContext>(), It.IsAny<bool>(), It.IsAny<ITraceId>(), It.IsAny<ISpanId>(), It.IsAny<string>(), It.IsAny<IEnumerable<ISpan>>())).Returns(false);
-            Assert.False(RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Invalid, "SET", m.Object, out context, out parentId));
+            Assert.False(RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Blank, "SET", m.Object, out context, out parentId));
         }
 
         [Fact]
         public void ShouldSampleDoesntThrowWithoutSampler()
         {
-            RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Invalid, "SET", null, out var context, out var parentId);
+            RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Blank, "SET", null, out var context, out var parentId);
         }
 
         [Fact]
@@ -68,10 +68,10 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var m = new Mock<ISampler>();
             m.Setup(x => x.ShouldSample(It.IsAny<ISpanContext>(), It.IsAny<bool>(), It.IsAny<ITraceId>(), It.IsAny<ISpanId>(), It.IsAny<string>(), It.IsAny<IEnumerable<ISpan>>())).Returns((ISpanContext parentContext, bool hasRemoteParent, ITraceId traceId, ISpanId spanId, string name, IEnumerable<ISpan> parentLinks) => parentContext.TraceOptions.IsSampled);
 
-            RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Invalid, "SET", m.Object, out var context, out var parentId);
+            RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Blank, "SET", m.Object, out var context, out var parentId);
 
             m.Verify(x => x.ShouldSample(
-                It.Is<ISpanContext>(y => y == SpanContext.Invalid),
+                It.Is<ISpanContext>(y => y == SpanContext.Blank),
                 It.Is<bool>(y => y == false),
                 It.Is<ITraceId>(y => y.IsValid && y == context.TraceId),
                 It.Is<ISpanId>(y => y.IsValid && y == context.SpanId),

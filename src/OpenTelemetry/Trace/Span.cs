@@ -37,7 +37,6 @@ namespace OpenTelemetry.Trace
         private readonly object @lock = new object();
         private AttributesWithCapacity attributes;
         private TraceEvents<EventWithTime<IEvent>> events;
-        private TraceEvents<EventWithTime<IMessageEvent>> messageEvents;
         private TraceEvents<ILink> links;
         private Status status;
         private DateTimeOffset endTime;
@@ -218,20 +217,6 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        private TraceEvents<EventWithTime<IMessageEvent>> InitializedMessageEvents
-        {
-            get
-            {
-                if (this.messageEvents == null)
-                {
-                    this.messageEvents =
-                        new TraceEvents<EventWithTime<IMessageEvent>>(this.traceParams.MaxNumberOfMessageEvents);
-                }
-
-                return this.messageEvents;
-            }
-        }
-
         private TraceEvents<ILink> InitializedLinks
         {
             get
@@ -364,31 +349,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void AddMessageEvent(IMessageEvent messageEvent)
-        {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
-            {
-                return;
-            }
-
-            lock (this.@lock)
-            {
-                if (this.hasBeenEnded)
-                {
-                    // logger.log(Level.FINE, "Calling addNetworkEvent() on an ended Span.");
-                    return;
-                }
-
-                if (messageEvent == null)
-                {
-                    throw new ArgumentNullException(nameof(messageEvent));
-                }
-
-                this.InitializedMessageEvents.AddEvent(new EventWithTime<IMessageEvent>(this.timestampConverter.Now, messageEvent));
-            }
-        }
-
-        /// <inheritdoc/>
         public override void End(EndSpanOptions options)
         {
             if (!this.Options.HasFlag(SpanOptions.RecordEvents))
@@ -429,7 +389,6 @@ namespace OpenTelemetry.Trace
                         : Attributes.Create(this.attributes, this.attributes.NumberOfDroppedAttributes);
 
             ITimedEvents<IEvent> annotationsSpanData = CreateTimedEvents(this.InitializedEvents, this.timestampConverter);
-            ITimedEvents<IMessageEvent> messageEventsSpanData = CreateTimedEvents(this.InitializedMessageEvents, this.timestampConverter);
             LinkList linksSpanData = this.links == null ? LinkList.Create(new List<ILink>(), 0) : LinkList.Create(this.links.Events, this.links.NumberOfDroppedEvents);
 
             return SpanData.Create(
@@ -440,7 +399,6 @@ namespace OpenTelemetry.Trace
                 Timestamp.FromDateTimeOffset(this.startTime),
                 attributesSpanData,
                 annotationsSpanData,
-                messageEventsSpanData,
                 linksSpanData,
                 null, // Not supported yet.
                 this.hasBeenEnded ? this.StatusWithDefault : null,

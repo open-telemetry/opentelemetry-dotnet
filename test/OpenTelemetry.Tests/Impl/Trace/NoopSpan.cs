@@ -55,10 +55,6 @@ namespace OpenTelemetry.Trace.Test
         {
         }
 
-        public override void AddMessageEvent(IMessageEvent messageEvent)
-        {
-        }
-
         public override void End(EndSpanOptions options)
         {
         }

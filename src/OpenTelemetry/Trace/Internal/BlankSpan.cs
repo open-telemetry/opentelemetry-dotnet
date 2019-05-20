@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace.Internal
         public static readonly BlankSpan Instance = new BlankSpan();
 
         private BlankSpan()
-            : base(SpanContext.Invalid, default(SpanOptions))
+            : base(SpanContext.Blank, default(SpanOptions))
         {
         }
 
@@ -82,10 +82,6 @@ namespace OpenTelemetry.Trace.Internal
         }
 
         public override void AddEvent(IEvent addEvent)
-        {
-        }
-
-        public override void AddMessageEvent(IMessageEvent messageEvent)
         {
         }
 

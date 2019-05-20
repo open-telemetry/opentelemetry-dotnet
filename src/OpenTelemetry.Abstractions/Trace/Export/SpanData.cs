@@ -32,7 +32,6 @@ namespace OpenTelemetry.Trace.Export
             Timestamp startTimestamp,
             IAttributes attributes,
             ITimedEvents<IEvent> events,
-            ITimedEvents<IMessageEvent> messageEvents,
             ILinks links,
             int? childSpanCount,
             Status status,
@@ -46,7 +45,6 @@ namespace OpenTelemetry.Trace.Export
             this.StartTimestamp = startTimestamp ?? throw new ArgumentNullException(nameof(startTimestamp));
             this.Attributes = attributes ?? Export.Attributes.Create(new Dictionary<string, IAttributeValue>(), 0);
             this.Events = events ?? TimedEvents<IEvent>.Create(Enumerable.Empty<ITimedEvent<IEvent>>(), 0);
-            this.MessageEvents = messageEvents ?? TimedEvents<IMessageEvent>.Create(Enumerable.Empty<ITimedEvent<IMessageEvent>>(), 0);
             this.Links = links ?? LinkList.Create(Enumerable.Empty<ILink>(), 0);
             this.ChildSpanCount = childSpanCount;
             this.Status = status;
@@ -71,9 +69,6 @@ namespace OpenTelemetry.Trace.Export
 
         /// <inheritdoc/>
         public ITimedEvents<IEvent> Events { get; }
-
-        /// <inheritdoc/>
-        public ITimedEvents<IMessageEvent> MessageEvents { get; }
 
         /// <inheritdoc/>
         public ILinks Links { get; }
@@ -103,7 +98,6 @@ namespace OpenTelemetry.Trace.Export
         /// <param name="startTimestamp">The start <see cref="Timestamp"/> of the <see cref="ISpan"/>.</param>
         /// <param name="attributes">The <see cref="IAttributes"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="events">The <see cref="Events"/> associated with the <see cref="ISpan"/>.</param>
-        /// <param name="messageEvents">The <see cref="MessageEvents"/>associated with the <see cref="ISpan"/>.</param>
         /// <param name="links">The <see cref="ILinks"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="childSpanCount">The <see cref="ChildSpanCount"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="status">The <see cref="Status"/> of the <see cref="ISpan"/>.</param>
@@ -118,25 +112,24 @@ namespace OpenTelemetry.Trace.Export
                         Timestamp startTimestamp,
                         IAttributes attributes,
                         ITimedEvents<IEvent> events,
-                        ITimedEvents<IMessageEvent> messageEvents,
                         ILinks links,
                         int? childSpanCount,
                         Status status,
                         SpanKind kind,
                         Timestamp endTimestamp)
         {
-            if (messageEvents == null)
+            if (events == null)
             {
-                messageEvents = TimedEvents<IMessageEvent>.Create(new List<ITimedEvent<IMessageEvent>>(), 0);
+                events = TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>(), 0);
             }
 
-            var messageEventsList = new List<ITimedEvent<IMessageEvent>>();
-            foreach (ITimedEvent<IMessageEvent> timedEvent in messageEvents.Events)
+            var eventsList = new List<ITimedEvent<IEvent>>();
+            foreach (ITimedEvent<IEvent> timedEvent in events.Events)
             {
-                messageEventsList.Add(timedEvent);
+                eventsList.Add(timedEvent);
             }
 
-            ITimedEvents<IMessageEvent> timedMessageEvents = TimedEvents<IMessageEvent>.Create(messageEventsList, messageEvents.DroppedEventsCount);
+            ITimedEvents<IEvent> timedMessageEvents = TimedEvents<IEvent>.Create(eventsList, events.DroppedEventsCount);
             return new SpanData(
                 context,
                 parentSpanId,
@@ -145,7 +138,6 @@ namespace OpenTelemetry.Trace.Export
                 startTimestamp,
                 attributes,
                 events,
-                timedMessageEvents,
                 links,
                 childSpanCount,
                 status,
@@ -164,7 +156,6 @@ namespace OpenTelemetry.Trace.Export
                 + "startTimestamp=" + this.StartTimestamp + ", "
                 + "attributes=" + this.Attributes + ", "
                 + "events=" + this.Events + ", "
-                + "messageEvents=" + this.MessageEvents + ", "
                 + "links=" + this.Links + ", "
                 + "childSpanCount=" + this.ChildSpanCount + ", "
                 + "status=" + this.Status + ", "
@@ -189,7 +180,6 @@ namespace OpenTelemetry.Trace.Export
                      && this.StartTimestamp.Equals(that.StartTimestamp)
                      && this.Attributes.Equals(that.Attributes)
                      && this.Events.Equals(that.Events)
-                     && this.MessageEvents.Equals(that.MessageEvents)
                      && this.Links.Equals(that.Links)
                      && ((this.ChildSpanCount == null) ? (that.ChildSpanCount == null) : this.ChildSpanCount.Equals(that.ChildSpanCount))
                      && ((this.Status == null) ? (that.Status == null) : this.Status.Equals(that.Status))
@@ -218,7 +208,6 @@ namespace OpenTelemetry.Trace.Export
             h *= 1000003;
             h ^= this.Events.GetHashCode();
             h *= 1000003;
-            h ^= this.MessageEvents.GetHashCode();
             h *= 1000003;
             h ^= this.Links.GetHashCode();
             h *= 1000003;
