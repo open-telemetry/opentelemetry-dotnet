@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace.Propagation.Test
         [Fact]
         public void Inject_NotNullSpanContext_DoesNotFail()
         {
-            textFormat.Inject(SpanContext.Invalid, new object(), (d, k, v) => { });
+            textFormat.Inject(SpanContext.Blank, new object(), (d, k, v) => { });
         }
 
         [Fact]
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace.Propagation.Test
         [Fact]
         public void FromHeaders_NotNullGetter()
         {
-            Assert.Same(SpanContext.Invalid, textFormat.Extract(new object(), (d, k) => null));
+            Assert.Same(SpanContext.Blank, textFormat.Extract(new object(), (d, k) => null));
         }
     }
 }

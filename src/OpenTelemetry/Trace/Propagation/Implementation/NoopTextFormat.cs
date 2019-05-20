@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace.Propagation.Implementation
                 throw new ArgumentNullException(nameof(getter));
             }
 
-            return SpanContext.Invalid;
+            return SpanContext.Blank;
         }
     }
 }

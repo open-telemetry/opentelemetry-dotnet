@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace.Propagation.Implementation
                 throw new ArgumentNullException(nameof(bytes));
             }
 
-            return SpanContext.Invalid;
+            return SpanContext.Blank;
         }
 
         public byte[] ToByteArray(ISpanContext spanContext)
