@@ -166,34 +166,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                         this.telemetryClient.Track(log);
                     }
 
-                    foreach (var m in span.MessageEvents.Events)
-                    {
-                        var log = new TraceTelemetry();
-
-                        if (m.Timestamp != null)
-                        {
-                            var logTimestamp = DateTimeOffset.FromUnixTimeSeconds(m.Timestamp.Seconds);
-                            logTimestamp = logTimestamp.Add(TimeSpan.FromTicks(m.Timestamp.Nanos / 100));
-                            log.Timestamp = logTimestamp;
-                        }
-
-                        log.Message = string.Concat(
-                            "MessageEvent. messageId: '",
-                            m.Event.MessageId,
-                            "', type: '",
-                            m.Event.Type.ToString(),
-                            "', compressed size: '",
-                            m.Event.CompressedMessageSize,
-                            "', uncompressed size: '",
-                            m.Event.UncompressedMessageSize,
-                            "'");
-
-                        log.Context.Operation.Id = traceId;
-                        log.Context.Operation.ParentId = string.Concat("|", traceId, ".", spanId, ".");
-
-                        this.telemetryClient.Track(log);
-                    }
-
                     this.OverwriteSpanKindFromAttribute(spanKindAttr, ref resultKind);
                     this.OverwriteErrorAttribute(errorAttr, ref success);
                     this.OverwriteFieldsForHttpSpans(

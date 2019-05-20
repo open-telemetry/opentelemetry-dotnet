@@ -59,11 +59,6 @@ namespace OpenTelemetry.Trace.Export
         ITimedEvents<IEvent> Events { get; }
 
         /// <summary>
-        /// Gets the collection of <see cref="ITimedEvents{IMessageEvent}"/> objects.
-        /// </summary>
-        ITimedEvents<IMessageEvent> MessageEvents { get; }
-
-        /// <summary>
         /// Gets the <see cref="ILinks"/> collection.
         /// </summary>
         ILinks Links { get; }

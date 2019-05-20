@@ -121,9 +121,6 @@ namespace OpenTelemetry.Trace
         public abstract void AddEvent(IEvent addEvent);
 
         /// <inheritdoc/>
-        public abstract void AddMessageEvent(IMessageEvent messageEvent);
-
-        /// <inheritdoc/>
         public abstract void AddLink(ILink link);
 
         /// <inheritdoc/>

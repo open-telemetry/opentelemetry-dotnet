@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void HasInvalidContextAndDefaultSpanOptions()
         {
-            Assert.Equal(SpanContext.Invalid, BlankSpan.Instance.Context);
+            Assert.Equal(SpanContext.Blank, BlankSpan.Instance.Context);
             Assert.True(BlankSpan.Instance.Options.HasFlag(SpanOptions.None));
         }
 
@@ -50,10 +50,8 @@ namespace OpenTelemetry.Trace.Test
             BlankSpan.Instance.AddEvent("MyEvent", attributes);
             BlankSpan.Instance.AddEvent("MyEvent", multipleAttributes);
             BlankSpan.Instance.AddEvent(Event.Create("MyEvent"));
-            // BlankSpan.Instance.addNetworkEvent(NetworkEvent.builder(NetworkEvent.Type.SENT, 1L).build());
-            BlankSpan.Instance.AddMessageEvent(MessageEvent.Builder(MessageEventType.Sent, 1L).Build());
             BlankSpan.Instance.AddLink(
-                Link.FromSpanContext(SpanContext.Invalid, LinkType.ChildLinkedSpan));
+                Link.FromSpanContext(SpanContext.Blank, LinkType.ChildLinkedSpan));
             BlankSpan.Instance.Status = Status.Ok;
             BlankSpan.Instance.End(EndSpanOptions.Default);
             BlankSpan.Instance.End();

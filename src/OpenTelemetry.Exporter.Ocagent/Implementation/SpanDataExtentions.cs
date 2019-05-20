@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                         !spanData.HasRemoteParent.GetValueOrDefault() && spanData.ParentSpanId != null,
                     ChildSpanCount = spanData.ChildSpanCount.HasValue ? (uint)spanData.ChildSpanCount.Value : 0,
                     Attributes = FromIAttributes(spanData.Attributes),
-                    TimeEvents = FromITimeEvents(spanData.MessageEvents, spanData.Events),
+                    TimeEvents = FromITimeEvents(spanData.Events),
                     Links = new Span.Types.Links
                     {
                         DroppedLinksCount = spanData.Links.DroppedLinksCount,
@@ -105,32 +105,12 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             return attributes;
         }
 
-        private static Span.Types.TimeEvent FromITimeEvent(ITimedEvent<IMessageEvent> source)
-        {
-            return new Span.Types.TimeEvent
-            {
-                Time = new Timestamp
-                {
-                    Nanos = source.Timestamp.Nanos,
-                    Seconds = source.Timestamp.Seconds,
-                },
-                MessageEvent = new Span.Types.TimeEvent.Types.MessageEvent
-                {
-                    Type = source.Event.Type == MessageEventType.Sent ? Span.Types.TimeEvent.Types.MessageEvent.Types.Type.Sent : Span.Types.TimeEvent.Types.MessageEvent.Types.Type.Received,
-                    CompressedSize = (ulong)source.Event.CompressedMessageSize,
-                    UncompressedSize = (ulong)source.Event.UncompressedMessageSize,
-                    Id = (ulong)source.Event.MessageId,
-                },
-            };
-        }
-
-        private static Span.Types.TimeEvents FromITimeEvents(ITimedEvents<IMessageEvent> messages, ITimedEvents<IEvent> events)
+        private static Span.Types.TimeEvents FromITimeEvents(ITimedEvents<IEvent> events)
         {
             var timedEvents = new Span.Types.TimeEvents
             {
-                DroppedMessageEventsCount = messages.DroppedEventsCount,
                 DroppedAnnotationsCount = events.DroppedEventsCount,
-                TimeEvent = { messages.Events.Select(FromITimeEvent), },
+                TimeEvent = { events.Events.Select(FromITimeEvent), },
             };
 
             timedEvents.TimeEvent.AddRange(events.Events.Select(FromITimeEvent));

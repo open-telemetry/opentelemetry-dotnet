@@ -102,11 +102,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 spanBuilder.AddAnnotation(this.ToEpochMicroseconds(annotation.Timestamp), annotation.Event.Name);
             }
 
-            foreach (var networkEvent in spanData.MessageEvents.Events)
-            {
-                spanBuilder.AddAnnotation(this.ToEpochMicroseconds(networkEvent.Timestamp), networkEvent.Event.Type.ToString());
-            }
-
             return spanBuilder.Build();
         }
 
