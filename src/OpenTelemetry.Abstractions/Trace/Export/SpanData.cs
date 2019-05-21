@@ -123,12 +123,6 @@ namespace OpenTelemetry.Trace.Export
                 events = TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>(), 0);
             }
 
-            var eventsList = new List<ITimedEvent<IEvent>>();
-            foreach (ITimedEvent<IEvent> timedEvent in events.Events)
-            {
-                eventsList.Add(timedEvent);
-            }
-
             return new SpanData(
                 context,
                 parentSpanId,
