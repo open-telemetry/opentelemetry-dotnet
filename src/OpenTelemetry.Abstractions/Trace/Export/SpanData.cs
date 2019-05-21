@@ -129,7 +129,6 @@ namespace OpenTelemetry.Trace.Export
                 eventsList.Add(timedEvent);
             }
 
-            ITimedEvents<IEvent> timedMessageEvents = TimedEvents<IEvent>.Create(eventsList, events.DroppedEventsCount);
             return new SpanData(
                 context,
                 parentSpanId,
