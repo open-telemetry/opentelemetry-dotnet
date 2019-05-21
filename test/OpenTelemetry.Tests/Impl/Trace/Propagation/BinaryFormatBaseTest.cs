@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace.Propagation.Test
         [Fact]
         public void ToByteArray_NotNullSpanContext()
         {
-            Assert.Equal(new byte[0], binaryFormat.ToByteArray(SpanContext.Invalid));
+            Assert.Equal(new byte[0], binaryFormat.ToByteArray(SpanContext.Blank));
         }
 
         [Fact]
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace.Propagation.Test
         [Fact]
         public void FromByteArray_NotNullInput()
         {
-            Assert.Equal(SpanContext.Invalid, binaryFormat.FromByteArray(new byte[0]));
+            Assert.Equal(SpanContext.Blank, binaryFormat.FromByteArray(new byte[0]));
         }
     }
 }

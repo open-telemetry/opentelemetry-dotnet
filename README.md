@@ -277,24 +277,24 @@ deprecate it for 18 months before removing it, if possible.
 [main-gitter-url]:https://gitter.im/open-telemetry/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 [dotnet-gitter-image]: https://badges.gitter.im/open-telemetry/opentelemetry-dotnet.svg
 [dotnet-gitter-url]:https://gitter.im/open-telemetry/opentelemetry-dotnet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
-[OpenTelemetry-myget-image]:https://img.shields.io/myget/OpenTelemetry/vpre/OpenTelemetry.svg
-[OpenTelemetry-myget-url]: https://www.myget.org/feed/OpenTelemetry/package/nuget/OpenTelemetry
-[OpenTelemetry-abs-myget-image]:https://img.shields.io/myget/OpenTelemetry/vpre/OpenTelemetry.Abstractions.svg
-[OpenTelemetry-abs-myget-url]: https://www.myget.org/feed/OpenTelemetry/package/nuget/OpenTelemetry.Abstractions
-[OpenTelemetry-exporter-zipkin-myget-image]:https://img.shields.io/myget/OpenTelemetry/vpre/OpenTelemetry.Exporter.Zipkin.svg
-[OpenTelemetry-exporter-zipkin-myget-url]: https://www.myget.org/feed/OpenTelemetry/package/nuget/OpenTelemetry.Exporter.Zipkin
-[OpenTelemetry-exporter-prom-myget-image]:https://img.shields.io/myget/OpenTelemetry/vpre/OpenTelemetry.Exporter.Prometheus.svg
-[OpenTelemetry-exporter-prom-myget-url]: https://www.myget.org/feed/OpenTelemetry/package/nuget/OpenTelemetry.Exporter.Prometheus
-[OpenTelemetry-exporter-ai-myget-image]:https://img.shields.io/myget/OpenTelemetry/vpre/OpenTelemetry.Exporter.ApplicationInsights.svg
-[OpenTelemetry-exporter-ai-myget-url]: https://www.myget.org/feed/OpenTelemetry/package/nuget/OpenTelemetry.Exporter.ApplicationInsights
-[OpenTelemetry-exporter-stackdriver-myget-image]:https://img.shields.io/myget/OpenTelemetry/vpre/OpenTelemetry.Exporter.Stackdriver.svg
-[OpenTelemetry-exporter-stackdriver-myget-url]: https://www.myget.org/feed/OpenTelemetry/package/nuget/OpenTelemetry.Exporter.Stackdriver
-[OpenTelemetry-collect-aspnetcore-myget-image]:https://img.shields.io/myget/OpenTelemetry/vpre/OpenTelemetry.Collector.AspNetCore.svg
-[OpenTelemetry-collect-aspnetcore-myget-url]: https://www.myget.org/feed/OpenTelemetry/package/nuget/OpenTelemetry.Collector.AspNetCore
-[OpenTelemetry-collect-deps-myget-image]:https://img.shields.io/myget/OpenTelemetry/vpre/OpenTelemetry.Collector.Dependencies.svg
-[OpenTelemetry-collect-deps-myget-url]: https://www.myget.org/feed/OpenTelemetry/package/nuget/OpenTelemetry.Collector.Dependencies
-[OpenTelemetry-collect-stackexchange-redis-myget-image]:https://img.shields.io/myget/OpenTelemetry/vpre/OpenTelemetry.Collector.StackExchangeRedis.svg
-[OpenTelemetry-collect-stackexchange-redis-myget-url]: https://www.myget.org/feed/OpenTelemetry/package/nuget/OpenTelemetry.Collector.StackExchangeRedis
+[OpenTelemetry-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.svg
+[OpenTelemetry-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry
+[OpenTelemetry-abs-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Abstractions.svg
+[OpenTelemetry-abs-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Abstractions
+[OpenTelemetry-exporter-zipkin-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Zipkin.svg
+[OpenTelemetry-exporter-zipkin-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Zipkin
+[OpenTelemetry-exporter-prom-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Prometheus.svg
+[OpenTelemetry-exporter-prom-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Prometheus
+[OpenTelemetry-exporter-ai-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.ApplicationInsights.svg
+[OpenTelemetry-exporter-ai-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.ApplicationInsights
+[OpenTelemetry-exporter-stackdriver-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Stackdriver.svg
+[OpenTelemetry-exporter-stackdriver-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Stackdriver
+[OpenTelemetry-collect-aspnetcore-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.AspNetCore.svg
+[OpenTelemetry-collect-aspnetcore-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Collector.AspNetCore
+[OpenTelemetry-collect-deps-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.Dependencies.svg
+[OpenTelemetry-collect-deps-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Collector.Dependencies
+[OpenTelemetry-collect-stackexchange-redis-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.StackExchangeRedis.svg
+[OpenTelemetry-collect-stackexchange-redis-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Collector.StackExchangeRedis
 [OpenTelemetry-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.svg
 [OpenTelemetry-nuget-url]:https://www.nuget.org/packages/OpenTelemetry
 [OpenTelemetry-abs-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Abstractions.svg

@@ -77,10 +77,10 @@ namespace OpenTelemetry.Trace
         void AddEvent(string name);
 
         /// <summary>
-        /// Adds a single <see cref="IEvent"/> with the <see cref="IDictionary{string, IAttributeValue}"/> attributes to the <see cref="ISpan"/>.
+        /// Adds a single <see cref="IEvent"/> with the <see cref="IDictionary{String, IAttributeValue}"/> attributes to the <see cref="ISpan"/>.
         /// </summary>
         /// <param name="name">Event name.</param>
-        /// <param name="attributes"><see cref="IDictionary{string, IAttributeValue}"/> of attributes name/value pairs associted with the <see cref="IEvent"/>.</param>
+        /// <param name="attributes"><see cref="IDictionary{String, IAttributeValue}"/> of attributes name/value pairs associted with the <see cref="IEvent"/>.</param>
         void AddEvent(string name, IDictionary<string, IAttributeValue> attributes);
 
         /// <summary>
@@ -88,12 +88,6 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="newEvent"><see cref="IEvent"/> to add to the span.</param>
         void AddEvent(IEvent newEvent);
-
-        /// <summary>
-        /// Adds the message even to the span.
-        /// </summary>
-        /// <param name="messageEvent">Message event to add to the span.</param>
-        void AddMessageEvent(IMessageEvent messageEvent);
 
         /// <summary>
         /// Adds link to the span.

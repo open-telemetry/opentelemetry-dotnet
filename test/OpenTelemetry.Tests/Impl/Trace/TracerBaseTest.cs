@@ -17,9 +17,9 @@
 namespace OpenTelemetry.Trace.Test
 {
     using System;
-    using Internal;
     using Moq;
     using OpenTelemetry.Common;
+    using OpenTelemetry.Trace.Internal;
     using Xunit;
 
     public class TracerBaseTest
@@ -145,7 +145,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DefaultSpanBuilderWithRemoteParent()
         {
-            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithRemoteParent(SPAN_NAME, remoteParentSpanContext: SpanContext.Invalid).StartSpan());
+            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithRemoteParent(SPAN_NAME, remoteParentSpanContext: SpanContext.Blank).StartSpan());
         }
 
         [Fact]

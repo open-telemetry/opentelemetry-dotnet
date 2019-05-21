@@ -18,12 +18,15 @@ namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// A class that represents a span context. A span context contains the state that must propagate to
-    /// child <see cref="SpanBase"/> and across process boundaries. It contains the identifiers <see cref="TraceId"/>
-    /// and <see cref="SpanId"/> associated with the <see cref="SpanBase"/> and a set of <see cref="TraceOptions"/>.
+    /// child <see cref="ISpan"/> and across process boundaries. It contains the identifiers <see cref="TraceId"/>
+    /// and <see cref="SpanId"/> associated with the <see cref="ISpan"/> and a set of <see cref="TraceOptions"/>.
     /// </summary>
     public sealed class SpanContext : ISpanContext
     {
-        public static readonly SpanContext Invalid = new SpanContext(Trace.TraceId.Invalid, Trace.SpanId.Invalid, TraceOptions.Default, Tracestate.Empty);
+        /// <summary>
+        /// A blank <see cref="ISpanContext"/> that can be used for no-op operations.
+        /// </summary>
+        public static readonly SpanContext Blank = new SpanContext(Trace.TraceId.Invalid, Trace.SpanId.Invalid, TraceOptions.Default, Tracestate.Empty);
 
         private SpanContext(ITraceId traceId, ISpanId spanId, TraceOptions traceOptions, Tracestate tracestate)
         {
@@ -33,16 +36,39 @@ namespace OpenTelemetry.Trace
             this.Tracestate = tracestate;
         }
 
+        /// <summary>
+        /// Gets the <see cref="ITraceId"/> associated with this <see cref="ISpanContext"/>.
+        /// </summary>
         public ITraceId TraceId { get; }
 
+        /// <summary>
+        /// Gets the <see cref="ISpanId"/> associated with this <see cref="ISpanContext"/>.
+        /// </summary>
         public ISpanId SpanId { get; }
 
+        /// <summary>
+        /// Gets the <see cref="TraceOptions"/> associated with this <see cref="ISpanContext"/>.
+        /// </summary>
         public TraceOptions TraceOptions { get; }
 
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="ISpanContext"/> is valid.
+        /// </summary>
         public bool IsValid => this.TraceId.IsValid && this.SpanId.IsValid;
 
+        /// <summary>
+        /// Gets the <see cref="Tracestate"/> associated with this <see cref="ISpanContext"/>.
+        /// </summary>
         public Tracestate Tracestate { get; }
 
+        /// <summary>
+        /// Creates a new <see cref="ISpanContext"/> with the given identifiers and options.
+        /// </summary>
+        /// <param name="traceId">The <see cref="ITraceId"/> to associate with the <see cref="ISpanContext"/>.</param>
+        /// <param name="spanId">The <see cref="ISpanId"/> to associate with the <see cref="ISpanContext"/>.</param>
+        /// <param name="traceOptions">The <see cref="TraceOptions"/> to associate with the <see cref="ISpanContext"/>.</param>
+        /// <param name="tracestate">The <see cref="Tracestate"/> to associate with the <see cref="ISpanContext"/>.</param>
+        /// <returns>A new <see cref="ISpanContext"/> with the given identifiers and options.</returns>
         public static ISpanContext Create(ITraceId traceId, ISpanId spanId, TraceOptions traceOptions, Tracestate tracestate)
         {
             return new SpanContext(traceId, spanId, traceOptions, tracestate);

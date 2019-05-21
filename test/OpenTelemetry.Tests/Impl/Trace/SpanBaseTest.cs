@@ -89,19 +89,15 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void AddMessageEventDefaultImplementation()
+        public void AddEventDefaultImplementation()
         {
             Mock<SpanBase> mockSpan = new Mock<SpanBase>();
             var span = mockSpan.Object;
 
-            IMessageEvent messageEvent =
-                MessageEvent.Builder(MessageEventType.Sent, 123)
-                    .SetUncompressedMessageSize(456)
-                    .SetCompressedMessageSize(789)
-                    .Build();
+            IEvent @event = Event.Create("MyEvent");
+            span.AddEvent(@event);
 
-            span.AddMessageEvent(messageEvent);
-            mockSpan.Verify((s) => s.AddMessageEvent(messageEvent));
+            mockSpan.Verify((s) => s.AddEvent(@event));
         }
     }
 }

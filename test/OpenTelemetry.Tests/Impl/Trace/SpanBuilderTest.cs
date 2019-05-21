@@ -122,7 +122,7 @@ namespace OpenTelemetry.Trace.Test
         public void StartRemoteSpanInvalidParent()
         {
             ISpan span =
-                SpanBuilder.CreateWithRemoteParent(SPAN_NAME, SpanKind.Internal, SpanContext.Invalid, spanBuilderOptions)
+                SpanBuilder.CreateWithRemoteParent(SPAN_NAME, SpanKind.Internal, SpanContext.Blank, spanBuilderOptions)
                     .StartSpan();
             Assert.True(span.Context.IsValid);
             Assert.True(span.Options.HasFlag(SpanOptions.RecordEvents));
@@ -278,7 +278,8 @@ namespace OpenTelemetry.Trace.Test
             // is not less than probability * Long.MAX_VALUE;
             ITraceId traceId =
                 TraceId.FromBytes(
-                    new byte[] {
+                    new byte[] 
+                    {
                         0x8F,
                         0xFF,
                         0xFF,

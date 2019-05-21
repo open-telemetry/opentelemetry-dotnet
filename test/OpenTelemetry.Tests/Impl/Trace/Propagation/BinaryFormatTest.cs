@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace.Propagation.Test
         {
             Assert.Equal(
                 new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0},
-                binaryFormat.ToByteArray(SpanContext.Invalid));
+                binaryFormat.ToByteArray(SpanContext.Blank));
 
         }
 
@@ -84,18 +84,17 @@ namespace OpenTelemetry.Trace.Propagation.Test
         [Fact]
         public void FromBinaryValue_EmptyInput()
         {
-
             Assert.Throws<SpanContextParseException>(() => binaryFormat.FromByteArray(new byte[0]));
         }
 
         [Fact]
         public void FromBinaryValue_UnsupportedVersionId()
         {
-
             Assert.Throws<SpanContextParseException>(() => binaryFormat.FromByteArray(
-                new byte[] {
-          66, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 97, 98, 99, 100, 101,
-          102, 103, 104, 1,
+                new byte[] 
+                {
+                    66, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 97, 98, 99, 100, 101,
+                    102, 103, 104, 1,
                 }));
         }
 
@@ -105,10 +104,11 @@ namespace OpenTelemetry.Trace.Propagation.Test
             Assert.Equal(
                 SpanContext.Create(TraceId.Invalid, SpanId.Invalid, TraceOptions.Default, Tracestate.Empty),
                 binaryFormat.FromByteArray(
-                        new byte[] {
-                  0, 4, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 1, 97, 98,
-                  99, 100, 101, 102, 103, 104, 2, 1,
-                        }));
+                    new byte[] 
+                    {
+                        0, 4, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 1, 97, 98,
+                        99, 100, 101, 102, 103, 104, 2, 1,
+                    }));
         }
 
         [Fact]
@@ -116,22 +116,20 @@ namespace OpenTelemetry.Trace.Propagation.Test
         {
             Assert.Equal(
                  SpanContext.Create(
-                        TraceId.FromBytes(
-                            new byte[] { 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79 }),
+                        TraceId.FromBytes(new byte[] { 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79 }),
                         SpanId.Invalid,
                         TraceOptions.Default, Tracestate.Empty),
                  binaryFormat.FromByteArray(
-                        new byte[] {
-                  0, 0, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 3, 97, 98,
-                  99, 100, 101, 102, 103, 104, 2, 1,
+                        new byte[] 
+                        {
+                            0, 0, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 3, 97, 98,
+                            99, 100, 101, 102, 103, 104, 2, 1,
                         }));
-
         }
 
         [Fact]
         public void FromBinaryValue_ShorterTraceId()
         {
-
             Assert.Throws<SpanContextParseException>(() => binaryFormat.FromByteArray(
                 new byte[] { 0, 0, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76 }));
         }
@@ -139,14 +137,12 @@ namespace OpenTelemetry.Trace.Propagation.Test
         [Fact]
         public void FromBinaryValue_ShorterSpanId()
         {
-
             Assert.Throws<SpanContextParseException>(() => binaryFormat.FromByteArray(new byte[] { 0, 1, 97, 98, 99, 100, 101, 102, 103 }));
         }
 
         [Fact]
         public void FromBinaryValue_ShorterTraceOptions()
         {
-
             Assert.Throws<SpanContextParseException>(() => binaryFormat.FromByteArray(
                 new byte[] {
                     0, 0, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 1, 97, 98, 99, 100,
