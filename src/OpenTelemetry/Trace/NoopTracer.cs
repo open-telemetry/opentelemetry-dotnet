@@ -16,20 +16,30 @@
 
 namespace OpenTelemetry.Trace
 {
+    /// <summary>
+    /// No-op tracer.
+    /// </summary>
     public sealed class NoopTracer : TracerBase, ITracer
     {
         internal NoopTracer()
         {
         }
 
+        /// <inheritdoc/>
         public override ISpanBuilder SpanBuilderWithExplicitParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpan parent = null)
         {
             return NoopSpanBuilder.CreateWithParent(spanName, spanKind, parent);
         }
 
+        /// <inheritdoc/>
         public override ISpanBuilder SpanBuilderWithRemoteParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpanContext remoteParentSpanContext = null)
         {
             return NoopSpanBuilder.CreateWithRemoteParent(spanName, spanKind, remoteParentSpanContext);
+        }
+
+        /// <inheritdoc/>
+        public override void RecordSpanData(ISpanData span)
+        {
         }
     }
 }

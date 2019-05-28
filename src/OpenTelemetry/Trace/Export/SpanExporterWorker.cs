@@ -56,6 +56,23 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
+        internal async Task ExportAsync(ISpanData export, CancellationToken token)
+        {
+            var handlers = this.serviceHandlers.Values;
+            foreach (var handler in handlers)
+            {
+                try
+                {
+                    // TODO: the async handlers could be run in parallel.
+                    await handler.ExportAsync(new ISpanData[] { export });
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetryEventSource.Log.ExporterThrownExceptionWarning(ex);
+                }
+            }
+        }
+
         internal async Task ExportAsync(IEnumerable<ISpanData> export, CancellationToken token)
         {
             var handlers = this.serviceHandlers.Values;
