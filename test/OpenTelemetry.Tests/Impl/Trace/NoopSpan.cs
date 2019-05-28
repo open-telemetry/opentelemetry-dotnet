@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace.Test
 
         public override SpanKind? Kind { get; set; }
 
-        public override string Name { get; set; }
+        public override string Name { get; protected set; }
 
         public override ISpanId ParentSpanId { get; }
 
