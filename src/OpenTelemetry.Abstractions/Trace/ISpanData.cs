@@ -16,8 +16,8 @@
 
 namespace OpenTelemetry.Trace
 {
-    using Export;
     using OpenTelemetry.Common;
+    using OpenTelemetry.Trace.Export;
 
     /// <summary>
     /// Span data with read-only properties.
@@ -58,11 +58,6 @@ namespace OpenTelemetry.Trace
         /// Gets the collection of <see cref="ITimedEvents{IEvent}"/> objects.
         /// </summary>
         ITimedEvents<IEvent> Events { get; }
-
-        /// <summary>
-        /// Gets the collection of <see cref="ITimedEvents{IMessageEvent}"/> objects.
-        /// </summary>
-        ITimedEvents<IMessageEvent> MessageEvents { get; }
 
         /// <summary>
         /// Gets the <see cref="ILinks"/> collection.
