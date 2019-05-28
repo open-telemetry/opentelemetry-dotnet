@@ -129,7 +129,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                 if (!string.IsNullOrEmpty(template))
                 {
                     // override the span name that was previously set to the path part of URL.
-                    span.Name = template;
+                    span.UpdateName(template);
 
                     span.PutHttpRouteAttribute(template);
                 }

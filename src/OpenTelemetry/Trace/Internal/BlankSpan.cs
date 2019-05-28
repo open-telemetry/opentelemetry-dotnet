@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Internal
         {
         }
 
-        public override string Name { get; set; }
+        public override string Name { get; protected set; }
 
         public override Status Status { get; set; }
 
