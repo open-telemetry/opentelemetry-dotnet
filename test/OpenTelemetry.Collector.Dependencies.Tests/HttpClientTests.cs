@@ -101,7 +101,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 out int port);
 
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig());
+            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
             tc.url = NormaizeValues(tc.url, host, port);
 
             using (serverLifeTime)

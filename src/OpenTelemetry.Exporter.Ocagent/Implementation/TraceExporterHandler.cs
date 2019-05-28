@@ -30,6 +30,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
     using OpenTelemetry.Proto.Agent.Common.V1;
     using OpenTelemetry.Proto.Agent.Trace.V1;
+    using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
     internal class TraceExporterHandler : IHandler, IDisposable
