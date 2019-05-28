@@ -68,7 +68,6 @@ namespace OpenTelemetry.Trace
         /// the values that will allow correlation of telemetry is also a caller responsibility.
         /// </summary>
         /// <param name="span">Immutable Span Data to be reported to all exporters.</param>
-        /// <remarks>TODO: not implemented yet.</remarks>
         void RecordSpanData(ISpanData span);
     }
 }

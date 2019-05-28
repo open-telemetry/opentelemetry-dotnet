@@ -51,7 +51,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             using (serverLifeTime)
             {
-                var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig());
+                var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
 
                 var tf = new Mock<ITextFormat>();
                 tf
