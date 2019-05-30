@@ -21,11 +21,20 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Attribute value.
     /// </summary>
-    public abstract class AttributeValue : IAttributeValue
+    public abstract class AttributeValue
     {
         internal AttributeValue()
         {
         }
+
+        public enum Type {
+            STRING,
+            BOOLEAN,
+            LONG,
+            DOUBLE
+        }
+
+        public new abstract Type GetType();
 
         /// <summary>
         /// Creates string attribute value from value provided.
@@ -72,6 +81,22 @@ namespace OpenTelemetry.Trace
             return new AttributeValue<double>(doubleValue);
         }
 
+        public String GetStringValue() {
+            throw new InvalidOperationException($"This type can only return {GetType()} data");
+        }
+
+        public Boolean GetBooleanValue() {
+            throw new InvalidOperationException($"This type can only return {GetType()} data");
+        }
+
+        public long GetLongValue() {
+            throw new InvalidOperationException($"This type can only return {GetType()} data");
+        }
+
+        public Double GetDoubleValue() {
+            throw new InvalidOperationException($"This type can only return {GetType()} data");
+        }
+
         /// <inheritdoc/>
         public abstract T Match<T>(
             Func<string, T> stringFunction,
@@ -80,4 +105,74 @@ namespace OpenTelemetry.Trace
             Func<double, T> doubleFunction,
             Func<object, T> defaultFunction);
     }
+
+    abstract class AttributeValueBoolean : AttributeValue {
+        AttributeValueBoolean() 
+        {
+        }
+
+        static AttributeValue Create(Boolean booleanValue) {
+            return new AttributeValue<bool>(booleanValue);
+        }
+        public override Type GetType() {
+            return AttributeValue.Type.BOOLEAN;
+        }
+
+        public new abstract Boolean GetBooleanValue();
+    }
+
+    abstract class AttributeValueString : AttributeValue {
+        AttributeValueString()
+        {
+        }
+
+        static AttributeValue Create(String stringValue) 
+        {
+            return new AttributeValue<String>(stringValue);
+        }
+
+        public override Type GetType() 
+        {
+            return AttributeValue.Type.STRING;
+        }
+        public new abstract String GetStringValue();
+    }
+
+    abstract class AttributeValueLong : AttributeValue {
+        AttributeValueLong()
+        {
+        }
+
+        static AttributeValue Create(long longValue) 
+        {
+            return new AttributeValue<long>(longValue);
+        }
+
+        public override Type GetType()
+        {
+            return AttributeValue.Type.LONG;
+        }
+
+        public new abstract long GetLongValue();
+    }
+
+    abstract class AttributeValueDouble : AttributeValue {
+        AttributeValueDouble()
+        {
+        }
+
+        static AttributeValue Create(double doubleValue)
+        {
+            return new AttributeValue<double>(doubleValue);
+        }
+
+        public override Type GetType() 
+        {
+            return AttributeValue.Type.DOUBLE;
+        }
+
+        public new abstract Double GetDoubleValue();
+
+    }
+
 }
