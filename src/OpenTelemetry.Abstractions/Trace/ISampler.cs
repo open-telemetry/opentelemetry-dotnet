@@ -32,7 +32,6 @@ namespace OpenTelemetry.Trace
         /// Checks whether span needs to be created and tracked.
         /// </summary>
         /// <param name="parentContext">Parent span context. Typically taken from the wire.</param>
-        /// <param name="hasRemoteParent">Indicates whether it was a remote parent.</param>
         /// <param name="traceId">Trace ID of a span to be created.</param>
         /// <param name="spanId">Span ID of a span to be created.</param>
         /// <param name="name"> Name of a span to be created. Note, that the name of the span is settable.
@@ -42,6 +41,6 @@ namespace OpenTelemetry.Trace
         /// </param>
         /// <param name="parentLinks">Links associated with the parent span.</param>
         /// <returns>True of span needs to be created. False otherwise.</returns>
-        bool ShouldSample(ISpanContext parentContext, bool hasRemoteParent, ITraceId traceId, ISpanId spanId, string name, IEnumerable<ISpan> parentLinks);
+        bool ShouldSample(ISpanContext parentContext, ITraceId traceId, ISpanId spanId, string name, IEnumerable<ISpan> parentLinks);
     }
 }

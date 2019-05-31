@@ -54,7 +54,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.Context.TraceOptions.IsSampled);
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
-            Assert.False(spanData.HasRemoteParent);
             Assert.InRange(spanData.StartTimestamp, Timestamp.FromDateTimeOffset(DateTimeOffset.Now).AddDuration(Duration.Create(-1, 0)), Timestamp.FromDateTimeOffset(DateTimeOffset.Now).AddDuration(Duration.Create(1, 0)));
             Assert.Equal(SPAN_NAME, spanData.Name);
         }
@@ -72,7 +71,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.False(span.Context.TraceOptions.IsSampled);
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
-            Assert.False(spanData.HasRemoteParent);
         }
 
         [Fact]
@@ -95,13 +93,11 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(rootSpan.Context.IsValid);
             Assert.True(rootSpan.Options.HasFlag(SpanOptions.RecordEvents));
             Assert.True(rootSpan.Context.TraceOptions.IsSampled);
-            Assert.False(((Span)rootSpan).ToSpanData().HasRemoteParent);
             ISpan childSpan =
                 SpanBuilder.CreateWithParent(SPAN_NAME, SpanKind.Internal, rootSpan, spanBuilderOptions).StartSpan();
             Assert.True(childSpan.Context.IsValid);
             Assert.Equal(rootSpan.Context.TraceId, childSpan.Context.TraceId);
             Assert.Equal(rootSpan.Context.SpanId, ((Span)childSpan).ToSpanData().ParentSpanId);
-            Assert.False(((Span)childSpan).ToSpanData().HasRemoteParent);
             Assert.Equal(((Span)rootSpan).TimestampConverter, ((Span)childSpan).TimestampConverter);
         }
 
@@ -115,7 +111,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.Context.TraceOptions.IsSampled);
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
-            Assert.False(spanData.HasRemoteParent);
         }
 
         [Fact]
@@ -129,7 +124,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.Context.TraceOptions.IsSampled);
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
-            Assert.False(spanData.HasRemoteParent);
         }
 
         [Fact]
@@ -148,7 +142,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.Context.TraceOptions.IsSampled);
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(spanContext.SpanId, spanData.ParentSpanId);
-            Assert.True(spanData.HasRemoteParent);
         }
 
         [Fact]

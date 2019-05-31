@@ -262,14 +262,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             // TODO: Should this be a part of generic logic?
             if (resultKind == SpanKind.Internal)
             {
-                if (span.HasRemoteParent.HasValue && span.HasRemoteParent.Value)
-                {
-                    resultKind = SpanKind.Server;
-                }
-                else
-                {
-                    resultKind = SpanKind.Client;
-                }
+                resultKind = SpanKind.Client;
             }
 
             // 1 tick is 100 ns

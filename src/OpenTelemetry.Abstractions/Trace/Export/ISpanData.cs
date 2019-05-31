@@ -34,11 +34,6 @@ namespace OpenTelemetry.Trace.Export
         ISpanId ParentSpanId { get; }
 
         /// <summary>
-        /// Gets a value indicating whether span has a remote parent.
-        /// </summary>
-        bool? HasRemoteParent { get; }
-
-        /// <summary>
         /// Gets the span name.
         /// </summary>
         string Name { get; }

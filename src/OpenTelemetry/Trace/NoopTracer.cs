@@ -24,12 +24,12 @@ namespace OpenTelemetry.Trace
 
         public override ISpanBuilder SpanBuilderWithExplicitParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpan parent = null)
         {
-            return NoopSpanBuilder.CreateWithParent(spanName, spanKind, parent);
+            return NoopSpanBuilder.SetParent(spanName, spanKind, parent);
         }
 
         public override ISpanBuilder SpanBuilderWithRemoteParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpanContext remoteParentSpanContext = null)
         {
-            return NoopSpanBuilder.CreateWithRemoteParent(spanName, spanKind, remoteParentSpanContext);
+            return NoopSpanBuilder.SetParent(spanName, spanKind, remoteParentSpanContext);
         }
     }
 }

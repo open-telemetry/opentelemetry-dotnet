@@ -50,14 +50,14 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        internal static ISpanBuilder CreateWithParent(string spanName, SpanKind kind, ISpan parent = null)
+        internal static ISpanBuilder SetParent(string name, SpanKind kind, ISpan parent = null)
         {
-            return new NoopSpanBuilder(spanName, kind);
+            return new NoopSpanBuilder(name, kind);
         }
 
-        internal static ISpanBuilder CreateWithRemoteParent(string spanName, SpanKind kind, ISpanContext remoteParentSpanContext = null)
+        internal static ISpanBuilder SetParent(string name, SpanKind kind, ISpanContext parentContext = null)
         {
-            return new NoopSpanBuilder(spanName, kind);
+            return new NoopSpanBuilder(name, kind);
         }
     }
 }
