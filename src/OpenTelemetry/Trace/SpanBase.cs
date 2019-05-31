@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (context.TraceOptions.IsSampled && !IsRecordingEvents)
+            if (context.TraceOptions.IsSampled && !options.HasFlag(SpanOptions.RecordEvents))
             {
                 throw new ArgumentOutOfRangeException("Span is sampled, but does not have RECORD_EVENTS set.");
             }
