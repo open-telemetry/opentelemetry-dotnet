@@ -54,7 +54,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public abstract string Name { get; set; }
+        public abstract string Name { get; protected set; }
 
         /// <inheritdoc/>
         public virtual ISpanContext Context { get; }
@@ -98,6 +98,12 @@ namespace OpenTelemetry.Trace
         /// Gets a value indicating whether this span was already stopped.
         /// </summary>
         public abstract bool HasEnded { get; }
+        
+        /// <inheritdoc/>
+        public void UpdateName(string name)
+        {
+            this.Name = name;
+        }
 
         /// <inheritdoc/>
         public virtual void SetAttribute(string key, IAttributeValue value)

@@ -37,10 +37,10 @@ namespace OpenTelemetry.Trace.Export
         /// span objects have been created from external sources, not using the Open Censis API.
         /// For example, read from file or generated from objects recieved in async queue.
         /// </summary>
-        /// <param name="export">Set of <see cref="ISpanData"/> objects to export.</param>
+        /// <param name="export"><see cref="ISpanData"/> object to export.</param>
         /// <param name="token">Cancellation token.</param>
         /// <returns>A <see cref="Task"/> representing asynchronous export operation.</returns>
-        Task ExportAsync(IEnumerable<ISpanData> export, CancellationToken token);
+        Task ExportAsync(ISpanData export, CancellationToken token);
 
         /// <summary>
         /// Registers the exporter handler.

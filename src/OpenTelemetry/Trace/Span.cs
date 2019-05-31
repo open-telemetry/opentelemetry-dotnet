@@ -82,7 +82,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override string Name { get; set; }
+        public override string Name { get; protected set; }
 
         /// <inheritdoc/>
         public override Status Status

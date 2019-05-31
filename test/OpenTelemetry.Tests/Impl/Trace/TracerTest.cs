@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace.Test
         {
             startEndHandler = Mock.Of<IStartEndHandler>();
             traceConfig = Mock.Of<ITraceConfig>();
-            tracer = new Tracer(new RandomGenerator(), startEndHandler, traceConfig);
+            tracer = new Tracer(new RandomGenerator(), startEndHandler, traceConfig, null);
         }
 
         [Fact]

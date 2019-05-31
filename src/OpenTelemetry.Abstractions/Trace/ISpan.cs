@@ -28,9 +28,9 @@ namespace OpenTelemetry.Trace
     public interface ISpan
     {
         /// <summary>
-        /// Gets or sets the span name.
+        /// Gets the span name. Use <code>UpdateSpan</code> to explicitly set the span name.
         /// </summary>
-        string Name { get; set; }
+        string Name { get; }
 
         /// <summary>
         /// Gets the span context.
@@ -56,6 +56,16 @@ namespace OpenTelemetry.Trace
         /// Gets a value indicating whether this span was already stopped.
         /// </summary>
         bool HasEnded { get; }
+
+        /// <summary>
+        /// Updates the <code>Span</code> name.
+        ///
+        /// If used, this will override the name provided via <code>SpanBuilder</code>.
+        /// Upon this update, any sampling behavior based on <code>Span</code> name will depend on the
+        /// implementation.
+        /// </summary>
+        /// <param name="name">name of the span.</param>
+        void UpdateName(string name);
 
         /// <summary>
         /// Puts a new attribute to the span.
