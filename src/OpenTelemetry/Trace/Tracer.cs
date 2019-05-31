@@ -16,9 +16,9 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System.Threading;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
-    using System.Threading;
 
     /// <inheritdoc/>
     public sealed class Tracer : TracerBase
@@ -38,15 +38,15 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override ISpanBuilder SpanBuilderWithExplicitParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpan parent = null)
+        public override ISpanBuilder SpanBuilderWithParent(string name, SpanKind kind = SpanKind.Internal, ISpan parent = null)
         {
-            return Trace.SpanBuilder.CreateWithParent(spanName, spanKind, parent, this.spanBuilderOptions);
+            return Trace.SpanBuilder.Create(name, kind, parent, this.spanBuilderOptions);
         }
 
         /// <inheritdoc/>
-        public override ISpanBuilder SpanBuilderWithRemoteParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpanContext remoteParentSpanContext = null)
+        public override ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, ISpanContext parentContext = null)
         {
-            return Trace.SpanBuilder.CreateWithRemoteParent(spanName, spanKind, remoteParentSpanContext, this.spanBuilderOptions);
+            return Trace.SpanBuilder.Create(name, kind, parentContext, this.spanBuilderOptions);
         }
     }
 }

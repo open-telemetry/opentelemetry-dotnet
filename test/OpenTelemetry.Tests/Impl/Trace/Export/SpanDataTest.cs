@@ -70,7 +70,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
-                    true,
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
@@ -82,7 +81,6 @@ namespace OpenTelemetry.Trace.Export.Test
                     endTimestamp);
             Assert.Equal(spanContext, spanData.Context);
             Assert.Equal(parentSpanId, spanData.ParentSpanId);
-            Assert.True(spanData.HasRemoteParent);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(startTimestamp, spanData.StartTimestamp);
             Assert.Equal(attributes, spanData.Attributes);
@@ -100,7 +98,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                     spanContext,
                     null,
-                    null,
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
@@ -112,7 +109,6 @@ namespace OpenTelemetry.Trace.Export.Test
                     null);
             Assert.Equal(spanContext, spanData.Context);
             Assert.Null(spanData.ParentSpanId);
-            Assert.Null(spanData.HasRemoteParent);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(startTimestamp, spanData.StartTimestamp);
             Assert.Equal(attributes, spanData.Attributes);
@@ -130,7 +126,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
-                    false,
                     SPAN_NAME,
                     startTimestamp,
                     Attributes.Create(new Dictionary<string, IAttributeValue>(), 0),
@@ -143,7 +138,6 @@ namespace OpenTelemetry.Trace.Export.Test
 
             Assert.Equal(spanContext, spanData.Context);
             Assert.Equal(parentSpanId, spanData.ParentSpanId);
-            Assert.False(spanData.HasRemoteParent);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(startTimestamp, spanData.StartTimestamp);
             Assert.Empty(spanData.Attributes.AttributeMap);
@@ -161,7 +155,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
-                    false,
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
@@ -175,7 +168,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
-                    false,
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
@@ -189,7 +181,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
-                    false,
                     SPAN_NAME,
                     startTimestamp,
                     Attributes.Create(new Dictionary<string, IAttributeValue>(), 0),
@@ -213,7 +204,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                         spanContext,
                         parentSpanId,
-                        false,
                         SPAN_NAME,
                         startTimestamp,
                         attributes,

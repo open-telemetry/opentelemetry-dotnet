@@ -28,7 +28,6 @@ namespace OpenTelemetry.Trace
         internal SpanData(
             ISpanContext context,
             ISpanId parentSpanId,
-            bool? hasRemoteParent,
             string name,
             Timestamp startTimestamp,
             IAttributes attributes,
@@ -41,7 +40,6 @@ namespace OpenTelemetry.Trace
         {
             this.Context = context ?? throw new ArgumentNullException(nameof(context));
             this.ParentSpanId = parentSpanId;
-            this.HasRemoteParent = hasRemoteParent;
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.StartTimestamp = startTimestamp ?? throw new ArgumentNullException(nameof(startTimestamp));
             this.Attributes = attributes ?? Export.Attributes.Create(new Dictionary<string, IAttributeValue>(), 0);
@@ -58,9 +56,6 @@ namespace OpenTelemetry.Trace
 
         /// <inheritdoc/>
         public ISpanId ParentSpanId { get; }
-
-        /// <inheritdoc/>
-        public bool? HasRemoteParent { get; }
 
         /// <inheritdoc/>
         public string Name { get; }
@@ -94,7 +89,6 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="context">The <see cref="SpanContext"/> of the <see cref="ISpan"/>.</param>
         /// <param name="parentSpanId">The parent <see cref="SpanId"/> of the <see cref="ISpan"/>. <c>null</c> if the <see cref="ISpan"/> is a root.</param>
-        /// <param name="hasRemoteParent">Indicates whether <see cref="ISpan"/> has a remote parent.</param>
         /// <param name="name">The name of the <see cref="ISpan"/>.</param>
         /// <param name="startTimestamp">The start <see cref="Timestamp"/> of the <see cref="ISpan"/>.</param>
         /// <param name="attributes">The <see cref="IAttributes"/> associated with the <see cref="ISpan"/>.</param>
@@ -108,7 +102,6 @@ namespace OpenTelemetry.Trace
         public static ISpanData Create(
                         ISpanContext context,
                         ISpanId parentSpanId,
-                        bool? hasRemoteParent,
                         string name,
                         Timestamp startTimestamp,
                         IAttributes attributes,
@@ -127,7 +120,6 @@ namespace OpenTelemetry.Trace
             return new SpanData(
                 context,
                 parentSpanId,
-                hasRemoteParent,
                 name,
                 startTimestamp,
                 attributes,
@@ -145,7 +137,6 @@ namespace OpenTelemetry.Trace
             return "SpanData{"
                 + "context=" + this.Context + ", "
                 + "parentSpanId=" + this.ParentSpanId + ", "
-                + "hasRemoteParent=" + this.HasRemoteParent + ", "
                 + "name=" + this.Name + ", "
                 + "startTimestamp=" + this.StartTimestamp + ", "
                 + "attributes=" + this.Attributes + ", "
@@ -169,7 +160,6 @@ namespace OpenTelemetry.Trace
             {
                 return this.Context.Equals(that.Context)
                      && ((this.ParentSpanId == null) ? (that.ParentSpanId == null) : this.ParentSpanId.Equals(that.ParentSpanId))
-                     && this.HasRemoteParent.Equals(that.HasRemoteParent)
                      && this.Name.Equals(that.Name)
                      && this.StartTimestamp.Equals(that.StartTimestamp)
                      && this.Attributes.Equals(that.Attributes)
@@ -191,8 +181,6 @@ namespace OpenTelemetry.Trace
             h ^= this.Context.GetHashCode();
             h *= 1000003;
             h ^= (this.ParentSpanId == null) ? 0 : this.ParentSpanId.GetHashCode();
-            h *= 1000003;
-            h ^= (this.HasRemoteParent == null) ? 0 : this.HasRemoteParent.GetHashCode();
             h *= 1000003;
             h ^= this.Name.GetHashCode();
             h *= 1000003;

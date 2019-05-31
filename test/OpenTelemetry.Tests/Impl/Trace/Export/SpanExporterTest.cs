@@ -60,7 +60,6 @@ namespace OpenTelemetry.Trace.Export.Test
                     recordSpanOptions,
                     spanName,
                     null,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     null);
@@ -76,7 +75,6 @@ namespace OpenTelemetry.Trace.Export.Test
                     recordSpanOptions,
                     spanName,
                     null,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     null);
