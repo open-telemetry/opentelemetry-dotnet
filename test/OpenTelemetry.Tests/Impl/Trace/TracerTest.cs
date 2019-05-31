@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void CreateSpanBuilderWithRemoteParet()
         {
-            ISpanBuilder spanBuilder = tracer.SpanBuilderWithRemoteParent(SPAN_NAME, remoteParentSpanContext: SpanContext.Blank);
+            ISpanBuilder spanBuilder = tracer.SpanBuilderWithRemoteParent(SPAN_NAME, parentContext: SpanContext.Blank);
             Assert.IsType<SpanBuilder>(spanBuilder);
         }
     }

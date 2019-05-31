@@ -121,7 +121,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SpanBuilderWithParentAndName_NullName()
         {
-            Assert.Throws<ArgumentNullException>(() => noopTracer.SpanBuilderWithExplicitParent(spanName: null, parent: null));
+            Assert.Throws<ArgumentNullException>(() => noopTracer.SpanBuilderWithExplicitParent(name: null, parent: null));
         }
 
         [Fact]
@@ -131,21 +131,21 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void spanBuilderWithRemoteParent_NullName()
+        public void DefaultSpanBuilderWithParentContext_NullName()
         {
-            Assert.Throws<ArgumentNullException>(() => noopTracer.SpanBuilderWithRemoteParent(null, remoteParentSpanContext: null));
+            Assert.Throws<ArgumentNullException>(() => noopTracer.SpanBuilderWithRemoteParent(null, parentContext: null));
         }
 
         [Fact]
-        public void DefaultSpanBuilderWithRemoteParent_NullParent()
+        public void DefaultSpanBuilderWithParentContext_NullParent()
         {
-            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithRemoteParent(SPAN_NAME, remoteParentSpanContext: null).StartSpan());
+            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithRemoteParent(SPAN_NAME, parentContext: null).StartSpan());
         }
 
         [Fact]
-        public void DefaultSpanBuilderWithRemoteParent()
+        public void DefaultSpanBuilderWithParentContext()
         {
-            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithRemoteParent(SPAN_NAME, remoteParentSpanContext: SpanContext.Blank).StartSpan());
+            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithRemoteParent(SPAN_NAME, parentContext: SpanContext.Blank).StartSpan());
         }
 
         [Fact]

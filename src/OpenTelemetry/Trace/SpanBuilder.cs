@@ -25,11 +25,11 @@ namespace OpenTelemetry.Trace
     /// <inheritdoc/>
     public class SpanBuilder : SpanBuilderBase
     {
-        private SpanBuilder(string name, SpanKind kind, SpanBuilderOptions options, ISpanContext parentSpanContext = null, ISpan parent = null) : base(kind)
+        private SpanBuilder(string name, SpanKind kind, SpanBuilderOptions options, ISpanContext parentContext = null, ISpan parent = null) : base(kind)
         {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.Parent = parent;
-            this.ParentSpanContext = parentSpanContext;
+            this.ParentSpanContext = parentContext;
             this.Options = options;
         }
 
@@ -100,14 +100,14 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        internal static ISpanBuilder CreateWithParent(string spanName, SpanKind kind, ISpan parent, SpanBuilderOptions options)
+        internal static ISpanBuilder Create(string name, SpanKind kind, ISpan parent, SpanBuilderOptions options)
         {
-            return new SpanBuilder(spanName, kind, options, null, parent);
+            return new SpanBuilder(name, kind, options, null, parent);
         }
 
-        internal static ISpanBuilder CreateWithRemoteParent(string spanName, SpanKind kind, ISpanContext remoteParentSpanContext, SpanBuilderOptions options)
+        internal static ISpanBuilder Create(string name, SpanKind kind, ISpanContext parentContext, SpanBuilderOptions options)
         {
-            return new SpanBuilder(spanName, kind, options, remoteParentSpanContext, null);
+            return new SpanBuilder(name, kind, options, parentContext, null);
         }
 
         private static bool IsAnyParentLinkSampled(IEnumerable<ISpan> parentLinks)
