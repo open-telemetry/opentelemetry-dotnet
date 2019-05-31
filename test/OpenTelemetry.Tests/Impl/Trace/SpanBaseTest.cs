@@ -55,28 +55,27 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetOptions_WhenNullOptions()
         {
-            ISpan span = new NoopSpan(notSampledSpanContext, default(SpanOptions));
+            var span = new NoopSpan(notSampledSpanContext, default(SpanOptions));
             Assert.Equal(SpanOptions.None, span.Options);
         }
 
         [Fact]
         public void GetContextAndOptions()
         {
-            ISpan span = new NoopSpan(spanContext, spanOptions);
+            var span = new NoopSpan(spanContext, spanOptions);
             Assert.Equal(spanContext, span.Context);
             Assert.Equal(spanOptions, span.Options);
         }
 
         [Fact]
-        public void PutAttributeCallsAddAttributesByDefault()
+        public void PutAttributeCallsAddAttributeByDefault()
         {
             var mockSpan = new Mock<NoopSpan>(spanContext, spanOptions) { CallBase = true };
             NoopSpan span = mockSpan.Object;
             IAttributeValue val = AttributeValue<bool>.Create(true);
             span.SetAttribute("MyKey", val);
             span.End();
-            mockSpan.Verify((s) => s.SetAttributes(It.Is<IDictionary<string, IAttributeValue>>((d) => d.ContainsKey("MyKey"))));
-    
+            mockSpan.Verify((s) => s.SetAttribute(It.Is<string>((arg) => arg == "MyKey"), It.Is<IAttributeValue>((v) => v == val)));
         }
 
         [Fact]

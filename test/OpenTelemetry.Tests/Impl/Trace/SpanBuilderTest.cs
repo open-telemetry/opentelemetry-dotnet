@@ -47,10 +47,10 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanNullParent()
         {
-            ISpan span =
+            var span =
                 SpanBuilder.CreateWithParent(SPAN_NAME, SpanKind.Internal,  null, spanBuilderOptions).StartSpan();
             Assert.True(span.Context.IsValid);
-            Assert.True(span.Options.HasFlag(SpanOptions.RecordEvents));
+            Assert.True(span.IsRecordingEvents);
             Assert.True(span.Context.TraceOptions.IsSampled);
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
@@ -62,13 +62,13 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanNullParentWithRecordEvents()
         {
-            ISpan span =
+            var span =
                 SpanBuilder.CreateWithParent(SPAN_NAME, SpanKind.Internal, null, spanBuilderOptions)
                     .SetSampler(Samplers.NeverSample)
                     .SetRecordEvents(true)
                     .StartSpan();
             Assert.True(span.Context.IsValid);
-            Assert.True(span.Options.HasFlag(SpanOptions.RecordEvents));
+            Assert.True(span.IsRecordingEvents);
             Assert.False(span.Context.TraceOptions.IsSampled);
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
@@ -78,12 +78,12 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanNullParentNoRecordOptions()
         {
-            ISpan span =
+            var span =
                 SpanBuilder.CreateWithParent(SPAN_NAME, SpanKind.Internal, null, spanBuilderOptions)
                     .SetSampler(Samplers.NeverSample)
                     .StartSpan();
             Assert.True(span.Context.IsValid);
-            Assert.False(span.Options.HasFlag(SpanOptions.RecordEvents));
+            Assert.False(span.IsRecordingEvents);
             Assert.False(span.Context.TraceOptions.IsSampled);
         }
 
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Trace.Test
             ISpan rootSpan =
                 SpanBuilder.CreateWithParent(SPAN_NAME, SpanKind.Internal, null, spanBuilderOptions).StartSpan();
             Assert.True(rootSpan.Context.IsValid);
-            Assert.True(rootSpan.Options.HasFlag(SpanOptions.RecordEvents));
+            Assert.True(rootSpan.IsRecordingEvents);
             Assert.True(rootSpan.Context.TraceOptions.IsSampled);
             Assert.False(((Span)rootSpan).ToSpanData().HasRemoteParent);
             ISpan childSpan =
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Trace.Test
             ISpan span =
                 SpanBuilder.CreateWithRemoteParent(SPAN_NAME, SpanKind.Internal, null, spanBuilderOptions).StartSpan();
             Assert.True(span.Context.IsValid);
-            Assert.True(span.Options.HasFlag(SpanOptions.RecordEvents));
+            Assert.True(span.IsRecordingEvents);
             Assert.True(span.Context.TraceOptions.IsSampled);
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Trace.Test
                 SpanBuilder.CreateWithRemoteParent(SPAN_NAME, SpanKind.Internal, SpanContext.Blank, spanBuilderOptions)
                     .StartSpan();
             Assert.True(span.Context.IsValid);
-            Assert.True(span.Options.HasFlag(SpanOptions.RecordEvents));
+            Assert.True(span.IsRecordingEvents);
             Assert.True(span.Context.TraceOptions.IsSampled);
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);

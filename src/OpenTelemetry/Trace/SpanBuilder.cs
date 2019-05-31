@@ -222,13 +222,13 @@ namespace OpenTelemetry.Trace
                         SpanContext.Create(traceId, spanId, traceOptions, parent?.Tracestate ?? Tracestate.Empty),
                         spanOptions,
                         name,
+                        this.Kind,
                         parentSpanId,
                         hasRemoteParent,
                         activeTraceParams,
                         this.Options.StartEndHandler,
                         timestampConverter);
             LinkSpans(span, parentLinks);
-            span.Kind = this.Kind;
             return span;
         }
     }
