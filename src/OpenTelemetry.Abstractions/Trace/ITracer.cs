@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Span kind.</param>
         /// <param name="parent">Parent of the span.</param>
         /// <returns>Span builder for the span with the given name and specified parent.</returns>
-        ISpanBuilder SpanBuilderWithExplicitParent(string name, SpanKind kind = SpanKind.Internal, ISpan parent = null);
+        ISpanBuilder SpanBuilderWithParent(string name, SpanKind kind = SpanKind.Internal, ISpan parent = null);
 
         /// <summary>
         /// Gets the span builder for the span with the give name and remote parent context.
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Span kind.</param>
         /// <param name="parentContext">Remote parent context extracted from the wire.</param>
         /// <returns>Span builder for the span with the given name and specified parent span context.</returns>
-        ISpanBuilder SpanBuilderWithRemoteParent(string name, SpanKind kind = SpanKind.Internal, ISpanContext parentContext = null);
+        ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, ISpanContext parentContext = null);
 
         /// <summary>
         /// Records <see cref="ISpanData"/>. This API allows to send a pre-populated span object to the

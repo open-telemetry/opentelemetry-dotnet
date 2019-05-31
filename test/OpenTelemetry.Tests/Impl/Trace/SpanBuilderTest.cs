@@ -136,10 +136,11 @@ namespace OpenTelemetry.Trace.Test
                     TraceOptions.Default, Tracestate.Empty);
             ISpan span =
                 SpanBuilder.Create(SPAN_NAME, SpanKind.Internal, spanContext, spanBuilderOptions)
+                    .SetRecordEvents(true)
                     .StartSpan();
             Assert.True(span.Context.IsValid);
             Assert.Equal(spanContext.TraceId, span.Context.TraceId);
-            Assert.True(span.Context.TraceOptions.IsSampled);
+            Assert.False(span.Context.TraceOptions.IsSampled);
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(spanContext.SpanId, spanData.ParentSpanId);
         }
@@ -200,7 +201,7 @@ namespace OpenTelemetry.Trace.Test
                     .StartSpan();
             Assert.True(childSpan.Context.IsValid);
             Assert.Equal(rootSpan.Context.TraceId, childSpan.Context.TraceId);
-            Assert.True(childSpan.Context.TraceOptions.IsSampled);
+            Assert.False(childSpan.Context.TraceOptions.IsSampled);
         }
 
         [Fact]
