@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace.Test
 
         public override bool HasEnded => true;
 
-        public override bool IsRecordingEvents => throw new NotImplementedException();
+        public override bool IsRecordingEvents => false;
 
         public override void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
         {
