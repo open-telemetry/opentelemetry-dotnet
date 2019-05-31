@@ -61,7 +61,6 @@ namespace OpenTelemetry.Trace.Export.Test
                     spanName,
                     SpanKind.Internal,
                     null,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     null);
@@ -78,7 +77,6 @@ namespace OpenTelemetry.Trace.Export.Test
                     spanName,
                     SpanKind.Internal,
                     null,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     null);

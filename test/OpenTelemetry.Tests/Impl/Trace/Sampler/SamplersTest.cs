@@ -53,7 +53,6 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     Samplers.AlwaysSample
                         .ShouldSample(
                             sampledSpanContext,
-                            false,
                             traceId,
                             spanId,
                             "Another name",
@@ -64,7 +63,6 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     Samplers.AlwaysSample
                         .ShouldSample(
                             notSampledSpanContext,
-                            false,
                             traceId,
                             spanId,
                             "Yet another name",
@@ -86,7 +84,6 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     Samplers.NeverSample
                         .ShouldSample(
                             sampledSpanContext,
-                            false,
                             traceId,
                             spanId,
                             "bar",
@@ -96,7 +93,6 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     Samplers.NeverSample
                         .ShouldSample(
                             notSampledSpanContext,
-                            false,
                             traceId,
                             spanId,
                             "quux",
@@ -190,28 +186,28 @@ namespace OpenTelemetry.Trace.Sampler.Test
             // is not less than probability * Long.MAX_VALUE;
             ITraceId notSampledtraceId =
                 TraceId.FromBytes(
-                    new byte[] {
-              0x8F,
-              0xFF,
-              0xFF,
-              0xFF,
-              0xFF,
-              0xFF,
-              0xFF,
-              0xFF,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
+                    new byte[] 
+                    {
+                      0x8F,
+                      0xFF,
+                      0xFF,
+                      0xFF,
+                      0xFF,
+                      0xFF,
+                      0xFF,
+                      0xFF,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
                     });
             Assert.False(
                     defaultProbability.ShouldSample(
                         null,
-                        false,
                         notSampledtraceId,
                         SpanId.GenerateRandomId(random),
                         SPAN_NAME,
@@ -220,28 +216,28 @@ namespace OpenTelemetry.Trace.Sampler.Test
             // is less than probability * Long.MAX_VALUE;
             ITraceId sampledtraceId =
                 TraceId.FromBytes(
-                    new byte[] {
-              0x00,
-              0x00,
-              0xFF,
-              0xFF,
-              0xFF,
-              0xFF,
-              0xFF,
-              0xFF,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
+                    new byte[] 
+                    {
+                      0x00,
+                      0x00,
+                      0xFF,
+                      0xFF,
+                      0xFF,
+                      0xFF,
+                      0xFF,
+                      0xFF,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
                     });
             Assert.True(
                     defaultProbability.ShouldSample(
                         null,
-                        false,
                         sampledtraceId,
                         SpanId.GenerateRandomId(random),
                         SPAN_NAME,
@@ -271,7 +267,6 @@ namespace OpenTelemetry.Trace.Sampler.Test
             {
                 if (sampler.ShouldSample(
                     parent,
-                    false,
                     TraceId.GenerateRandomId(random),
                     SpanId.GenerateRandomId(random),
                     SPAN_NAME,

@@ -18,7 +18,6 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
@@ -29,10 +28,8 @@ namespace OpenTelemetry.Trace
     public sealed class Span : SpanBase
     {
         private readonly ISpanId parentSpanId;
-        private readonly bool? hasRemoteParent;
         private readonly ITraceParams traceParams;
         private readonly IStartEndHandler startEndHandler;
-        private readonly Timer timestampConverter;
         private readonly DateTimeOffset startTime;
         private readonly object @lock = new object();
         private AttributesWithCapacity attributes;
@@ -49,14 +46,12 @@ namespace OpenTelemetry.Trace
                 string name,
                 SpanKind spanKind,
                 ISpanId parentSpanId,
-                bool? hasRemoteParent,
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
                 Timer timestampConverter)
             : base(context, options)
         {
             this.parentSpanId = parentSpanId;
-            this.hasRemoteParent = hasRemoteParent;
             this.Name = name;
             this.traceParams = traceParams ?? throw new ArgumentNullException(nameof(traceParams));
             this.startEndHandler = startEndHandler;
@@ -67,19 +62,19 @@ namespace OpenTelemetry.Trace
             {
                 if (timestampConverter == null)
                 {
-                    this.timestampConverter = Timer.StartNew();
-                    this.startTime = this.timestampConverter.StartTime;
+                    this.TimestampConverter = Timer.StartNew();
+                    this.startTime = this.TimestampConverter.StartTime;
                 }
                 else
                 {
-                    this.timestampConverter = timestampConverter;
-                    this.startTime = this.timestampConverter.Now;
+                    this.TimestampConverter = timestampConverter;
+                    this.startTime = this.TimestampConverter.Now;
                 }
             }
             else
             {
                 this.startTime = DateTimeOffset.MinValue;
-                this.timestampConverter = timestampConverter;
+                this.TimestampConverter = timestampConverter;
             }
         }
 
@@ -129,7 +124,7 @@ namespace OpenTelemetry.Trace
             {
                 lock (this.@lock)
                 {
-                    return this.hasBeenEnded ? this.endTime : this.timestampConverter.Now;
+                    return this.hasBeenEnded ? this.endTime : this.TimestampConverter.Now;
                 }
             }
         }
@@ -141,7 +136,7 @@ namespace OpenTelemetry.Trace
             {
                 lock (this.@lock)
                 {
-                    return this.hasBeenEnded ? this.endTime - this.startTime : this.timestampConverter.Now - this.startTime;
+                    return this.hasBeenEnded ? this.endTime - this.startTime : this.TimestampConverter.Now - this.startTime;
                 }
             }
         }
@@ -164,30 +159,12 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override ISpanId ParentSpanId
-        {
-            get
-            {
-                return this.parentSpanId;
-            }
-        }
+        public override ISpanId ParentSpanId => this.parentSpanId;
 
         /// <inheritdoc/>
-        public override bool HasEnded
-        {
-            get
-            {
-                return this.hasBeenEnded;
-            }
-        }
+        public override bool HasEnded => this.hasBeenEnded;
 
-        internal Timer TimestampConverter
-        {
-            get
-            {
-                return this.timestampConverter;
-            }
-        }
+        internal Timer TimestampConverter { get; private set; }
 
         private AttributesWithCapacity InitializedAttributes
         {
@@ -229,13 +206,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        private Status StatusWithDefault
-        {
-            get
-            {
-                return this.status ?? Trace.Status.Ok;
-            }
-        }
+        private Status StatusWithDefault => this.status ?? Trace.Status.Ok;
 
         public override bool IsRecordingEvents
         {
@@ -283,7 +254,7 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.timestampConverter.Now, Event.Create(name, attributes)));
+                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.TimestampConverter.Now, Event.Create(name, attributes)));
             }
         }
 
@@ -308,7 +279,7 @@ namespace OpenTelemetry.Trace
                     throw new ArgumentNullException(nameof(addEvent));
                 }
 
-                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.timestampConverter.Now, addEvent));
+                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.TimestampConverter.Now, addEvent));
             }
         }
 
@@ -359,7 +330,7 @@ namespace OpenTelemetry.Trace
                 }
 
                 this.sampleToLocalSpanStore = options.SampleToLocalSpanStore;
-                this.endTime = this.timestampConverter.Now;
+                this.endTime = this.TimestampConverter.Now;
                 this.hasBeenEnded = true;
             }
 
@@ -377,13 +348,12 @@ namespace OpenTelemetry.Trace
             Attributes attributesSpanData = this.attributes == null ? Attributes.Create(new Dictionary<string, IAttributeValue>(), 0)
                         : Attributes.Create(this.attributes, this.attributes.NumberOfDroppedAttributes);
 
-            ITimedEvents<IEvent> annotationsSpanData = CreateTimedEvents(this.InitializedEvents, this.timestampConverter);
+            ITimedEvents<IEvent> annotationsSpanData = CreateTimedEvents(this.InitializedEvents, this.TimestampConverter);
             LinkList linksSpanData = this.links == null ? LinkList.Create(new List<ILink>(), 0) : LinkList.Create(this.links.Events, this.links.NumberOfDroppedEvents);
 
             return SpanData.Create(
                 this.Context,
                 this.parentSpanId,
-                this.hasRemoteParent,
                 this.Name,
                 Timestamp.FromDateTimeOffset(this.startTime),
                 attributesSpanData,
@@ -401,7 +371,6 @@ namespace OpenTelemetry.Trace
                         string name,
                         SpanKind spanKind,
                         ISpanId parentSpanId,
-                        bool? hasRemoteParent,
                         ITraceParams traceParams,
                         IStartEndHandler startEndHandler,
                         Timer timestampConverter)
@@ -412,7 +381,6 @@ namespace OpenTelemetry.Trace
                name,
                spanKind,
                parentSpanId,
-               hasRemoteParent,
                traceParams,
                startEndHandler,
                timestampConverter);

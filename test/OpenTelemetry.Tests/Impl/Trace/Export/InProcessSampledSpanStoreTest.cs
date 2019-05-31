@@ -317,7 +317,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 spanName,
                 SpanKind.Internal,
                 parentSpanId,
-                false,
                 TraceParams.Default,
                 startEndHandler,
                 timestampConverter);
@@ -331,7 +330,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 spanName,
                 SpanKind.Internal,
                 parentSpanId,
-                false,
                 TraceParams.Default,
                 startEndHandler,
                 timestampConverter);

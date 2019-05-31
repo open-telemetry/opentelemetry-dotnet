@@ -70,7 +70,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -97,7 +96,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -133,7 +131,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    true,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -158,7 +155,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(spanContext, spanData.Context);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(parentSpanId, spanData.ParentSpanId);
-            Assert.True(spanData.HasRemoteParent);
             Assert.Equal(0, spanData.Attributes.DroppedAttributesCount);
             Assert.Equal(expectedAttributes, spanData.Attributes.AttributeMap); 
             Assert.Equal(0, spanData.Events.DroppedEventsCount);
@@ -189,7 +185,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -216,7 +211,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(spanContext, spanData.Context);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(parentSpanId, spanData.ParentSpanId);
-            Assert.False(spanData.HasRemoteParent);
             Assert.Equal(0, spanData.Attributes.DroppedAttributesCount);
             Assert.Equal(expectedAttributes, spanData.Attributes.AttributeMap);
             Assert.Equal(0, spanData.Events.DroppedEventsCount);
@@ -248,7 +242,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -274,7 +267,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -303,7 +295,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    false,
                     traceParams,
                     startEndHandler,
                     timestampConverter);
@@ -355,7 +346,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    false,
                     traceParams,
                     startEndHandler,
                     timestampConverter);
@@ -422,7 +412,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    false,
                     traceParams,
                     startEndHandler,
                     timestampConverter);
@@ -469,7 +458,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    false,
                     traceParams,
                     startEndHandler,
                     timestampConverter);
@@ -505,7 +493,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -519,7 +506,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -544,7 +530,6 @@ namespace OpenTelemetry.Trace.Test
                     SPAN_NAME,
                     SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);

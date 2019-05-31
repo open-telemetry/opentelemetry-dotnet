@@ -51,7 +51,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 spanName,
                 SpanKind.Internal,
                 SpanId.GenerateRandomId(random),
-                false,
                 TraceParams.Default,
                 startEndHandler,
                 null);
