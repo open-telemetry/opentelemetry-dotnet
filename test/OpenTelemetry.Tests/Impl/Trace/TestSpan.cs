@@ -18,11 +18,10 @@ namespace OpenTelemetry.Trace.Test
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Trace.Export;
 
-    public class NoopSpan : SpanBase
+    public class TestSpan : SpanBase
     {
-        public NoopSpan(ISpanContext context, SpanOptions options)
+        public TestSpan(ISpanContext context, SpanOptions options)
             : base(context, options)
         {
         }
@@ -41,7 +40,7 @@ namespace OpenTelemetry.Trace.Test
 
         public override bool HasEnded => true;
 
-        public override bool IsRecordingEvents => false;
+        public override bool IsRecordingEvents => this.Options.HasFlag(SpanOptions.RecordEvents);
 
         public override void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
         {
