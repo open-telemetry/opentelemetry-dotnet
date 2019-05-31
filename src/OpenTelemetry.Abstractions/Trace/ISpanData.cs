@@ -14,9 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Trace
 {
     using OpenTelemetry.Common;
+    using OpenTelemetry.Trace.Export;
 
     /// <summary>
     /// Span data with read-only properties.

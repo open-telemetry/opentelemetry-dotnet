@@ -14,12 +14,13 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using OpenTelemetry.Common;
+    using OpenTelemetry.Trace.Export;
 
     /// <inheritdoc/>
     public sealed class SpanData : ISpanData
