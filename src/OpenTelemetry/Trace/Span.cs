@@ -212,7 +212,7 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                return this.IsRecordingEvents;
+                return this.Options.HasFlag(SpanOptions.RecordEvents);
             }
         }
 
