@@ -28,43 +28,34 @@ namespace OpenTelemetry.Trace
     public interface ISpan
     {
         /// <summary>
-        /// Gets the span name. Use <code>UpdateSpan</code> to explicitly set the span name.
-        /// </summary>
-        string Name { get; }
-
-        /// <summary>
         /// Gets the span context.
         /// </summary>
         ISpanContext Context { get; }
 
         /// <summary>
-        /// Gets the span options.
+        /// Gets a value indicating whether this span will be recorded.
         /// </summary>
-        SpanOptions Options { get; }
+        bool IsRecordingEvents { get; }
 
         /// <summary>
-        /// Gets or sets the status of the span execution.
+        /// Sets the status of the span execution.
         /// </summary>
-        Status Status { get; set; }
-
-        /// <summary>
-        /// Gets or sets the kind of a span.
-        /// </summary>
-        SpanKind? Kind { get; set; }
+        Status Status { set; }
 
         /// <summary>
         /// Gets a value indicating whether this span was already stopped.
         /// </summary>
+        /// <remarks>This method is not compliant with the specification. https://github.com/open-telemetry/opentelemetry-specification/issues/55</remarks>
         bool HasEnded { get; }
 
         /// <summary>
-        /// Updates the <code>Span</code> name.
+        /// Updates the <see cref="Span"/> name.
         ///
-        /// If used, this will override the name provided via <code>SpanBuilder</code>.
-        /// Upon this update, any sampling behavior based on <code>Span</code> name will depend on the
+        /// If used, this will override the name provided via <see cref="ISpanBuilder"/>.
+        /// Upon this update, any sampling behavior based on <see cref="Span"/> name will depend on the
         /// implementation.
         /// </summary>
-        /// <param name="name">name of the span.</param>
+        /// <param name="name">Name of the span.</param>
         void UpdateName(string name);
 
         /// <summary>
@@ -75,10 +66,32 @@ namespace OpenTelemetry.Trace
         void SetAttribute(string key, IAttributeValue value);
 
         /// <summary>
-        /// Puts a list of attributes to the span.
+        /// Puts a new attribute to the span.
         /// </summary>
-        /// <param name="attributes">Collection of attributes name/value pairs.</param>
-        void SetAttributes(IDictionary<string, IAttributeValue> attributes);
+        /// <param name="key">Key of the attribute.</param>
+        /// <param name="value">Attribute value.</param>
+        void SetAttribute(string key, string value);
+
+        /// <summary>
+        /// Puts a new attribute to the span.
+        /// </summary>
+        /// <param name="key">Key of the attribute.</param>
+        /// <param name="value">Attribute value.</param>
+        void SetAttribute(string key, long value);
+
+        /// <summary>
+        /// Puts a new attribute to the span.
+        /// </summary>
+        /// <param name="key">Key of the attribute.</param>
+        /// <param name="value">Attribute value.</param>
+        void SetAttribute(string key, double value);
+
+        /// <summary>
+        /// Puts a new attribute to the span.
+        /// </summary>
+        /// <param name="key">Key of the attribute.</param>
+        /// <param name="value">Attribute value.</param>
+        void SetAttribute(string key, bool value);
 
         /// <summary>
         /// Adds a single <see cref="IEvent"/> to the <see cref="ISpan"/>.

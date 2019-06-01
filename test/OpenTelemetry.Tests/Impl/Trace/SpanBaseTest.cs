@@ -48,41 +48,40 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void NewSpan_WithNullContext()
         {
-            Assert.Throws<ArgumentNullException>(() => new NoopSpan(null, default(SpanOptions)));
+            Assert.Throws<ArgumentNullException>(() => new TestSpan(null, default(SpanOptions)));
         }
 
 
         [Fact]
         public void GetOptions_WhenNullOptions()
         {
-            ISpan span = new NoopSpan(notSampledSpanContext, default(SpanOptions));
+            var span = new TestSpan(notSampledSpanContext, default(SpanOptions));
             Assert.Equal(SpanOptions.None, span.Options);
         }
 
         [Fact]
         public void GetContextAndOptions()
         {
-            ISpan span = new NoopSpan(spanContext, spanOptions);
+            var span = new TestSpan(spanContext, spanOptions);
             Assert.Equal(spanContext, span.Context);
             Assert.Equal(spanOptions, span.Options);
         }
 
         [Fact]
-        public void PutAttributeCallsAddAttributesByDefault()
+        public void PutAttributeCallsAddAttributeByDefault()
         {
-            var mockSpan = new Mock<NoopSpan>(spanContext, spanOptions) { CallBase = true };
-            NoopSpan span = mockSpan.Object;
+            var mockSpan = new Mock<TestSpan>(spanContext, spanOptions) { CallBase = true };
+            TestSpan span = mockSpan.Object;
             IAttributeValue val = AttributeValue<bool>.Create(true);
             span.SetAttribute("MyKey", val);
             span.End();
-            mockSpan.Verify((s) => s.SetAttributes(It.Is<IDictionary<string, IAttributeValue>>((d) => d.ContainsKey("MyKey"))));
-    
+            mockSpan.Verify((s) => s.SetAttribute(It.Is<string>((arg) => arg == "MyKey"), It.Is<IAttributeValue>((v) => v == val)));
         }
 
         [Fact]
         public void EndCallsEndWithDefaultOptions()
         {
-            var mockSpan = new Mock<NoopSpan>(spanContext, spanOptions) { CallBase = true };
+            var mockSpan = new Mock<TestSpan>(spanContext, spanOptions) { CallBase = true };
             var span = mockSpan.Object;
             span.End();
             mockSpan.Verify((s) => s.End(EndSpanOptions.Default));

@@ -171,52 +171,54 @@ namespace OpenTelemetry.Trace
         {
             span.PutHttpStatusCodeAttribute(statusCode);
 
+            Status newStatus = Status.Ok;
+
             if ((int)statusCode < 200)
             {
-                span.Status = Status.Unknown;
+                newStatus = Status.Unknown;
             }
             else if ((int)statusCode >= 200 && (int)statusCode <= 399)
             {
-                span.Status = Status.Ok;
+                newStatus = Status.Ok;
             }
             else if ((int)statusCode == 400)
             {
-                span.Status = Status.InvalidArgument;
+                newStatus = Status.InvalidArgument;
             }
             else if ((int)statusCode == 401)
             {
-                span.Status = Status.Unauthenticated;
+                newStatus = Status.Unauthenticated;
             }
             else if ((int)statusCode == 403)
             {
-                span.Status = Status.PermissionDenied;
+                newStatus = Status.PermissionDenied;
             }
             else if ((int)statusCode == 404)
             {
-                span.Status = Status.NotFound;
+                newStatus = Status.NotFound;
             }
             else if ((int)statusCode == 429)
             {
-                span.Status = Status.ResourceExhausted;
+                newStatus = Status.ResourceExhausted;
             }
             else if ((int)statusCode == 501)
             {
-                span.Status = Status.Unimplemented;
+                newStatus = Status.Unimplemented;
             }
             else if ((int)statusCode == 503)
             {
-                span.Status = Status.Unavailable;
+                newStatus = Status.Unavailable;
             }
             else if ((int)statusCode == 504)
             {
-                span.Status = Status.DeadlineExceeded;
+                newStatus = Status.DeadlineExceeded;
             }
             else
             {
-                span.Status = Status.Unknown;
+                newStatus = Status.Unknown;
             }
 
-            span.Status = span.Status.WithDescription(reasonPhrase);
+            span.Status = newStatus.WithDescription(reasonPhrase);
 
             return span;
         }

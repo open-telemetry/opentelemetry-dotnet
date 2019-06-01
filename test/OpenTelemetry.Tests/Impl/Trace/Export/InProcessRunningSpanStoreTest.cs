@@ -49,6 +49,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 spanContext,
                 recordSpanOptions,
                 spanName,
+                SpanKind.Internal,
                 SpanId.GenerateRandomId(random),
                 TraceParams.Default,
                 startEndHandler,
