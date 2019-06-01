@@ -64,14 +64,13 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             }
 
             var result = parentOptions.IsSampled;
-            bool hasRemoteParent = false;
             var spanId = SpanId.FromBytes(Guid.NewGuid().ToByteArray(), 8);
             var traceOptions = TraceOptions.Default;
 
             if (sampler != null)
             {
                 var builder = TraceOptions.Builder(parentContext.TraceOptions);
-                result = sampler.ShouldSample(parentContext, hasRemoteParent, traceId, spanId, name, null);
+                result = sampler.ShouldSample(parentContext, traceId, spanId, name, null);
                 builder = builder.SetIsSampled(result);
                 traceOptions = builder.Build();
             }
@@ -83,8 +82,6 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 
         internal static ISpanData ProfiledCommandToSpanData(ISpanContext context, string name, ISpanId parentSpanId, IProfiledCommand command)
         {
-            var hasRemoteParent = false;
-
             // use https://github.com/opentracing/specification/blob/master/semantic_conventions.md for now
 
             // Timing example:
@@ -107,7 +104,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
                 {
                     TimedEvent<IEvent>.Create(Timestamp.FromMillis(timestamp.ToUnixTimeMilliseconds()), Event.Create("Enqueued")),
                     TimedEvent<IEvent>.Create(Timestamp.FromMillis((timestamp = timestamp.Add(command.EnqueuedToSending)).ToUnixTimeMilliseconds()), Event.Create("Sent")),
-                    TimedEvent<IEvent>.Create(Timestamp.FromMillis((timestamp = timestamp.Add(command.SentToResponse)).ToUnixTimeMilliseconds()), Event.Create("ResponseRecieved")),
+                    TimedEvent<IEvent>.Create(Timestamp.FromMillis(timestamp.Add(command.SentToResponse).ToUnixTimeMilliseconds()), Event.Create("ResponseRecieved")),
                 },
                 droppedEventsCount: 0);
 
@@ -147,7 +144,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             Status status = Status.Ok;
             SpanKind kind = SpanKind.Client;
 
-            return SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            return SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
         }
     }
 }

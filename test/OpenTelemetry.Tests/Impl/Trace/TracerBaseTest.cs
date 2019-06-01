@@ -121,31 +121,31 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SpanBuilderWithParentAndName_NullName()
         {
-            Assert.Throws<ArgumentNullException>(() => noopTracer.SpanBuilderWithExplicitParent(spanName: null, parent: null));
+            Assert.Throws<ArgumentNullException>(() => noopTracer.SpanBuilderWithParent(name: null, parent: null));
         }
 
         [Fact]
         public void DefaultSpanBuilderWithParentAndName()
         {
-            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithExplicitParent(SPAN_NAME, parent: null).StartSpan());
+            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithParent(SPAN_NAME, parent: null).StartSpan());
         }
 
         [Fact]
-        public void spanBuilderWithRemoteParent_NullName()
+        public void DefaultSpanBuilderWithParentContext_NullName()
         {
-            Assert.Throws<ArgumentNullException>(() => noopTracer.SpanBuilderWithRemoteParent(null, remoteParentSpanContext: null));
+            Assert.Throws<ArgumentNullException>(() => noopTracer.SpanBuilderWithParentContext(null, parentContext: null));
         }
 
         [Fact]
-        public void DefaultSpanBuilderWithRemoteParent_NullParent()
+        public void DefaultSpanBuilderWithParentContext_NullParent()
         {
-            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithRemoteParent(SPAN_NAME, remoteParentSpanContext: null).StartSpan());
+            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithParentContext(SPAN_NAME, parentContext: null).StartSpan());
         }
 
         [Fact]
-        public void DefaultSpanBuilderWithRemoteParent()
+        public void DefaultSpanBuilderWithParentContext()
         {
-            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithRemoteParent(SPAN_NAME, remoteParentSpanContext: SpanContext.Blank).StartSpan());
+            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithParentContext(SPAN_NAME, parentContext: SpanContext.Blank).StartSpan());
         }
 
         [Fact]
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Trace.Test
             try
             {
                 Assert.Same(span, tracer.CurrentSpan);
-                Mock.Get(tracer).Setup((tracer) => tracer.SpanBuilderWithExplicitParent(SPAN_NAME, SpanKind.Internal, span)).Returns(spanBuilder);
+                Mock.Get(tracer).Setup((tracer) => tracer.SpanBuilderWithParent(SPAN_NAME, SpanKind.Internal, span)).Returns(spanBuilder);
                 Assert.Same(spanBuilder, tracer.SpanBuilder(SPAN_NAME));
             }
             finally
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Trace.Test
             try
             {
                 Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
-                Mock.Get(tracer).Setup((t) => t.SpanBuilderWithExplicitParent(SPAN_NAME, SpanKind.Internal, BlankSpan.Instance)).Returns(spanBuilder);
+                Mock.Get(tracer).Setup((t) => t.SpanBuilderWithParent(SPAN_NAME, SpanKind.Internal, BlankSpan.Instance)).Returns(spanBuilder);
                 Assert.Same(spanBuilder, tracer.SpanBuilder(SPAN_NAME));
             }
             finally

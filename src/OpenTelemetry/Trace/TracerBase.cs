@@ -55,14 +55,14 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ISpanBuilder SpanBuilder(string spanName, SpanKind spanKind = SpanKind.Internal)
         {
-            return this.SpanBuilderWithExplicitParent(spanName, spanKind, CurrentSpanUtils.CurrentSpan);
+            return this.SpanBuilderWithParent(spanName, spanKind, CurrentSpanUtils.CurrentSpan);
         }
 
         /// <inheritdoc/>
-        public abstract ISpanBuilder SpanBuilderWithExplicitParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpan parent = null);
+        public abstract ISpanBuilder SpanBuilderWithParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpan parent = null);
 
         /// <inheritdoc/>
-        public abstract ISpanBuilder SpanBuilderWithRemoteParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpanContext remoteParentSpanContext = null);
+        public abstract ISpanBuilder SpanBuilderWithParentContext(string spanName, SpanKind spanKind = SpanKind.Internal, ISpanContext remoteParentSpanContext = null);
 
         /// <inheritdoc/>
         public abstract void RecordSpanData(ISpanData span);

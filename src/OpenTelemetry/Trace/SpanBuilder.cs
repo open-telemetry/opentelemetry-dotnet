@@ -22,13 +22,14 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
 
+    /// <inheritdoc/>
     public class SpanBuilder : SpanBuilderBase
     {
-        private SpanBuilder(string name, SpanKind kind, SpanBuilderOptions options, ISpanContext remoteParentSpanContext = null, ISpan parent = null) : base(kind)
+        private SpanBuilder(string name, SpanKind kind, SpanBuilderOptions options, ISpanContext parentContext = null, ISpan parent = null) : base(kind)
         {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.Parent = parent;
-            this.RemoteParentSpanContext = remoteParentSpanContext;
+            this.ParentSpanContext = parentContext;
             this.Options = options;
         }
 
@@ -38,7 +39,7 @@ namespace OpenTelemetry.Trace
 
         private ISpan Parent { get; set; }
 
-        private ISpanContext RemoteParentSpanContext { get; set; }
+        private ISpanContext ParentSpanContext { get; set; }
 
         private ISampler Sampler { get; set; }
 
@@ -46,17 +47,16 @@ namespace OpenTelemetry.Trace
 
         private bool RecordEvents { get; set; }
 
+        /// <inheritdoc/>
         public override ISpan StartSpan()
         {
-            ISpanContext parentContext = this.RemoteParentSpanContext;
-            bool hasRemoteParent = true;
+            ISpanContext parentContext = this.ParentSpanContext;
             Timer timestampConverter = null;
-            if (this.RemoteParentSpanContext == null)
+            if (this.ParentSpanContext == null)
             {
                 // This is not a child of a remote Span. Get the parent SpanContext from the parent Span if
                 // any.
                 ISpan parent = this.Parent;
-                hasRemoteParent = false;
                 if (parent != null)
                 {
                     parentContext = parent.Context;
@@ -68,15 +68,10 @@ namespace OpenTelemetry.Trace
                         timestampConverter = ((Span)parent).TimestampConverter;
                     }
                 }
-                else
-                {
-                    hasRemoteParent = false;
-                }
             }
 
             return this.StartSpanInternal(
                 parentContext,
-                hasRemoteParent,
                 this.Name,
                 this.Sampler,
                 this.ParentLinks,
@@ -84,32 +79,35 @@ namespace OpenTelemetry.Trace
                 timestampConverter);
         }
 
+        /// <inheritdoc/>
         public override ISpanBuilder SetSampler(ISampler sampler)
         {
             this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             return this;
         }
 
+        /// <inheritdoc/>
         public override ISpanBuilder SetParentLinks(IEnumerable<ISpan> parentLinks)
         {
             this.ParentLinks = parentLinks ?? throw new ArgumentNullException(nameof(parentLinks));
             return this;
         }
 
+        /// <inheritdoc/>
         public override ISpanBuilder SetRecordEvents(bool recordEvents)
         {
             this.RecordEvents = recordEvents;
             return this;
         }
 
-        internal static ISpanBuilder CreateWithParent(string spanName, SpanKind kind, ISpan parent, SpanBuilderOptions options)
+        internal static ISpanBuilder Create(string name, SpanKind kind, ISpan parent, SpanBuilderOptions options)
         {
-            return new SpanBuilder(spanName, kind, options, null, parent);
+            return new SpanBuilder(name, kind, options, null, parent);
         }
 
-        internal static ISpanBuilder CreateWithRemoteParent(string spanName, SpanKind kind, ISpanContext remoteParentSpanContext, SpanBuilderOptions options)
+        internal static ISpanBuilder Create(string name, SpanKind kind, ISpanContext parentContext, SpanBuilderOptions options)
         {
-            return new SpanBuilder(spanName, kind, options, remoteParentSpanContext, null);
+            return new SpanBuilder(name, kind, options, parentContext, null);
         }
 
         private static bool IsAnyParentLinkSampled(IEnumerable<ISpan> parentLinks)
@@ -140,7 +138,6 @@ namespace OpenTelemetry.Trace
 
         private static bool MakeSamplingDecision(
             ISpanContext parent,
-            bool hasRemoteParent,
             string name,
             ISampler sampler,
             IEnumerable<ISpan> parentLinks,
@@ -151,16 +148,16 @@ namespace OpenTelemetry.Trace
             // If users set a specific sampler in the SpanBuilder, use it.
             if (sampler != null)
             {
-                return sampler.ShouldSample(parent, hasRemoteParent, traceId, spanId, name, parentLinks);
+                return sampler.ShouldSample(parent, traceId, spanId, name, parentLinks);
             }
 
             // Use the default sampler if this is a root Span or this is an entry point Span (has remote
             // parent).
-            if (hasRemoteParent || parent == null || !parent.IsValid)
+            if (parent == null || !parent.IsValid)
             {
                 return activeTraceParams
                     .Sampler
-                    .ShouldSample(parent, hasRemoteParent, traceId, spanId, name, parentLinks);
+                    .ShouldSample(parent, traceId, spanId, name, parentLinks);
             }
 
             // Parent is always different than null because otherwise we use the default sampler.
@@ -169,7 +166,6 @@ namespace OpenTelemetry.Trace
 
         private ISpan StartSpanInternal(
                      ISpanContext parent,
-                     bool hasRemoteParent,
                      string name,
                      ISampler sampler,
                      IEnumerable<ISpan> parentLinks,
@@ -187,10 +183,6 @@ namespace OpenTelemetry.Trace
                 // New root span.
                 traceId = TraceId.GenerateRandomId(random);
                 traceOptionsBuilder = TraceOptions.Builder();
-
-                // This is a root span so no remote or local parent.
-                // hasRemoteParent = null;
-                hasRemoteParent = false;
             }
             else
             {
@@ -203,7 +195,6 @@ namespace OpenTelemetry.Trace
             traceOptionsBuilder.SetIsSampled(
                  MakeSamplingDecision(
                     parent,
-                    hasRemoteParent,
                     name,
                     sampler,
                     parentLinks,
@@ -223,7 +214,6 @@ namespace OpenTelemetry.Trace
                         spanOptions,
                         name,
                         parentSpanId,
-                        hasRemoteParent,
                         activeTraceParams,
                         this.Options.StartEndHandler,
                         timestampConverter);

@@ -79,8 +79,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksRequest()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             // ARRANGE
 
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
             context = SpanContext.Create(
                 context.TraceId,
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     .Set("k2", "v2")
                     .Build());
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -142,11 +142,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksRequestWithParent()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
             parentSpanId = SpanId.FromBytes(this.testParentSpanIdBytes);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -159,11 +159,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksRequestWithInvalidParent()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
             parentSpanId = SpanId.Invalid;
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -176,11 +176,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksRequestWithStatus()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
             status = Status.Ok;
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -197,11 +197,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksRequestWithStatusAndDescription()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
             status = Status.Ok.WithDescription("all good");
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -219,11 +219,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksRequestWithNonSuccessStatusAndDescription()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
             status = Status.Cancelled.WithDescription("all bad");
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
 
             // ACT
@@ -241,11 +241,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestErrorAttribute()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "error", AttributeValue.BooleanAttributeValue(true) } }, 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -258,11 +258,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksClientDependency()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
             kind = SpanKind.Client;
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -292,11 +292,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksProducerDependency()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
             kind = SpanKind.Producer;
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -326,7 +326,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksDependencyWithTracestate()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
             kind = SpanKind.Client;
             context = SpanContext.Create(
@@ -339,7 +339,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     .Build());
 
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -363,11 +363,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             // ARRANGE
             var now = DateTime.UtcNow;
 
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
             kind = SpanKind.Client;
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
 
             span.TimeEvents = new Span.Types.TimeEvents
@@ -433,10 +433,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksDependencyWithParent()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
             parentSpanId = SpanId.FromBytes(this.testParentSpanIdBytes);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -450,10 +450,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksDependencyWithStatus()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
             status = Status.Ok;
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -471,10 +471,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksDependencyWithStatusAndDescription()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
             status = Status.Ok.WithDescription("all good");
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -494,10 +494,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksDependencyWithNonSuccessStatusAndDescription()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
             status = Status.Cancelled.WithDescription("all bad");
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -515,10 +515,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksDependencyErrorAttribute()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "error", AttributeValue.BooleanAttributeValue(true) } }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -530,11 +530,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnServerSpanKindAttribute()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("server") } }, 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -544,11 +544,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnClientSpanKindAttribute()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("client") } }, 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -558,11 +558,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnProducerSpanKindAttribute()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("producer") } }, 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -572,11 +572,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnConsumerSpanKindAttribute()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("consumer") } }, 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -586,11 +586,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnOtherSpanKindAttribute()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("other") } }, 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -600,10 +600,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnSpanKindProperty()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             parentSpanId = SpanId.FromBytes(this.testParentSpanIdBytes);
-            hasRemoteParent = null;
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -613,11 +612,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksDependencyBasedOnSpanKindProperty()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
             parentSpanId = SpanId.FromBytes(this.testParentSpanIdBytes);
-            hasRemoteParent = null;
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -625,12 +623,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         }
 
         [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksDependenciesBasedOnSpanKindAttribute()
+        public void OpenTelemetryTelemetryConverterTests_TracksDependencyBasedOnSpanKindAttribute()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Internal;
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("client") } }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -638,36 +636,22 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         }
 
         [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnSameProcessAsParentFlag()
+        public void OpenTelemetryTelemetryConverterTests_TracksDependencyBasedOnSameProcessAsParentFlag()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Internal;
-            hasRemoteParent = true;
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
-            var sentItems = this.ConvertSpan(span);
-
-            Assert.True(sentItems.Single() is RequestTelemetry);
-        }
-
-        [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksDepednencyBasedOnSameProcessAsParentFlag()
-        {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
-            kind = SpanKind.Internal;
-            hasRemoteParent = false;
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
             var sentItems = this.ConvertSpan(span);
 
             Assert.True(sentItems.Single() is DependencyTelemetry);
         }
 
         [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksDepednencyBasedOnSameProcessAsParentFlagNotSet()
+        public void OpenTelemetryTelemetryConverterTests_TracksDependencyBasedOnSameProcessAsParentFlagNotSet()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Internal;
-            hasRemoteParent = null;
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -678,9 +662,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         //[Fact]
         //public void OpenTelemetryTelemetryConverterTests_TracksRequestWithoutName()
         //{
-        //    this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+        //    this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
         //    name = null;
-        //    var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+        //    var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
         //    var sentItems = this.ConvertSpan(span);
 
@@ -690,9 +674,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksDependencyWithoutKind()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Internal;
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -703,10 +687,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         //[Fact]
         //public void OpenTelemetryTelemetryConverterTests_TracksRequestWithoutStartAndEndTime()
         //{
-        //    this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+        //    this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
         //    startTimestamp = null;
         //    endTimestamp = null;
-        //    var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+        //    var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
         //    var sentItems = this.ConvertSpan(span);
 
@@ -718,7 +702,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpRequestWithUrl()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
@@ -727,7 +711,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.method", AttributeValue.StringAttributeValue("POST") },
                     { "http.status_code", AttributeValue.LongAttributeValue(409) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -740,7 +724,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpRequestWithRelativeUrl()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
@@ -749,7 +733,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.method", AttributeValue.StringAttributeValue("POST") },
                     { "http.status_code", AttributeValue.LongAttributeValue(409) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -762,7 +746,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpRequestWithUrlAndRoute()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
@@ -772,7 +756,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.route", AttributeValue.StringAttributeValue("route") },
                     { "http.status_code", AttributeValue.LongAttributeValue(503) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -785,7 +769,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpRequestWithUrlAndNoMethod()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
@@ -793,7 +777,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.url", AttributeValue.StringAttributeValue(url.ToString()) },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -806,7 +790,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpRequestWithUrlOtherAttributesAreIgnored()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
@@ -818,7 +802,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.port", AttributeValue.LongAttributeValue(8080) },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -832,14 +816,14 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksRequestWithStringStatusCode()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
                 {
                     { "http.status_code", AttributeValue.LongAttributeValue(201) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -853,7 +837,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpRequestHostPortPathAttributes()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
@@ -864,7 +848,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.port", AttributeValue.LongAttributeValue(123) },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -877,7 +861,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpRequestPortPathAndEmptyHostAttributes()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "HttpIn";
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
                 {
@@ -887,7 +871,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.port", AttributeValue.LongAttributeValue(123) },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -900,7 +884,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpRequestHostPathAttributes()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
@@ -910,7 +894,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.host", AttributeValue.StringAttributeValue("host") },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -923,7 +907,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpRequestHostAttributes()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "HttpIn";
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
                 {
@@ -931,7 +915,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.host", AttributeValue.StringAttributeValue("host") },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -944,7 +928,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpRequestOnlyMethodAttributes()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
@@ -952,7 +936,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.method", AttributeValue.StringAttributeValue("POST") },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -966,7 +950,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksDependencyWithStringStatusCode()
         {
             // ARRANGE
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             kind = SpanKind.Client;
             name = "HttpIn";
@@ -974,7 +958,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 {
                     { "http.status_code", AttributeValue.LongAttributeValue(201) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
             var sentItems = this.ConvertSpan(span);
@@ -988,7 +972,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpRequestUserAgent()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host/path");
             var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36";
             name = "HttpIn";
@@ -997,7 +981,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.url", AttributeValue.StringAttributeValue(url.ToString()) },
                     { "http.user_agent", AttributeValue.StringAttributeValue(userAgent) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1008,7 +992,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpDependencyWithUrl()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpOut";
             kind = SpanKind.Client;
@@ -1018,7 +1002,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.method", AttributeValue.StringAttributeValue("POST") },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1033,7 +1017,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpDependencyWithRelativeUrl()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpOut";
             kind = SpanKind.Client;
@@ -1043,7 +1027,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.method", AttributeValue.StringAttributeValue("POST") },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1058,7 +1042,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpDependencyWithUrlIgnoresHostPortPath()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpOut";
             kind = SpanKind.Client;
@@ -1071,7 +1055,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.port", AttributeValue.LongAttributeValue(8080) },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1086,7 +1070,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpDependencyWithHostPortPath()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "HttpOut";
             kind = SpanKind.Client;
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
@@ -1097,7 +1081,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.port", AttributeValue.LongAttributeValue(123) },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1112,7 +1096,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpDependencyWithHostPort()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "HttpOut";
             kind = SpanKind.Client;
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
@@ -1122,7 +1106,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.port", AttributeValue.LongAttributeValue(123) },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1137,7 +1121,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpDependencyWithPathAndEmptyHost()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "HttpOut";
             kind = SpanKind.Client;
             attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
@@ -1147,7 +1131,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.host", AttributeValue.StringAttributeValue("") },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1162,7 +1146,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpDependencyWithHost()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpOut";
             kind = SpanKind.Client;
@@ -1172,7 +1156,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.host", AttributeValue.StringAttributeValue("host") },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1187,7 +1171,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpDependencyWithMethod()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpOut";
             kind = SpanKind.Client;
@@ -1196,7 +1180,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "http.method", AttributeValue.StringAttributeValue("POST") },
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
 
             var sentItems = this.ConvertSpan(span);
@@ -1212,7 +1196,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksHttpDependencyWithStatusCodeOnly()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpOut";
             kind = SpanKind.Client;
@@ -1220,7 +1204,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 {
                     { "http.status_code", AttributeValue.LongAttributeValue(200) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1235,7 +1219,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksDependencyWithCustomAttributes()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "spanName";
             kind = SpanKind.Client;
@@ -1245,7 +1229,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "custom.longAttribute", AttributeValue.LongAttributeValue(long.MaxValue) },
                     { "custom.boolAttribute", AttributeValue.BooleanAttributeValue(true) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1265,7 +1249,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestsWithCustomAttributes()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "spanName";
             kind = SpanKind.Server;
@@ -1275,7 +1259,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     { "custom.longAttribute", AttributeValue.LongAttributeValue(long.MaxValue) },
                     { "custom.boolAttribute", AttributeValue.BooleanAttributeValue(true) },
                 }, 0);
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1303,7 +1287,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var (link1SpanId, link1SpanIdBytes) = GenerateRandomId(8);
             var (link2SpanId, link2SpanIdBytes) = GenerateRandomId(8);
 
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "spanName";
             kind = SpanKind.Client;
 
@@ -1318,7 +1302,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                         SpanContext.Create(TraceId.FromBytes(link2TraceIdBytes), SpanId.FromBytes(link2SpanIdBytes), TraceOptions.Default, Tracestate.Empty), LinkType.Unspecified),
                 }, 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1353,7 +1337,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksDependencyWithLinksAndAttributes()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "spanName";
             kind = SpanKind.Client;
 
@@ -1376,7 +1360,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 },
                 droppedLinksCount: 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1404,7 +1388,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var (link1SpanId, link1SpanIdBytes) = GenerateRandomId(8);
             var (link2SpanId, link2SpanIdBytes) = GenerateRandomId(8);
 
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "spanName";
             kind = SpanKind.Server;
 
@@ -1418,7 +1402,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                         SpanContext.Create(TraceId.FromBytes(link2TraceIdBytes), SpanId.FromBytes(link2SpanIdBytes), TraceOptions.Default, Tracestate.Empty), LinkType.Unspecified),
             }, 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1453,7 +1437,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestWithLinksAndAttributes()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "spanName";
             kind = SpanKind.Server;
 
@@ -1476,7 +1460,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 },
                 droppedLinksCount: 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1496,7 +1480,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestWithEvents()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             Thread.Sleep(TimeSpan.FromTicks(10));
             name = "spanName";
             kind = SpanKind.Server;
@@ -1514,7 +1498,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 },
                 droppedEventsCount: 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1621,7 +1605,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksDependenciesWithEvents()
         {
-            this.GetDefaults(out var context, out var parentSpanId, out var hasRemoteParent, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+            this.GetDefaults(out var context, out var parentSpanId, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             nowDateTimeOffset = nowDateTimeOffset.Subtract(TimeSpan.FromSeconds(1));
             name = "spanName";
             kind = SpanKind.Client;
@@ -1639,7 +1623,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 },
                 droppedEventsCount: 0);
 
-            var span = SpanData.Create(context, parentSpanId, hasRemoteParent, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            var span = SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
 
@@ -1901,7 +1885,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         private void GetDefaults(
             out ISpanContext context,
             out ISpanId parentSpanId,
-            out bool? hasRemoteParent,
             out string name,
             out Timestamp startTimestamp,
             out IAttributes attributes,
@@ -1914,7 +1897,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             context = SpanContext.Create(TraceId.FromBytes(this.testTraceIdBytes), SpanId.FromBytes(this.testSpanIdBytes), TraceOptions.Default, Tracestate.Empty);
             parentSpanId = SpanId.Invalid;
-            hasRemoteParent = null;
             name = "spanName";
             startTimestamp = NowTimestamp.AddDuration(Duration.Create(TimeSpan.FromSeconds(-1)));
             attributes = null;

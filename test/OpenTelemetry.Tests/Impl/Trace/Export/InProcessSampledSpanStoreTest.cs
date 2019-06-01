@@ -316,7 +316,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 recordSpanOptions,
                 spanName,
                 parentSpanId,
-                false,
                 TraceParams.Default,
                 startEndHandler,
                 timestampConverter);
@@ -329,7 +328,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 recordSpanOptions,
                 spanName,
                 parentSpanId,
-                false,
                 TraceParams.Default,
                 startEndHandler,
                 timestampConverter);

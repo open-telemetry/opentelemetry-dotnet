@@ -147,11 +147,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             }
             else if (spanData.Kind == SpanKind.Client)
             {
-                if (spanData.HasRemoteParent.HasValue && spanData.HasRemoteParent.Value)
-                {
-                    return ZipkinSpanKind.SERVER;
-                }
-
                 return ZipkinSpanKind.CLIENT;
             }
 

@@ -21,30 +21,15 @@ namespace OpenTelemetry.Trace.Sampler
     /// </summary>
     public sealed class Samplers
     {
-        private static readonly ISampler AlwaysSampleInstance = new AlwaysSampleSampler();
-        private static readonly ISampler NeverSampleInstance = new NeverSampleSampler();
-
         /// <summary>
         /// Gets the sampler that always sample.
         /// </summary>
-        public static ISampler AlwaysSample
-        {
-            get
-            {
-                return AlwaysSampleInstance;
-            }
-        }
+        public static ISampler AlwaysSample { get; } = new AlwaysSampleSampler();
 
         /// <summary>
         /// Gets the sampler than never samples.
         /// </summary>
-        public static ISampler NeverSample
-        {
-            get
-            {
-                return NeverSampleInstance;
-            }
-        }
+        public static ISampler NeverSample { get; } = new NeverSampleSampler();
 
         /// <summary>
         /// Gets the probability sampler.
