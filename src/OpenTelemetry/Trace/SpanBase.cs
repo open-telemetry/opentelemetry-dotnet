@@ -53,20 +53,21 @@ namespace OpenTelemetry.Trace
             this.Options = options;
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Gets the span name. Use <see cref="UpdateName"/> to explicitly set the span name.
+        /// </summary>
         public abstract string Name { get; protected set; }
 
         /// <inheritdoc/>
         public virtual ISpanContext Context { get; }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Gets the span options.
+        /// </summary>
         public virtual SpanOptions Options { get; }
 
         /// <inheritdoc/>
         public abstract Status Status { get; set; }
-
-        /// <inheritdoc/>
-        public abstract SpanKind? Kind { get; set; }
 
         /// <inheritdoc/>
         public SpanBase Next { get; set; }
@@ -98,7 +99,10 @@ namespace OpenTelemetry.Trace
         /// Gets a value indicating whether this span was already stopped.
         /// </summary>
         public abstract bool HasEnded { get; }
-        
+
+        /// <inheritdoc/>
+        public abstract bool IsRecordingEvents { get; }
+
         /// <inheritdoc/>
         public void UpdateName(string name)
         {
@@ -106,13 +110,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public virtual void SetAttribute(string key, IAttributeValue value)
-        {
-            this.SetAttributes(new Dictionary<string, IAttributeValue>() { { key, value } });
-        }
-
-        /// <inheritdoc/>
-        public abstract void SetAttributes(IDictionary<string, IAttributeValue> attributes);
+        public abstract void SetAttribute(string key, IAttributeValue value);
 
         /// <inheritdoc/>
         public void AddEvent(string name)
@@ -151,5 +149,17 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <returns>Span Data corresponding current span.</returns>
         public abstract ISpanData ToSpanData();
+
+        /// <inheritdoc/>
+        public abstract void SetAttribute(string key, string value);
+        
+        /// <inheritdoc/>
+        public abstract void SetAttribute(string key, long value);
+        
+        /// <inheritdoc/>
+        public abstract void SetAttribute(string key, double value);
+        
+        /// <inheritdoc/>
+        public abstract void SetAttribute(string key, bool value);
     }
 }

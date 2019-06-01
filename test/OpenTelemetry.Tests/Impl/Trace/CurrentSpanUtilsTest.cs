@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace.Test
                     Tracestate.Empty);
 
             spanOptions = SpanOptions.RecordEvents;
-            var mockSpan = new Mock<NoopSpan>(spanContext, spanOptions) { CallBase = true };
+            var mockSpan = new Mock<TestSpan>(spanContext, spanOptions) { CallBase = true };
             span = mockSpan.Object;
         }
 

@@ -44,6 +44,7 @@ namespace OpenTelemetry.Trace
                 ISpanContext context,
                 SpanOptions options,
                 string name,
+                SpanKind spanKind,
                 ISpanId parentSpanId,
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
@@ -56,7 +57,8 @@ namespace OpenTelemetry.Trace
             this.startEndHandler = startEndHandler;
             this.hasBeenEnded = false;
             this.sampleToLocalSpanStore = false;
-            if (options.HasFlag(SpanOptions.RecordEvents))
+            this.Kind = spanKind;
+            if (this.IsRecordingEvents)
             {
                 if (timestampConverter == null)
                 {
@@ -79,6 +81,11 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override string Name { get; protected set; }
 
+        /// <summary>
+        /// Gets or sets span kind.
+        /// </summary>
+        internal SpanKind? Kind { get; set; }
+
         /// <inheritdoc/>
         public override Status Status
         {
@@ -92,7 +99,7 @@ namespace OpenTelemetry.Trace
 
             set
             {
-                if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+                if (!this.IsRecordingEvents)
                 {
                     return;
                 }
@@ -108,14 +115,6 @@ namespace OpenTelemetry.Trace
                     this.status = value;
                 }
             }
-        }
-
-        /// <inheritdoc/>
-        public override SpanKind? Kind
-        {
-            get;
-
-            set; // TODO: do we need to notify when attempt to set on already closed Span?
         }
 
         /// <inheritdoc/>
@@ -209,10 +208,20 @@ namespace OpenTelemetry.Trace
 
         private Status StatusWithDefault => this.status ?? Trace.Status.Ok;
 
+        public override bool IsRecordingEvents
+        {
+            get
+            {
+                return this.Options.HasFlag(SpanOptions.RecordEvents);
+            }
+        }
+
+
+
         /// <inheritdoc/>
         public override void SetAttribute(string key, IAttributeValue value)
         {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+            if (!this.IsRecordingEvents)
             {
                 return;
             }
@@ -230,29 +239,9 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void SetAttributes(IDictionary<string, IAttributeValue> attributes)
-        {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
-            {
-                return;
-            }
-
-            lock (this.@lock)
-            {
-                if (this.hasBeenEnded)
-                {
-                    // logger.log(Level.FINE, "Calling putAttributes() on an ended Span.");
-                    return;
-                }
-
-                this.InitializedAttributes.PutAttributes(attributes);
-            }
-        }
-
-        /// <inheritdoc/>
         public override void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
         {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+            if (!this.IsRecordingEvents)
             {
                 return;
             }
@@ -272,7 +261,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override void AddEvent(IEvent addEvent)
         {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+            if (!this.IsRecordingEvents)
             {
                 return;
             }
@@ -297,7 +286,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override void AddLink(ILink link)
         {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+            if (!this.IsRecordingEvents)
             {
                 return;
             }
@@ -322,7 +311,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override void End(EndSpanOptions options)
         {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+            if (!this.IsRecordingEvents)
             {
                 return;
             }
@@ -351,7 +340,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override ISpanData ToSpanData()
         {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+            if (!this.IsRecordingEvents)
             {
                 throw new InvalidOperationException("Getting SpanData for a Span without RECORD_EVENTS option.");
             }
@@ -380,6 +369,7 @@ namespace OpenTelemetry.Trace
                         ISpanContext context,
                         SpanOptions options,
                         string name,
+                        SpanKind spanKind,
                         ISpanId parentSpanId,
                         ITraceParams traceParams,
                         IStartEndHandler startEndHandler,
@@ -389,6 +379,7 @@ namespace OpenTelemetry.Trace
                context,
                options,
                name,
+               spanKind,
                parentSpanId,
                traceParams,
                startEndHandler,
@@ -396,7 +387,7 @@ namespace OpenTelemetry.Trace
 
             // Call onStart here instead of calling in the constructor to make sure the span is completely
             // initialized.
-            if (span.Options.HasFlag(SpanOptions.RecordEvents))
+            if (span.IsRecordingEvents)
             {
                 startEndHandler.OnStart(span);
             }
@@ -419,6 +410,51 @@ namespace OpenTelemetry.Trace
             }
 
             return TimedEvents<T>.Create(eventsList, events.NumberOfDroppedEvents);
+        }
+
+        /// <inheritdoc/>
+
+        public override void SetAttribute(string key, string value)
+        {
+            if (!this.IsRecordingEvents)
+            {
+                return;
+            }
+
+            this.SetAttribute(key, AttributeValue.StringAttributeValue(value));
+        }
+
+        /// <inheritdoc/>
+        public override void SetAttribute(string key, long value)
+        {
+            if (!this.IsRecordingEvents)
+            {
+                return;
+            }
+
+            this.SetAttribute(key, AttributeValue.LongAttributeValue(value));
+        }
+
+        /// <inheritdoc/>
+        public override void SetAttribute(string key, double value)
+        {
+            if (!this.IsRecordingEvents)
+            {
+                return;
+            }
+
+            this.SetAttribute(key, AttributeValue.DoubleAttributeValue(value));
+        }
+
+        /// <inheritdoc/>
+        public override void SetAttribute(string key, bool value)
+        {
+            if (!this.IsRecordingEvents)
+            {
+                return;
+            }
+
+            this.SetAttribute(key, AttributeValue.BooleanAttributeValue(value));
         }
     }
 }
