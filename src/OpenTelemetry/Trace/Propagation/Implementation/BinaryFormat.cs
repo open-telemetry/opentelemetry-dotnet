@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace.Propagation.Implementation
         private const int TraceOptionOffset = TraceOptionFieldIdOffset + IdSize;
         private const int FormatLength = (4 * IdSize) + TraceId.Size + SpanId.Size + TraceOptions.Size;
 
-        public override ISpanContext FromByteArray(byte[] bytes)
+        public override SpanContext FromByteArray(byte[] bytes)
         {
             if (bytes == null)
             {
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Trace.Propagation.Implementation
             }
         }
 
-        public override byte[] ToByteArray(ISpanContext spanContext)
+        public override byte[] ToByteArray(SpanContext spanContext)
         {
             if (spanContext == null)
             {

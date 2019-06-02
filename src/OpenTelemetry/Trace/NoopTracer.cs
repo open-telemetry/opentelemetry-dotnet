@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, ISpanContext parentContext = null)
+        public override ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, SpanContext parentContext = null)
         {
             return NoopSpanBuilder.SetParent(name, kind, parentContext);
         }

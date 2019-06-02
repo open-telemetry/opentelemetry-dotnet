@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the span context.
         /// </summary>
-        ISpanContext Context { get; }
+        SpanContext Context { get; }
 
         /// <summary>
         /// Gets a value indicating whether this span will be recorded.
@@ -117,12 +117,6 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="link">Link to add to the span.</param>
         void AddLink(ILink link);
-
-        /// <summary>
-        /// Complete the span and set end span options.
-        /// </summary>
-        /// <param name="options">Span completion options.</param>
-        void End(EndSpanOptions options);
 
         /// <summary>
         /// End the span.

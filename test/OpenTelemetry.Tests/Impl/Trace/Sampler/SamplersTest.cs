@@ -31,8 +31,8 @@ namespace OpenTelemetry.Trace.Sampler.Test
         private readonly ITraceId traceId;
         private readonly ISpanId parentSpanId;
         private readonly ISpanId spanId;
-        private readonly ISpanContext sampledSpanContext;
-        private readonly ISpanContext notSampledSpanContext;
+        private readonly SpanContext sampledSpanContext;
+        private readonly SpanContext notSampledSpanContext;
         private readonly ISpan sampledSpan;
 
         public SamplersTest()
@@ -259,7 +259,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
 
         // Applies the given sampler to NUM_SAMPLE_TRIES random traceId/spanId pairs.
         private static void AssertSamplerSamplesWithProbability(
-            ISampler sampler, ISpanContext parent, IEnumerable<ISpan> parentLinks, double probability)
+            ISampler sampler, SpanContext parent, IEnumerable<ISpan> parentLinks, double probability)
         {
             RandomGenerator random = new RandomGenerator(1234);
             int count = 0; // Count of spans with sampling enabled

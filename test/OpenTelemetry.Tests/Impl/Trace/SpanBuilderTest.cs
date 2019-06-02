@@ -105,7 +105,7 @@ namespace OpenTelemetry.Trace.Test
         public void StartSpan_NullParent()
         {
             var span =
-                SpanBuilder.Create(SPAN_NAME, SpanKind.Internal, (ISpanContext)null, spanBuilderOptions).StartSpan();
+                SpanBuilder.Create(SPAN_NAME, SpanKind.Internal, (SpanContext)null, spanBuilderOptions).StartSpan();
             Assert.True(span.Context.IsValid);
             Assert.True(span.IsRecordingEvents);
             Assert.True(span.Context.TraceOptions.IsSampled);
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartRemoteSpan()
         {
-            ISpanContext spanContext =
+            SpanContext spanContext =
                 SpanContext.Create(
                     TraceId.GenerateRandomId(randomHandler),
                     SpanId.GenerateRandomId(randomHandler),

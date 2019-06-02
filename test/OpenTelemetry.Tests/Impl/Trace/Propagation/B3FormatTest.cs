@@ -68,7 +68,7 @@ namespace OpenTelemetry.Trace.Propagation.Test
             IDictionary<String, String> headersNotSampled = new Dictionary<String, String>();
             headersNotSampled.Add(B3Format.XB3TraceId, TRACE_ID_BASE16);
             headersNotSampled.Add(B3Format.XB3SpanId, SPAN_ID_BASE16);
-            ISpanContext spanContext = SpanContext.Create(TRACE_ID, SPAN_ID, TraceOptions.Default, Tracestate.Empty);
+            SpanContext spanContext = SpanContext.Create(TRACE_ID, SPAN_ID, TraceOptions.Default, Tracestate.Empty);
             Assert.Equal(spanContext, b3Format.Extract(headersNotSampled, getter));
         }
 

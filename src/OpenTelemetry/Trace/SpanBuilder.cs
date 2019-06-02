@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace
     /// <inheritdoc/>
     public class SpanBuilder : SpanBuilderBase
     {
-        private SpanBuilder(string name, SpanKind kind, SpanBuilderOptions options, ISpanContext parentContext = null, ISpan parent = null) : base(kind)
+        private SpanBuilder(string name, SpanKind kind, SpanBuilderOptions options, SpanContext parentContext = null, ISpan parent = null) : base(kind)
         {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.Parent = parent;
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace
 
         private ISpan Parent { get; set; }
 
-        private ISpanContext ParentSpanContext { get; set; }
+        private SpanContext ParentSpanContext { get; set; }
 
         private ISampler Sampler { get; set; }
 
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override ISpan StartSpan()
         {
-            ISpanContext parentContext = this.ParentSpanContext;
+            SpanContext parentContext = this.ParentSpanContext;
             Timer timestampConverter = null;
             if (this.ParentSpanContext == null)
             {
@@ -105,7 +105,7 @@ namespace OpenTelemetry.Trace
             return new SpanBuilder(name, kind, options, null, parent);
         }
 
-        internal static ISpanBuilder Create(string name, SpanKind kind, ISpanContext parentContext, SpanBuilderOptions options)
+        internal static ISpanBuilder Create(string name, SpanKind kind, SpanContext parentContext, SpanBuilderOptions options)
         {
             return new SpanBuilder(name, kind, options, parentContext, null);
         }
@@ -137,7 +137,7 @@ namespace OpenTelemetry.Trace
         }
 
         private static bool MakeSamplingDecision(
-            ISpanContext parent,
+            SpanContext parent,
             string name,
             ISampler sampler,
             IEnumerable<ISpan> parentLinks,
@@ -165,7 +165,7 @@ namespace OpenTelemetry.Trace
         }
 
         private ISpan StartSpanInternal(
-                     ISpanContext parent,
+                     SpanContext parent,
                      string name,
                      ISampler sampler,
                      IEnumerable<ISpan> parentLinks,
