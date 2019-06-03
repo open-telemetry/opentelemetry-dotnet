@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="context">Span context.</param>
         /// <param name="options">Span creation options.</param>
-        protected SpanBase(ISpanContext context, SpanOptions options = SpanOptions.None)
+        protected SpanBase(SpanContext context, SpanOptions options = SpanOptions.None)
         {
             if (context == null)
             {
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace
         public abstract string Name { get; protected set; }
 
         /// <inheritdoc/>
-        public virtual ISpanContext Context { get; }
+        public virtual SpanContext Context { get; }
 
         /// <summary>
         /// Gets the span options.

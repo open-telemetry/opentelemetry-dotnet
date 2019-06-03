@@ -61,7 +61,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         internal ZipkinSpan GenerateSpan(ISpanData spanData, ZipkinEndpoint localEndpoint)
         {
-            ISpanContext context = spanData.Context;
+            SpanContext context = spanData.Context;
             long startTimestamp = this.ToEpochMicroseconds(spanData.StartTimestamp);
             long endTimestamp = this.ToEpochMicroseconds(spanData.EndTimestamp);
 

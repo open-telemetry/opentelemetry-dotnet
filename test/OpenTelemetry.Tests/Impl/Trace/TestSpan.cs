@@ -21,7 +21,7 @@ namespace OpenTelemetry.Trace.Test
 
     public class TestSpan : SpanBase
     {
-        public TestSpan(ISpanContext context, SpanOptions options)
+        public TestSpan(SpanContext context, SpanOptions options)
             : base(context, options)
         {
         }

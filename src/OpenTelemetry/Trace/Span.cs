@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace
         private bool sampleToLocalSpanStore;
 
         private Span(
-                ISpanContext context,
+                SpanContext context,
                 SpanOptions options,
                 string name,
                 SpanKind spanKind,
@@ -366,7 +366,7 @@ namespace OpenTelemetry.Trace
         }
 
         internal static ISpan StartSpan(
-                        ISpanContext context,
+                        SpanContext context,
                         SpanOptions options,
                         string name,
                         SpanKind spanKind,

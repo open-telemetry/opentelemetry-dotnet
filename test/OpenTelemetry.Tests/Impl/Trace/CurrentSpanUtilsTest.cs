@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace.Test
     {
         private ISpan span;
         private RandomGenerator random;
-        private ISpanContext spanContext;
+        private SpanContext spanContext;
         private SpanOptions spanOptions;
 
         public CurrentSpanUtilsTest()
@@ -63,23 +63,6 @@ namespace OpenTelemetry.Trace.Test
                 ws.Dispose();
             }
             Assert.Null(CurrentSpanUtils.CurrentSpan);
-        }
-
-        [Fact]
-        public void WithSpan_CloseDetachesAndEndsSpan()
-        {
-            Assert.Null(CurrentSpanUtils.CurrentSpan);
-            IScope ss = CurrentSpanUtils.WithSpan(span, true);
-            try
-            {
-                Assert.Same(span, CurrentSpanUtils.CurrentSpan);
-            }
-            finally
-            {
-                ss.Dispose();
-            }
-            Assert.Null(CurrentSpanUtils.CurrentSpan);
-            Mock.Get<ISpan>(span).Verify((s) => s.End(EndSpanOptions.Default));
         }
     }
 }

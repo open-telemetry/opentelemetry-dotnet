@@ -34,8 +34,8 @@ namespace OpenTelemetry.Trace.Export.Test
         private static readonly String SPAN_NAME_1 = "MySpanName/1";
         private static readonly String SPAN_NAME_2 = "MySpanName/2";
         private readonly RandomGenerator random = new RandomGenerator(1234);
-        private readonly ISpanContext sampledSpanContext;
-        private readonly ISpanContext notSampledSpanContext;
+        private readonly SpanContext sampledSpanContext;
+        private readonly SpanContext notSampledSpanContext;
         private readonly ISpanExporter spanExporter = SpanExporter.Create(4, Duration.Create(1, 0));
         private readonly IRunningSpanStore runningSpanStore = new InProcessRunningSpanStore();
         private readonly IStartEndHandler startEndHandler;

@@ -1883,7 +1883,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         */
 
         private void GetDefaults(
-            out ISpanContext context,
+            out SpanContext context,
             out ISpanId parentSpanId,
             out string name,
             out Timestamp startTimestamp,

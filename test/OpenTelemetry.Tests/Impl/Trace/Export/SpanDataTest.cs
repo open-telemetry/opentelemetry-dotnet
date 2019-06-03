@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private static readonly SpanKind kind = SpanKind.Client;
         private static readonly int CHILD_SPAN_COUNT = 13;
         private readonly IRandomGenerator random = new RandomGenerator(1234);
-        private readonly ISpanContext spanContext;
+        private readonly SpanContext spanContext;
         private readonly ISpanId parentSpanId; 
         private readonly IDictionary<string, IAttributeValue> attributesMap = new Dictionary<string, IAttributeValue>();
         private readonly List<ITimedEvent<IEvent>> eventList = new List<ITimedEvent<IEvent>>();

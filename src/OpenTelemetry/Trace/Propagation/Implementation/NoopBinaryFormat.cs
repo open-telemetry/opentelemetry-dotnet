@@ -20,7 +20,7 @@ namespace OpenTelemetry.Trace.Propagation.Implementation
 
     internal class NoopBinaryFormat : IBinaryFormat
     {
-        public ISpanContext FromByteArray(byte[] bytes)
+        public SpanContext FromByteArray(byte[] bytes)
         {
             if (bytes == null)
             {
@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace.Propagation.Implementation
             return SpanContext.Blank;
         }
 
-        public byte[] ToByteArray(ISpanContext spanContext)
+        public byte[] ToByteArray(SpanContext spanContext)
         {
             if (spanContext == null)
             {

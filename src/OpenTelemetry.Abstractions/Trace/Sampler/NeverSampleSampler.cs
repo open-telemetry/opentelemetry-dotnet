@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace.Sampler
             }
         }
 
-        public bool ShouldSample(ISpanContext parentContext, ITraceId traceId, ISpanId spanId, string name, IEnumerable<ISpan> parentLinks)
+        public bool ShouldSample(SpanContext parentContext, ITraceId traceId, ISpanId spanId, string name, IEnumerable<ISpan> parentLinks)
         {
             return false;
         }

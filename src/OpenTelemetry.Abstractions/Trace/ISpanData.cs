@@ -25,9 +25,9 @@ namespace OpenTelemetry.Trace
     public interface ISpanData
     {
         /// <summary>
-        /// Gets the <see cref="ISpanContext"/>.
+        /// Gets the <see cref="SpanContext"/>.
         /// </summary>
-        ISpanContext Context { get; }
+        SpanContext Context { get; }
 
         /// <summary>
         /// Gets the parent <see cref="ISpanId"/>.

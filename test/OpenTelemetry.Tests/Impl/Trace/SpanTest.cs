@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace.Test
         private static readonly String SPAN_NAME = "MySpanName";
         private static readonly String EVENT_DESCRIPTION = "MyEvent";
         private readonly RandomGenerator random = new RandomGenerator(1234);
-        private readonly ISpanContext spanContext;
+        private readonly SpanContext spanContext;
         private readonly ISpanId parentSpanId;
         private TimeSpan interval = TimeSpan.FromMilliseconds(0);
         private readonly DateTimeOffset startTime = DateTimeOffset.Now;
@@ -178,8 +178,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GoSpanData_EndedSpan()
         {
-            ISpan span =
-                Span.StartSpan(
+            var span =
+                (Span)Span.StartSpan(
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
@@ -486,8 +486,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SampleToLocalSpanStore()
         {
-            ISpan span =
-                Span.StartSpan(
+            var span =
+                (Span)Span.StartSpan(
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,

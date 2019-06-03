@@ -31,9 +31,9 @@ namespace OpenTelemetry.Trace.Export.Test
         private static readonly String REGISTERED_SPAN_NAME = "MySpanName/1";
         private static readonly String NOT_REGISTERED_SPAN_NAME = "MySpanName/2";
         private readonly RandomGenerator random = new RandomGenerator(1234);
-        private readonly ISpanContext sampledSpanContext;
+        private readonly SpanContext sampledSpanContext;
 
-        private readonly ISpanContext notSampledSpanContext;
+        private readonly SpanContext notSampledSpanContext;
 
         private readonly ISpanId parentSpanId;
         private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
@@ -309,9 +309,9 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Empty(samples);
         }
 
-        private ISpan CreateSampledSpan(string spanName)
+        private Span CreateSampledSpan(string spanName)
         {
-            return Span.StartSpan(
+            return (Span)Span.StartSpan(
                 sampledSpanContext,
                 recordSpanOptions,
                 spanName,
@@ -322,9 +322,9 @@ namespace OpenTelemetry.Trace.Export.Test
                 timestampConverter);
         }
 
-        private ISpan CreateNotSampledSpan(string spanName)
+        private Span CreateNotSampledSpan(string spanName)
         {
-            return Span.StartSpan(
+            return (Span)Span.StartSpan(
                 notSampledSpanContext,
                 recordSpanOptions,
                 spanName,
@@ -353,8 +353,8 @@ namespace OpenTelemetry.Trace.Export.Test
             {
                 if (code != CanonicalCode.Ok)
                 {
-                    ISpan sampledSpan = CreateSampledSpan(spanName);
-                    ISpan notSampledSpan = CreateNotSampledSpan(spanName);
+                    var sampledSpan = CreateSampledSpan(spanName);
+                    var notSampledSpan = CreateNotSampledSpan(spanName);
                     interval += TimeSpan.FromTicks(10);
                     sampledSpan.End(EndSpanOptions.Builder().SetStatus(code.ToStatus()).Build());
                     notSampledSpan.End(EndSpanOptions.Builder().SetStatus(code.ToStatus()).Build());

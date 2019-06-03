@@ -30,8 +30,8 @@ namespace OpenTelemetry.Trace.Propagation
             }
         }
 
-        public abstract ISpanContext FromByteArray(byte[] bytes);
+        public abstract SpanContext FromByteArray(byte[] bytes);
 
-        public abstract byte[] ToByteArray(ISpanContext spanContext);
+        public abstract byte[] ToByteArray(SpanContext spanContext);
     }
 }
