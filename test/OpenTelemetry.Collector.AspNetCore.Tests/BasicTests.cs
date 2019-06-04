@@ -89,7 +89,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task SuccesfulTemplateControllerCallUsesRemoteParentContext()
+        public async Task SuccesfulTemplateControllerCallUsesParentContext()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
             var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);

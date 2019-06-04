@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                 {
                     Name = new TruncatableString { Value = spanData.Name },
 
-                    // TODO: Utilize new Span.Types.SpanKind below when updated protos are incorporated
+                    // TODO: Utilize new Span.Types.SpanKind below when updated protos are incorporated, also confirm default for SpanKind.Internal
                     Kind = spanData.Kind == SpanKind.Client || spanData.Kind == SpanKind.Producer ? Span.Types.SpanKind.Client : Span.Types.SpanKind.Server,
 
                     TraceId = ByteString.CopyFrom(spanData.Context.TraceId.Bytes),
@@ -62,8 +62,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                             Code = (int)spanData.Status.CanonicalCode,
                             Message = spanData.Status.Description ?? string.Empty,
                         },
-                    SameProcessAsParentSpan =
-                        !spanData.HasRemoteParent.GetValueOrDefault() && spanData.ParentSpanId != null,
+                    SameProcessAsParentSpan = spanData.ParentSpanId != null,
                     ChildSpanCount = spanData.ChildSpanCount.HasValue ? (uint)spanData.ChildSpanCount.Value : 0,
                     Attributes = FromIAttributes(spanData.Attributes),
                     TimeEvents = FromITimeEvents(spanData.Events),

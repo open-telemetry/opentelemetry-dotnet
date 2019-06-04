@@ -33,8 +33,6 @@ namespace OpenTelemetry.Trace.Internal
 
         public override Status Status { get; set; }
 
-        public override SpanKind? Kind { get; set; }
-
         public override DateTimeOffset EndTime
         {
             get
@@ -69,9 +67,7 @@ namespace OpenTelemetry.Trace.Internal
 
         public override bool HasEnded => true;
 
-        public override void SetAttributes(IDictionary<string, IAttributeValue> attributes)
-        {
-        }
+        public override bool IsRecordingEvents => false;
 
         public override void SetAttribute(string key, IAttributeValue value)
         {
@@ -100,7 +96,23 @@ namespace OpenTelemetry.Trace.Internal
 
         public override ISpanData ToSpanData()
         {
-            throw new NotImplementedException();
+            return null;
+        }
+
+        public override void SetAttribute(string key, string value)
+        {
+        }
+
+        public override void SetAttribute(string key, long value)
+        {
+        }
+
+        public override void SetAttribute(string key, double value)
+        {
+        }
+
+        public override void SetAttribute(string key, bool value)
+        {
         }
     }
 }

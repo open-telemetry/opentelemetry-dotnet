@@ -18,7 +18,6 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
@@ -29,10 +28,8 @@ namespace OpenTelemetry.Trace
     public sealed class Span : SpanBase
     {
         private readonly ISpanId parentSpanId;
-        private readonly bool? hasRemoteParent;
         private readonly ITraceParams traceParams;
         private readonly IStartEndHandler startEndHandler;
-        private readonly Timer timestampConverter;
         private readonly DateTimeOffset startTime;
         private readonly object @lock = new object();
         private AttributesWithCapacity attributes;
@@ -44,45 +41,50 @@ namespace OpenTelemetry.Trace
         private bool sampleToLocalSpanStore;
 
         private Span(
-                ISpanContext context,
+                SpanContext context,
                 SpanOptions options,
                 string name,
+                SpanKind spanKind,
                 ISpanId parentSpanId,
-                bool? hasRemoteParent,
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
                 Timer timestampConverter)
             : base(context, options)
         {
             this.parentSpanId = parentSpanId;
-            this.hasRemoteParent = hasRemoteParent;
             this.Name = name;
             this.traceParams = traceParams ?? throw new ArgumentNullException(nameof(traceParams));
             this.startEndHandler = startEndHandler;
             this.hasBeenEnded = false;
             this.sampleToLocalSpanStore = false;
-            if (options.HasFlag(SpanOptions.RecordEvents))
+            this.Kind = spanKind;
+            if (this.IsRecordingEvents)
             {
                 if (timestampConverter == null)
                 {
-                    this.timestampConverter = Timer.StartNew();
-                    this.startTime = this.timestampConverter.StartTime;
+                    this.TimestampConverter = Timer.StartNew();
+                    this.startTime = this.TimestampConverter.StartTime;
                 }
                 else
                 {
-                    this.timestampConverter = timestampConverter;
-                    this.startTime = this.timestampConverter.Now;
+                    this.TimestampConverter = timestampConverter;
+                    this.startTime = this.TimestampConverter.Now;
                 }
             }
             else
             {
                 this.startTime = DateTimeOffset.MinValue;
-                this.timestampConverter = timestampConverter;
+                this.TimestampConverter = timestampConverter;
             }
         }
 
         /// <inheritdoc/>
         public override string Name { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets span kind.
+        /// </summary>
+        internal SpanKind? Kind { get; set; }
 
         /// <inheritdoc/>
         public override Status Status
@@ -97,7 +99,7 @@ namespace OpenTelemetry.Trace
 
             set
             {
-                if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+                if (!this.IsRecordingEvents)
                 {
                     return;
                 }
@@ -116,21 +118,13 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override SpanKind? Kind
-        {
-            get;
-
-            set; // TODO: do we need to notify when attempt to set on already closed Span?
-        }
-
-        /// <inheritdoc/>
         public override DateTimeOffset EndTime
         {
             get
             {
                 lock (this.@lock)
                 {
-                    return this.hasBeenEnded ? this.endTime : this.timestampConverter.Now;
+                    return this.hasBeenEnded ? this.endTime : this.TimestampConverter.Now;
                 }
             }
         }
@@ -142,7 +136,7 @@ namespace OpenTelemetry.Trace
             {
                 lock (this.@lock)
                 {
-                    return this.hasBeenEnded ? this.endTime - this.startTime : this.timestampConverter.Now - this.startTime;
+                    return this.hasBeenEnded ? this.endTime - this.startTime : this.TimestampConverter.Now - this.startTime;
                 }
             }
         }
@@ -165,30 +159,12 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override ISpanId ParentSpanId
-        {
-            get
-            {
-                return this.parentSpanId;
-            }
-        }
+        public override ISpanId ParentSpanId => this.parentSpanId;
 
         /// <inheritdoc/>
-        public override bool HasEnded
-        {
-            get
-            {
-                return this.hasBeenEnded;
-            }
-        }
+        public override bool HasEnded => this.hasBeenEnded;
 
-        internal Timer TimestampConverter
-        {
-            get
-            {
-                return this.timestampConverter;
-            }
-        }
+        internal Timer TimestampConverter { get; private set; }
 
         private AttributesWithCapacity InitializedAttributes
         {
@@ -230,18 +206,22 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        private Status StatusWithDefault
+        private Status StatusWithDefault => this.status ?? Trace.Status.Ok;
+
+        public override bool IsRecordingEvents
         {
             get
             {
-                return this.status ?? Trace.Status.Ok;
+                return this.Options.HasFlag(SpanOptions.RecordEvents);
             }
         }
+
+
 
         /// <inheritdoc/>
         public override void SetAttribute(string key, IAttributeValue value)
         {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+            if (!this.IsRecordingEvents)
             {
                 return;
             }
@@ -259,29 +239,9 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void SetAttributes(IDictionary<string, IAttributeValue> attributes)
-        {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
-            {
-                return;
-            }
-
-            lock (this.@lock)
-            {
-                if (this.hasBeenEnded)
-                {
-                    // logger.log(Level.FINE, "Calling putAttributes() on an ended Span.");
-                    return;
-                }
-
-                this.InitializedAttributes.PutAttributes(attributes);
-            }
-        }
-
-        /// <inheritdoc/>
         public override void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
         {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+            if (!this.IsRecordingEvents)
             {
                 return;
             }
@@ -294,14 +254,14 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.timestampConverter.Now, Event.Create(name, attributes)));
+                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.TimestampConverter.Now, Event.Create(name, attributes)));
             }
         }
 
         /// <inheritdoc/>
         public override void AddEvent(IEvent addEvent)
         {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+            if (!this.IsRecordingEvents)
             {
                 return;
             }
@@ -319,14 +279,14 @@ namespace OpenTelemetry.Trace
                     throw new ArgumentNullException(nameof(addEvent));
                 }
 
-                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.timestampConverter.Now, addEvent));
+                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.TimestampConverter.Now, addEvent));
             }
         }
 
         /// <inheritdoc/>
         public override void AddLink(ILink link)
         {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+            if (!this.IsRecordingEvents)
             {
                 return;
             }
@@ -351,7 +311,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override void End(EndSpanOptions options)
         {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+            if (!this.IsRecordingEvents)
             {
                 return;
             }
@@ -370,7 +330,7 @@ namespace OpenTelemetry.Trace
                 }
 
                 this.sampleToLocalSpanStore = options.SampleToLocalSpanStore;
-                this.endTime = this.timestampConverter.Now;
+                this.endTime = this.TimestampConverter.Now;
                 this.hasBeenEnded = true;
             }
 
@@ -380,7 +340,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override ISpanData ToSpanData()
         {
-            if (!this.Options.HasFlag(SpanOptions.RecordEvents))
+            if (!this.IsRecordingEvents)
             {
                 throw new InvalidOperationException("Getting SpanData for a Span without RECORD_EVENTS option.");
             }
@@ -388,13 +348,12 @@ namespace OpenTelemetry.Trace
             Attributes attributesSpanData = this.attributes == null ? Attributes.Create(new Dictionary<string, IAttributeValue>(), 0)
                         : Attributes.Create(this.attributes, this.attributes.NumberOfDroppedAttributes);
 
-            ITimedEvents<IEvent> annotationsSpanData = CreateTimedEvents(this.InitializedEvents, this.timestampConverter);
+            ITimedEvents<IEvent> annotationsSpanData = CreateTimedEvents(this.InitializedEvents, this.TimestampConverter);
             LinkList linksSpanData = this.links == null ? LinkList.Create(new List<ILink>(), 0) : LinkList.Create(this.links.Events, this.links.NumberOfDroppedEvents);
 
             return SpanData.Create(
                 this.Context,
                 this.parentSpanId,
-                this.hasRemoteParent,
                 this.Name,
                 Timestamp.FromDateTimeOffset(this.startTime),
                 attributesSpanData,
@@ -407,11 +366,11 @@ namespace OpenTelemetry.Trace
         }
 
         internal static ISpan StartSpan(
-                        ISpanContext context,
+                        SpanContext context,
                         SpanOptions options,
                         string name,
+                        SpanKind spanKind,
                         ISpanId parentSpanId,
-                        bool? hasRemoteParent,
                         ITraceParams traceParams,
                         IStartEndHandler startEndHandler,
                         Timer timestampConverter)
@@ -420,15 +379,15 @@ namespace OpenTelemetry.Trace
                context,
                options,
                name,
+               spanKind,
                parentSpanId,
-               hasRemoteParent,
                traceParams,
                startEndHandler,
                timestampConverter);
 
             // Call onStart here instead of calling in the constructor to make sure the span is completely
             // initialized.
-            if (span.Options.HasFlag(SpanOptions.RecordEvents))
+            if (span.IsRecordingEvents)
             {
                 startEndHandler.OnStart(span);
             }
@@ -451,6 +410,51 @@ namespace OpenTelemetry.Trace
             }
 
             return TimedEvents<T>.Create(eventsList, events.NumberOfDroppedEvents);
+        }
+
+        /// <inheritdoc/>
+
+        public override void SetAttribute(string key, string value)
+        {
+            if (!this.IsRecordingEvents)
+            {
+                return;
+            }
+
+            this.SetAttribute(key, AttributeValue.StringAttributeValue(value));
+        }
+
+        /// <inheritdoc/>
+        public override void SetAttribute(string key, long value)
+        {
+            if (!this.IsRecordingEvents)
+            {
+                return;
+            }
+
+            this.SetAttribute(key, AttributeValue.LongAttributeValue(value));
+        }
+
+        /// <inheritdoc/>
+        public override void SetAttribute(string key, double value)
+        {
+            if (!this.IsRecordingEvents)
+            {
+                return;
+            }
+
+            this.SetAttribute(key, AttributeValue.DoubleAttributeValue(value));
+        }
+
+        /// <inheritdoc/>
+        public override void SetAttribute(string key, bool value)
+        {
+            if (!this.IsRecordingEvents)
+            {
+                return;
+            }
+
+            this.SetAttribute(key, AttributeValue.BooleanAttributeValue(value));
         }
     }
 }

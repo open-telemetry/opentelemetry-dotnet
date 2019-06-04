@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace.Test
         private static readonly String SPAN_NAME = "MySpanName";
         private static readonly String EVENT_DESCRIPTION = "MyEvent";
         private readonly RandomGenerator random = new RandomGenerator(1234);
-        private readonly ISpanContext spanContext;
+        private readonly SpanContext spanContext;
         private readonly ISpanId parentSpanId;
         private TimeSpan interval = TimeSpan.FromMilliseconds(0);
         private readonly DateTimeOffset startTime = DateTimeOffset.Now;
@@ -63,18 +63,21 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void ToSpanData_NoRecordEvents()
         {
-            ISpan span =
+            var span =
                 Span.StartSpan(
                     spanContext,
                     noRecordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
             // Check that adding trace events after Span#End() does not throw any exception.
-            span.SetAttributes(attributes);
+            foreach (var attribute in attributes)
+            {
+                span.SetAttribute(attribute.Key, attribute.Value);
+            }
             span.AddEvent(Event.Create(EVENT_DESCRIPTION));
             span.AddEvent(EVENT_DESCRIPTION, attributes);
             span.AddLink(Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan));
@@ -91,15 +94,18 @@ namespace OpenTelemetry.Trace.Test
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
             span.End();
             // Check that adding trace events after Span#End() does not throw any exception and are not
             // recorded.
-            span.SetAttributes(attributes);
+            foreach (var attribute in attributes)
+            {
+                span.SetAttribute(attribute.Key, attribute.Value);
+            }
             span.SetAttribute(
                 "MySingleStringAttributeKey",
                 AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
@@ -123,8 +129,8 @@ namespace OpenTelemetry.Trace.Test
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    true,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -132,7 +138,11 @@ namespace OpenTelemetry.Trace.Test
             span.SetAttribute(
                 "MySingleStringAttributeKey",
                 AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
-            span.SetAttributes(attributes);
+            foreach (var attribute in attributes)
+            {
+                span.SetAttribute(attribute.Key, attribute.Value);
+            }
+
             interval = TimeSpan.FromMilliseconds(100);
             span.AddEvent(Event.Create(EVENT_DESCRIPTION));
             interval = TimeSpan.FromMilliseconds(200);
@@ -145,7 +155,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(spanContext, spanData.Context);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(parentSpanId, spanData.ParentSpanId);
-            Assert.True(spanData.HasRemoteParent);
             Assert.Equal(0, spanData.Attributes.DroppedAttributesCount);
             Assert.Equal(expectedAttributes, spanData.Attributes.AttributeMap); 
             Assert.Equal(0, spanData.Events.DroppedEventsCount);
@@ -169,13 +178,13 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GoSpanData_EndedSpan()
         {
-            ISpan span =
-                Span.StartSpan(
+            var span =
+                (Span)Span.StartSpan(
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -183,7 +192,11 @@ namespace OpenTelemetry.Trace.Test
             span.SetAttribute(
                 "MySingleStringAttributeKey",
                 AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
-            span.SetAttributes(attributes);
+            foreach (var attribute in attributes)
+            {
+                span.SetAttribute(attribute.Key, attribute.Value);
+            }
+
             interval = TimeSpan.FromMilliseconds(100);
             span.AddEvent(Event.Create(EVENT_DESCRIPTION));
             interval = TimeSpan.FromMilliseconds(200);
@@ -198,7 +211,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(spanContext, spanData.Context);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(parentSpanId, spanData.ParentSpanId);
-            Assert.False(spanData.HasRemoteParent);
             Assert.Equal(0, spanData.Attributes.DroppedAttributesCount);
             Assert.Equal(expectedAttributes, spanData.Attributes.AttributeMap);
             Assert.Equal(0, spanData.Events.DroppedEventsCount);
@@ -223,13 +235,13 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Status_ViaSetStatus()
         {
-            ISpan span =
-                Span.StartSpan(
+            var span =
+                (Span)Span.StartSpan(
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -248,13 +260,13 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void status_ViaEndSpanOptions()
         {
-            ISpan span =
-                Span.StartSpan(
+            var span =
+                (Span)Span.StartSpan(
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -281,8 +293,8 @@ namespace OpenTelemetry.Trace.Test
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    false,
                     traceParams,
                     startEndHandler,
                     timestampConverter);
@@ -290,7 +302,11 @@ namespace OpenTelemetry.Trace.Test
             {
                 IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
                 attributes.Add("MyStringAttributeKey" + i, AttributeValue.LongAttributeValue(i));
-                span.SetAttributes(attributes);
+                foreach (var attribute in attributes)
+                {
+                    span.SetAttribute(attribute.Key, attribute.Value);
+                }
+
             }
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfAttributes, spanData.Attributes.DroppedAttributesCount);
@@ -328,8 +344,8 @@ namespace OpenTelemetry.Trace.Test
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    false,
                     traceParams,
                     startEndHandler,
                     timestampConverter);
@@ -337,7 +353,11 @@ namespace OpenTelemetry.Trace.Test
             {
                 IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
                 attributes.Add("MyStringAttributeKey" + i, AttributeValue.LongAttributeValue(i));
-                span.SetAttributes(attributes);
+                foreach (var attribute in attributes)
+                {
+                    span.SetAttribute(attribute.Key, attribute.Value);
+                }
+
             }
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfAttributes, spanData.Attributes.DroppedAttributesCount);
@@ -354,7 +374,11 @@ namespace OpenTelemetry.Trace.Test
             {
                 IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
                 attributes.Add("MyStringAttributeKey" + i, AttributeValue.LongAttributeValue(i));
-                span.SetAttributes(attributes);
+                foreach (var attribute in attributes)
+                {
+                    span.SetAttribute(attribute.Key, attribute.Value);
+                }
+
             }
             spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfAttributes * 3 / 2, spanData.Attributes.DroppedAttributesCount);
@@ -386,8 +410,8 @@ namespace OpenTelemetry.Trace.Test
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    false,
                     traceParams,
                     startEndHandler,
                     timestampConverter);
@@ -432,8 +456,8 @@ namespace OpenTelemetry.Trace.Test
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    false,
                     traceParams,
                     startEndHandler,
                     timestampConverter);
@@ -462,13 +486,13 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SampleToLocalSpanStore()
         {
-            ISpan span =
-                Span.StartSpan(
+            var span =
+                (Span)Span.StartSpan(
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -480,8 +504,8 @@ namespace OpenTelemetry.Trace.Test
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);
@@ -504,8 +528,8 @@ namespace OpenTelemetry.Trace.Test
                     spanContext,
                     recordSpanOptions,
                     SPAN_NAME,
+                    SpanKind.Internal,
                     parentSpanId,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter);

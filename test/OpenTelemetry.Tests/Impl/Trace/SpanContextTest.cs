@@ -28,13 +28,13 @@ namespace OpenTelemetry.Trace.Test
 
         private static readonly byte[] firstSpanIdBytes = new byte[] { 0, 0, 0, 0, 0, 0, 0, (byte)'a' };
         private static readonly byte[] secondSpanIdBytes = new byte[] { (byte)'0', 0, 0, 0, 0, 0, 0, 0 };
-        private static readonly ISpanContext first =
+        private static readonly SpanContext first =
       SpanContext.Create(
           TraceId.FromBytes(firstTraceIdBytes),
           SpanId.FromBytes(firstSpanIdBytes),
           TraceOptions.Default, Tracestate.Empty);
 
-        private static readonly ISpanContext second =
+        private static readonly SpanContext second =
       SpanContext.Create(
           TraceId.FromBytes(secondTraceIdBytes),
           SpanId.FromBytes(secondSpanIdBytes),

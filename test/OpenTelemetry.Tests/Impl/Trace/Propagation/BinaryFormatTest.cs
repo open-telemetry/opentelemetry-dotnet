@@ -31,13 +31,13 @@ namespace OpenTelemetry.Trace.Propagation.Test
         private static readonly byte[] EXAMPLE_BYTES =
             new byte[] {0, 0, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 1, 97, 98, 99, 100,101, 102, 103, 104, 2, 1};
 
-        private static readonly ISpanContext EXAMPLE_SPAN_CONTEXT = SpanContext.Create(TRACE_ID, SPAN_ID, TRACE_OPTIONS, Tracestate.Empty);
+        private static readonly SpanContext EXAMPLE_SPAN_CONTEXT = SpanContext.Create(TRACE_ID, SPAN_ID, TRACE_OPTIONS, Tracestate.Empty);
 
         private readonly BinaryFormat binaryFormat = new BinaryFormat();
 
-        private void TestSpanContextConversion(ISpanContext spanContext)
+        private void TestSpanContextConversion(SpanContext spanContext)
         {
-            ISpanContext propagatedBinarySpanContext = binaryFormat.FromByteArray(binaryFormat.ToByteArray(spanContext));
+            SpanContext propagatedBinarySpanContext = binaryFormat.FromByteArray(binaryFormat.ToByteArray(spanContext));
             Assert.Equal(spanContext, propagatedBinarySpanContext);
         }
 
