@@ -72,6 +72,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Exporters", "samples\Exporters\Exporters.csproj", "{6EC9DEC9-086F-4F29-BF3F-5FC7253829D5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LoggingTracer", "LoggingTracer", "{D9C14CDA-5182-4DEA-8606-98FF1A388BD3}"
+	ProjectSection(SolutionItems) = preProject
+		samples\LoggingTracer\readme.md = samples\LoggingTracer\readme.md
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoggingTracer", "samples\LoggingTracer\LoggingTracer\LoggingTracer.csproj", "{1EEF77DF-7552-4265-B64C-FA13BC40C256}"
 EndProject
