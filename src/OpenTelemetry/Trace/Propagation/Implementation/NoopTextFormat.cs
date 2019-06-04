@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace.Propagation.Implementation
 
         public override ISet<string> Fields => new HashSet<string>();
 
-        public override void Inject<T>(ISpanContext spanContext, T carrier, Action<T, string, string> setter)
+        public override void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
         {
             if (spanContext == null)
             {
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace.Propagation.Implementation
             }
         }
 
-        public override ISpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        public override SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)
             {

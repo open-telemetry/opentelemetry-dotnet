@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace.Propagation
         public override ISet<string> Fields => new HashSet<string> { "tracestate", "traceparent" };
 
         /// <inheritdoc/>
-        public override ISpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        public override SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
@@ -162,7 +162,7 @@ namespace OpenTelemetry.Trace.Propagation
         }
 
         /// <inheritdoc/>
-        public override void Inject<T>(ISpanContext spanContext, T carrier, Action<T, string, string> setter)
+        public override void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
         {
             var traceparent = string.Concat("00-", spanContext.TraceId.ToLowerBase16(), "-", spanContext.SpanId.ToLowerBase16());
             traceparent = string.Concat(traceparent, spanContext.TraceOptions.IsSampled ? "-01" : "-00");

@@ -42,12 +42,12 @@ namespace OpenTelemetry.Trace
 
         public IDictionary<string, IAttributeValue> Attributes { get; }
 
-        public static ILink FromSpanContext(ISpanContext context, LinkType type)
+        public static ILink FromSpanContext(SpanContext context, LinkType type)
         {
             return new Link(context.TraceId, context.SpanId, type, EmptyAttributes);
         }
 
-        public static ILink FromSpanContext(ISpanContext context, LinkType type, IDictionary<string, IAttributeValue> attributes)
+        public static ILink FromSpanContext(SpanContext context, LinkType type, IDictionary<string, IAttributeValue> attributes)
         {
             IDictionary<string, IAttributeValue> copy = new Dictionary<string, IAttributeValue>(attributes);
             return new Link(
