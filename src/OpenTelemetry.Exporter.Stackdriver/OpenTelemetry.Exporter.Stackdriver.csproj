@@ -27,5 +27,4 @@
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
   </ItemGroup>
-
 </Project>

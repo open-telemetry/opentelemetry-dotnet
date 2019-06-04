@@ -1,4 +1,4 @@
-// <copyright file="SpanKind.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanKind.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,30 +24,30 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Span kind was not specified.
         /// </summary>
-        Internal = 0,
+        Internal = 1,
 
         /// <summary>
         /// Server span represents request incoming from external component.
         /// </summary>
-        Server = 1,
+        Server = 2,
 
         /// <summary>
         /// Client span represents outgoing request to the external component.
         /// </summary>
-        Client = 2,
+        Client = 3,
 
         /// <summary>
         /// Producer span represents output provided to external components. Unlike client and
         /// server, there is no direct critical path latency relationship between producer and consumer
         /// spans.
         /// </summary>
-        Producer = 3,
+        Producer = 4,
 
         /// <summary>
         /// Consumer span represents output received from an external component. Unlike client and
         /// server, there is no direct critical path latency relationship between producer and consumer
         /// spans.
         /// </summary>
-        Consumer = 4,
+        Consumer = 5,
     }
 }
