@@ -24,6 +24,7 @@ namespace LoggingTracer.ConsoleApp
             var builder = tracer.SpanBuilder("Foo (span2)");
             using (var scope = builder.StartScopedSpan())
             {
+                tracer.CurrentSpan.SetAttribute("myattribute", "mvalue");
                 Thread.Sleep(100);
             }
         }
