@@ -5,12 +5,11 @@ namespace LoggingTracer
 {
     public class LoggingTracer : ITracer
     {
-        private ISpan currentSpan;
         public ISpan CurrentSpan
         {
             get
             {
-                return currentSpan;
+                return CurrentSpanUtils.CurrentSpan;
             }
         }
 
