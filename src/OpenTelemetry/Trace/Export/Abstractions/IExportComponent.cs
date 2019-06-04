@@ -1,4 +1,4 @@
-﻿// <copyright file="ExportComponentBase.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="IExportComponent.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,27 +16,19 @@
 
 namespace OpenTelemetry.Trace.Export
 {
-    /// <inheritdoc/>
-    public abstract class ExportComponentBase : IExportComponent
+    /// <summary>
+    /// Component that exports spans.
+    /// </summary>
+    public interface IExportComponent : IExportComponentBase
     {
         /// <summary>
-        /// Gets a new <see cref="IExportComponent"/>.
+        /// Gets the running span store.
         /// </summary>
-        public static IExportComponent NewNoopExportComponent
-        {
-            get
-            {
-                return new NoopExportComponent();
-            }
-        }
+        IRunningSpanStore RunningSpanStore { get; }
 
-        /// <inheritdoc/>
-        public abstract ISpanExporter SpanExporter { get; }
-
-        /// <inheritdoc/>
-        public abstract IRunningSpanStore RunningSpanStore { get; }
-
-        /// <inheritdoc/>
-        public abstract ISampledSpanStore SampledSpanStore { get; }
+        /// <summary>
+        /// Gets the sampled span store.
+        /// </summary>
+        ISampledSpanStore SampledSpanStore { get; }
     }
 }

@@ -24,36 +24,12 @@ namespace OpenTelemetry.Trace
     {
         private readonly IExportComponent noopExportComponent = Export.ExportComponentBase.NewNoopExportComponent;
 
-        public ITracer Tracer
-        {
-            get
-            {
-                return Trace.Tracer.NoopTracer;
-            }
-        }
+        public ITracer Tracer => TracerBase.NoopTracer;
 
-        public IPropagationComponent PropagationComponent
-        {
-            get
-            {
-                return Propagation.PropagationComponentBase.NoopPropagationComponent;
-            }
-        }
+        public IPropagationComponent PropagationComponent => PropagationComponentBase.NoopPropagationComponent;
 
-        public IExportComponent ExportComponent
-        {
-            get
-            {
-                return this.noopExportComponent;
-            }
-        }
+        public IExportComponent ExportComponent => ExportComponentBase.NewNoopExportComponent;
 
-        public ITraceConfig TraceConfig
-        {
-            get
-            {
-                return Config.TraceConfigBase.NoopTraceConfig;
-            }
-        }
+        public ITraceConfig TraceConfig => Config.TraceConfigBase.NoopTraceConfig;
     }
 }

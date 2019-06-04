@@ -1,4 +1,4 @@
-﻿// <copyright file="ITraceComponent.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ITraceComponentBase.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Trace component holds all the extensibility points required for distributed tracing.
     /// </summary>
-    public interface ITraceComponent
+    public interface ITraceComponentBase
     {
         /// <summary>
         /// Gets the tracer to record Spans.
@@ -35,11 +35,6 @@ namespace OpenTelemetry.Trace
         /// Gets the propagation component that defines how to extract and inject the context from the wire protocols.
         /// </summary>
         IPropagationComponent PropagationComponent { get; }
-
-        /// <summary>
-        /// Gets the exporter to use to upload spans.
-        /// </summary>
-        IExportComponent ExportComponent { get; }
 
         /// <summary>
         /// Gets the tracer configuration. Include sampling definition and limits.

@@ -32,7 +32,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
     public class StackExchangeRedisCallsCollector : IDisposable
     {
         private readonly ITracer tracer;
-        private readonly IExportComponent exporter;
+        private readonly IExportComponentBase exporter;
         private readonly ISampler sampler;
 
         private readonly CancellationTokenSource cancellationTokenSource;
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="sampler">Sampler to use to sample dependnecy calls.</param>
         /// <param name="exportComponent">TEMPORARY: handler to send data to.</param>
-        public StackExchangeRedisCallsCollector(StackExchangeRedisCallsCollectorOptions options, ITracer tracer, ISampler sampler, IExportComponent exportComponent)
+        public StackExchangeRedisCallsCollector(StackExchangeRedisCallsCollectorOptions options, ITracer tracer, ISampler sampler, IExportComponentBase exportComponent)
         {
             this.tracer = tracer;
             this.exporter = exportComponent;

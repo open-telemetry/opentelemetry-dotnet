@@ -52,11 +52,11 @@ namespace TestApp.AspNetCore._2._0
             services.AddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
             services.AddSingleton<DependenciesCollector>();
             services.AddSingleton<IPropagationComponent>(new DefaultPropagationComponent());
-            services.AddSingleton<IExportComponent>(Tracing.ExportComponent);
+            services.AddSingleton<IExportComponentBase>(Tracing.ExportComponent);
             services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new CallbackMiddleware.CallbackMiddlewareImpl());
             services.AddSingleton<OcagentExporter>((p) =>
             {
-                var exportComponent = p.GetService<IExportComponent>();
+                var exportComponent = p.GetService<IExportComponentBase>();
                 return new OcagentExporter(
                     exportComponent,
                     "localhost:55678",

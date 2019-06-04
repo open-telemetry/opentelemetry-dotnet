@@ -1,4 +1,4 @@
-﻿// <copyright file="IExportComponent.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ITraceComponent.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,26 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Trace
 {
+    using OpenTelemetry.Trace.Export;
+
     /// <summary>
-    /// Component that exports spans.
+    /// Trace component holds all the extensibility points required for distributed tracing.
     /// </summary>
-    public interface IExportComponent
+    public interface ITraceComponent : ITraceComponentBase
     {
         /// <summary>
-        /// Gets the span exoprter.
+        /// Gets the exporter to use to upload spans.
         /// </summary>
-        ISpanExporter SpanExporter { get; }
-
-        /// <summary>
-        /// Gets the running span store.
-        /// </summary>
-        IRunningSpanStore RunningSpanStore { get; }
-
-        /// <summary>
-        /// Gets the sampled span store.
-        /// </summary>
-        ISampledSpanStore SampledSpanStore { get; }
+        IExportComponent ExportComponent { get; }
     }
 }

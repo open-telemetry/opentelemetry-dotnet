@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
 
         private readonly IViewManager viewManager;
 
-        private readonly IExportComponent exportComponent;
+        private readonly IExportComponentBase exportComponent;
 
         private readonly object lck = new object();
 
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
         /// <param name="exportComponent">Exporter to get traces and metrics from.</param>
         /// <param name="viewManager">View manager to get stats from.</param>
         /// <param name="telemetryConfiguration">Telemetry configuration to use to report telemetry.</param>
-        public ApplicationInsightsExporter(IExportComponent exportComponent, IViewManager viewManager, TelemetryConfiguration telemetryConfiguration)
+        public ApplicationInsightsExporter(IExportComponentBase exportComponent, IViewManager viewManager, TelemetryConfiguration telemetryConfiguration)
         {
             this.exportComponent = exportComponent;
             this.viewManager = viewManager;

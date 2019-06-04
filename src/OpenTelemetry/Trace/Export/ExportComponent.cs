@@ -19,6 +19,7 @@ namespace OpenTelemetry.Trace.Export
     using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
 
+    /// <inheritdoc/>
     public sealed class ExportComponent : ExportComponentBase
     {
         private const int ExporterBufferSize = 32;
@@ -39,17 +40,30 @@ namespace OpenTelemetry.Trace.Export
                     : Export.SampledSpanStoreBase.NoopSampledSpanStore;
         }
 
+        /// <inheritdoc/>
         public override ISpanExporter SpanExporter { get; }
 
+        /// <inheritdoc/>
         public override IRunningSpanStore RunningSpanStore { get; }
 
+        /// <inheritdoc/>
         public override ISampledSpanStore SampledSpanStore { get; }
 
+        /// <summary>
+        /// Constructs a new <see cref="IExportComponent"/> with noop span stores.
+        /// </summary>
+        /// <param name="eventQueue"><see cref="IEventQueue"/> for sampled span store.</param>
+        /// <returns>A new <see cref="IExportComponent"/>.</returns>
         public static IExportComponent CreateWithoutInProcessStores(IEventQueue eventQueue)
         {
             return new ExportComponent(false, eventQueue);
         }
 
+        /// <summary>
+        /// Constructs a new <see cref="IExportComponent"/> with in process span stores.
+        /// </summary>
+        /// <param name="eventQueue"><see cref="IEventQueue"/> for sampled span store.</param>
+        /// <returns>A new <see cref="IExportComponent"/>.</returns>
         public static IExportComponent CreateWithInProcessStores(IEventQueue eventQueue)
         {
             return new ExportComponent(true, eventQueue);
