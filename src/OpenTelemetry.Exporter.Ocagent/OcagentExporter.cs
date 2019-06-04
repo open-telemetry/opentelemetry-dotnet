@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter.Ocagent
     {
         private const string TraceExporterName = "OcagentTraceExporter";
 
-        private readonly IExportComponentBase exportComponent;
+        private readonly IExportComponent exportComponent;
 
         private readonly object lck = new object();
 
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.Ocagent
         /// <param name="hostName">Name of the host.</param>
         /// <param name="serviceName">Name of the application.</param>
         public OcagentExporter(
-            IExportComponentBase exportComponent,
+            IExportComponent exportComponent,
             string agentEndpoint,
             string hostName,
             string serviceName)

@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
     {
         private const string ExporterName = "StackdriverTraceExporter";
 
-        private readonly IExportComponentBase exportComponent;
+        private readonly IExportComponent exportComponent;
         private readonly IViewManager viewManager;
         private readonly string projectId;
         private readonly string jsonPath;
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
         /// <param name="viewManager">View manager to get the stats from</param>
         public StackdriverExporter(
             string projectId,
-            IExportComponentBase exportComponent,
+            IExportComponent exportComponent,
             IViewManager viewManager) : this(projectId, null, exportComponent, viewManager)
         {
         }
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
         public StackdriverExporter(
             string projectId,
             string jsonPath,
-            IExportComponentBase exportComponent,
+            IExportComponent exportComponent,
             IViewManager viewManager)
         {
             GaxPreconditions.CheckNotNullOrEmpty(projectId, "projectId");

@@ -71,7 +71,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact(Skip = "need to fix the way tracer being instantiated")]
         public void DefaultTraceExporter()
         {
-            Assert.Equal(ExportComponentBase.NewNoopExportComponent.GetType(), Tracing.ExportComponent.GetType());
+            Assert.Equal(ExportComponent.NewNoopExportComponent.GetType(), Tracing.ExportComponent.GetType());
         }
 
         [Fact(Skip = "need to fix the way tracer being instantiated")]

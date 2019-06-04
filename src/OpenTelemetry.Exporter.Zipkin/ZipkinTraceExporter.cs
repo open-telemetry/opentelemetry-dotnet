@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
         private readonly ZipkinTraceExporterOptions options;
 
-        private readonly IExportComponentBase exportComponent;
+        private readonly IExportComponent exportComponent;
 
         private readonly object lck = new object();
 
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// For local development with invalid certificates use code like this:
         /// new HttpClient(new HttpClientHandler() { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator }).
         /// </param>
-        public ZipkinTraceExporter(ZipkinTraceExporterOptions options, IExportComponentBase exportComponent, HttpClient client = null)
+        public ZipkinTraceExporter(ZipkinTraceExporterOptions options, IExportComponent exportComponent, HttpClient client = null)
         {
             this.options = options;
 

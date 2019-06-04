@@ -19,16 +19,11 @@ namespace OpenTelemetry.Trace.Export
     /// <summary>
     /// Component that exports spans.
     /// </summary>
-    public interface IExportComponent : IExportComponentBase
+    public interface IExportComponent
     {
         /// <summary>
-        /// Gets the running span store.
+        /// Gets the span exporter.
         /// </summary>
-        IRunningSpanStore RunningSpanStore { get; }
-
-        /// <summary>
-        /// Gets the sampled span store.
-        /// </summary>
-        ISampledSpanStore SampledSpanStore { get; }
+        ISpanExporter SpanExporter { get; }
     }
 }

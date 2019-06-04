@@ -22,13 +22,11 @@ namespace OpenTelemetry.Trace
 
     internal sealed class NoopTraceComponent : ITraceComponent
     {
-        private readonly IExportComponent noopExportComponent = Export.ExportComponentBase.NewNoopExportComponent;
-
         public ITracer Tracer => TracerBase.NoopTracer;
 
         public IPropagationComponent PropagationComponent => PropagationComponentBase.NoopPropagationComponent;
 
-        public IExportComponent ExportComponent => ExportComponentBase.NewNoopExportComponent;
+        public IExportComponent ExportComponent { get; } = Export.ExportComponent.NewNoopExportComponent;
 
         public ITraceConfig TraceConfig => Config.TraceConfigBase.NoopTraceConfig;
     }
