@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Sampler
+namespace OpenTelemetry.Trace.Sampler.Internal
 {
     using System.Collections.Generic;
 

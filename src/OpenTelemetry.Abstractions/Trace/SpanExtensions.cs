@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span with populated http method properties.</returns>
         public static ISpan PutHttpMethodAttribute(this ISpan span, string method)
         {
-            span.SetAttribute(SpanAttributeConstants.HttpMethodKey, AttributeValue.StringAttributeValue(method));
+            span.SetAttribute(SpanAttributeConstants.HttpMethodKey, method);
             return span;
         }
 
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span with populated status code properties.</returns>
         public static ISpan PutHttpStatusCodeAttribute(this ISpan span, int statusCode)
         {
-            span.SetAttribute(SpanAttributeConstants.HttpStatusCodeKey, AttributeValue.LongAttributeValue(statusCode));
+            span.SetAttribute(SpanAttributeConstants.HttpStatusCodeKey, statusCode);
             return span;
         }
 
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace
         {
             if (!string.IsNullOrWhiteSpace(userAgent))
             {
-                span.SetAttribute(SpanAttributeConstants.HttpUserAgentKey, AttributeValue.StringAttributeValue(userAgent));
+                span.SetAttribute(SpanAttributeConstants.HttpUserAgentKey, userAgent);
             }
 
             return span;
@@ -76,11 +76,11 @@ namespace OpenTelemetry.Trace
         {
             if (port == 80 || port == 443)
             {
-                span.SetAttribute(SpanAttributeConstants.HttpHostKey, AttributeValue.StringAttributeValue(hostName));
+                span.SetAttribute(SpanAttributeConstants.HttpHostKey, hostName);
             }
             else
             {
-                span.SetAttribute(SpanAttributeConstants.HttpHostKey, AttributeValue.StringAttributeValue(hostName + ":" + port));
+                span.SetAttribute(SpanAttributeConstants.HttpHostKey, hostName + ":" + port);
             }
 
             return span;
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Trace
         {
             if (!string.IsNullOrEmpty(route))
             {
-                span.SetAttribute(SpanAttributeConstants.HttpRouteKey, AttributeValue.StringAttributeValue(route));
+                span.SetAttribute(SpanAttributeConstants.HttpRouteKey, route);
             }
 
             return span;
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Trace
         {
             if (!string.IsNullOrEmpty(rawUrl))
             {
-                span.SetAttribute(SpanAttributeConstants.HttpUrlKey, AttributeValue.StringAttributeValue(rawUrl));
+                span.SetAttribute(SpanAttributeConstants.HttpUrlKey, rawUrl);
             }
 
             return span;
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span with populated path properties.</returns>
         public static ISpan PutHttpPathAttribute(this ISpan span, string path)
         {
-            span.SetAttribute(SpanAttributeConstants.HttpPathKey, AttributeValue.StringAttributeValue(path));
+            span.SetAttribute(SpanAttributeConstants.HttpPathKey, path);
             return span;
         }
 
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span with populated response size properties.</returns>
         public static ISpan PutHttpResponseSizeAttribute(this ISpan span, long size)
         {
-            span.SetAttribute(SpanAttributeConstants.HttpResponseSizeKey, AttributeValue.LongAttributeValue(size));
+            span.SetAttribute(SpanAttributeConstants.HttpResponseSizeKey, size);
             return span;
         }
 
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span with populated request size properties.</returns>
         public static ISpan PutHttpRequestSizeAttribute(this ISpan span, long size)
         {
-            span.SetAttribute(SpanAttributeConstants.HttpRequestSizeKey, AttributeValue.LongAttributeValue(size));
+            span.SetAttribute(SpanAttributeConstants.HttpRequestSizeKey, size);
             return span;
         }
 

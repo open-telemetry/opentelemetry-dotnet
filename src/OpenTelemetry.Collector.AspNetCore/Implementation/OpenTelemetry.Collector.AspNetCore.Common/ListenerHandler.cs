@@ -50,7 +50,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Common
 
             foreach (var tag in activity.Tags)
             {
-                span.SetAttribute(tag.Key, AttributeValue.StringAttributeValue(tag.Value));
+                span.SetAttribute(tag.Key, tag.Value);
             }
         }
 
