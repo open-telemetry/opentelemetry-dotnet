@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace.Config.Test
         [Fact]
         public void DefaultTraceParams()
         {
-            Assert.Equal(Samplers.GetProbabilitySampler(1e-4), TraceParams.Default.Sampler);
+            Assert.Equal(Samplers.AlwaysSample, TraceParams.Default.Sampler);
             Assert.Equal(32, TraceParams.Default.MaxNumberOfAttributes);
             Assert.Equal(32, TraceParams.Default.MaxNumberOfEvents);
             Assert.Equal(128, TraceParams.Default.MaxNumberOfMessageEvents);

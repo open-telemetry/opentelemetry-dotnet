@@ -26,9 +26,8 @@ namespace OpenTelemetry.Trace.Config
         /// Default trace parameters.
         /// </summary>
         public static readonly ITraceParams Default =
-            new TraceParams(Samplers.GetProbabilitySampler(DefaultProbability), DefaultSpanMaxNumAttributes, DefaultSpanMaxNumEvents, DefaultSpanMaxNumMessageEvents, DefaultSpanMaxNumLinks);
+            new TraceParams(Samplers.AlwaysSample, DefaultSpanMaxNumAttributes, DefaultSpanMaxNumEvents, DefaultSpanMaxNumMessageEvents, DefaultSpanMaxNumLinks);
 
-        private const double DefaultProbability = 1e-4;
         private const int DefaultSpanMaxNumAttributes = 32;
         private const int DefaultSpanMaxNumEvents = 32;
         private const int DefaultSpanMaxNumMessageEvents = 128;
