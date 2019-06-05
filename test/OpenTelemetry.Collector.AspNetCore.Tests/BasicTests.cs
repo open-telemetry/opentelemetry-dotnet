@@ -31,6 +31,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using OpenTelemetry.Context.Propagation;
     using Microsoft.AspNetCore.Http;
     using System.Collections.Generic;
+    using System.Text;
 
     // See https://github.com/aspnet/Docs/tree/master/aspnetcore/test/integration-tests/samples/2.x/IntegrationTestsSample
     public class BasicTests
@@ -92,7 +93,6 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         public async Task SuccesfulTemplateControllerCallUsesParentContext()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
 
             var expectedTraceId = TraceId.GenerateRandomId(new RandomGenerator());
             var expectedSpanId = SpanId.GenerateRandomId(new RandomGenerator());
@@ -104,6 +104,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 TraceOptions.Default,
                 Tracestate.Empty
                 ));
+
+            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
 
             // Arrange
             using (var client = this.factory
