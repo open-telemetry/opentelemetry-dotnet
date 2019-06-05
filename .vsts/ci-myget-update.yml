@@ -24,7 +24,7 @@ steps:
   displayName: pack solution with symbols (Release)
   inputs:
     command: "pack"
-    projects: OpenTelemetry.sln
+    projects: OpenTelemetry.proj
     configuration: 'Release'
     packDirectory: '$(build.artifactStagingDirectory)'
     buildProperties: "SymbolPackageFormat=snupkg"

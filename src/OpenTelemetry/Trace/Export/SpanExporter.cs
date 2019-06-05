@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace.Export
         }
 
         /// <inheritdoc/>
-        public override Task ExportAsync(IEnumerable<ISpanData> export, CancellationToken token)
+        public override Task ExportAsync(ISpanData export, CancellationToken token)
         {
             this.worker.ExportAsync(export, token);
 

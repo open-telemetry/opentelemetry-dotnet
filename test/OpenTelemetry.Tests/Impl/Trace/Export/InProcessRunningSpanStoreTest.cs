@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private ISpan CreateSpan(string spanName)
         {
-            ISpanContext spanContext =
+            SpanContext spanContext =
                 SpanContext.Create(
                     TraceId.GenerateRandomId(random),
                     SpanId.GenerateRandomId(random),
@@ -49,8 +49,8 @@ namespace OpenTelemetry.Trace.Export.Test
                 spanContext,
                 recordSpanOptions,
                 spanName,
+                SpanKind.Internal,
                 SpanId.GenerateRandomId(random),
-                false,
                 TraceParams.Default,
                 startEndHandler,
                 null);

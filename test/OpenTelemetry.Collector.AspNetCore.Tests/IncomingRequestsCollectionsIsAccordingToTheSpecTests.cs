@@ -56,7 +56,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         public async Task SuccesfulTemplateControllerCallGeneratesASpan()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig());
+            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
 
             // Arrange
             using (var client = this.factory

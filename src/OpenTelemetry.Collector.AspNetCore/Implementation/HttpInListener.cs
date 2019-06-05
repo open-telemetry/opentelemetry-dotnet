@@ -63,7 +63,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             string path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
             ISpan span = null;
-            this.Tracer.SpanBuilderWithRemoteParent(path, SpanKind.Server, ctx).SetSampler(this.SamplerFactory(request)).StartScopedSpan(out span);
+            this.Tracer.SpanBuilderWithParentContext(path, SpanKind.Server, ctx).SetSampler(this.SamplerFactory(request)).StartScopedSpan(out span);
             if (span == null)
             {
                 // Debug.WriteLine("span is null");
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                 if (!string.IsNullOrEmpty(template))
                 {
                     // override the span name that was previously set to the path part of URL.
-                    span.Name = template;
+                    span.UpdateName(template);
 
                     span.PutHttpRouteAttribute(template);
                 }

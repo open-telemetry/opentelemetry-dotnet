@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Sampler
+namespace OpenTelemetry.Trace.Sampler.Internal
 {
     using System.Collections.Generic;
 
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace.Sampler
             }
         }
 
-        public bool ShouldSample(ISpanContext parentContext, bool hasRemoteParent, ITraceId traceId, ISpanId spanId, string name, IEnumerable<ISpan> parentLinks)
+        public bool ShouldSample(SpanContext parentContext, ITraceId traceId, ISpanId spanId, string name, IEnumerable<ISpan> parentLinks)
         {
             return false;
         }

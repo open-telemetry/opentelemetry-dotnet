@@ -1,4 +1,4 @@
-﻿// <copyright file="ExportComponentBase.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AlwaysSampleSampler.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,33 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Trace.Sampler.Internal
 {
-    public abstract class ExportComponentBase : IExportComponent
+    using System.Collections.Generic;
+
+    internal sealed class AlwaysSampleSampler : ISampler
     {
-        public static IExportComponent NewNoopExportComponent
+        internal AlwaysSampleSampler()
+        {
+        }
+
+        public string Description
         {
             get
             {
-                return new NoopExportComponent();
+                return this.ToString();
             }
         }
 
-        public abstract ISpanExporter SpanExporter { get; }
+        public bool ShouldSample(SpanContext parentContext, ITraceId traceId, ISpanId spanId, string name, IEnumerable<ISpan> parentLinks)
+        {
+            return true;
+        }
 
-        public abstract IRunningSpanStore RunningSpanStore { get; }
-
-        public abstract ISampledSpanStore SampledSpanStore { get; }
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return "AlwaysSampleSampler";
+        }
     }
 }

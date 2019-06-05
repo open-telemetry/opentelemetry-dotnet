@@ -14,9 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Trace
 {
     using OpenTelemetry.Common;
+    using OpenTelemetry.Trace.Export;
 
     /// <summary>
     /// Span data with read-only properties.
@@ -24,19 +25,14 @@ namespace OpenTelemetry.Trace.Export
     public interface ISpanData
     {
         /// <summary>
-        /// Gets the <see cref="ISpanContext"/>.
+        /// Gets the <see cref="SpanContext"/>.
         /// </summary>
-        ISpanContext Context { get; }
+        SpanContext Context { get; }
 
         /// <summary>
         /// Gets the parent <see cref="ISpanId"/>.
         /// </summary>
         ISpanId ParentSpanId { get; }
-
-        /// <summary>
-        /// Gets a value indicating whether span has a remote parent.
-        /// </summary>
-        bool? HasRemoteParent { get; }
 
         /// <summary>
         /// Gets the span name.

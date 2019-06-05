@@ -19,15 +19,20 @@ namespace OpenTelemetry.Trace.Export
     using System.Collections.Generic;
     using OpenTelemetry.Utils;
 
+    /// <inheritdoc/>
     public sealed class InProcessRunningSpanStore : RunningSpanStoreBase
     {
         private readonly ConcurrentIntrusiveList<SpanBase> runningSpans;
 
+        /// <summary>
+        /// Constructs a new <see cref="InProcessRunningSpanStore"/>.
+        /// </summary>
         public InProcessRunningSpanStore()
         {
             this.runningSpans = new ConcurrentIntrusiveList<SpanBase>();
         }
 
+        /// <inheritdoc/>
         public override IRunningSpanStoreSummary Summary
         {
             get
@@ -53,6 +58,7 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
+        /// <inheritdoc/>
         public override IEnumerable<ISpanData> GetRunningSpans(IRunningSpanStoreFilter filter)
         {
             IReadOnlyCollection<SpanBase> allRunningSpans = this.runningSpans.Copy();
@@ -74,6 +80,7 @@ namespace OpenTelemetry.Trace.Export
             return ret;
         }
 
+        /// <inheritdoc/>
         public override void OnEnd(ISpan span)
         {
             if (span is SpanBase spanBase)
@@ -82,6 +89,7 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
+        /// <inheritdoc/>
         public override void OnStart(ISpan span)
         {
             if (span is SpanBase spanBase)

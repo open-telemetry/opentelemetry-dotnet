@@ -20,9 +20,9 @@ namespace OpenTelemetry.Trace.Sampler
     using System.Collections.Generic;
     using OpenTelemetry.Utils;
 
-    internal sealed class ProbabilitySampler : ISampler
+    public sealed class ProbabilitySampler : ISampler
     {
-        internal ProbabilitySampler(double probability, long idUpperBound)
+        private ProbabilitySampler(double probability, long idUpperBound)
         {
             this.Probability = probability;
             this.IdUpperBound = idUpperBound;
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace.Sampler
 
         public long IdUpperBound { get; }
 
-        public bool ShouldSample(ISpanContext parentContext, bool hasRemoteParent, ITraceId traceId, ISpanId spanId, string name, IEnumerable<ISpan> parentLinks)
+        public bool ShouldSample(SpanContext parentContext, ITraceId traceId, ISpanId spanId, string name, IEnumerable<ISpan> parentLinks)
         {
             // If the parent is sampled keep the sampling decision.
             if (parentContext != null && parentContext.TraceOptions.IsSampled)
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Trace.Sampler
             return (int)h;
         }
 
-        internal static ProbabilitySampler Create(double probability)
+        public static ProbabilitySampler Create(double probability)
         {
             if (probability < 0.0 || probability > 1.0)
             {
