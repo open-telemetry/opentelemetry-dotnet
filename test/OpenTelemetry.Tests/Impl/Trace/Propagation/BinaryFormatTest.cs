@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Context.Propagation.Test
 {
     using OpenTelemetry.Context.Propagation;
+    using OpenTelemetry.Trace;
     using System;
     using Xunit;
 
