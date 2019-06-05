@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace.Propagation
         /// <param name="spanContext">Span context to transmit over the wire.</param>
         /// <param name="carrier">Object to set context on. Instance of this object will be passed to setter.</param>
         /// <param name="setter">Action that will set name and value pair on the object.</param>
-        void Inject<T>(ISpanContext spanContext, T carrier, Action<T, string, string> setter);
+        void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter);
 
         /// <summary>
         /// Extracts span context from textual representation.
@@ -48,6 +48,6 @@ namespace OpenTelemetry.Trace.Propagation
         /// <param name="carrier">Object to extract context from. Instance of this object will be passed to the getter.</param>
         /// <param name="getter">Function that will return string value of a key with the specified name.</param>
         /// <returns>Span context from it's text representation.</returns>
-        ISpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter);
+        SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter);
     }
 }

@@ -61,7 +61,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         internal ZipkinSpan GenerateSpan(ISpanData spanData, ZipkinEndpoint localEndpoint)
         {
-            ISpanContext context = spanData.Context;
+            SpanContext context = spanData.Context;
             long startTimestamp = this.ToEpochMicroseconds(spanData.StartTimestamp);
             long endTimestamp = this.ToEpochMicroseconds(spanData.EndTimestamp);
 
@@ -147,11 +147,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             }
             else if (spanData.Kind == SpanKind.Client)
             {
-                if (spanData.HasRemoteParent.HasValue && spanData.HasRemoteParent.Value)
-                {
-                    return ZipkinSpanKind.SERVER;
-                }
-
                 return ZipkinSpanKind.CLIENT;
             }
 

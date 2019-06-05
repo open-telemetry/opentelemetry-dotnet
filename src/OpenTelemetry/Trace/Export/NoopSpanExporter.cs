@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace.Export
         {
         }
 
-        public Task ExportAsync(IEnumerable<ISpanData> export, CancellationToken token)
+        public Task ExportAsync(ISpanData export, CancellationToken token)
         {
             return Task.CompletedTask;
         }

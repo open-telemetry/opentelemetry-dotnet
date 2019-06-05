@@ -33,20 +33,20 @@ namespace OpenTelemetry.Trace.Test
         {
             startEndHandler = Mock.Of<IStartEndHandler>();
             traceConfig = Mock.Of<ITraceConfig>();
-            tracer = new Tracer(new RandomGenerator(), startEndHandler, traceConfig);
+            tracer = new Tracer(new RandomGenerator(), startEndHandler, traceConfig, null);
         }
 
         [Fact]
         public void CreateSpanBuilder()
         {
-            ISpanBuilder spanBuilder = tracer.SpanBuilderWithExplicitParent(SPAN_NAME, parent: BlankSpan.Instance);
+            ISpanBuilder spanBuilder = tracer.SpanBuilderWithParent(SPAN_NAME, parent: BlankSpan.Instance);
             Assert.IsType<SpanBuilder>(spanBuilder);
         }
 
         [Fact]
         public void CreateSpanBuilderWithRemoteParet()
         {
-            ISpanBuilder spanBuilder = tracer.SpanBuilderWithRemoteParent(SPAN_NAME, remoteParentSpanContext: SpanContext.Blank);
+            ISpanBuilder spanBuilder = tracer.SpanBuilderWithParentContext(SPAN_NAME, parentContext: SpanContext.Blank);
             Assert.IsType<SpanBuilder>(spanBuilder);
         }
     }

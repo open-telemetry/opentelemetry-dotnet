@@ -26,13 +26,13 @@ namespace OpenTelemetry.Trace.Propagation
         /// </summary>
         /// <param name="bytes">Bytes array with the envoded span context in it.</param>
         /// <returns>Span context deserialized from the byte array.</returns>
-        ISpanContext FromByteArray(byte[] bytes);
+        SpanContext FromByteArray(byte[] bytes);
 
         /// <summary>
         /// Serialize span context into the bytes array.
         /// </summary>
         /// <param name="spanContext">Span context to serialize.</param>
         /// <returns>Byte array with the encoded span context in it.</returns>
-        byte[] ToByteArray(ISpanContext spanContext);
+        byte[] ToByteArray(SpanContext spanContext);
     }
 }

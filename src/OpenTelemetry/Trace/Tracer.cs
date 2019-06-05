@@ -16,25 +16,37 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System.Threading;
     using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
 
+    /// <inheritdoc/>
     public sealed class Tracer : TracerBase
     {
         private readonly SpanBuilderOptions spanBuilderOptions;
+        private readonly IExportComponent exportComponent;
 
-        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig)
+        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent)
         {
             this.spanBuilderOptions = new SpanBuilderOptions(randomGenerator, startEndHandler, traceConfig);
         }
 
-        public override ISpanBuilder SpanBuilderWithExplicitParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpan parent = null)
+        /// <inheritdoc/>
+        public override void RecordSpanData(ISpanData span)
         {
-            return Trace.SpanBuilder.CreateWithParent(spanName, spanKind, parent, this.spanBuilderOptions);
+            this.exportComponent.SpanExporter.ExportAsync(span, CancellationToken.None);
         }
 
-        public override ISpanBuilder SpanBuilderWithRemoteParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpanContext remoteParentSpanContext = null)
+        /// <inheritdoc/>
+        public override ISpanBuilder SpanBuilderWithParent(string name, SpanKind kind = SpanKind.Internal, ISpan parent = null)
         {
-            return Trace.SpanBuilder.CreateWithRemoteParent(spanName, spanKind, remoteParentSpanContext, this.spanBuilderOptions);
+            return Trace.SpanBuilder.Create(name, kind, parent, this.spanBuilderOptions);
+        }
+
+        /// <inheritdoc/>
+        public override ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, SpanContext parentContext = null)
+        {
+            return Trace.SpanBuilder.Create(name, kind, parentContext, this.spanBuilderOptions);
         }
     }
 }

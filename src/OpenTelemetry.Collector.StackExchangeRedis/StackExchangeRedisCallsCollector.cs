@@ -124,7 +124,10 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
                     }
                 }
 
-                this.exporter.SpanExporter.ExportAsync(spans, CancellationToken.None).Wait();
+                foreach (var s in spans)
+                {
+                    this.exporter.SpanExporter.ExportAsync(s, CancellationToken.None).Wait();
+                }
 
                 Thread.Sleep(TimeSpan.FromSeconds(1));
             }

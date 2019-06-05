@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace
                     ((ExportComponent)this.ExportComponent).RunningSpanStore,
                     ((ExportComponent)this.ExportComponent).SampledSpanStore,
                     eventQueue);
-            this.Tracer = new Tracer(randomHandler, startEndHandler, this.TraceConfig);
+            this.Tracer = new Tracer(randomHandler, startEndHandler, this.TraceConfig, null);
         }
 
         /// <inheritdoc/>

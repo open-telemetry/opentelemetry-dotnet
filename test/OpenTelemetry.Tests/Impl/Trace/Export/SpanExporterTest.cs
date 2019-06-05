@@ -34,8 +34,8 @@ namespace OpenTelemetry.Trace.Export.Test
         private static readonly String SPAN_NAME_1 = "MySpanName/1";
         private static readonly String SPAN_NAME_2 = "MySpanName/2";
         private readonly RandomGenerator random = new RandomGenerator(1234);
-        private readonly ISpanContext sampledSpanContext;
-        private readonly ISpanContext notSampledSpanContext;
+        private readonly SpanContext sampledSpanContext;
+        private readonly SpanContext notSampledSpanContext;
         private readonly ISpanExporter spanExporter = SpanExporter.Create(4, Duration.Create(1, 0));
         private readonly IRunningSpanStore runningSpanStore = new InProcessRunningSpanStore();
         private readonly IStartEndHandler startEndHandler;
@@ -59,8 +59,8 @@ namespace OpenTelemetry.Trace.Export.Test
                     sampledSpanContext,
                     recordSpanOptions,
                     spanName,
+                    SpanKind.Internal,
                     null,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     null);
@@ -75,8 +75,8 @@ namespace OpenTelemetry.Trace.Export.Test
                     notSampledSpanContext,
                     recordSpanOptions,
                     spanName,
+                    SpanKind.Internal,
                     null,
-                    false,
                     TraceParams.Default,
                     startEndHandler,
                     null);
@@ -188,30 +188,20 @@ namespace OpenTelemetry.Trace.Export.Test
             var exporter = SpanExporter.Create(4, Duration.Create(1, 0));
 
             var handler1 = new Mock<IHandler>();
-            var handler2 = new Mock<IHandler>();
 
 
             exporter.RegisterHandler("first", handler1.Object);
-            exporter.RegisterHandler("second", handler2.Object);
 
             var span1 = new Mock<ISpanData>();
-            var span2 = new Mock<ISpanData>();
 
-            await exporter.ExportAsync(new ISpanData[] { span1.Object, span2.Object }, CancellationToken.None);
+            await exporter.ExportAsync(span1.Object, CancellationToken.None);
 
             Assert.Single(handler1.Invocations);
             var args = (IEnumerable<ISpanData>)handler1.Invocations.First().Arguments.First();
 
-
             handler1.Verify(c => c.ExportAsync(It.Is<IEnumerable<ISpanData>>(
                 (x) => x.Where((s) => s == span1.Object).Count() > 0 &&
-                       x.Where((s) => s == span2.Object).Count() > 0 &&
-                       x.Count() == 2)));
-
-            handler2.Verify(c => c.ExportAsync(It.Is<IEnumerable<ISpanData>>(
-                (x) => x.Where((s) => s == span1.Object).Count() > 0 &&
-                       x.Where((s) => s == span2.Object).Count() > 0 &&
-                       x.Count() == 2)));
+                       x.Count() == 1)));
         }
     }
 

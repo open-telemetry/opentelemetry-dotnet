@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace.Internal
 
         public void OnEnd(ISpan span)
         {
-            if ((span.Options.HasFlag(SpanOptions.RecordEvents) && this.enqueueEventForNonSampledSpans)
+            if ((span.IsRecordingEvents && this.enqueueEventForNonSampledSpans)
                 || span.Context.TraceOptions.IsSampled)
             {
                 this.eventQueue.Enqueue(new SpanEndEvent(span, this.spanExporter, this.runningSpanStore, this.sampledSpanStore));
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace.Internal
 
         public void OnStart(ISpan span)
         {
-            if (span.Options.HasFlag(SpanOptions.RecordEvents) && this.enqueueEventForNonSampledSpans)
+            if (span.IsRecordingEvents && this.enqueueEventForNonSampledSpans)
             {
                 this.eventQueue.Enqueue(new SpanStartEvent(span, this.runningSpanStore));
             }

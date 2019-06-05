@@ -51,12 +51,12 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             using (serverLifeTime)
             {
-                var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig());
+                var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
 
                 var tf = new Mock<ITextFormat>();
                 tf
-                    .Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<ISpanContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                    .Callback((ISpanContext sc, HttpRequestMessage obj, Action<HttpRequestMessage, string, string> setter) =>
+                    .Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<SpanContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                    .Callback((SpanContext sc, HttpRequestMessage obj, Action<HttpRequestMessage, string, string> setter) =>
                     {
                         expectedTraceId = sc.TraceId;
                         expectedSpanId = sc.SpanId;

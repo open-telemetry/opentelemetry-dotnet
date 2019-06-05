@@ -20,6 +20,7 @@ namespace OpenTelemetry.Testing.Export
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
     public class TestHandler : IHandler

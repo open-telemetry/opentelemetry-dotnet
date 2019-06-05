@@ -44,8 +44,16 @@ namespace OpenTelemetry.Trace.Test
             // Tests only that all the methods are not crashing/throwing errors.
             BlankSpan.Instance.SetAttribute(
                 "MyStringAttributeKey2", AttributeValue<string>.Create("MyStringAttributeValue2"));
-            BlankSpan.Instance.SetAttributes(attributes);
-            BlankSpan.Instance.SetAttributes(multipleAttributes);
+            foreach (var a in attributes)
+            {
+                BlankSpan.Instance.SetAttribute(a.Key, a.Value);
+            }
+
+            foreach (var a in multipleAttributes)
+            {
+                BlankSpan.Instance.SetAttribute(a.Key, a.Value);
+            }
+
             BlankSpan.Instance.AddEvent("MyEvent");
             BlankSpan.Instance.AddEvent("MyEvent", attributes);
             BlankSpan.Instance.AddEvent("MyEvent", multipleAttributes);
