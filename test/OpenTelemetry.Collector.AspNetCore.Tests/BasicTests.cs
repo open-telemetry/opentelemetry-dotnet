@@ -28,7 +28,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using Moq;
     using Microsoft.AspNetCore.TestHost;
     using System;
-    using OpenTelemetry.Trace.Propagation;
+    using OpenTelemetry.Context.Propagation;
     using Microsoft.AspNetCore.Http;
     using System.Collections.Generic;
 
@@ -105,17 +105,14 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 Tracestate.Empty
                 ));
 
-            var propagationComponent = new Mock<IPropagationComponent>();
-            propagationComponent.SetupGet(m => m.TextFormat).Returns(tf.Object);
-
-
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices((services) =>
                     {
                         services.AddSingleton<ITracer>(tracer);
-                        services.AddSingleton<IPropagationComponent>(propagationComponent.Object);
+                        services.AddSingleton<ITextFormat>(tf.Object);
+                        services.AddSingleton<IBinaryFormat>(new BinaryFormat());
                     }))
                 .CreateClient())
             {

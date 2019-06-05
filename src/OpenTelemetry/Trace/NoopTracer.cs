@@ -16,13 +16,36 @@
 
 namespace OpenTelemetry.Trace
 {
+    using OpenTelemetry.Context.Propagation;
+
     /// <summary>
     /// No-op tracer.
     /// </summary>
     public sealed class NoopTracer : TracerBase, ITracer
     {
+        private static IBinaryFormat binaryFormat = new BinaryFormat();
+        private static ITextFormat textFormat = new TraceContextFormat();
+
         internal NoopTracer()
         {
+        }
+
+        /// <inheritdoc/>
+        public override IBinaryFormat BinaryFormat
+        {
+            get
+            {
+                return binaryFormat;
+            }
+        }
+
+        /// <inheritdoc/>
+        public override ITextFormat TextFormat
+        {
+            get
+            {
+                return textFormat;
+            }
         }
 
         /// <inheritdoc/>

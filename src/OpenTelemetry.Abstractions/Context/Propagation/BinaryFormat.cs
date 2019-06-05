@@ -14,11 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Propagation.Implementation
+namespace OpenTelemetry.Context.Propagation
 {
     using System;
+    using OpenTelemetry.Trace;
 
-    internal class BinaryFormat : BinaryFormatBase
+    public class BinaryFormat : IBinaryFormat
     {
         private const byte VersionId = 0;
         private const int VersionIdOffset = 0;
@@ -36,7 +37,7 @@ namespace OpenTelemetry.Trace.Propagation.Implementation
         private const int TraceOptionOffset = TraceOptionFieldIdOffset + IdSize;
         private const int FormatLength = (4 * IdSize) + TraceId.Size + SpanId.Size + TraceOptions.Size;
 
-        public override SpanContext FromByteArray(byte[] bytes)
+        public SpanContext FromByteArray(byte[] bytes)
         {
             if (bytes == null)
             {
@@ -80,7 +81,7 @@ namespace OpenTelemetry.Trace.Propagation.Implementation
             }
         }
 
-        public override byte[] ToByteArray(SpanContext spanContext)
+        public byte[] ToByteArray(SpanContext spanContext)
         {
             if (spanContext == null)
             {

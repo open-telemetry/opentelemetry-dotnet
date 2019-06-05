@@ -24,8 +24,8 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
     using System.Net.Http;
     using System.Threading.Tasks;
     using OpenTelemetry.Collector.Dependencies.Common;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Propagation;
     using OpenTelemetry.Trace.Sampler;
 
     internal class HttpHandlerDiagnosticListener : ListenerHandler
@@ -35,12 +35,9 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         private readonly PropertyFetcher stopExceptionFetcher = new PropertyFetcher("Exception");
         private readonly PropertyFetcher stopRequestStatusFetcher = new PropertyFetcher("RequestTaskStatus");
 
-        private readonly IPropagationComponent propagationComponent;
-
-        public HttpHandlerDiagnosticListener(ITracer tracer, Func<HttpRequestMessage, ISampler> samplerFactory, IPropagationComponent propagationComponent)
+        public HttpHandlerDiagnosticListener(ITracer tracer, Func<HttpRequestMessage, ISampler> samplerFactory)
             : base("HttpHandlerDiagnosticListener", tracer, samplerFactory)
         {
-            this.propagationComponent = propagationComponent;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -59,7 +56,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             span.PutHttpUserAgentAttribute(userAgents?.FirstOrDefault());
             span.PutHttpRawUrlAttribute(request.RequestUri.OriginalString);
 
-            this.propagationComponent.TextFormat.Inject<HttpRequestMessage>(span.Context, request, (r, k, v) => r.Headers.Add(k, v));
+            this.Tracer.TextFormat.Inject<HttpRequestMessage>(span.Context, request, (r, k, v) => r.Headers.Add(k, v));
         }
 
         public override void OnStopActivity(Activity activity, object payload)

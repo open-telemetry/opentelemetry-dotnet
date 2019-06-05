@@ -18,7 +18,7 @@ namespace OpenTelemetry.Trace.Test
 {
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Propagation;
+    using OpenTelemetry.Context.Propagation;
     using Xunit;
 
     public class TracingTest
@@ -60,12 +60,6 @@ namespace OpenTelemetry.Trace.Test
         public void DefaultTracer()
         {
             Assert.Same(Tracer.NoopTracer, Tracing.Tracer);
-        }
-
-        [Fact(Skip = "need to fix the way tracer being instantiated")]
-        public void DefaultBinaryPropagationHandler()
-        {
-            Assert.Same(PropagationComponentBase.NoopPropagationComponent, Tracing.PropagationComponent);
         }
 
         [Fact(Skip = "need to fix the way tracer being instantiated")]

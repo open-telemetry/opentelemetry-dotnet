@@ -14,10 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Propagation.Test
+namespace OpenTelemetry.Context.Propagation.Test
 {
     using System;
     using System.Collections.Generic;
+    using OpenTelemetry.Trace;
     using Xunit;
     using Xunit.Abstractions;
 

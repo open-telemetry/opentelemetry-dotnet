@@ -20,7 +20,6 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Trace.Propagation;
 
     /// <summary>
     /// Trace component holds all the extensibility points required for distributed tracing.
@@ -54,7 +53,6 @@ namespace OpenTelemetry.Trace
                 this.ExportComponent = Export.ExportComponent.CreateWithInProcessStores(eventQueue);
             }
 
-            this.PropagationComponent = new DefaultPropagationComponent();
             IStartEndHandler startEndHandler =
                 new StartEndHandler(
                     this.ExportComponent.SpanExporter,
@@ -66,9 +64,6 @@ namespace OpenTelemetry.Trace
 
         /// <inheritdoc/>
         public ITracer Tracer { get; }
-
-        /// <inheritdoc/>
-        public IPropagationComponent PropagationComponent { get; }
 
         /// <inheritdoc/>
         public IExportComponent ExportComponent { get; }
