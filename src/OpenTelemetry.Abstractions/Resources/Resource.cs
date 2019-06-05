@@ -3,7 +3,7 @@
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of theLicense at
+// You may obtain a copy of the License at
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -20,17 +20,37 @@ namespace OpenTelemetry.Resources
     using System.Collections.Generic;
     using System.Security;
     using System.Text.RegularExpressions;
-    using OpenTelemetry.Implementation;
     using OpenTelemetry.Tags;
     using OpenTelemetry.Utils;
 
     /// <summary>
-    /// Represents a resource that captures identification information about the entities for which signals (stats or traces)
-    /// are reported. It further provides a framework for detection of resource information from the environment and progressive
-    /// population as signals propagate from the core instrumentation library to a backend's exporter.
+    /// <see cref="Resource"/> represents a resource, which captures identifying information about the entities
+    /// for which signals (stats or traces) are reported. It further provides a framework for detection of resource
+    /// information from the environment and progressive population as signals propagate from the core
+    /// instrumentation library to a backend's exporter.
     /// </summary>
-    public abstract class Resource : IResource
+    public abstract class Resource
     {
+        /// <summary>
+        /// Maximum length of the resource type name.
+        /// </summary>
+        public const int MaxResourceTypeNameLength = 255;
+
+        /// <summary>
+        /// Special resource type name that is assigned if nothing else is detected.
+        /// </summary>
+        public const string GlobalResourceType = "Global";
+
+        /// <summary>
+        /// OpenTelemetry Resource Type Environment Variable Name.
+        /// </summary>
+        public const string ResourceTypeEnvironmentVariable = "OC_RESOURCE_TYPE";
+
+        /// <summary>
+        /// OpenTelemetry Resource Labels Environment Variable Name.
+        /// </summary>
+        public const string ResourceLabelsEnvironmentVariable = "OC_RESOURCE_LABELS";
+
         /// <summary>
         /// Tag list splitter.
         /// </summary>
@@ -50,46 +70,40 @@ namespace OpenTelemetry.Resources
 
         static Resource()
         {
-            string OpenTelemetryResourceType;
-            string OpenTelemetryEnvironmentTags;
+            string openTelemetryResourceType = string.Empty;
+            string openTelemetryEnvironmentTags = string.Empty;
 
             try
             {
-                OpenTelemetryResourceType = Environment.GetEnvironmentVariable(Constants.ResourceTypeEnvironmentVariable);
+                openTelemetryResourceType = Environment.GetEnvironmentVariable(ResourceTypeEnvironmentVariable);
             }
             catch (SecurityException ex)
             {
-                OpenTelemetryResourceType = Constants.GlobalResourceType;
-
-                Log.FailedReadingEnvironmentVariableWarning(Constants.ResourceTypeEnvironmentVariable, ex);
+                openTelemetryResourceType = GlobalResourceType;
             }
 
             try
             {
-                OpenTelemetryEnvironmentTags = Environment.GetEnvironmentVariable(Constants.ResourceLabelsEnvironmentVariable);
+                openTelemetryEnvironmentTags = Environment.GetEnvironmentVariable(ResourceLabelsEnvironmentVariable);
             }
             catch (SecurityException ex)
             {
-                OpenTelemetryEnvironmentTags = string.Empty;
-
-                Log.FailedReadingEnvironmentVariableWarning(Constants.ResourceLabelsEnvironmentVariable, ex);
+                openTelemetryEnvironmentTags = string.Empty;
             }
 
-            TryParseResourceType(OpenTelemetryResourceType, out EnvironmentType);
-            EnvironmentToLabelMap = ParseResourceLabels(Environment.GetEnvironmentVariable(Constants.ResourceLabelsEnvironmentVariable));
+            TryParseResourceType(openTelemetryResourceType, out EnvironmentType);
+            EnvironmentToLabelMap = ParseResourceLabels(Environment.GetEnvironmentVariable(ResourceLabelsEnvironmentVariable));
         }
 
         /// <summary>
-        /// Gets or sets the identification of the resource.
+        /// Gets or sets the type identifier of the resource.
         /// </summary>
         public abstract string Type { get; protected set; }
 
         /// <summary>
-        /// Gets the map between the tag and its value.
+        /// Gets the map of tags describing the resource.
         /// </summary>
         public abstract IEnumerable<ITag> Tags { get; }
-
-        private static OpenTelemetryEventSource Log => OpenTelemetryEventSource.Log;
 
         /// <summary>
         /// Creates a label/tag map from the OC_RESOURCE_LABELS environment variable.
@@ -112,7 +126,7 @@ namespace OpenTelemetry.Resources
                 string[] rawLabels = rawEnvironmentTags.Split(LabelListSplitter);
 
                 Regex regex = new Regex("^\"|\"$", RegexOptions.Compiled);
-                
+
                 foreach (var rawLabel in rawLabels)
                 {
                     string[] keyValuePair = rawLabel.Split(LabelKeyValueSplitter);
@@ -126,13 +140,11 @@ namespace OpenTelemetry.Resources
 
                     if (!IsValidAndNotEmpty(key))
                     {
-                        Log.InvalidCharactersInResourceElement("Label key");
                         return new ITag[0] { };
                     }
 
                     if (!IsValid(value))
                     {
-                        Log.InvalidCharactersInResourceElement("Label key");
                         return new ITag[0] { };
                     }
 
@@ -147,14 +159,13 @@ namespace OpenTelemetry.Resources
         {
             if (string.IsNullOrEmpty(rawEnvironmentType))
             {
-                resourceType = Constants.GlobalResourceType;
+                resourceType = GlobalResourceType;
                 return false;
             }
 
-            if (rawEnvironmentType.Length > Constants.MaxResourceTypeNameLength)
+            if (rawEnvironmentType.Length > MaxResourceTypeNameLength)
             {
-                Log.InvalidCharactersInResourceElement(rawEnvironmentType);
-                resourceType = Constants.GlobalResourceType;
+                resourceType = GlobalResourceType;
                 return false;
             }
 
@@ -164,18 +175,18 @@ namespace OpenTelemetry.Resources
 
         /// <summary>
         /// Checks whether given string is a valid printable ASCII string with a length not exeeding
-        /// <see cref="Constants.MaxResourceTypeNameLength"/> characters.
+        /// <see cref="MaxResourceTypeNameLength"/> characters.
         /// </summary>
         /// <param name="name">The string.</param>
         /// <returns>Whether given string is valid.</returns>
         private static bool IsValid(string name)
         {
-            return name.Length <= Constants.MaxResourceTypeNameLength && StringUtil.IsPrintableString(name);
+            return name.Length <= MaxResourceTypeNameLength && StringUtil.IsPrintableString(name);
         }
 
         /// <summary>
         /// Checks whether given string is a valid printable ASCII string with a length
-        /// greater than 0 and not exceeding <see cref="Constants.MaxResourceTypeNameLength"/> characters.
+        /// greater than 0 and not exceeding <see cref="MaxResourceTypeNameLength"/> characters.
         /// </summary>
         /// <param name="name">The string.</param>
         /// <returns>Whether given string is valid.</returns>

@@ -18,6 +18,7 @@ namespace OpenTelemetry.Tags
 {
     using System;
 
+    /// <inheritdoc/>
     public sealed class Tag : ITag
     {
         internal Tag(ITagKey key, ITagValue value)
@@ -26,10 +27,18 @@ namespace OpenTelemetry.Tags
             this.Value = value ?? throw new ArgumentNullException(nameof(value));
         }
 
+        /// <inheritdoc/>
         public ITagKey Key { get; }
 
+        /// <inheritdoc/>
         public ITagValue Value { get; }
 
+        /// <summary>
+        /// Creates a new <see cref="ITag"/> from the given key and value.
+        /// </summary>
+        /// <param name="key">The tag's key.</param>
+        /// <param name="value">The tag's value.</param>
+        /// <returns><see cref="ITag"/>.</returns>
         public static ITag Create(ITagKey key, ITagValue value)
         {
             return new Tag(key, value);
@@ -44,7 +53,7 @@ namespace OpenTelemetry.Tags
                 + "}";
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override bool Equals(object o)
         {
             if (o == this)
@@ -61,7 +70,7 @@ namespace OpenTelemetry.Tags
             return false;
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             int h = 1;

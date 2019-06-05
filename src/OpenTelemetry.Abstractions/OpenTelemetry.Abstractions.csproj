@@ -27,7 +27,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Stats\" />
-    <Folder Include="Tags\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Utils\AttributesWithCapacity.cs" />

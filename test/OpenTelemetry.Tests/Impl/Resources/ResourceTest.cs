@@ -35,21 +35,21 @@ namespace OpenTelemetry.Impl.Resources
 
             // Assert (empty)
             Assert.False(parsed);
-            Assert.Equal(Constants.GlobalResourceType, resourceType);
+            Assert.Equal(Resource.GlobalResourceType, resourceType);
 
             // Act (null)
             parsed = Resource.TryParseResourceType(rawResourceType, out resourceType);
 
             // Assert (null)
             Assert.False(parsed);
-            Assert.Equal(Constants.GlobalResourceType, resourceType);
+            Assert.Equal(Resource.GlobalResourceType, resourceType);
         }
 
         [Fact]
         public void TryParseResourceType_LongResourceTypeName_GlobalResourceSet()
         {
             // Arrange
-            string longResouceTypeName = "a".PadLeft(Constants.MaxResourceTypeNameLength + 1, 'a');
+            string longResouceTypeName = "a".PadLeft(Resource.MaxResourceTypeNameLength + 1, 'a');
             string resourceType;
 
             // Act
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Impl.Resources
 
             // Assert
             Assert.False(parsed);
-            Assert.Equal(Constants.GlobalResourceType, resourceType);
+            Assert.Equal(Resource.GlobalResourceType, resourceType);
         }
 
         [Fact]
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Impl.Resources
         public void ParseResourceLabels_LongValueName_AllLaterLabelsIgnored()
         {
             // Arrange
-            string longValue = "a".PadLeft(Constants.MaxResourceTypeNameLength + 1, 'a');
+            string longValue = "a".PadLeft(Resource.MaxResourceTypeNameLength + 1, 'a');
             string resourceLabels = $"k1={longValue};k2=v2";
 
             // Act
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Impl.Resources
         public void ParseResourceLabels_LongKeyName_AllLaterLabelsIgnored()
         {
             // Arrange
-            string longKey = "a".PadLeft(Constants.MaxResourceTypeNameLength + 1, 'a');
+            string longKey = "a".PadLeft(Resource.MaxResourceTypeNameLength + 1, 'a');
             string resourceLabels = $"{longKey}=v1;k2=v2";
 
             // Act
