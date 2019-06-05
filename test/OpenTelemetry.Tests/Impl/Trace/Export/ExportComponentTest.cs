@@ -21,8 +21,8 @@ namespace OpenTelemetry.Trace.Export.Test
 
     public class ExportComponentTest
     {
-        private readonly IExportComponent exportComponentWithInProcess = ExportComponent.CreateWithInProcessStores(new SimpleEventQueue());
-        private readonly IExportComponent exportComponentWithoutInProcess = ExportComponent.CreateWithoutInProcessStores(new SimpleEventQueue());
+        private readonly ExportComponent exportComponentWithInProcess = ExportComponent.CreateWithInProcessStores(new SimpleEventQueue());
+        private readonly ExportComponent exportComponentWithoutInProcess = ExportComponent.CreateWithoutInProcessStores(new SimpleEventQueue());
 
         [Fact]
         public void ImplementationOfSpanExporter()

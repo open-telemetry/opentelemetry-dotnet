@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
     public class NoopRunningSpanStoreTest
     {
-        private readonly IRunningSpanStore runningSpanStore = ExportComponent.NewNoopExportComponent.RunningSpanStore;
+        private readonly IRunningSpanStore runningSpanStore = ((NoopExportComponent)ExportComponent.NewNoopExportComponent).RunningSpanStore;
 
         [Fact]
         public void NoopRunningSpanStore_GetSummary()
