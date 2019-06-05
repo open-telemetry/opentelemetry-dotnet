@@ -20,7 +20,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
     public class ExportComponentBaseTest
     {
-        private readonly IExportComponent exportComponent = ExportComponentBase.NewNoopExportComponent;
+        private readonly NoopExportComponent exportComponent = (NoopExportComponent)ExportComponent.NewNoopExportComponent;
 
         [Fact]
         public void ImplementationOfSpanExporter()
