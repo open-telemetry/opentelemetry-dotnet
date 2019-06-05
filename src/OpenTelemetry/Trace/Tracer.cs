@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     using System.Threading;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
 
@@ -25,11 +26,26 @@ namespace OpenTelemetry.Trace
     {
         private readonly SpanBuilderOptions spanBuilderOptions;
         private readonly IExportComponent exportComponent;
+        private readonly IBinaryFormat binaryFormat;
+        private readonly ITextFormat textFormat;
 
         public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent)
+            : this(randomGenerator, startEndHandler, traceConfig, exportComponent, null, null)
+        {
+        }
+
+        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent, IBinaryFormat binaryFormat, ITextFormat textFormat)
         {
             this.spanBuilderOptions = new SpanBuilderOptions(randomGenerator, startEndHandler, traceConfig);
+            this.binaryFormat = binaryFormat ?? new BinaryFormat();
+            this.textFormat = textFormat ?? new TraceContextFormat();
         }
+
+        /// <inheritdoc/>
+        public override IBinaryFormat BinaryFormat => this.binaryFormat;
+
+        /// <inheritdoc/>
+        public override ITextFormat TextFormat => this.textFormat;
 
         /// <inheritdoc/>
         public override void RecordSpanData(ISpanData span)

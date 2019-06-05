@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Propagation.Test
+namespace OpenTelemetry.Context.Propagation.Test
 {
     using System;
     using Xunit;

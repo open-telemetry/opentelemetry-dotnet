@@ -16,42 +16,30 @@
 
 namespace OpenTelemetry.Trace
 {
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Trace.Propagation;
 
     /// <summary>
     /// Helper class that provides easy to use static constructor of the default tracer component.
     /// </summary>
     public sealed class Tracing
     {
-        private static Tracing tracing = new Tracing(true);
+        private static Tracing tracing = new Tracing();
 
         private ITraceComponent traceComponent = null;
 
-        internal Tracing(bool enabled)
+        internal Tracing()
         {
-            if (enabled)
-            {
-                this.traceComponent = new TraceComponent(new RandomGenerator(), new SimpleEventQueue());
-            }
-            else
-            {
-                this.traceComponent = new NoopTraceComponent();
-            }
+            this.traceComponent = new TraceComponent(new RandomGenerator(), new SimpleEventQueue());
         }
 
         /// <summary>
         /// Gets the tracer to record spans.
         /// </summary>
         public static ITracer Tracer => tracing.traceComponent.Tracer;
-
-        /// <summary>
-        /// Gets the propagation component that defines how to extract and inject span context from the wire protocols.
-        /// </summary>
-        public static IPropagationComponent PropagationComponent => tracing.traceComponent.PropagationComponent;
 
         /// <summary>
         /// Gets the export component to upload spans to.

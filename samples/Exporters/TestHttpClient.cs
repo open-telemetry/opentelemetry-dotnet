@@ -5,7 +5,7 @@
     using OpenTelemetry.Collector.Dependencies;
     using OpenTelemetry.Exporter.Zipkin;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Propagation;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Sampler;
 
     internal class TestHttpClient
@@ -16,7 +16,7 @@
         {
             Console.WriteLine("Hello World!");
 
-            var collector = new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample, PropagationComponentBase.NoopPropagationComponent);
+            var collector = new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample);
 
             var exporter = new ZipkinTraceExporter(
                 new ZipkinTraceExporterOptions()
