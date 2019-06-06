@@ -36,7 +36,7 @@
             var exporter = new PrometheusExporter(
                 new PrometheusExporterOptions()
                 {
-                    Url = new String("http://localhost:9184/metrics/")
+                    Url = "http://localhost:9184/metrics/"
                 },
                 Stats.ViewManager);
 
