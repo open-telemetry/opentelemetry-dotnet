@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace.Propagation
         }
 
         /// <inheritdoc/>
-        public override ISpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        public override SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)
             {
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Trace.Propagation
         }
 
         /// <inheritdoc/>
-        public override void Inject<T>(ISpanContext spanContext, T carrier, Action<T, string, string> setter)
+        public override void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
         {
             if (spanContext == null)
             {

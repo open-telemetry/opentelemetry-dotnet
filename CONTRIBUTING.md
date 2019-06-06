@@ -40,6 +40,8 @@ git merge upstream/master
 
 Remember to always work in a branch of your local copy, as you might otherwise have to contend with conflicts in master.
 
+Please also see [GitHub workflow](https://github.com/open-telemetry/community/blob/master/CONTRIBUTING.md#github-workflow) section of general project contributing guide.
+
 ### Build
 
 You can use Visual Studio 2017+ or VS Code to contribute. Just open root folder

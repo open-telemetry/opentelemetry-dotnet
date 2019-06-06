@@ -22,18 +22,20 @@ namespace OpenTelemetry.Trace.Export
     using OpenTelemetry.Internal;
     using OpenTelemetry.Utils;
 
+    /// <inheritdoc/>
     public sealed class InProcessSampledSpanStore : SampledSpanStoreBase
     {
-        private const int NumSampolesPerLatencySamples = 10;
+        private const int NumSamplesPerLatencySamples = 10;
         private const int NumSamplesPerErrorSamples = 5;
-        private static TimeSpan timeBetweenSamples = TimeSpan.FromSeconds(1);
         // The total number of canonical codes - 1 (the OK code).
         private const int NumErrorBuckets = 17 - 1; // CanonicalCode.values().length - 1;
 
         private static readonly int NumLatencyBuckets = LatencyBucketBoundaries.Values.Count;
         private static readonly int MaxPerSpanNameSamples =
-            (NumSampolesPerLatencySamples * NumLatencyBuckets)
+            (NumSamplesPerLatencySamples * NumLatencyBuckets)
                 + (NumSamplesPerErrorSamples * NumErrorBuckets);
+
+        private static TimeSpan timeBetweenSamples = TimeSpan.FromSeconds(1);
 
         private readonly IEventQueue eventQueue;
         private readonly Dictionary<string, PerSpanNameSamples> samples;
@@ -44,6 +46,7 @@ namespace OpenTelemetry.Trace.Export
             this.eventQueue = eventQueue;
         }
 
+        /// <inheritdoc/>
         public override ISampledSpanStoreSummary Summary
         {
             get
@@ -61,6 +64,7 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
+        /// <inheritdoc/>
         public override ISet<string> RegisteredSpanNamesForCollection
         {
             get
@@ -72,6 +76,7 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
+        /// <inheritdoc/>
         public override void ConsiderForSampling(ISpan ispan)
         {
             if (ispan is SpanBase span)
@@ -93,6 +98,7 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
+        /// <inheritdoc/>
         public override IEnumerable<ISpanData> GetErrorSampledSpans(ISampledSpanStoreErrorFilter filter)
         {
             int numSpansToReturn = filter.MaxSpansToReturn == 0 ? MaxPerSpanNameSamples : filter.MaxSpansToReturn;
@@ -117,6 +123,7 @@ namespace OpenTelemetry.Trace.Export
             return ret.AsReadOnly();
         }
 
+        /// <inheritdoc/>
         public override IEnumerable<ISpanData> GetLatencySampledSpans(ISampledSpanStoreLatencyFilter filter)
         {
             int numSpansToReturn = filter.MaxSpansToReturn == 0 ? MaxPerSpanNameSamples : filter.MaxSpansToReturn;
@@ -141,11 +148,13 @@ namespace OpenTelemetry.Trace.Export
             return ret.AsReadOnly();
         }
 
+        /// <inheritdoc/>
         public override void RegisterSpanNamesForCollection(IEnumerable<string> spanNames)
         {
             this.eventQueue.Enqueue(new RegisterSpanNameEvent(this, spanNames));
         }
 
+        /// <inheritdoc/>
         public override void UnregisterSpanNamesForCollection(IEnumerable<string> spanNames)
         {
             this.eventQueue.Enqueue(new UnregisterSpanNameEvent(this, spanNames));
@@ -286,7 +295,7 @@ namespace OpenTelemetry.Trace.Export
                 this.latencyBuckets = new Bucket[NumLatencyBuckets];
                 for (int i = 0; i < NumLatencyBuckets; i++)
                 {
-                    this.latencyBuckets[i] = new Bucket(NumSampolesPerLatencySamples);
+                    this.latencyBuckets[i] = new Bucket(NumSamplesPerLatencySamples);
                 }
 
                 this.errorBuckets = new Bucket[NumErrorBuckets];

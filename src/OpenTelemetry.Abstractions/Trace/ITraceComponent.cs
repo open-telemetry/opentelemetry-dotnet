@@ -37,13 +37,13 @@ namespace OpenTelemetry.Trace
         IPropagationComponent PropagationComponent { get; }
 
         /// <summary>
-        /// Gets the exporter to use to upload spans.
-        /// </summary>
-        IExportComponent ExportComponent { get; }
-
-        /// <summary>
         /// Gets the tracer configuration. Include sampling definition and limits.
         /// </summary>
         ITraceConfig TraceConfig { get; }
+
+        /// <summary>
+        /// Gets the exporter to use to upload spans.
+        /// </summary>
+        IExportComponent ExportComponent { get; }
     }
 }
