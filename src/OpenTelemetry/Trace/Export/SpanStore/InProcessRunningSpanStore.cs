@@ -59,11 +59,11 @@ namespace OpenTelemetry.Trace.Export
         }
 
         /// <inheritdoc/>
-        public override IEnumerable<ISpanData> GetRunningSpans(IRunningSpanStoreFilter filter)
+        public override IEnumerable<SpanData> GetRunningSpans(IRunningSpanStoreFilter filter)
         {
             IReadOnlyCollection<SpanBase> allRunningSpans = this.runningSpans.Copy();
             int maxSpansToReturn = filter.MaxSpansToReturn == 0 ? allRunningSpans.Count : filter.MaxSpansToReturn;
-            List<ISpanData> ret = new List<ISpanData>(maxSpansToReturn);
+            List<SpanData> ret = new List<SpanData>(maxSpansToReturn);
             foreach (var span in allRunningSpans)
             {
                 if (ret.Count == maxSpansToReturn)

@@ -66,7 +66,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanData_AllValues()
         {
-            ISpanData spanData =
+            SpanData spanData =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanData_RootActiveSpan()
         {
-            ISpanData spanData =
+            SpanData spanData =
                 SpanData.Create(
                     spanContext,
                     null,
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanData_AllDataEmpty()
         {
-            ISpanData spanData =
+            SpanData spanData =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanDataEquals()
         {
-            ISpanData allSpanData1 =
+            SpanData allSpanData1 =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
@@ -164,7 +164,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     status,
                     kind,
                     endTimestamp);
-            ISpanData allSpanData2 =
+            SpanData allSpanData2 =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
@@ -177,7 +177,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     status,
                     kind,
                     endTimestamp);
-            ISpanData emptySpanData =
+            SpanData emptySpanData =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,

@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace.Test
         {
         }
 
-        public override ISpanData ToSpanData()
+        public override SpanData ToSpanData()
         {
             return null;
         }

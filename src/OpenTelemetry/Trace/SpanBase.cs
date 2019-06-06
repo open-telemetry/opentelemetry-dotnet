@@ -148,7 +148,7 @@ namespace OpenTelemetry.Trace
         /// Converts this span into span data for exporting purposes.
         /// </summary>
         /// <returns>Span Data corresponding current span.</returns>
-        public abstract ISpanData ToSpanData();
+        public abstract SpanData ToSpanData();
 
         /// <inheritdoc/>
         public abstract void SetAttribute(string key, string value);

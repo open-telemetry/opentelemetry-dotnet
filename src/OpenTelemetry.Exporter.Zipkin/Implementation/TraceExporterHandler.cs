@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             this.httpClient = client ?? new HttpClient();
         }
 
-        public async Task ExportAsync(IEnumerable<ISpanData> spanDataList)
+        public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
         {
             List<ZipkinSpan> zipkinSpans = new List<ZipkinSpan>();
 
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             await this.SendSpansAsync(zipkinSpans);
         }
 
-        internal ZipkinSpan GenerateSpan(ISpanData spanData, ZipkinEndpoint localEndpoint)
+        internal ZipkinSpan GenerateSpan(SpanData spanData, ZipkinEndpoint localEndpoint)
         {
             SpanContext context = spanData.Context;
             long startTimestamp = this.ToEpochMicroseconds(spanData.StartTimestamp);
@@ -139,7 +139,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return spanId.ToLowerBase16();
         }
 
-        private ZipkinSpanKind ToSpanKind(ISpanData spanData)
+        private ZipkinSpanKind ToSpanKind(SpanData spanData)
         {
             if (spanData.Kind == SpanKind.Server)
             {

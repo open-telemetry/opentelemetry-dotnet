@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace.Export
 
         private static readonly ISampledSpanStoreSummary EmptySummary = SampledSpanStoreSummary.Create(new Dictionary<string, ISampledPerSpanNameSummary>());
 
-        private static readonly IEnumerable<ISpanData> EmptySpanData = new ISpanData[0];
+        private static readonly IEnumerable<SpanData> EmptySpanData = new SpanData[0];
 
         private readonly HashSet<string> registeredSpanNames = new HashSet<string>();
 
@@ -59,12 +59,12 @@ namespace OpenTelemetry.Trace.Export
         {
         }
 
-        public override IEnumerable<ISpanData> GetErrorSampledSpans(ISampledSpanStoreErrorFilter filter)
+        public override IEnumerable<SpanData> GetErrorSampledSpans(ISampledSpanStoreErrorFilter filter)
         {
             return EmptySpanData;
         }
 
-        public override IEnumerable<ISpanData> GetLatencySampledSpans(ISampledSpanStoreLatencyFilter filter)
+        public override IEnumerable<SpanData> GetLatencySampledSpans(ISampledSpanStoreLatencyFilter filter)
         {
             return EmptySpanData;
         }

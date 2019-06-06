@@ -338,7 +338,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override ISpanData ToSpanData()
+        public override SpanData ToSpanData()
         {
             if (!this.IsRecordingEvents)
             {

@@ -58,7 +58,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             nowDateTimeOffset = DateTimeOffset.Now.Subtract(TimeSpan.FromSeconds(1));
         }
 
-        private ConcurrentQueue<ITelemetry> ConvertSpan(ISpanData data)
+        private ConcurrentQueue<ITelemetry> ConvertSpan(SpanData data)
         {
             var sentItems = new ConcurrentQueue<ITelemetry>();
             var configuration = new TelemetryConfiguration();
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             configuration.TelemetryChannel = channel;
 
             TraceExporterHandler exporter = new TraceExporterHandler(configuration);
-            exporter.ExportAsync(new List<ISpanData> { data }).Wait();
+            exporter.ExportAsync(new List<SpanData> { data }).Wait();
 
             return sentItems;
         }

@@ -94,7 +94,7 @@ namespace OpenTelemetry.Trace.Internal
             return "BlankSpan";
         }
 
-        public override ISpanData ToSpanData()
+        public override SpanData ToSpanData()
         {
             return null;
         }

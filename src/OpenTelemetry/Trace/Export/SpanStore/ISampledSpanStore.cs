@@ -38,14 +38,14 @@ namespace OpenTelemetry.Trace.Export
         /// </summary>
         /// <param name="filter">Filter to use to query sampled store.</param>
         /// <returns>List of spans satisfying filtering criteria.</returns>
-        IEnumerable<ISpanData> GetLatencySampledSpans(ISampledSpanStoreLatencyFilter filter);
+        IEnumerable<SpanData> GetLatencySampledSpans(ISampledSpanStoreLatencyFilter filter);
 
         /// <summary>
         /// Gets the list of error spans using provided error filter.
         /// </summary>
         /// <param name="filter">Filter to use to query store.</param>
         /// <returns>List of sampled spans satisfying filtering criteria.</returns>
-        IEnumerable<ISpanData> GetErrorSampledSpans(ISampledSpanStoreErrorFilter filter);
+        IEnumerable<SpanData> GetErrorSampledSpans(ISampledSpanStoreErrorFilter filter);
 
         /// <summary>
         /// Registers span names for collection.

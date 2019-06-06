@@ -29,6 +29,6 @@ namespace OpenTelemetry.Trace.Export
         /// </summary>
         /// <param name="spanDataList">Collection of spans to export.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous export operation.</returns>
-        Task ExportAsync(IEnumerable<ISpanData> spanDataList);
+        Task ExportAsync(IEnumerable<SpanData> spanDataList);
     }
 }

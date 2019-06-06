@@ -130,7 +130,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ServiceHandlerThrowsException()
         {
             var mockHandler = Mock.Get<IHandler>(mockServiceHandler);
-            mockHandler.Setup((h) => h.ExportAsync(It.IsAny<IEnumerable<ISpanData>>())).Throws(new ArgumentException("No export for you."));
+            mockHandler.Setup((h) => h.ExportAsync(It.IsAny<IEnumerable<SpanData>>())).Throws(new ArgumentException("No export for you."));
             // doThrow(new IllegalArgumentException("No export for you."))
             //    .when(mockServiceHandler)
             //    .export(anyListOf(SpanData));
@@ -192,14 +192,14 @@ namespace OpenTelemetry.Trace.Export.Test
 
             exporter.RegisterHandler("first", handler1.Object);
 
-            var span1 = new Mock<ISpanData>();
+            var span1 = new Mock<SpanData>();
 
             await exporter.ExportAsync(span1.Object, CancellationToken.None);
 
             Assert.Single(handler1.Invocations);
-            var args = (IEnumerable<ISpanData>)handler1.Invocations.First().Arguments.First();
+            var args = (IEnumerable<SpanData>)handler1.Invocations.First().Arguments.First();
 
-            handler1.Verify(c => c.ExportAsync(It.Is<IEnumerable<ISpanData>>(
+            handler1.Verify(c => c.ExportAsync(It.Is<IEnumerable<SpanData>>(
                 (x) => x.Where((s) => s == span1.Object).Count() > 0 &&
                        x.Count() == 1)));
         }

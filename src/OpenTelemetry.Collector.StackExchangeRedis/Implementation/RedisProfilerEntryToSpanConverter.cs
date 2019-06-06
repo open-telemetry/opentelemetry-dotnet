@@ -25,7 +25,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 
     internal static class RedisProfilerEntryToSpanConverter
     {
-        public static void DrainSession(ISpan parentSpan, IEnumerable<IProfiledCommand> sessionCommands, ISampler sampler, ICollection<ISpanData> spans)
+        public static void DrainSession(ISpan parentSpan, IEnumerable<IProfiledCommand> sessionCommands, ISampler sampler, ICollection<SpanData> spans)
         {
             var parentContext = parentSpan?.Context ?? SpanContext.Blank;
 
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             return result;
         }
 
-        internal static ISpanData ProfiledCommandToSpanData(SpanContext context, string name, ISpanId parentSpanId, IProfiledCommand command)
+        internal static SpanData ProfiledCommandToSpanData(SpanContext context, string name, ISpanId parentSpanId, IProfiledCommand command)
         {
             // use https://github.com/opentracing/specification/blob/master/semantic_conventions.md for now
 

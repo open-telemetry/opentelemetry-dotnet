@@ -99,7 +99,7 @@ namespace OpenTelemetry.Trace.Export
         }
 
         /// <inheritdoc/>
-        public override IEnumerable<ISpanData> GetErrorSampledSpans(ISampledSpanStoreErrorFilter filter)
+        public override IEnumerable<SpanData> GetErrorSampledSpans(ISampledSpanStoreErrorFilter filter)
         {
             int numSpansToReturn = filter.MaxSpansToReturn == 0 ? MaxPerSpanNameSamples : filter.MaxSpansToReturn;
             IEnumerable<SpanBase> spans = Enumerable.Empty<SpanBase>();
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Trace.Export
                 }
             }
 
-            List<ISpanData> ret = new List<ISpanData>(spans.Count());
+            List<SpanData> ret = new List<SpanData>(spans.Count());
             foreach (SpanBase span in spans)
             {
                 ret.Add(span.ToSpanData());
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Trace.Export
         }
 
         /// <inheritdoc/>
-        public override IEnumerable<ISpanData> GetLatencySampledSpans(ISampledSpanStoreLatencyFilter filter)
+        public override IEnumerable<SpanData> GetLatencySampledSpans(ISampledSpanStoreLatencyFilter filter)
         {
             int numSpansToReturn = filter.MaxSpansToReturn == 0 ? MaxPerSpanNameSamples : filter.MaxSpansToReturn;
             IEnumerable<SpanBase> spans = Enumerable.Empty<SpanBase>();
@@ -139,7 +139,7 @@ namespace OpenTelemetry.Trace.Export
                 }
             }
 
-            List<ISpanData> ret = new List<ISpanData>(spans.Count());
+            List<SpanData> ret = new List<SpanData>(spans.Count());
             foreach (SpanBase span in spans)
             {
                 ret.Add(span.ToSpanData());
