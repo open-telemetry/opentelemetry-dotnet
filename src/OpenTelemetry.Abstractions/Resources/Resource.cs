@@ -66,7 +66,7 @@ namespace OpenTelemetry.Resources
         /// </summary>
         private static readonly string EnvironmentType;
 
-        private static readonly ITag[] EnvironmentToLabelMap;
+        private static readonly Tag[] EnvironmentToLabelMap;
 
         static Resource()
         {
@@ -103,7 +103,7 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Gets the map of tags describing the resource.
         /// </summary>
-        public abstract IEnumerable<ITag> Tags { get; }
+        public abstract IEnumerable<Tag> Tags { get; }
 
         /// <summary>
         /// Creates a label/tag map from the OC_RESOURCE_LABELS environment variable.
@@ -114,15 +114,15 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <param name="rawEnvironmentTags">Environment tags as a raw, comma separated string</param>
         /// <returns>Environment Tags as a list.</returns>
-        internal static ITag[] ParseResourceLabels(string rawEnvironmentTags)
+        internal static Tag[] ParseResourceLabels(string rawEnvironmentTags)
         {
             if (rawEnvironmentTags == null)
             {
-                return new ITag[0] { };
+                return new Tag[0] { };
             }
             else
             {
-                var labels = new List<ITag>();
+                var labels = new List<Tag>();
                 string[] rawLabels = rawEnvironmentTags.Split(LabelListSplitter);
 
                 Regex regex = new Regex("^\"|\"$", RegexOptions.Compiled);
@@ -140,12 +140,12 @@ namespace OpenTelemetry.Resources
 
                     if (!IsValidAndNotEmpty(key))
                     {
-                        return new ITag[0] { };
+                        return new Tag[0] { };
                     }
 
                     if (!IsValid(value))
                     {
-                        return new ITag[0] { };
+                        return new Tag[0] { };
                     }
 
                     labels.Add(new Tag(TagKey.Create(key), TagValue.Create(value)));

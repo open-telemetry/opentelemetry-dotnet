@@ -23,7 +23,7 @@ namespace OpenTelemetry.Stats
 
     public sealed class View : IView
     {
-        internal View(IViewName name, string description, IMeasure measure, IAggregation aggregation, IReadOnlyList<ITagKey> columns)
+        internal View(IViewName name, string description, IMeasure measure, IAggregation aggregation, IReadOnlyList<TagKey> columns)
         {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.Description = description ?? throw new ArgumentNullException(nameof(description));
@@ -40,11 +40,11 @@ namespace OpenTelemetry.Stats
 
         public IAggregation Aggregation { get; }
 
-        public IReadOnlyList<ITagKey> Columns { get; }
+        public IReadOnlyList<TagKey> Columns { get; }
 
-        public static IView Create(IViewName name, string description, IMeasure measure, IAggregation aggregation, IReadOnlyList<ITagKey> columns)
+        public static IView Create(IViewName name, string description, IMeasure measure, IAggregation aggregation, IReadOnlyList<TagKey> columns)
         {
-            var set = new HashSet<ITagKey>(columns);
+            var set = new HashSet<TagKey>(columns);
             if (set.Count != columns.Count)
             {
                 throw new ArgumentException("Columns have duplicate.");
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Stats
                 description,
                 measure,
                 aggregation,
-                new List<ITagKey>(columns).AsReadOnly());
+                new List<TagKey>(columns).AsReadOnly());
         }
 
         /// <inheritdoc/>

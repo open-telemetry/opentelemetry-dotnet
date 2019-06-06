@@ -42,9 +42,9 @@ namespace OpenTelemetry.Stats.Test
             var tagsComponent = new TagsComponent();
             var tagger = tagsComponent.Tagger;
 
-            ITagKey FRONTEND_KEY = TagKey.Create("my.org/keys/frontend");
-            ITagKey FRONTEND_OS_KEY = TagKey.Create("my.org/keys/frontend/os");
-            ITagKey FRONTEND_OS_VERSION_KEY = TagKey.Create("my.org/keys/frontend/os/version");
+            TagKey FRONTEND_KEY = TagKey.Create("my.org/keys/frontend");
+            TagKey FRONTEND_OS_KEY = TagKey.Create("my.org/keys/frontend/os");
+            TagKey FRONTEND_OS_VERSION_KEY = TagKey.Create("my.org/keys/frontend/os/version");
 
             IMeasureLong VIDEO_SIZE = MeasureLong.Create("my.org/measure/video_size", "size of processed videos", "MBy");
 
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Stats.Test
                                         "processed video size over time",
                                         VIDEO_SIZE,
                                         Distribution.Create(BucketBoundaries.Create(new List<double>() { 0.0, 256.0, 65536.0 })),
-                                        new List<ITagKey>() { FRONTEND_KEY});
+                                        new List<TagKey>() { FRONTEND_KEY});
 
             IViewName VIDEO_SIZE_ALL_VIEW_NAME = ViewName.Create("my.org/views/video_size_all");
             IView VIDEO_SIZE_VIEW_ALL = View.Create(
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Stats.Test
                             "processed video size over time",
                             VIDEO_SIZE,
                             Distribution.Create(BucketBoundaries.Create(new List<double>() { 0.0, 256.0, 65536.0 })),
-                            new List<ITagKey>() { });
+                            new List<TagKey>() { });
 
 
             IViewName VIDEO_SIZE_TOTAL_VIEW_NAME = ViewName.Create("my.org/views/video_size_total");
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Stats.Test
                                   "total video size over time",
                                   VIDEO_SIZE,
                                   Sum.Create(),
-                                  new List<ITagKey>() { FRONTEND_KEY});
+                                  new List<TagKey>() { FRONTEND_KEY});
 
             IViewName VIDEOS_PROCESSED_VIEW_NAME = ViewName.Create("my.org/views/videos_processed");
             IView VIDEOS_PROCESSED = View.Create(
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Stats.Test
                                   "total video processed",
                                   VIDEO_SIZE,
                                   Count.Create(),
-                                  new List<ITagKey>() { FRONTEND_KEY });
+                                  new List<TagKey>() { FRONTEND_KEY });
 
             viewManager.RegisterView(VIDEO_SIZE_VIEW_ALL);
             viewManager.RegisterView(VIDEO_SIZE_BY_FRONTEND_VIEW);
@@ -136,9 +136,9 @@ namespace OpenTelemetry.Stats.Test
             var tagsComponent = new TagsComponent();
             var tagger = tagsComponent.Tagger;
 
-            ITagKey FRONTEND_KEY = TagKey.Create("my.org/keys/frontend");
-            ITagKey FRONTEND_OS_KEY = TagKey.Create("my.org/keys/frontend/os");
-            ITagKey FRONTEND_OS_VERSION_KEY = TagKey.Create("my.org/keys/frontend/os/version");
+            TagKey FRONTEND_KEY = TagKey.Create("my.org/keys/frontend");
+            TagKey FRONTEND_OS_KEY = TagKey.Create("my.org/keys/frontend/os");
+            TagKey FRONTEND_OS_VERSION_KEY = TagKey.Create("my.org/keys/frontend/os/version");
 
             IMeasureLong VIDEO_SIZE = MeasureLong.Create("my.org/measure/video_size", "size of processed videos", "MBy");
 
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Stats.Test
                                         "processed video size over time",
                                         VIDEO_SIZE,
                                         Distribution.Create(BucketBoundaries.Create(new List<double>() { 0.0, 256.0, 65536.0 })),
-                                        new List<ITagKey>() { FRONTEND_KEY, FRONTEND_OS_KEY, FRONTEND_OS_VERSION_KEY });
+                                        new List<TagKey>() { FRONTEND_KEY, FRONTEND_OS_KEY, FRONTEND_OS_VERSION_KEY });
 
 
             viewManager.RegisterView(VIDEO_SIZE_VIEW);
@@ -187,7 +187,7 @@ namespace OpenTelemetry.Stats.Test
                 output.WriteLine(view.Columns[i] + "=" + GetTagValues(i, viewDataAggMap));
             }
 
-            var keys = new List<ITagValue>() { TagValue.Create("1.1.1") };
+            var keys = new List<TagValue>() { TagValue.Create("1.1.1") };
 
             var results = videoSizeView.AggregationMap.Where((kvp) =>
             {

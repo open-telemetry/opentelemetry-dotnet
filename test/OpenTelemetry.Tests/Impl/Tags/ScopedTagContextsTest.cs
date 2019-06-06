@@ -22,11 +22,11 @@ namespace OpenTelemetry.Tags.Test
 
     public class ScopedTagContextsTest
     {
-        private static readonly ITagKey KEY_1 = TagKey.Create("key 1");
-        private static readonly ITagKey KEY_2 = TagKey.Create("key 2");
+        private static readonly TagKey KEY_1 = TagKey.Create("key 1");
+        private static readonly TagKey KEY_2 = TagKey.Create("key 2");
 
-        private static readonly ITagValue VALUE_1 = TagValue.Create("value 1");
-        private static readonly ITagValue VALUE_2 = TagValue.Create("value 2");
+        private static readonly TagValue VALUE_1 = TagValue.Create("value 1");
+        private static readonly TagValue VALUE_2 = TagValue.Create("value 2");
 
         private readonly ITagger tagger = new Tagger(new CurrentTaggingState());
 
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Tags.Test
             try
             {
                 ITagContext newTags = tagger.CurrentBuilder.Put(KEY_2, VALUE_2).Build();
-                Assert.Equal(new List<ITag>() { Tag.Create(KEY_1, VALUE_1), Tag.Create(KEY_2, VALUE_2) },
+                Assert.Equal(new List<Tag>() { Tag.Create(KEY_1, VALUE_1), Tag.Create(KEY_2, VALUE_2) },
                     TagsTestUtil.TagContextToList(newTags));
                 Assert.Same(scopedTags, tagger.CurrentTagContext);
             }
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Tags.Test
             IScope scope = tagger.EmptyBuilder.Put(KEY_1, VALUE_1).BuildScoped();
             try
             {
-                Assert.Equal(new List<ITag>() { Tag.Create(KEY_1, VALUE_1) }, TagsTestUtil.TagContextToList(tagger.CurrentTagContext));
+                Assert.Equal(new List<Tag>() { Tag.Create(KEY_1, VALUE_1) }, TagsTestUtil.TagContextToList(tagger.CurrentTagContext));
             }
             finally
             {
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Tags.Test
                 IScope scope2 = tagger.CurrentBuilder.Put(KEY_2, VALUE_2).BuildScoped();
                 try
                 {
-                    Assert.Equal(new List<ITag>() { Tag.Create(KEY_1, VALUE_1), Tag.Create(KEY_2, VALUE_2) },
+                    Assert.Equal(new List<Tag>() { Tag.Create(KEY_1, VALUE_1), Tag.Create(KEY_2, VALUE_2) },
                         TagsTestUtil.TagContextToList(tagger.CurrentTagContext));
                 }
                 finally

@@ -24,8 +24,8 @@ namespace OpenTelemetry.Tags
 
         public abstract IScope BuildScoped();
 
-        public abstract ITagContextBuilder Put(ITagKey key, ITagValue value);
+        public abstract ITagContextBuilder Put(TagKey key, TagValue value);
 
-        public abstract ITagContextBuilder Remove(ITagKey key);
+        public abstract ITagContextBuilder Remove(TagKey key);
     }
 }

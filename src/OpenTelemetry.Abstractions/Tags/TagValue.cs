@@ -19,8 +19,10 @@ namespace OpenTelemetry.Tags
     using System;
     using OpenTelemetry.Utils;
 
-    /// <inheritdoc/>
-    public sealed class TagValue : ITagValue
+    /// <summary>
+    /// Tag key.
+    /// </summary>
+    public sealed class TagValue
     {
         /// <summary>
         /// Maximum string length of the value.
@@ -38,11 +40,11 @@ namespace OpenTelemetry.Tags
         public string AsString { get; }
 
         /// <summary>
-        /// Creates a new <see cref="ITagValue"/> from the given value.
+        /// Creates a new <see cref="TagValue"/> from the given value.
         /// </summary>
         /// <param name="value">The tag's value.</param>
-        /// <returns><see cref="ITagValue"/>.</returns>
-        public static ITagValue Create(string value)
+        /// <returns><see cref="TagValue"/>.</returns>
+        public static TagValue Create(string value)
         {
             if (!IsValid(value))
             {

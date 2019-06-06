@@ -22,14 +22,14 @@ namespace OpenTelemetry.Tags.Propagation.Test
     public class TagContextRoundtripTest
     {
 
-        private static readonly ITagKey K1 = TagKey.Create("k1");
-        private static readonly ITagKey K2 = TagKey.Create("k2");
-        private static readonly ITagKey K3 = TagKey.Create("k3");
+        private static readonly TagKey K1 = TagKey.Create("k1");
+        private static readonly TagKey K2 = TagKey.Create("k2");
+        private static readonly TagKey K3 = TagKey.Create("k3");
 
-        private static readonly ITagValue V_EMPTY = TagValue.Create("");
-        private static readonly ITagValue V1 = TagValue.Create("v1");
-        private static readonly ITagValue V2 = TagValue.Create("v2");
-        private static readonly ITagValue V3 = TagValue.Create("v3");
+        private static readonly TagValue V_EMPTY = TagValue.Create("");
+        private static readonly TagValue V1 = TagValue.Create("v1");
+        private static readonly TagValue V2 = TagValue.Create("v2");
+        private static readonly TagValue V3 = TagValue.Create("v3");
 
         private readonly TagsComponent tagsComponent = new TagsComponent();
         private readonly ITagContextBinarySerializer serializer;

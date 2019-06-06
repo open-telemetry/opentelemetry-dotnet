@@ -42,12 +42,12 @@ namespace OpenTelemetry.Tags
             var t1Enumerator = this.GetEnumerator();
             var t2Enumerator = otherTags.GetEnumerator();
 
-            List<ITag> tags1 = null;
-            List<ITag> tags2 = null;
+            List<Tag> tags1 = null;
+            List<Tag> tags2 = null;
 
             if (t1Enumerator == null)
             {
-                tags1 = new List<ITag>();
+                tags1 = new List<Tag>();
             }
             else
             {
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Tags
 
             if (t2Enumerator == null)
             {
-                tags2 = new List<ITag>();
+                tags2 = new List<Tag>();
             }
             else
             {
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Tags
             return hashCode;
         }
 
-        public abstract IEnumerator<ITag> GetEnumerator();
+        public abstract IEnumerator<Tag> GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator()
         {

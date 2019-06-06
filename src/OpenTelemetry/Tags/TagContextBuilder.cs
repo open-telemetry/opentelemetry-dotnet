@@ -22,19 +22,19 @@ namespace OpenTelemetry.Tags
 
     internal sealed class TagContextBuilder : TagContextBuilderBase
     {
-        internal TagContextBuilder(IDictionary<ITagKey, ITagValue> tags)
+        internal TagContextBuilder(IDictionary<TagKey, TagValue> tags)
         {
-            this.Tags = new Dictionary<ITagKey, ITagValue>(tags);
+            this.Tags = new Dictionary<TagKey, TagValue>(tags);
         }
 
         internal TagContextBuilder()
         {
-            this.Tags = new Dictionary<ITagKey, ITagValue>();
+            this.Tags = new Dictionary<TagKey, TagValue>();
         }
 
-        internal IDictionary<ITagKey, ITagValue> Tags { get; }
+        internal IDictionary<TagKey, TagValue> Tags { get; }
 
-        public override ITagContextBuilder Put(ITagKey key, ITagValue value)
+        public override ITagContextBuilder Put(TagKey key, TagValue value)
         {
             if (key == null)
             {
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Tags
             return this;
         }
 
-        public override ITagContextBuilder Remove(ITagKey key)
+        public override ITagContextBuilder Remove(TagKey key)
         {
             if (key == null)
             {

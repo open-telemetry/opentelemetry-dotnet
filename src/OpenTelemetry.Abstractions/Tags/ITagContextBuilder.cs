@@ -29,14 +29,14 @@ namespace OpenTelemetry.Tags
         /// <param name="key">Key of the tag to add.</param>
         /// <param name="value">Value of the tag to add.</param>
         /// <returns>Tag context builder for operations chaining.</returns>
-        ITagContextBuilder Put(ITagKey key, ITagValue value);
+        ITagContextBuilder Put(TagKey key, TagValue value);
 
         /// <summary>
         /// Removes tag with the given key from the context.
         /// </summary>
         /// <param name="key">Key of the tag to remove.</param>
         /// <returns>Tag context builder for operations chaining.</returns>
-        ITagContextBuilder Remove(ITagKey key);
+        ITagContextBuilder Remove(TagKey key);
 
         /// <summary>
         /// Builds the tags context.

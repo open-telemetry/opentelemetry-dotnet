@@ -18,28 +18,39 @@ namespace OpenTelemetry.Tags
 {
     using System;
 
-    /// <inheritdoc/>
-    public sealed class Tag : ITag
+    /// <summary>
+    /// Tag with the key and value.
+    /// </summary>
+    public sealed class Tag
     {
-        internal Tag(ITagKey key, ITagValue value)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Tag"/> class with the key and value.
+        /// </summary>
+        /// <param name="key">Key name for the tag.</param>
+        /// <param name="value">Value associated with the key name.</param>
+        internal Tag(TagKey key, TagValue value)
         {
             this.Key = key ?? throw new ArgumentNullException(nameof(key));
             this.Value = value ?? throw new ArgumentNullException(nameof(value));
         }
 
-        /// <inheritdoc/>
-        public ITagKey Key { get; }
-
-        /// <inheritdoc/>
-        public ITagValue Value { get; }
+        /// <summary>
+        /// Gets the tag key.
+        /// </summary>
+        public TagKey Key { get; }
 
         /// <summary>
-        /// Creates a new <see cref="ITag"/> from the given key and value.
+        /// Gets the tag value.
+        /// </summary>
+        public TagValue Value { get; }
+
+        /// <summary>
+        /// Creates a new <see cref="Tag"/> from the given key and value.
         /// </summary>
         /// <param name="key">The tag's key.</param>
         /// <param name="value">The tag's value.</param>
-        /// <returns><see cref="ITag"/>.</returns>
-        public static ITag Create(ITagKey key, ITagValue value)
+        /// <returns><see cref="Tag"/>.</returns>
+        public static Tag Create(TagKey key, TagValue value)
         {
             return new Tag(key, value);
         }

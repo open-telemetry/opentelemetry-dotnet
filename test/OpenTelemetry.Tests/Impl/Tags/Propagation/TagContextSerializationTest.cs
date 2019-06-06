@@ -27,20 +27,20 @@ namespace OpenTelemetry.Tags.Propagation.Test
 
     public class TagContextSerializationTest
     {
-        private static readonly ITagKey K1 = TagKey.Create("k1");
-        private static readonly ITagKey K2 = TagKey.Create("k2");
-        private static readonly ITagKey K3 = TagKey.Create("k3");
-        private static readonly ITagKey K4 = TagKey.Create("k4");
+        private static readonly TagKey K1 = TagKey.Create("k1");
+        private static readonly TagKey K2 = TagKey.Create("k2");
+        private static readonly TagKey K3 = TagKey.Create("k3");
+        private static readonly TagKey K4 = TagKey.Create("k4");
 
-        private static readonly ITagValue V1 = TagValue.Create("v1");
-        private static readonly ITagValue V2 = TagValue.Create("v2");
-        private static readonly ITagValue V3 = TagValue.Create("v3");
-        private static readonly ITagValue V4 = TagValue.Create("v4");
+        private static readonly TagValue V1 = TagValue.Create("v1");
+        private static readonly TagValue V2 = TagValue.Create("v2");
+        private static readonly TagValue V3 = TagValue.Create("v3");
+        private static readonly TagValue V4 = TagValue.Create("v4");
 
-        private static readonly ITag T1 = Tag.Create(K1, V1);
-        private static readonly ITag T2 = Tag.Create(K2, V2);
-        private static readonly ITag T3 = Tag.Create(K3, V3);
-        private static readonly ITag T4 = Tag.Create(K4, V4);
+        private static readonly Tag T1 = Tag.Create(K1, V1);
+        private static readonly Tag T2 = Tag.Create(K2, V2);
+        private static readonly Tag T3 = Tag.Create(K3, V3);
+        private static readonly Tag T4 = Tag.Create(K4, V4);
 
         private readonly TagsComponent tagsComponent = new TagsComponent();
         private readonly ITagContextBinarySerializer serializer;
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
             Assert.Throws<TagContextSerializationException>(() => serializer.ToByteArray(tagContext));
         }
 
-        private void TestSerialize(params ITag[] tags)
+        private void TestSerialize(params Tag[] tags)
         {
             ITagContextBuilder builder = tagger.EmptyBuilder;
             foreach (var tag in tags)
@@ -116,10 +116,10 @@ namespace OpenTelemetry.Tags.Propagation.Test
             var tagsList = tags.ToList();
             var tagPermutation = Permutate(tagsList, tagsList.Count);
             ISet<String> possibleOutPuts = new HashSet<String>();
-            foreach (List<ITag> list in tagPermutation) {
+            foreach (List<Tag> list in tagPermutation) {
                 MemoryStream expected = new MemoryStream();
                 expected.WriteByte(SerializationUtils.VersionId);
-                foreach (ITag tag in list) {
+                foreach (Tag tag in list) {
                     expected.WriteByte(SerializationUtils.TagFieldId);
                     EncodeString(tag.Key.Name, expected);
                     EncodeString(tag.Value.AsString, expected);

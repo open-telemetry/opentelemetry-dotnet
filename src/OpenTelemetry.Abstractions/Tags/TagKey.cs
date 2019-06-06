@@ -19,8 +19,10 @@ namespace OpenTelemetry.Tags
     using System;
     using OpenTelemetry.Utils;
 
-    /// <inheritdoc/>
-    public sealed class TagKey : ITagKey
+    /// <summary>
+    /// Tag key.
+    /// </summary>
+    public sealed class TagKey
     {
         /// <summary>
         /// Maximum string length of the key.
@@ -38,11 +40,11 @@ namespace OpenTelemetry.Tags
         public string Name { get; }
 
         /// <summary>
-        /// Creates a new <see cref="ITagKey"/> from the given name.
+        /// Creates a new <see cref="TagKey"/> from the given name.
         /// </summary>
         /// <param name="name">The tag's name.</param>
-        /// <returns><see cref="ITagKey"/>.</returns>
-        public static ITagKey Create(string name)
+        /// <returns><see cref="TagKey"/>.</returns>
+        public static TagKey Create(string name)
         {
             if (!IsValid(name))
             {

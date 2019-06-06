@@ -91,9 +91,9 @@ namespace OpenTelemetry.Tags.Propagation
             }
         }
 
-        internal static IDictionary<ITagKey, ITagValue> ParseTags(MemoryStream buffer)
+        internal static IDictionary<TagKey, TagValue> ParseTags(MemoryStream buffer)
         {
-            IDictionary<ITagKey, ITagValue> tags = new Dictionary<ITagKey, ITagValue>();
+            IDictionary<TagKey, TagValue> tags = new Dictionary<TagKey, TagValue>();
             long limit = buffer.Length;
             int totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
             while (buffer.Position < limit)
@@ -101,8 +101,8 @@ namespace OpenTelemetry.Tags.Propagation
                 int type = buffer.ReadByte();
                 if (type == TagFieldId)
                 {
-                    ITagKey key = CreateTagKey(DecodeString(buffer));
-                    ITagValue val = CreateTagValue(key, DecodeString(buffer));
+                    TagKey key = CreateTagKey(DecodeString(buffer));
+                    TagValue val = CreateTagValue(key, DecodeString(buffer));
                     totalChars += key.Name.Length;
                     totalChars += val.AsString.Length;
                     tags[key] = val;
@@ -127,7 +127,7 @@ else
 
         // TODO(sebright): Consider exposing a TagKey name validation method to avoid needing to catch an
         // IllegalArgumentException here.
-        private static ITagKey CreateTagKey(string name)
+        private static TagKey CreateTagKey(string name)
         {
             try
             {
@@ -141,7 +141,7 @@ else
 
         // TODO(sebright): Consider exposing a TagValue validation method to avoid needing to catch
         // an IllegalArgumentException here.
-        private static ITagValue CreateTagValue(ITagKey key, string value)
+        private static TagValue CreateTagValue(TagKey key, string value)
         {
             try
             {
@@ -154,7 +154,7 @@ else
             }
         }
 
-        private static void EncodeTag(ITag tag, MemoryStream byteArrayDataOutput)
+        private static void EncodeTag(Tag tag, MemoryStream byteArrayDataOutput)
         {
             byteArrayDataOutput.WriteByte(TagFieldId);
             EncodeString(tag.Key.Name, byteArrayDataOutput);
