@@ -26,6 +26,6 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <summary>
         /// Gets or sets the port to listen to. Typically it ends with /metrics like http://localhost:9184/metrics/.
         /// </summary>
-        public Uri Url { get; set; }
+        public string Url { get; set; }
     }
 }
