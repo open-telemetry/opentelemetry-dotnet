@@ -354,6 +354,7 @@ namespace OpenTelemetry.Trace
             return SpanData.Create(
                 this.Context,
                 this.parentSpanId,
+                null,
                 this.Name,
                 Timestamp.FromDateTimeOffset(this.startTime),
                 attributesSpanData,

@@ -144,7 +144,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             Status status = Status.Ok;
             SpanKind kind = SpanKind.Client;
 
-            return SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            return SpanData.Create(context, parentSpanId, null, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
         }
     }
 }

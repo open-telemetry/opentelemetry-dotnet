@@ -23,151 +23,176 @@ namespace OpenTelemetry.Impl.Resources
 
     public class ResourceTest
     {
-        [Fact]
-        public void TryParseResourceType_NullOrEmptyType_GlobalResourceSet()
-        {
-            // Arrange
-            string rawResourceType = string.Empty;
-            string resourceType;
+        // Create
+        //  empty
+        //  single
+        //  multi
+        //  null
+        // Merge
+        //  empty
+        //  single
+        //  multi
+        //  null
+        // Get labels
+        //  empty
+        //  single
+        //  multi
+        //  null?
+        // Create with invalid labels
+        //  null
+        //  empty
+        //  too long
+        // Merge invalid labels
+        //  null
+        //  empty
+        //  too long
+        // Merge duplicate labels
 
-            // Act (empty)
-            var parsed = Resource.TryParseResourceType(rawResourceType, out resourceType);
+        //[Fact]
+        //public void TryParseResourceType_NullOrEmptyType_GlobalResourceSet()
+        //{
+        //    // Arrange
+        //    string rawResourceType = string.Empty;
+        //    string resourceType;
 
-            // Assert (empty)
-            Assert.False(parsed);
-            Assert.Equal(Resource.GlobalResourceType, resourceType);
+        //    // Act (empty)
+        //    var parsed = Resource.TryParseResourceType(rawResourceType, out resourceType);
 
-            // Act (null)
-            parsed = Resource.TryParseResourceType(rawResourceType, out resourceType);
+        //    // Assert (empty)
+        //    Assert.False(parsed);
+        //    Assert.Equal(Resource.GlobalResourceType, resourceType);
 
-            // Assert (null)
-            Assert.False(parsed);
-            Assert.Equal(Resource.GlobalResourceType, resourceType);
-        }
+        //    // Act (null)
+        //    parsed = Resource.TryParseResourceType(rawResourceType, out resourceType);
 
-        [Fact]
-        public void TryParseResourceType_LongResourceTypeName_GlobalResourceSet()
-        {
-            // Arrange
-            string longResouceTypeName = "a".PadLeft(Resource.MaxResourceTypeNameLength + 1, 'a');
-            string resourceType;
+        //    // Assert (null)
+        //    Assert.False(parsed);
+        //    Assert.Equal(Resource.GlobalResourceType, resourceType);
+        //}
 
-            // Act
-            var parsed = Resource.TryParseResourceType(longResouceTypeName, out resourceType);
+        //[Fact]
+        //public void TryParseResourceType_LongResourceTypeName_GlobalResourceSet()
+        //{
+        //    // Arrange
+        //    string longResouceTypeName = "a".PadLeft(Resource.MaxResourceTypeNameLength + 1, 'a');
+        //    string resourceType;
 
-            // Assert
-            Assert.False(parsed);
-            Assert.Equal(Resource.GlobalResourceType, resourceType);
-        }
+        //    // Act
+        //    var parsed = Resource.TryParseResourceType(longResouceTypeName, out resourceType);
 
-        [Fact]
-        public void TryParseResourceType_NameWithSpaces_SpacesTrimmed()
-        {
-            // Arrange
-            string rawResouceType = "  a    ";
-            string resourceType;
+        //    // Assert
+        //    Assert.False(parsed);
+        //    Assert.Equal(Resource.GlobalResourceType, resourceType);
+        //}
 
-            // Act
-            var parsed = Resource.TryParseResourceType(rawResouceType, out resourceType);
+        //[Fact]
+        //public void TryParseResourceType_NameWithSpaces_SpacesTrimmed()
+        //{
+        //    // Arrange
+        //    string rawResouceType = "  a    ";
+        //    string resourceType;
 
-            // Assert
-            Assert.True(parsed);
-            Assert.Equal("a", resourceType);
-        }
+        //    // Act
+        //    var parsed = Resource.TryParseResourceType(rawResouceType, out resourceType);
 
-        [Fact]
-        public void ParseResourceLabels_WrongKeyValueDelimiter_PairIgnored()
-        {
-            // Arrange
-            string resourceLabels = "k1:v1,k2=v2";
+        //    // Assert
+        //    Assert.True(parsed);
+        //    Assert.Equal("a", resourceType);
+        //}
 
-            // Act
-            var tags = Resource.ParseResourceLabels(resourceLabels);
+        //[Fact]
+        //public void ParseResourceLabels_WrongKeyValueDelimiter_PairIgnored()
+        //{
+        //    // Arrange
+        //    string resourceLabels = "k1:v1,k2=v2";
 
-            // Assert
-            Assert.NotNull(tags);
-            Assert.NotEmpty(tags);
-            Assert.Single(tags);
-            Assert.Equal(TagKey.Create("k2"), tags[0].Key);
-            Assert.Equal(TagValue.Create("v2"), tags[0].Value);
-        }
+        //    // Act
+        //    var tags = Resource.ParseResourceLabels(resourceLabels);
 
-        [Fact]
-        public void ParseResourceLabels_LongValueName_AllLaterLabelsIgnored()
-        {
-            // Arrange
-            string longValue = "a".PadLeft(Resource.MaxResourceTypeNameLength + 1, 'a');
-            string resourceLabels = $"k1={longValue};k2=v2";
+        //    // Assert
+        //    Assert.NotNull(tags);
+        //    Assert.NotEmpty(tags);
+        //    Assert.Single(tags);
+        //    Assert.Equal(TagKey.Create("k2"), tags[0].Key);
+        //    Assert.Equal(TagValue.Create("v2"), tags[0].Value);
+        //}
 
-            // Act
-            var tags = Resource.ParseResourceLabels(resourceLabels);
+        //[Fact]
+        //public void ParseResourceLabels_LongValueName_AllLaterLabelsIgnored()
+        //{
+        //    // Arrange
+        //    string longValue = "a".PadLeft(Resource.MaxResourceTypeNameLength + 1, 'a');
+        //    string resourceLabels = $"k1={longValue};k2=v2";
 
-            // Assert
-            Assert.NotNull(tags);
-            Assert.Empty(tags);
-        }
+        //    // Act
+        //    var tags = Resource.ParseResourceLabels(resourceLabels);
 
-        [Fact]
-        public void ParseResourceLabels_LongKeyName_AllLaterLabelsIgnored()
-        {
-            // Arrange
-            string longKey = "a".PadLeft(Resource.MaxResourceTypeNameLength + 1, 'a');
-            string resourceLabels = $"{longKey}=v1;k2=v2";
+        //    // Assert
+        //    Assert.NotNull(tags);
+        //    Assert.Empty(tags);
+        //}
 
-            // Act
-            var tags = Resource.ParseResourceLabels(resourceLabels);
+        //[Fact]
+        //public void ParseResourceLabels_LongKeyName_AllLaterLabelsIgnored()
+        //{
+        //    // Arrange
+        //    string longKey = "a".PadLeft(Resource.MaxResourceTypeNameLength + 1, 'a');
+        //    string resourceLabels = $"{longKey}=v1;k2=v2";
 
-            // Assert
-            Assert.NotNull(tags);
-            Assert.Empty(tags);
-        }
+        //    // Act
+        //    var tags = Resource.ParseResourceLabels(resourceLabels);
 
-        [Fact]
-        public void ParseResourceLabels_ValueWithParenthesis_StrippedValue()
-        {
-            // Arrange
-            string resourceLabels = "k1=\"v1\"";
+        //    // Assert
+        //    Assert.NotNull(tags);
+        //    Assert.Empty(tags);
+        //}
 
-            // Act
-            var tags = Resource.ParseResourceLabels(resourceLabels);
+        //[Fact]
+        //public void ParseResourceLabels_ValueWithParenthesis_StrippedValue()
+        //{
+        //    // Arrange
+        //    string resourceLabels = "k1=\"v1\"";
 
-            // Assert
-            Assert.NotNull(tags);
-            Assert.NotEmpty(tags);
-            Assert.Equal(TagKey.Create("k1"), tags[0].Key);
-            Assert.Equal(TagValue.Create("v1"), tags[0].Value);
-        }
+        //    // Act
+        //    var tags = Resource.ParseResourceLabels(resourceLabels);
 
-        [Fact]
-        public void ParseResourceLabels_EmptyString_EmptyMapReturned()
-        {
-            // Arrange
-            string resourceLabels = "";
+        //    // Assert
+        //    Assert.NotNull(tags);
+        //    Assert.NotEmpty(tags);
+        //    Assert.Equal(TagKey.Create("k1"), tags[0].Key);
+        //    Assert.Equal(TagValue.Create("v1"), tags[0].Value);
+        //}
 
-            // Act
-            var tags = Resource.ParseResourceLabels(resourceLabels);
+        //[Fact]
+        //public void ParseResourceLabels_EmptyString_EmptyMapReturned()
+        //{
+        //    // Arrange
+        //    string resourceLabels = "";
 
-            // Assert
-            Assert.NotNull(tags);
-            Assert.Empty(tags);
-        }
+        //    // Act
+        //    var tags = Resource.ParseResourceLabels(resourceLabels);
 
-        [Fact]
-        public void ParseResourceLabels_CommaSeparated_MapReturned()
-        {
-            // Arrange
-            string resourceLabels = "key1=val1,key2=val2";
+        //    // Assert
+        //    Assert.NotNull(tags);
+        //    Assert.Empty(tags);
+        //}
 
-            // Act
-            var tags = Resource.ParseResourceLabels(resourceLabels);
+        //[Fact]
+        //public void ParseResourceLabels_CommaSeparated_MapReturned()
+        //{
+        //    // Arrange
+        //    string resourceLabels = "key1=val1,key2=val2";
 
-            // Assert
-            Assert.NotNull(tags);
-            Assert.Equal(2, tags.Length);
-            Assert.Equal(TagKey.Create("key1"), tags[0].Key);
-            Assert.Equal(TagKey.Create("key2"), tags[1].Key);
-            Assert.Equal(TagValue.Create("val1"), tags[0].Value);
-            Assert.Equal(TagValue.Create("val2"), tags[1].Value);
-        }
+        //    // Act
+        //    var tags = Resource.ParseResourceLabels(resourceLabels);
+
+        //    // Assert
+        //    Assert.NotNull(tags);
+        //    Assert.Equal(2, tags.Length);
+        //    Assert.Equal(TagKey.Create("key1"), tags[0].Key);
+        //    Assert.Equal(TagKey.Create("key2"), tags[1].Key);
+        //    Assert.Equal(TagValue.Create("val1"), tags[0].Value);
+        //    Assert.Equal(TagValue.Create("val2"), tags[1].Value);
+        //}
     }
 }

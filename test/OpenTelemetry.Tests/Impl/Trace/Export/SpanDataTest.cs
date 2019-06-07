@@ -43,7 +43,6 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private IAttributes attributes;
         private ITimedEvents<IEvent> events;
-        // private TimedEvents<NetworkEvent> networkEvents;
         private LinkList links;
 
         public SpanDataTest()
@@ -70,6 +69,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
+                    null,
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
@@ -97,6 +97,7 @@ namespace OpenTelemetry.Trace.Export.Test
             SpanData spanData =
                 SpanData.Create(
                     spanContext,
+                    null,
                     null,
                     SPAN_NAME,
                     startTimestamp,
@@ -126,6 +127,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
+                    null,
                     SPAN_NAME,
                     startTimestamp,
                     Attributes.Create(new Dictionary<string, IAttributeValue>(), 0),
@@ -155,6 +157,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
+                    null,
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
@@ -168,6 +171,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
+                    null,
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
@@ -181,6 +185,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
+                    null,
                     SPAN_NAME,
                     startTimestamp,
                     Attributes.Create(new Dictionary<string, IAttributeValue>(), 0),
@@ -204,6 +209,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                         spanContext,
                         parentSpanId,
+                        null,
                         SPAN_NAME,
                         startTimestamp,
                         attributes,
