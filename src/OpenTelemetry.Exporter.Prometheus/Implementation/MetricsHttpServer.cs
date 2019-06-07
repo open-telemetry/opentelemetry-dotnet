@@ -34,7 +34,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
         {
             this.viewManager = viewManager;
             this.token = token;
-            this.httpListener.Prefixes.Add(options.Url.ToString());
+            this.httpListener.Prefixes.Add(options.Url);
         }
 
         public void WorkerThread()
