@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets a value indicating whether this span was already stopped.
         /// </summary>
-        /// <remarks>This method is not compliant with the specification. https://github.com/open-telemetry/opentelemetry-specification/issues/55</remarks>
+        /// <remarks>This method is not compliant with the specification. https://github.com/open-telemetry/opentelemetry-specification/issues/55 .</remarks>
         bool HasEnded { get; }
 
         /// <summary>

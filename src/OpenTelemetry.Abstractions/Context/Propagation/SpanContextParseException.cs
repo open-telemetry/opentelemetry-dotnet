@@ -1,4 +1,4 @@
-﻿// <copyright file="NoopPropagationComponent.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanContextParseException.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +14,20 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Propagation.Implementation
+namespace OpenTelemetry.Context.Propagation
 {
-    internal class NoopPropagationComponent : IPropagationComponent
+    using System;
+
+    public class SpanContextParseException : Exception
     {
-        public IBinaryFormat BinaryFormat
+        public SpanContextParseException(string message)
+            : base(message)
         {
-            get
-            {
-                return Propagation.BinaryFormatBase.NoopBinaryFormat;
-            }
         }
 
-        public ITextFormat TextFormat
+        public SpanContextParseException(string message, Exception cause)
+            : base(message, cause)
         {
-            get
-            {
-                return Propagation.TextFormatBase.NoopTextFormat;
-            }
         }
     }
 }

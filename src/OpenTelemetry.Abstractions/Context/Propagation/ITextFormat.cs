@@ -14,10 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Propagation
+namespace OpenTelemetry.Context.Propagation
 {
     using System;
     using System.Collections.Generic;
+    using OpenTelemetry.Trace;
 
     /// <summary>
     /// Text format wire context propagator. Helps to extract and inject context from textual

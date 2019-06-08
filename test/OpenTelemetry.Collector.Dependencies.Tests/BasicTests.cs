@@ -21,7 +21,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Trace.Propagation;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Sampler;
     using System;
     using System.Net.Http;
@@ -51,8 +51,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             using (serverLifeTime)
             {
-                var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
-
                 var tf = new Mock<ITextFormat>();
                 tf
                     .Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<SpanContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
@@ -62,10 +60,9 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                         expectedSpanId = sc.SpanId;
                     });
 
-                var propagationComponent = new Mock<IPropagationComponent>();
-                propagationComponent.SetupGet(m => m.TextFormat).Returns(tf.Object);
+                var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
 
-                using (var dc = new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample, propagationComponent.Object))
+                using (var dc = new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
                 {
 
                     using (var c = new HttpClient())

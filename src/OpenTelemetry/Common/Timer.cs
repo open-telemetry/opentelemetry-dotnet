@@ -22,7 +22,7 @@ namespace OpenTelemetry.Internal
     /// <summary>
     /// Gets the current time based on start time and precise duration.
     /// </summary>
-    public sealed class Timer
+    internal sealed class Timer
     {
         private readonly DateTimeOffset timestamp;
         private readonly Func<TimeSpan> stopwatch;
