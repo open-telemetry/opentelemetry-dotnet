@@ -14,16 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Propagation
+namespace OpenTelemetry.Context.Propagation
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using OpenTelemetry.Trace;
 
     /// <summary>
     /// B3 text propagator. See https://github.com/openzipkin/b3-propagation for the specification.
     /// </summary>
-    public sealed class B3Format : TextFormatBase
+    public sealed class B3Format : ITextFormat
     {
         internal const string XB3TraceId = "X-B3-TraceId";
         internal const string XB3SpanId = "X-B3-SpanId";
@@ -44,7 +45,7 @@ namespace OpenTelemetry.Trace.Propagation
         private static readonly HashSet<string> AllFields = new HashSet<string>() { XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags };
 
         /// <inheritdoc/>
-        public override ISet<string> Fields
+        public ISet<string> Fields
         {
             get
             {
@@ -53,7 +54,7 @@ namespace OpenTelemetry.Trace.Propagation
         }
 
         /// <inheritdoc/>
-        public override SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        public SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)
             {
@@ -111,7 +112,7 @@ namespace OpenTelemetry.Trace.Propagation
         }
 
         /// <inheritdoc/>
-        public override void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
         {
             if (spanContext == null)
             {

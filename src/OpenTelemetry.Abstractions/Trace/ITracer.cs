@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     using OpenTelemetry.Common;
+    using OpenTelemetry.Context.Propagation;
 
     /// <summary>
     /// Tracer to record distributed tracing informaiton.
@@ -27,6 +28,16 @@ namespace OpenTelemetry.Trace
         /// Gets the current span from the context.
         /// </summary>
         ISpan CurrentSpan { get; }
+
+        /// <summary>
+        /// Gets the <see cref="IBinaryFormat"/> for this implementation.
+        /// </summary>
+        IBinaryFormat BinaryFormat { get; }
+
+        /// <summary>
+        /// Gets the <see cref="ITextFormat"/> for this implementation.
+        /// </summary>
+        ITextFormat TextFormat { get; }
 
         /// <summary>
         /// Associates the span with the current context.

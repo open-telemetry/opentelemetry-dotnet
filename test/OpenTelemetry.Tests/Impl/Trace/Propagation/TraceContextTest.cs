@@ -19,7 +19,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
     using System.Collections.Generic;
     using System.Linq;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Propagation;
+    using OpenTelemetry.Context.Propagation;
     using Xunit;
 
     public class TraceContextTest

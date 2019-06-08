@@ -14,18 +14,19 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Propagation
+namespace OpenTelemetry.Context.Propagation
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
+    using OpenTelemetry.Trace;
     using OpenTelemetry.Utils;
 
     /// <summary>
     /// W3C trace context text wire protocol formatter. See https://github.com/w3c/distributed-tracing/.
     /// </summary>
-    public class TraceContextFormat : TextFormatBase
+    public class TraceContextFormat : ITextFormat
     {
         private static readonly int VersionLength = "00".Length;
         private static readonly int VersionPrefixIdLength = "00-".Length;
@@ -36,10 +37,10 @@ namespace OpenTelemetry.Trace.Propagation
         private static readonly int OptionsLength = "00".Length;
 
         /// <inheritdoc/>
-        public override ISet<string> Fields => new HashSet<string> { "tracestate", "traceparent" };
+        public ISet<string> Fields => new HashSet<string> { "tracestate", "traceparent" };
 
         /// <inheritdoc/>
-        public override SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        public SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
@@ -162,7 +163,7 @@ namespace OpenTelemetry.Trace.Propagation
         }
 
         /// <inheritdoc/>
-        public override void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
         {
             var traceparent = string.Concat("00-", spanContext.TraceId.ToLowerBase16(), "-", spanContext.SpanId.ToLowerBase16());
             traceparent = string.Concat(traceparent, spanContext.TraceOptions.IsSampled ? "-01" : "-00");

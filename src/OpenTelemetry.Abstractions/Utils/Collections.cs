@@ -60,12 +60,5 @@ namespace OpenTelemetry.Abstractions.Utils
 
             return sb.ToString();
         }
-
-        public static bool AreEquivalent<T>(IEnumerable<T> c1, IEnumerable<T> c2)
-        {
-            var c1Dist = c1.Distinct();
-            var c2Dist = c2.Distinct();
-            return c1.Count() == c2.Count() && c1Dist.Count() == c2Dist.Count() && c1Dist.Intersect(c2Dist).Count() == c1Dist.Count();
-        }
     }
 }

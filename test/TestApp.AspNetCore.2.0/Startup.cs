@@ -22,7 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Collector.AspNetCore;
 using OpenTelemetry.Collector.Dependencies;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Propagation;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace.Sampler;
 using System.Net.Http;
 using OpenTelemetry.Exporter.Ocagent;
@@ -51,7 +51,6 @@ namespace TestApp.AspNetCore._2._0
             services.AddSingleton<RequestsCollector>();
             services.AddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
             services.AddSingleton<DependenciesCollector>();
-            services.AddSingleton<IPropagationComponent>(new DefaultPropagationComponent());
             services.AddSingleton<IExportComponent>(Tracing.ExportComponent);
             services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new CallbackMiddleware.CallbackMiddlewareImpl());
             services.AddSingleton<OcagentExporter>((p) =>
