@@ -19,6 +19,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
     using System;
     using System.Collections.Generic;
     using OpenTelemetry.Common;
+    using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
     using StackExchange.Redis.Profiling;
@@ -114,6 +115,9 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             // command.RetransmissionOf;
             // command.RetransmissionReason;
 
+            // TODO: determine what to do with Resource in this context
+            var resource = Resource.Empty;
+
             var attributesMap = new Dictionary<string, IAttributeValue>()
             {
                 // TODO: pre-allocate constant attribute and reuse
@@ -144,7 +148,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             Status status = Status.Ok;
             SpanKind kind = SpanKind.Client;
 
-            return SpanData.Create(context, parentSpanId, null, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            return SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
         }
     }
 }

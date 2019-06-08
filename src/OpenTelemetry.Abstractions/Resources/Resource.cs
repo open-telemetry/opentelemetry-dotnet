@@ -37,6 +37,11 @@ namespace OpenTelemetry.Resources
         }
 
         /// <summary>
+        /// Gets an empty Resource.
+        /// </summary>
+        public static Resource Empty { get; } = new Resource(new Dictionary<string, string>());
+
+        /// <summary>
         /// Gets the map of tags describing the resource.
         /// </summary>
         public Dictionary<string, string> Labels { get; internal set; }
