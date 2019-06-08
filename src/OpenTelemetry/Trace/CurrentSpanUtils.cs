@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     using System.Threading;
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
 
     internal static class CurrentSpanUtils
     {

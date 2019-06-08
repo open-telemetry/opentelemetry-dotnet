@@ -18,7 +18,7 @@ namespace OpenTelemetry.Tags
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
 
     internal sealed class TagContextBuilder : TagContextBuilderBase
     {

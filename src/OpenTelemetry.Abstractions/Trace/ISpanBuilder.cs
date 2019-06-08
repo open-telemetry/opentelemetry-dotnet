@@ -16,9 +16,8 @@
 
 namespace OpenTelemetry.Trace
 {
-    using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
 
     /// <summary>
     /// Span builder.

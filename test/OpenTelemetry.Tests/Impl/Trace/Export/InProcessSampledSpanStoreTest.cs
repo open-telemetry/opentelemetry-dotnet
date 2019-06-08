@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private readonly SpanContext notSampledSpanContext;
 
-        private readonly ISpanId parentSpanId;
+        private readonly SpanId parentSpanId;
         private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
         private TimeSpan interval = TimeSpan.FromMilliseconds(0);
         private readonly DateTimeOffset startTime = DateTimeOffset.Now;

@@ -30,9 +30,9 @@ namespace OpenTelemetry.Trace
         SpanContext Context { get; }
 
         /// <summary>
-        /// Gets the parent <see cref="ISpanId"/>.
+        /// Gets the parent <see cref="SpanId"/>.
         /// </summary>
-        ISpanId ParentSpanId { get; }
+        SpanId ParentSpanId { get; }
 
         /// <summary>
         /// Gets the span name.

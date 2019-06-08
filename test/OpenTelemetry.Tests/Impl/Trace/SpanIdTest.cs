@@ -22,8 +22,8 @@ namespace OpenTelemetry.Trace.Test
     {
         private static readonly byte[] firstBytes = new byte[] { 0, 0, 0, 0, 0, 0, 0, (byte)'a' };
         private static readonly byte[] secondBytes = new byte[] { 0xFF, 0, 0, 0, 0, 0, 0, (byte)'A' };
-        private static readonly ISpanId first = SpanId.FromBytes(firstBytes);
-        private static readonly ISpanId second = SpanId.FromBytes(secondBytes);
+        private static readonly SpanId first = SpanId.FromBytes(firstBytes);
+        private static readonly SpanId second = SpanId.FromBytes(secondBytes);
 
         [Fact]
         public void invalidSpanId()

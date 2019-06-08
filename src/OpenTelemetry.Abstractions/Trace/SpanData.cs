@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
     {
         internal SpanData(
             SpanContext context,
-            ISpanId parentSpanId,
+            SpanId parentSpanId,
             string name,
             Timestamp startTimestamp,
             IAttributes attributes,
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace
         public SpanContext Context { get; }
 
         /// <inheritdoc/>
-        public ISpanId ParentSpanId { get; }
+        public SpanId ParentSpanId { get; }
 
         /// <inheritdoc/>
         public string Name { get; }
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Trace
         /// <returns>A new immutable <see cref="SpanData"/>.</returns>
         public static ISpanData Create(
                         SpanContext context,
-                        ISpanId parentSpanId,
+                        SpanId parentSpanId,
                         string name,
                         Timestamp startTimestamp,
                         IAttributes attributes,

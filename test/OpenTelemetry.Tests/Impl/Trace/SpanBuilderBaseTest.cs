@@ -17,8 +17,8 @@
 namespace OpenTelemetry.Trace.Test
 {
     using Moq;
-    using Internal;
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
+    using OpenTelemetry.Trace.Internal;
     using Xunit;
 
     public class SpanBuilderBaseTest
