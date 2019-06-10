@@ -28,11 +28,6 @@ namespace OpenTelemetry.Resources
     public interface IResource
     {
         /// <summary>
-        /// Gets Type identifier for the resource.
-        /// </summary>
-        string Type { get; }
-
-        /// <summary>
         /// Gets the map of the labels/tags that describe the resource.
         /// </summary>
         IEnumerable<ITag> Tags { get; }
