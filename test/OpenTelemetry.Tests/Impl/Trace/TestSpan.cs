@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace.Test
 
         public override string Name { get; protected set; }
 
-        public override ISpanId ParentSpanId { get; }
+        public override SpanId ParentSpanId { get; }
 
         public override bool HasEnded => true;
 

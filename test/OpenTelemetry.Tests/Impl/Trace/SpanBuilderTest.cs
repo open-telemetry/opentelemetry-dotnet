@@ -270,7 +270,7 @@ namespace OpenTelemetry.Trace.Test
             configMock.Setup((c) => c.ActiveTraceParams).Returns(TraceParams.Default);
             // This traceId will not be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is not less than probability * Long.MAX_VALUE;
-            ITraceId traceId =
+            TraceId traceId =
                 TraceId.FromBytes(
                     new byte[] 
                     {

@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace.Test
             BlankSpan.Instance.AddEvent("MyEvent", multipleAttributes);
             BlankSpan.Instance.AddEvent(Event.Create("MyEvent"));
             BlankSpan.Instance.AddLink(
-                Link.FromSpanContext(SpanContext.Blank, LinkType.ChildLinkedSpan));
+                Link.FromSpanContext(SpanContext.Blank));
             BlankSpan.Instance.Status = Status.Ok;
             BlankSpan.Instance.End(EndSpanOptions.Default);
             BlankSpan.Instance.End();

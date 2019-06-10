@@ -28,9 +28,9 @@ namespace OpenTelemetry.Trace.Sampler.Test
         private static readonly String SPAN_NAME = "MySpanName";
         private static readonly int NUM_SAMPLE_TRIES = 1000;
         private readonly IRandomGenerator random = new RandomGenerator(1234);
-        private readonly ITraceId traceId;
-        private readonly ISpanId parentSpanId;
-        private readonly ISpanId spanId;
+        private readonly TraceId traceId;
+        private readonly SpanId parentSpanId;
+        private readonly SpanId spanId;
         private readonly SpanContext sampledSpanContext;
         private readonly SpanContext notSampledSpanContext;
         private readonly ISpan sampledSpan;
@@ -184,7 +184,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
             ISampler defaultProbability = ProbabilitySampler.Create(0.0001);
             // This traceId will not be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is not less than probability * Long.MAX_VALUE;
-            ITraceId notSampledtraceId =
+            TraceId notSampledtraceId =
                 TraceId.FromBytes(
                     new byte[] 
                     {
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                         new List<ISpan>()));
             // This traceId will be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is less than probability * Long.MAX_VALUE;
-            ITraceId sampledtraceId =
+            TraceId sampledtraceId =
                 TraceId.FromBytes(
                     new byte[] 
                     {

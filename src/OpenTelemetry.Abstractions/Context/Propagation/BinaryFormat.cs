@@ -49,8 +49,8 @@ namespace OpenTelemetry.Context.Propagation
                 throw new SpanContextParseException("Unsupported version.");
             }
 
-            ITraceId traceId = TraceId.Invalid;
-            ISpanId spanId = SpanId.Invalid;
+            TraceId traceId = TraceId.Invalid;
+            SpanId spanId = SpanId.Invalid;
             TraceOptions traceOptions = TraceOptions.Default;
 
             int pos = 1;

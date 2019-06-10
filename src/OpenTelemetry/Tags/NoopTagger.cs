@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Tags
 {
     using System;
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
     using OpenTelemetry.Internal;
 
     internal sealed class NoopTagger : TaggerBase
