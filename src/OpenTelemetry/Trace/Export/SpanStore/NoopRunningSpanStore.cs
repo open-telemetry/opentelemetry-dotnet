@@ -31,14 +31,14 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
-        public override IEnumerable<ISpanData> GetRunningSpans(IRunningSpanStoreFilter filter)
+        public override IEnumerable<SpanData> GetRunningSpans(IRunningSpanStoreFilter filter)
         {
             if (filter == null)
             {
                 throw new ArgumentNullException(nameof(filter));
             }
 
-            return new ISpanData[0];
+            return new SpanData[0];
         }
 
         public override void OnEnd(ISpan span)

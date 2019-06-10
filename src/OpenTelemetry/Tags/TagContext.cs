@@ -22,16 +22,16 @@ namespace OpenTelemetry.Tags
 
     public sealed class TagContext : TagContextBase
     {
-        public static readonly ITagContext Empty = new TagContext(new Dictionary<ITagKey, ITagValue>());
+        public static readonly ITagContext Empty = new TagContext(new Dictionary<TagKey, TagValue>());
 
-        public TagContext(IDictionary<ITagKey, ITagValue> tags)
+        public TagContext(IDictionary<TagKey, TagValue> tags)
         {
-            this.Tags = new ReadOnlyDictionary<ITagKey, ITagValue>(new Dictionary<ITagKey, ITagValue>(tags));
+            this.Tags = new ReadOnlyDictionary<TagKey, TagValue>(new Dictionary<TagKey, TagValue>(tags));
         }
 
-        public IDictionary<ITagKey, ITagValue> Tags { get; }
+        public IDictionary<TagKey, TagValue> Tags { get; }
 
-        public override IEnumerator<ITag> GetEnumerator()
+        public override IEnumerator<Tag> GetEnumerator()
         {
             var result = this.Tags.Select((kvp) => Tag.Create(kvp.Key, kvp.Value));
             return result.ToList().GetEnumerator();

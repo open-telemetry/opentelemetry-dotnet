@@ -21,8 +21,8 @@ namespace OpenTelemetry.Tags.Test
 
     public class TagContextBaseTest
     {
-        private static readonly ITag TAG1 = Tag.Create(TagKey.Create("key"), TagValue.Create("val"));
-        private static readonly ITag TAG2 = Tag.Create(TagKey.Create("key2"), TagValue.Create("val"));
+        private static readonly Tag TAG1 = Tag.Create(TagKey.Create("key"), TagValue.Create("val"));
+        private static readonly Tag TAG2 = Tag.Create(TagKey.Create("key2"), TagValue.Create("val"));
 
         [Fact]
         public void Equals_IgnoresTagOrderAndTagContextClass()
@@ -43,8 +43,8 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void Equals_HandlesNullIterator()
         {
-            var ctx1 = new SimpleTagContext((IEnumerable<ITag>)null);
-            var ctx2 = new SimpleTagContext((IEnumerable<ITag>)null);
+            var ctx1 = new SimpleTagContext((IEnumerable<Tag>)null);
+            var ctx2 = new SimpleTagContext((IEnumerable<Tag>)null);
             var ctx3 = new SimpleTagContext();
             Assert.True(ctx1.Equals(ctx2));
             Assert.True(ctx1.Equals(ctx3));
@@ -86,30 +86,30 @@ namespace OpenTelemetry.Tags.Test
 
         class TestTagContext : TagContextBase
         {
-            public override IEnumerator<ITag> GetEnumerator()
+            public override IEnumerator<Tag> GetEnumerator()
             {
-                var l = new List<ITag>() { TAG1, TAG2 };
+                var l = new List<Tag>() { TAG1, TAG2 };
                 return l.GetEnumerator();
             }
         }
 
         class SimpleTagContext : TagContextBase
         {
-            private readonly IEnumerable<ITag> tags;
+            private readonly IEnumerable<Tag> tags;
 
             // This Error Prone warning doesn't seem correct, because the constructor is just calling
             // another constructor.
-            public SimpleTagContext(params ITag[] tags)
-                : this(new List<ITag>(tags))
+            public SimpleTagContext(params Tag[] tags)
+                : this(new List<Tag>(tags))
             {
             }
 
-            public SimpleTagContext(IEnumerable<ITag> tags)
+            public SimpleTagContext(IEnumerable<Tag> tags)
             {
-                this.tags = tags == null ? null : new List<ITag>(tags);
+                this.tags = tags == null ? null : new List<Tag>(tags);
             }
 
-            public override IEnumerator<ITag> GetEnumerator()
+            public override IEnumerator<Tag> GetEnumerator()
             {
                 return tags == null ? null : tags.GetEnumerator();
             }

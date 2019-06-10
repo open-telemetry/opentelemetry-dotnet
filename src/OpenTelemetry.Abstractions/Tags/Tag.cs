@@ -18,19 +18,39 @@ namespace OpenTelemetry.Tags
 {
     using System;
 
-    public sealed class Tag : ITag
+    /// <summary>
+    /// Tag with the key and value.
+    /// </summary>
+    public sealed class Tag
     {
-        internal Tag(ITagKey key, ITagValue value)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Tag"/> class with the key and value.
+        /// </summary>
+        /// <param name="key">Key name for the tag.</param>
+        /// <param name="value">Value associated with the key name.</param>
+        internal Tag(TagKey key, TagValue value)
         {
             this.Key = key ?? throw new ArgumentNullException(nameof(key));
             this.Value = value ?? throw new ArgumentNullException(nameof(value));
         }
 
-        public ITagKey Key { get; }
+        /// <summary>
+        /// Gets the tag key.
+        /// </summary>
+        public TagKey Key { get; }
 
-        public ITagValue Value { get; }
+        /// <summary>
+        /// Gets the tag value.
+        /// </summary>
+        public TagValue Value { get; }
 
-        public static ITag Create(ITagKey key, ITagValue value)
+        /// <summary>
+        /// Creates a new <see cref="Tag"/> from the given key and value.
+        /// </summary>
+        /// <param name="key">The tag's key.</param>
+        /// <param name="value">The tag's value.</param>
+        /// <returns><see cref="Tag"/>.</returns>
+        public static Tag Create(TagKey key, TagValue value)
         {
             return new Tag(key, value);
         }
@@ -44,7 +64,7 @@ namespace OpenTelemetry.Tags
                 + "}";
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override bool Equals(object o)
         {
             if (o == this)
@@ -61,7 +81,7 @@ namespace OpenTelemetry.Tags
             return false;
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             int h = 1;

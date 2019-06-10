@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void RecordSpanData(ISpanData span)
+        public override void RecordSpanData(SpanData span)
         {
         }
     }

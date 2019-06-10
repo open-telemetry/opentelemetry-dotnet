@@ -1,4 +1,4 @@
-﻿// <copyright file="ITag.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="StringUtil.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,26 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Tags
+namespace OpenTelemetry.Utils
 {
-    /// <summary>
-    /// Tag with the key and value.
-    /// </summary>
-    public interface ITag
+    internal static class StringUtil
     {
-        /// <summary>
-        /// Gets the tag key.
-        /// </summary>
-        ITagKey Key { get; }
+        public static bool IsPrintableString(string str)
+        {
+            for (int i = 0; i < str.Length; i++)
+            {
+                if (!IsPrintableChar(str[i]))
+                {
+                    return false;
+                }
+            }
 
-        /// <summary>
-        /// Gets the tag value.
-        /// </summary>
-        ITagValue Value { get; }
+            return true;
+        }
+
+        private static bool IsPrintableChar(char ch)
+        {
+            return ch >= ' ' && ch <= '~';
+        }
     }
 }

@@ -77,6 +77,6 @@ namespace OpenTelemetry.Trace
         public abstract ISpanBuilder SpanBuilderWithParentContext(string spanName, SpanKind spanKind = SpanKind.Internal, SpanContext remoteParentSpanContext = null);
 
         /// <inheritdoc/>
-        public abstract void RecordSpanData(ISpanData span);
+        public abstract void RecordSpanData(SpanData span);
     }
 }

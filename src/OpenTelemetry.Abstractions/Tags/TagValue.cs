@@ -1,4 +1,4 @@
-﻿// <copyright file="TagKey.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TagValue.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,36 +19,50 @@ namespace OpenTelemetry.Tags
     using System;
     using OpenTelemetry.Utils;
 
-    public sealed class TagKey : ITagKey
+    /// <summary>
+    /// Tag key.
+    /// </summary>
+    public sealed class TagValue
     {
+        /// <summary>
+        /// Maximum string length of the value.
+        /// </summary>
         public const int MaxLength = 255;
 
-        internal TagKey(string name)
+        internal TagValue(string asString)
         {
-            this.Name = name ?? throw new ArgumentNullException(nameof(name));
+            this.AsString = asString ?? throw new ArgumentNullException(nameof(asString));
         }
 
-        public string Name { get; }
+        /// <summary>
+        /// Gets the value.
+        /// </summary>
+        public string AsString { get; }
 
-        public static ITagKey Create(string name)
+        /// <summary>
+        /// Creates a new <see cref="TagValue"/> from the given value.
+        /// </summary>
+        /// <param name="value">The tag's value.</param>
+        /// <returns><see cref="TagValue"/>.</returns>
+        public static TagValue Create(string value)
         {
-            if (!IsValid(name))
+            if (!IsValid(value))
             {
-                throw new ArgumentOutOfRangeException(nameof(name));
+                throw new ArgumentOutOfRangeException(nameof(value));
             }
 
-            return new TagKey(name);
+            return new TagValue(value);
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "TagKey{"
-                + "name=" + this.Name
+            return "TagValue{"
+                + "asString=" + this.AsString
                 + "}";
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override bool Equals(object o)
         {
             if (o == this)
@@ -56,26 +70,26 @@ namespace OpenTelemetry.Tags
                 return true;
             }
 
-            if (o is TagKey that)
+            if (o is TagValue that)
             {
-                return this.Name.Equals(that.Name);
+                return this.AsString.Equals(that.AsString);
             }
 
             return false;
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             int h = 1;
             h *= 1000003;
-            h ^= this.Name.GetHashCode();
+            h ^= this.AsString.GetHashCode();
             return h;
         }
 
         private static bool IsValid(string value)
         {
-            return !string.IsNullOrEmpty(value) && value.Length <= MaxLength && StringUtil.IsPrintableString(value);
+            return value.Length <= MaxLength && StringUtil.IsPrintableString(value);
         }
     }
 }

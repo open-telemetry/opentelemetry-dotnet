@@ -18,7 +18,7 @@
 
         private static IStatsRecorder statsRecorder = Stats.StatsRecorder;
         private static readonly IMeasureDouble VideoSize = MeasureDouble.Create("my_org/measure/video_size", "size of processed videos", "MiB");
-        private static readonly ITagKey FrontendKey = TagKey.Create("my_org/keys/frontend");
+        private static readonly TagKey FrontendKey = TagKey.Create("my_org/keys/frontend");
 
         private static long MiB = 1 << 20;
 
@@ -29,7 +29,7 @@
             description: "processed video size over time",
             measure: VideoSize,
             aggregation: Sum.Create(),
-            columns: new List<ITagKey>() { FrontendKey });
+            columns: new List<TagKey>() { FrontendKey });
 
         internal static object Run(string projectId)
         {

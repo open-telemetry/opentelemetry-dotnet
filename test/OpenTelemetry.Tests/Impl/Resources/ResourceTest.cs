@@ -18,156 +18,274 @@ namespace OpenTelemetry.Impl.Resources
 {
     using Xunit;
     using OpenTelemetry.Resources;
-    using OpenTelemetry.Tags;
-    using OpenTelemetry.Implementation;
+    using System.Collections.Generic;
+    using System;
+    using System.Linq;
 
     public class ResourceTest
     {
+        private const string keyName = "key";
+        private const string valueName = "value";
+        private static Random random = new Random();
+
         [Fact]
-        public void TryParseResourceType_NullOrEmptyType_GlobalResourceSet()
+        public static void CreateResource_NullLabelCollection()
         {
-            // Arrange
-            string rawResourceType = string.Empty;
-            string resourceType;
-
-            // Act (empty)
-            var parsed = Resource.TryParseResourceType(rawResourceType, out resourceType);
-
-            // Assert (empty)
-            Assert.False(parsed);
-            Assert.Equal(Constants.GlobalResourceType, resourceType);
-
-            // Act (null)
-            parsed = Resource.TryParseResourceType(rawResourceType, out resourceType);
-
-            // Assert (null)
-            Assert.False(parsed);
-            Assert.Equal(Constants.GlobalResourceType, resourceType);
+            // Act and Assert
+            Exception ex = Assert.Throws<ArgumentNullException>(() => Resource.Create(null));
         }
 
         [Fact]
-        public void TryParseResourceType_LongResourceTypeName_GlobalResourceSet()
+        public void CreateResource_NullLabelValue()
         {
             // Arrange
-            string longResouceTypeName = "a".PadLeft(Constants.MaxResourceTypeNameLength + 1, 'a');
-            string resourceType;
+            var labelCount = 3;
+            var labels = CreateLabels(labelCount);
+            labels.Add("NullValue", null);
 
             // Act
-            var parsed = Resource.TryParseResourceType(longResouceTypeName, out resourceType);
+            Exception ex = Assert.Throws<ArgumentException>(() => Resource.Create(labels));
 
             // Assert
-            Assert.False(parsed);
-            Assert.Equal(Constants.GlobalResourceType, resourceType);
+            Assert.Equal("Label value should be a string with a length greater than 0 and not exceed 255 characters.", ex.Message);
         }
 
         [Fact]
-        public void TryParseResourceType_NameWithSpaces_SpacesTrimmed()
+        public void CreateResource_EmptyLabelValue()
         {
             // Arrange
-            string rawResouceType = "  a    ";
-            string resourceType;
+            var labelCount = 3;
+            var labels = CreateLabels(labelCount);
+            labels.Add("EmptyValue", string.Empty);
 
             // Act
-            var parsed = Resource.TryParseResourceType(rawResouceType, out resourceType);
+            Exception ex = Assert.Throws<ArgumentException>(() => Resource.Create(labels));
 
             // Assert
-            Assert.True(parsed);
-            Assert.Equal("a", resourceType);
+            Assert.Equal("Label value should be a string with a length greater than 0 and not exceed 255 characters.", ex.Message);
         }
 
         [Fact]
-        public void ParseResourceLabels_WrongKeyValueDelimiter_PairIgnored()
+        public void CreateResource_ExceedsLengthLabelValue()
         {
             // Arrange
-            string resourceLabels = "k1:v1,k2=v2";
+            var labelCount = 3;
+            var labels = CreateLabels(labelCount);
+            labels.Add("ExceedsLengthValue", RandomString(256));
 
             // Act
-            var tags = Resource.ParseResourceLabels(resourceLabels);
+            Exception ex = Assert.Throws<ArgumentException>(() => Resource.Create(labels));
 
             // Assert
-            Assert.NotNull(tags);
-            Assert.NotEmpty(tags);
-            Assert.Single(tags);
-            Assert.Equal(TagKey.Create("k2"), tags[0].Key);
-            Assert.Equal(TagValue.Create("v2"), tags[0].Value);
+            Assert.Equal("Label value should be a string with a length greater than 0 and not exceed 255 characters.", ex.Message);
+        }
+
+
+        [Fact]
+        public void CreateResource_MaxLengthLabelValue()
+        {
+            // Arrange
+            var labelCount = 3;
+            var labels = CreateLabels(labelCount);
+            labels.Add("MaxLengthValue", RandomString(255));
+
+            // Act
+            var resource = Resource.Create(labels);
+
+            // Assert
+            Assert.NotNull(resource);
+            Assert.NotNull(resource.Labels);
+            Assert.True(resource.Labels.Count == labelCount + 1);
         }
 
         [Fact]
-        public void ParseResourceLabels_LongValueName_AllLaterLabelsIgnored()
+        public void CreateResource_EmptyLabel()
         {
             // Arrange
-            string longValue = "a".PadLeft(Constants.MaxResourceTypeNameLength + 1, 'a');
-            string resourceLabels = $"k1={longValue};k2=v2";
+            var labelCount = 0;
+            var labels = CreateLabels(labelCount);
 
             // Act
-            var tags = Resource.ParseResourceLabels(resourceLabels);
+            var resource = Resource.Create(labels);
 
             // Assert
-            Assert.NotNull(tags);
-            Assert.Empty(tags);
+            ValidateResource(resource, labelCount);
         }
 
         [Fact]
-        public void ParseResourceLabels_LongKeyName_AllLaterLabelsIgnored()
+        public void CreateResource_SingleLabel()
         {
             // Arrange
-            string longKey = "a".PadLeft(Constants.MaxResourceTypeNameLength + 1, 'a');
-            string resourceLabels = $"{longKey}=v1;k2=v2";
+            var labelCount = 1;
+            var labels = CreateLabels(labelCount);
 
             // Act
-            var tags = Resource.ParseResourceLabels(resourceLabels);
+            var resource = Resource.Create(labels);
 
             // Assert
-            Assert.NotNull(tags);
-            Assert.Empty(tags);
+            ValidateResource(resource, labelCount);
         }
 
         [Fact]
-        public void ParseResourceLabels_ValueWithParenthesis_StrippedValue()
+        public void CreateResource_MultipleLabel()
         {
             // Arrange
-            string resourceLabels = "k1=\"v1\"";
+            var labelCount = 5;
+            var labels = CreateLabels(labelCount);
 
             // Act
-            var tags = Resource.ParseResourceLabels(resourceLabels);
+            var resource = Resource.Create(labels);
 
             // Assert
-            Assert.NotNull(tags);
-            Assert.NotEmpty(tags);
-            Assert.Equal(TagKey.Create("k1"), tags[0].Key);
-            Assert.Equal(TagValue.Create("v1"), tags[0].Value);
+            ValidateResource(resource, labelCount);
         }
 
         [Fact]
-        public void ParseResourceLabels_EmptyString_EmptyMapReturned()
+        public void MergeResource_EmptyLabelSource_MultiLabelTarget()
         {
             // Arrange
-            string resourceLabels = "";
+            var sourceLabelCount = 0;
+            var sourceLabels = CreateLabels(sourceLabelCount);
+            var sourceResource = Resource.Create(sourceLabels);
+
+            var targetLabelCount = 3;
+            var targetLabels = CreateLabels(targetLabelCount);
+            var targetResource = Resource.Create(targetLabels);
 
             // Act
-            var tags = Resource.ParseResourceLabels(resourceLabels);
+            targetResource.Merge(sourceResource);
 
             // Assert
-            Assert.NotNull(tags);
-            Assert.Empty(tags);
+            ValidateResource(targetResource, sourceLabelCount + targetLabelCount);
         }
 
         [Fact]
-        public void ParseResourceLabels_CommaSeparated_MapReturned()
+        public void MergeResource_MultiLabelSource_EmptyLabelTarget()
         {
             // Arrange
-            string resourceLabels = "key1=val1,key2=val2";
+            var sourceLabelCount = 3;
+            var sourceLabels = CreateLabels(sourceLabelCount);
+            var sourceResource = Resource.Create(sourceLabels);
+
+            var targetLabelCount = 0;
+            var targetLabels = CreateLabels(targetLabelCount);
+            var targetResource = Resource.Create(targetLabels);
 
             // Act
-            var tags = Resource.ParseResourceLabels(resourceLabels);
+            targetResource.Merge(sourceResource);
 
             // Assert
-            Assert.NotNull(tags);
-            Assert.Equal(2, tags.Length);
-            Assert.Equal(TagKey.Create("key1"), tags[0].Key);
-            Assert.Equal(TagKey.Create("key2"), tags[1].Key);
-            Assert.Equal(TagValue.Create("val1"), tags[0].Value);
-            Assert.Equal(TagValue.Create("val2"), tags[1].Value);
+            ValidateResource(targetResource, sourceLabelCount + targetLabelCount);
+        }
+
+        [Fact]
+        public void MergeResource_MultiLabelSource_MultiLabelTarget_NoOverlap()
+        {
+            // Arrange
+            var sourceLabelCount = 3;
+            var sourceLabels = CreateLabels(sourceLabelCount);
+            var sourceResource = Resource.Create(sourceLabels);
+
+            var targetLabelCount = 3;
+            var targetLabels = CreateLabels(targetLabelCount, sourceLabelCount);
+            var targetResource = Resource.Create(targetLabels);
+
+            // Act
+            targetResource.Merge(sourceResource);
+
+            // Assert
+            ValidateResource(targetResource, sourceLabelCount + targetLabelCount);
+        }
+
+        [Fact]
+        public void MergeResource_MultiLabelSource_MultiLabelTarget_SingleOverlap()
+        {
+            // Arrange
+            var sourceLabelCount = 3;
+            var sourceLabels = CreateLabels(sourceLabelCount);
+            var sourceResource = Resource.Create(sourceLabels);
+
+            var targetLabelCount = 3;
+            var targetLabels = CreateLabels(targetLabelCount, sourceLabelCount - 1);
+            var targetResource = Resource.Create(targetLabels);
+
+            // Act
+            targetResource.Merge(sourceResource);
+
+            // Assert
+            ValidateResource(targetResource, sourceLabelCount + targetLabelCount - 1);
+
+            // Also verify target labels were not overwritten
+            foreach (var targetLabel in targetLabels)
+            {
+                Assert.True(targetResource.Labels.ContainsKey(targetLabel.Key));
+                Assert.Equal(targetLabel.Value, targetResource.Labels[targetLabel.Key]);
+            }
+        }
+
+        [Fact]
+        public void MergeResource_MultiLabelSource_MultiLabelTarget_FullOverlap()
+        {
+            // Arrange
+            var sourceLabelCount = 3;
+            var sourceLabels = CreateLabels(sourceLabelCount);
+            var sourceResource = Resource.Create(sourceLabels);
+
+            var targetLabelCount = 3;
+            var targetLabels = CreateLabels(targetLabelCount);
+            var targetResource = Resource.Create(targetLabels);
+
+            // Act
+            targetResource.Merge(sourceResource);
+
+            // Assert
+            ValidateResource(targetResource, targetLabelCount);
+
+            // Also verify target labels were not overwritten
+            foreach (var targetLabel in targetLabels)
+            {
+                Assert.True(targetResource.Labels.ContainsKey(targetLabel.Key));
+                Assert.Equal(targetLabel.Value, targetResource.Labels[targetLabel.Key]);
+            }
+        }
+
+        private static void AddLabels(Dictionary<string, string> labels, int labelCount, int startIndex = 0)
+        {
+            for (int i = startIndex; i < labelCount + startIndex; ++i)
+            {
+                labels.Add($"{keyName}{i}", $"{valueName}{i}");
+            }
+        }
+
+        private Dictionary<string, string> CreateLabels(int labelCount, int startIndex = 0)
+        {
+            var labels = new Dictionary<string, string>();
+            AddLabels(labels, labelCount, startIndex);
+            return labels;
+        }
+
+        private static void ValidateLabels(IReadOnlyDictionary<string, string> labels, int startIndex = 0)
+        {
+            for (var i = startIndex; i < labels.Count; ++i)
+            {
+                Assert.True(labels.ContainsKey($"{keyName}{i}"));
+                Assert.Equal($"{valueName}{i}", labels[$"{keyName}{i}"]);
+            }
+        }
+
+        private static void ValidateResource(Resource resource, int labelCount)
+        {
+            Assert.NotNull(resource);
+            Assert.NotNull(resource.Labels);
+            Assert.True(resource.Labels.Count == labelCount);
+            ValidateLabels(resource.Labels);
+        }
+
+        private static string RandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
         }
     }
 }

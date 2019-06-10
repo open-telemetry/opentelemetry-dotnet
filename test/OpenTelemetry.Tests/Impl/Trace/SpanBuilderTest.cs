@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.Context.IsValid);
             Assert.True(span.IsRecordingEvents);
             Assert.True(span.Context.TraceOptions.IsSampled);
-            ISpanData spanData = ((Span)span).ToSpanData();
+            SpanData spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
             Assert.InRange(spanData.StartTimestamp, Timestamp.FromDateTimeOffset(DateTimeOffset.Now).AddDuration(Duration.Create(-1, 0)), Timestamp.FromDateTimeOffset(DateTimeOffset.Now).AddDuration(Duration.Create(1, 0)));
             Assert.Equal(SPAN_NAME, spanData.Name);
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.Context.IsValid);
             Assert.True(span.IsRecordingEvents);
             Assert.False(span.Context.TraceOptions.IsSampled);
-            ISpanData spanData = ((Span)span).ToSpanData();
+            SpanData spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
         }
 
@@ -109,7 +109,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.Context.IsValid);
             Assert.True(span.IsRecordingEvents);
             Assert.True(span.Context.TraceOptions.IsSampled);
-            ISpanData spanData = ((Span)span).ToSpanData();
+            SpanData spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
         }
 
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.Context.IsValid);
             Assert.True(span.IsRecordingEvents);
             Assert.True(span.Context.TraceOptions.IsSampled);
-            ISpanData spanData = ((Span)span).ToSpanData();
+            SpanData spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
         }
 
@@ -141,7 +141,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.Context.IsValid);
             Assert.Equal(spanContext.TraceId, span.Context.TraceId);
             Assert.False(span.Context.TraceOptions.IsSampled);
-            ISpanData spanData = ((Span)span).ToSpanData();
+            SpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(spanContext.SpanId, spanData.ParentSpanId);
         }
 

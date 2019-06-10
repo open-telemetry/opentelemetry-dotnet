@@ -20,6 +20,7 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
+    using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Utils;
@@ -80,11 +81,6 @@ namespace OpenTelemetry.Trace
 
         /// <inheritdoc/>
         public override string Name { get; protected set; }
-
-        /// <summary>
-        /// Gets or sets span kind.
-        /// </summary>
-        internal SpanKind? Kind { get; set; }
 
         /// <inheritdoc/>
         public override Status Status
@@ -164,6 +160,20 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override bool HasEnded => this.hasBeenEnded;
 
+        /// <inheritdoc/>
+        public override bool IsRecordingEvents
+        {
+            get
+            {
+                return this.Options.HasFlag(SpanOptions.RecordEvents);
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets span kind.
+        /// </summary>
+        internal SpanKind? Kind { get; set; }
+
         internal Timer TimestampConverter { get; private set; }
 
         private AttributesWithCapacity InitializedAttributes
@@ -207,16 +217,6 @@ namespace OpenTelemetry.Trace
         }
 
         private Status StatusWithDefault => this.status ?? Trace.Status.Ok;
-
-        public override bool IsRecordingEvents
-        {
-            get
-            {
-                return this.Options.HasFlag(SpanOptions.RecordEvents);
-            }
-        }
-
-
 
         /// <inheritdoc/>
         public override void SetAttribute(string key, IAttributeValue value)
@@ -338,7 +338,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override ISpanData ToSpanData()
+        public override SpanData ToSpanData()
         {
             if (!this.IsRecordingEvents)
             {
@@ -354,6 +354,7 @@ namespace OpenTelemetry.Trace
             return SpanData.Create(
                 this.Context,
                 this.parentSpanId,
+                Resource.Empty, // TODO: determine what to do with Resource in this context
                 this.Name,
                 Timestamp.FromDateTimeOffset(this.startTime),
                 attributesSpanData,
@@ -365,55 +366,7 @@ namespace OpenTelemetry.Trace
                 this.hasBeenEnded ? Timestamp.FromDateTimeOffset(this.endTime) : null);
         }
 
-        internal static ISpan StartSpan(
-                        SpanContext context,
-                        SpanOptions options,
-                        string name,
-                        SpanKind spanKind,
-                        SpanId parentSpanId,
-                        ITraceParams traceParams,
-                        IStartEndHandler startEndHandler,
-                        Timer timestampConverter)
-        {
-            var span = new Span(
-               context,
-               options,
-               name,
-               spanKind,
-               parentSpanId,
-               traceParams,
-               startEndHandler,
-               timestampConverter);
-
-            // Call onStart here instead of calling in the constructor to make sure the span is completely
-            // initialized.
-            if (span.IsRecordingEvents)
-            {
-                startEndHandler.OnStart(span);
-            }
-
-            return span;
-        }
-
-        private static ITimedEvents<T> CreateTimedEvents<T>(TraceEvents<EventWithTime<T>> events, Timer timestampConverter)
-        {
-            if (events == null)
-            {
-                IEnumerable<ITimedEvent<T>> empty = new ITimedEvent<T>[0];
-                return TimedEvents<T>.Create(empty, 0);
-            }
-
-            var eventsList = new List<ITimedEvent<T>>(events.Events.Count);
-            foreach (EventWithTime<T> networkEvent in events.Events)
-            {
-                eventsList.Add(networkEvent.ToSpanDataTimedEvent(timestampConverter));
-            }
-
-            return TimedEvents<T>.Create(eventsList, events.NumberOfDroppedEvents);
-        }
-
         /// <inheritdoc/>
-
         public override void SetAttribute(string key, string value)
         {
             if (!this.IsRecordingEvents)
@@ -455,6 +408,53 @@ namespace OpenTelemetry.Trace
             }
 
             this.SetAttribute(key, AttributeValue.BooleanAttributeValue(value));
+        }
+
+        internal static ISpan StartSpan(
+                        SpanContext context,
+                        SpanOptions options,
+                        string name,
+                        SpanKind spanKind,
+                        SpanId parentSpanId,
+                        ITraceParams traceParams,
+                        IStartEndHandler startEndHandler,
+                        Timer timestampConverter)
+        {
+            var span = new Span(
+               context,
+               options,
+               name,
+               spanKind,
+               parentSpanId,
+               traceParams,
+               startEndHandler,
+               timestampConverter);
+
+            // Call onStart here instead of calling in the constructor to make sure the span is completely
+            // initialized.
+            if (span.IsRecordingEvents)
+            {
+                startEndHandler.OnStart(span);
+            }
+
+            return span;
+        }
+
+        private static ITimedEvents<T> CreateTimedEvents<T>(TraceEvents<EventWithTime<T>> events, Timer timestampConverter)
+        {
+            if (events == null)
+            {
+                IEnumerable<ITimedEvent<T>> empty = Array.Empty<ITimedEvent<T>>();
+                return TimedEvents<T>.Create(empty, 0);
+            }
+
+            var eventsList = new List<ITimedEvent<T>>(events.Events.Count);
+            foreach (EventWithTime<T> networkEvent in events.Events)
+            {
+                eventsList.Add(networkEvent.ToSpanDataTimedEvent(timestampConverter));
+            }
+
+            return TimedEvents<T>.Create(eventsList, events.NumberOfDroppedEvents);
         }
     }
 }

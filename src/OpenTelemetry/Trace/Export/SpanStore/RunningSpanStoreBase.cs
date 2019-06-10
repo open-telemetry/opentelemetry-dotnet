@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
-        public abstract IEnumerable<ISpanData> GetRunningSpans(IRunningSpanStoreFilter filter);
+        public abstract IEnumerable<SpanData> GetRunningSpans(IRunningSpanStoreFilter filter);
 
         public abstract void OnEnd(ISpan span);
 

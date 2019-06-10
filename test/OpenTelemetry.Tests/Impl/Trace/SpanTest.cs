@@ -112,7 +112,7 @@ namespace OpenTelemetry.Trace.Test
             span.AddEvent(Event.Create(EVENT_DESCRIPTION));
             span.AddEvent(EVENT_DESCRIPTION, attributes);
             span.AddLink(Link.FromSpanContext(spanContext));
-            ISpanData spanData = ((Span)span).ToSpanData();
+            SpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(timestamp, spanData.StartTimestamp);
             Assert.Empty(spanData.Attributes.AttributeMap);
             Assert.Empty(spanData.Events.Events);
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Trace.Test
             interval = TimeSpan.FromMilliseconds(400);
             ILink link = Link.FromSpanContext(spanContext);
             span.AddLink(link);
-            ISpanData spanData = ((Span)span).ToSpanData();
+            SpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(spanContext, spanData.Context);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(parentSpanId, spanData.ParentSpanId);
@@ -207,7 +207,7 @@ namespace OpenTelemetry.Trace.Test
             interval = TimeSpan.FromMilliseconds(400);
             span.End(EndSpanOptions.Builder().SetStatus(Status.Cancelled).Build());
           
-            ISpanData spanData = ((Span)span).ToSpanData();
+            SpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(spanContext, spanData.Context);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(parentSpanId, spanData.ParentSpanId);
@@ -308,7 +308,7 @@ namespace OpenTelemetry.Trace.Test
                 }
 
             }
-            ISpanData spanData = ((Span)span).ToSpanData();
+            SpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfAttributes, spanData.Attributes.DroppedAttributesCount);
             Assert.Equal(maxNumberOfAttributes, spanData.Attributes.AttributeMap.Count);
             for (int i = 0; i < maxNumberOfAttributes; i++)
@@ -359,7 +359,7 @@ namespace OpenTelemetry.Trace.Test
                 }
 
             }
-            ISpanData spanData = ((Span)span).ToSpanData();
+            SpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfAttributes, spanData.Attributes.DroppedAttributesCount);
             Assert.Equal(maxNumberOfAttributes, spanData.Attributes.AttributeMap.Count);
             for (int i = 0; i < maxNumberOfAttributes; i++)
@@ -422,7 +422,7 @@ namespace OpenTelemetry.Trace.Test
                 span.AddEvent(testEvent);
                 interval += TimeSpan.FromMilliseconds(100);
             }
-            ISpanData spanData = ((Span)span).ToSpanData();
+            SpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfEvents, spanData.Events.DroppedEventsCount);
             Assert.Equal(maxNumberOfEvents, spanData.Events.Events.Count());
             i = 0;
@@ -466,7 +466,7 @@ namespace OpenTelemetry.Trace.Test
             {
                 span.AddLink(link);
             }
-            ISpanData spanData = ((Span)span).ToSpanData();
+            SpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfLinks, spanData.Links.DroppedLinksCount);
             Assert.Equal(maxNumberOfLinks, spanData.Links.Links.Count());
             foreach (var actualLink in spanData.Links.Links)
