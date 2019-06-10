@@ -122,7 +122,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 (arg) => { return null; });
         }
 
-        private string EncodeTraceId(ITraceId traceId)
+        private string EncodeTraceId(TraceId traceId)
         {
             var id = traceId.ToLowerBase16();
 
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return id;
         }
 
-        private string EncodeSpanId(ISpanId spanId)
+        private string EncodeSpanId(SpanId spanId)
         {
             return spanId.ToLowerBase16();
         }

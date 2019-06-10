@@ -1293,11 +1293,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 new List<ILink>()
                 {
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link0TraceIdBytes), SpanId.FromBytes(link0SpanIdBytes), TraceOptions.Default, Tracestate.Empty), LinkType.ChildLinkedSpan),
+                        SpanContext.Create(TraceId.FromBytes(link0TraceIdBytes), SpanId.FromBytes(link0SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link1TraceIdBytes), SpanId.FromBytes(link1SpanIdBytes), TraceOptions.Default, Tracestate.Empty), LinkType.ParentLinkedSpan),
+                        SpanContext.Create(TraceId.FromBytes(link1TraceIdBytes), SpanId.FromBytes(link1SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link2TraceIdBytes), SpanId.FromBytes(link2SpanIdBytes), TraceOptions.Default, Tracestate.Empty), LinkType.Unspecified),
+                        SpanContext.Create(TraceId.FromBytes(link2TraceIdBytes), SpanId.FromBytes(link2SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
                 }, 0);
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
@@ -1305,7 +1305,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var sentItems = this.ConvertSpan(span);
 
             var dependency = sentItems.OfType<DependencyTelemetry>().Single();
-            Assert.Equal(9, dependency.Properties.Count);
+            Assert.Equal(6, dependency.Properties.Count);
 
             Assert.True(dependency.Properties.ContainsKey("link0_traceId"));
             Assert.True(dependency.Properties.ContainsKey("link1_traceId"));
@@ -1322,14 +1322,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal(link0SpanId, dependency.Properties["link0_spanId"]);
             Assert.Equal(link1SpanId, dependency.Properties["link1_spanId"]);
             Assert.Equal(link2SpanId, dependency.Properties["link2_spanId"]);
-
-            Assert.True(dependency.Properties.ContainsKey("link0_type"));
-            Assert.True(dependency.Properties.ContainsKey("link1_type"));
-            Assert.True(dependency.Properties.ContainsKey("link2_type"));
-
-            Assert.Equal("ChildLinkedSpan", dependency.Properties["link0_type"]);
-            Assert.Equal("ParentLinkedSpan", dependency.Properties["link1_type"]);
-            Assert.Equal("Unspecified", dependency.Properties["link2_type"]);
         }
 
         [Fact]
@@ -1348,7 +1340,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                             SpanId.FromBytes(GenerateRandomId(8).Item2),
                             TraceOptions.Default,
                             Tracestate.Empty),
-                        LinkType.ChildLinkedSpan,
                         new Dictionary<string, IAttributeValue>()
                         {
                             { "some.str.attribute", AttributeValue.StringAttributeValue("foo") },
@@ -1363,7 +1354,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var sentItems = this.ConvertSpan(span);
 
             var dependency = sentItems.OfType<DependencyTelemetry>().Single();
-            Assert.Equal(6, dependency.Properties.Count);
+            Assert.Equal(5, dependency.Properties.Count);
 
             Assert.True(dependency.Properties.ContainsKey("link0_some.str.attribute"));
             Assert.Equal("foo", dependency.Properties["link0_some.str.attribute"]);
@@ -1393,11 +1384,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             links = LinkList.Create(new List<ILink>()
             {
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link0TraceIdBytes), SpanId.FromBytes(link0SpanIdBytes), TraceOptions.Default, Tracestate.Empty), LinkType.ChildLinkedSpan),
+                        SpanContext.Create(TraceId.FromBytes(link0TraceIdBytes), SpanId.FromBytes(link0SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link1TraceIdBytes), SpanId.FromBytes(link1SpanIdBytes), TraceOptions.Default, Tracestate.Empty), LinkType.ParentLinkedSpan),
+                        SpanContext.Create(TraceId.FromBytes(link1TraceIdBytes), SpanId.FromBytes(link1SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link2TraceIdBytes), SpanId.FromBytes(link2SpanIdBytes), TraceOptions.Default, Tracestate.Empty), LinkType.Unspecified),
+                        SpanContext.Create(TraceId.FromBytes(link2TraceIdBytes), SpanId.FromBytes(link2SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
             }, 0);
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
@@ -1405,7 +1396,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var sentItems = this.ConvertSpan(span);
 
             var request = sentItems.OfType<RequestTelemetry>().Single();
-            Assert.Equal(9, request.Properties.Count);
+            Assert.Equal(6, request.Properties.Count);
 
             Assert.True(request.Properties.ContainsKey("link0_traceId"));
             Assert.True(request.Properties.ContainsKey("link1_traceId"));
@@ -1422,14 +1413,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal(link0SpanId, request.Properties["link0_spanId"]);
             Assert.Equal(link1SpanId, request.Properties["link1_spanId"]);
             Assert.Equal(link2SpanId, request.Properties["link2_spanId"]);
-
-            Assert.True(request.Properties.ContainsKey("link0_type"));
-            Assert.True(request.Properties.ContainsKey("link1_type"));
-            Assert.True(request.Properties.ContainsKey("link2_type"));
-
-            Assert.Equal("ChildLinkedSpan", request.Properties["link0_type"]);
-            Assert.Equal("ParentLinkedSpan", request.Properties["link1_type"]);
-            Assert.Equal("Unspecified", request.Properties["link2_type"]);
         }
 
         [Fact]
@@ -1448,7 +1431,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                             SpanId.FromBytes(GenerateRandomId(8).Item2),
                             TraceOptions.Default,
                             Tracestate.Empty),
-                        LinkType.ChildLinkedSpan,
                         new Dictionary<string, IAttributeValue>()
                         {
                             { "some.str.attribute", AttributeValue.StringAttributeValue("foo") },
@@ -1463,7 +1445,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var sentItems = this.ConvertSpan(span);
 
             var request = sentItems.OfType<RequestTelemetry>().Single();
-            Assert.Equal(6, request.Properties.Count);
+            Assert.Equal(5, request.Properties.Count);
 
             Assert.True(request.Properties.ContainsKey("link0_some.str.attribute"));
             Assert.Equal("foo", request.Properties["link0_some.str.attribute"]);
@@ -1882,8 +1864,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
         private void GetDefaults(
             out SpanContext context,
-            out ISpanId parentSpanId,
-            out Resource resource,
+            out SpanId parentSpanId,
+            out Resource,
             out string name,
             out Timestamp startTimestamp,
             out IAttributes attributes,

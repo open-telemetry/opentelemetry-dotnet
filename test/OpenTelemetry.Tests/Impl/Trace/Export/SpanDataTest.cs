@@ -60,7 +60,7 @@ namespace OpenTelemetry.Trace.Export.Test
             eventList.Add(TimedEvent<IEvent>.Create(eventTimestamp3, spanEvent));
             events = TimedEvents<IEvent>.Create(eventList, 2);
 
-            linksList.Add(Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan));
+            linksList.Add(Link.FromSpanContext(spanContext));
             links = LinkList.Create(linksList, 0);
         }
 

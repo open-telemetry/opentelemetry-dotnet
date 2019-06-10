@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace.Sampler
 
         public long IdUpperBound { get; }
 
-        public bool ShouldSample(SpanContext parentContext, ITraceId traceId, ISpanId spanId, string name, IEnumerable<ISpan> parentLinks)
+        public bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ISpan> parentLinks)
         {
             // If the parent is sampled keep the sampling decision.
             if (parentContext != null && parentContext.TraceOptions.IsSampled)

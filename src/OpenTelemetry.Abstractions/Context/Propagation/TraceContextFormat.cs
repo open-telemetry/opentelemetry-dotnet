@@ -54,7 +54,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
 
                 var traceparent = traceparentCollection?.FirstOrDefault();
-                var traceparentParsed = this.TryExtractTraceparent(traceparent, out ITraceId traceId, out ISpanId spanId, out TraceOptions traceoptions);
+                var traceparentParsed = this.TryExtractTraceparent(traceparent, out TraceId traceId, out SpanId spanId, out TraceOptions traceoptions);
 
                 if (!traceparentParsed)
                 {
@@ -193,7 +193,7 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
-        private bool TryExtractTraceparent(string traceparent, out ITraceId traceId, out ISpanId spanId, out TraceOptions traceoptions)
+        private bool TryExtractTraceparent(string traceparent, out TraceId traceId, out SpanId spanId, out TraceOptions traceoptions)
         {
             // from https://github.com/w3c/distributed-tracing/blob/master/trace_context/HTTP_HEADER_FORMAT.md
             // traceparent: 00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01

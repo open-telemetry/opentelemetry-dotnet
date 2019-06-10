@@ -89,8 +89,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         public static Span.Types.Link ToLink(this ILink link)
         {
             var ret = new Span.Types.Link();
-            ret.SpanId = link.SpanId.ToLowerBase16();
-            ret.TraceId = link.TraceId.ToLowerBase16();
+            ret.SpanId = link.Context.SpanId.ToLowerBase16();
+            ret.TraceId = link.Context.TraceId.ToLowerBase16();
 
             if (link.Attributes != null)
             {

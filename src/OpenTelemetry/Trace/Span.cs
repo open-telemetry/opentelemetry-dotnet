@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace
     /// <inheritdoc/>
     public sealed class Span : SpanBase
     {
-        private readonly ISpanId parentSpanId;
+        private readonly SpanId parentSpanId;
         private readonly ITraceParams traceParams;
         private readonly IStartEndHandler startEndHandler;
         private readonly DateTimeOffset startTime;
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace
                 SpanOptions options,
                 string name,
                 SpanKind spanKind,
-                ISpanId parentSpanId,
+                SpanId parentSpanId,
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
                 Timer timestampConverter)
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override ISpanId ParentSpanId => this.parentSpanId;
+        public override SpanId ParentSpanId => this.parentSpanId;
 
         /// <inheritdoc/>
         public override bool HasEnded => this.hasBeenEnded;
@@ -415,7 +415,7 @@ namespace OpenTelemetry.Trace
                         SpanOptions options,
                         string name,
                         SpanKind spanKind,
-                        ISpanId parentSpanId,
+                        SpanId parentSpanId,
                         ITraceParams traceParams,
                         IStartEndHandler startEndHandler,
                         Timer timestampConverter)

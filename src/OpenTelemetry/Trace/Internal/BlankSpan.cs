@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace.Internal
             }
         }
 
-        public override ISpanId ParentSpanId
+        public override SpanId ParentSpanId
         {
             get
             {

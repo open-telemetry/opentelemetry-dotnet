@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Trace
 {
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
 
     /// <summary>

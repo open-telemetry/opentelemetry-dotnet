@@ -119,13 +119,14 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
         private static Span.Types.Link FromILink(ILink source)
         {
-            return new Span.Types.Link
+            var result = new Span.Types.Link
             {
-                TraceId = ByteString.CopyFrom(source.TraceId.Bytes),
-                SpanId = ByteString.CopyFrom(source.SpanId.Bytes),
-                Type = source.Type == LinkType.ChildLinkedSpan ? Span.Types.Link.Types.Type.ChildLinkedSpan : Span.Types.Link.Types.Type.ParentLinkedSpan,
                 Attributes = FromIAttributeMap(source.Attributes),
+                TraceId = ByteString.CopyFrom(source.Context.TraceId.Bytes),
+                SpanId = ByteString.CopyFrom(source.Context.SpanId.Bytes),
             };
+
+            return result;
         }
 
         private static Span.Types.TimeEvent FromITimeEvent(ITimedEvent<IEvent> source)
