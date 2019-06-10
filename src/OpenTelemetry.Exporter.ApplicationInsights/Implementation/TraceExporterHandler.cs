@@ -127,7 +127,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     {
                         AddPropertyWithAdjustedName(props, "link" + linkId + "_traceId", link.TraceId.ToLowerBase16());
                         AddPropertyWithAdjustedName(props, "link" + linkId + "_spanId", link.SpanId.ToLowerBase16());
-                        AddPropertyWithAdjustedName(props, "link" + linkId + "_type", link.Type.ToString());
 
                         foreach (var attr in link.Attributes)
                         {

@@ -127,11 +127,11 @@ namespace OpenTelemetry.Trace
         {
             if (parentLinks.Any())
             {
-                ILink childLink = Link.FromSpanContext(span.Context, LinkType.ChildLinkedSpan);
+                ILink childLink = Link.FromSpanContext(span.Context);
                 foreach (ISpan linkedSpan in parentLinks)
                 {
                     linkedSpan.AddLink(childLink);
-                    span.AddLink(Link.FromSpanContext(linkedSpan.Context, LinkType.ParentLinkedSpan));
+                    span.AddLink(Link.FromSpanContext(linkedSpan.Context));
                 }
             }
         }

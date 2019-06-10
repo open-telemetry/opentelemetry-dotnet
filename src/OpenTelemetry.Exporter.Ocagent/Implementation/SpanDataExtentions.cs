@@ -123,7 +123,6 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             {
                 TraceId = ByteString.CopyFrom(source.TraceId.Bytes),
                 SpanId = ByteString.CopyFrom(source.SpanId.Bytes),
-                Type = source.Type == LinkType.ChildLinkedSpan ? Span.Types.Link.Types.Type.ChildLinkedSpan : Span.Types.Link.Types.Type.ParentLinkedSpan,
                 Attributes = FromIAttributeMap(source.Attributes),
             };
         }

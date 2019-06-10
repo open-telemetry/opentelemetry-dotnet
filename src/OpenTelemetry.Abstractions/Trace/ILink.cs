@@ -34,11 +34,6 @@ namespace OpenTelemetry.Trace
         ISpanId SpanId { get; }
 
         /// <summary>
-        /// Gets the type of the link.
-        /// </summary>
-        LinkType Type { get; }
-
-        /// <summary>
         /// Gets the collection of attributes associated with the link.
         /// </summary>
         IDictionary<string, IAttributeValue> Attributes { get; }
