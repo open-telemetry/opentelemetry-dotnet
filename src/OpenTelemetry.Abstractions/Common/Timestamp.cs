@@ -17,10 +17,12 @@
 namespace OpenTelemetry.Common
 {
     using System;
+    using System.Diagnostics;
 
     /// <summary>
     /// Timestamp with the nanoseconds precision.
     /// </summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed class Timestamp : IComparable<Timestamp>, IComparable
     {
         /// <summary>
@@ -33,11 +35,13 @@ namespace OpenTelemetry.Common
         private const long MillisPerSecond = 1000L;
         private const long NanosPerMilli = 1000 * 1000;
         private const long NanosPerSecond = NanosPerMilli * MillisPerSecond;
+        private readonly string stringRepresentation;
 
         internal Timestamp(long seconds, int nanos)
         {
             this.Seconds = seconds;
             this.Nanos = nanos;
+            this.stringRepresentation = $"Timestamp{{seconds={this.Seconds}, nanos={this.Nanos}}}";
         }
 
         /// <summary>
@@ -175,10 +179,7 @@ namespace OpenTelemetry.Common
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Timestamp{"
-                + "seconds=" + this.Seconds + ", "
-                + "nanos=" + this.Nanos
-                + "}";
+            return this.stringRepresentation;
         }
 
         /// <inheritdoc/>
