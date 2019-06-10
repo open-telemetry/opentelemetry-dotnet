@@ -28,9 +28,9 @@ namespace OpenTelemetry.Stats.Test
 
     public class ViewManagerTest
     {
-        private static readonly ITagKey KEY = TagKey.Create("KEY");
-        private static readonly ITagValue VALUE = TagValue.Create("VALUE");
-        private static readonly ITagValue VALUE_2 = TagValue.Create("VALUE_2");
+        private static readonly TagKey KEY = TagKey.Create("KEY");
+        private static readonly TagValue VALUE = TagValue.Create("VALUE");
+        private static readonly TagValue VALUE_2 = TagValue.Create("VALUE_2");
         private static readonly String MEASURE_NAME = "my measurement";
         private static readonly String MEASURE_NAME_2 = "my measurement 2";
         private static readonly String MEASURE_UNIT = "us";
@@ -78,11 +78,11 @@ namespace OpenTelemetry.Stats.Test
 
         private static IView CreateCumulativeView()
         {
-            return CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<ITagKey>() { KEY });
+            return CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<TagKey>() { KEY });
         }
 
         private static IView CreateCumulativeView(
-            IViewName name, IMeasure measure, IAggregation aggregation, List<ITagKey> keys)
+            IViewName name, IMeasure measure, IAggregation aggregation, List<TagKey> keys)
         {
             return View.Create(name, VIEW_DESCRIPTION, measure, aggregation, keys);
         }
@@ -103,10 +103,10 @@ namespace OpenTelemetry.Stats.Test
             Assert.Empty(viewManager.AllExportedViews);
             IView cumulativeView1 =
                 CreateCumulativeView(
-                    ViewName.Create("View 1"), MEASURE_DOUBLE, DISTRIBUTION, new List<ITagKey>() { KEY });
+                    ViewName.Create("View 1"), MEASURE_DOUBLE, DISTRIBUTION, new List<TagKey>() { KEY });
             IView cumulativeView2 =
                 CreateCumulativeView(
-                    ViewName.Create("View 2"), MEASURE_DOUBLE, DISTRIBUTION, new List<ITagKey>() { KEY });
+                    ViewName.Create("View 2"), MEASURE_DOUBLE, DISTRIBUTION, new List<TagKey>() { KEY });
             // View intervalView =
             //    View.Create(
             //        View.Name.Create("View 3"),
@@ -133,7 +133,7 @@ namespace OpenTelemetry.Stats.Test
                     VIEW_DESCRIPTION,
                     MEASURE_DOUBLE,
                     DISTRIBUTION,
-                    new List<ITagKey>() { KEY });
+                    new List<TagKey>() { KEY });
             viewManager.RegisterView(view1);
             ISet<IView> exported = viewManager.AllExportedViews;
 
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Stats.Test
                     VIEW_DESCRIPTION,
                     MEASURE_DOUBLE,
                     DISTRIBUTION,
-                    new List<ITagKey>() { KEY });
+                    new List<TagKey>() { KEY });
             Assert.Throws<NotSupportedException>(() => exported.Add(view2));
 
         }
@@ -183,14 +183,14 @@ namespace OpenTelemetry.Stats.Test
                     "View description.",
                     MEASURE_DOUBLE,
                     DISTRIBUTION,
-                    new List<ITagKey>() { KEY });
+                    new List<TagKey>() { KEY });
             IView view2 =
                 View.Create(
                     VIEW_NAME,
                     "This is a different description.",
                     MEASURE_DOUBLE,
                     DISTRIBUTION,
-                    new List<ITagKey>() { KEY });
+                    new List<TagKey>() { KEY });
             TestFailedToRegisterView(view1, view2, "A different view with the same name is already registered");
         }
 
@@ -201,10 +201,10 @@ namespace OpenTelemetry.Stats.Test
             IMeasureLong measure2 = MeasureLong.Create("measure", "description", "1");
             IView view1 =
                 View.Create(
-                    VIEW_NAME, VIEW_DESCRIPTION, measure1, DISTRIBUTION, new List<ITagKey>() { KEY });
+                    VIEW_NAME, VIEW_DESCRIPTION, measure1, DISTRIBUTION, new List<TagKey>() { KEY });
             IView view2 =
         View.Create(
-            VIEW_NAME_2, VIEW_DESCRIPTION, measure2, DISTRIBUTION, new List<ITagKey>() { KEY });
+            VIEW_NAME_2, VIEW_DESCRIPTION, measure2, DISTRIBUTION, new List<TagKey>() { KEY });
             TestFailedToRegisterView(view1, view2, "A different measure with the same name is already registered");
         }
 
@@ -263,7 +263,7 @@ namespace OpenTelemetry.Stats.Test
 
         private void TestRecordCumulative(IMeasure measure, IAggregation aggregation, params double[] values)
         {
-            IView view = CreateCumulativeView(VIEW_NAME, measure, aggregation, new List<ITagKey>() { KEY });
+            IView view = CreateCumulativeView(VIEW_NAME, measure, aggregation, new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             ITagContext tags = tagger.EmptyBuilder.Put(KEY, VALUE).Build();
             foreach (double val in values)
@@ -273,7 +273,7 @@ namespace OpenTelemetry.Stats.Test
             IViewData viewData = viewManager.GetView(VIEW_NAME);
             Assert.Equal(view, viewData.View);
 
-            var tv = TagValues.Create(new List<ITagValue>() { VALUE });
+            var tv = TagValues.Create(new List<TagValue>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -287,12 +287,12 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void GetViewDoesNotClearStats()
         {
-            IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<ITagKey>() { KEY });
+            IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             ITagContext tags = tagger.EmptyBuilder.Put(KEY, VALUE).Build();
             statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 0.1).Record(tags);
             IViewData viewData1 = viewManager.GetView(VIEW_NAME);
-            var tv = TagValues.Create(new List<ITagValue>() { VALUE });
+            var tv = TagValues.Create(new List<TagValue>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData1.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -320,7 +320,7 @@ namespace OpenTelemetry.Stats.Test
         public void TestRecordCumulativeMultipleTagValues()
         {
             viewManager.RegisterView(
-                CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<ITagKey>() { KEY }));
+                CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<TagKey>() { KEY }));
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 10.0)
@@ -334,8 +334,8 @@ namespace OpenTelemetry.Stats.Test
                 .Put(MEASURE_DOUBLE, 50.0)
                 .Record(tagger.EmptyBuilder.Put(KEY, VALUE_2).Build());
             IViewData viewData = viewManager.GetView(VIEW_NAME);
-            var tv = TagValues.Create(new List<ITagValue>() { VALUE });
-            var tv2 = TagValues.Create(new List<ITagValue>() { VALUE_2 });
+            var tv = TagValues.Create(new List<TagValue>() { VALUE });
+            var tv2 = TagValues.Create(new List<TagValue>() { VALUE_2 });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -362,11 +362,11 @@ namespace OpenTelemetry.Stats.Test
         public void TestRecordWithEmptyStatsContext()
         {
             viewManager.RegisterView(
-                CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<ITagKey>() { KEY }));
+                CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<TagKey>() { KEY }));
             // DEFAULT doesn't have tags, but the view has tag key "KEY".
             statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 10.0).Record(tagger.Empty);
             IViewData viewData = viewManager.GetView(VIEW_NAME);
-            var tv = TagValues.Create(new List<ITagValue>() { MutableViewData.UnknownTagValue });
+            var tv = TagValues.Create(new List<TagValue>() { MutableViewData.UnknownTagValue });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -402,7 +402,7 @@ namespace OpenTelemetry.Stats.Test
 
         private void TestRecord_MeasureNotMatch(IMeasure measure1, IMeasure measure2, double value)
         {
-            viewManager.RegisterView(CreateCumulativeView(VIEW_NAME, measure1, MEAN, new List<ITagKey>() { KEY }));
+            viewManager.RegisterView(CreateCumulativeView(VIEW_NAME, measure1, MEAN, new List<TagKey>() { KEY }));
             ITagContext tags = tagger.EmptyBuilder.Put(KEY, VALUE).Build();
             PutToMeasureMap(statsRecorder.NewMeasureMap(), measure2, value).Record(tags);
             IViewData view = viewManager.GetView(VIEW_NAME);
@@ -413,7 +413,7 @@ namespace OpenTelemetry.Stats.Test
         public void TestRecordWithTagsThatDoNotMatchViewData()
         {
             viewManager.RegisterView(
-                CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<ITagKey>() { KEY }));
+                CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<TagKey>() { KEY }));
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 10.0)
@@ -423,7 +423,7 @@ namespace OpenTelemetry.Stats.Test
                 .Put(MEASURE_DOUBLE, 50.0)
                 .Record(tagger.EmptyBuilder.Put(TagKey.Create("another wrong key"), VALUE).Build());
             IViewData viewData = viewManager.GetView(VIEW_NAME);
-            var tv = TagValues.Create(new List<ITagValue>() { MutableViewData.UnknownTagValue });
+            var tv = TagValues.Create(new List<TagValue>() { MutableViewData.UnknownTagValue });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -440,10 +440,10 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestViewDataWithMultipleTagKeys()
         {
-            ITagKey key1 = TagKey.Create("Key-1");
-            ITagKey key2 = TagKey.Create("Key-2");
+            TagKey key1 = TagKey.Create("Key-1");
+            TagKey key2 = TagKey.Create("Key-2");
             viewManager.RegisterView(
-                CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<ITagKey>() { key1, key2 }));
+                CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<TagKey>() { key1, key2 }));
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.1)
@@ -481,9 +481,9 @@ namespace OpenTelemetry.Stats.Test
                         .Put(key2, TagValue.Create("v10"))
                         .Build());
             IViewData viewData = viewManager.GetView(VIEW_NAME);
-            var tv1 = TagValues.Create(new List<ITagValue>() { TagValue.Create("v1"), TagValue.Create("v10") });
-            var tv2 = TagValues.Create(new List<ITagValue>() { TagValue.Create("v1"), TagValue.Create("v20") });
-            var tv3 = TagValues.Create(new List<ITagValue>() { TagValue.Create("v2"), TagValue.Create("v10") });
+            var tv1 = TagValues.Create(new List<TagValue>() { TagValue.Create("v1"), TagValue.Create("v10") });
+            var tv2 = TagValues.Create(new List<TagValue>() { TagValue.Create("v1"), TagValue.Create("v20") });
+            var tv3 = TagValues.Create(new List<TagValue>() { TagValue.Create("v2"), TagValue.Create("v10") });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -499,9 +499,9 @@ namespace OpenTelemetry.Stats.Test
         public void TestMultipleViewSameMeasure()
         {
             IView view1 =
-                CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<ITagKey>() { KEY });
+                CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, DISTRIBUTION, new List<TagKey>() { KEY });
             IView view2 =
-                CreateCumulativeView(VIEW_NAME_2, MEASURE_DOUBLE, DISTRIBUTION, new List<ITagKey>() { KEY });
+                CreateCumulativeView(VIEW_NAME_2, MEASURE_DOUBLE, DISTRIBUTION, new List<TagKey>() { KEY });
             viewManager.RegisterView(view1);
             viewManager.RegisterView(view2);
             statsRecorder
@@ -510,7 +510,7 @@ namespace OpenTelemetry.Stats.Test
                 .Record(tagger.EmptyBuilder.Put(KEY, VALUE).Build());
             IViewData viewData1 = viewManager.GetView(VIEW_NAME);
             IViewData viewData2 = viewManager.GetView(VIEW_NAME_2);
-            var tv = TagValues.Create(new List<ITagValue>() { VALUE });
+            var tv = TagValues.Create(new List<TagValue>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData1.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -550,9 +550,9 @@ namespace OpenTelemetry.Stats.Test
 
         private void TestMultipleViews_DifferentMeasures(IMeasure measure1, IMeasure measure2, double value1, double value2)
         {
-            IView view1 = CreateCumulativeView(VIEW_NAME, measure1, DISTRIBUTION, new List<ITagKey>() { KEY });
+            IView view1 = CreateCumulativeView(VIEW_NAME, measure1, DISTRIBUTION, new List<TagKey>() { KEY });
             IView view2 =
-                CreateCumulativeView(VIEW_NAME_2, measure2, DISTRIBUTION, new List<ITagKey>() { KEY });
+                CreateCumulativeView(VIEW_NAME_2, measure2, DISTRIBUTION, new List<TagKey>() { KEY });
             viewManager.RegisterView(view1);
             viewManager.RegisterView(view2);
             ITagContext tags = tagger.EmptyBuilder.Put(KEY, VALUE).Build();
@@ -562,7 +562,7 @@ namespace OpenTelemetry.Stats.Test
             measureMap.Record(tags);
             IViewData viewData1 = viewManager.GetView(VIEW_NAME);
             IViewData viewData2 = viewManager.GetView(VIEW_NAME_2);
-            var tv = TagValues.Create(new List<ITagValue>() { VALUE });
+            var tv = TagValues.Create(new List<TagValue>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData1.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -585,14 +585,14 @@ namespace OpenTelemetry.Stats.Test
         {
             IAggregation noHistogram =
                 Distribution.Create(BucketBoundaries.Create(Enumerable.Empty<double>()));
-            IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, noHistogram, new List<ITagKey>() { KEY });
+            IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, noHistogram, new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.1)
                 .Record(tagger.EmptyBuilder.Put(KEY, VALUE).Build());
             IViewData viewData = viewManager.GetView(VIEW_NAME);
-            var tv = TagValues.Create(new List<ITagValue>() { VALUE });
+            var tv = TagValues.Create(new List<TagValue>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -605,14 +605,14 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestGetCumulativeViewDataWithoutBucketBoundaries()
         {
-            IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<ITagKey>() { KEY });
+            IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.1)
                 .Record(tagger.EmptyBuilder.Put(KEY, VALUE).Build());
             IViewData viewData = viewManager.GetView(VIEW_NAME);
-            var tv = TagValues.Create(new List<ITagValue>() { VALUE });
+            var tv = TagValues.Create(new List<TagValue>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -626,7 +626,7 @@ namespace OpenTelemetry.Stats.Test
         public void RegisterRecordAndGetView_StatsDisabled()
         {
             statsComponent.State = StatsCollectionState.DISABLED;
-            IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<ITagKey>() { KEY });
+            IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             statsRecorder
                 .NewMeasureMap()
@@ -640,13 +640,13 @@ namespace OpenTelemetry.Stats.Test
         {
             statsComponent.State = StatsCollectionState.DISABLED;
             statsComponent.State = StatsCollectionState.ENABLED;
-            IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<ITagKey>() { KEY });
+            IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.1)
                 .Record(tagger.EmptyBuilder.Put(KEY, VALUE).Build());
-            TagValues tv = TagValues.Create(new List<ITagValue>() { VALUE });
+            TagValues tv = TagValues.Create(new List<TagValue>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewManager.GetView(VIEW_NAME).AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -660,7 +660,7 @@ namespace OpenTelemetry.Stats.Test
         public void RegisterViewWithStatsDisabled_RecordAndGetViewWithStatsEnabled()
         {
             statsComponent.State = StatsCollectionState.DISABLED;
-            IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<ITagKey>() { KEY });
+            IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<TagKey>() { KEY });
             viewManager.RegisterView(view); // view will still be registered.
 
             statsComponent.State = StatsCollectionState.ENABLED;
@@ -668,7 +668,7 @@ namespace OpenTelemetry.Stats.Test
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.1)
                 .Record(tagger.EmptyBuilder.Put(KEY, VALUE).Build());
-            TagValues tv = TagValues.Create(new List<ITagValue>() { VALUE });
+            TagValues tv = TagValues.Create(new List<TagValue>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewManager.GetView(VIEW_NAME).AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -688,14 +688,14 @@ namespace OpenTelemetry.Stats.Test
                     "View description.",
                     MEASURE_DOUBLE,
                     DISTRIBUTION,
-                    new List<ITagKey>() { KEY });
+                    new List<TagKey>() { KEY });
             IView view2 =
                 View.Create(
                     VIEW_NAME,
                     "This is a different description.",
                     MEASURE_DOUBLE,
                     DISTRIBUTION,
-                    new List<ITagKey>() { KEY });
+                    new List<TagKey>() { KEY });
 
             TestFailedToRegisterView(
                 view1, view2, "A different view with the same name is already registered");
@@ -704,7 +704,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void SettingStateToDisabledWillClearStats_Cumulative()
         {
-            IView cumulativeView = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<ITagKey>() { KEY });
+            IView cumulativeView = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<TagKey>() { KEY });
             SettingStateToDisabledWillClearStats(cumulativeView);
         }
 
@@ -732,7 +732,7 @@ namespace OpenTelemetry.Stats.Test
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.1)
                 .Record(tagger.EmptyBuilder.Put(KEY, VALUE).Build());
-            TagValues tv = TagValues.Create(new List<ITagValue>() { VALUE });
+            TagValues tv = TagValues.Create(new List<TagValue>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewManager.GetView(view.Name).AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()

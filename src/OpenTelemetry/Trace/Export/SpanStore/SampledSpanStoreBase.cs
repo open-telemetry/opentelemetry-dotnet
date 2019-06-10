@@ -48,9 +48,9 @@ namespace OpenTelemetry.Trace.Export
 
         public abstract void ConsiderForSampling(ISpan span);
 
-        public abstract IEnumerable<ISpanData> GetErrorSampledSpans(ISampledSpanStoreErrorFilter filter);
+        public abstract IEnumerable<SpanData> GetErrorSampledSpans(ISampledSpanStoreErrorFilter filter);
 
-        public abstract IEnumerable<ISpanData> GetLatencySampledSpans(ISampledSpanStoreLatencyFilter filter);
+        public abstract IEnumerable<SpanData> GetLatencySampledSpans(ISampledSpanStoreLatencyFilter filter);
 
         public abstract void RegisterSpanNamesForCollection(IEnumerable<string> spanNames);
 

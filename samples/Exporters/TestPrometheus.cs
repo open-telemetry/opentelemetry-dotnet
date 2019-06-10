@@ -18,7 +18,7 @@
 
         private static IStatsRecorder statsRecorder = Stats.StatsRecorder;
         private static readonly IMeasureLong VideoSize = MeasureLong.Create("my.org/measure/video_size", "size of processed videos", "By");
-        private static readonly ITagKey FrontendKey = TagKey.Create("my.org/keys/frontend");
+        private static readonly TagKey FrontendKey = TagKey.Create("my.org/keys/frontend");
 
         private static long MiB = 1 << 20;
 
@@ -29,7 +29,7 @@
             "processed video size over time",
             VideoSize,
             Distribution.Create(BucketBoundaries.Create(new List<double>() { 0.0, 16.0 * MiB, 256.0 * MiB })),
-            new List<ITagKey>() { FrontendKey });
+            new List<TagKey>() { FrontendKey });
 
         internal static object Run()
         {

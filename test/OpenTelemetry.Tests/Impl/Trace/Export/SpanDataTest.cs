@@ -18,32 +18,33 @@ namespace OpenTelemetry.Trace.Export.Test
 {
     using System.Collections.Generic;
     using OpenTelemetry.Common;
+    using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 
     public class SpanDataTest
     {
+        private const string SPAN_NAME = "MySpanName";
+        private const string EVENT_TEXT = "MyEventText";
+        private const SpanKind SPAN_KIND = SpanKind.Client;
+        private const int CHILD_SPAN_COUNT = 13;
         private static readonly Timestamp startTimestamp = Timestamp.Create(123, 456);
         private static readonly Timestamp eventTimestamp1 = Timestamp.Create(123, 457);
         private static readonly Timestamp eventTimestamp2 = Timestamp.Create(123, 458);
         private static readonly Timestamp eventTimestamp3 = Timestamp.Create(123, 459);
         private static readonly Timestamp endTimestamp = Timestamp.Create(123, 460);
-        private static readonly string SPAN_NAME = "MySpanName";
-        private static readonly string EVENT_TEXT = "MyEventText";
         private static readonly IEvent spanEvent = Event.Create(EVENT_TEXT);
         private static readonly Status status = Status.DeadlineExceeded.WithDescription("TooSlow");
-        private static readonly SpanKind kind = SpanKind.Client;
-        private static readonly int CHILD_SPAN_COUNT = 13;
         private readonly IRandomGenerator random = new RandomGenerator(1234);
         private readonly SpanContext spanContext;
-        private readonly SpanId parentSpanId; 
+        private readonly SpanId parentSpanId;
+        private readonly Resource resource = Resource.Empty;
         private readonly IDictionary<string, IAttributeValue> attributesMap = new Dictionary<string, IAttributeValue>();
         private readonly List<ITimedEvent<IEvent>> eventList = new List<ITimedEvent<IEvent>>();
         private readonly List<ILink> linksList = new List<ILink>();
 
         private IAttributes attributes;
         private ITimedEvents<IEvent> events;
-        // private TimedEvents<NetworkEvent> networkEvents;
         private LinkList links;
 
         public SpanDataTest()
@@ -66,10 +67,11 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanData_AllValues()
         {
-            ISpanData spanData =
+            SpanData spanData =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
+                    resource,
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
@@ -77,10 +79,11 @@ namespace OpenTelemetry.Trace.Export.Test
                     links,
                     CHILD_SPAN_COUNT,
                     status,
-                    kind,
+                    SPAN_KIND,
                     endTimestamp);
             Assert.Equal(spanContext, spanData.Context);
             Assert.Equal(parentSpanId, spanData.ParentSpanId);
+            Assert.Equal(resource, spanData.Resource);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(startTimestamp, spanData.StartTimestamp);
             Assert.Equal(attributes, spanData.Attributes);
@@ -94,10 +97,11 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanData_RootActiveSpan()
         {
-            ISpanData spanData =
+            SpanData spanData =
                 SpanData.Create(
                     spanContext,
                     null,
+                    resource,
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
@@ -105,10 +109,11 @@ namespace OpenTelemetry.Trace.Export.Test
                     links,
                     null,
                     null,
-                    kind,
+                    SPAN_KIND,
                     null);
             Assert.Equal(spanContext, spanData.Context);
             Assert.Null(spanData.ParentSpanId);
+            Assert.Equal(resource, spanData.Resource);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(startTimestamp, spanData.StartTimestamp);
             Assert.Equal(attributes, spanData.Attributes);
@@ -122,10 +127,11 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanData_AllDataEmpty()
         {
-            ISpanData spanData =
+            SpanData spanData =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
+                    resource,
                     SPAN_NAME,
                     startTimestamp,
                     Attributes.Create(new Dictionary<string, IAttributeValue>(), 0),
@@ -133,11 +139,12 @@ namespace OpenTelemetry.Trace.Export.Test
                     LinkList.Create(new List<ILink>(), 0),
                     0,
                     status,
-                    kind,
+                    SPAN_KIND,
                     endTimestamp);
 
             Assert.Equal(spanContext, spanData.Context);
             Assert.Equal(parentSpanId, spanData.ParentSpanId);
+            Assert.Equal(resource, spanData.Resource);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(startTimestamp, spanData.StartTimestamp);
             Assert.Empty(spanData.Attributes.AttributeMap);
@@ -151,10 +158,11 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanDataEquals()
         {
-            ISpanData allSpanData1 =
+            SpanData allSpanData1 =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
+                    resource,
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
@@ -162,12 +170,13 @@ namespace OpenTelemetry.Trace.Export.Test
                     links,
                     CHILD_SPAN_COUNT,
                     status,
-                    kind,
+                    SPAN_KIND,
                     endTimestamp);
-            ISpanData allSpanData2 =
+            SpanData allSpanData2 =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
+                    resource,
                     SPAN_NAME,
                     startTimestamp,
                     attributes,
@@ -175,12 +184,13 @@ namespace OpenTelemetry.Trace.Export.Test
                     links,
                     CHILD_SPAN_COUNT,
                     status,
-                    kind,
+                    SPAN_KIND,
                     endTimestamp);
-            ISpanData emptySpanData =
+            SpanData emptySpanData =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
+                    resource,
                     SPAN_NAME,
                     startTimestamp,
                     Attributes.Create(new Dictionary<string, IAttributeValue>(), 0),
@@ -188,7 +198,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     LinkList.Create(new List<ILink>(), 0),
                     0,
                     status,
-                    kind,
+                    SPAN_KIND,
                     endTimestamp);
 
             Assert.Equal(allSpanData1, allSpanData2);
@@ -204,6 +214,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 SpanData.Create(
                         spanContext,
                         parentSpanId,
+                        resource,
                         SPAN_NAME,
                         startTimestamp,
                         attributes,
@@ -211,11 +222,12 @@ namespace OpenTelemetry.Trace.Export.Test
                         links,
                         CHILD_SPAN_COUNT,
                         status,
-                        kind,
+                        SPAN_KIND,
                         endTimestamp)
                     .ToString();
             Assert.Contains(spanContext.ToString(), spanDataString);
             Assert.Contains(parentSpanId.ToString(), spanDataString);
+            Assert.Contains(resource.ToString(), spanDataString);
             Assert.Contains(SPAN_NAME, spanDataString);
             Assert.Contains(startTimestamp.ToString(), spanDataString);
             Assert.Contains(attributes.ToString(), spanDataString);

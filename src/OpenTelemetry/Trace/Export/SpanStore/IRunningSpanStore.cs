@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace.Export
         /// </summary>
         /// <param name="filter">Filter to apply to query running spans.</param>
         /// <returns>List of currently running spans.</returns>
-        IEnumerable<ISpanData> GetRunningSpans(IRunningSpanStoreFilter filter);
+        IEnumerable<SpanData> GetRunningSpans(IRunningSpanStoreFilter filter);
 
         /// <summary>
         /// Called when span got started.

@@ -48,7 +48,7 @@ namespace OpenTelemetry.Trace
         public override ITextFormat TextFormat => this.textFormat;
 
         /// <inheritdoc/>
-        public override void RecordSpanData(ISpanData span)
+        public override void RecordSpanData(SpanData span)
         {
             this.exportComponent.SpanExporter.ExportAsync(span, CancellationToken.None);
         }

@@ -105,7 +105,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         {
             while (!this.cancellationToken.IsCancellationRequested)
             {
-                var spans = new List<ISpanData>();
+                var spans = new List<SpanData>();
 
                 RedisProfilerEntryToSpanConverter.DrainSession(null, this.defaultSession.FinishProfiling(), this.sampler, spans);
 

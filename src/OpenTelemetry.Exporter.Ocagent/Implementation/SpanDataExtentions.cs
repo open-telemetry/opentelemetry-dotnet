@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
     internal static class SpanDataExtentions
     {
-        internal static Span ToProtoSpan(this ISpanData spanData)
+        internal static Span ToProtoSpan(this SpanData spanData)
         {
             try
             {

@@ -31,13 +31,13 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     static class SpanExtensions
     {
         /// <summary>
-        /// Translating <see cref="ISpanData"/> to Stackdriver's Span
+        /// Translating <see cref="SpanData"/> to Stackdriver's Span
         /// According to <see href="https://cloud.google.com/trace/docs/reference/v2/rpc/google.devtools.cloudtrace.v2"/> specifications
         /// </summary>
         /// <param name="spanData">Span in OpenTelemetry format</param>
         /// <param name="projectId">Google Cloud Platform Project Id</param>
         /// <returns></returns>
-        public static Span ToSpan(this ISpanData spanData, string projectId)
+        public static Span ToSpan(this SpanData spanData, string projectId)
         {
             string spanId = spanData.Context.SpanId.ToLowerBase16();
 
@@ -165,7 +165,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             }
         }
 
-        public async Task ExportAsync(IEnumerable<ISpanData> spanDataList)
+        public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
         {
             TraceServiceClient traceWriter = TraceServiceClient.Create(settings: traceServiceSettings);
             

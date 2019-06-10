@@ -19,13 +19,14 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
     using System;
     using System.Collections.Generic;
     using OpenTelemetry.Common;
+    using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
     using StackExchange.Redis.Profiling;
 
     internal static class RedisProfilerEntryToSpanConverter
     {
-        public static void DrainSession(ISpan parentSpan, IEnumerable<IProfiledCommand> sessionCommands, ISampler sampler, ICollection<ISpanData> spans)
+        public static void DrainSession(ISpan parentSpan, IEnumerable<IProfiledCommand> sessionCommands, ISampler sampler, ICollection<SpanData> spans)
         {
             var parentContext = parentSpan?.Context ?? SpanContext.Blank;
 
@@ -80,7 +81,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             return result;
         }
 
-        internal static ISpanData ProfiledCommandToSpanData(SpanContext context, string name, SpanId parentSpanId, IProfiledCommand command)
+        internal static SpanData ProfiledCommandToSpanData(SpanContext context, string name, SpanId parentSpanId, IProfiledCommand command)
         {
             // use https://github.com/opentracing/specification/blob/master/semantic_conventions.md for now
 
@@ -114,6 +115,9 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             // command.RetransmissionOf;
             // command.RetransmissionReason;
 
+            // TODO: determine what to do with Resource in this context
+            var resource = Resource.Empty;
+
             var attributesMap = new Dictionary<string, IAttributeValue>()
             {
                 // TODO: pre-allocate constant attribute and reuse
@@ -144,7 +148,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             Status status = Status.Ok;
             SpanKind kind = SpanKind.Client;
 
-            return SpanData.Create(context, parentSpanId, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+            return SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
         }
     }
 }
