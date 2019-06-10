@@ -17,20 +17,24 @@
 namespace OpenTelemetry.Common
 {
     using System;
+    using System.Diagnostics;
 
     /// <summary>
     /// Represents duration with the nanoseconds precition.
     /// </summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed class Duration : IComparable<Duration>
     {
         private const long MaxSeconds = 315576000000L;
         private const int MaxNanos = 999999999;
         private static readonly Duration Zero = new Duration(0, 0);
+        private readonly string stringRepresentation;
 
         private Duration(long seconds, int nanos)
         {
             this.Seconds = seconds;
             this.Nanos = nanos;
+            this.stringRepresentation = $"Duration{{seconds={this.Seconds}, nanos={this.Nanos}}}";
         }
 
         /// <summary>
@@ -100,10 +104,7 @@ namespace OpenTelemetry.Common
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Duration{"
-                + "seconds=" + this.Seconds + ", "
-                + "nanos=" + this.Nanos
-                + "}";
+            return this.stringRepresentation;
         }
 
         /// <inheritdoc/>

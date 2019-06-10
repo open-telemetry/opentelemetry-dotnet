@@ -68,7 +68,7 @@ namespace OpenTelemetry.Context.Propagation
 
             try
             {
-                ITraceId traceId;
+                TraceId traceId;
                 string traceIdStr = getter(carrier, XB3TraceId)?.FirstOrDefault();
                 if (traceIdStr != null)
                 {
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Context.Propagation
                     throw new SpanContextParseException("Missing X_B3_TRACE_ID.");
                 }
 
-                ISpanId spanId;
+                SpanId spanId;
                 string spanIdStr = getter(carrier, XB3SpanId)?.FirstOrDefault();
                 if (spanIdStr != null)
                 {

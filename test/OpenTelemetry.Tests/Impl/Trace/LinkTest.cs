@@ -40,38 +40,34 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromSpanContext_ChildLink()
         {
-            ILink link = Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan);
-            Assert.Equal(spanContext.TraceId, link.TraceId);
-            Assert.Equal(spanContext.SpanId, link.SpanId);
-            Assert.Equal(LinkType.ChildLinkedSpan, link.Type);
+            ILink link = Link.FromSpanContext(spanContext);
+            Assert.Equal(spanContext.TraceId, link.Context.TraceId);
+            Assert.Equal(spanContext.SpanId, link.Context.SpanId);
         }
 
         [Fact]
         public void FromSpanContext_ChildLink_WithAttributes()
         {
-            ILink link = Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan, attributesMap);
-            Assert.Equal(spanContext.TraceId, link.TraceId);
-            Assert.Equal(spanContext.SpanId, link.SpanId);
-            Assert.Equal(LinkType.ChildLinkedSpan, link.Type);
+            ILink link = Link.FromSpanContext(spanContext, attributesMap);
+            Assert.Equal(spanContext.TraceId, link.Context.TraceId);
+            Assert.Equal(spanContext.SpanId, link.Context.SpanId);
             Assert.Equal(attributesMap, link.Attributes);
         }
 
         [Fact]
         public void FromSpanContext_ParentLink()
         {
-            ILink link = Link.FromSpanContext(spanContext, LinkType.ParentLinkedSpan);
-            Assert.Equal(spanContext.TraceId, link.TraceId);
-            Assert.Equal(spanContext.SpanId, link.SpanId);
-            Assert.Equal(LinkType.ParentLinkedSpan, link.Type);
+            ILink link = Link.FromSpanContext(spanContext);
+            Assert.Equal(spanContext.TraceId, link.Context.TraceId);
+            Assert.Equal(spanContext.SpanId, link.Context.SpanId);
         }
 
         [Fact]
         public void FromSpanContext_ParentLink_WithAttributes()
         {
-            ILink link = Link.FromSpanContext(spanContext, LinkType.ParentLinkedSpan, attributesMap);
-            Assert.Equal(spanContext.TraceId, link.TraceId);
-            Assert.Equal(spanContext.SpanId, link.SpanId);
-            Assert.Equal(LinkType.ParentLinkedSpan, link.Type);
+            ILink link = Link.FromSpanContext(spanContext, attributesMap);
+            Assert.Equal(spanContext.TraceId, link.Context.TraceId);
+            Assert.Equal(spanContext.SpanId, link.Context.SpanId);
             Assert.Equal(attributesMap, link.Attributes);
         }
 
@@ -99,15 +95,13 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Link_ToString()
         {
-            ILink link = Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan, attributesMap);
+            ILink link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Contains(spanContext.TraceId.ToString(), link.ToString());
             Assert.Contains(spanContext.SpanId.ToString(), link.ToString());
-            Assert.Contains("ChildLinkedSpan", link.ToString());
             Assert.Contains(Collections.ToString(attributesMap), link.ToString());
-            link = Link.FromSpanContext(spanContext, LinkType.ParentLinkedSpan, attributesMap);
+            link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Contains(spanContext.TraceId.ToString(), link.ToString());
             Assert.Contains(spanContext.SpanId.ToString(), spanContext.SpanId.ToString());
-            Assert.Contains("ParentLinkedSpan", link.ToString());
             Assert.Contains(Collections.ToString(attributesMap), link.ToString());
         }
     }

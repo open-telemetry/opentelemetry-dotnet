@@ -19,7 +19,10 @@ namespace OpenTelemetry.Trace
     using System;
     using OpenTelemetry.Utils;
 
-    public sealed class TraceId : ITraceId
+    /// <summary>
+    /// Trace ID.
+    /// </summary>
+    public sealed class TraceId : IComparable<TraceId>
     {
         public const int Size = 16;
         private static readonly TraceId InvalidTraceId = new TraceId(new byte[Size]);
@@ -31,7 +34,7 @@ namespace OpenTelemetry.Trace
             this.bytes = bytes;
         }
 
-        public static ITraceId Invalid
+        public static TraceId Invalid
         {
             get
             {
@@ -39,6 +42,9 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <summary>
+        /// Gets the bytes representation of a trace id.
+        /// </summary>
         public byte[] Bytes
         {
             get
@@ -49,6 +55,9 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether trace if is valid.
+        /// </summary>
         public bool IsValid
         {
             get
@@ -57,6 +66,9 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <summary>
+        /// Gets the lower long of the trace ID.
+        /// </summary>
         public long LowerLong
         {
             get
@@ -79,7 +91,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public static ITraceId FromBytes(byte[] buffer)
+        public static TraceId FromBytes(byte[] buffer)
         {
             if (buffer == null)
             {
@@ -96,14 +108,14 @@ namespace OpenTelemetry.Trace
             return new TraceId(bytesCopied);
         }
 
-        public static ITraceId FromBytes(byte[] src, int srcOffset)
+        public static TraceId FromBytes(byte[] src, int srcOffset)
         {
             byte[] bytes = new byte[Size];
             Buffer.BlockCopy(src, srcOffset, bytes, 0, Size);
             return new TraceId(bytes);
         }
 
-        public static ITraceId FromLowerBase16(string src)
+        public static TraceId FromLowerBase16(string src)
         {
             if (src.Length != 2 * Size)
             {
@@ -114,7 +126,7 @@ namespace OpenTelemetry.Trace
             return new TraceId(bytes);
         }
 
-        public static ITraceId GenerateRandomId(IRandomGenerator random)
+        public static TraceId GenerateRandomId(IRandomGenerator random)
         {
             byte[] bytes = new byte[Size];
             do
@@ -125,11 +137,20 @@ namespace OpenTelemetry.Trace
             return new TraceId(bytes);
         }
 
+        /// <summary>
+        /// Copy trace ID as bytes into the destination bytes array at a given offset.
+        /// </summary>
+        /// <param name="dest">Destination bytes array.</param>
+        /// <param name="destOffset">Desitnation bytes array offset.</param>
         public void CopyBytesTo(byte[] dest, int destOffset)
         {
             Buffer.BlockCopy(this.bytes, 0, dest, destOffset, Size);
         }
 
+        /// <summary>
+        /// Gets the lower base 16 representaiton of the trace id.
+        /// </summary>
+        /// <returns>Canonical string representation of a trace id.</returns>
         public string ToLowerBase16()
         {
             var bytes = this.Bytes;
@@ -168,7 +189,7 @@ namespace OpenTelemetry.Trace
                + "}";
         }
 
-        public int CompareTo(ITraceId other)
+        public int CompareTo(TraceId other)
         {
             TraceId that = other as TraceId;
             for (int i = 0; i < Size; i++)

@@ -20,40 +20,35 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Linq;
-    using OpenTelemetry.Utils;
+    using OpenTelemetry.Abstractions.Utils;
 
+    /// <inheritdoc/>
     public sealed class Link : ILink
     {
         private static readonly IDictionary<string, IAttributeValue> EmptyAttributes = new Dictionary<string, IAttributeValue>();
 
-        private Link(ITraceId traceId, ISpanId spanId, LinkType type, IDictionary<string, IAttributeValue> attributes)
+        private Link(SpanContext context, IDictionary<string, IAttributeValue> attributes)
         {
-            this.TraceId = traceId ?? throw new ArgumentNullException(nameof(traceId));
-            this.SpanId = spanId ?? throw new ArgumentNullException(nameof(spanId));
-            this.Type = type;
+            this.Context = context ?? throw new ArgumentNullException(nameof(context));
             this.Attributes = attributes ?? throw new ArgumentNullException(nameof(attributes));
         }
 
-        public ITraceId TraceId { get; }
+        /// <inheritdoc/>
+        public SpanContext Context { get; }
 
-        public ISpanId SpanId { get; }
-
-        public LinkType Type { get; }
-
+        /// <inheritdoc/>
         public IDictionary<string, IAttributeValue> Attributes { get; }
 
-        public static ILink FromSpanContext(SpanContext context, LinkType type)
+        public static ILink FromSpanContext(SpanContext context)
         {
-            return new Link(context.TraceId, context.SpanId, type, EmptyAttributes);
+            return new Link(context, EmptyAttributes);
         }
 
-        public static ILink FromSpanContext(SpanContext context, LinkType type, IDictionary<string, IAttributeValue> attributes)
+        public static ILink FromSpanContext(SpanContext context, IDictionary<string, IAttributeValue> attributes)
         {
             IDictionary<string, IAttributeValue> copy = new Dictionary<string, IAttributeValue>(attributes);
             return new Link(
-                context.TraceId,
-                context.SpanId,
-                type,
+                context,
                 new ReadOnlyDictionary<string, IAttributeValue>(copy));
         }
 
@@ -61,9 +56,9 @@ namespace OpenTelemetry.Trace
         public override string ToString()
         {
             return "Link{"
-                + "traceId=" + this.TraceId + ", "
-                + "spanId=" + this.SpanId + ", "
-                + "type=" + this.Type + ", "
+                + "traceId=" + this.Context.TraceId + ", "
+                + "spanId=" + this.Context.SpanId + ", "
+                + "tracestate=" + this.Context.Tracestate.ToString() + ", "
                 + "attributes=" + Collections.ToString(this.Attributes)
                 + "}";
         }
@@ -78,9 +73,7 @@ namespace OpenTelemetry.Trace
 
             if (o is Link that)
             {
-                return this.TraceId.Equals(that.TraceId)
-                     && this.SpanId.Equals(that.SpanId)
-                     && this.Type.Equals(that.Type)
+                return this.Context.Equals(that.Context)
                      && this.Attributes.SequenceEqual(that.Attributes);
             }
 
@@ -92,11 +85,9 @@ namespace OpenTelemetry.Trace
         {
             int h = 1;
             h *= 1000003;
-            h ^= this.TraceId.GetHashCode();
+            h ^= this.Context.TraceId.GetHashCode();
             h *= 1000003;
-            h ^= this.SpanId.GetHashCode();
-            h *= 1000003;
-            h ^= this.Type.GetHashCode();
+            h ^= this.Context.SpanId.GetHashCode();
             h *= 1000003;
             h ^= this.Attributes.GetHashCode();
             return h;

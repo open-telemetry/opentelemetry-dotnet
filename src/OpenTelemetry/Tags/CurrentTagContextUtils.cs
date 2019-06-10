@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Tags
 {
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
     using OpenTelemetry.Tags.Unsafe;
 
     internal static class CurrentTagContextUtils

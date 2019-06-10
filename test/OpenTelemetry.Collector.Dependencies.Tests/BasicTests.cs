@@ -46,8 +46,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             var url = $"http://{host}:{port}/";
 
-            ITraceId expectedTraceId = TraceId.Invalid;
-            ISpanId expectedSpanId = SpanId.Invalid;
+            TraceId expectedTraceId = TraceId.Invalid;
+            SpanId expectedSpanId = SpanId.Invalid;
 
             using (serverLifeTime)
             {

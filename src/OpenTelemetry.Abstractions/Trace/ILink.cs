@@ -24,19 +24,9 @@ namespace OpenTelemetry.Trace
     public interface ILink
     {
         /// <summary>
-        /// Gets the trace ID of the linked span.
+        /// Gets the span context of a linked span.
         /// </summary>
-        ITraceId TraceId { get; }
-
-        /// <summary>
-        /// Gets the span ID of the linked span.
-        /// </summary>
-        ISpanId SpanId { get; }
-
-        /// <summary>
-        /// Gets the type of the link.
-        /// </summary>
-        LinkType Type { get; }
+        SpanContext Context { get; }
 
         /// <summary>
         /// Gets the collection of attributes associated with the link.

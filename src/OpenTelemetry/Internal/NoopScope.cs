@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Internal
 {
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
 
     public sealed class NoopScope : IScope
     {

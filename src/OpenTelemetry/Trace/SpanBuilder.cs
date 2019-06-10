@@ -127,11 +127,11 @@ namespace OpenTelemetry.Trace
         {
             if (parentLinks.Any())
             {
-                ILink childLink = Link.FromSpanContext(span.Context, LinkType.ChildLinkedSpan);
+                ILink childLink = Link.FromSpanContext(span.Context);
                 foreach (ISpan linkedSpan in parentLinks)
                 {
                     linkedSpan.AddLink(childLink);
-                    span.AddLink(Link.FromSpanContext(linkedSpan.Context, LinkType.ParentLinkedSpan));
+                    span.AddLink(Link.FromSpanContext(linkedSpan.Context));
                 }
             }
         }
@@ -141,8 +141,8 @@ namespace OpenTelemetry.Trace
             string name,
             ISampler sampler,
             IEnumerable<ISpan> parentLinks,
-            ITraceId traceId,
-            ISpanId spanId,
+            TraceId traceId,
+            SpanId spanId,
             ITraceParams activeTraceParams)
         {
             // If users set a specific sampler in the SpanBuilder, use it.
@@ -174,9 +174,9 @@ namespace OpenTelemetry.Trace
         {
             ITraceParams activeTraceParams = this.Options.TraceConfig.ActiveTraceParams;
             IRandomGenerator random = this.Options.RandomHandler;
-            ITraceId traceId;
-            ISpanId spanId = SpanId.GenerateRandomId(random);
-            ISpanId parentSpanId = null;
+            TraceId traceId;
+            SpanId spanId = SpanId.GenerateRandomId(random);
+            SpanId parentSpanId = null;
             TraceOptionsBuilder traceOptionsBuilder;
             if (parent == null || !parent.IsValid)
             {

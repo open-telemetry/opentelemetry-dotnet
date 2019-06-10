@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace.Test
         private static readonly String EVENT_DESCRIPTION = "MyEvent";
         private readonly RandomGenerator random = new RandomGenerator(1234);
         private readonly SpanContext spanContext;
-        private readonly ISpanId parentSpanId;
+        private readonly SpanId parentSpanId;
         private TimeSpan interval = TimeSpan.FromMilliseconds(0);
         private readonly DateTimeOffset startTime = DateTimeOffset.Now;
         private readonly Timestamp timestamp;
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Trace.Test
             }
             span.AddEvent(Event.Create(EVENT_DESCRIPTION));
             span.AddEvent(EVENT_DESCRIPTION, attributes);
-            span.AddLink(Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan));
+            span.AddLink(Link.FromSpanContext(spanContext));
             span.End();
             // exception.expect(IllegalStateException);
             Assert.Throws<InvalidOperationException>(() => ((Span)span).ToSpanData());
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Trace.Test
                 AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
             span.AddEvent(Event.Create(EVENT_DESCRIPTION));
             span.AddEvent(EVENT_DESCRIPTION, attributes);
-            span.AddLink(Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan));
+            span.AddLink(Link.FromSpanContext(spanContext));
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(timestamp, spanData.StartTimestamp);
             Assert.Empty(spanData.Attributes.AttributeMap);
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Trace.Test
             span.AddEvent(EVENT_DESCRIPTION, attributes);
             interval = TimeSpan.FromMilliseconds(300);
             interval = TimeSpan.FromMilliseconds(400);
-            ILink link = Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan);
+            ILink link = Link.FromSpanContext(spanContext);
             span.AddLink(link);
             ISpanData spanData = ((Span)span).ToSpanData();
             Assert.Equal(spanContext, spanData.Context);
@@ -202,7 +202,7 @@ namespace OpenTelemetry.Trace.Test
             interval = TimeSpan.FromMilliseconds(200);
             span.AddEvent(EVENT_DESCRIPTION, attributes);
             interval = TimeSpan.FromMilliseconds(300);
-            ILink link = Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan);
+            ILink link = Link.FromSpanContext(spanContext);
             span.AddLink(link);
             interval = TimeSpan.FromMilliseconds(400);
             span.End(EndSpanOptions.Builder().SetStatus(Status.Cancelled).Build());
@@ -461,7 +461,7 @@ namespace OpenTelemetry.Trace.Test
                     traceParams,
                     startEndHandler,
                     timestampConverter);
-            ILink link = Link.FromSpanContext(spanContext, LinkType.ChildLinkedSpan);
+            ILink link = Link.FromSpanContext(spanContext);
             for (int i = 0; i < 2 * maxNumberOfLinks; i++)
             {
                 span.AddLink(link);

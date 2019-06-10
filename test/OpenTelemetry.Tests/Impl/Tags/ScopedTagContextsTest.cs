@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Tags.Test
 {
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
     using Xunit;
 
     public class ScopedTagContextsTest

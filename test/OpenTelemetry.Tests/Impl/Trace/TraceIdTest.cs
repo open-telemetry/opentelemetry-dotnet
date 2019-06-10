@@ -26,8 +26,8 @@ namespace OpenTelemetry.Trace.Test
         private static readonly byte[] secondBytes =
             new byte[] { 0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte)'A' };
 
-        private static readonly ITraceId first = TraceId.FromBytes(firstBytes);
-        private static readonly ITraceId second = TraceId.FromBytes(secondBytes);
+        private static readonly TraceId first = TraceId.FromBytes(firstBytes);
+        private static readonly TraceId second = TraceId.FromBytes(secondBytes);
 
         [Fact]
         public void invalidTraceId()
