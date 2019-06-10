@@ -80,11 +80,6 @@ namespace OpenTelemetry.Resources
         }
 
         /// <summary>
-        /// Gets or sets the identification of the resource.
-        /// </summary>
-        public abstract string Type { get; protected set; }
-
-        /// <summary>
         /// Gets the map between the tag and its value.
         /// </summary>
         public abstract IEnumerable<ITag> Tags { get; }
