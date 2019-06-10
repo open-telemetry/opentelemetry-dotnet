@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Span data with read-only properties.
     /// </summary>
-    public sealed class SpanData
+    public class SpanData
     {
         internal SpanData(
             SpanContext context,

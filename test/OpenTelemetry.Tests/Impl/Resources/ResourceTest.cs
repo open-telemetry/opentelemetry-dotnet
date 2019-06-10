@@ -219,7 +219,6 @@ namespace OpenTelemetry.Impl.Resources
             foreach (var targetLabel in targetLabels)
             {
                 Assert.True(targetResource.Labels.ContainsKey(targetLabel.Key));
-                Assert.True(targetResource.Labels.ContainsValue(targetLabel.Value));
                 Assert.Equal(targetLabel.Value, targetResource.Labels[targetLabel.Key]);
             }
         }
@@ -246,7 +245,6 @@ namespace OpenTelemetry.Impl.Resources
             foreach (var targetLabel in targetLabels)
             {
                 Assert.True(targetResource.Labels.ContainsKey(targetLabel.Key));
-                Assert.True(targetResource.Labels.ContainsValue(targetLabel.Value));
                 Assert.Equal(targetLabel.Value, targetResource.Labels[targetLabel.Key]);
             }
         }
@@ -266,12 +264,11 @@ namespace OpenTelemetry.Impl.Resources
             return labels;
         }
 
-        private static void ValidateLabels(Dictionary<string, string> labels, int startIndex = 0)
+        private static void ValidateLabels(IReadOnlyDictionary<string, string> labels, int startIndex = 0)
         {
             for (var i = startIndex; i < labels.Count; ++i)
             {
                 Assert.True(labels.ContainsKey($"{keyName}{i}"));
-                Assert.True(labels.ContainsValue($"{valueName}{i}"));
                 Assert.Equal($"{valueName}{i}", labels[$"{keyName}{i}"]);
             }
         }

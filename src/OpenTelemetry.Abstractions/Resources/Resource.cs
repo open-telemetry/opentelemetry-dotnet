@@ -30,10 +30,11 @@ namespace OpenTelemetry.Resources
         /// Maximum length of the resource type name.
         /// </summary>
         private const int MaxResourceTypeNameLength = 255;
+        private readonly Dictionary<string, string> labelCollection;
 
-        internal Resource(Dictionary<string, string> labels)
+        internal Resource(IDictionary<string, string> labels)
         {
-            this.Labels = ValidateLabels(labels);
+            this.labelCollection = (Dictionary<string, string>)ValidateLabels(labels);
         }
 
         /// <summary>
@@ -42,16 +43,16 @@ namespace OpenTelemetry.Resources
         public static Resource Empty { get; } = new Resource(new Dictionary<string, string>());
 
         /// <summary>
-        /// Gets the map of tags describing the resource.
+        /// Gets the collection of key-value pairs describing the resource.
         /// </summary>
-        public Dictionary<string, string> Labels { get; internal set; }
+        public IReadOnlyDictionary<string, string> Labels => this.labelCollection;
 
         /// <summary>
         /// Returns a new <see cref="Resource"/>.
         /// </summary>
-        /// <param name="labels">A <see cref="Dictionary{TKey, TValue}"/> of labels that describe the resource.</param>
+        /// <param name="labels">An <see cref="IDictionary{string, string}"/> of labels that describe the resource.</param>
         /// <returns><see cref="Resource"/>.</returns>
-        public static Resource Create(Dictionary<string, string> labels)
+        public static Resource Create(IDictionary<string, string> labels)
         {
             return new Resource(labels);
         }
@@ -71,20 +72,16 @@ namespace OpenTelemetry.Resources
 
             foreach (KeyValuePair<string, string> label in other.Labels)
             {
-                try
+                if (this.labelCollection.ContainsKey(label.Key) == false)
                 {
-                    this.Labels.Add(label.Key, label.Value);
-                }
-                catch (ArgumentException)
-                {
-                    // key already exists, keep current value
+                    this.labelCollection.Add(label.Key, label.Value);
                 }
             }
 
             return this;
         }
 
-        private static Dictionary<string, string> ValidateLabels(Dictionary<string, string> labels)
+        private static IDictionary<string, string> ValidateLabels(IDictionary<string, string> labels)
         {
             if (labels == null)
             {
