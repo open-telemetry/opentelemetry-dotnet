@@ -1865,7 +1865,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         private void GetDefaults(
             out SpanContext context,
             out SpanId parentSpanId,
-            out Resource,
+            out Resource resource,
             out string name,
             out Timestamp startTimestamp,
             out IAttributes attributes,

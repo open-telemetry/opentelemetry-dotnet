@@ -46,7 +46,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             }
         }
 
-        internal static bool ShouldSample(SpanContext parentContext, string name, ISampler sampler, out SpanContext context, out ISpanId parentSpanId)
+        internal static bool ShouldSample(SpanContext parentContext, string name, ISampler sampler, out SpanContext context, out SpanId parentSpanId)
         {
             var traceId = TraceId.Invalid;
             var tracestate = Tracestate.Empty;
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             return result;
         }
 
-        internal static SpanData ProfiledCommandToSpanData(SpanContext context, string name, ISpanId parentSpanId, IProfiledCommand command)
+        internal static SpanData ProfiledCommandToSpanData(SpanContext context, string name, SpanId parentSpanId, IProfiledCommand command)
         {
             // use https://github.com/opentracing/specification/blob/master/semantic_conventions.md for now
 

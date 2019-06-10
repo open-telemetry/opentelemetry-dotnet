@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private static readonly Status status = Status.DeadlineExceeded.WithDescription("TooSlow");
         private readonly IRandomGenerator random = new RandomGenerator(1234);
         private readonly SpanContext spanContext;
-        private readonly ISpanId parentSpanId;
+        private readonly SpanId parentSpanId;
         private readonly Resource resource = Resource.Empty;
         private readonly IDictionary<string, IAttributeValue> attributesMap = new Dictionary<string, IAttributeValue>();
         private readonly List<ITimedEvent<IEvent>> eventList = new List<ITimedEvent<IEvent>>();

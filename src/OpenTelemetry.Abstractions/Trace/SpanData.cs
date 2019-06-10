@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
     {
         internal SpanData(
             SpanContext context,
-            ISpanId parentSpanId,
+            SpanId parentSpanId,
             Resource resource,
             string name,
             Timestamp startTimestamp,
@@ -62,9 +62,9 @@ namespace OpenTelemetry.Trace
         public SpanContext Context { get; }
 
         /// <summary>
-        /// Gets the parent <see cref="ISpanId"/>.
+        /// Gets the parent <see cref="SpanId"/>.
         /// </summary>
-        public ISpanId ParentSpanId { get; }
+        public SpanId ParentSpanId { get; }
 
         /// <summary>
         /// Gets the <see cref="Resource"/> this span was executed on.
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Trace
         /// <returns>A new immutable <see cref="SpanData"/>.</returns>
         public static SpanData Create(
                         SpanContext context,
-                        ISpanId parentSpanId,
+                        SpanId parentSpanId,
                         Resource resource,
                         string name,
                         Timestamp startTimestamp,
