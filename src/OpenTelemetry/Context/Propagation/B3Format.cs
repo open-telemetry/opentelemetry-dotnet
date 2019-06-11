@@ -26,21 +26,21 @@ namespace OpenTelemetry.Context.Propagation
     /// </summary>
     public sealed class B3Format : ITextFormat
     {
-        internal const string XB3TraceId = "X-B3-TraceId";
-        internal const string XB3SpanId = "X-B3-SpanId";
-        internal const string XB3ParentSpanId = "X-B3-ParentSpanId";
-        internal const string XB3Sampled = "X-B3-Sampled";
-        internal const string XB3Flags = "X-B3-Flags";
+        internal static readonly string XB3TraceId = "X-B3-TraceId";
+        internal static readonly string XB3SpanId = "X-B3-SpanId";
+        internal static readonly string XB3ParentSpanId = "X-B3-ParentSpanId";
+        internal static readonly string XB3Sampled = "X-B3-Sampled";
+        internal static readonly string XB3Flags = "X-B3-Flags";
 
         // Used as the upper TraceId.SIZE hex characters of the traceID. B3-propagation used to send
         // TraceId.SIZE hex characters (8-bytes traceId) in the past.
-        internal const string UpperTraceId = "0000000000000000";
+        internal static readonly string UpperTraceId = "0000000000000000";
 
         // Sampled value via the X_B3_SAMPLED header.
-        internal const string SampledValue = "1";
+        internal static readonly string SampledValue = "1";
 
         // "Debug" sampled value.
-        internal const string FlagsValue = "1";
+        internal static readonly string FlagsValue = "1";
 
         private static readonly HashSet<string> AllFields = new HashSet<string>() { XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags };
 
