@@ -63,15 +63,14 @@ namespace OpenTelemetry.Common
         /// <returns>New instance of <see cref="Timestamp"/>.</returns>
         public static Timestamp Create(long seconds, int nanos)
         {
-            // TODO:
             if (seconds < -MaxSeconds || seconds > MaxSeconds)
             {
-                return new Timestamp(0, 0);
+                return Zero;
             }
 
             if (nanos < 0 || nanos > MaxNanos)
             {
-                return new Timestamp(0, 0);
+                return Zero;
             }
 
             return new Timestamp(seconds, nanos);
@@ -84,9 +83,8 @@ namespace OpenTelemetry.Common
         /// <returns>New instance of <see cref="Timestamp"/>.</returns>
         public static Timestamp FromMillis(long millis)
         {
-            Timestamp zero = new Timestamp(0, 0);
             long nanos = millis * NanosPerMilli;
-            return zero.Plus(0, nanos);
+            return Zero.Plus(0, nanos);
         }
 
         /// <summary>
