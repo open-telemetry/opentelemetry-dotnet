@@ -17,8 +17,10 @@
 namespace OpenTelemetry.Stats.Aggregations
 {
     using System;
+    using System.Diagnostics;
     using OpenTelemetry.Utils;
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public class MeanData : AggregationData, IMeanData
     {
         internal MeanData(double mean, long count, double min, double max)

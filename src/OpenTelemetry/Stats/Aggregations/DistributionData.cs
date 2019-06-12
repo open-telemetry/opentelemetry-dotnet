@@ -18,9 +18,11 @@ namespace OpenTelemetry.Stats.Aggregations
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Utils;
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public class DistributionData : AggregationData, IDistributionData
     {
         internal DistributionData(double mean, long count, double min, double max, double sumOfSquaredDeviations, IReadOnlyList<long> bucketCounts)
