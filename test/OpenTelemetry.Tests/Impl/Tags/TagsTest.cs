@@ -31,11 +31,5 @@ namespace OpenTelemetry.Tags.Test
         {
             Assert.Equal(typeof(Tagger), Tags.Tagger.GetType());
         }
-
-        [Fact]
-        public void GetTagContextSerializer()
-        {
-            Assert.Equal(typeof(TagPropagationComponent), Tags.TagPropagationComponent.GetType());
-        }
     }
 }

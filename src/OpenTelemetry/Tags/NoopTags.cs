@@ -44,14 +44,6 @@ namespace OpenTelemetry.Tags
             }
         }
 
-        internal static ITagPropagationComponent NoopTagPropagationComponent
-        {
-            get
-            {
-                return OpenTelemetry.Tags.NoopTagPropagationComponent.Instance;
-            }
-        }
-
         internal static ITagContextBinarySerializer NoopTagContextBinarySerializer
         {
             get

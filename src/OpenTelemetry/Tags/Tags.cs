@@ -24,16 +24,15 @@ namespace OpenTelemetry.Tags
 
         private static Tags tags;
 
-        // The TaggingState shared between the TagsComponent, Tagger, and TagPropagationComponent
         private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
-        private readonly ITagPropagationComponent tagPropagationComponent;
+        private readonly ITagContextBinarySerializer tagContextBinarySerializer;
 
         internal Tags()
         {
             this.state = new CurrentTaggingState();
             this.tagger = new Tagger(this.state);
-            this.tagPropagationComponent = new TagPropagationComponent(this.state);
+            this.tagContextBinarySerializer = new TagContextBinarySerializer(this.state);
         }
 
         public static ITagger Tagger
@@ -45,21 +44,21 @@ namespace OpenTelemetry.Tags
             }
         }
 
-        public static ITagPropagationComponent TagPropagationComponent
-        {
-            get
-            {
-                Initialize();
-                return tags.tagPropagationComponent;
-            }
-        }
-
         public static TaggingState State
         {
             get
             {
                 Initialize();
                 return tags.state.Value;
+            }
+        }
+
+        public static ITagContextBinarySerializer BinarySerializer
+        {
+            get
+            {
+                Initialize();
+                return tags.tagContextBinarySerializer;
             }
         }
 

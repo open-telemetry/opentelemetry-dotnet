@@ -37,7 +37,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
         public TagContextBinarySerializerTest()
         {
             state = new CurrentTaggingState();
-            serializer = new TagPropagationComponent(this.state).BinarySerializer;
+            serializer = new TagContextBinarySerializer(state);
         }
         // [Fact]
         // public void ToByteArray_TaggingDisabled()

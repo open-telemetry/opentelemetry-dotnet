@@ -50,7 +50,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
         {
             state = new CurrentTaggingState();
             tagger = new Tagger(state);
-            serializer = new TagPropagationComponent(this.state).BinarySerializer;
+            serializer = new TagContextBinarySerializer(state);
         }
 
         [Fact]

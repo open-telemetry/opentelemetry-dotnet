@@ -94,12 +94,6 @@ namespace OpenTelemetry.Tags.Test
         }
 
         [Fact]
-        public void NoopTagPropagationComponent()
-        {
-            Assert.Same(NoopTags.NoopTagContextBinarySerializer, NoopTags.NoopTagPropagationComponent.BinarySerializer);
-        }
-
-        [Fact]
         public void NoopTagContextBinarySerializer()
         {
             Assert.Equal(new byte[0], NoopTags.NoopTagContextBinarySerializer.ToByteArray(TAG_CONTEXT));
