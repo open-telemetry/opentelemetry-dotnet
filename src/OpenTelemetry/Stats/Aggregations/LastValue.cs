@@ -17,7 +17,9 @@
 namespace OpenTelemetry.Stats.Aggregations
 {
     using System;
+    using System.Diagnostics;
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed class LastValue : Aggregation, ILastValue
     {
         private static readonly LastValue Instance = new LastValue();

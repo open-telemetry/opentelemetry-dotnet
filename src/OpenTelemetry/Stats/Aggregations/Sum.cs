@@ -17,7 +17,9 @@
 namespace OpenTelemetry.Stats.Aggregations
 {
     using System;
+    using System.Diagnostics;
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed class Sum : Aggregation, ISum
     {
         private static readonly Sum Instance = new Sum();
