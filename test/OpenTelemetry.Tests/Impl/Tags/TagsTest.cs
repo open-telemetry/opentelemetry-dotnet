@@ -23,7 +23,7 @@ namespace OpenTelemetry.Tags.Test
     {
         public TagsTest()
         {
-            Tags.Initialize(true);
+            Tags.Initialize();
         }
 
         [Fact]

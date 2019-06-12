@@ -59,10 +59,5 @@ namespace OpenTelemetry.Tags
                 return OpenTelemetry.Tags.NoopTagContextBinarySerializer.Instance;
             }
         }
-
-        internal static ITagsComponent NewNoopTagsComponent()
-        {
-            return new NoopTagsComponent();
-        }
     }
 }

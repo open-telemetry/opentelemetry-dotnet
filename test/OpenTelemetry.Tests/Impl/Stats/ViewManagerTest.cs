@@ -60,8 +60,7 @@ namespace OpenTelemetry.Stats.Test
         private static readonly ILastValue LAST_VALUE = LastValue.Create();
 
         private readonly StatsComponent statsComponent;
-        private readonly TagsComponent tagsComponent;
-
+        private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
         private readonly IViewManager viewManager;
         private readonly IStatsRecorder statsRecorder;
@@ -69,9 +68,9 @@ namespace OpenTelemetry.Stats.Test
         public ViewManagerTest()
         {
             statsComponent = new StatsComponent(new SimpleEventQueue());
-            tagsComponent = new TagsComponent();
 
-            tagger = tagsComponent.Tagger;
+            state = new CurrentTaggingState();
+            tagger = new Tagger(state);
             viewManager = statsComponent.ViewManager;
             statsRecorder = statsComponent.StatsRecorder;
         }

@@ -39,8 +39,8 @@ namespace OpenTelemetry.Stats.Test
             var statsComponent = new StatsComponent();
             var viewManager = statsComponent.ViewManager;
             var statsRecorder = statsComponent.StatsRecorder;
-            var tagsComponent = new TagsComponent();
-            var tagger = tagsComponent.Tagger;
+            var state = new CurrentTaggingState();
+            var tagger = new Tagger(state);
 
             TagKey FRONTEND_KEY = TagKey.Create("my.org/keys/frontend");
             TagKey FRONTEND_OS_KEY = TagKey.Create("my.org/keys/frontend/os");
@@ -133,8 +133,8 @@ namespace OpenTelemetry.Stats.Test
             var statsComponent = new StatsComponent();
             var viewManager = statsComponent.ViewManager;
             var statsRecorder = statsComponent.StatsRecorder;
-            var tagsComponent = new TagsComponent();
-            var tagger = tagsComponent.Tagger;
+            var state = new CurrentTaggingState();
+            var tagger = new Tagger(state);
 
             TagKey FRONTEND_KEY = TagKey.Create("my.org/keys/frontend");
             TagKey FRONTEND_OS_KEY = TagKey.Create("my.org/keys/frontend/os");

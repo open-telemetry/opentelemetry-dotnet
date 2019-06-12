@@ -24,31 +24,24 @@ namespace OpenTelemetry.Tags
 
         private static Tags tags;
 
-        private readonly ITagsComponent tagsComponent = new TagsComponent();
-
-        internal Tags(bool enabled)
-        {
-            if (enabled)
-            {
-                this.tagsComponent = new TagsComponent();
-            }
-            else
-            {
-                this.tagsComponent = NoopTags.NewNoopTagsComponent();
-            }
-        }
+        // The TaggingState shared between the TagsComponent, Tagger, and TagPropagationComponent
+        private readonly CurrentTaggingState state;
+        private readonly ITagger tagger;
+        private readonly ITagPropagationComponent tagPropagationComponent;
 
         internal Tags()
-            : this(false)
         {
+            this.state = new CurrentTaggingState();
+            this.tagger = new Tagger(this.state);
+            this.tagPropagationComponent = new TagPropagationComponent(this.state);
         }
 
         public static ITagger Tagger
         {
             get
             {
-                Initialize(true);
-                return tags.tagsComponent.Tagger;
+                Initialize();
+                return tags.tagger;
             }
         }
 
@@ -56,8 +49,8 @@ namespace OpenTelemetry.Tags
         {
             get
             {
-                Initialize(false);
-                return tags.tagsComponent.TagPropagationComponent;
+                Initialize();
+                return tags.tagPropagationComponent;
             }
         }
 
@@ -65,18 +58,18 @@ namespace OpenTelemetry.Tags
         {
             get
             {
-                Initialize(false);
-                return tags.tagsComponent.State;
+                Initialize();
+                return tags.state.Value;
             }
         }
 
-        internal static void Initialize(bool enabled)
+        internal static void Initialize()
         {
             if (tags == null)
             {
                 lock (Lock)
                 {
-                    tags = tags ?? new Tags(enabled);
+                    tags = tags ?? new Tags();
                 }
             }
         }
