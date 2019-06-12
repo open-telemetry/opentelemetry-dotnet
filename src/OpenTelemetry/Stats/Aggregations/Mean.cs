@@ -17,7 +17,9 @@
 namespace OpenTelemetry.Stats.Aggregations
 {
     using System;
+    using System.Diagnostics;
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed class Mean : Aggregation, IMean
     {
         private static readonly Mean Instance = new Mean();

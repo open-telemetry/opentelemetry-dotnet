@@ -17,8 +17,10 @@
 namespace OpenTelemetry.Stats.Aggregations
 {
     using System;
+    using System.Diagnostics;
     using OpenTelemetry.Utils;
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed class SumDataDouble : AggregationData, ISumDataDouble
     {
         internal SumDataDouble(double sum)

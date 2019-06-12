@@ -17,8 +17,10 @@
 namespace OpenTelemetry.Stats.Measures
 {
     using System;
+    using System.Diagnostics;
     using OpenTelemetry.Utils;
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public class MeasureDouble : Measure, IMeasureDouble
     {
         internal MeasureDouble(string name, string description, string unit)
