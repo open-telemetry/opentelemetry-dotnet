@@ -21,7 +21,7 @@
 
   <PropertyGroup>
     <PackageTags>Tracing;OpenTelemetry;Management;Monitoring</PackageTags>
-    <PackageIconUrl>https://opentelemetry.io/img/logos/opentracing-icon-color.png</PackageIconUrl>
+    <PackageIconUrl>https://opentelemetry.io/img/logos/opentelemetry-icon-color.png</PackageIconUrl>
     <PackageProjectUrl>https://OpenTelemetry.io</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Authors>OpenTelemetry authors</Authors>

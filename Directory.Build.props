@@ -1,6 +1,5 @@
 <Project>
   <PropertyGroup>
-    <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/open-telemetry/opentelemetry-dotnet</PackageProjectUrl>
   </PropertyGroup>
