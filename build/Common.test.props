@@ -6,6 +6,11 @@
     <DelaySign>false</DelaySign>
     <DefineConstants>$(DefineConstants);SIGNED</DefineConstants>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
   
   <PropertyGroup>
     <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\OpenTelemetry.test.ruleset</CodeAnalysisRuleSet>
@@ -15,4 +20,28 @@
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)/stylecop.json" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <IsTestProject>true</IsTestProject>
+    <CollectCoverage Condition="$(CollectCoverage) == ''">true</CollectCoverage>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CollectCoverage Condition="$(CollectCoverage) == '' OR !$(TargetFramework.StartsWith('netcoreapp'))">false</CollectCoverage>
+  </PropertyGroup>
+
+  <PropertyGroup Label="CollectCodeCoverageResults" Condition="$(CollectCoverage)">
+    <CoverletOutputFormat>cobertura</CoverletOutputFormat>
+    <_BaseDir>..\..\TestResults\</_BaseDir>
+    <CoverletBaseDir>$(_BaseDir)Coverage\</CoverletBaseDir>
+    <CoverletResultsDir>$(_BaseDir)Results\</CoverletResultsDir>
+    <CoverletBaseDir Condition="$([MSBuild]::IsOSUnixLike())">$(CoverletBaseDir.Replace('\', '/'))</CoverletBaseDir>
+    <CoverletResultsDir Condition="$([MSBuild]::IsOSUnixLike())">$(CoverletResultsDir.Replace('\', '/'))</CoverletResultsDir>
+    <CoverletOutput>$(CoverletBaseDir)$(MSBuildProjectName).xml</CoverletOutput>
+    <Exclude>[xunit*]*,[*.Tests]*</Exclude>
+    <DebugType>pdbonly</DebugType> <!-- Coverlet needs full debug symbols -->
+  </PropertyGroup>
 </Project>
