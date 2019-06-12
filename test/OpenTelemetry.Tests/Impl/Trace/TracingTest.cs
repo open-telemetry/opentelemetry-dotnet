@@ -62,17 +62,17 @@ namespace OpenTelemetry.Trace.Test
             Assert.Same(Tracer.NoopTracer, Tracing.Tracer);
         }
 
-        [Fact(Skip = "need to fix the way tracer being instantiated")]
-        public void DefaultTraceExporter()
-        {
-            Assert.Equal(ExportComponent.NewNoopExportComponent.GetType(), Tracing.ExportComponent.GetType());
-        }
+        //[Fact(Skip = "need to fix the way tracer being instantiated")]
+        //public void DefaultTraceExporter()
+        //{
+        //    Assert.Equal(ExportComponent.NewNoopExportComponent.GetType(), Tracing.ExportComponent.GetType());
+        //}
 
-        [Fact(Skip = "need to fix the way tracer being instantiated")]
-        public void DefaultTraceConfig()
-        {
-            Assert.Same(TraceConfigBase.NoopTraceConfig, Tracing.TraceConfig);
-        }
+        //[Fact(Skip = "need to fix the way tracer being instantiated")]
+        //public void DefaultTraceConfig()
+        //{
+        //    Assert.Same(TraceConfigBase.NoopTraceConfig, Tracing.TraceConfig);
+        //}
 
         // [Fact]
         // public void ImplementationOfTracer()

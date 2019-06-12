@@ -4,14 +4,20 @@
     using System.Collections.Generic;
     using System.Threading;
     using OpenTelemetry.Exporter.Zipkin;
+    using OpenTelemetry.Internal;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
 
     internal class TestZipkin
     {
         internal static object Run(string zipkinUri)
         {
+            // 0. Initialization
+            SimpleEventQueue eventQueue = new SimpleEventQueue();
+            ExportComponent exportComponent = ExportComponent.CreateWithInProcessStores(eventQueue);
+
             // 1. Configure exporter to export traces to Zipkin
             var exporter = new ZipkinTraceExporter(
                 new ZipkinTraceExporterOptions()
@@ -19,11 +25,11 @@
                     Endpoint = new Uri(zipkinUri),
                     ServiceName = "tracing-to-zipkin-service",
                 },
-                Tracing.ExportComponent);
+                exportComponent);
             exporter.Start();
 
             // 2. Configure 100% sample rate for the purposes of the demo
-            ITraceConfig traceConfig = Tracing.TraceConfig;
+            ITraceConfig traceConfig = new TraceConfig();
             ITraceParams currentConfig = traceConfig.ActiveTraceParams;
             var newConfig = currentConfig.ToBuilder()
                 .SetSampler(Samplers.AlwaysSample)
@@ -45,7 +51,7 @@
             }
 
             // 5. Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
-            Tracing.ExportComponent.SpanExporter.Dispose();
+            exportComponent.SpanExporter.Dispose();
 
             return null;
         }

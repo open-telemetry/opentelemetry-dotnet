@@ -9,6 +9,7 @@
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
     using OpenTelemetry.Trace;
+    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
 
     internal class TestStackdriver
@@ -34,8 +35,8 @@
         internal static object Run(string projectId)
         {
             var exporter = new StackdriverExporter(
-                projectId, 
-                Tracing.ExportComponent,
+                projectId,
+                ExportComponent.NewNoopExportComponent,
                 Stats.ViewManager);
             exporter.Start();
 

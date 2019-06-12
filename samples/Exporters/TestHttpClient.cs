@@ -5,7 +5,7 @@
     using OpenTelemetry.Collector.Dependencies;
     using OpenTelemetry.Exporter.Zipkin;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Context.Propagation;
+    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
 
     internal class TestHttpClient
@@ -24,7 +24,7 @@
                     Endpoint = new Uri("https://zipkin.azurewebsites.net/api/v2/spans"),
                     ServiceName = typeof(Program).Assembly.GetName().Name,
                 },
-                Tracing.ExportComponent);
+                ExportComponent.NewNoopExportComponent);
             exporter.Start();
 
             var scope = tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartScopedSpan();

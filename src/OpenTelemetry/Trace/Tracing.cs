@@ -23,32 +23,17 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Trace.Internal;
 
     /// <summary>
-    /// Helper class that provides easy to use static constructor of the default tracer component.
+    /// Class that manages a global instance of the <see cref="Tracer"/>.
     /// </summary>
     public sealed class Tracing
     {
-        private static Tracing tracing = new Tracing();
-
-        private ITraceComponent traceComponent = null;
-
         internal Tracing()
         {
-            this.traceComponent = new TraceComponent(new RandomGenerator(), new SimpleEventQueue());
         }
 
         /// <summary>
         /// Gets the tracer to record spans.
         /// </summary>
-        public static ITracer Tracer => tracing.traceComponent.Tracer;
-
-        /// <summary>
-        /// Gets the export component to upload spans to.
-        /// </summary>
-        public static IExportComponent ExportComponent => tracing.traceComponent.ExportComponent;
-
-        /// <summary>
-        /// Gets the tracer configuration.
-        /// </summary>
-        public static ITraceConfig TraceConfig => tracing.traceComponent.TraceConfig;
+        public static ITracer Tracer => TracerBase.NoopTracer;
     }
 }
