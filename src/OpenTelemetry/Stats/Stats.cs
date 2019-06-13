@@ -16,34 +16,29 @@
 
 namespace OpenTelemetry.Stats
 {
+    using OpenTelemetry.Internal;
+
     public class Stats
     {
         private static Stats stats = new Stats();
 
-        private IStatsComponent statsComponent = new StatsComponent();
+        private readonly CurrentStatsState state = new CurrentStatsState();
+        private readonly StatsManager statsManager;
+        private readonly IViewManager viewManager;
+        private readonly IStatsRecorder statsRecorder;
 
         internal Stats()
-            : this(true)
         {
-        }
-
-        internal Stats(bool enabled)
-        {
-            if (enabled)
-            {
-                this.statsComponent = new StatsComponent();
-            }
-            else
-            {
-                this.statsComponent = NoopStats.NewNoopStatsComponent();
-            }
+            this.statsManager = new StatsManager(new SimpleEventQueue(), this.state);
+            this.viewManager = new ViewManager(this.statsManager);
+            this.statsRecorder = new StatsRecorder(this.statsManager);
         }
 
         public static IStatsRecorder StatsRecorder
         {
             get
             {
-                return stats.statsComponent.StatsRecorder;
+                return stats.statsRecorder;
             }
         }
 
@@ -51,7 +46,7 @@ namespace OpenTelemetry.Stats
         {
             get
             {
-                return stats.statsComponent.ViewManager;
+                return stats.viewManager;
             }
         }
 
@@ -59,7 +54,28 @@ namespace OpenTelemetry.Stats
         {
             get
             {
-                return stats.statsComponent.State;
+                return stats.state.Value;
+            }
+
+            set
+            {
+                if (!(stats.viewManager is ViewManager manager))
+                {
+                    return;
+                }
+
+                var result = stats.state.Set(value);
+                if (result)
+                {
+                    if (value == StatsCollectionState.DISABLED)
+                    {
+                        manager.ClearStats();
+                    }
+                    else
+                    {
+                        manager.ResumeStatsCollection();
+                    }
+                }
             }
         }
     }

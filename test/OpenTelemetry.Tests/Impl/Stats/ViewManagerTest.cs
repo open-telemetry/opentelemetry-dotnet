@@ -20,7 +20,6 @@ namespace OpenTelemetry.Stats.Test
     using System.Collections.Generic;
     using System.Linq;
     using OpenTelemetry.Common;
-    using OpenTelemetry.Internal;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
@@ -59,20 +58,18 @@ namespace OpenTelemetry.Stats.Test
         private static readonly IDistribution DISTRIBUTION = Distribution.Create(BUCKET_BOUNDARIES);
         private static readonly ILastValue LAST_VALUE = LastValue.Create();
 
-        private readonly StatsComponent statsComponent;
-        private readonly CurrentTaggingState state;
-        private readonly ITagger tagger;
         private readonly IViewManager viewManager;
         private readonly IStatsRecorder statsRecorder;
+        private readonly CurrentTaggingState state;
+        private readonly ITagger tagger;
 
         public ViewManagerTest()
         {
-            statsComponent = new StatsComponent(new SimpleEventQueue());
+            viewManager = Stats.ViewManager;
+            statsRecorder = Stats.StatsRecorder;
 
             state = new CurrentTaggingState();
             tagger = new Tagger(state);
-            viewManager = statsComponent.ViewManager;
-            statsRecorder = statsComponent.StatsRecorder;
         }
 
         private static IView CreateCumulativeView()
@@ -427,11 +424,12 @@ namespace OpenTelemetry.Stats.Test
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
                 { 
-                // Won't Record the unregistered tag key, for missing registered keys will use default
-                // tag value : "unknown/not set".
-                { tv,
+                    // Won't Record the unregistered tag key, for missing registered keys will use default
+                    // tag value : "unknown/not set".
+                    { tv,
                     // Should Record stats with default tag value: "KEY" : "unknown/not set".
-                    StatsTestUtil.CreateAggregationData(DISTRIBUTION, MEASURE_DOUBLE, 10.0, 50.0) },
+                    StatsTestUtil.CreateAggregationData(DISTRIBUTION, MEASURE_DOUBLE, 10.0, 50.0)
+                    },
                 },
                 EPSILON);
         }
@@ -490,7 +488,7 @@ namespace OpenTelemetry.Stats.Test
                     { tv1,  StatsTestUtil.CreateAggregationData(DISTRIBUTION, MEASURE_DOUBLE, 1.1, 4.4) },
                     { tv2,  StatsTestUtil.CreateAggregationData(DISTRIBUTION, MEASURE_DOUBLE, 2.2) },
                     { tv3,  StatsTestUtil.CreateAggregationData(DISTRIBUTION, MEASURE_DOUBLE, 3.3)},
-                 },
+                },
                 EPSILON);
         }
 
@@ -567,7 +565,7 @@ namespace OpenTelemetry.Stats.Test
                 new Dictionary<TagValues, IAggregationData>()
                 {
                     {tv, StatsTestUtil.CreateAggregationData(DISTRIBUTION, measure1, value1) },
-                 },
+                },
                 EPSILON);
 
             StatsTestUtil.AssertAggregationMapEquals(
@@ -624,7 +622,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void RegisterRecordAndGetView_StatsDisabled()
         {
-            statsComponent.State = StatsCollectionState.DISABLED;
+            Stats.State = StatsCollectionState.DISABLED;
             IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             statsRecorder
@@ -637,8 +635,8 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void RegisterRecordAndGetView_StatsReenabled()
         {
-            statsComponent.State = StatsCollectionState.DISABLED;
-            statsComponent.State = StatsCollectionState.ENABLED;
+            Stats.State = StatsCollectionState.DISABLED;
+            Stats.State = StatsCollectionState.ENABLED;
             IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             statsRecorder
@@ -658,11 +656,11 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void RegisterViewWithStatsDisabled_RecordAndGetViewWithStatsEnabled()
         {
-            statsComponent.State = StatsCollectionState.DISABLED;
+            Stats.State = StatsCollectionState.DISABLED;
             IView view = CreateCumulativeView(VIEW_NAME, MEASURE_DOUBLE, MEAN, new List<TagKey>() { KEY });
             viewManager.RegisterView(view); // view will still be registered.
 
-            statsComponent.State = StatsCollectionState.ENABLED;
+            Stats.State = StatsCollectionState.ENABLED;
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.1)
@@ -680,7 +678,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void RegisterDifferentViewWithSameNameWithStatsDisabled()
         {
-            statsComponent.State = StatsCollectionState.DISABLED;
+            Stats.State = StatsCollectionState.DISABLED;
             IView view1 =
                 View.Create(
                     VIEW_NAME,
@@ -742,12 +740,12 @@ namespace OpenTelemetry.Stats.Test
 
             Timestamp timestamp2 = Timestamp.Create(2, 0);
             //clock.Time = timestamp2;
-            statsComponent.State = StatsCollectionState.DISABLED; // This will clear stats.
+            Stats.State = StatsCollectionState.DISABLED; // This will clear stats.
             Assert.Equal(StatsTestUtil.CreateEmptyViewData(view), viewManager.GetView(view.Name));
 
             Timestamp timestamp3 = Timestamp.Create(3, 0);
             //clock.Time = timestamp3;
-            statsComponent.State = StatsCollectionState.ENABLED;
+            Stats.State = StatsCollectionState.ENABLED;
 
             Timestamp timestamp4 = Timestamp.Create(4, 0);
             //clock.Time = timestamp4;

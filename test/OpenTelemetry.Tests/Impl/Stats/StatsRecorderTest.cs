@@ -35,15 +35,13 @@ namespace OpenTelemetry.Stats.Test
         private static readonly IMeasureDouble MEASURE_DOUBLE_NO_VIEW_2 = MeasureDouble.Create("my measurement no view 2", "description", "us");
         private static readonly IViewName VIEW_NAME = ViewName.Create("my view");
 
-        private StatsComponent statsComponent;
         private IViewManager viewManager;
         private IStatsRecorder statsRecorder;
 
         public StatsRecorderTest()
         {
-            statsComponent = new StatsComponent(new SimpleEventQueue());
-            viewManager = statsComponent.ViewManager;
-            statsRecorder = statsComponent.StatsRecorder;
+            viewManager = Stats.ViewManager;
+            statsRecorder = Stats.StatsRecorder;
         }
 
         [Fact]
@@ -165,7 +163,7 @@ namespace OpenTelemetry.Stats.Test
                     new List<TagKey>() { KEY });
 
             viewManager.RegisterView(view);
-            statsComponent.State = StatsCollectionState.DISABLED;
+            Stats.State = StatsCollectionState.DISABLED;
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.0)
@@ -186,14 +184,14 @@ namespace OpenTelemetry.Stats.Test
 
             viewManager.RegisterView(view);
 
-            statsComponent.State = StatsCollectionState.DISABLED;
+            Stats.State = StatsCollectionState.DISABLED;
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.0)
                 .Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
             Assert.Equal(CreateEmptyViewData(view), viewManager.GetView(VIEW_NAME));
 
-            statsComponent.State = StatsCollectionState.ENABLED;
+            Stats.State = StatsCollectionState.ENABLED;
             Assert.Empty(viewManager.GetView(VIEW_NAME).AggregationMap);
             // assertThat(viewManager.getView(VIEW_NAME).getWindowData())
             //    .isNotEqualTo(CumulativeData.Create(ZERO_TIMESTAMP, ZERO_TIMESTAMP));
