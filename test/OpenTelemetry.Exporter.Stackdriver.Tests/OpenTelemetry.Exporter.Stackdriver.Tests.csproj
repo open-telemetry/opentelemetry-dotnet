@@ -1,16 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\Common.test.props" />
-
   <PropertyGroup>
     <Description>Unit test project for Stackdriver Exporter for OpenTelemetry</Description>
-    <TargetFrameworks>net46;netcoreapp2.0</TargetFrameworks>
-    <TargetFrameworks Condition="$(OS) != 'Windows_NT'">netcoreapp2.0</TargetFrameworks>
-    <AssemblyName>OpenTelemetry.Exporter.Stackdriver.Tests</AssemblyName>
-    <PackageId>OpenTelemetry.Exporter.Stackdriver.Tests</PackageId>
-    <PackageTags>OpenTelemetry;Tracing;Management;Monitoring;Stackdriver;Google;Cloud</PackageTags>
-    <PackageProjectUrl>http://OpenTelemetry.io</PackageProjectUrl>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <RootNamespace>OpenTelemetry</RootNamespace>
+    <TargetFrameworks>net46;netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks Condition="$(OS) != 'Windows_NT'">netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,25 +18,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.1.1" />
     <PackageReference Include="Moq" Version="4.11.0" />
-
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
-  </ItemGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <DebugType>full</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
-
 </Project>

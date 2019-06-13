@@ -1,31 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\Common.prod.props" />
-
   <PropertyGroup>
     <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>
     <TargetFrameworks Condition="$(OS) != 'Windows_NT'">netstandard2.0</TargetFrameworks>
-    <IncludeSymbols>True</IncludeSymbols>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <Description>Application Insights exporter for Open Census.</Description>
-    <PackageTags>Tracing;OpenTelemetry;Management;Monitoring;application-insights;azure;distributed-tracing</PackageTags>
-    <PackageIconUrl>https://OpenTelemetry.io/images/OpenTelemetry-logo.png</PackageIconUrl>
-    <PackageProjectUrl>https://OpenTelemetry.io</PackageProjectUrl>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <Authors>OpenTelemetry authors</Authors>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageTags>$(PackageTags);application-insights;azure;distributed-tracing</PackageTags>
   </PropertyGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\stylecop.json" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.8.0-beta1" />
   </ItemGroup>
 </Project>
