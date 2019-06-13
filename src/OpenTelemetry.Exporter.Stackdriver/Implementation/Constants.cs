@@ -20,30 +20,30 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
     internal class Constants
     {
-        public const string PACKAGE_VERSION_UNDEFINED = "undefined";
+        public static readonly string PACKAGE_VERSION_UNDEFINED = "undefined";
 
-        public const string LABEL_DESCRIPTION = "OpenTelemetry TagKey";
-        public const string OpenTelemetry_TASK = "OpenTelemetry_task";
-        public const string OpenTelemetry_TASK_DESCRIPTION = "OpenTelemetry task identifier";
+        public static readonly string LABEL_DESCRIPTION = "OpenTelemetry TagKey";
+        public static readonly string OpenTelemetry_TASK = "OpenTelemetry_task";
+        public static readonly string OpenTelemetry_TASK_DESCRIPTION = "OpenTelemetry task identifier";
 
-        public const string GCP_GKE_CONTAINER = "k8s_container";
-        public const string GCP_GCE_INSTANCE = "gce_instance";
-        public const string AWS_EC2_INSTANCE = "aws_ec2_instance";
-        public const string GLOBAL = "global";
+        public static readonly string GCP_GKE_CONTAINER = "k8s_container";
+        public static readonly string GCP_GCE_INSTANCE = "gce_instance";
+        public static readonly string AWS_EC2_INSTANCE = "aws_ec2_instance";
+        public static readonly string GLOBAL = "global";
 
-        public const string PROJECT_ID_LABEL_KEY = "project_id";
+        public static readonly string PROJECT_ID_LABEL_KEY = "project_id";
         public static readonly string OpenTelemetry_TASK_VALUE_DEFAULT = GenerateDefaultTaskValue();
 
-        public const string GCP_GCE_INSTANCE_TYPE = "cloud.google.com/gce/instance";
-        public const string GCP_INSTANCE_ID_KEY = "cloud.google.com/gce/instance_id";
-        public const string GCP_ACCOUNT_ID_KEY = "cloud.google.com/gce/project_id";
-        public const string GCP_ZONE_KEY = "cloud.google.com/gce/zone";
+        public static readonly string GCP_GCE_INSTANCE_TYPE = "cloud.google.com/gce/instance";
+        public static readonly string GCP_INSTANCE_ID_KEY = "cloud.google.com/gce/instance_id";
+        public static readonly string GCP_ACCOUNT_ID_KEY = "cloud.google.com/gce/project_id";
+        public static readonly string GCP_ZONE_KEY = "cloud.google.com/gce/zone";
 
-        public const string K8S_CONTAINER_TYPE = "k8s.io/container";
-        public const string K8S_CLUSTER_NAME_KEY = "k8s.io/cluster/name";
-        public const string K8S_CONTAINER_NAME_KEY = "k8s.io/container/name";
-        public const string K8S_NAMESPACE_NAME_KEY = "k8s.io/namespace/name";
-        public const string K8S_POD_NAME_KEY = "k8s.io/pod/name";
+        public static readonly string K8S_CONTAINER_TYPE = "k8s.io/container";
+        public static readonly string K8S_CLUSTER_NAME_KEY = "k8s.io/cluster/name";
+        public static readonly string K8S_CONTAINER_NAME_KEY = "k8s.io/container/name";
+        public static readonly string K8S_NAMESPACE_NAME_KEY = "k8s.io/namespace/name";
+        public static readonly string K8S_POD_NAME_KEY = "k8s.io/pod/name";
 
         private static string GenerateDefaultTaskValue()
         {

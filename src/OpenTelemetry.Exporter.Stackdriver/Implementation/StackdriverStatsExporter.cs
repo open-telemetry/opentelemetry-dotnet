@@ -46,11 +46,11 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private CancellationTokenSource tokenSource;
 
         private const int MAX_BATCH_EXPORT_SIZE = 200;
-        private const string DEFAULT_DISPLAY_NAME_PREFIX = "OpenTelemetry/";
-        private const string CUSTOM_METRIC_DOMAIN = "custom.googleapis.com/";
-        private const string CUSTOM_OpenTelemetry_DOMAIN = CUSTOM_METRIC_DOMAIN + "OpenTelemetry/";
+        private static readonly string DEFAULT_DISPLAY_NAME_PREFIX = "OpenTelemetry/";
+        private static readonly string CUSTOM_METRIC_DOMAIN = "custom.googleapis.com/";
+        private static readonly string CUSTOM_OpenTelemetry_DOMAIN = CUSTOM_METRIC_DOMAIN + "OpenTelemetry/";
 
-        private const string USER_AGENT_KEY = "user-agent";
+        private static readonly string USER_AGENT_KEY = "user-agent";
         private static string USER_AGENT;
 
         private readonly string domain;
