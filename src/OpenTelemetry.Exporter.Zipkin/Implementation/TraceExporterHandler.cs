@@ -30,11 +30,13 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
     internal class TraceExporterHandler : IHandler
     {
-        private const string StatusCode = "census.status_code";
-        private const string StatusDescription = "census.status_description";
         private const long MillisPerSecond = 1000L;
         private const long NanosPerMillisecond = 1000 * 1000;
         private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
+
+        private static readonly string StatusCode = "census.status_code";
+        private static readonly string StatusDescription = "census.status_description";
+
         private readonly ZipkinTraceExporterOptions options;
         private readonly ZipkinEndpoint localEndpoint;
         private readonly HttpClient httpClient;
