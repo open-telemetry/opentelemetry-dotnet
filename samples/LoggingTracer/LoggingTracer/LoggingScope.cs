@@ -1,10 +1,9 @@
 ﻿using System.Threading;
-using OpenTelemetry.Common;
+using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace LoggingTracer
 {
-
     public static class CurrentSpanUtils
     {
         private static AsyncLocal<ISpan> asyncLocalContext = new AsyncLocal<ISpan>();
@@ -49,8 +48,4 @@ namespace LoggingTracer
             }
         }
     }
-
-
 }
-
-

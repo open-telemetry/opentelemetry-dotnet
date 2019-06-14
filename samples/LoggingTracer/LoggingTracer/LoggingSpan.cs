@@ -87,8 +87,5 @@ namespace LoggingTracer
         {
             Logger.Log($"Span.UpdateName({name})");
         }
-
     }
 }
-
-

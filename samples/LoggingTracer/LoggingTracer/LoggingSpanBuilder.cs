@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using OpenTelemetry.Common;
+using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace LoggingTracer
@@ -10,6 +10,7 @@ namespace LoggingTracer
         private SpanKind spanKind;
         private ISpan parent;
         private SpanContext remoteParentSpanContext;
+        private ISpan span;
 
         public LoggingSpanBuilder(string spanName, SpanKind spanKind)
         {
@@ -17,6 +18,7 @@ namespace LoggingTracer
 
             this.spanName = spanName;
             this.spanKind = spanKind;
+            this.span = new LoggingSpan(spanName, spanKind);
         }
 
         public LoggingSpanBuilder(string spanName, SpanKind spanKind, ISpan parent) : this(spanName, spanKind)
@@ -52,21 +54,19 @@ namespace LoggingTracer
         public IScope StartScopedSpan()
         {
             Logger.Log($"SpanBuilder.StartScopedSpan");
-            return new CurrentSpanUtils.LoggingScope(new LoggingSpan(spanName, spanKind));
+            return new CurrentSpanUtils.LoggingScope(this.span);
         }
 
         public IScope StartScopedSpan(out ISpan currentSpan)
         {
             Logger.Log($"SpanBuilder.StartScopedSpan");
-            return new CurrentSpanUtils.LoggingScope(currentSpan = new LoggingSpan(spanName, spanKind));
+            return new CurrentSpanUtils.LoggingScope(currentSpan = this.span);
         }
 
         public ISpan StartSpan()
         {
             Logger.Log($"SpanBuilder.StartSpan");
-            return new LoggingSpan(spanName, spanKind);
+            return this.span;
         }
     }
 }
-
-

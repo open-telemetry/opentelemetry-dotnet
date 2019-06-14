@@ -3,6 +3,7 @@ using System.Threading;
 
 namespace LoggingTracer
 {
+
     public static class Logger
     {
         static DateTime startTime = DateTime.UtcNow;
@@ -18,5 +19,3 @@ namespace LoggingTracer
         }
     }
 }
-
-

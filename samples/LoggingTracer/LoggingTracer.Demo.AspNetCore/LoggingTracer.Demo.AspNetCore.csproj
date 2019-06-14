@@ -5,17 +5,16 @@
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
   </PropertyGroup>
 
-
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
-  </ItemGroup>
 
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
 
-  <ItemGroup>
-    <ProjectReference Include="..\LoggingTracer\LoggingTracer.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Collector.AspNetCore\OpenTelemetry.Collector.AspNetCore.csproj" />
+
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Collector.Dependencies\OpenTelemetry.Collector.Dependencies.csproj" />
+    <ProjectReference Include="..\LoggingTracer\LoggingTracer.csproj" />
   </ItemGroup>
 
 </Project>
