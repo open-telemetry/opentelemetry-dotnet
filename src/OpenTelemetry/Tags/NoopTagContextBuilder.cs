@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Tags
 {
     using System;
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
     using OpenTelemetry.Internal;
 
     internal sealed class NoopTagContextBuilder : TagContextBuilderBase
@@ -28,7 +28,7 @@ namespace OpenTelemetry.Tags
         {
         }
 
-        public override ITagContextBuilder Put(ITagKey key, ITagValue value)
+        public override ITagContextBuilder Put(TagKey key, TagValue value)
         {
             if (key == null)
             {
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Tags
             return this;
         }
 
-        public override ITagContextBuilder Remove(ITagKey key)
+        public override ITagContextBuilder Remove(TagKey key)
         {
             if (key == null)
             {

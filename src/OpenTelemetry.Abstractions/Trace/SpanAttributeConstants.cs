@@ -18,14 +18,14 @@ namespace OpenTelemetry.Trace
 {
     internal static class SpanAttributeConstants
     {
-        public const string HttpMethodKey = "http.method";
-        public const string HttpStatusCodeKey = "http.status_code";
-        public const string HttpUserAgentKey = "http.user_agent";
-        public const string HttpPathKey = "http.path";
-        public const string HttpHostKey = "http.host";
-        public const string HttpUrlKey = "http.url";
-        public const string HttpRequestSizeKey = "http.request.size";
-        public const string HttpResponseSizeKey = "http.response.size";
-        public const string HttpRouteKey = "http.route";
+        public static readonly string HttpMethodKey = "http.method";
+        public static readonly string HttpStatusCodeKey = "http.status_code";
+        public static readonly string HttpUserAgentKey = "http.user_agent";
+        public static readonly string HttpPathKey = "http.path";
+        public static readonly string HttpHostKey = "http.host";
+        public static readonly string HttpUrlKey = "http.url";
+        public static readonly string HttpRequestSizeKey = "http.request.size";
+        public static readonly string HttpResponseSizeKey = "http.response.size";
+        public static readonly string HttpRouteKey = "http.route";
     }
 }

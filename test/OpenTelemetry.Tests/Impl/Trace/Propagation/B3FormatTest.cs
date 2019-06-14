@@ -14,21 +14,22 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Propagation.Test
+namespace OpenTelemetry.Context.Propagation.Test
 {
     using System;
     using System.Collections.Generic;
+    using OpenTelemetry.Trace;
     using Xunit;
     using Xunit.Abstractions;
 
     public class B3FormatTest
     {
         private static readonly string TRACE_ID_BASE16 = "ff000000000000000000000000000041";
-        private static readonly ITraceId TRACE_ID = TraceId.FromLowerBase16(TRACE_ID_BASE16);
+        private static readonly TraceId TRACE_ID = TraceId.FromLowerBase16(TRACE_ID_BASE16);
         private static readonly string TRACE_ID_BASE16_EIGHT_BYTES = "0000000000000041";
-        private static readonly ITraceId TRACE_ID_EIGHT_BYTES = TraceId.FromLowerBase16("0000000000000000" + TRACE_ID_BASE16_EIGHT_BYTES);
+        private static readonly TraceId TRACE_ID_EIGHT_BYTES = TraceId.FromLowerBase16("0000000000000000" + TRACE_ID_BASE16_EIGHT_BYTES);
         private static readonly string SPAN_ID_BASE16 = "ff00000000000041";
-        private static readonly ISpanId SPAN_ID = SpanId.FromLowerBase16(SPAN_ID_BASE16);
+        private static readonly SpanId SPAN_ID = SpanId.FromLowerBase16(SPAN_ID_BASE16);
         private static readonly byte[] TRACE_OPTIONS_BYTES = new byte[] { 1 };
         private static readonly TraceOptions TRACE_OPTIONS = TraceOptions.FromBytes(TRACE_OPTIONS_BYTES);
         private readonly B3Format b3Format = new B3Format();

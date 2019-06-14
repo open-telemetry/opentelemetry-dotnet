@@ -19,7 +19,10 @@ namespace OpenTelemetry.Trace
     using System;
     using OpenTelemetry.Utils;
 
-    public sealed class SpanId : ISpanId
+    /// <summary>
+    /// Span identifier.
+    /// </summary>
+    public sealed class SpanId : IComparable<SpanId>
     {
         public const int Size = 8;
 
@@ -32,7 +35,7 @@ namespace OpenTelemetry.Trace
             this.bytes = bytes;
         }
 
-        public static ISpanId Invalid
+        public static SpanId Invalid
         {
             get
             {
@@ -40,6 +43,9 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <summary>
+        /// Gets the span identifier as bytes.
+        /// </summary>
         public byte[] Bytes
         {
             get
@@ -50,12 +56,15 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether span identifier is valid.
+        /// </summary>
         public bool IsValid
         {
             get { return !Arrays.Equals(this.bytes, InvalidSpanId.bytes); }
         }
 
-        public static ISpanId FromBytes(byte[] buffer)
+        public static SpanId FromBytes(byte[] buffer)
         {
             if (buffer == null)
             {
@@ -72,14 +81,14 @@ namespace OpenTelemetry.Trace
             return new SpanId(bytesCopied);
         }
 
-        public static ISpanId FromBytes(byte[] src, int srcOffset)
+        public static SpanId FromBytes(byte[] src, int srcOffset)
         {
             byte[] bytes = new byte[Size];
             Buffer.BlockCopy(src, srcOffset, bytes, 0, Size);
             return new SpanId(bytes);
         }
 
-        public static ISpanId FromLowerBase16(string src)
+        public static SpanId FromLowerBase16(string src)
         {
             if (src.Length != 2 * Size)
             {
@@ -90,7 +99,7 @@ namespace OpenTelemetry.Trace
             return new SpanId(bytes);
         }
 
-        public static ISpanId GenerateRandomId(IRandomGenerator random)
+        public static SpanId GenerateRandomId(IRandomGenerator random)
         {
             byte[] bytes = new byte[Size];
             do
@@ -101,11 +110,20 @@ namespace OpenTelemetry.Trace
             return new SpanId(bytes);
         }
 
+        /// <summary>
+        /// Copy span id as bytes into destination byte array.
+        /// </summary>
+        /// <param name="dest">Destination byte array.</param>
+        /// <param name="destOffset">Offset to start writing from.</param>
         public void CopyBytesTo(byte[] dest, int destOffset)
         {
             Buffer.BlockCopy(this.bytes, 0, dest, destOffset, Size);
         }
 
+        /// <summary>
+        /// Gets the span identifier as a string.
+        /// </summary>
+        /// <returns>String representation of Span identifier.</returns>
         public string ToLowerBase16()
         {
             var bytes = this.Bytes;
@@ -143,15 +161,15 @@ namespace OpenTelemetry.Trace
                 + "}";
         }
 
-        public int CompareTo(ISpanId other)
+        /// <inheritdoc />
+        public int CompareTo(SpanId other)
         {
-            SpanId that = other as SpanId;
             for (int i = 0; i < Size; i++)
             {
-                if (this.bytes[i] != that.bytes[i])
+                if (this.bytes[i] != other.bytes[i])
                 {
                     sbyte b1 = (sbyte)this.bytes[i];
-                    sbyte b2 = (sbyte)that.bytes[i];
+                    sbyte b2 = (sbyte)other.bytes[i];
 
                     return b1 < b2 ? -1 : 1;
                 }

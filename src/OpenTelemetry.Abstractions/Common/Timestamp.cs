@@ -17,10 +17,12 @@
 namespace OpenTelemetry.Common
 {
     using System;
+    using System.Diagnostics;
 
     /// <summary>
     /// Timestamp with the nanoseconds precision.
     /// </summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed class Timestamp : IComparable<Timestamp>, IComparable
     {
         /// <summary>
@@ -33,11 +35,13 @@ namespace OpenTelemetry.Common
         private const long MillisPerSecond = 1000L;
         private const long NanosPerMilli = 1000 * 1000;
         private const long NanosPerSecond = NanosPerMilli * MillisPerSecond;
+        private readonly string stringRepresentation;
 
         internal Timestamp(long seconds, int nanos)
         {
             this.Seconds = seconds;
             this.Nanos = nanos;
+            this.stringRepresentation = $"Timestamp{{seconds={this.Seconds}, nanos={this.Nanos}}}";
         }
 
         /// <summary>
@@ -59,15 +63,14 @@ namespace OpenTelemetry.Common
         /// <returns>New instance of <see cref="Timestamp"/>.</returns>
         public static Timestamp Create(long seconds, int nanos)
         {
-            // TODO:
             if (seconds < -MaxSeconds || seconds > MaxSeconds)
             {
-                return new Timestamp(0, 0);
+                return Zero;
             }
 
             if (nanos < 0 || nanos > MaxNanos)
             {
-                return new Timestamp(0, 0);
+                return Zero;
             }
 
             return new Timestamp(seconds, nanos);
@@ -80,9 +83,8 @@ namespace OpenTelemetry.Common
         /// <returns>New instance of <see cref="Timestamp"/>.</returns>
         public static Timestamp FromMillis(long millis)
         {
-            Timestamp zero = new Timestamp(0, 0);
             long nanos = millis * NanosPerMilli;
-            return zero.Plus(0, nanos);
+            return Zero.Plus(0, nanos);
         }
 
         /// <summary>
@@ -175,10 +177,7 @@ namespace OpenTelemetry.Common
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Timestamp{"
-                + "seconds=" + this.Seconds + ", "
-                + "nanos=" + this.Nanos
-                + "}";
+            return this.stringRepresentation;
         }
 
         /// <inheritdoc/>

@@ -77,7 +77,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             return ValueType.Unspecified;
         }
 
-        public static LabelDescriptor ToLabelDescriptor(this ITagKey tagKey)
+        public static LabelDescriptor ToLabelDescriptor(this TagKey tagKey)
         {
             var labelDescriptor = new LabelDescriptor();
             
@@ -131,7 +131,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             metricDescriptor.Description = view.Description;
             metricDescriptor.DisplayName = GetDisplayName(viewName, displayNamePrefix);
 
-            foreach (ITagKey tagKey in view.Columns)
+            foreach (TagKey tagKey in view.Columns)
             {
                 var labelDescriptor = tagKey.ToLabelDescriptor();
                 metricDescriptor.Labels.Add(labelDescriptor);
@@ -216,20 +216,20 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <returns></returns>
         public static Metric GetMetric(
             IView view,
-            IReadOnlyList<ITagValue> tagValues,
+            IReadOnlyList<TagValue> tagValues,
             MetricDescriptor metricDescriptor,
             string domain)
         {
             var metric = new Metric();
             metric.Type = metricDescriptor.Type;
 
-            IReadOnlyList<ITagKey> columns = view.Columns;
+            IReadOnlyList<TagKey> columns = view.Columns;
 
             // Populate metric labels
             for (int i = 0; i < tagValues.Count; i++)
             {
-                ITagKey key = columns[i];
-                ITagValue value = tagValues[i];
+                TagKey key = columns[i];
+                TagValue value = tagValues[i];
                 if (value == null)
                 {
                     continue;
@@ -271,7 +271,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             foreach (var entry in viewData.AggregationMap)
             {
                 var timeSeries = new TimeSeries();
-                IReadOnlyList<ITagValue> labels = entry.Key.Values;
+                IReadOnlyList<TagValue> labels = entry.Key.Values;
                 IAggregationData points = entry.Value;
                 
                 timeSeries.Resource = monitoredResource;

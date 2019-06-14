@@ -17,7 +17,9 @@
 namespace OpenTelemetry.Stats.Aggregations
 {
     using System;
+    using System.Diagnostics;
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public class CountData : AggregationData, ICountData
     {
         internal CountData(long count)

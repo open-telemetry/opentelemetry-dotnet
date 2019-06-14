@@ -20,7 +20,7 @@ namespace OpenTelemetry.Trace.Test
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Trace.Propagation;
+    using OpenTelemetry.Context.Propagation;
     using Xunit;
 
     public class TraceComponentTest
@@ -31,12 +31,6 @@ namespace OpenTelemetry.Trace.Test
         public void ImplementationOfTracer()
         {
             Assert.IsType<Tracer>(traceComponent.Tracer);
-        }
-
-        [Fact]
-        public void IplementationOfBinaryPropagationHandler()
-        {
-            Assert.IsType<DefaultPropagationComponent>(traceComponent.PropagationComponent);
         }
 
         [Fact]

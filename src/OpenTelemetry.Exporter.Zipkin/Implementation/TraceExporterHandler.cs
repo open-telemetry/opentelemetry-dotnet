@@ -30,11 +30,13 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
     internal class TraceExporterHandler : IHandler
     {
-        private const string StatusCode = "census.status_code";
-        private const string StatusDescription = "census.status_description";
         private const long MillisPerSecond = 1000L;
         private const long NanosPerMillisecond = 1000 * 1000;
         private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
+
+        private static readonly string StatusCode = "census.status_code";
+        private static readonly string StatusDescription = "census.status_description";
+
         private readonly ZipkinTraceExporterOptions options;
         private readonly ZipkinEndpoint localEndpoint;
         private readonly HttpClient httpClient;
@@ -46,7 +48,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             this.httpClient = client ?? new HttpClient();
         }
 
-        public async Task ExportAsync(IEnumerable<ISpanData> spanDataList)
+        public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
         {
             List<ZipkinSpan> zipkinSpans = new List<ZipkinSpan>();
 
@@ -59,7 +61,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             await this.SendSpansAsync(zipkinSpans);
         }
 
-        internal ZipkinSpan GenerateSpan(ISpanData spanData, ZipkinEndpoint localEndpoint)
+        internal ZipkinSpan GenerateSpan(SpanData spanData, ZipkinEndpoint localEndpoint)
         {
             SpanContext context = spanData.Context;
             long startTimestamp = this.ToEpochMicroseconds(spanData.StartTimestamp);
@@ -122,7 +124,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 (arg) => { return null; });
         }
 
-        private string EncodeTraceId(ITraceId traceId)
+        private string EncodeTraceId(TraceId traceId)
         {
             var id = traceId.ToLowerBase16();
 
@@ -134,12 +136,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return id;
         }
 
-        private string EncodeSpanId(ISpanId spanId)
+        private string EncodeSpanId(SpanId spanId)
         {
             return spanId.ToLowerBase16();
         }
 
-        private ZipkinSpanKind ToSpanKind(ISpanData spanData)
+        private ZipkinSpanKind ToSpanKind(SpanData spanData)
         {
             if (spanData.Kind == SpanKind.Server)
             {

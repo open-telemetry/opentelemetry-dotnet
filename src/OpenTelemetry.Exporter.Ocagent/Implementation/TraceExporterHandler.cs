@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
         private const uint MaxSpanBatchSize = 32;
         private readonly Channel channel;
         private readonly OpenTelemetry.Proto.Agent.Trace.V1.TraceService.TraceServiceClient traceClient;
-        private readonly ConcurrentQueue<ISpanData> spans = new ConcurrentQueue<ISpanData>();
+        private readonly ConcurrentQueue<SpanData> spans = new ConcurrentQueue<SpanData>();
         private readonly Node node;
         private readonly uint spanBatchSize;
         private CancellationTokenSource cts;
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                 LibraryInfo = new LibraryInfo
                 {
                     Language = LibraryInfo.Types.Language.CSharp,
-                    CoreLibraryVersion = GetAssemblyVersion(typeof(ISpanData).Assembly),
+                    CoreLibraryVersion = GetAssemblyVersion(typeof(SpanData).Assembly),
                     ExporterVersion = GetAssemblyVersion(typeof(OcagentExporter).Assembly),
                 },
                 ServiceInfo = new ServiceInfo
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             this.Start();
         }
 
-        public async Task ExportAsync(IEnumerable<ISpanData> spanDataList)
+        public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
         {
             await Task.Run(() =>
             {

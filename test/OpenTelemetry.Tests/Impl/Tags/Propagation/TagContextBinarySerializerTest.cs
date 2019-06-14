@@ -79,9 +79,9 @@ namespace OpenTelemetry.Tags.Propagation.Test
 
             }
 
-            public override IEnumerator<ITag> GetEnumerator()
+            public override IEnumerator<Tag> GetEnumerator()
             {
-                return new List<ITag>() { Tag.Create(TagKey.Create("key"), TagValue.Create("value")) }.GetEnumerator();
+                return new List<Tag>() { Tag.Create(TagKey.Create("key"), TagValue.Create("value")) }.GetEnumerator();
             }
         }
     }

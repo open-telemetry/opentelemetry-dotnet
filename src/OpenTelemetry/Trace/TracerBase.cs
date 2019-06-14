@@ -17,13 +17,16 @@
 namespace OpenTelemetry.Trace
 {
     using System;
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Internal;
 
+    /// <inheritdoc/>
     public abstract class TracerBase : ITracer
     {
         private static readonly NoopTracer NoopTracerInstance = new NoopTracer();
 
+        /// <inheritdoc/>
         public ISpan CurrentSpan
         {
             get
@@ -33,6 +36,15 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
+        public abstract IBinaryFormat BinaryFormat { get; }
+
+        /// <inheritdoc/>
+        public abstract ITextFormat TextFormat { get; }
+
+        /// <summary>
+        /// No-op tracer.
+        /// </summary>
         internal static NoopTracer NoopTracer
         {
             get
@@ -65,6 +77,6 @@ namespace OpenTelemetry.Trace
         public abstract ISpanBuilder SpanBuilderWithParentContext(string spanName, SpanKind spanKind = SpanKind.Internal, SpanContext remoteParentSpanContext = null);
 
         /// <inheritdoc/>
-        public abstract void RecordSpanData(ISpanData span);
+        public abstract void RecordSpanData(SpanData span);
     }
 }

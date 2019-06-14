@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         public static readonly SpanContext Blank = new SpanContext(Trace.TraceId.Invalid, Trace.SpanId.Invalid, TraceOptions.Default, Tracestate.Empty);
 
-        private SpanContext(ITraceId traceId, ISpanId spanId, TraceOptions traceOptions, Tracestate tracestate)
+        private SpanContext(TraceId traceId, SpanId spanId, TraceOptions traceOptions, Tracestate tracestate)
         {
             this.TraceId = traceId;
             this.SpanId = spanId;
@@ -37,14 +37,14 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets the <see cref="ITraceId"/> associated with this <see cref="SpanContext"/>.
+        /// Gets the <see cref="TraceId"/> associated with this <see cref="SpanContext"/>.
         /// </summary>
-        public ITraceId TraceId { get; }
+        public TraceId TraceId { get; }
 
         /// <summary>
-        /// Gets the <see cref="ISpanId"/> associated with this <see cref="SpanContext"/>.
+        /// Gets the <see cref="SpanId"/> associated with this <see cref="SpanContext"/>.
         /// </summary>
-        public ISpanId SpanId { get; }
+        public SpanId SpanId { get; }
 
         /// <summary>
         /// Gets the <see cref="TraceOptions"/> associated with this <see cref="SpanContext"/>.
@@ -64,12 +64,12 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Creates a new <see cref="SpanContext"/> with the given identifiers and options.
         /// </summary>
-        /// <param name="traceId">The <see cref="ITraceId"/> to associate with the <see cref="SpanContext"/>.</param>
-        /// <param name="spanId">The <see cref="ISpanId"/> to associate with the <see cref="SpanContext"/>.</param>
+        /// <param name="traceId">The <see cref="TraceId"/> to associate with the <see cref="SpanContext"/>.</param>
+        /// <param name="spanId">The <see cref="SpanId"/> to associate with the <see cref="SpanContext"/>.</param>
         /// <param name="traceOptions">The <see cref="TraceOptions"/> to associate with the <see cref="SpanContext"/>.</param>
         /// <param name="tracestate">The <see cref="Tracestate"/> to associate with the <see cref="SpanContext"/>.</param>
         /// <returns>A new <see cref="SpanContext"/> with the given identifiers and options.</returns>
-        public static SpanContext Create(ITraceId traceId, ISpanId spanId, TraceOptions traceOptions, Tracestate tracestate)
+        public static SpanContext Create(TraceId traceId, SpanId spanId, TraceOptions traceOptions, Tracestate tracestate)
         {
             return new SpanContext(traceId, spanId, traceOptions, tracestate);
         }

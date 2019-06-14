@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace.Internal
             }
         }
 
-        public override ISpanId ParentSpanId
+        public override SpanId ParentSpanId
         {
             get
             {
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Trace.Internal
             return "BlankSpan";
         }
 
-        public override ISpanData ToSpanData()
+        public override SpanData ToSpanData()
         {
             return null;
         }

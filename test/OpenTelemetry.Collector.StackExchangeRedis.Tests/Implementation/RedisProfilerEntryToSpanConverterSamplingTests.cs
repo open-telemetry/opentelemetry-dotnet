@@ -32,8 +32,8 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var m = new Mock<ISampler>();
             m.Setup(x => x.ShouldSample(
                 It.IsAny<SpanContext>(), 
-                It.IsAny<ITraceId>(), 
-                It.IsAny<ISpanId>(), 
+                It.IsAny<TraceId>(), 
+                It.IsAny<SpanId>(), 
                 It.IsAny<string>(), 
                 It.IsAny<IEnumerable<ISpan>>())).Returns(true);
 
@@ -42,8 +42,8 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             m = new Mock<ISampler>();
             m.Setup(x => x.ShouldSample(
                 It.IsAny<SpanContext>(), 
-                It.IsAny<ITraceId>(), 
-                It.IsAny<ISpanId>(), 
+                It.IsAny<TraceId>(), 
+                It.IsAny<SpanId>(), 
                 It.IsAny<string>(), 
                 It.IsAny<IEnumerable<ISpan>>())).Returns(false);
 
@@ -67,8 +67,8 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 
             m.Verify(x => x.ShouldSample(
                 It.Is<SpanContext>(y => y == parentContext),
-                It.Is<ITraceId>(y => y == traceId && y == context.TraceId),
-                It.Is<ISpanId>(y => y.IsValid && y == context.SpanId),
+                It.Is<TraceId>(y => y == traceId && y == context.TraceId),
+                It.Is<SpanId>(y => y.IsValid && y == context.SpanId),
                 It.Is<string>(y => y == "SET"),
                 It.Is<IEnumerable<ISpan>>(y => y == null)));
         }
@@ -79,17 +79,17 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var m = new Mock<ISampler>();
             m.Setup(x => x.ShouldSample(
                 It.IsAny<SpanContext>(), 
-                It.IsAny<ITraceId>(), 
-                It.IsAny<ISpanId>(), 
+                It.IsAny<TraceId>(), 
+                It.IsAny<SpanId>(), 
                 It.IsAny<string>(), 
-                It.IsAny<IEnumerable<ISpan>>())).Returns((SpanContext parentContext, ITraceId traceId, ISpanId spanId, string name, IEnumerable<ISpan> parentLinks) => parentContext.TraceOptions.IsSampled);
+                It.IsAny<IEnumerable<ISpan>>())).Returns((SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ISpan> parentLinks) => parentContext.TraceOptions.IsSampled);
 
             RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Blank, "SET", m.Object, out var context, out var parentId);
 
             m.Verify(x => x.ShouldSample(
                 It.Is<SpanContext>(y => y == SpanContext.Blank),
-                It.Is<ITraceId>(y => y.IsValid && y == context.TraceId),
-                It.Is<ISpanId>(y => y.IsValid && y == context.SpanId),
+                It.Is<TraceId>(y => y.IsValid && y == context.TraceId),
+                It.Is<SpanId>(y => y.IsValid && y == context.SpanId),
                 It.Is<string>(y => y == "SET"),
                 It.Is<IEnumerable<ISpan>>(y => y == null)));
 

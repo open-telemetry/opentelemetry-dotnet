@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             this.telemetryClient = new TelemetryClient(telemetryConfiguration);
         }
 
-        public async Task ExportAsync(IEnumerable<ISpanData> spanDataList)
+        public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
         {
             await Task.Run(async () =>
             {
@@ -125,9 +125,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     var linkId = 0;
                     foreach (var link in span.Links.Links)
                     {
-                        AddPropertyWithAdjustedName(props, "link" + linkId + "_traceId", link.TraceId.ToLowerBase16());
-                        AddPropertyWithAdjustedName(props, "link" + linkId + "_spanId", link.SpanId.ToLowerBase16());
-                        AddPropertyWithAdjustedName(props, "link" + linkId + "_type", link.Type.ToString());
+                        AddPropertyWithAdjustedName(props, "link" + linkId + "_traceId", link.Context.TraceId.ToLowerBase16());
+                        AddPropertyWithAdjustedName(props, "link" + linkId + "_spanId", link.Context.SpanId.ToLowerBase16());
 
                         foreach (var attr in link.Attributes)
                         {
@@ -255,7 +254,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             props.Add(n, value);
         }
 
-        private void ExtractGenericProperties(ISpanData span, out SpanKind resultKind, out DateTimeOffset timestamp, out string name, out string resultCode, out IDictionary<string, string> props, out string traceId, out string spanId, out string parentId, out Tracestate tracestate, out bool? success, out TimeSpan duration)
+        private void ExtractGenericProperties(SpanData span, out SpanKind resultKind, out DateTimeOffset timestamp, out string name, out string resultCode, out IDictionary<string, string> props, out string traceId, out string spanId, out string parentId, out Tracestate tracestate, out bool? success, out TimeSpan duration)
         {
             resultKind = span.Kind;
 

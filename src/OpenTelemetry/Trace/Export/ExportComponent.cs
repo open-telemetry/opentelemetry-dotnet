@@ -19,7 +19,8 @@ namespace OpenTelemetry.Trace.Export
     using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
 
-    public sealed class ExportComponent : ExportComponentBase
+    /// <inheritdoc/>
+    public sealed class ExportComponent : IExportComponent
     {
         private const int ExporterBufferSize = 32;
 
@@ -39,18 +40,40 @@ namespace OpenTelemetry.Trace.Export
                     : Export.SampledSpanStoreBase.NoopSampledSpanStore;
         }
 
-        public override ISpanExporter SpanExporter { get; }
+        /// <summary>
+        /// Gets a new no-op <see cref="IExportComponent"/>.
+        /// </summary>
+        public static IExportComponent NewNoopExportComponent => new NoopExportComponent();
 
-        public override IRunningSpanStore RunningSpanStore { get; }
+        /// <inheritdoc/>
+        public ISpanExporter SpanExporter { get; }
 
-        public override ISampledSpanStore SampledSpanStore { get; }
+        /// <summary>
+        /// Gets the running span store.
+        /// </summary>
+        public IRunningSpanStore RunningSpanStore { get; }
 
-        public static IExportComponent CreateWithoutInProcessStores(IEventQueue eventQueue)
+        /// <summary>
+        /// Gets the sampled span store.
+        /// </summary>
+        public ISampledSpanStore SampledSpanStore { get; }
+
+        /// <summary>
+        /// Constructs a new <see cref="ExportComponent"/> with noop span stores.
+        /// </summary>
+        /// <param name="eventQueue"><see cref="IEventQueue"/> for sampled span store.</param>
+        /// <returns>A new <see cref="ExportComponent"/>.</returns>
+        public static ExportComponent CreateWithoutInProcessStores(IEventQueue eventQueue)
         {
             return new ExportComponent(false, eventQueue);
         }
 
-        public static IExportComponent CreateWithInProcessStores(IEventQueue eventQueue)
+        /// <summary>
+        /// Constructs a new <see cref="ExportComponent"/> with in process span stores.
+        /// </summary>
+        /// <param name="eventQueue"><see cref="IEventQueue"/> for sampled span store.</param>
+        /// <returns>A new <see cref="ExportComponent"/>.</returns>
+        public static ExportComponent CreateWithInProcessStores(IEventQueue eventQueue)
         {
             return new ExportComponent(true, eventQueue);
         }
