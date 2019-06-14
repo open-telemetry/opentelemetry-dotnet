@@ -56,7 +56,7 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
-        internal async Task ExportAsync(ISpanData export, CancellationToken token)
+        internal async Task ExportAsync(SpanData export, CancellationToken token)
         {
             var handlers = this.serviceHandlers.Values;
             foreach (var handler in handlers)
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Trace.Export
                 try
                 {
                     // TODO: the async handlers could be run in parallel.
-                    await handler.ExportAsync(new ISpanData[] { export });
+                    await handler.ExportAsync(new SpanData[] { export });
                 }
                 catch (Exception ex)
                 {
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
-        internal async Task ExportAsync(IEnumerable<ISpanData> export, CancellationToken token)
+        internal async Task ExportAsync(IEnumerable<SpanData> export, CancellationToken token)
         {
             var handlers = this.serviceHandlers.Values;
             foreach (var handler in handlers)
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Trace.Export
 
         internal async void Run(object obj)
         {
-            List<ISpanData> toExport = new List<ISpanData>();
+            List<SpanData> toExport = new List<SpanData>();
             while (!this.shutdown)
             {
                 try
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Trace.Export
             this.serviceHandlers.TryRemove(name, out IHandler prev);
         }
 
-        internal ISpanData ToSpanData(ISpan span)
+        internal SpanData ToSpanData(ISpan span)
         {
             if (!(span is Span spanImpl))
             {
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Trace.Export
             return spanImpl.ToSpanData();
         }
 
-        private void BuildList(ISpan item, ICollection<ISpanData> toExport)
+        private void BuildList(ISpan item, ICollection<SpanData> toExport)
         {
             if (item is Span span)
             {

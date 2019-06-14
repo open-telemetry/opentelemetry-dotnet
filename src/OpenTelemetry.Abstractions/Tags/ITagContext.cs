@@ -21,7 +21,7 @@ namespace OpenTelemetry.Tags
     /// <summary>
     /// Collection of tags representing the tags context.
     /// </summary>
-    public interface ITagContext : IEnumerable<ITag>
+    public interface ITagContext : IEnumerable<Tag>
     {
     }
 }

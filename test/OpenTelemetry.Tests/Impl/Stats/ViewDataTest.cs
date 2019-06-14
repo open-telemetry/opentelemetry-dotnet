@@ -26,15 +26,15 @@ namespace OpenTelemetry.Stats.Test
     public class ViewDataTest
     {
         // tag keys
-        private static readonly ITagKey K1 = TagKey.Create("k1");
-        private static readonly ITagKey K2 = TagKey.Create("k2");
-        private static readonly IReadOnlyList<ITagKey> TAG_KEYS = new List<ITagKey>() { K1, K2 };
+        private static readonly TagKey K1 = TagKey.Create("k1");
+        private static readonly TagKey K2 = TagKey.Create("k2");
+        private static readonly IReadOnlyList<TagKey> TAG_KEYS = new List<TagKey>() { K1, K2 };
 
         // tag values
-        private static readonly ITagValue V1 = TagValue.Create("v1");
-        private static readonly ITagValue V2 = TagValue.Create("v2");
-        private static readonly ITagValue V10 = TagValue.Create("v10");
-        private static readonly ITagValue V20 = TagValue.Create("v20");
+        private static readonly TagValue V1 = TagValue.Create("v1");
+        private static readonly TagValue V2 = TagValue.Create("v2");
+        private static readonly TagValue V10 = TagValue.Create("v10");
+        private static readonly TagValue V20 = TagValue.Create("v20");
 
         // private static readonly AggregationWindow CUMULATIVE = Cumulative.Create();
         // private static readonly AggregationWindow INTERVAL_HOUR = Interval.Create(Duration.Create(3600, 0));
@@ -46,8 +46,8 @@ namespace OpenTelemetry.Stats.Test
 
         private static readonly IDictionary<TagValues, IAggregationData> ENTRIES =
             new Dictionary<TagValues, IAggregationData>() {
-          { TagValues.Create(new List<ITagValue>(){ V1, V2 }), DistributionData.Create(1, 1, 1, 1, 0, new List<long>() {0L, 1L, 0L }) },
-          { TagValues.Create(new List<ITagValue>(){ V10, V20 }), DistributionData.Create(-5, 6, -20, 5, 100.1,  new List<long>() {5L, 0L, 1L }) },
+          { TagValues.Create(new List<TagValue>(){ V1, V2 }), DistributionData.Create(1, 1, 1, 1, 0, new List<long>() {0L, 1L, 0L }) },
+          { TagValues.Create(new List<TagValue>(){ V10, V20 }), DistributionData.Create(-5, 6, -20, 5, 100.1,  new List<long>() {5L, 0L, 1L }) },
             };
 
         // name
@@ -202,7 +202,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void PreventAggregationAndAggregationDataMismatch_SumDouble_SumLong()
         {
-            var tagValues = TagValues.Create(new List<ITagValue>() { V1, V2 });
+            var tagValues = TagValues.Create(new List<TagValue>() { V1, V2 });
             AggregationAndAggregationDataMismatch(
                 CreateView(Sum.Create(), MEASURE_DOUBLE),
                 new Dictionary<TagValues, IAggregationData>()
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void PreventAggregationAndAggregationDataMismatch_SumLong_SumDouble()
         {
-            var tagValues = TagValues.Create(new List<ITagValue>() { V1, V2 });
+            var tagValues = TagValues.Create(new List<TagValue>() { V1, V2 });
             AggregationAndAggregationDataMismatch(
                 CreateView(Sum.Create(), MEASURE_LONG),
                 new Dictionary<TagValues, IAggregationData>()
@@ -238,8 +238,8 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void PreventAggregationAndAggregationDataMismatch_Distribution_Count()
         {
-            var tagValues1 = TagValues.Create(new List<ITagValue>() { V1, V2 });
-            var tagValues2 = TagValues.Create(new List<ITagValue>() { V10, V20 });
+            var tagValues1 = TagValues.Create(new List<TagValue>() { V1, V2 });
+            var tagValues2 = TagValues.Create(new List<TagValue>() { V10, V20 });
             AggregationAndAggregationDataMismatch(
                 CreateView(DISTRIBUTION),
                 new Dictionary<TagValues, IAggregationData>()
@@ -252,7 +252,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void PreventAggregationAndAggregationDataMismatch_LastValueDouble_LastValueLong()
         {
-            var tagValues = TagValues.Create(new List<ITagValue>() { V1, V2 });
+            var tagValues = TagValues.Create(new List<TagValue>() { V1, V2 });
             AggregationAndAggregationDataMismatch(
                 CreateView(LastValue.Create(), MEASURE_DOUBLE),
                 new Dictionary<TagValues, IAggregationData>()
@@ -264,7 +264,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void PreventAggregationAndAggregationDataMismatch_LastValueLong_LastValueDouble()
         {
-            var tagValues = TagValues.Create(new List<ITagValue>() { V1, V2 });
+            var tagValues = TagValues.Create(new List<TagValue>() { V1, V2 });
             AggregationAndAggregationDataMismatch(
                 CreateView(LastValue.Create(), MEASURE_LONG),
                 new Dictionary<TagValues, IAggregationData>()

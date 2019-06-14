@@ -93,7 +93,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the parent span id.
         /// </summary>
-        public abstract ISpanId ParentSpanId { get; }
+        public abstract SpanId ParentSpanId { get; }
 
         /// <summary>
         /// Gets a value indicating whether this span was already stopped.
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Trace
         /// Converts this span into span data for exporting purposes.
         /// </summary>
         /// <returns>Span Data corresponding current span.</returns>
-        public abstract ISpanData ToSpanData();
+        public abstract SpanData ToSpanData();
 
         /// <inheritdoc/>
         public abstract void SetAttribute(string key, string value);

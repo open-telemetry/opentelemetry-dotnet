@@ -16,7 +16,8 @@
 
 namespace OpenTelemetry.Trace
 {
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
+    using OpenTelemetry.Context.Propagation;
 
     /// <summary>
     /// Tracer to record distributed tracing informaiton.
@@ -27,6 +28,16 @@ namespace OpenTelemetry.Trace
         /// Gets the current span from the context.
         /// </summary>
         ISpan CurrentSpan { get; }
+
+        /// <summary>
+        /// Gets the <see cref="IBinaryFormat"/> for this implementation.
+        /// </summary>
+        IBinaryFormat BinaryFormat { get; }
+
+        /// <summary>
+        /// Gets the <see cref="ITextFormat"/> for this implementation.
+        /// </summary>
+        ITextFormat TextFormat { get; }
 
         /// <summary>
         /// Associates the span with the current context.
@@ -62,12 +73,12 @@ namespace OpenTelemetry.Trace
         ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, SpanContext parentContext = null);
 
         /// <summary>
-        /// Records <see cref="ISpanData"/>. This API allows to send a pre-populated span object to the
+        /// Records <see cref="SpanData"/>. This API allows to send a pre-populated span object to the
         /// exporter.Sampling and recording decisions as well as other collection optimizations is a
         /// responsibility of a caller.Note, the <see cref="SpanContext" /> object on the span population with
         /// the values that will allow correlation of telemetry is also a caller responsibility.
         /// </summary>
         /// <param name="span">Immutable Span Data to be reported to all exporters.</param>
-        void RecordSpanData(ISpanData span);
+        void RecordSpanData(SpanData span);
     }
 }

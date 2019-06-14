@@ -17,10 +17,13 @@
 namespace OpenTelemetry.Stats.Aggregations
 {
     using System;
+    using System.Diagnostics;
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed class Count : Aggregation, ICount
     {
         private static readonly Count Instance = new Count();
+        private static readonly string StringRepresentation = "Count{}";
 
         private Count()
         {
@@ -39,8 +42,7 @@ namespace OpenTelemetry.Stats.Aggregations
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Count{"
-                + "}";
+            return StringRepresentation;
         }
 
     /// <inheritdoc/>

@@ -21,8 +21,8 @@ namespace OpenTelemetry.Collector.Dependencies
     using System.Net.Http;
     using OpenTelemetry.Collector.Dependencies.Common;
     using OpenTelemetry.Collector.Dependencies.Implementation;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Propagation;
 
     /// <summary>
     /// Dependencies collector.
@@ -37,12 +37,11 @@ namespace OpenTelemetry.Collector.Dependencies
         /// <param name="options">Configuration options for dependencies collector.</param>
         /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="sampler">Sampler to use to sample dependnecy calls.</param>
-        /// <param name="propagationComponent">Propagation component to use to encode span context to the wire.</param>
-        public DependenciesCollector(DependenciesCollectorOptions options, ITracer tracer, ISampler sampler, IPropagationComponent propagationComponent)
+        public DependenciesCollector(DependenciesCollectorOptions options, ITracer tracer, ISampler sampler)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
                 new Dictionary<string, Func<ITracer, Func<HttpRequestMessage, ISampler>, ListenerHandler>>()
-                { { "HttpHandlerDiagnosticListener", (t, s) => new HttpHandlerDiagnosticListener(t, s, propagationComponent) } },
+                { { "HttpHandlerDiagnosticListener", (t, s) => new HttpHandlerDiagnosticListener(t, s) } },
                 tracer,
                 x =>
                 {

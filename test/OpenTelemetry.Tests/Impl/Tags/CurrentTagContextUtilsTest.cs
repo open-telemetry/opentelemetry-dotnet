@@ -17,13 +17,13 @@
 namespace OpenTelemetry.Tags.Test
 {
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
     using OpenTelemetry.Tags.Unsafe;
     using Xunit;
 
     public class CurrentTagContextUtilsTest
     {
-        private static readonly ITag TAG = Tag.Create(TagKey.Create("key"), TagValue.Create("value"));
+        private static readonly Tag TAG = Tag.Create(TagKey.Create("key"), TagValue.Create("value"));
 
         private readonly ITagContext tagContext = new TestTagContext();
 
@@ -103,9 +103,9 @@ namespace OpenTelemetry.Tags.Test
 
             }
 
-            public override IEnumerator<ITag> GetEnumerator()
+            public override IEnumerator<Tag> GetEnumerator()
             {
-                return new List<ITag>() { TAG }.GetEnumerator();
+                return new List<Tag>() { TAG }.GetEnumerator();
             }
         }
     }

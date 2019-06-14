@@ -6,6 +6,10 @@ process content of "Unreleased" section content will generate release notes for
 the release.
 
 ## Unreleased
+- Modified Prometheus Exporter to add listening on all hostnames support.
+    1. Modified the content of PrometheusExporterOptions from `Uri()` to `string`.
+    2. `HttpListener()` can support "+" as: hostname which listens on all ports.
+    3. Modified samples/TestPrometheus.cs to safely use the new implementation.
 
 - Copy from
   [OpenCensus](http://github.com/census-instrumentation/opencensus-csharp) at

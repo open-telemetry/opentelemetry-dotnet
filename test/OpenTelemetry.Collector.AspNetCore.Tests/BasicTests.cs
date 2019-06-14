@@ -28,9 +28,10 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using Moq;
     using Microsoft.AspNetCore.TestHost;
     using System;
-    using OpenTelemetry.Trace.Propagation;
+    using OpenTelemetry.Context.Propagation;
     using Microsoft.AspNetCore.Http;
     using System.Collections.Generic;
+    using System.Text;
 
     // See https://github.com/aspnet/Docs/tree/master/aspnetcore/test/integration-tests/samples/2.x/IntegrationTestsSample
     public class BasicTests
@@ -92,7 +93,6 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         public async Task SuccesfulTemplateControllerCallUsesParentContext()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
 
             var expectedTraceId = TraceId.GenerateRandomId(new RandomGenerator());
             var expectedSpanId = SpanId.GenerateRandomId(new RandomGenerator());
@@ -105,9 +105,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 Tracestate.Empty
                 ));
 
-            var propagationComponent = new Mock<IPropagationComponent>();
-            propagationComponent.SetupGet(m => m.TextFormat).Returns(tf.Object);
-
+            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
 
             // Arrange
             using (var client = this.factory
@@ -115,7 +113,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     builder.ConfigureTestServices((services) =>
                     {
                         services.AddSingleton<ITracer>(tracer);
-                        services.AddSingleton<IPropagationComponent>(propagationComponent.Object);
+                        services.AddSingleton<ITextFormat>(tf.Object);
+                        services.AddSingleton<IBinaryFormat>(new BinaryFormat());
                     }))
                 .CreateClient())
             {

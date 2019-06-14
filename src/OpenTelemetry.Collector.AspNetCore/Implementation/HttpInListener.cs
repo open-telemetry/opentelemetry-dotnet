@@ -23,23 +23,21 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Http.Features;
     using OpenTelemetry.Collector.AspNetCore.Common;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Propagation;
 
     internal class HttpInListener : ListenerHandler
     {
-        private const string UnknownHostName = "UNKNOWN-HOST";
+        private static readonly string UnknownHostName = "UNKNOWN-HOST";
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher stopContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher beforeActionActionDescriptorFetcher = new PropertyFetcher("actionDescriptor");
         private readonly PropertyFetcher beforeActionAttributeRouteInfoFetcher = new PropertyFetcher("AttributeRouteInfo");
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
-        private readonly IPropagationComponent propagationComponent;
 
-        public HttpInListener(ITracer tracer, Func<HttpRequest, ISampler> samplerFactory, IPropagationComponent propagationComponent)
+        public HttpInListener(ITracer tracer, Func<HttpRequest, ISampler> samplerFactory)
             : base("Microsoft.AspNetCore", tracer, samplerFactory)
         {
-            this.propagationComponent = propagationComponent;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -54,7 +52,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
             HttpRequest request = context.Request;
 
-            var ctx = this.propagationComponent.TextFormat.Extract<HttpRequest>(
+            var ctx = this.Tracer.TextFormat.Extract<HttpRequest>(
                 request,
                 (r, name) => r.Headers[name]);
 

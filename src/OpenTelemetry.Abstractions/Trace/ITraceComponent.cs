@@ -16,10 +16,8 @@
 
 namespace OpenTelemetry.Trace
 {
-    using OpenTelemetry.Common;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Propagation;
 
     /// <summary>
     /// Trace component holds all the extensibility points required for distributed tracing.
@@ -32,18 +30,13 @@ namespace OpenTelemetry.Trace
         ITracer Tracer { get; }
 
         /// <summary>
-        /// Gets the propagation component that defines how to extract and inject the context from the wire protocols.
+        /// Gets the trace config.
         /// </summary>
-        IPropagationComponent PropagationComponent { get; }
+        ITraceConfig TraceConfig { get; }
 
         /// <summary>
         /// Gets the exporter to use to upload spans.
         /// </summary>
         IExportComponent ExportComponent { get; }
-
-        /// <summary>
-        /// Gets the tracer configuration. Include sampling definition and limits.
-        /// </summary>
-        ITraceConfig TraceConfig { get; }
     }
 }

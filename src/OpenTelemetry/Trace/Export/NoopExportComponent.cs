@@ -16,32 +16,20 @@
 
 namespace OpenTelemetry.Trace.Export
 {
-    internal sealed class NoopExportComponent : IExportComponent
+    /// <inheritdoc/>
+    public sealed class NoopExportComponent : IExportComponent
     {
-        private readonly ISampledSpanStore noopSampledSpanStore = Export.SampledSpanStoreBase.NewNoopSampledSpanStore;
+        /// <inheritdoc/>
+        public ISpanExporter SpanExporter => Export.SpanExporter.NoopSpanExporter;
 
-        public ISpanExporter SpanExporter
-        {
-            get
-            {
-                return Export.SpanExporter.NoopSpanExporter;
-            }
-        }
+        /// <summary>
+        /// Gets the running span store.
+        /// </summary>
+        public IRunningSpanStore RunningSpanStore => Export.RunningSpanStoreBase.NoopRunningSpanStore;
 
-        public IRunningSpanStore RunningSpanStore
-        {
-            get
-            {
-                return Export.RunningSpanStoreBase.NoopRunningSpanStore;
-            }
-        }
-
-        public ISampledSpanStore SampledSpanStore
-        {
-            get
-            {
-                return this.noopSampledSpanStore;
-            }
-        }
+        /// <summary>
+        /// Gets the sampled span store.
+        /// </summary>
+        public ISampledSpanStore SampledSpanStore { get; } = Export.SampledSpanStoreBase.NewNoopSampledSpanStore;
     }
 }

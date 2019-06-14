@@ -24,47 +24,47 @@ namespace OpenTelemetry.Tags.Test
     {
         private readonly ITagger tagger = new Tagger(new CurrentTaggingState());
 
-        private static readonly ITagKey K1 = TagKey.Create("k1");
-        private static readonly ITagKey K2 = TagKey.Create("k2");
+        private static readonly TagKey K1 = TagKey.Create("k1");
+        private static readonly TagKey K2 = TagKey.Create("k2");
 
-        private static readonly ITagValue V1 = TagValue.Create("v1");
-        private static readonly ITagValue V2 = TagValue.Create("v2");
+        private static readonly TagValue V1 = TagValue.Create("v1");
+        private static readonly TagValue V2 = TagValue.Create("v2");
 
 
         [Fact]
         public void getTags_empty()
         {
-            TagContext tags = new TagContext(new Dictionary<ITagKey, ITagValue>());
+            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>());
             Assert.Empty(tags.Tags);
         }
 
         [Fact]
         public void getTags_nonEmpty()
         {
-            TagContext tags = new TagContext(new Dictionary<ITagKey, ITagValue>() { { K1, V1 }, { K2, V2 } });
-            Assert.Equal(new Dictionary<ITagKey, ITagValue>() { { K1, V1 }, { K2, V2 } }, tags.Tags);
+            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } });
+            Assert.Equal(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } }, tags.Tags);
         }
 
         [Fact]
         public void Put_NewKey()
         {
-            TagContext tags = new TagContext(new Dictionary<ITagKey, ITagValue>() { { K1, V1 } });
-            Assert.Equal(new Dictionary<ITagKey, ITagValue>() { { K1, V1 }, { K2, V2 } },
+            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
+            Assert.Equal(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } },
                 ((TagContext)tagger.ToBuilder(tags).Put(K2, V2).Build()).Tags);
         }
 
         [Fact]
         public void Put_ExistingKey()
         {
-            TagContext tags = new TagContext(new Dictionary<ITagKey, ITagValue>() { { K1, V1 } });
-            Assert.Equal(new Dictionary<ITagKey, ITagValue>() { { K1, V2 } },
+            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
+            Assert.Equal(new Dictionary<TagKey, TagValue>() { { K1, V2 } },
                 ((TagContext)tagger.ToBuilder(tags).Put(K1, V2).Build()).Tags);
         }
 
         [Fact]
         public void Put_NullKey()
         {
-            TagContext tags = new TagContext(new Dictionary<ITagKey, ITagValue>() { { K1, V1 } });
+            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
             ITagContextBuilder builder = tagger.ToBuilder(tags);
             Assert.Throws<ArgumentNullException>(() => builder.Put(null, V2));
         }
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void Put_NullValue()
         {
-            TagContext tags = new TagContext(new Dictionary<ITagKey, ITagValue>() { { K1, V1 } });
+            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
             ITagContextBuilder builder = tagger.ToBuilder(tags);
             Assert.Throws<ArgumentNullException>(() => builder.Put(K2, null));
         }
@@ -80,21 +80,21 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void Remove_ExistingKey()
         {
-            TagContext tags = new TagContext(new Dictionary<ITagKey, ITagValue>() { { K1, V1 }, { K2, V2 } });
-            Assert.Equal(new Dictionary<ITagKey, ITagValue>() { { K2, V2 } }, ((TagContext)tagger.ToBuilder(tags).Remove(K1).Build()).Tags);
+            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } });
+            Assert.Equal(new Dictionary<TagKey, TagValue>() { { K2, V2 } }, ((TagContext)tagger.ToBuilder(tags).Remove(K1).Build()).Tags);
         }
 
         [Fact]
         public void Remove_DifferentKey()
         {
-            TagContext tags = new TagContext(new Dictionary<ITagKey, ITagValue>() { { K1, V1 } });
-            Assert.Equal(new Dictionary<ITagKey, ITagValue>() { { K1, V1 } }, ((TagContext)tagger.ToBuilder(tags).Remove(K2).Build()).Tags);
+            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
+            Assert.Equal(new Dictionary<TagKey, TagValue>() { { K1, V1 } }, ((TagContext)tagger.ToBuilder(tags).Remove(K2).Build()).Tags);
         }
 
         [Fact]
         public void Remove_NullKey()
         {
-            TagContext tags = new TagContext(new Dictionary<ITagKey, ITagValue>() { { K1, V1 } });
+            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
             ITagContextBuilder builder = tagger.ToBuilder(tags);
             Assert.Throws<ArgumentNullException>(() => builder.Remove(null));
         }
@@ -102,14 +102,14 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void TestIterator()
         {
-            TagContext tags = new TagContext(new Dictionary<ITagKey, ITagValue>() { { K1, V1 }, { K2, V2 } });
+            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } });
             var i = tags.GetEnumerator();
             Assert.True(i.MoveNext());
-            ITag tag1 = i.Current;
+            Tag tag1 = i.Current;
             Assert.True(i.MoveNext());
-            ITag tag2 = i.Current;
+            Tag tag2 = i.Current;
             Assert.False(i.MoveNext());
-            Assert.Equal(new List<ITag>() { Tag.Create(K1, V1), Tag.Create(K2, V2)}, new List<ITag>() { tag1, tag2 });
+            Assert.Equal(new List<Tag>() { Tag.Create(K1, V1), Tag.Create(K2, V2)}, new List<Tag>() { tag1, tag2 });
 
         }
 
@@ -145,9 +145,9 @@ namespace OpenTelemetry.Tags.Test
 
         class TestTagContext : TagContextBase
         {
-            public override IEnumerator<ITag> GetEnumerator()
+            public override IEnumerator<Tag> GetEnumerator()
             {
-                return new List<ITag>() { Tag.Create(K1, V1), Tag.Create(K2, V2) }.GetEnumerator();
+                return new List<Tag>() { Tag.Create(K1, V1), Tag.Create(K2, V2) }.GetEnumerator();
             }
         }
     }

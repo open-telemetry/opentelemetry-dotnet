@@ -26,9 +26,9 @@ namespace OpenTelemetry.Testing.Export
     public class TestHandler : IHandler
     {
         private readonly object monitor = new object();
-        private readonly List<ISpanData> spanDataList = new List<ISpanData>();
+        private readonly List<SpanData> spanDataList = new List<SpanData>();
 
-        public async Task ExportAsync(IEnumerable<ISpanData> data)
+        public async Task ExportAsync(IEnumerable<SpanData> data)
         {
             lock (monitor)
             {
@@ -38,9 +38,9 @@ namespace OpenTelemetry.Testing.Export
             
         }
 
-        public IEnumerable<ISpanData> WaitForExport(int numberOfSpans)
+        public IEnumerable<SpanData> WaitForExport(int numberOfSpans)
         {
-            var result = new List<ISpanData>();
+            var result = new List<SpanData>();
             lock (monitor) {
                 while (spanDataList.Count < numberOfSpans)
                 {
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Testing.Export
                         return result;
                     }
                 }
-                result = new List<ISpanData>(spanDataList);
+                result = new List<SpanData>(spanDataList);
                 spanDataList.Clear();
             }
             return result;

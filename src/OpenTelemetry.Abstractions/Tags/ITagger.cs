@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Tags
 {
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
 
     /// <summary>
     /// Tags API configuraiton.

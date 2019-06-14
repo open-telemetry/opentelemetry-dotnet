@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             // should return empty before register
             ISampledSpanStore sampledSpanStore =
-                ExportComponent.NewNoopExportComponent.SampledSpanStore;
+                ((NoopExportComponent)ExportComponent.NewNoopExportComponent).SampledSpanStore;
             ISampledSpanStoreSummary summary = sampledSpanStore.Summary;
             Assert.Empty(summary.PerSpanNameSummary);
 
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void NoopSampledSpanStore_GetLatencySampledSpans()
         {
-            ISampledSpanStore sampledSpanStore = ExportComponentBase.NewNoopExportComponent.SampledSpanStore;
+            ISampledSpanStore sampledSpanStore = ((NoopExportComponent)ExportComponent.NewNoopExportComponent).SampledSpanStore;
             var latencySampledSpans =
                 sampledSpanStore.GetLatencySampledSpans(
                     SampledSpanStoreLatencyFilter.Create("TestLatencyFilter", TimeSpan.Zero, TimeSpan.Zero, 0));
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void NoopSampledSpanStore_GetErrorSampledSpans()
         {
-            ISampledSpanStore sampledSpanStore = ExportComponentBase.NewNoopExportComponent.SampledSpanStore;
+            ISampledSpanStore sampledSpanStore = ((NoopExportComponent)ExportComponent.NewNoopExportComponent).SampledSpanStore;
             var errorSampledSpans =
                 sampledSpanStore.GetErrorSampledSpans(
                     SampledSpanStoreErrorFilter.Create("TestErrorFilter", null, 0));
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void NoopSampledSpanStore_GetRegisteredSpanNamesForCollection()
         {
-            ISampledSpanStore sampledSpanStore = ExportComponentBase.NewNoopExportComponent.SampledSpanStore;
+            ISampledSpanStore sampledSpanStore = ((NoopExportComponent)ExportComponent.NewNoopExportComponent).SampledSpanStore;
             sampledSpanStore.RegisterSpanNamesForCollection(new List<string>() { "TestSpan3", "TestSpan4" });
             ISet<string> registeredSpanNames = sampledSpanStore.RegisteredSpanNamesForCollection;
             Assert.Equal(2, registeredSpanNames.Count);
