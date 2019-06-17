@@ -27,20 +27,14 @@ namespace OpenTelemetry.Trace
         {
         }
 
-        public enum Type {
+        public enum Type
+        {
             STRING,
             BOOLEAN,
             LONG,
-            DOUBLE
+            DOUBLE,
         }
 
-        public new abstract Type GetType();
-
-        /// <summary>
-        /// Creates string attribute value from value provided.
-        /// </summary>
-        /// <param name="stringValue">String value.</param>
-        /// <returns>Attribute value encapsulating the provided string value.</returns>
         public static IAttributeValue<string> StringAttributeValue(string stringValue)
         {
             if (stringValue == null)
@@ -81,20 +75,32 @@ namespace OpenTelemetry.Trace
             return new AttributeValue<double>(doubleValue);
         }
 
-        public String GetStringValue() {
-            throw new InvalidOperationException($"This type can only return {GetType()} data");
+        public new abstract Type GetType();
+
+        /// <summary>
+        /// Creates string attribute value from value provided.
+        /// </summary>
+        /// <param name="stringValue">String value.</param>
+        /// <returns>Attribute value encapsulating the provided string value.</returns>
+
+        public string GetStringValue()
+        {
+            throw new InvalidOperationException($"This type can only return {this.GetType()} data");
         }
 
-        public Boolean GetBooleanValue() {
-            throw new InvalidOperationException($"This type can only return {GetType()} data");
+        public bool GetBooleanValue()
+        {
+            throw new InvalidOperationException($"This type can only return {this.GetType()} data");
         }
 
-        public long GetLongValue() {
-            throw new InvalidOperationException($"This type can only return {GetType()} data");
+        public long GetLongValue()
+        {
+            throw new InvalidOperationException($"This type can only return {this.GetType()} data");
         }
 
-        public Double GetDoubleValue() {
-            throw new InvalidOperationException($"This type can only return {GetType()} data");
+        public double GetDoubleValue()
+        {
+            throw new InvalidOperationException($"This type can only return {this.GetType()} data");
         }
 
         /// <inheritdoc/>
@@ -105,74 +111,4 @@ namespace OpenTelemetry.Trace
             Func<double, T> doubleFunction,
             Func<object, T> defaultFunction);
     }
-
-    abstract class AttributeValueBoolean : AttributeValue {
-        AttributeValueBoolean() 
-        {
-        }
-
-        static AttributeValue Create(Boolean booleanValue) {
-            return new AttributeValue<bool>(booleanValue);
-        }
-        public override Type GetType() {
-            return AttributeValue.Type.BOOLEAN;
-        }
-
-        public new abstract Boolean GetBooleanValue();
-    }
-
-    abstract class AttributeValueString : AttributeValue {
-        AttributeValueString()
-        {
-        }
-
-        static AttributeValue Create(String stringValue) 
-        {
-            return new AttributeValue<String>(stringValue);
-        }
-
-        public override Type GetType() 
-        {
-            return AttributeValue.Type.STRING;
-        }
-        public new abstract String GetStringValue();
-    }
-
-    abstract class AttributeValueLong : AttributeValue {
-        AttributeValueLong()
-        {
-        }
-
-        static AttributeValue Create(long longValue) 
-        {
-            return new AttributeValue<long>(longValue);
-        }
-
-        public override Type GetType()
-        {
-            return AttributeValue.Type.LONG;
-        }
-
-        public new abstract long GetLongValue();
-    }
-
-    abstract class AttributeValueDouble : AttributeValue {
-        AttributeValueDouble()
-        {
-        }
-
-        static AttributeValue Create(double doubleValue)
-        {
-            return new AttributeValue<double>(doubleValue);
-        }
-
-        public override Type GetType() 
-        {
-            return AttributeValue.Type.DOUBLE;
-        }
-
-        public new abstract Double GetDoubleValue();
-
-    }
-
 }

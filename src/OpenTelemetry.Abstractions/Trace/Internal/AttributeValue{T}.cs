@@ -116,6 +116,11 @@ namespace OpenTelemetry.Trace
                 + "}";
         }
 
+        public override Type GetType()
+        {
+            return this.GetType();
+        }
+
         /// <inheritdoc/>
         public override TReturn Match<TReturn>(
             Func<string, TReturn> stringFunction,
