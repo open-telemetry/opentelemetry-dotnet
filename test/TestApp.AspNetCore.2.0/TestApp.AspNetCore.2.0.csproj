@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\Common.test.props" />
-
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,9 +24,6 @@
     <ProjectReference Include="..\..\src\OpenTelemetry.Collector.Dependencies\OpenTelemetry.Collector.Dependencies.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Ocagent\OpenTelemetry.Exporter.Ocagent.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
   </ItemGroup>
 
 </Project>

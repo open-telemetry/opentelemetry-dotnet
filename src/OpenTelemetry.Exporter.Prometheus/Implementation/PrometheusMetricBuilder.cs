@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
 
     internal class PrometheusMetricBuilder
     {
-        public const string ContentType = "text/plain; version = 0.0.4";
+        public static readonly string ContentType = "text/plain; version = 0.0.4";
 
         private static char[] firstCharacterNameCharset = new char[]
         {
