@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/open-telemetry/opentelemetry-dotnet</PackageProjectUrl>
+  </PropertyGroup>
+</Project>

@@ -28,7 +28,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
     internal class HttpInListener : ListenerHandler
     {
-        private const string UnknownHostName = "UNKNOWN-HOST";
+        private static readonly string UnknownHostName = "UNKNOWN-HOST";
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher stopContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher beforeActionActionDescriptorFetcher = new PropertyFetcher("actionDescriptor");
