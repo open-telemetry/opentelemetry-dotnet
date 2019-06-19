@@ -70,7 +70,7 @@ namespace OpenTelemetry.Resources
                 return this;
             }
 
-            foreach (KeyValuePair<string, string> label in other.Labels)
+            foreach (var label in other.Labels)
             {
                 if (this.labelCollection.ContainsKey(label.Key) == false)
                 {
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Resources
                 throw new ArgumentNullException(nameof(labels));
             }
 
-            foreach (KeyValuePair<string, string> label in labels)
+            foreach (var label in labels)
             {
                 if (!IsValidAndNotEmpty(label.Key))
                 {

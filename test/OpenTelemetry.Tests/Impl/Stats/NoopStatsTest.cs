@@ -90,7 +90,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void NoopStatsRecorder_Record_DisallowNullTagContext()
         {
-            IMeasureMap measureMap = NoopStats.NoopStatsRecorder.NewMeasureMap();
+            var measureMap = NoopStats.NoopStatsRecorder.NewMeasureMap();
             Assert.Throws<ArgumentNullException>(() => measureMap.Record(null));
         }
 

@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             }
 
             // Try to detect projectId from service account credential if it exists
-            string serviceAccountFilePath = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS");
+            var serviceAccountFilePath = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS");
             if (!string.IsNullOrEmpty(serviceAccountFilePath) && File.Exists(serviceAccountFilePath))
             {
                 using (var stream = new FileStream(serviceAccountFilePath, FileMode.Open, FileAccess.Read))

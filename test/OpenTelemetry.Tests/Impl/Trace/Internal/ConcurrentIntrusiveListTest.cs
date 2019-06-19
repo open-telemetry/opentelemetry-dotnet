@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Internal.Test
         [Fact]
         public void AddRemoveAdd_SameElement()
         {
-            FakeElement element = new FakeElement();
+            var element = new FakeElement();
             intrusiveList.AddElement(element);
             Assert.Equal(1, intrusiveList.Count);
             intrusiveList.RemoveElement(element);
@@ -46,9 +46,9 @@ namespace OpenTelemetry.Trace.Internal.Test
         [Fact]
         public void addAndRemoveElements()
         {
-            FakeElement element1 = new FakeElement();
-            FakeElement element2 = new FakeElement();
-            FakeElement element3 = new FakeElement();
+            var element1 = new FakeElement();
+            var element2 = new FakeElement();
+            var element3 = new FakeElement();
             intrusiveList.AddElement(element1);
             intrusiveList.AddElement(element2);
             intrusiveList.AddElement(element3);
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Trace.Internal.Test
         [Fact]
         public void AddAlreadyAddedElement()
         {
-            FakeElement element = new FakeElement();
+            var element = new FakeElement();
             intrusiveList.AddElement(element);
 
             Assert.Throws<ArgumentOutOfRangeException>(() => intrusiveList.AddElement(element));
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Trace.Internal.Test
         [Fact]
         public void removeNotAddedElement()
         {
-            FakeElement element = new FakeElement();
+            var element = new FakeElement();
             Assert.Throws<ArgumentOutOfRangeException>(() => intrusiveList.RemoveElement(element));
         }
 

@@ -68,9 +68,9 @@ namespace OpenTelemetry.Stats
              * https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance, or Knuth, "The Art of
              * Computer Programming", Vol. 2, page 323, 3rd edition)
              */
-            double deltaFromMean = value - this.Mean;
+            var deltaFromMean = value - this.Mean;
             this.Mean += deltaFromMean / this.Count;
-            double deltaFromMean2 = value - this.Mean;
+            var deltaFromMean2 = value - this.Mean;
             this.SumOfSquaredDeviations += deltaFromMean * deltaFromMean2;
 
             if (value < this.Min)
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Stats
                 this.Max = value;
             }
 
-            for (int i = 0; i < this.BucketBoundaries.Boundaries.Count; i++)
+            for (var i = 0; i < this.BucketBoundaries.Boundaries.Count; i++)
             {
                 if (value < this.BucketBoundaries.Boundaries[i])
                 {
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Stats
             // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm.
             if (this.Count + mutableDistribution.Count > 0)
             {
-                double delta = mutableDistribution.Mean - this.Mean;
+                var delta = mutableDistribution.Mean - this.Mean;
                 this.SumOfSquaredDeviations =
                     this.SumOfSquaredDeviations
                         + mutableDistribution.SumOfSquaredDeviations
@@ -141,8 +141,8 @@ namespace OpenTelemetry.Stats
                 this.Max = mutableDistribution.Max;
             }
 
-            long[] bucketCounts = mutableDistribution.BucketCounts;
-            for (int i = 0; i < bucketCounts.Length; i++)
+            var bucketCounts = mutableDistribution.BucketCounts;
+            for (var i = 0; i < bucketCounts.Length; i++)
             {
                 this.BucketCounts[i] += bucketCounts[i];
             }

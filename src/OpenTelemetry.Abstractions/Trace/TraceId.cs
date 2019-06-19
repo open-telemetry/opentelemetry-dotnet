@@ -49,7 +49,7 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                byte[] copyOf = new byte[Size];
+                var copyOf = new byte[Size];
                 Buffer.BlockCopy(this.bytes, 0, copyOf, 0, Size);
                 return copyOf;
             }
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace
             get
             {
                 long result = 0;
-                for (int i = 0; i < 8; i++)
+                for (var i = 0; i < 8; i++)
                 {
                     result <<= 8;
 #pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
@@ -103,14 +103,14 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentOutOfRangeException(string.Format("Invalid size: expected {0}, got {1}", Size, buffer.Length));
             }
 
-            byte[] bytesCopied = new byte[Size];
+            var bytesCopied = new byte[Size];
             Buffer.BlockCopy(buffer, 0, bytesCopied, 0, Size);
             return new TraceId(bytesCopied);
         }
 
         public static TraceId FromBytes(byte[] src, int srcOffset)
         {
-            byte[] bytes = new byte[Size];
+            var bytes = new byte[Size];
             Buffer.BlockCopy(src, srcOffset, bytes, 0, Size);
             return new TraceId(bytes);
         }
@@ -122,13 +122,13 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentOutOfRangeException(string.Format("Invalid size: expected {0}, got {1}", 2 * Size, src.Length));
             }
 
-            byte[] bytes = Arrays.StringToByteArray(src);
+            var bytes = Arrays.StringToByteArray(src);
             return new TraceId(bytes);
         }
 
         public static TraceId GenerateRandomId(IRandomGenerator random)
         {
-            byte[] bytes = new byte[Size];
+            var bytes = new byte[Size];
             do
             {
                 random.NextBytes(bytes);
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Trace
                 return false;
             }
 
-            TraceId that = (TraceId)obj;
+            var that = (TraceId)obj;
             return Arrays.Equals(this.bytes, that.bytes);
         }
 
@@ -191,13 +191,13 @@ namespace OpenTelemetry.Trace
 
         public int CompareTo(TraceId other)
         {
-            TraceId that = other as TraceId;
-            for (int i = 0; i < Size; i++)
+            var that = other as TraceId;
+            for (var i = 0; i < Size; i++)
             {
                 if (this.bytes[i] != that.bytes[i])
                 {
-                    sbyte b1 = (sbyte)this.bytes[i];
-                    sbyte b2 = (sbyte)that.bytes[i];
+                    var b1 = (sbyte)this.bytes[i];
+                    var b2 = (sbyte)that.bytes[i];
 
                     return b1 < b2 ? -1 : 1;
                 }

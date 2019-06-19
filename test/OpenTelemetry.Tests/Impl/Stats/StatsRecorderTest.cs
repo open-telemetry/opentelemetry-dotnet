@@ -49,7 +49,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void Record_CurrentContextNotSet()
         {
-            IView view =
+            var view =
                 View.Create(
                     VIEW_NAME,
                     "description",
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Stats.Test
                     new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 1.0).Record();
-            IViewData viewData = viewManager.GetView(VIEW_NAME);
+            var viewData = viewManager.GetView(VIEW_NAME);
 
             // record() should have used the default TagContext, so the tag value should be null.
             ICollection<TagValues> expected = new List<TagValues>() { TagValues.Create(new List<TagValue>() { null }) };
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void Record_CurrentContextSet()
         {
-            IView view =
+            var view =
                 View.Create(
                     VIEW_NAME,
                     "description",
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Stats.Test
             {
                 AsyncLocalContext.CurrentTagContext = orig;
             }
-            IViewData viewData = viewManager.GetView(VIEW_NAME);
+            var viewData = viewManager.GetView(VIEW_NAME);
 
             // record() should have used the given TagContext.
             ICollection<TagValues> expected = new List<TagValues>() { TagValues.Create(new List<TagValue>() { VALUE }) };
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void Record_UnregisteredMeasure()
         {
-            IView view =
+            var view =
                 View.Create(
                     VIEW_NAME,
                     "description",
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Stats.Test
                 .Put(MEASURE_DOUBLE_NO_VIEW_2, 3.0)
                 .Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
 
-            IViewData viewData = viewManager.GetView(VIEW_NAME);
+            var viewData = viewManager.GetView(VIEW_NAME);
 
             // There should be one entry.
             var tv = TagValues.Create(new List<TagValue>() { VALUE });
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void RecordTwice()
         {
-            IView view =
+            var view =
                 View.Create(
                     VIEW_NAME,
                     "description",
@@ -134,10 +134,10 @@ namespace OpenTelemetry.Stats.Test
                     new List<TagKey>() { KEY });
 
             viewManager.RegisterView(view);
-            IMeasureMap statsRecord = statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 1.0);
+            var statsRecord = statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 1.0);
             statsRecord.Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
             statsRecord.Record(new SimpleTagContext(Tag.Create(KEY, VALUE_2)));
-            IViewData viewData = viewManager.GetView(VIEW_NAME);
+            var viewData = viewManager.GetView(VIEW_NAME);
 
             // There should be two entries.
             var tv = TagValues.Create(new List<TagValue>() { VALUE });
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void Record_StatsDisabled()
         {
-            IView view =
+            var view =
                 View.Create(
                     VIEW_NAME,
                     "description",
@@ -176,7 +176,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void Record_StatsReenabled()
         {
-            IView view =
+            var view =
                 View.Create(
                     VIEW_NAME,
                     "description",
@@ -201,7 +201,7 @@ namespace OpenTelemetry.Stats.Test
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 4.0)
                 .Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
-            TagValues tv = TagValues.Create(new List<TagValue>() { VALUE });
+            var tv = TagValues.Create(new List<TagValue>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewManager.GetView(VIEW_NAME).AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()

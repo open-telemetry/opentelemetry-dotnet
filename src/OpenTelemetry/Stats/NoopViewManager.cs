@@ -36,7 +36,7 @@ namespace OpenTelemetry.Stats
         {
             get
             {
-                ISet<IView> views = this.exportedViews;
+                var views = this.exportedViews;
                 if (views == null)
                 {
                     lock (this.registeredViews)
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Stats
             lock (this.registeredViews)
             {
                 this.exportedViews = null;
-                this.registeredViews.TryGetValue(newView.Name, out IView existing);
+                this.registeredViews.TryGetValue(newView.Name, out var existing);
                 if (!(existing == null || newView.Equals(existing)))
                 {
                     throw new ArgumentException("A different view with the same name already exists.");
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Stats
 
             lock (this.registeredViews)
             {
-                this.registeredViews.TryGetValue(name, out IView view);
+                this.registeredViews.TryGetValue(name, out var view);
                 if (view == null)
                 {
                     return null;
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Stats
         private static ISet<IView> FilterExportedViews(ICollection<IView> allViews)
         {
             ISet<IView> views = new HashSet<IView>();
-            foreach (IView view in allViews)
+            foreach (var view in allViews)
             {
                 // if (view.getWindow() instanceof View.AggregationWindow.Interval) {
                 //    continue;

@@ -48,11 +48,11 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 return;
             }
 
-            this.Tracer.SpanBuilder(request.RequestUri.AbsolutePath, SpanKind.Client).SetSampler(this.SamplerFactory(request)).StartScopedSpan(out ISpan span);
+            this.Tracer.SpanBuilder(request.RequestUri.AbsolutePath, SpanKind.Client).SetSampler(this.SamplerFactory(request)).StartScopedSpan(out var span);
             span.PutHttpMethodAttribute(request.Method.ToString());
             span.PutHttpHostAttribute(request.RequestUri.Host, request.RequestUri.Port);
             span.PutHttpPathAttribute(request.RequestUri.AbsolutePath);
-            request.Headers.TryGetValues("User-Agent", out IEnumerable<string> userAgents);
+            request.Headers.TryGetValues("User-Agent", out var userAgents);
             span.PutHttpUserAgentAttribute(userAgents?.FirstOrDefault());
             span.PutHttpRawUrlAttribute(request.RequestUri.OriginalString);
 

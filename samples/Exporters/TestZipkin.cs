@@ -23,8 +23,8 @@
             exporter.Start();
 
             // 2. Configure 100% sample rate for the purposes of the demo
-            ITraceConfig traceConfig = Tracing.TraceConfig;
-            ITraceParams currentConfig = traceConfig.ActiveTraceParams;
+            var traceConfig = Tracing.TraceConfig;
+            var currentConfig = traceConfig.ActiveTraceParams;
             var newConfig = currentConfig.ToBuilder()
                 .SetSampler(Samplers.AlwaysSample)
                 .Build();
@@ -38,7 +38,7 @@
             using (var scope = tracer.SpanBuilder("Main").StartScopedSpan())
             {
                 Console.WriteLine("About to do a busy work");
-                for (int i = 0; i < 10; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     DoWork(i);
                 }
@@ -53,15 +53,15 @@
         private static void DoWork(int i)
         {
             // 6. Get the global singleton Tracer object
-            ITracer tracer = Tracing.Tracer;
+            var tracer = Tracing.Tracer;
 
             // 7. Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be
             // a child span.
-            using (OpenTelemetry.Context.IScope scope = tracer.SpanBuilder("DoWork").StartScopedSpan())
+            using (var scope = tracer.SpanBuilder("DoWork").StartScopedSpan())
             {
                 // Simulate some work.
-                ISpan span = tracer.CurrentSpan;
+                var span = tracer.CurrentSpan;
 
                 try
                 {

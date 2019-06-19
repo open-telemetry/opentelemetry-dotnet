@@ -33,7 +33,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void SetState()
         {
-            CurrentStatsState state = new CurrentStatsState();
+            var state = new CurrentStatsState();
             Assert.True(state.Set(StatsCollectionState.DISABLED));
             Assert.Equal(StatsCollectionState.DISABLED, state.Internal);
             Assert.True(state.Set(StatsCollectionState.ENABLED));
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void PreventSettingStateAfterReadingState()
         {
-            CurrentStatsState state = new CurrentStatsState();
+            var state = new CurrentStatsState();
             var st = state.Value;
             Assert.Throws<ArgumentException>(() => state.Set(StatsCollectionState.DISABLED));
         }
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Stats.Test
             // (e.g. more/less machine load, faster/slower processors).
             // It will not incorrectly fail transiently though.
 
-            for (int i = 0; i < 10; i ++)
+            for (var i = 0; i < 10; i ++)
             {
                 var state = new CurrentStatsState();
 

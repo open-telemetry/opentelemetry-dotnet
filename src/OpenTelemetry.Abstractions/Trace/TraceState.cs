@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace
         /// </returns>
         public string Get(string key)
         {
-            foreach (Entry entry in this.Entries)
+            foreach (var entry in this.Entries)
             {
                 if (entry.Key.Equals(key))
                 {
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Trace
             // can only contain lowercase letters a-z, digits 0-9, underscores _, dashes -, asterisks *,
             // forward slashes / and @
 
-            int i = 0;
+            var i = 0;
 
             if (string.IsNullOrEmpty(key)
                 || key.Length > KeyMaxSize
@@ -108,7 +108,7 @@ namespace OpenTelemetry.Trace
             // before
             for (i = 1; i < key.Length; i++)
             {
-                char c = key[i];
+                var c = key[i];
 
                 if (c == '@')
                 {
@@ -147,7 +147,7 @@ namespace OpenTelemetry.Trace
 
             for (; i < key.Length; i++)
             {
-                char c = key[i];
+                var c = key[i];
 
                 if (!(c >= 'a' && c <= 'z')
                     && !(c >= '0' && c <= '9')
@@ -173,9 +173,9 @@ namespace OpenTelemetry.Trace
                 return false;
             }
 
-            for (int i = 0; i < value.Length; i++)
+            for (var i = 0; i < value.Length; i++)
             {
-                char c = value[i];
+                var c = value[i];
 
                 if (c == ',' || c == '=' || c < ' ' /* '\u0020' */ || c > '~' /* '\u007E' */)
                 {
@@ -275,7 +275,7 @@ namespace OpenTelemetry.Trace
             {
                 // Initially create the Entry to validate input.
 
-                Entry entry = Entry.Create(key, value);
+                var entry = Entry.Create(key, value);
 
                 if (this.entries == null)
                 {
@@ -283,7 +283,7 @@ namespace OpenTelemetry.Trace
                     this.entries = new List<Entry>(this.parent.Entries);
                 }
 
-                for (int i = 0; i < this.entries.Count; i++)
+                for (var i = 0; i < this.entries.Count; i++)
                 {
                     if (this.entries[i].Key.Equals(entry.Key))
                     {
@@ -314,7 +314,7 @@ namespace OpenTelemetry.Trace
                     this.entries = new List<Entry>(this.parent.Entries);
                 }
 
-                for (int i = 0; i < this.entries.Count; i++)
+                for (var i = 0; i < this.entries.Count; i++)
                 {
                     if (this.entries[i].Key.Equals(key))
                     {

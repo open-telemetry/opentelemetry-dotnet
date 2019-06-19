@@ -73,8 +73,8 @@ namespace OpenTelemetry.Stats.Test
         public void TestBuilder()
         {
             var expected = new List<IMeasurement>(10);
-            MeasureMapBuilder builder = MeasureMapBuilder.Builder();
-            for (int i = 1; i <= 10; i++)
+            var builder = MeasureMapBuilder.Builder();
+            for (var i = 1; i <= 10; i++)
             {
                 expected.Add(MeasurementDouble.Create(MakeSimpleMeasureDouble("m" + i), i * 11.1));
                 builder.Put(MakeSimpleMeasureDouble("m" + i), i * 11.1);

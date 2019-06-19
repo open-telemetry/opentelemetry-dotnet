@@ -95,7 +95,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
         private static string GetAssemblyVersion(Assembly assembly)
         {
-            AssemblyFileVersionAttribute fileVersionAttr = assembly.GetCustomAttribute<AssemblyFileVersionAttribute>();
+            var fileVersionAttr = assembly.GetCustomAttribute<AssemblyFileVersionAttribute>();
             return fileVersionAttr?.Version ?? "0.0.0";
         }
 
@@ -128,7 +128,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             var duplexCall = this.traceClient.Export();
             try
             {
-                bool firstRequest = true;
+                var firstRequest = true;
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     var spanExportRequest = new ExportTraceServiceRequest();
@@ -138,7 +138,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                     }
 
                     // Spans
-                    bool hasSpans = false;
+                    var hasSpans = false;
 
                     while (spanExportRequest.Spans.Count < this.spanBatchSize)
                     {

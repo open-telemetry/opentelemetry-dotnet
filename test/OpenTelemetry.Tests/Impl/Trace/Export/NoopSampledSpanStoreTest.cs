@@ -30,9 +30,9 @@ namespace OpenTelemetry.Trace.Export.Test
         public void NoopSampledSpanStore_RegisterUnregisterAndGetSummary()
         {
             // should return empty before register
-            ISampledSpanStore sampledSpanStore =
+            var sampledSpanStore =
                 ((NoopExportComponent)ExportComponent.NewNoopExportComponent).SampledSpanStore;
-            ISampledSpanStoreSummary summary = sampledSpanStore.Summary;
+            var summary = sampledSpanStore.Summary;
             Assert.Empty(summary.PerSpanNameSummary);
 
             // should return non-empty summaries with zero latency/error sampled spans after register
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void NoopSampledSpanStore_GetLatencySampledSpans()
         {
-            ISampledSpanStore sampledSpanStore = ((NoopExportComponent)ExportComponent.NewNoopExportComponent).SampledSpanStore;
+            var sampledSpanStore = ((NoopExportComponent)ExportComponent.NewNoopExportComponent).SampledSpanStore;
             var latencySampledSpans =
                 sampledSpanStore.GetLatencySampledSpans(
                     SampledSpanStoreLatencyFilter.Create("TestLatencyFilter", TimeSpan.Zero, TimeSpan.Zero, 0));
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void NoopSampledSpanStore_GetErrorSampledSpans()
         {
-            ISampledSpanStore sampledSpanStore = ((NoopExportComponent)ExportComponent.NewNoopExportComponent).SampledSpanStore;
+            var sampledSpanStore = ((NoopExportComponent)ExportComponent.NewNoopExportComponent).SampledSpanStore;
             var errorSampledSpans =
                 sampledSpanStore.GetErrorSampledSpans(
                     SampledSpanStoreErrorFilter.Create("TestErrorFilter", null, 0));
@@ -80,9 +80,9 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void NoopSampledSpanStore_GetRegisteredSpanNamesForCollection()
         {
-            ISampledSpanStore sampledSpanStore = ((NoopExportComponent)ExportComponent.NewNoopExportComponent).SampledSpanStore;
+            var sampledSpanStore = ((NoopExportComponent)ExportComponent.NewNoopExportComponent).SampledSpanStore;
             sampledSpanStore.RegisterSpanNamesForCollection(new List<string>() { "TestSpan3", "TestSpan4" });
-            ISet<string> registeredSpanNames = sampledSpanStore.RegisteredSpanNamesForCollection;
+            var registeredSpanNames = sampledSpanStore.RegisteredSpanNamesForCollection;
             Assert.Equal(2, registeredSpanNames.Count);
             Assert.Contains(registeredSpanNames, (item) =>
             {

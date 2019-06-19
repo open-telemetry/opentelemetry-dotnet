@@ -50,13 +50,13 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override ISpan StartSpan()
         {
-            SpanContext parentContext = this.ParentSpanContext;
+            var parentContext = this.ParentSpanContext;
             Timer timestampConverter = null;
             if (this.ParentSpanContext == null)
             {
                 // This is not a child of a remote Span. Get the parent SpanContext from the parent Span if
                 // any.
-                ISpan parent = this.Parent;
+                var parent = this.Parent;
                 if (parent != null)
                 {
                     parentContext = parent.Context;
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Trace
 
         private static bool IsAnyParentLinkSampled(IEnumerable<ISpan> parentLinks)
         {
-            foreach (ISpan parentLink in parentLinks)
+            foreach (var parentLink in parentLinks)
             {
                 if (parentLink.Context.TraceOptions.IsSampled)
                 {
@@ -127,8 +127,8 @@ namespace OpenTelemetry.Trace
         {
             if (parentLinks.Any())
             {
-                ILink childLink = Link.FromSpanContext(span.Context);
-                foreach (ISpan linkedSpan in parentLinks)
+                var childLink = Link.FromSpanContext(span.Context);
+                foreach (var linkedSpan in parentLinks)
                 {
                     linkedSpan.AddLink(childLink);
                     span.AddLink(Link.FromSpanContext(linkedSpan.Context));
@@ -172,10 +172,10 @@ namespace OpenTelemetry.Trace
                      bool recordEvents,
                      Timer timestampConverter)
         {
-            ITraceParams activeTraceParams = this.Options.TraceConfig.ActiveTraceParams;
-            IRandomGenerator random = this.Options.RandomHandler;
+            var activeTraceParams = this.Options.TraceConfig.ActiveTraceParams;
+            var random = this.Options.RandomHandler;
             TraceId traceId;
-            SpanId spanId = SpanId.GenerateRandomId(random);
+            var spanId = SpanId.GenerateRandomId(random);
             SpanId parentSpanId = null;
             TraceOptionsBuilder traceOptionsBuilder;
             if (parent == null || !parent.IsValid)
@@ -201,15 +201,15 @@ namespace OpenTelemetry.Trace
                     traceId,
                     spanId,
                     activeTraceParams));
-            TraceOptions traceOptions = traceOptionsBuilder.Build();
-            SpanOptions spanOptions = SpanOptions.None;
+            var traceOptions = traceOptionsBuilder.Build();
+            var spanOptions = SpanOptions.None;
 
             if (traceOptions.IsSampled || recordEvents)
             {
                 spanOptions = SpanOptions.RecordEvents;
             }
 
-            ISpan span = Span.StartSpan(
+            var span = Span.StartSpan(
                         SpanContext.Create(traceId, spanId, traceOptions, parent?.Tracestate ?? Tracestate.Empty),
                         spanOptions,
                         name,

@@ -20,7 +20,7 @@ namespace OpenTelemetry.Utils
     {
         public static bool IsPrintableString(string str)
         {
-            for (int i = 0; i < str.Length; i++)
+            for (var i = 0; i < str.Length; i++)
             {
                 if (!IsPrintableChar(str[i]))
                 {

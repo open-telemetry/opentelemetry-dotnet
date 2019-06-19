@@ -88,7 +88,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                                         metricValueBuilder.WithValue,
                                         metricValueBuilder.WithValue);
 
-                                    for (int i = 0; i < value.Key.Values.Count; i++)
+                                    for (var i = 0; i < value.Key.Values.Count; i++)
                                     {
                                         metricValueBuilder.WithLabel(data.View.Columns[i].Name, value.Key.Values[i].AsString);
                                     }

@@ -421,7 +421,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                 }
                 else
                 {
-                    int idx = url.OriginalString.IndexOf('?');
+                    var idx = url.OriginalString.IndexOf('?');
                     if (idx != -1)
                     {
                         httpPath = url.OriginalString.Substring(0, idx);
@@ -435,7 +435,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
             if (url == null)
             {
-                string urlString = string.Empty;
+                var urlString = string.Empty;
                 if (!string.IsNullOrEmpty(httpHost))
                 {
                     urlString += "https://" + httpHost;
