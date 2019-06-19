@@ -48,7 +48,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             this.httpClient = client ?? new HttpClient();
         }
 
-        public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
+        public Task ExportAsync(IEnumerable<SpanData> spanDataList)
         {
             List<ZipkinSpan> zipkinSpans = new List<ZipkinSpan>();
 
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 zipkinSpans.Add(zipkinSpan);
             }
 
-            await this.SendSpansAsync(zipkinSpans);
+            return this.SendSpansAsync(zipkinSpans);
         }
 
         internal ZipkinSpan GenerateSpan(SpanData spanData, ZipkinEndpoint localEndpoint)
