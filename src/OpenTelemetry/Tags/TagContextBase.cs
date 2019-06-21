@@ -37,7 +37,7 @@ namespace OpenTelemetry.Tags
                 return false;
             }
 
-            TagContextBase otherTags = (TagContextBase)other;
+            var otherTags = (TagContextBase)other;
 
             var t1Enumerator = this.GetEnumerator();
             var t2Enumerator = otherTags.GetEnumerator();
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Tags
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int hashCode = 0;
+            var hashCode = 0;
             foreach (var t in this)
             {
                 hashCode += t.GetHashCode();

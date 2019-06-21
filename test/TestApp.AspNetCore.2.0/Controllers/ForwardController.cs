@@ -35,7 +35,7 @@ namespace TestApp.AspNetCore._2._0.Controllers
         {
             if (url != null)
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
+                var request = new HttpRequestMessage(HttpMethod.Post, url)
                 {
                     Content = new StringContent(JsonConvert.SerializeObject(arguments), Encoding.UTF8, "application/json"),
                 };

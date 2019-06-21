@@ -118,7 +118,7 @@ namespace OpenTelemetry.Trace.Config
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int h = 1;
+            var h = 1;
             h *= 1000003;
             h ^= this.Sampler.GetHashCode();
             h *= 1000003;

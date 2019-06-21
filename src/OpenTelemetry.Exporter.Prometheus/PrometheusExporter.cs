@@ -62,7 +62,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                 this.tokenSource = new CancellationTokenSource();
 
-                CancellationToken token = this.tokenSource.Token;
+                var token = this.tokenSource.Token;
 
                 var metricsServer = new MetricsHttpServer(this.viewManager, this.options, token);
                 this.workerThread = Task.Factory.StartNew((Action)metricsServer.WorkerThread, TaskCreationOptions.LongRunning);

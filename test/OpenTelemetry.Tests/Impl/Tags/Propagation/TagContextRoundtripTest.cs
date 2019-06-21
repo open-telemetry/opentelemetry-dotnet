@@ -53,8 +53,8 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void TestRoundtrip_TagContextWithMaximumSize()
         {
-            ITagContextBuilder builder = tagger.EmptyBuilder;
-            for (int i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8; i++)
+            var builder = tagger.EmptyBuilder;
+            for (var i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8; i++)
             {
                 // Each tag will be with format {key : "0123", value : "0123"}, so the length of it is 8.
                 // Add 1024 tags, the total size should just be 8192.
@@ -82,8 +82,8 @@ namespace OpenTelemetry.Tags.Propagation.Test
 
         private void TestRoundtripSerialization(ITagContext expected)
         {
-            byte[] bytes = serializer.ToByteArray(expected);
-            ITagContext actual = serializer.FromByteArray(bytes);
+            var bytes = serializer.ToByteArray(expected);
+            var actual = serializer.FromByteArray(bytes);
             Assert.Equal(expected, actual);
         }
     }

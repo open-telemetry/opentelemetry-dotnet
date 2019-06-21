@@ -73,8 +73,8 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void TestSerializeTooLargeTagContext()
         {
-            ITagContextBuilder builder = tagger.EmptyBuilder;
-            for (int i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8 - 1; i++) {
+            var builder = tagger.EmptyBuilder;
+            for (var i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8 - 1; i++) {
                 // Each tag will be with format {key : "0123", value : "0123"}, so the length of it is 8.
                 String str;
                 if (i < 10)
@@ -99,27 +99,27 @@ namespace OpenTelemetry.Tags.Propagation.Test
             // more than limit.
             builder.Put(TagKey.Create("last"), TagValue.Create("last1"));
 
-            ITagContext tagContext = builder.Build();
+            var tagContext = builder.Build();
 
             Assert.Throws<TagContextSerializationException>(() => serializer.ToByteArray(tagContext));
         }
 
         private void TestSerialize(params Tag[] tags)
         {
-            ITagContextBuilder builder = tagger.EmptyBuilder;
+            var builder = tagger.EmptyBuilder;
             foreach (var tag in tags)
             {
                 builder.Put(tag.Key, tag.Value);
             }
 
-            byte[] actual = serializer.ToByteArray(builder.Build());
+            var actual = serializer.ToByteArray(builder.Build());
             var tagsList = tags.ToList();
             var tagPermutation = Permutate(tagsList, tagsList.Count);
             ISet<String> possibleOutPuts = new HashSet<String>();
             foreach (List<Tag> list in tagPermutation) {
-                MemoryStream expected = new MemoryStream();
+                var expected = new MemoryStream();
                 expected.WriteByte(SerializationUtils.VersionId);
-                foreach (Tag tag in list) {
+                foreach (var tag in list) {
                     expected.WriteByte(SerializationUtils.TagFieldId);
                     EncodeString(tag.Key.Name, expected);
                     EncodeString(tag.Value.AsString, expected);
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
 
         internal static void RotateRight(IList sequence, int count)
         {
-            object tmp = sequence[count - 1];
+            var tmp = sequence[count - 1];
             sequence.RemoveAt(count - 1);
             sequence.Insert(0, tmp);
         }
@@ -153,7 +153,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
             }
             else
             {
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                 {
                     foreach (var perm in Permutate(sequence, count - 1))
                     {

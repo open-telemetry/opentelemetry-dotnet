@@ -64,9 +64,9 @@ namespace OpenTelemetry.Trace.Export.Test
         public void AddSpansWithRegisteredNamesInAllLatencyBuckets()
         {
             AddSpanNameToAllLatencyBuckets(REGISTERED_SPAN_NAME);
-            IDictionary<string, ISampledPerSpanNameSummary> perSpanNameSummary = sampleStore.Summary.PerSpanNameSummary;
+            var perSpanNameSummary = sampleStore.Summary.PerSpanNameSummary;
             Assert.Equal(1, perSpanNameSummary.Count);
-            IDictionary<ISampledLatencyBucketBoundaries, int> latencyBucketsSummaries = perSpanNameSummary[REGISTERED_SPAN_NAME].NumbersOfLatencySampledSpans;
+            var latencyBucketsSummaries = perSpanNameSummary[REGISTERED_SPAN_NAME].NumbersOfLatencySampledSpans;
             Assert.Equal(LatencyBucketBoundaries.Values.Count, latencyBucketsSummaries.Count);
             foreach (var it in latencyBucketsSummaries)
             {
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void AddSpansWithoutRegisteredNamesInAllLatencyBuckets()
         {
             AddSpanNameToAllLatencyBuckets(NOT_REGISTERED_SPAN_NAME);
-            IDictionary<string, ISampledPerSpanNameSummary> perSpanNameSummary = sampleStore.Summary.PerSpanNameSummary;
+            var perSpanNameSummary = sampleStore.Summary.PerSpanNameSummary;
             Assert.Equal(1, perSpanNameSummary.Count);
             Assert.False(perSpanNameSummary.ContainsKey(NOT_REGISTERED_SPAN_NAME));
         }
@@ -119,9 +119,9 @@ namespace OpenTelemetry.Trace.Export.Test
         public void AddSpansWithRegisteredNamesInAllErrorBuckets()
         {
             AddSpanNameToAllErrorBuckets(REGISTERED_SPAN_NAME);
-            IDictionary<string, ISampledPerSpanNameSummary> perSpanNameSummary = sampleStore.Summary.PerSpanNameSummary;
+            var perSpanNameSummary = sampleStore.Summary.PerSpanNameSummary;
             Assert.Equal(1, perSpanNameSummary.Count);
-            IDictionary<CanonicalCode, int> errorBucketsSummaries = perSpanNameSummary[REGISTERED_SPAN_NAME].NumbersOfErrorSampledSpans;
+            var errorBucketsSummaries = perSpanNameSummary[REGISTERED_SPAN_NAME].NumbersOfErrorSampledSpans;
             var ccCount = Enum.GetValues(typeof(CanonicalCode)).Cast<CanonicalCode>().Count();
             Assert.Equal(ccCount - 1, errorBucketsSummaries.Count);
             foreach (var it in errorBucketsSummaries)
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void AddSpansWithoutRegisteredNamesInAllErrorBuckets()
         {
             AddSpanNameToAllErrorBuckets(NOT_REGISTERED_SPAN_NAME);
-            IDictionary<string, ISampledPerSpanNameSummary> perSpanNameSummary = sampleStore.Summary.PerSpanNameSummary;
+            var perSpanNameSummary = sampleStore.Summary.PerSpanNameSummary;
             Assert.Equal(1, perSpanNameSummary.Count);
             Assert.False(perSpanNameSummary.ContainsKey(NOT_REGISTERED_SPAN_NAME));
         }
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetErrorSampledSpans()
         {
-            Span span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
             span.End(EndSpanOptions.Builder().SetStatus(Status.Cancelled).Build());
             var samples =
@@ -155,12 +155,12 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetErrorSampledSpans_MaxSpansToReturn()
         {
-            Span span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
             span1.End(EndSpanOptions.Builder().SetStatus(Status.Cancelled).Build());
             // Advance time to allow other spans to be sampled.
             interval += TimeSpan.FromSeconds(5);
-            Span span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
             span2.End(EndSpanOptions.Builder().SetStatus(Status.Cancelled).Build());
             var samples =
@@ -174,10 +174,10 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetErrorSampledSpans_NullCode()
         {
-            Span span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
             span1.End(EndSpanOptions.Builder().SetStatus(Status.Cancelled).Build());
-            Span span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
             span2.End(EndSpanOptions.Builder().SetStatus(Status.Unknown).Build());
             var samples =
@@ -190,10 +190,10 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetErrorSampledSpans_NullCode_MaxSpansToReturn()
         {
-            Span span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
             span1.End(EndSpanOptions.Builder().SetStatus(Status.Cancelled).Build());
-            Span span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
             span2.End(EndSpanOptions.Builder().SetStatus(Status.Unknown).Build());
             var samples =
@@ -205,7 +205,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetLatencySampledSpans()
         {
-            Span span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(200); // 20 microseconds
             span.End();
             var samples =
@@ -222,7 +222,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetLatencySampledSpans_ExclusiveUpperBound()
         {
-            Span span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(200); // 20 microseconds
             span.End();
             var samples =
@@ -238,7 +238,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetLatencySampledSpans_InclusiveLowerBound()
         {
-            Span span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(200); // 20 microseconds
             span.End();
             var samples =
@@ -255,12 +255,12 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetLatencySampledSpans_QueryBetweenMultipleBuckets()
         {
-            Span span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(200); // 20 microseconds
             span1.End();
             // Advance time to allow other spans to be sampled.
             interval += TimeSpan.FromSeconds(5);
-            Span span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(2000); // 200 microseconds
             span2.End();
             var samples =
@@ -278,12 +278,12 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetLatencySampledSpans_MaxSpansToReturn()
         {
-            Span span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(200); // 20 microseconds
             span1.End();
             // Advance time to allow other spans to be sampled.
             interval += TimeSpan.FromSeconds(5);
-            Span span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(2000); // 200 microseconds
             span2.End();
             var samples =
@@ -300,7 +300,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void IgnoreNegativeSpanLatency()
         {
-            Span span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval -= TimeSpan.FromTicks(200); // 20 microseconds
             span.End();
             var samples =
@@ -349,7 +349,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private void AddSpanNameToAllErrorBuckets(String spanName)
         {
-            foreach (CanonicalCode code in Enum.GetValues(typeof(CanonicalCode)).Cast<CanonicalCode>())
+            foreach (var code in Enum.GetValues(typeof(CanonicalCode)).Cast<CanonicalCode>())
             {
                 if (code != CanonicalCode.Ok)
                 {

@@ -50,7 +50,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
         {
-            List<ZipkinSpan> zipkinSpans = new List<ZipkinSpan>();
+            var zipkinSpans = new List<ZipkinSpan>();
 
             foreach (var data in spanDataList)
             {
@@ -70,11 +70,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         internal ZipkinSpan GenerateSpan(SpanData spanData, ZipkinEndpoint localEndpoint)
         {
-            SpanContext context = spanData.Context;
-            long startTimestamp = this.ToEpochMicroseconds(spanData.StartTimestamp);
-            long endTimestamp = this.ToEpochMicroseconds(spanData.EndTimestamp);
+            var context = spanData.Context;
+            var startTimestamp = this.ToEpochMicroseconds(spanData.StartTimestamp);
+            var endTimestamp = this.ToEpochMicroseconds(spanData.EndTimestamp);
 
-            ZipkinSpan.Builder spanBuilder =
+            var spanBuilder =
                 ZipkinSpan.NewBuilder()
                     .TraceId(this.EncodeTraceId(context.TraceId))
                     .Id(this.EncodeSpanId(context.SpanId))
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 spanBuilder.PutTag(label.Key, this.AttributeValueToString(label.Value));
             }
 
-            Status status = spanData.Status;
+            var status = spanData.Status;
 
             if (status != null)
             {
@@ -116,8 +116,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private long ToEpochMicroseconds(Timestamp timestamp)
         {
-            long nanos = (timestamp.Seconds * NanosPerSecond) + timestamp.Nanos;
-            long micros = nanos / 1000L;
+            var nanos = (timestamp.Seconds * NanosPerSecond) + timestamp.Nanos;
+            var micros = nanos / 1000L;
             return micros;
         }
 
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private async Task DoPost(HttpClient client, HttpRequestMessage request)
         {
-            using (HttpResponseMessage response = await client.SendAsync(request))
+            using (var response = await client.SendAsync(request))
             {
                 if (response.StatusCode != HttpStatusCode.OK &&
                     response.StatusCode != HttpStatusCode.Accepted)
@@ -191,7 +191,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private HttpContent GetRequestContent(IEnumerable<ZipkinSpan> toSerialize)
         {
-            string content = string.Empty;
+            var content = string.Empty;
             try
             {
                 content = JsonConvert.SerializeObject(toSerialize);
@@ -211,7 +211,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 ServiceName = this.options.ServiceName,
             };
 
-            string hostName = this.ResolveHostName();
+            var hostName = this.ResolveHostName();
 
             if (!string.IsNullOrEmpty(hostName))
             {

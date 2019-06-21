@@ -29,7 +29,7 @@ namespace OpenTelemetry.Utils
                 return "null";
             }
 
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             foreach (var kvp in dict)
             {
                 sb.Append(kvp.Key.ToString());
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Utils
                 return "null";
             }
 
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             foreach (var val in list)
             {
                 if (val != null)

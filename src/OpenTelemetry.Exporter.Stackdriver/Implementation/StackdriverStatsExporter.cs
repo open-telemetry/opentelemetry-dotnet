@@ -97,7 +97,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         {
             try
             {
-                string assemblyPackageVersion = typeof(StackdriverStatsExporter).GetTypeInfo().Assembly.GetCustomAttributes<AssemblyInformationalVersionAttribute>().First().InformationalVersion;
+                var assemblyPackageVersion = typeof(StackdriverStatsExporter).GetTypeInfo().Assembly.GetCustomAttributes<AssemblyInformationalVersionAttribute>().First().InformationalVersion;
                 USER_AGENT = $"OpenTelemetry-dotnet/{assemblyPackageVersion}";
             }
             catch (Exception)
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         {
             try
             {
-                TimeSpan sleepTime = collectionInterval;
+                var sleepTime = collectionInterval;
                 var stopWatch = new Stopwatch();
 
                 while (!tokenSource.IsCancellationRequested)
@@ -188,12 +188,12 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             }
             registeredViews.Add(view.Name, view);
 
-            string metricDescriptorTypeName = GenerateMetricDescriptorTypeName(view.Name, domain);
+            var metricDescriptorTypeName = GenerateMetricDescriptorTypeName(view.Name, domain);
 
             // TODO - zeltser: don't need to create MetricDescriptor for RpcViewConstants once we defined
             // canonical metrics. Registration is required only for custom view definitions. Canonical
             // views should be pre-registered.
-            MetricDescriptor metricDescriptor = MetricsConversions.CreateMetricDescriptor(
+            var metricDescriptor = MetricsConversions.CreateMetricDescriptor(
                 metricDescriptorTypeName,
                 view,
                 project,
@@ -253,13 +253,13 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             var timeSeriesList = new List<TimeSeries>();
             foreach (var viewData in viewDataList)
             {
-                MetricDescriptor metricDescriptor = metricDescriptors[viewData.View];
-                List<TimeSeries> timeSeries = MetricsConversions.CreateTimeSeriesList(viewData, monitoredResource, metricDescriptor, domain);
+                var metricDescriptor = metricDescriptors[viewData.View];
+                var timeSeries = MetricsConversions.CreateTimeSeriesList(viewData, monitoredResource, metricDescriptor, domain);
                 timeSeriesList.AddRange(timeSeries);
             }
 
             // Perform the operation in batches of MAX_BATCH_EXPORT_SIZE
-            foreach (IEnumerable<TimeSeries> batchedTimeSeries in timeSeriesList.Partition(MAX_BATCH_EXPORT_SIZE))
+            foreach (var batchedTimeSeries in timeSeriesList.Partition(MAX_BATCH_EXPORT_SIZE))
             {
                 var request = new CreateTimeSeriesRequest();
                 request.ProjectName = project;

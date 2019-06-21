@@ -85,7 +85,7 @@ namespace OpenTelemetry.Tags
             }
 else
             {
-                TagContextBuilder builder = new TagContextBuilder();
+                var builder = new TagContextBuilder();
                 foreach (var tag in tags)
                 {
                     if (tag != null)
@@ -107,7 +107,7 @@ else
             }
 else
             {
-                TagContextBuilder builder = new TagContextBuilder();
+                var builder = new TagContextBuilder();
                 foreach (var tag in tags)
                 {
                     if (tag != null)

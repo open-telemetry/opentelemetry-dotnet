@@ -30,14 +30,14 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SetStatus_Ok()
         {
-            EndSpanOptions endSpanOptions = EndSpanOptions.Builder().SetStatus(Status.Ok).Build();
+            var endSpanOptions = EndSpanOptions.Builder().SetStatus(Status.Ok).Build();
             Assert.Equal(Status.Ok, endSpanOptions.Status);
         }
 
         [Fact]
         public void SetStatus_Error()
         {
-            EndSpanOptions endSpanOptions =
+            var endSpanOptions =
                 EndSpanOptions.Builder()
                     .SetStatus(Status.Cancelled.WithDescription("ThisIsAnError"))
                     .Build();
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SetSampleToLocalSpanStore()
         {
-            EndSpanOptions endSpanOptions =
+            var endSpanOptions =
                 EndSpanOptions.Builder().SetSampleToLocalSpanStore(true).Build();
             Assert.True(endSpanOptions.SampleToLocalSpanStore);
         }
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void EndSpanOptions_ToString()
         {
-            EndSpanOptions endSpanOptions =
+            var endSpanOptions =
                 EndSpanOptions.Builder()
                     .SetStatus(Status.Cancelled.WithDescription("ThisIsAnError"))
                     .Build();

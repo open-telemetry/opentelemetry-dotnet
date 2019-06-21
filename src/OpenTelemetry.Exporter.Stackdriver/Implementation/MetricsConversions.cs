@@ -59,7 +59,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         public static ValueType ToValueType(
             this IMeasure measure, IAggregation aggregation)
         {
-            MetricKind metricKind = aggregation.ToMetricKind();
+            var metricKind = aggregation.ToMetricKind();
             if (aggregation is IDistribution && (metricKind == MetricKind.Cumulative || metricKind == MetricKind.Gauge))
                 return ValueType.Distribution;
 
@@ -124,14 +124,14 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             string displayNamePrefix)
         {
             var metricDescriptor = new MetricDescriptor();
-            string viewName = view.Name.AsString;
+            var viewName = view.Name.AsString;
 
             metricDescriptor.Name = string.Format($"projects/{project.ProjectId}/metricDescriptors/{metricDescriptorTypeName}");
             metricDescriptor.Type = metricDescriptorTypeName;
             metricDescriptor.Description = view.Description;
             metricDescriptor.DisplayName = GetDisplayName(viewName, displayNamePrefix);
 
-            foreach (TagKey tagKey in view.Columns)
+            foreach (var tagKey in view.Columns)
             {
                 var labelDescriptor = tagKey.ToLabelDescriptor();
                 metricDescriptor.Labels.Add(labelDescriptor);
@@ -223,19 +223,19 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             var metric = new Metric();
             metric.Type = metricDescriptor.Type;
 
-            IReadOnlyList<TagKey> columns = view.Columns;
+            var columns = view.Columns;
 
             // Populate metric labels
-            for (int i = 0; i < tagValues.Count; i++)
+            for (var i = 0; i < tagValues.Count; i++)
             {
-                TagKey key = columns[i];
-                TagValue value = tagValues[i];
+                var key = columns[i];
+                var value = tagValues[i];
                 if (value == null)
                 {
                     continue;
                 }
 
-                string labelKey = GetStackdriverLabelKey(key.Name);
+                var labelKey = GetStackdriverLabelKey(key.Name);
                 metric.Labels.Add(labelKey, value.AsString);
             }
             metric.Labels.Add(Constants.OpenTelemetry_TASK, Constants.OpenTelemetry_TASK_VALUE_DEFAULT);
@@ -264,15 +264,15 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 return timeSeriesList;
             }
 
-            IView view = viewData.View;
+            var view = viewData.View;
             var startTime = viewData.Start.ToTimestamp();
 
             // Each entry in AggregationMap will be converted into an independent TimeSeries object
             foreach (var entry in viewData.AggregationMap)
             {
                 var timeSeries = new TimeSeries();
-                IReadOnlyList<TagValue> labels = entry.Key.Values;
-                IAggregationData points = entry.Value;
+                var labels = entry.Key.Values;
+                var points = entry.Value;
                 
                 timeSeries.Resource = monitoredResource;
                 timeSeries.ValueType = view.Measure.ToValueType(view.Aggregation);
@@ -280,7 +280,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
                 timeSeries.Metric = GetMetric(view, labels, metricDescriptor, domain);
 
-                Point point = ExtractPointInInterval(viewData.Start, viewData.End, view.Aggregation, points);
+                var point = ExtractPointInInterval(viewData.Start, viewData.End, view.Aggregation, points);
                 var timeSeriesPoints = new List<Point> { point };
                 timeSeries.Points.AddRange(timeSeriesPoints);
 

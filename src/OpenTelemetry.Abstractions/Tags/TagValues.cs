@@ -67,7 +67,7 @@ namespace OpenTelemetry.Tags
                     return false;
                 }
 
-                for (int i = 0; i < this.Values.Count; i++)
+                for (var i = 0; i < this.Values.Count; i++)
                 {
                     if (this.Values[i] == null)
                     {
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Tags
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int h = 1;
+            var h = 1;
             h *= 1000003;
             foreach (var v in this.Values)
             {
