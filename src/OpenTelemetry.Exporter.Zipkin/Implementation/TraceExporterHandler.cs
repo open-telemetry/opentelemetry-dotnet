@@ -58,7 +58,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 zipkinSpans.Add(zipkinSpan);
             }
 
-            await this.SendSpansAsync(zipkinSpans);
+            try
+            {
+                await this.SendSpansAsync(zipkinSpans);
+            }
+            catch (Exception)
+            {
+                // Ignored
+            }
         }
 
         internal ZipkinSpan GenerateSpan(SpanData spanData, ZipkinEndpoint localEndpoint)
@@ -155,37 +162,23 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return ZipkinSpanKind.CLIENT;
         }
 
-        private async Task SendSpansAsync(IEnumerable<ZipkinSpan> spans)
+        private Task SendSpansAsync(IEnumerable<ZipkinSpan> spans)
         {
-            try
-            {
-                var requestUri = this.options.Endpoint;
-                var request = this.GetHttpRequestMessage(HttpMethod.Post, requestUri);
-                request.Content = this.GetRequestContent(spans);
-                await this.DoPost(this.httpClient, request);
-            }
-            catch (Exception)
-            {
-            }
+            var requestUri = this.options.Endpoint;
+            var request = this.GetHttpRequestMessage(HttpMethod.Post, requestUri);
+            request.Content = this.GetRequestContent(spans);
+            return this.DoPost(this.httpClient, request);
         }
 
         private async Task DoPost(HttpClient client, HttpRequestMessage request)
         {
-            try
+            using (HttpResponseMessage response = await client.SendAsync(request))
             {
-                using (HttpResponseMessage response = await client.SendAsync(request))
+                if (response.StatusCode != HttpStatusCode.OK &&
+                    response.StatusCode != HttpStatusCode.Accepted)
                 {
-                    if (response.StatusCode != HttpStatusCode.OK &&
-                        response.StatusCode != HttpStatusCode.Accepted)
-                    {
-                        var statusCode = (int)response.StatusCode;
-                    }
-
-                    return;
+                    var statusCode = (int)response.StatusCode;
                 }
-            }
-            catch (Exception)
-            {
             }
         }
 
@@ -198,17 +191,17 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private HttpContent GetRequestContent(IEnumerable<ZipkinSpan> toSerialize)
         {
+            string content = string.Empty;
             try
             {
-                string json = JsonConvert.SerializeObject(toSerialize);
-
-                return new StringContent(json, Encoding.UTF8, "application/json");
+                content = JsonConvert.SerializeObject(toSerialize);
             }
             catch (Exception)
             {
+                // Ignored
             }
 
-            return new StringContent(string.Empty, Encoding.UTF8, "application/json");
+            return new StringContent(content, Encoding.UTF8, "application/json");
         }
 
         private ZipkinEndpoint GetLocalZipkinEndpoint()
