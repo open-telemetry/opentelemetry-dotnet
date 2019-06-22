@@ -89,12 +89,12 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             return labelDescriptor;
         }
 
-        public static Distribution CreateDistribution(
+        public static Google.Api.Distribution CreateDistribution(
             IDistributionData distributionData,
             IBucketBoundaries bucketBoundaries)
         {
             var bucketOptions = bucketBoundaries.ToBucketOptions();
-            var distribution = new Distribution
+            var distribution = new Google.Api.Distribution
             {
                 BucketOptions = bucketOptions,
                 BucketCounts = { CreateBucketCounts(distributionData.BucketCounts) },
