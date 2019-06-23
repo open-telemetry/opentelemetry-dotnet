@@ -92,12 +92,12 @@ namespace OpenTelemetry.Trace.Export
 
         internal async void Run(object obj)
         {
-            List<SpanData> toExport = new List<SpanData>();
+            var toExport = new List<SpanData>();
             while (!this.shutdown)
             {
                 try
                 {
-                    if (this.spans.TryTake(out ISpan item, this.scheduleDelay))
+                    if (this.spans.TryTake(out var item, this.scheduleDelay))
                     {
                         // Build up list
                         this.BuildList(item, toExport);
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Trace.Export
 
         internal void UnregisterHandler(string name)
         {
-            this.serviceHandlers.TryRemove(name, out IHandler prev);
+            this.serviceHandlers.TryRemove(name, out var prev);
         }
 
         internal SpanData ToSpanData(ISpan span)

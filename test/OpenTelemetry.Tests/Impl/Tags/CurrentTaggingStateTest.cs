@@ -30,7 +30,7 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void SetState()
         {
-            CurrentTaggingState state = new CurrentTaggingState();
+            var state = new CurrentTaggingState();
             state.Set(TaggingState.DISABLED);
             Assert.Equal(TaggingState.DISABLED, state.Internal);
             state.Set(TaggingState.ENABLED);
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void PreventSettingStateAfterReadingState()
         {
-            CurrentTaggingState state = new CurrentTaggingState();
+            var state = new CurrentTaggingState();
             var current = state.Value;
             Assert.Throws<InvalidOperationException>(() => state.Set(TaggingState.DISABLED));
         }

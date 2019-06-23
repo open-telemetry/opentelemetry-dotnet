@@ -38,22 +38,22 @@ namespace OpenTelemetry.Trace.Export
             get
             {
                 IEnumerable<SpanBase> allRunningSpans = this.runningSpans.Copy();
-                Dictionary<string, int> numSpansPerName = new Dictionary<string, int>();
+                var numSpansPerName = new Dictionary<string, int>();
                 foreach (var span in allRunningSpans)
                 {
-                    numSpansPerName.TryGetValue(span.Name, out int prevValue);
+                    numSpansPerName.TryGetValue(span.Name, out var prevValue);
                     numSpansPerName[span.Name] = prevValue + 1;
                 }
 
-                Dictionary<string, IRunningPerSpanNameSummary> perSpanNameSummary = new Dictionary<string, IRunningPerSpanNameSummary>();
+                var perSpanNameSummary = new Dictionary<string, IRunningPerSpanNameSummary>();
                 foreach (var it in numSpansPerName)
                 {
-                    int numRunningSpans = it.Value;
+                    var numRunningSpans = it.Value;
                     var runningPerSpanNameSummary = RunningPerSpanNameSummary.Create(numRunningSpans);
                     perSpanNameSummary[it.Key] = runningPerSpanNameSummary;
                 }
 
-                IRunningSpanStoreSummary summary = RunningSpanStoreSummary.Create(perSpanNameSummary);
+                var summary = RunningSpanStoreSummary.Create(perSpanNameSummary);
                 return summary;
             }
         }
@@ -62,8 +62,8 @@ namespace OpenTelemetry.Trace.Export
         public override IEnumerable<SpanData> GetRunningSpans(IRunningSpanStoreFilter filter)
         {
             IReadOnlyCollection<SpanBase> allRunningSpans = this.runningSpans.Copy();
-            int maxSpansToReturn = filter.MaxSpansToReturn == 0 ? allRunningSpans.Count : filter.MaxSpansToReturn;
-            List<SpanData> ret = new List<SpanData>(maxSpansToReturn);
+            var maxSpansToReturn = filter.MaxSpansToReturn == 0 ? allRunningSpans.Count : filter.MaxSpansToReturn;
+            var ret = new List<SpanData>(maxSpansToReturn);
             foreach (var span in allRunningSpans)
             {
                 if (ret.Count == maxSpansToReturn)

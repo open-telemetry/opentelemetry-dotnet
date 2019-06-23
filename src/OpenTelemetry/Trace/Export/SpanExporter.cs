@@ -76,7 +76,7 @@ namespace OpenTelemetry.Trace.Export
 
         internal static ISpanExporter Create(int bufferSize, Duration scheduleDelay)
         {
-            SpanExporterWorker worker = new SpanExporterWorker(bufferSize, scheduleDelay);
+            var worker = new SpanExporterWorker(bufferSize, scheduleDelay);
             return new SpanExporter(worker);
         }
     }

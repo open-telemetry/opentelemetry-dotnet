@@ -54,7 +54,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
 
                 var traceparent = traceparentCollection?.FirstOrDefault();
-                var traceparentParsed = this.TryExtractTraceparent(traceparent, out TraceId traceId, out SpanId spanId, out TraceOptions traceoptions);
+                var traceparentParsed = this.TryExtractTraceparent(traceparent, out var traceId, out var spanId, out var traceoptions);
 
                 if (!traceparentParsed)
                 {
@@ -64,8 +64,8 @@ namespace OpenTelemetry.Context.Propagation
                 var tracestateResult = Tracestate.Empty;
                 try
                 {
-                    List<KeyValuePair<string, string>> entries = new List<KeyValuePair<string, string>>();
-                    HashSet<string> names = new HashSet<string>();
+                    var entries = new List<KeyValuePair<string, string>>();
+                    var names = new HashSet<string>();
                     var discardTracestate = false;
                     if (tracestateCollection != null)
                     {
@@ -170,7 +170,7 @@ namespace OpenTelemetry.Context.Propagation
 
             setter(carrier, "traceparent", traceparent);
 
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             var isFirst = true;
 
             foreach (var entry in spanContext.Tracestate.Entries)

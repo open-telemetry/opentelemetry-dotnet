@@ -42,7 +42,7 @@ namespace OpenTelemetry.Stats
         {
             get
             {
-                ISet<IView> views = this.exportedViews;
+                var views = this.exportedViews;
                 if (views == null)
                 {
                     lock (this.lck)
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Stats
         {
             lock (this.lck)
             {
-                MutableViewData view = this.GetMutableViewData(viewName);
+                var view = this.GetMutableViewData(viewName);
                 return view?.ToViewData(DateTimeOffset.Now, state);
             }
         }
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Stats
             lock (this.lck)
             {
                 this.exportedViews = null;
-                this.registeredViews.TryGetValue(view.Name, out IView existing);
+                this.registeredViews.TryGetValue(view.Name, out var existing);
                 if (existing != null)
                 {
                     if (existing.Equals(view))
@@ -84,8 +84,8 @@ namespace OpenTelemetry.Stats
                     }
                 }
 
-                IMeasure measure = view.Measure;
-                this.registeredMeasures.TryGetValue(measure.Name, out IMeasure registeredMeasure);
+                var measure = view.Measure;
+                this.registeredMeasures.TryGetValue(measure.Name, out var registeredMeasure);
                 if (registeredMeasure != null && !registeredMeasure.Equals(measure))
                 {
                     throw new ArgumentException("A different measure with the same name is already registered: " + registeredMeasure);
@@ -108,8 +108,8 @@ namespace OpenTelemetry.Stats
             {
                 foreach (var measurement in stats)
                 {
-                    IMeasure measure = measurement.Measure;
-                    this.registeredMeasures.TryGetValue(measure.Name, out IMeasure value);
+                    var measure = measurement.Measure;
+                    this.registeredMeasures.TryGetValue(measure.Name, out var value);
                     if (!measure.Equals(value))
                     {
                         // unregistered measures will be ignored.
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Stats
                     }
 
                     var views = this.mutableMap[measure.Name];
-                    foreach (MutableViewData view in views)
+                    foreach (var view in views)
                     {
                         measurement.Match<object>(
                             (arg) =>
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Stats
             {
                 foreach (var entry in this.mutableMap)
                 {
-                    foreach (MutableViewData mutableViewData in entry.Value)
+                    foreach (var mutableViewData in entry.Value)
                     {
                         mutableViewData.ClearStats();
                     }
@@ -161,7 +161,7 @@ namespace OpenTelemetry.Stats
             {
                 foreach (var entry in this.mutableMap)
                 {
-                    foreach (MutableViewData mutableViewData in entry.Value)
+                    foreach (var mutableViewData in entry.Value)
                     {
                         mutableViewData.ResumeStatsCollection(now);
                     }
@@ -191,16 +191,16 @@ namespace OpenTelemetry.Stats
         {
             lock (this.lck)
             {
-                this.registeredViews.TryGetValue(viewName, out IView view);
+                this.registeredViews.TryGetValue(viewName, out var view);
                 if (view == null)
                 {
                     return null;
                 }
 
-                this.mutableMap.TryGetValue(view.Measure.Name, out ICollection<MutableViewData> views);
+                this.mutableMap.TryGetValue(view.Measure.Name, out var views);
                 if (views != null)
                 {
-                    foreach (MutableViewData viewData in views)
+                    foreach (var viewData in views)
                     {
                         if (viewData.View.Name.Equals(viewName))
                         {

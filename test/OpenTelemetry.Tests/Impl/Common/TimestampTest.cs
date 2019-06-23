@@ -64,7 +64,7 @@ namespace OpenTelemetry.Common.Test
         [Fact]
         public void TimestampAddNanos()
         {
-            Timestamp timestamp = Timestamp.Create(1234, 223);
+            var timestamp = Timestamp.Create(1234, 223);
             Assert.Equal(timestamp, timestamp.AddNanos(0));
             Assert.Equal(Timestamp.Create(1235, 0), timestamp.AddNanos(999999777));
             Assert.Equal(Timestamp.Create(1235, 300200723), timestamp.AddNanos(1300200500));
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Common.Test
         [Fact]
         public void TimestampAddNanos_Negative()
         {
-            Timestamp timestamp = Timestamp.Create(1234, 223);
+            var timestamp = Timestamp.Create(1234, 223);
             Assert.Equal(Timestamp.Create(1234, 0), timestamp.AddNanos(-223));
             Assert.Equal(Timestamp.Create(1233, 0), timestamp.AddNanos(-1000000223));
             Assert.Equal(Timestamp.Create(1232, 699799723), timestamp.AddNanos(-1300200500));
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Common.Test
         [Fact]
         public void TimestampAddDuration()
         {
-            Timestamp timestamp = Timestamp.Create(1234, 223);
+            var timestamp = Timestamp.Create(1234, 223);
             Assert.Equal(Timestamp.Create(1235, 223), timestamp.AddDuration(Duration.Create(1, 0)));
             Assert.Equal(Timestamp.Create(1234, 224), timestamp.AddDuration(Duration.Create(0, 1)));
             Assert.Equal(Timestamp.Create(1235, 224), timestamp.AddDuration(Duration.Create(1, 1)));
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Common.Test
         [Fact]
         public void TimestampAddDuration_Negative()
         {
-            Timestamp timestamp = Timestamp.Create(1234, 223);
+            var timestamp = Timestamp.Create(1234, 223);
             Assert.Equal(Timestamp.Create(0, 0), timestamp.AddDuration(Duration.Create(-1234, -223)));
             Assert.Equal(Timestamp.Create(1233, 223), timestamp.AddDuration(Duration.Create(-1, 0)));
             Assert.Equal(Timestamp.Create(1233, 222), timestamp.AddDuration(Duration.Create(-1, -1)));
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Common.Test
         [Fact]
         public void TimestampSubtractTimestamp()
         {
-            Timestamp timestamp = Timestamp.Create(1234, 223);
+            var timestamp = Timestamp.Create(1234, 223);
             Assert.Equal(Duration.Create(1234, 223), timestamp.SubtractTimestamp(Timestamp.Create(0, 0)));
             Assert.Equal(Duration.Create(1, 0), timestamp.SubtractTimestamp(Timestamp.Create(1233, 223)));
             Assert.Equal(Duration.Create(1, 1), timestamp.SubtractTimestamp(Timestamp.Create(1233, 222)));
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Common.Test
         [Fact]
         public void TimestampSubtractTimestamp_NegativeResult()
         {
-            Timestamp timestamp = Timestamp.Create(1234, 223);
+            var timestamp = Timestamp.Create(1234, 223);
             Assert.Equal(Duration.Create(-1, 0), timestamp.SubtractTimestamp(Timestamp.Create(1235, 223)));
             Assert.Equal(Duration.Create(0, -1), timestamp.SubtractTimestamp(Timestamp.Create(1234, 224)));
             Assert.Equal(Duration.Create(-1, -1), timestamp.SubtractTimestamp(Timestamp.Create(1235, 224)));

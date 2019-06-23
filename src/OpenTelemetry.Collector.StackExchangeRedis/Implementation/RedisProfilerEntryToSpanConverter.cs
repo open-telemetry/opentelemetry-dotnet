@@ -32,7 +32,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 
             foreach (var command in sessionCommands)
             {
-                string name = command.Command; // Example: SET;
+                var name = command.Command; // Example: SET;
                 if (string.IsNullOrEmpty(name))
                 {
                     name = "name";
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             // command.ElapsedTime;             // 00:00:32.4988020
 
             // TODO: make timestamp with the better precision
-            Timestamp startTimestamp = Timestamp.FromMillis(new DateTimeOffset(command.CommandCreated).ToUnixTimeMilliseconds());
+            var startTimestamp = Timestamp.FromMillis(new DateTimeOffset(command.CommandCreated).ToUnixTimeMilliseconds());
 
             var timestamp = new DateTimeOffset(command.CommandCreated).Add(command.CreationToEnqueued);
             var events = TimedEvents<IEvent>.Create(
@@ -109,7 +109,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
                 },
                 droppedEventsCount: 0);
 
-            Timestamp endTimestamp = Timestamp.FromMillis(new DateTimeOffset(command.CommandCreated.Add(command.ElapsedTime)).ToUnixTimeMilliseconds());
+            var endTimestamp = Timestamp.FromMillis(new DateTimeOffset(command.CommandCreated.Add(command.ElapsedTime)).ToUnixTimeMilliseconds());
 
             // TODO: deal with the re-transmission
             // command.RetransmissionOf;
@@ -145,8 +145,8 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             int? childSpanCount = 0;
 
             // TODO: this is strange that IProfiledCommand doesn't give the result
-            Status status = Status.Ok;
-            SpanKind kind = SpanKind.Client;
+            var status = Status.Ok;
+            var kind = SpanKind.Client;
 
             return SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
         }

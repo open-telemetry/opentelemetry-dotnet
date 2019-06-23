@@ -33,7 +33,7 @@ namespace OpenTelemetry.Stats
 
         public StatsComponent(IEventQueue queue)
         {
-            StatsManager statsManager = new StatsManager(queue, this.state);
+            var statsManager = new StatsManager(queue, this.state);
             this.viewManager = new ViewManager(statsManager);
             this.statsRecorder = new StatsRecorder(statsManager);
         }

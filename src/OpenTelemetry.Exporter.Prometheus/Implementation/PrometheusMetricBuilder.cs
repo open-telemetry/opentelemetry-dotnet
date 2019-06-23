@@ -206,7 +206,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             // Label names may contain ASCII letters, numbers, as well as underscores. They must match the regex [a-zA-Z_][a-zA-Z0-9_]*. Label names beginning with __ are reserved for internal use.
             // Label values may contain any Unicode characters.
 
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
 
             if (!string.IsNullOrEmpty(name))
             {
@@ -231,9 +231,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 }
             }
 
-            for (int i = 1; i < name.Length; ++i)
+            for (var i = 1; i < name.Length; ++i)
             {
-                char c = name[i];
+                var c = name[i];
 
                 if (nameCharset.Contains(c))
                 {
@@ -261,7 +261,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             // Label names may contain ASCII letters, numbers, as well as underscores. They must match the regex [a-zA-Z_][a-zA-Z0-9_]*. Label names beginning with __ are reserved for internal use.
             // Label values may contain any Unicode characters.
 
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
 
             if (!string.IsNullOrEmpty(name))
             {
@@ -286,9 +286,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 }
             }
 
-            for (int i = 1; i < name.Length; ++i)
+            for (var i = 1; i < name.Length; ++i)
             {
-                char c = name[i];
+                var c = name[i];
 
                 if (labelCharset.Contains(c))
                 {

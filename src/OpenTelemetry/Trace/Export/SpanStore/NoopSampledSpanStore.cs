@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace.Export
                 IDictionary<string, ISampledPerSpanNameSummary> result = new Dictionary<string, ISampledPerSpanNameSummary>();
                 lock (this.registeredSpanNames)
                 {
-                    foreach (string registeredSpanName in this.registeredSpanNames)
+                    foreach (var registeredSpanName in this.registeredSpanNames)
                     {
                         result[registeredSpanName] = EmptyPerSpanNameSummary;
                     }

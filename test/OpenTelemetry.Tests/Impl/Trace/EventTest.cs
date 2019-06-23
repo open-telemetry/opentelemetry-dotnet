@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromDescription()
         {
-            IEvent @event = Event.Create("MyEventText");
+            var @event = Event.Create("MyEventText");
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(0, @event.Attributes.Count);
         }
@@ -52,10 +52,10 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromDescriptionAndAttributes()
         {
-            Dictionary<string, IAttributeValue> attributes = new Dictionary<string, IAttributeValue>();
+            var attributes = new Dictionary<string, IAttributeValue>();
             attributes.Add(
                 "MyStringAttributeKey", AttributeValue<string>.Create("MyStringAttributeValue"));
-            IEvent @event = Event.Create("MyEventText", attributes);
+            var @event = Event.Create("MyEventText", attributes);
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(attributes, @event.Attributes);
         }
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromDescriptionAndAttributes_EmptyAttributes()
         {
-            IEvent @event =
+            var @event =
                 Event.Create(
                     "MyEventText", new Dictionary<string, IAttributeValue>());
             Assert.Equal("MyEventText", @event.Name);
@@ -92,9 +92,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Event_ToString()
         {
-            IEvent @event = Event.Create("MyEventText");
+            var @event = Event.Create("MyEventText");
             Assert.Contains("MyEventText", @event.ToString());
-            Dictionary<string, IAttributeValue> attributes = new Dictionary<string, IAttributeValue>();
+            var attributes = new Dictionary<string, IAttributeValue>();
             attributes.Add(
                 "MyStringAttributeKey", AttributeValue<string>.Create("MyStringAttributeValue"));
             @event = Event.Create("MyEventText2", attributes);

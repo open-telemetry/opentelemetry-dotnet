@@ -26,22 +26,22 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestConstructBoundaries()
         {
-            List<Double> buckets = new List<double>() { 0.0, 1.0, 2.0 };
-            IBucketBoundaries bucketBoundaries = BucketBoundaries.Create(buckets);
+            var buckets = new List<double>() { 0.0, 1.0, 2.0 };
+            var bucketBoundaries = BucketBoundaries.Create(buckets);
             Assert.Equal(buckets, bucketBoundaries.Boundaries);
         }
 
         [Fact]
         public void TestBoundariesDoesNotChangeWithOriginalList()
         {
-            List<double> original = new List<double>();
+            var original = new List<double>();
             original.Add(0.0);
             original.Add(1.0);
             original.Add(2.0);
-            IBucketBoundaries bucketBoundaries = BucketBoundaries.Create(original);
+            var bucketBoundaries = BucketBoundaries.Create(original);
             original[2] = 3.0;
             original.Add(4.0);
-            List<double> expected = new List<double>() { 0.0, 1.0, 2.0 };
+            var expected = new List<double>() { 0.0, 1.0, 2.0 };
             Assert.NotEqual(original, bucketBoundaries.Boundaries);
             Assert.Equal(expected, bucketBoundaries.Boundaries);
         }
@@ -55,15 +55,15 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestUnsortedBoundaries()
         {
-            List<double> buckets = new List<double>() { 0.0, 1.0, 1.0 };
+            var buckets = new List<double>() { 0.0, 1.0, 1.0 };
             Assert.Throws<ArgumentOutOfRangeException>(() => BucketBoundaries.Create(buckets));
         }
 
         [Fact]
         public void TestNoBoundaries()
         {
-            List<double> buckets = new List<double>();
-            IBucketBoundaries bucketBoundaries = BucketBoundaries.Create(buckets);
+            var buckets = new List<double>();
+            var bucketBoundaries = BucketBoundaries.Create(buckets);
             Assert.Equal(buckets, bucketBoundaries.Boundaries);
         }
 

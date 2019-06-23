@@ -81,7 +81,7 @@ namespace OpenTelemetry.Common
         public static Duration Create(TimeSpan duration)
         {
             var seconds = duration.Ticks / TimeSpan.TicksPerSecond;
-            int nanoseconds = (int)(duration.Ticks % TimeSpan.TicksPerSecond) * 100;
+            var nanoseconds = (int)(duration.Ticks % TimeSpan.TicksPerSecond) * 100;
             return Create(seconds, nanoseconds);
         }
 
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Common
         /// <returns>Zero if equal, -1 when lesser and +1 when greater than given value.</returns>
         public int CompareTo(Duration other)
         {
-            int cmp = (this.Seconds < other.Seconds) ? -1 : ((this.Seconds > other.Seconds) ? 1 : 0);
+            var cmp = (this.Seconds < other.Seconds) ? -1 : ((this.Seconds > other.Seconds) ? 1 : 0);
             if (cmp != 0)
             {
                 return cmp;
