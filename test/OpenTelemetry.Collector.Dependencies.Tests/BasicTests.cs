@@ -41,13 +41,13 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     ctx.Response.StatusCode = 200;
                     ctx.Response.OutputStream.Close();
                 },
-                out string host,
-                out int port);
+                out var host,
+                out var port);
 
             var url = $"http://{host}:{port}/";
 
-            TraceId expectedTraceId = TraceId.Invalid;
-            SpanId expectedSpanId = SpanId.Invalid;
+            var expectedTraceId = TraceId.Invalid;
+            var expectedSpanId = SpanId.Invalid;
 
             using (serverLifeTime)
             {

@@ -83,7 +83,7 @@ namespace OpenTelemetry.Common
         /// <returns>New instance of <see cref="Timestamp"/>.</returns>
         public static Timestamp FromMillis(long millis)
         {
-            long nanos = millis * NanosPerMilli;
+            var nanos = millis * NanosPerMilli;
             return Zero.Plus(0, nanos);
         }
 
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Common
             seconds = time.ToUnixTimeSeconds();
 #endif
 
-            int nanos = (int)time.Subtract(new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)).Subtract(TimeSpan.FromSeconds(seconds)).Ticks * 100;
+            var nanos = (int)time.Subtract(new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)).Subtract(TimeSpan.FromSeconds(seconds)).Ticks * 100;
             return Timestamp.Create(seconds, nanos);
         }
 
@@ -133,8 +133,8 @@ namespace OpenTelemetry.Common
         /// <returns>Returns the timestamp with the substructed duration.</returns>
         public Duration SubtractTimestamp(Timestamp timestamp)
         {
-            long durationSeconds = this.Seconds - timestamp.Seconds;
-            int durationNanos = this.Nanos - timestamp.Nanos;
+            var durationSeconds = this.Seconds - timestamp.Seconds;
+            var durationNanos = this.Nanos - timestamp.Nanos;
             if (durationSeconds < 0 && durationNanos > 0)
             {
                 durationSeconds += 1;
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Common
         /// <inheritdoc />
         public int CompareTo(Timestamp other)
         {
-            int cmp = (this.Seconds < other.Seconds) ? -1 : ((this.Seconds > other.Seconds) ? 1 : 0);
+            var cmp = (this.Seconds < other.Seconds) ? -1 : ((this.Seconds > other.Seconds) ? 1 : 0);
             if (cmp != 0)
             {
                 return cmp;
@@ -205,9 +205,9 @@ namespace OpenTelemetry.Common
 
         private static Timestamp OfSecond(long seconds, long nanoAdjustment)
         {
-            long floor = (long)Math.Floor((double)nanoAdjustment / NanosPerSecond);
-            long secs = seconds + floor;
-            long nos = nanoAdjustment - (floor * NanosPerSecond);
+            var floor = (long)Math.Floor((double)nanoAdjustment / NanosPerSecond);
+            var secs = seconds + floor;
+            var nos = nanoAdjustment - (floor * NanosPerSecond);
             return Create(secs, (int)nos);
         }
 
@@ -218,10 +218,10 @@ namespace OpenTelemetry.Common
                 return this;
             }
 
-            long sec = this.Seconds + secondsToAdd;
-            long nanoSeconds = Math.DivRem(nanosToAdd, NanosPerSecond, out long nanosSpill);
+            var sec = this.Seconds + secondsToAdd;
+            var nanoSeconds = Math.DivRem(nanosToAdd, NanosPerSecond, out var nanosSpill);
             sec += nanoSeconds;
-            long nanoAdjustment = this.Nanos + nanosSpill;
+            var nanoAdjustment = this.Nanos + nanosSpill;
             return OfSecond(sec, nanoAdjustment);
         }
     }

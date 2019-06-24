@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromSpanContext_ChildLink()
         {
-            ILink link = Link.FromSpanContext(spanContext);
+            var link = Link.FromSpanContext(spanContext);
             Assert.Equal(spanContext.TraceId, link.Context.TraceId);
             Assert.Equal(spanContext.SpanId, link.Context.SpanId);
         }
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromSpanContext_ChildLink_WithAttributes()
         {
-            ILink link = Link.FromSpanContext(spanContext, attributesMap);
+            var link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Equal(spanContext.TraceId, link.Context.TraceId);
             Assert.Equal(spanContext.SpanId, link.Context.SpanId);
             Assert.Equal(attributesMap, link.Attributes);
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromSpanContext_ParentLink()
         {
-            ILink link = Link.FromSpanContext(spanContext);
+            var link = Link.FromSpanContext(spanContext);
             Assert.Equal(spanContext.TraceId, link.Context.TraceId);
             Assert.Equal(spanContext.SpanId, link.Context.SpanId);
         }
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromSpanContext_ParentLink_WithAttributes()
         {
-            ILink link = Link.FromSpanContext(spanContext, attributesMap);
+            var link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Equal(spanContext.TraceId, link.Context.TraceId);
             Assert.Equal(spanContext.SpanId, link.Context.SpanId);
             Assert.Equal(attributesMap, link.Attributes);
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Link_ToString()
         {
-            ILink link = Link.FromSpanContext(spanContext, attributesMap);
+            var link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Contains(spanContext.TraceId.ToString(), link.ToString());
             Assert.Contains(spanContext.SpanId.ToString(), link.ToString());
             Assert.Contains(Collections.ToString(attributesMap), link.ToString());

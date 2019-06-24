@@ -56,8 +56,8 @@ namespace OpenTelemetry.Stats
 
         private static Func<MutableDistribution, IAggregationData> CreateDistributionData { get; } = (s) =>
         {
-            List<long> boxedBucketCounts = new List<long>();
-            foreach (long bucketCount in s.BucketCounts)
+            var boxedBucketCounts = new List<long>();
+            foreach (var bucketCount in s.BucketCounts)
             {
                 boxedBucketCounts.Add(bucketCount);
             }
@@ -91,13 +91,13 @@ namespace OpenTelemetry.Stats
 
         internal static IReadOnlyList<TagValue> GetTagValues(IDictionary<TagKey, TagValue> tags, IReadOnlyList<TagKey> columns)
         {
-            List<TagValue> tagValues = new List<TagValue>(columns.Count);
+            var tagValues = new List<TagValue>(columns.Count);
 
             // Record all the measures in a "Greedy" way.
             // Every view aggregates every measure. This is similar to doing a GROUPBY view’s keys.
-            for (int i = 0; i < columns.Count; ++i)
+            for (var i = 0; i < columns.Count; ++i)
             {
-                TagKey tagKey = columns[i];
+                var tagKey = columns[i];
                 if (!tags.ContainsKey(tagKey))
                 {
                     // replace not found key values by null.

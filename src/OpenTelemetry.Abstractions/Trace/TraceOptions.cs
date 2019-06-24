@@ -56,7 +56,7 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                byte[] bytes = new byte[Size];
+                var bytes = new byte[Size];
                 bytes[0] = this.options;
                 return bytes;
             }
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentOutOfRangeException(string.Format("Invalid size: expected {0}, got {1}", Size, buffer.Length));
             }
 
-            byte[] bytesCopied = new byte[Size];
+            var bytesCopied = new byte[Size];
             Buffer.BlockCopy(buffer, 0, bytesCopied, 0, Size);
             return new TraceOptions(bytesCopied[0]);
         }
@@ -163,14 +163,14 @@ namespace OpenTelemetry.Trace
                 return false;
             }
 
-            TraceOptions that = (TraceOptions)obj;
+            var that = (TraceOptions)obj;
             return this.options == that.options;
         }
 
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int result = (31 * 1) + this.options;
+            var result = (31 * 1) + this.options;
             return result;
         }
 

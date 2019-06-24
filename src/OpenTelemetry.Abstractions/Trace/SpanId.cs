@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                byte[] copyOf = new byte[Size];
+                var copyOf = new byte[Size];
                 Buffer.BlockCopy(this.bytes, 0, copyOf, 0, Size);
                 return copyOf;
             }
@@ -76,14 +76,14 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentOutOfRangeException(string.Format("Invalid size: expected {0}, got {1}", Size, buffer.Length));
             }
 
-            byte[] bytesCopied = new byte[Size];
+            var bytesCopied = new byte[Size];
             Buffer.BlockCopy(buffer, 0, bytesCopied, 0, Size);
             return new SpanId(bytesCopied);
         }
 
         public static SpanId FromBytes(byte[] src, int srcOffset)
         {
-            byte[] bytes = new byte[Size];
+            var bytes = new byte[Size];
             Buffer.BlockCopy(src, srcOffset, bytes, 0, Size);
             return new SpanId(bytes);
         }
@@ -95,13 +95,13 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentOutOfRangeException(string.Format("Invalid size: expected {0}, got {1}", 2 * Size, src.Length));
             }
 
-            byte[] bytes = Arrays.StringToByteArray(src);
+            var bytes = Arrays.StringToByteArray(src);
             return new SpanId(bytes);
         }
 
         public static SpanId GenerateRandomId(IRandomGenerator random)
         {
-            byte[] bytes = new byte[Size];
+            var bytes = new byte[Size];
             do
             {
                 random.NextBytes(bytes);
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Trace
                 return false;
             }
 
-            SpanId that = (SpanId)obj;
+            var that = (SpanId)obj;
             return Arrays.Equals(this.bytes, that.bytes);
         }
 
@@ -164,12 +164,12 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public int CompareTo(SpanId other)
         {
-            for (int i = 0; i < Size; i++)
+            for (var i = 0; i < Size; i++)
             {
                 if (this.bytes[i] != other.bytes[i])
                 {
-                    sbyte b1 = (sbyte)this.bytes[i];
-                    sbyte b2 = (sbyte)other.bytes[i];
+                    var b1 = (sbyte)this.bytes[i];
+                    var b2 = (sbyte)other.bytes[i];
 
                     return b1 < b2 ? -1 : 1;
                 }

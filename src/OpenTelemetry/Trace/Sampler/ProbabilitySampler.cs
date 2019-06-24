@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace.Sampler
             if (parentLinks != null)
             {
                 // If any parent link is sampled keep the sampling decision.
-                foreach (ISpan parentLink in parentLinks)
+                foreach (var parentLink in parentLinks)
                 {
                     if (parentLink.Context.TraceOptions.IsSampled)
                     {

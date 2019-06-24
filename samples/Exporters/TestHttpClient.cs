@@ -30,7 +30,7 @@
             var scope = tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartScopedSpan();
             //Thread.Sleep(TimeSpan.FromSeconds(1));
 
-            HttpClient client = new HttpClient();
+            var client = new HttpClient();
             var t = client.GetStringAsync("http://bing.com");
 
             t.Wait();

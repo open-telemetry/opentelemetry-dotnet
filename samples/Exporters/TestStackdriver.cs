@@ -40,7 +40,7 @@
                 Stats.ViewManager);
             exporter.Start();
 
-            ITagContextBuilder tagContextBuilder = tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
+            var tagContextBuilder = tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
             var spanBuilder = tracer
                 .SpanBuilder("incoming request")

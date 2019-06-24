@@ -36,33 +36,33 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void Create_AllowTagValueWithMaxLength()
         {
-            char[] chars = new char[TagValue.MaxLength];
-            for (int i = 0; i < chars.Length; i++)
+            var chars = new char[TagValue.MaxLength];
+            for (var i = 0; i < chars.Length; i++)
             {
                 chars[i] = 'v';
             }
 
-            String value = new String(chars);
+            var value = new String(chars);
             Assert.Equal(value, TagValue.Create(value).AsString);
         }
 
         [Fact]
         public void Create_DisallowTagValueOverMaxLength()
         {
-            char[] chars = new char[TagValue.MaxLength + 1];
-            for (int i = 0; i < chars.Length; i++)
+            var chars = new char[TagValue.MaxLength + 1];
+            for (var i = 0; i < chars.Length; i++)
             {
                 chars[i] = 'v';
             }
 
-            String value = new String(chars);
+            var value = new String(chars);
             Assert.Throws<ArgumentOutOfRangeException>(() => TagValue.Create(value));
         }
 
         [Fact]
         public void DisallowTagValueWithUnprintableChars()
         {
-            String value = "\u02ab\u03cd";
+            var value = "\u02ab\u03cd";
             Assert.Throws<ArgumentOutOfRangeException>(() => TagValue.Create(value));
         }
 

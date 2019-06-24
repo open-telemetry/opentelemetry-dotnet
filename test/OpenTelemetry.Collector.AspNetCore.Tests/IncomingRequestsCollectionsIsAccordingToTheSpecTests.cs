@@ -79,7 +79,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     // ignore errors
                 }
 
-                for (int i = 0; i < 10; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     if (startEndHandler.Invocations.Count == 2)
                     {

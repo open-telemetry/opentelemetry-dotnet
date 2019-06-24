@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private Span CreateSampledEndedSpan(string spanName)
         {
-            ISpan span =
+            var span =
                 Span.StartSpan(
                     sampledSpanContext,
                     recordSpanOptions,
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private Span CreateNotSampledEndedSpan(string spanName)
         {
-            ISpan span =
+            var span =
                 Span.StartSpan(
                     notSampledSpanContext,
                     recordSpanOptions,
@@ -88,8 +88,8 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ExportDifferentSampledSpans()
         {
-            Span span1 = CreateSampledEndedSpan(SPAN_NAME_1);
-            Span span2 = CreateSampledEndedSpan(SPAN_NAME_2);
+            var span1 = CreateSampledEndedSpan(SPAN_NAME_1);
+            var span2 = CreateSampledEndedSpan(SPAN_NAME_2);
             var exported = serviceHandler.WaitForExport(2);
             Assert.Equal(2, exported.Count());
             Assert.Contains(span1.ToSpanData(), exported);
@@ -99,12 +99,12 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ExportMoreSpansThanTheBufferSize()
         {
-            Span span1 = CreateSampledEndedSpan(SPAN_NAME_1);
-            Span span2 = CreateSampledEndedSpan(SPAN_NAME_1);
-            Span span3 = CreateSampledEndedSpan(SPAN_NAME_1);
-            Span span4 = CreateSampledEndedSpan(SPAN_NAME_1);
-            Span span5 = CreateSampledEndedSpan(SPAN_NAME_1);
-            Span span6 = CreateSampledEndedSpan(SPAN_NAME_1);
+            var span1 = CreateSampledEndedSpan(SPAN_NAME_1);
+            var span2 = CreateSampledEndedSpan(SPAN_NAME_1);
+            var span3 = CreateSampledEndedSpan(SPAN_NAME_1);
+            var span4 = CreateSampledEndedSpan(SPAN_NAME_1);
+            var span5 = CreateSampledEndedSpan(SPAN_NAME_1);
+            var span6 = CreateSampledEndedSpan(SPAN_NAME_1);
             var exported = serviceHandler.WaitForExport(6);
             Assert.Equal(6, exported.Count());
             Assert.Contains(span1.ToSpanData(), exported);
@@ -120,7 +120,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void InterruptWorkerThreadStops()
         {
   
-            Thread serviceExporterThread = ((SpanExporter)spanExporter).ServiceExporterThread;
+            var serviceExporterThread = ((SpanExporter)spanExporter).ServiceExporterThread;
             spanExporter.Dispose();
             // serviceExporterThread.Interrupt();
             // Test that the worker thread will stop.
@@ -136,13 +136,13 @@ namespace OpenTelemetry.Trace.Export.Test
             //    .when(mockServiceHandler)
             //    .export(anyListOf(SpanData));
             spanExporter.RegisterHandler("mock.service", mockServiceHandler);
-            Span span1 = CreateSampledEndedSpan(SPAN_NAME_1);
+            var span1 = CreateSampledEndedSpan(SPAN_NAME_1);
             var exported = serviceHandler.WaitForExport(1);
             Assert.Single(exported);
             Assert.Contains(span1.ToSpanData(), exported);
             // assertThat(exported).containsExactly(span1.toSpanData());
             // Continue to export after the exception was received.
-            Span span2 = CreateSampledEndedSpan(SPAN_NAME_1);
+            var span2 = CreateSampledEndedSpan(SPAN_NAME_1);
             exported = serviceHandler.WaitForExport(1);
             Assert.Single(exported);
             Assert.Contains(span2.ToSpanData(), exported);
@@ -152,10 +152,10 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ExportSpansToMultipleServices()
         {
-            TestHandler serviceHandler2 = new TestHandler();
+            var serviceHandler2 = new TestHandler();
             spanExporter.RegisterHandler("test.service2", serviceHandler2);
-            Span span1 = CreateSampledEndedSpan(SPAN_NAME_1);
-            Span span2 = CreateSampledEndedSpan(SPAN_NAME_2);
+            var span1 = CreateSampledEndedSpan(SPAN_NAME_1);
+            var span2 = CreateSampledEndedSpan(SPAN_NAME_2);
             var exported1 = serviceHandler.WaitForExport(2);
             var exported2 = serviceHandler2.WaitForExport(2);
             Assert.Equal(2, exported1.Count());
@@ -169,8 +169,8 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ExportNotSampledSpans()
         {
-            Span span1 = CreateNotSampledEndedSpan(SPAN_NAME_1);
-            Span span2 = CreateSampledEndedSpan(SPAN_NAME_2);
+            var span1 = CreateNotSampledEndedSpan(SPAN_NAME_1);
+            var span2 = CreateSampledEndedSpan(SPAN_NAME_2);
             // Spans are recorded and exported in the same order as they are ended, we test that a non
             // sampled span is not exported by creating and ending a sampled span after a non sampled span
             // and checking that the first exported span is the sampled span (the non sampled did not get

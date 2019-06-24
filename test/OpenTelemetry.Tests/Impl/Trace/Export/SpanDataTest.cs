@@ -67,7 +67,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanData_AllValues()
         {
-            SpanData spanData =
+            var spanData =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanData_RootActiveSpan()
         {
-            SpanData spanData =
+            var spanData =
                 SpanData.Create(
                     spanContext,
                     null,
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanData_AllDataEmpty()
         {
-            SpanData spanData =
+            var spanData =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
@@ -158,7 +158,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanDataEquals()
         {
-            SpanData allSpanData1 =
+            var allSpanData1 =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     status,
                     SPAN_KIND,
                     endTimestamp);
-            SpanData allSpanData2 =
+            var allSpanData2 =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
@@ -186,7 +186,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     status,
                     SPAN_KIND,
                     endTimestamp);
-            SpanData emptySpanData =
+            var emptySpanData =
                 SpanData.Create(
                     spanContext,
                     parentSpanId,
@@ -210,7 +210,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void SpanData_ToString()
         {
-            string spanDataString =
+            var spanDataString =
                 SpanData.Create(
                         spanContext,
                         parentSpanId,

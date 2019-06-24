@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StringAttributeValue()
         {
-            IAttributeValue<string> attribute = AttributeValue<string>.Create("MyStringAttributeValue");
+            var attribute = AttributeValue<string>.Create("MyStringAttributeValue");
             attribute.Apply<object>((stringValue) =>
             {
                 Assert.Equal("MyStringAttributeValue", stringValue);
@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void BooleanAttributeValue()
         {
-            IAttributeValue<bool> attribute = AttributeValue<bool>.Create(true);
+            var attribute = AttributeValue<bool>.Create(true);
             attribute.Apply<object>((boolValue) =>
             {
                 Assert.True(boolValue);
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void LongAttributeValue()
         {
-            IAttributeValue<long> attribute = AttributeValue<long>.Create(123456L);
+            var attribute = AttributeValue<long>.Create(123456L);
             attribute.Apply<object>((longValue) =>
             {
                 Assert.Equal(123456L, longValue);
@@ -68,11 +68,11 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void AttributeValue_ToString()
         {
-            IAttributeValue<string> attribute = AttributeValue<string>.Create("MyStringAttributeValue");
+            var attribute = AttributeValue<string>.Create("MyStringAttributeValue");
             Assert.Contains("MyStringAttributeValue", attribute.ToString());
-            IAttributeValue<bool> attribute2 = AttributeValue<bool>.Create(true);
+            var attribute2 = AttributeValue<bool>.Create(true);
             Assert.Contains("True", attribute2.ToString());
-            IAttributeValue<long> attribute3 = AttributeValue<long>.Create(123456L);
+            var attribute3 = AttributeValue<long>.Create(123456L);
             Assert.Contains("123456", attribute3.ToString());
         }
     }

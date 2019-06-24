@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Utils
         private static IEnumerable<T> WalkPartition<T>(IEnumerator<T> source, int size)
         {
             yield return source.Current;
-            for (int i = 0; i < size && source.MoveNext(); i++)
+            for (var i = 0; i < size && source.MoveNext(); i++)
             {
                 yield return source.Current;
             }

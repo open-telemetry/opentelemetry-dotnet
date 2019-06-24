@@ -34,7 +34,7 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void NoopTagger()
         {
-            ITagger noopTagger = NoopTags.NoopTagger;
+            var noopTagger = NoopTags.NoopTagger;
             Assert.Same(NoopTags.NoopTagContext, noopTagger.Empty);
             Assert.Same(NoopTags.NoopTagContext, noopTagger.CurrentTagContext);
             Assert.Same(NoopTags.NoopTagContextBuilder, noopTagger.EmptyBuilder);
@@ -46,14 +46,14 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void NoopTagger_ToBuilder_DisallowsNull()
         {
-            ITagger noopTagger = NoopTags.NoopTagger;
+            var noopTagger = NoopTags.NoopTagger;
             Assert.Throws<ArgumentNullException>(() => noopTagger.ToBuilder(null));
         }
 
         [Fact]
         public void NoopTagger_WithTagContext_DisallowsNull()
         {
-            ITagger noopTagger = NoopTags.NoopTagger;
+            var noopTagger = NoopTags.NoopTagger;
             Assert.Throws<ArgumentNullException>(() => noopTagger.WithTagContext(null));
         }
 
@@ -69,21 +69,21 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void NoopTagContextBuilder_Put_DisallowsNullKey()
         {
-            ITagContextBuilder noopBuilder = NoopTags.NoopTagContextBuilder;
+            var noopBuilder = NoopTags.NoopTagContextBuilder;
             Assert.Throws<ArgumentNullException>(() => noopBuilder.Put(null, VALUE));
         }
 
         [Fact]
         public void NoopTagContextBuilder_Put_DisallowsNullValue()
         {
-            ITagContextBuilder noopBuilder = NoopTags.NoopTagContextBuilder;
+            var noopBuilder = NoopTags.NoopTagContextBuilder;
             Assert.Throws<ArgumentNullException>(() => noopBuilder.Put(KEY, null));
         }
 
         [Fact]
         public void NoopTagContextBuilder_Remove_DisallowsNullKey()
         {
-            ITagContextBuilder noopBuilder = NoopTags.NoopTagContextBuilder;
+            var noopBuilder = NoopTags.NoopTagContextBuilder;
             Assert.Throws<ArgumentNullException>(() => noopBuilder.Remove(null));
         }
 
@@ -103,14 +103,14 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void NoopTagContextBinarySerializer_ToByteArray_DisallowsNull()
         {
-            ITagContextBinarySerializer noopSerializer = NoopTags.NoopTagContextBinarySerializer;
+            var noopSerializer = NoopTags.NoopTagContextBinarySerializer;
             Assert.Throws<ArgumentNullException>(() => noopSerializer.ToByteArray(null));
         }
 
         [Fact]
         public void NoopTagContextBinarySerializer_FromByteArray_DisallowsNull()
         {
-            ITagContextBinarySerializer noopSerializer = NoopTags.NoopTagContextBinarySerializer;
+            var noopSerializer = NoopTags.NoopTagContextBinarySerializer;
             Assert.Throws<ArgumentNullException>(() => noopSerializer.FromByteArray(null));
         }
 

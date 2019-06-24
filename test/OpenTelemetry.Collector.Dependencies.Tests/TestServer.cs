@@ -38,7 +38,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 this.cts = new CancellationTokenSource();
                 this.listener = new HttpListener();
 
-                CancellationToken token = this.cts.Token;
+                var token = this.cts.Token;
 
                 this.listener.Prefixes.Add($"http://{host}:{port}/");
                 this.listener.Start();

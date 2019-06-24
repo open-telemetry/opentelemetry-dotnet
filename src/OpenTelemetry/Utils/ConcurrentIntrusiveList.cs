@@ -102,8 +102,8 @@ namespace OpenTelemetry.Utils
         {
             lock (this.lck)
             {
-                List<T> all = new List<T>(this.size);
-                for (T e = this.head; e != null; e = e.Next)
+                var all = new List<T>(this.size);
+                for (var e = this.head; e != null; e = e.Next)
                 {
                     all.Add(e);
                 }

@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                ISpan currentSpan = CurrentSpanUtils.CurrentSpan;
+                var currentSpan = CurrentSpanUtils.CurrentSpan;
                 return currentSpan ?? BlankSpan.Instance;
             }
         }

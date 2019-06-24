@@ -49,11 +49,11 @@ namespace OpenTelemetry.Context.Propagation
                 throw new SpanContextParseException("Unsupported version.");
             }
 
-            TraceId traceId = TraceId.Invalid;
-            SpanId spanId = SpanId.Invalid;
-            TraceOptions traceOptions = TraceOptions.Default;
+            var traceId = TraceId.Invalid;
+            var spanId = SpanId.Invalid;
+            var traceOptions = TraceOptions.Default;
 
-            int pos = 1;
+            var pos = 1;
             try
             {
                 if (bytes.Length > pos && bytes[pos] == TraceIdFieldId)
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Context.Propagation
                 throw new ArgumentNullException(nameof(spanContext));
             }
 
-            byte[] bytes = new byte[FormatLength];
+            var bytes = new byte[FormatLength];
             bytes[VersionIdOffset] = VersionId;
             bytes[TraceIdFieldIdOffset] = TraceIdFieldId;
             spanContext.TraceId.CopyBytesTo(bytes, TraceIdOffset);
