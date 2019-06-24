@@ -39,7 +39,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <returns></returns>
         public static Span ToSpan(this SpanData spanData, string projectId)
         {
-            string spanId = spanData.Context.SpanId.ToLowerBase16();
+            var spanId = spanData.Context.SpanId.ToLowerBase16();
 
             // Base span settings
             var span = new Span
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             };
             if (spanData.ParentSpanId != null)
             {
-                string parentSpanId = spanData.ParentSpanId.ToLowerBase16();
+                var parentSpanId = spanData.ParentSpanId.ToLowerBase16();
                 if (!string.IsNullOrEmpty(parentSpanId))
                 {
                     span.ParentSpanId = parentSpanId;
@@ -138,7 +138,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
             // Set header mutation for every outgoing API call to Stackdriver so the BE knows
             // which version of OC client is calling it as well as which version of the exporter
-            CallSettings callSettings = CallSettings.FromHeaderMutation(StackdriverCallHeaderAppender);
+            var callSettings = CallSettings.FromHeaderMutation(StackdriverCallHeaderAppender);
             traceServiceSettings = new TraceServiceSettings();
             traceServiceSettings.CallSettings = callSettings;
         }
@@ -147,7 +147,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         {
             try
             {
-                string assemblyPackageVersion = typeof(StackdriverTraceExporter).GetTypeInfo().Assembly.GetCustomAttributes<AssemblyInformationalVersionAttribute>().First().InformationalVersion;
+                var assemblyPackageVersion = typeof(StackdriverTraceExporter).GetTypeInfo().Assembly.GetCustomAttributes<AssemblyInformationalVersionAttribute>().First().InformationalVersion;
                 STACKDRIVER_EXPORTER_VERSION = assemblyPackageVersion;
             }
             catch (Exception)
@@ -167,7 +167,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
         public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
         {
-            TraceServiceClient traceWriter = TraceServiceClient.Create(settings: traceServiceSettings);
+            var traceWriter = TraceServiceClient.Create(settings: traceServiceSettings);
             
             var batchSpansRequest = new BatchWriteSpansRequest
             {

@@ -67,7 +67,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                for (int i = 0; i < 10; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     if (startEndHandler.Invocations.Count == 2)
                     {
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                for (int i = 0; i < 10; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     if (startEndHandler.Invocations.Count == 2)
                     {

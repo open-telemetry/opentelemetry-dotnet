@@ -102,7 +102,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int h = 1;
+            var h = 1;
             h *= 1000003;
             h ^= this.Value.GetHashCode();
             return h;
@@ -126,22 +126,22 @@ namespace OpenTelemetry.Trace
         {
             if (typeof(T) == typeof(string))
             {
-                string value = this.Value as string;
+                var value = this.Value as string;
                 return stringFunction(value);
             }
             else if (typeof(T) == typeof(long))
             {
-                long val = (long)(object)this.Value;
+                var val = (long)(object)this.Value;
                 return longFunction(val);
             }
             else if (typeof(T) == typeof(bool))
             {
-                bool val = (bool)(object)this.Value;
+                var val = (bool)(object)this.Value;
                 return booleanFunction(val);
             }
             else if (typeof(T) == typeof(double))
             {
-                double val = (double)(object)this.Value;
+                var val = (double)(object)this.Value;
                 return doubleFunction(val);
             }
 

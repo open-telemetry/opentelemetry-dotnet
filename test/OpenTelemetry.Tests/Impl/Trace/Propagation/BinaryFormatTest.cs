@@ -38,7 +38,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
         private void TestSpanContextConversion(SpanContext spanContext)
         {
-            SpanContext propagatedBinarySpanContext = binaryFormat.FromByteArray(binaryFormat.ToByteArray(spanContext));
+            var propagatedBinarySpanContext = binaryFormat.FromByteArray(binaryFormat.ToByteArray(spanContext));
             Assert.Equal(spanContext, propagatedBinarySpanContext);
         }
 

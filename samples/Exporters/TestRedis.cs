@@ -25,8 +25,8 @@
             exporter.Start();
 
             // 2. Configure 100% sample rate for the purposes of the demo
-            ITraceConfig traceConfig = Tracing.TraceConfig;
-            ITraceParams currentConfig = traceConfig.ActiveTraceParams;
+            var traceConfig = Tracing.TraceConfig;
+            var currentConfig = traceConfig.ActiveTraceParams;
             var newConfig = currentConfig.ToBuilder()
                 .SetSampler(Samplers.AlwaysSample)
                 .Build();
@@ -39,18 +39,18 @@
             var collector = new StackExchangeRedisCallsCollector(null, tracer, null, Tracing.ExportComponent);
 
             // connect to the server
-            ConnectionMultiplexer connection = ConnectionMultiplexer.Connect("localhost:6379");
+            var connection = ConnectionMultiplexer.Connect("localhost:6379");
             connection.RegisterProfiler(collector.GetProfilerSessionsFactory());
 
             // select a database (by default, DB = 0)
-            IDatabase db = connection.GetDatabase();
+            var db = connection.GetDatabase();
 
 
             // 4. Create a scoped span. It will end automatically when using statement ends
             using (var scope = tracer.SpanBuilder("Main").StartScopedSpan())
             {
                 Console.WriteLine("About to do a busy work");
-                for (int i = 0; i < 10; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     DoWork(db, i);
                 }
@@ -65,15 +65,15 @@
         private static void DoWork(IDatabase db, int i)
         {
             // 6. Get the global singleton Tracer object
-            ITracer tracer = Tracing.Tracer;
+            var tracer = Tracing.Tracer;
 
             // 7. Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be
             // a child span.
-            using (OpenTelemetry.Context.IScope scope = tracer.SpanBuilder("DoWork").StartScopedSpan())
+            using (var scope = tracer.SpanBuilder("DoWork").StartScopedSpan())
             {
                 // Simulate some work.
-                ISpan span = tracer.CurrentSpan;
+                var span = tracer.CurrentSpan;
 
                 try
                 {
@@ -83,7 +83,7 @@
                     Thread.Sleep(1000);
 
                     // run a command, in this case a GET
-                    RedisValue myVal = db.StringGet("key");
+                    var myVal = db.StringGet("key");
 
                     Console.WriteLine(myVal);
 

@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void CreateStatus_WithDescription()
         {
-            Status status = Status.Unknown.WithDescription("This is an error.");
+            var status = Status.Unknown.WithDescription("This is an error.");
             Assert.Equal(CanonicalCode.Unknown, status.CanonicalCode);
             Assert.Equal("This is an error.", status.Description);
             Assert.False(status.IsOk);

@@ -32,14 +32,14 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void PreventTooLongMeasureName()
         {
-            char[] chars = new char[Measure.NameMaxLength + 1];
+            var chars = new char[Measure.NameMaxLength + 1];
 
-            for (int i = 0; i < chars.Length; i++)
+            for (var i = 0; i < chars.Length; i++)
             {
                 chars[i] = 'a';
             }
 
-            String longName = new string(chars);
+            var longName = new string(chars);
             Assert.Throws<ArgumentOutOfRangeException>(() => MeasureDouble.Create(longName, "description", "1"));
         }
 
@@ -84,12 +84,12 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestMatch()
         {
-            List<IMeasure> measures =
+            var measures =
                 new List<IMeasure>() {
                     MeasureDouble.Create("measure1", "description", "1"),
                     MeasureLong.Create("measure2", "description", "1"),};
-            List<String> outputs = new List<string>();
-            foreach (IMeasure measure in measures)
+            var outputs = new List<string>();
+            foreach (var measure in measures)
             {
                 outputs.Add(
                     measure.Match(

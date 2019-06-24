@@ -27,7 +27,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
         [Fact]
         public void TraceContextFormatCanParseExampleFromSpec()
         {
-            Dictionary<string, string> headers = new Dictionary<string, string>()
+            var headers = new Dictionary<string, string>()
             {
                 { "traceparent", "00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01" },
                 { "tracestate", "congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01" },

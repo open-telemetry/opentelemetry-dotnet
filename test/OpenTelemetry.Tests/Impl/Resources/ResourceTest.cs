@@ -251,7 +251,7 @@ namespace OpenTelemetry.Impl.Resources
 
         private static void AddLabels(Dictionary<string, string> labels, int labelCount, int startIndex = 0)
         {
-            for (int i = startIndex; i < labelCount + startIndex; ++i)
+            for (var i = startIndex; i < labelCount + startIndex; ++i)
             {
                 labels.Add($"{keyName}{i}", $"{valueName}{i}");
             }

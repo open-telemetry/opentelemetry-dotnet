@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace.Config.Test
         [Fact]
         public void UpdateTraceParams()
         {
-            TraceParams traceParams =
+            var traceParams =
                 TraceParams.Default
                     .ToBuilder()
                     .SetSampler(Samplers.AlwaysSample)

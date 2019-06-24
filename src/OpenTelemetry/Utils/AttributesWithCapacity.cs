@@ -153,7 +153,7 @@ namespace OpenTelemetry.Utils
 
         public bool Contains(KeyValuePair<string, IAttributeValue> item)
         {
-            var result = this.TryGetValue(item.Key, out IAttributeValue value);
+            var result = this.TryGetValue(item.Key, out var value);
             if (result)
             {
                 return value.Equals(item.Value);
@@ -164,10 +164,10 @@ namespace OpenTelemetry.Utils
 
         public void CopyTo(KeyValuePair<string, IAttributeValue>[] array, int arrayIndex)
         {
-            DictionaryEntry[] entries = new DictionaryEntry[this.@delegate.Count];
+            var entries = new DictionaryEntry[this.@delegate.Count];
             this.@delegate.CopyTo(entries, 0);
 
-            for (int i = 0; i < entries.Length; i++)
+            for (var i = 0; i < entries.Length; i++)
             {
                 array[i + arrayIndex] = new KeyValuePair<string, IAttributeValue>((string)entries[i].Key, (IAttributeValue)entries[i].Value);
             }

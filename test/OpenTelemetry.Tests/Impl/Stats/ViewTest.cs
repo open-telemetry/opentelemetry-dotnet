@@ -48,7 +48,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestDistributionView()
         {
-            IView view = View.Create(NAME, DESCRIPTION, MEASURE, MEAN, keys);
+            var view = View.Create(NAME, DESCRIPTION, MEASURE, MEAN, keys);
             Assert.Equal(NAME, view.Name);
             Assert.Equal(DESCRIPTION, view.Description);
             Assert.Equal(MEASURE.Name, view.Measure.Name);
@@ -63,10 +63,10 @@ namespace OpenTelemetry.Stats.Test
         public void testViewEquals()
         {
 
-            IView view1 = View.Create(NAME, DESCRIPTION, MEASURE, MEAN, keys);
-            IView view2 = View.Create(NAME, DESCRIPTION, MEASURE, MEAN, keys);
+            var view1 = View.Create(NAME, DESCRIPTION, MEASURE, MEAN, keys);
+            var view2 = View.Create(NAME, DESCRIPTION, MEASURE, MEAN, keys);
             Assert.Equal(view1, view2);
-            IView view3 = View.Create(NAME, DESCRIPTION + 2, MEASURE, MEAN, keys);
+            var view3 = View.Create(NAME, DESCRIPTION + 2, MEASURE, MEAN, keys);
             Assert.NotEqual(view1, view3);
             Assert.NotEqual(view2, view3);
 
@@ -92,13 +92,13 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void PreventTooLongViewName()
         {
-            char[] chars = new char[ViewName.NameMaxLength + 1];
-            for (int i = 0; i < chars.Length; i++)
+            var chars = new char[ViewName.NameMaxLength + 1];
+            for (var i = 0; i < chars.Length; i++)
             {
                 chars[i] = 'a';
             }
 
-            String longName = new String(chars);
+            var longName = new String(chars);
             Assert.Throws<ArgumentOutOfRangeException>(() => ViewName.Create(longName));
         }
 

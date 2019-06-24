@@ -26,8 +26,8 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestCreateDistribution()
         {
-            IBucketBoundaries bucketBoundaries = BucketBoundaries.Create(new List<double>() { 0.1, 2.2, 33.3 });
-            IDistribution distribution = Distribution.Create(bucketBoundaries);
+            var bucketBoundaries = BucketBoundaries.Create(new List<double>() { 0.1, 2.2, 33.3 });
+            var distribution = Distribution.Create(bucketBoundaries);
             Assert.Equal(bucketBoundaries, distribution.BucketBoundaries);
         }
 
@@ -70,15 +70,15 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestMatch()
         {
-            List<IAggregation> aggregations =
+            var aggregations =
                 new List<IAggregation>() {
                                 Sum.Create(),
                                 Count.Create(),
                                 Mean.Create(),
                                 Distribution.Create(BucketBoundaries.Create(new List<double>() {-10.0, 1.0, 5.0 })),
                                 LastValue.Create(),};
-            List<String> actual = new List<String>();
-            foreach (IAggregation aggregation in aggregations)
+            var actual = new List<String>();
+            foreach (var aggregation in aggregations)
             {
                 actual.Add(
                     aggregation.Match(

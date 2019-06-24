@@ -77,7 +77,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
 
                 this.tokenSource = new CancellationTokenSource();
 
-                CancellationToken token = this.tokenSource.Token;
+                var token = this.tokenSource.Token;
 
                 var metricsExporter = new MetricsExporterThread(this.telemetryConfiguration, this.viewManager, token, TimeSpan.FromMinutes(1));
                 this.workerThread = Task.Factory.StartNew((Action)metricsExporter.WorkerThread, TaskCreationOptions.LongRunning);

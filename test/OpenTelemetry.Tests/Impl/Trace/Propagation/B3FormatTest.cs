@@ -36,7 +36,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
 
         private static readonly Action<IDictionary<string, string>, string, string> setter = (d, k, v) => d[k] = v;
-        private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> getter = (d, k) => { d.TryGetValue(k, out string v); return new string[] { v }; };
+        private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> getter = (d, k) => { d.TryGetValue(k, out var v); return new string[] { v }; };
         ITestOutputHelper _output;
 
         public B3FormatTest(ITestOutputHelper output)
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             IDictionary<String, String> headersNotSampled = new Dictionary<String, String>();
             headersNotSampled.Add(B3Format.XB3TraceId, TRACE_ID_BASE16);
             headersNotSampled.Add(B3Format.XB3SpanId, SPAN_ID_BASE16);
-            SpanContext spanContext = SpanContext.Create(TRACE_ID, SPAN_ID, TraceOptions.Default, Tracestate.Empty);
+            var spanContext = SpanContext.Create(TRACE_ID, SPAN_ID, TraceOptions.Default, Tracestate.Empty);
             Assert.Equal(spanContext, b3Format.Extract(headersNotSampled, getter));
         }
 

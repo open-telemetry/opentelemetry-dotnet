@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private ISpan CreateSpan(string spanName)
         {
-            SpanContext spanContext =
+            var spanContext =
                 SpanContext.Create(
                     TraceId.GenerateRandomId(random),
                     SpanId.GenerateRandomId(random),
@@ -59,8 +59,8 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetSummary_SpansWithDifferentNames()
         {
-            ISpan span1 = CreateSpan(SPAN_NAME_1);
-            ISpan span2 = CreateSpan(SPAN_NAME_2);
+            var span1 = CreateSpan(SPAN_NAME_1);
+            var span2 = CreateSpan(SPAN_NAME_2);
             Assert.Equal(2, activeSpansExporter.Summary.PerSpanNameSummary.Count);
             Assert.Equal(1,
                     activeSpansExporter
@@ -87,9 +87,9 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetSummary_SpansWithSameName()
         {
-            ISpan span1 = CreateSpan(SPAN_NAME_1);
-            ISpan span2 = CreateSpan(SPAN_NAME_1);
-            ISpan span3 = CreateSpan(SPAN_NAME_1);
+            var span1 = CreateSpan(SPAN_NAME_1);
+            var span2 = CreateSpan(SPAN_NAME_1);
+            var span3 = CreateSpan(SPAN_NAME_1);
             Assert.Equal(1, activeSpansExporter.Summary.PerSpanNameSummary.Count);
             Assert.Equal(3,
                     activeSpansExporter
@@ -117,8 +117,8 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetActiveSpans_SpansWithDifferentNames()
         {
-            Span span1 = CreateSpan(SPAN_NAME_1) as Span;
-            Span span2 = CreateSpan(SPAN_NAME_2) as Span;
+            var span1 = CreateSpan(SPAN_NAME_1) as Span;
+            var span2 = CreateSpan(SPAN_NAME_2) as Span;
             Assert.Contains(span1.ToSpanData(), activeSpansExporter.GetRunningSpans(RunningSpanStoreFilter.Create(SPAN_NAME_1, 0)));
             Assert.Contains(span1.ToSpanData(), activeSpansExporter.GetRunningSpans(RunningSpanStoreFilter.Create(SPAN_NAME_1, 2)));
             Assert.Contains(span2.ToSpanData(), activeSpansExporter.GetRunningSpans(RunningSpanStoreFilter.Create(SPAN_NAME_2, 0)));
