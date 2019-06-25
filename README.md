@@ -49,7 +49,7 @@ We encourage contributions. Use tags [up-for-grabs][up-for-grabs-issues] and
 
 ## OpenTelemetry QuickStart: collecting data
 
-You can use Open Census API to instrument code and report data. Or use one of
+You can use OpenTelemetry API to instrument code and report data. Or use one of
 automatic data collection modules.
 
 ### Using ASP.NET Core incoming requests collector
