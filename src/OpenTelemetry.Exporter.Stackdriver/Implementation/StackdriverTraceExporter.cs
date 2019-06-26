@@ -37,12 +37,12 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <param name="spanData">Span in OpenTelemetry format</param>
         /// <param name="projectId">Google Cloud Platform Project Id</param>
         /// <returns></returns>
-        public static Span ToSpan(this SpanData spanData, string projectId)
+        public static Google.Cloud.Trace.V2.Span ToSpan(this SpanData spanData, string projectId)
         {
             var spanId = spanData.Context.SpanId.ToLowerBase16();
 
             // Base span settings
-            var span = new Span
+            var span = new Google.Cloud.Trace.V2.Span
             {
                 SpanName = new SpanName(projectId, spanData.Context.TraceId.ToLowerBase16(), spanId),
                 SpanId = spanId,
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             // Span Links
             if (spanData.Links != null)
             {
-                span.Links = new Span.Types.Links
+                span.Links = new Google.Cloud.Trace.V2.Span.Types.Links
                 {
                     DroppedLinksCount = spanData.Links.DroppedLinksCount,
                     Link = { spanData.Links.Links.Select(l => l.ToLink()) }
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             // Span Attributes
             if (spanData.Attributes != null)
             {
-                span.Attributes = new Span.Types.Attributes
+                span.Attributes = new Google.Cloud.Trace.V2.Span.Types.Attributes
                 {
                     DroppedAttributesCount = spanData.Attributes != null ? spanData.Attributes.DroppedAttributesCount : 0,
 
@@ -86,15 +86,15 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             return span;
         }
 
-        public static Span.Types.Link ToLink(this ILink link)
+        public static Google.Cloud.Trace.V2.Span.Types.Link ToLink(this ILink link)
         {
-            var ret = new Span.Types.Link();
+            var ret = new Google.Cloud.Trace.V2.Span.Types.Link();
             ret.SpanId = link.Context.SpanId.ToLowerBase16();
             ret.TraceId = link.Context.TraceId.ToLowerBase16();
 
             if (link.Attributes != null)
             {
-                ret.Attributes = new Span.Types.Attributes
+                ret.Attributes = new Google.Cloud.Trace.V2.Span.Types.Attributes
                 {
 
                     DroppedAttributesCount = OpenTelemetry.Trace.Config.TraceParams.Default.MaxNumberOfAttributes - link.Attributes.Count,
