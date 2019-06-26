@@ -323,8 +323,9 @@ deprecate it for 18 months before removing it, if possible.
 [GKE]: https://codelabs.developers.google.com/codelabs/cloud-kubernetes-aspnetcore/index.html?index=..%2F..index#0
 [gcp-auth]: https://cloud.google.com/docs/authentication/getting-started
 [semver]: http://semver.org/
-[ai-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestApplicationInsights.cs
-[stackdriver-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestStackdriver.cs
-[zipkin-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestZipkin.cs
+[ai-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestApplicationInsights.cs
+[stackdriver-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestStackdriver.cs
+[zipkin-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestZipkin.cs
 [prometheus-get-started]: https://prometheus.io/docs/introduction/first_steps/
-[prometheus-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestPrometheus.cs
+[prometheus-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestPrometheus.cs
+
