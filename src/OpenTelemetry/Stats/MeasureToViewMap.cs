@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Stats
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using OpenTelemetry.Tags;
@@ -24,12 +25,12 @@ namespace OpenTelemetry.Stats
     internal sealed class MeasureToViewMap
     {
         private readonly object lck = new object();
-        private readonly IDictionary<string, ICollection<MutableViewData>> mutableMap = new Dictionary<string, ICollection<MutableViewData>>();
+        private readonly IDictionary<string, ICollection<MutableViewData>> mutableMap = new ConcurrentDictionary<string, ICollection<MutableViewData>>();
 
-        private readonly IDictionary<IViewName, IView> registeredViews = new Dictionary<IViewName, IView>();
+        private readonly IDictionary<IViewName, IView> registeredViews = new ConcurrentDictionary<IViewName, IView>();
 
         // TODO(songya): consider adding a Measure.Name class
-        private readonly IDictionary<string, IMeasure> registeredMeasures = new Dictionary<string, IMeasure>();
+        private readonly IDictionary<string, IMeasure> registeredMeasures = new ConcurrentDictionary<string, IMeasure>();
 
         // Cached set of exported views. It must be set to null whenever a view is registered or
         // unregistered.

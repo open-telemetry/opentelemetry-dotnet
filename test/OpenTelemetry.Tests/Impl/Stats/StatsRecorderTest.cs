@@ -24,6 +24,7 @@ namespace OpenTelemetry.Stats.Test
     using OpenTelemetry.Tags;
     using OpenTelemetry.Tags.Unsafe;
     using Xunit;
+    using System.Collections;
 
     public class StatsRecorderTest
     {
@@ -36,41 +37,44 @@ namespace OpenTelemetry.Stats.Test
         private static readonly IViewName VIEW_NAME = ViewName.Create("my view");
         private static readonly int RANDOM_NAME_LEN = 8;
 
-        private IViewManager viewManager;
-        private IStatsRecorder statsRecorder;
+        private static readonly IViewManager viewManager = Stats.ViewManager;
+        private static readonly IStatsRecorder statsRecorder = Stats.StatsRecorder;
 
         public StatsRecorderTest()
         {
-            viewManager = Stats.ViewManager;
-            statsRecorder = Stats.StatsRecorder;
         }
 
         [Fact]
         public void Record_CurrentContextNotSet()
         {
+            IViewName viewName = CreateRandomViewName();
+
             IView view =
                 View.Create(
-                    VIEW_NAME,
+                    viewName,
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
                     new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 1.0).Record();
-            IViewData viewData = viewManager.GetView(VIEW_NAME);
+            IViewData viewData = viewManager.GetView(viewName);
 
             // record() should have used the default TagContext, so the tag value should be null.
             ICollection<TagValues> expected = new List<TagValues>() { TagValues.Create(new List<TagValue>() { null }) };
-            ICollection<TagValues> actual = viewData.AggregationMap.Keys;
+            ICollection<TagValues> actual = viewData.AggregationMap.Select(kvp => kvp.Key).ToList();
+
             Assert.Equal(expected, actual); 
         }
 
         [Fact]
         public void Record_CurrentContextSet()
         {
+            IViewName viewName = CreateRandomViewName();
+
             IView view =
                 View.Create(
-                    VIEW_NAME,
+                    viewName,
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
@@ -87,7 +91,7 @@ namespace OpenTelemetry.Stats.Test
             {
                 AsyncLocalContext.CurrentTagContext = orig;
             }
-            IViewData viewData = viewManager.GetView(VIEW_NAME);
+            IViewData viewData = viewManager.GetView(viewName);
 
             // record() should have used the given TagContext.
             ICollection<TagValues> expected = new List<TagValues>() { TagValues.Create(new List<TagValue>() { VALUE }) };
@@ -127,9 +131,11 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void RecordTwice()
         {
+            IViewName viewName = CreateRandomViewName();
+
             IView view =
                 View.Create(
-                    VIEW_NAME,
+                    viewName,
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
@@ -139,7 +145,7 @@ namespace OpenTelemetry.Stats.Test
             IMeasureMap statsRecord = statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 1.0);
             statsRecord.Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
             statsRecord.Record(new SimpleTagContext(Tag.Create(KEY, VALUE_2)));
-            IViewData viewData = viewManager.GetView(VIEW_NAME);
+            IViewData viewData = viewManager.GetView(viewName);
 
             // There should be two entries.
             var tv = TagValues.Create(new List<TagValue>() { VALUE });
