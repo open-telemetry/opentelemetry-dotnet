@@ -16,7 +16,11 @@
 
 namespace OpenTelemetry.Metrics
 {
+    using System.Collections;
+    using System.Collections.Generic;
     using OpenTelemetry.Metrics.Implementation;
+    using OpenTelemetry.Tags;
+    using OpenTelemetry.Trace;
 
     /// <summary>
     /// Returns a builder for <see cref="ICounterDouble"/>.
@@ -50,5 +54,18 @@ namespace OpenTelemetry.Metrics
         /// <param name="name">Name of the counter.</param>
         /// <returns>The builder for the <see cref="IGaugeLong"/>.</returns>
         IGaugeLongBuilder GetGaugeLongBuilder(string name);
+
+        /// <summary>
+        /// Gets the builder for the <see cref="IMeasure"/>.
+        /// </summary>
+        /// <param name="name">The name of the <see cref="IMeasure"/>.</param>
+        /// <returns>The <see cref="IMeasureBuilder"/> to build the <see cref="IMeasure"/>.</returns>
+        IMeasureBuilder GetMeasureBuilder(string name);
+
+        void Record(IEnumerable<IMeasurement> measurements);
+
+        void Record(IEnumerable<IMeasurement> measurements, ITagContext tagContext);
+
+        void Record(IEnumerable<IMeasurement> measurements, ITagContext tagContext, SpanContext spanContext);
     }
 }

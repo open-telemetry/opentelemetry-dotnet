@@ -18,8 +18,11 @@ namespace OpenTelemetry.Metrics
 {
     using System;
     using System.Collections.Generic;
+    using System.Net.NetworkInformation;
     using OpenTelemetry.Metrics.Implementation;
     using OpenTelemetry.Resources;
+    using OpenTelemetry.Tags;
+    using OpenTelemetry.Trace;
 
     /// <summary>
     /// No-op implementation of a meter interface.
@@ -30,6 +33,7 @@ namespace OpenTelemetry.Metrics
         private static CounterLongBuilder counterLongBuilder = new CounterLongBuilder();
         private static GaugeDoubleBuilder gaugeDoubleBuilder = new GaugeDoubleBuilder();
         private static GaugeLongBuilder gaugeLongBuilder = new GaugeLongBuilder();
+        private static MeasureBuilder measureBuilder = new MeasureBuilder();
 
         /// <inheritdoc/>
         public ICounterDoubleBuilder GetCounterDoubleBuilder(string name) => counterDoubleBuilder;
@@ -42,6 +46,24 @@ namespace OpenTelemetry.Metrics
 
         /// <inheritdoc/>
         public IGaugeLongBuilder GetGaugeLongBuilder(string name) => gaugeLongBuilder;
+
+        /// <inheritdoc/>
+        public IMeasureBuilder GetMeasureBuilder(string name) => measureBuilder;
+
+        /// <inheritdoc/>
+        public void Record(IEnumerable<IMeasurement> measurements)
+        {
+        }
+
+        /// <inheritdoc/>
+        public void Record(IEnumerable<IMeasurement> measurements, ITagContext tagContext)
+        {
+        }
+
+        /// <inheritdoc/>
+        public void Record(IEnumerable<IMeasurement> measurements, ITagContext tagContext, SpanContext spanContext)
+        {
+        }
 
         private class CounterDoubleTimeSeries : ICounterDoubleTimeSeries
         {
@@ -245,6 +267,32 @@ namespace OpenTelemetry.Metrics
             public IMetricBuilder<IGaugeLongTimeSeries> SetResource(Resource resource) => this;
 
             public IMetricBuilder<IGaugeLongTimeSeries> SetUnit(string unit) => this;
+        }
+
+        private class Measurement : IMeasurement
+        {
+        }
+
+        private class Measure : IMeasure
+        {
+            private static IMeasurement measurement = new Measurement();
+
+            public IMeasurement CreateDoubleMeasurement(double value) => measurement;
+
+            public IMeasurement CreateLongMeasurement(long value) => measurement;
+        }
+
+        private class MeasureBuilder : IMeasureBuilder
+        {
+            private static Measure measure = new Measure();
+
+            public IMeasure Build() => measure;
+
+            public IMeasureBuilder SetDescription(string description) => this;
+
+            public IMeasureBuilder SetType(MeasureType type) => this;
+
+            public IMeasureBuilder SetUnit(string unit) => this;
         }
     }
 }
