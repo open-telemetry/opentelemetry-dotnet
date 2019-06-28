@@ -17,9 +17,9 @@
 namespace OpenTelemetry.Metrics.Implementation
 {
     /// <summary>
-    /// The builder for the <see cref="ICounterDouble"/>.
+    /// The builder for the <see cref="ICounterLong"/>.
     /// </summary>
-    public interface ICounterLongBuilder : IMetricBuilder<ICounterDoubleTimeSeries>
+    public interface ICounterLongBuilder : IMetricBuilder<ICounterLongTimeSeries>
     {
     }
 }

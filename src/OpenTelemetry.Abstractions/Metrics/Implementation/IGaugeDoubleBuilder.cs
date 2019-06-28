@@ -19,7 +19,7 @@ namespace OpenTelemetry.Metrics.Implementation
     /// <summary>
     /// The builder for the <see cref="IGaugeDouble"/>.
     /// </summary>
-    public interface IGaugeDoubleBuilder : IMetricBuilder<ICounterDoubleTimeSeries>
+    public interface IGaugeDoubleBuilder : IMetricBuilder<IGaugeDoubleTimeSeries>
     {
     }
 }

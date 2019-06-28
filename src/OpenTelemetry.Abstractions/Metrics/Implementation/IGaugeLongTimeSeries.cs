@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Metrics.Implementation
 {
     /// <summary>
-    /// Time series type for <see cref="IGaugeDouble"/>.
+    /// Time series type for <see cref="IGaugeLong"/>.
     /// </summary>
     public interface IGaugeLongTimeSeries
     {
