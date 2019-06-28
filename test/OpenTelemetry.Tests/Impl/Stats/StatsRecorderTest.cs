@@ -155,8 +155,8 @@ namespace OpenTelemetry.Stats.Test
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
                 {
-                    { tv, StatsTestUtil.CreateAggregationData(Sum.Create(), MEASURE_DOUBLE, 1.0) },
                     { tv2, StatsTestUtil.CreateAggregationData(Sum.Create(), MEASURE_DOUBLE, 1.0) },
+                    { tv, StatsTestUtil.CreateAggregationData(Sum.Create(), MEASURE_DOUBLE, 1.0) },
                 },
                 1e-6);
         }
