@@ -105,11 +105,11 @@ namespace OpenTelemetry.Metrics
 
             public IMetricBuilder<ICounterDoubleTimeSeries> SetComponent(string component) => this;
 
-            public IMetricBuilder<ICounterDoubleTimeSeries> SetConstantLabels(Dictionary<LabelKey, string> constantLabels) => this;
+            public IMetricBuilder<ICounterDoubleTimeSeries> SetConstantLabels(IDictionary<LabelKey, string> constantLabels) => this;
 
             public IMetricBuilder<ICounterDoubleTimeSeries> SetDescription(string description) => this;
 
-            public IMetricBuilder<ICounterDoubleTimeSeries> SetLabelKeys(List<LabelKey> labelKeys) => this;
+            public IMetricBuilder<ICounterDoubleTimeSeries> SetLabelKeys(IEnumerable<LabelKey> labelKeys) => this;
 
             public IMetricBuilder<ICounterDoubleTimeSeries> SetResource(Resource resource) => this;
 
@@ -156,11 +156,11 @@ namespace OpenTelemetry.Metrics
 
             public IMetricBuilder<ICounterLongTimeSeries> SetComponent(string component) => this;
 
-            public IMetricBuilder<ICounterLongTimeSeries> SetConstantLabels(Dictionary<LabelKey, string> constantLabels) => this;
+            public IMetricBuilder<ICounterLongTimeSeries> SetConstantLabels(IDictionary<LabelKey, string> constantLabels) => this;
 
             public IMetricBuilder<ICounterLongTimeSeries> SetDescription(string description) => this;
 
-            public IMetricBuilder<ICounterLongTimeSeries> SetLabelKeys(List<LabelKey> labelKeys) => this;
+            public IMetricBuilder<ICounterLongTimeSeries> SetLabelKeys(IEnumerable<LabelKey> labelKeys) => this;
 
             public IMetricBuilder<ICounterLongTimeSeries> SetResource(Resource resource) => this;
 
@@ -207,11 +207,11 @@ namespace OpenTelemetry.Metrics
 
             public IMetricBuilder<IGaugeDoubleTimeSeries> SetComponent(string component) => this;
 
-            public IMetricBuilder<IGaugeDoubleTimeSeries> SetConstantLabels(Dictionary<LabelKey, string> constantLabels) => this;
+            public IMetricBuilder<IGaugeDoubleTimeSeries> SetConstantLabels(IDictionary<LabelKey, string> constantLabels) => this;
 
             public IMetricBuilder<IGaugeDoubleTimeSeries> SetDescription(string description) => this;
 
-            public IMetricBuilder<IGaugeDoubleTimeSeries> SetLabelKeys(List<LabelKey> labelKeys) => this;
+            public IMetricBuilder<IGaugeDoubleTimeSeries> SetLabelKeys(IEnumerable<LabelKey> labelKeys) => this;
 
             public IMetricBuilder<IGaugeDoubleTimeSeries> SetResource(Resource resource) => this;
 
@@ -258,11 +258,11 @@ namespace OpenTelemetry.Metrics
 
             public IMetricBuilder<IGaugeLongTimeSeries> SetComponent(string component) => this;
 
-            public IMetricBuilder<IGaugeLongTimeSeries> SetConstantLabels(Dictionary<LabelKey, string> constantLabels) => this;
+            public IMetricBuilder<IGaugeLongTimeSeries> SetConstantLabels(IDictionary<LabelKey, string> constantLabels) => this;
 
             public IMetricBuilder<IGaugeLongTimeSeries> SetDescription(string description) => this;
 
-            public IMetricBuilder<IGaugeLongTimeSeries> SetLabelKeys(List<LabelKey> labelKeys) => this;
+            public IMetricBuilder<IGaugeLongTimeSeries> SetLabelKeys(IEnumerable<LabelKey> labelKeys) => this;
 
             public IMetricBuilder<IGaugeLongTimeSeries> SetResource(Resource resource) => this;
 
