@@ -19,7 +19,7 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// Immutable representation of a measurement.
     /// </summary>
-    public class IMeasurement
+    public interface IMeasurement
     {
     }
 }

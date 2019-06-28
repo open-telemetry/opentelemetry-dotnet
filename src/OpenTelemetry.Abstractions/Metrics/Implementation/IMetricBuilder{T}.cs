@@ -44,14 +44,14 @@ namespace OpenTelemetry.Metrics.Implementation
         /// </summary>
         /// <param name="labelKeys">List of keys for dynamic labels.</param>
         /// <returns>This builder instance.</returns>
-        IMetricBuilder<T> SetLabelKeys(List<LabelKey> labelKeys);
+        IMetricBuilder<T> SetLabelKeys(IEnumerable<LabelKey> labelKeys);
 
         /// <summary>
         /// Sets the description of the <see cref="IMetric{T}"/>.
         /// </summary>
         /// <param name="constantLabels">Set of labels with values.</param>
         /// <returns>This builder instance.</returns>
-        IMetricBuilder<T> SetConstantLabels(Dictionary<LabelKey, string> constantLabels);
+        IMetricBuilder<T> SetConstantLabels(IDictionary<LabelKey, string> constantLabels);
 
         /// <summary>
         /// Sets the description of the <see cref="IMetric{T}"/>.
