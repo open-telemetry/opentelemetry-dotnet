@@ -62,9 +62,9 @@ namespace OpenTelemetry.Stats.Test
 
             // record() should have used the default TagContext, so the tag value should be null.
             ICollection<TagValues> expected = new List<TagValues>() { TagValues.Create(new List<TagValue>() { null }) };
-            ICollection<TagValues> actual = viewData.AggregationMap.Select(kvp => kvp.Key).ToList();
+            ICollection<TagValues> actual = viewData.AggregationMap.Keys.ToList();
 
-            Assert.Equal(expected, actual); 
+            Assert.Equal(expected, actual);
         }
 
         [Fact]
@@ -95,7 +95,9 @@ namespace OpenTelemetry.Stats.Test
 
             // record() should have used the given TagContext.
             ICollection<TagValues> expected = new List<TagValues>() { TagValues.Create(new List<TagValue>() { VALUE }) };
-            Assert.Equal(expected, viewData.AggregationMap.Keys);
+            ICollection<TagValues> actual = viewData.AggregationMap.Keys.ToList();
+
+            Assert.Equal(expected, actual);
         }
 
         [Fact]
