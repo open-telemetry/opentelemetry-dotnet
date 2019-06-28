@@ -29,5 +29,26 @@ namespace OpenTelemetry.Metrics
         /// <param name="name">Name of the counter.</param>
         /// <returns>The builder for the <see cref="ICounterDouble"/>.</returns>
         ICounterDoubleBuilder GetCounterDoubleBuilder(string name);
+
+        /// <summary>
+        /// Gets the builder for <see cref="ICounterLong"/>.
+        /// </summary>
+        /// <param name="name">Name of the counter.</param>
+        /// <returns>The builder for the <see cref="ICounterLong"/>.</returns>
+        ICounterDoubleBuilder GetCounterLongBuilder(string name);
+
+        /// <summary>
+        /// Gets the builder for <see cref="IGaugeDouble"/>.
+        /// </summary>
+        /// <param name="name">Name of the counter.</param>
+        /// <returns>The builder for the <see cref="IGaugeDouble"/>.</returns>
+        ICounterDoubleBuilder GetGaugeDoubleBuilder(string name);
+
+        /// <summary>
+        /// Gets the builder for <see cref="IGaugeLong"/>.
+        /// </summary>
+        /// <param name="name">Name of the counter.</param>
+        /// <returns>The builder for the <see cref="IGaugeLong"/>.</returns>
+        ICounterDoubleBuilder GetGaugeLongBuilder(string name);
     }
 }
