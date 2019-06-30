@@ -21,11 +21,11 @@ namespace OpenTelemetry.Metrics.Implementation
         /// <summary>
         /// Long type values.
         /// </summary>
-        LONG,
+        Long,
 
         /// <summary>
         /// Double type values.
         /// </summary>
-        DOUBLE,
+        Double,
     }
 }
