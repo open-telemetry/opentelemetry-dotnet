@@ -3,9 +3,9 @@
     using System;
     using System.Net.Http;
     using OpenTelemetry.Collector.Dependencies;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Exporter.Zipkin;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Sampler;
 
     internal class TestHttpClient
