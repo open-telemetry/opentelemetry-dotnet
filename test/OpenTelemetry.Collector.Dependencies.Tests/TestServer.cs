@@ -24,7 +24,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
     public class TestServer
     {
-        private static Random GlobalRandom = new Random();
+        private static readonly Random GlobalRandom = new Random();
 
         private class RunningServer : IDisposable
         {

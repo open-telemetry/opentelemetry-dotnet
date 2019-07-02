@@ -23,10 +23,10 @@ namespace OpenTelemetry.Trace.Test
 
     public class SpanBaseTest
     {
-        private RandomGenerator random;
-        private SpanContext spanContext;
-        private SpanContext notSampledSpanContext;
-        private SpanOptions spanOptions;
+        private readonly RandomGenerator random;
+        private readonly SpanContext spanContext;
+        private readonly SpanContext notSampledSpanContext;
+        private readonly SpanOptions spanOptions;
 
         public SpanBaseTest()
         {

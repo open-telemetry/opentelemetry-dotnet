@@ -23,7 +23,7 @@ namespace OpenTelemetry.Tags.Unsafe
     {
         private static readonly ITagContext EmptyTagContextInstance = new EmptyTagContext();
 
-        private static AsyncLocal<ITagContext> context = new AsyncLocal<ITagContext>();
+        private static readonly AsyncLocal<ITagContext> context = new AsyncLocal<ITagContext>();
 
         public static ITagContext CurrentTagContext
         {

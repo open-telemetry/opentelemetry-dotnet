@@ -25,7 +25,7 @@ namespace OpenTelemetry.Collector.AspNetCore
     /// </summary>
     public class RequestsCollectorOptions
     {
-        private static Func<HttpRequest, ISampler> defaultSampler = (req) => { return null; };
+        private static readonly Func<HttpRequest, ISampler> defaultSampler = (req) => { return null; };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RequestsCollectorOptions"/> class.

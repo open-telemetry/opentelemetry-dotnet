@@ -23,8 +23,8 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class NoopTracer : TracerBase, ITracer
     {
-        private static IBinaryFormat binaryFormat = new BinaryFormat();
-        private static ITextFormat textFormat = new TraceContextFormat();
+        private static readonly IBinaryFormat binaryFormat = new BinaryFormat();
+        private static readonly ITextFormat textFormat = new TraceContextFormat();
 
         internal NoopTracer()
         {

@@ -26,7 +26,7 @@ namespace OpenTelemetry.Impl.Resources
     {
         private const string keyName = "key";
         private const string valueName = "value";
-        private static Random random = new Random();
+        private static readonly Random random = new Random();
 
         [Fact]
         public static void CreateResource_NullLabelCollection()

@@ -30,14 +30,14 @@ namespace Samples
 
     internal class TestApplicationInsights
     {
-        private static ITracer tracer = Tracing.Tracer;
-        private static ITagger tagger = Tags.Tagger;
+        private static readonly ITracer tracer = Tracing.Tracer;
+        private static readonly ITagger tagger = Tags.Tagger;
 
-        private static IStatsRecorder statsRecorder = Stats.StatsRecorder;
+        private static readonly IStatsRecorder statsRecorder = Stats.StatsRecorder;
         private static readonly IMeasureLong VideoSize = MeasureLong.Create("my.org/measure/video_size", "size of processed videos", "By");
         private static readonly TagKey FrontendKey = TagKey.Create("my.org/keys/frontend");
 
-        private static long MiB = 1 << 20;
+        private static readonly long MiB = 1 << 20;
 
         private static readonly IViewName VideoSizeViewName = ViewName.Create("my.org/views/video_size");
 

@@ -25,7 +25,7 @@ namespace Samples
 
     internal class TestHttpClient
     {
-        private static ITracer tracer = Tracing.Tracer;
+        private static readonly ITracer tracer = Tracing.Tracer;
 
         internal static object Run()
         {

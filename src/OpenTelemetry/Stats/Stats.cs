@@ -18,9 +18,9 @@ namespace OpenTelemetry.Stats
 {
     public class Stats
     {
-        private static Stats stats = new Stats();
+        private static readonly Stats stats = new Stats();
 
-        private IStatsComponent statsComponent = new StatsComponent();
+        private readonly IStatsComponent statsComponent = new StatsComponent();
 
         internal Stats()
             : this(true)

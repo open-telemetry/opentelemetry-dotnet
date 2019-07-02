@@ -26,9 +26,9 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Tracing
     {
-        private static Tracing tracing = new Tracing();
+        private static readonly Tracing tracing = new Tracing();
 
-        private ITraceComponent traceComponent = null;
+        private readonly ITraceComponent traceComponent = null;
 
         internal Tracing()
         {

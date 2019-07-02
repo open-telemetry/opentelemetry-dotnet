@@ -26,7 +26,7 @@ namespace OpenTelemetry.Collector.Dependencies
     /// </summary>
     public class DependenciesCollectorOptions
     {
-        private static Func<HttpRequestMessage, ISampler> defaultSampler = (req) => { return ((req.RequestUri != null) && req.RequestUri.ToString().Contains("zipkin.azurewebsites.net")) ? Samplers.NeverSample : null; };
+        private static readonly Func<HttpRequestMessage, ISampler> defaultSampler = (req) => { return ((req.RequestUri != null) && req.RequestUri.ToString().Contains("zipkin.azurewebsites.net")) ? Samplers.NeverSample : null; };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DependenciesCollectorOptions"/> class.

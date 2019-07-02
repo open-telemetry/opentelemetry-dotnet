@@ -131,8 +131,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     /// </summary>
     internal class StackdriverTraceExporter : IHandler
     {
-        private static string STACKDRIVER_EXPORTER_VERSION;
-        private static string OpenTelemetry_EXPORTER_VERSION;
+        private static readonly string STACKDRIVER_EXPORTER_VERSION;
+        private static readonly string OpenTelemetry_EXPORTER_VERSION;
 
         private readonly Google.Api.Gax.ResourceNames.ProjectName googleCloudProjectId;
         private readonly TraceServiceSettings traceServiceSettings;

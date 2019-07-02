@@ -21,7 +21,7 @@ namespace OpenTelemetry.Trace
 
     internal static class CurrentSpanUtils
     {
-        private static AsyncLocal<ISpan> asyncLocalContext = new AsyncLocal<ISpan>();
+        private static readonly AsyncLocal<ISpan> asyncLocalContext = new AsyncLocal<ISpan>();
 
         public static ISpan CurrentSpan
         {

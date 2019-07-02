@@ -22,10 +22,10 @@ namespace OpenTelemetry.Trace.Test
 
     public class CurrentSpanUtilsTest
     {
-        private ISpan span;
-        private RandomGenerator random;
-        private SpanContext spanContext;
-        private SpanOptions spanOptions;
+        private readonly ISpan span;
+        private readonly RandomGenerator random;
+        private readonly SpanContext spanContext;
+        private readonly SpanOptions spanOptions;
 
         public CurrentSpanUtilsTest()
         {

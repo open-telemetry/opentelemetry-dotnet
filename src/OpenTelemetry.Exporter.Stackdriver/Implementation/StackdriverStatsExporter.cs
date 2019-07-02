@@ -51,7 +51,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private static readonly string CUSTOM_OpenTelemetry_DOMAIN = CUSTOM_METRIC_DOMAIN + "OpenTelemetry/";
 
         private static readonly string USER_AGENT_KEY = "user-agent";
-        private static string USER_AGENT;
+        private static readonly string USER_AGENT;
 
         private readonly string domain;
         private readonly string displayNamePrefix;
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <summary>
         /// Interval between two subsequent stats collection operations
         /// </summary>
-        private TimeSpan collectionInterval = TimeSpan.FromMinutes(1);
+        private readonly TimeSpan collectionInterval = TimeSpan.FromMinutes(1);
 
         /// <summary>
         /// Interval within which the cancellation should be honored
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// </summary>
         private readonly TimeSpan cancellationInterval = TimeSpan.FromSeconds(3);
 
-        private object locker = new object();
+        private readonly object locker = new object();
 
         public StackdriverStatsExporter(
            IViewManager viewManager,

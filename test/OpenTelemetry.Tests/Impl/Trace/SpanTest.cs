@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace.Test
         private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
         private readonly IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
         private readonly IDictionary<String, IAttributeValue> expectedAttributes;
-        private IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
+        private readonly IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
 
         public SpanTest()
         {

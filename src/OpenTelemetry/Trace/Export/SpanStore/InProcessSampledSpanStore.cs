@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Export
             (NumSamplesPerLatencySamples * NumLatencyBuckets)
                 + (NumSamplesPerErrorSamples * NumErrorBuckets);
 
-        private static TimeSpan timeBetweenSamples = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan timeBetweenSamples = TimeSpan.FromSeconds(1);
 
         private readonly IEventQueue eventQueue;
         private readonly Dictionary<string, PerSpanNameSamples> samples;
