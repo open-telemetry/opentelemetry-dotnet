@@ -16,9 +16,7 @@
 
 namespace OpenTelemetry.Exporter.Stackdriver.Utils
 {
-    using System;
     using System.Collections.Generic;
-    using System.Linq;
 
     /// <summary>
     /// Common Utility Methods that are not metrics/trace specific

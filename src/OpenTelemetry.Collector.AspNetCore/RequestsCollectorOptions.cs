@@ -19,7 +19,6 @@ namespace OpenTelemetry.Collector.AspNetCore
     using System;
     using Microsoft.AspNetCore.Http;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Sampler;
 
     /// <summary>
     /// Options for dependencies collector.

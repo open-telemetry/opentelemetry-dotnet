@@ -14,6 +14,5 @@
 // limitations under the License.
 // </copyright>
 
-using System.Runtime.CompilerServices;
 
 [assembly: System.CLSCompliant(true)]

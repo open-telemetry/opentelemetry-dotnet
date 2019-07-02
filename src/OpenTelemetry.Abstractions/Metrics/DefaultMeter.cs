@@ -18,7 +18,6 @@ namespace OpenTelemetry.Metrics
 {
     using System;
     using System.Collections.Generic;
-    using System.Net.NetworkInformation;
     using OpenTelemetry.Metrics.Implementation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Tags;

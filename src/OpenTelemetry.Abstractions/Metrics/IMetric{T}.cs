@@ -18,7 +18,6 @@ namespace OpenTelemetry.Metrics
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Resources;
 
     /// <summary>
     /// Base interface for all metrics defined in this package.

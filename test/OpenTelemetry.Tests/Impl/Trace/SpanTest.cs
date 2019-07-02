@@ -23,7 +23,6 @@ namespace OpenTelemetry.Trace.Test
     using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 

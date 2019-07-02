@@ -6,7 +6,6 @@
     using OpenTelemetry.Collector.StackExchangeRedis;
     using OpenTelemetry.Exporter.Zipkin;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Sampler;
     using StackExchange.Redis;
 

@@ -16,7 +16,6 @@
 
 namespace OpenTelemetry.Metrics
 {
-    using System.Collections;
     using System.Collections.Generic;
     using OpenTelemetry.Metrics.Implementation;
     using OpenTelemetry.Tags;

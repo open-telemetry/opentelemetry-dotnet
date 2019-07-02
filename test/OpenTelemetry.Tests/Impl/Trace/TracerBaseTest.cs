@@ -18,7 +18,6 @@ namespace OpenTelemetry.Trace.Test
 {
     using System;
     using Moq;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 

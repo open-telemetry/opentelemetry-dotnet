@@ -16,11 +16,9 @@
 
 namespace OpenTelemetry.Trace.Test
 {
-    using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Context.Propagation;
     using Xunit;
 
     public class TraceComponentTest

@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Collector.StackExchangeRedis
 {
     using Moq;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;

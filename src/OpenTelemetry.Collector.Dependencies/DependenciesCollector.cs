@@ -21,7 +21,6 @@ namespace OpenTelemetry.Collector.Dependencies
     using System.Net.Http;
     using OpenTelemetry.Collector.Dependencies.Common;
     using OpenTelemetry.Collector.Dependencies.Implementation;
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
 
     /// <summary>

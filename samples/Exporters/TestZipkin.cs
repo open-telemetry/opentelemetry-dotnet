@@ -5,7 +5,6 @@
     using System.Threading;
     using OpenTelemetry.Exporter.Zipkin;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Sampler;
 
     internal class TestZipkin
