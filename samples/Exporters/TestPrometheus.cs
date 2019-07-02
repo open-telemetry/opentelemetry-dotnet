@@ -36,7 +36,7 @@
             var exporter = new PrometheusExporter(
                 new PrometheusExporterOptions()
                 {
-                    Url = "http://localhost:9184/metrics/"
+                    Url = "http://+:9184/metrics/"  // "+" is a wildcard used to listen to all hostnames
                 },
                 Stats.ViewManager);
 
