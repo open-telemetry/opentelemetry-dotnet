@@ -14,18 +14,18 @@
 
         public void RecordSpanData(SpanData span)
         {
-            Logger.Log($"Tracer.RecordSpanData");
+            Logger.Log($"Tracer.RecordSpanData({span})");
         }
 
         public ISpanBuilder SpanBuilder(string spanName, SpanKind spanKind = SpanKind.Internal)
         {
-            Logger.Log($"Tracer.SpanBuilder");
+            Logger.Log($"Tracer.SpanBuilder({spanName}, {spanKind})");
             return new LoggingSpanBuilder(spanName, spanKind);
         }
 
         public ISpanBuilder SpanBuilderWithParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpan parent = null)
         {
-            Logger.Log($"Tracer.SpanBuilderWithExplicitParent");
+            Logger.Log($"Tracer.SpanBuilderWithExplicitParent({spanName}, {spanKind}, {parent})");
             return new LoggingSpanBuilder(spanName, spanKind, parent);
         }
 

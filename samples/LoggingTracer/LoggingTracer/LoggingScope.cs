@@ -33,7 +33,7 @@
 
                 if (current != this.origContext)
                 {
-                    // Log
+                    Logger.Log($"Scope.Dispose: current != this.origContext");
                 }
 
                 if (this.endSpan)
