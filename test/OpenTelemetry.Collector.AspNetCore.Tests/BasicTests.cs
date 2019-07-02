@@ -92,23 +92,21 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task SuccesfulTemplateControllerCallUsesParentContext()
+        public async Task SuccesfullTemplateControllerCallUsesParentActivity()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
 
-            var expectedTraceId = ActivityTraceId.CreateRandom();
-            var expectedSpanId = ActivitySpanId.CreateRandom();
-
             var tf = new Mock<ITextFormat>();
             tf.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(SpanContext.Create(
-                expectedTraceId,
-                expectedSpanId,
+                ActivityTraceId.CreateRandom(),
+                ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None,
                 Tracestate.Empty
                 ));
 
             var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
 
+            Activity aspNetCoreActivity;
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
@@ -120,6 +118,9 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     }))
                 .CreateClient())
             {
+
+                // Emulate ASP.NET Core Activity
+                aspNetCoreActivity = new Activity("foo").Start();
 
                 // Act
                 var response = await client.GetAsync("/api/values/2");
@@ -141,6 +142,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 }
             }
 
+            aspNetCoreActivity.Stop();
+            Assert.Equal(0, tf.Invocations.Count);
             Assert.Equal(2, startEndHandler.Invocations.Count); // begin and end was called
             var spanData = ((Span)startEndHandler.Invocations[0].Arguments[0]).ToSpanData();
 
@@ -148,8 +151,9 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             Assert.Equal("api/Values/{id}", spanData.Name);
             Assert.Equal(AttributeValue.StringAttributeValue("/api/values/2"), spanData.Attributes.AttributeMap["http.path"]);
 
-            Assert.Equal(expectedTraceId, spanData.Context.TraceId);
-            Assert.Equal(expectedSpanId, spanData.ParentSpanId);
+            Assert.Equal(aspNetCoreActivity.TraceId, spanData.Context.TraceId);
+            Assert.Equal(aspNetCoreActivity.ParentSpanId, spanData.ParentSpanId);
+            Assert.Equal(aspNetCoreActivity.SpanId, spanData.Context.SpanId);
         }
     }
 }

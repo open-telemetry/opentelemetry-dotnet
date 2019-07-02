@@ -51,10 +51,6 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
             var request = context.Request;
 
-            var ctx = this.Tracer.TextFormat.Extract<HttpRequest>(
-                request,
-                (r, name) => r.Headers[name]);
-
             // see the spec https://github.com/open-telemetry/OpenTelemetry-specs/blob/master/trace/HTTP.md
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";

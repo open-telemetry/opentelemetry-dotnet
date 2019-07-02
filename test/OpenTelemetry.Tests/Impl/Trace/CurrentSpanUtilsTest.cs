@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void WithSpan_CloseDetaches()
         {
-            var mockSpan = new Mock<TestSpan>(spanContext, spanOptions, new Activity("foo").Start()) { CallBase = true };
+            var mockSpan = new Mock<TestSpan>(spanContext, new Activity("foo").Start(), spanOptions) { CallBase = true };
             span = mockSpan.Object;
 
             Assert.Same(BlankSpan.Instance, currentUtils.CurrentSpan);

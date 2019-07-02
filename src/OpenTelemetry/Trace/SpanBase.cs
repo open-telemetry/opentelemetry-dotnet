@@ -29,6 +29,13 @@ namespace OpenTelemetry.Trace
     {
         private static readonly IDictionary<string, IAttributeValue> EmptyAttributes = new Dictionary<string, IAttributeValue>();
 
+        static SpanBase()
+        {
+            // TODO find good place for config - it will go away with Activity.SetIdFormat in the next .NET preview
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+        }
+
         internal SpanBase()
         {
         }
@@ -38,11 +45,16 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="context">Span context.</param>
         /// <param name="options">Span creation options.</param>
-        protected SpanBase(SpanContext context, SpanOptions options = SpanOptions.None)
+        protected SpanBase(SpanContext context, Activity actvity, SpanOptions options = SpanOptions.None)
         {
             if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
+            }
+
+            if (actvity == null)
+            {
+                throw new ArgumentNullException(nameof(actvity));
             }
 
             if ((context.TraceOptions & ActivityTraceFlags.Recorded) != 0 && !options.HasFlag(SpanOptions.RecordEvents))
@@ -52,6 +64,7 @@ namespace OpenTelemetry.Trace
 
             this.Context = context;
             this.Options = options;
+            this.Activity = actvity;
         }
 
         /// <summary>

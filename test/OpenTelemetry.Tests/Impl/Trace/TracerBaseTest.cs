@@ -18,7 +18,6 @@ namespace OpenTelemetry.Trace.Test
 {
     using System;
     using Moq;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 
@@ -50,15 +49,11 @@ namespace OpenTelemetry.Trace.Test
         public void GetCurrentSpan_WithSpan()
         {
             Assert.Same(BlankSpan.Instance, noopTracer.CurrentSpan);
-            var ws = noopTracer.WithSpan(span);
-            try
+            using (noopTracer.WithSpan(span))
             {
-                Assert.Same(span, noopTracer.CurrentSpan);
+                Assert.Same(BlankSpan.Instance, noopTracer.CurrentSpan);
             }
-            finally
-            {
-                ws.Dispose();
-            }
+
             Assert.Same(BlankSpan.Instance, noopTracer.CurrentSpan);
         }
 

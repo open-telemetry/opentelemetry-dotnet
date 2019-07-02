@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using OpenTelemetry.Context;
 using OpenTelemetry.Internal;
@@ -45,6 +46,11 @@ namespace OpenTelemetry.Trace
 
         public override IScope WithSpan(ISpan span)
         {
+            if (span == null)
+            {
+                throw new ArgumentNullException(nameof(span));
+            }
+
             return NoopScope.Instance;
         }
 

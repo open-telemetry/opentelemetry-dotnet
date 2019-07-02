@@ -42,7 +42,10 @@ namespace OpenTelemetry.Trace.Sampler.Test
             spanId = ActivitySpanId.CreateRandom();
             sampledSpanContext = SpanContext.Create(traceId, parentSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty);
             notSampledSpanContext = SpanContext.Create(traceId, parentSpanId, ActivityTraceFlags.None, Tracestate.Empty);
-            sampledSpan = new TestSpan(sampledSpanContext, SpanOptions.RecordEvents, null);
+
+            var activity = new Activity("foo");
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            sampledSpan = new TestSpan(sampledSpanContext, activity, SpanOptions.RecordEvents);
         }
 
         [Fact]

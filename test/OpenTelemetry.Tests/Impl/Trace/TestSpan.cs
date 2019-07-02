@@ -22,10 +22,9 @@ namespace OpenTelemetry.Trace.Test
 
     public class TestSpan : SpanBase
     {
-        public TestSpan(SpanContext context, SpanOptions options, Activity activity)
-            : base(context, options)
+        public TestSpan(SpanContext context, Activity activity, SpanOptions options)
+            : base(context, activity, options)
         {
-            this.Activity = activity;
         }
 
         public override DateTimeOffset EndTime { get; }

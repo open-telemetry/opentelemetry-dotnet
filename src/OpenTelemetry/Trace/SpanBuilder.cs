@@ -36,10 +36,6 @@ namespace OpenTelemetry.Trace
             this.Activity = activity;
             this.CreateSpanAsChildOfActivity = createSpanAsChildOfActivity;
             this.Options = options;
-
-            // TODO find good place for config - it will go away with Activity.SetIdFormat in the next .NET preview
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
         }
 
         private SpanBuilderOptions Options { get; set; }

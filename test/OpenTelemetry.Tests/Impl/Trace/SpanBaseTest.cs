@@ -50,21 +50,21 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void NewSpan_WithNullContext()
         {
-            Assert.Throws<ArgumentNullException>(() => new TestSpan(null, default(SpanOptions), null));
+            Assert.Throws<ArgumentNullException>(() => new TestSpan(null, null, default(SpanOptions)));
         }
 
 
         [Fact]
         public void GetOptions_WhenNullOptions()
         {
-            var span = new TestSpan(notSampledSpanContext, default(SpanOptions), null);
+            var span = new TestSpan(notSampledSpanContext, new Activity("foo"), default(SpanOptions));
             Assert.Equal(SpanOptions.None, span.Options);
         }
 
         [Fact]
         public void GetContextAndOptions()
         {
-            var span = new TestSpan(spanContext, spanOptions, null);
+            var span = new TestSpan(spanContext, new Activity("foo"), spanOptions);
             Assert.Equal(spanContext, span.Context);
             Assert.Equal(spanOptions, span.Options);
         }
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void PutAttributeCallsAddAttributeByDefault()
         {
-            var mockSpan = new Mock<TestSpan>(spanContext, spanOptions) { CallBase = true };
+            var mockSpan = new Mock<TestSpan>(spanContext, new Activity("foo"), spanOptions) { CallBase = true };
             var span = mockSpan.Object;
             IAttributeValue val = AttributeValue<bool>.Create(true);
             span.SetAttribute("MyKey", val);
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void EndCallsEndWithDefaultOptions()
         {
-            var mockSpan = new Mock<TestSpan>(spanContext, spanOptions) { CallBase = true };
+            var mockSpan = new Mock<TestSpan>(spanContext, new Activity("foo"), spanOptions) { CallBase = true };
             var span = mockSpan.Object;
             span.End();
             mockSpan.Verify((s) => s.End(EndSpanOptions.Default));

@@ -23,10 +23,9 @@ namespace OpenTelemetry.Trace.Internal
     internal sealed class BlankSpan : SpanBase
     {
         public static readonly BlankSpan Instance = new BlankSpan();
-        private static readonly Activity BlankActivity = new Activity("Blank");
 
         private BlankSpan()
-            : base(SpanContext.Blank, default(SpanOptions))
+            : base(SpanContext.Blank, new Activity("Blank"), default(SpanOptions))
         {
         }
 

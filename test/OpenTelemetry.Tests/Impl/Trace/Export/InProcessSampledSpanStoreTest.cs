@@ -28,13 +28,10 @@ namespace OpenTelemetry.Trace.Export.Test
     using OpenTelemetry.Utils;
     using Xunit;
 
-    public class InProcessSampledSpanStoreTest
+    public class InProcessSampledSpanStoreTest : IDisposable
     {
         private static readonly string RegisteredSpanName = "MySpanName/1";
         private static readonly string NotRegisteredSpanName = "MySpanName/2";
-        private readonly SpanContext sampledSpanContext;
-
-        private readonly SpanContext notSampledSpanContext;
 
         private readonly ActivitySpanId parentSpanId;
         private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
@@ -52,14 +49,15 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             timestamp = Timestamp.FromDateTimeOffset(startTime);
             timestampConverter = Timer.StartNew(startTime, () => interval);
-            sampledSpanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, Tracestate.Empty);
-            notSampledSpanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty);
+
             parentSpanId = ActivitySpanId.CreateRandom();
             startEndHandler = new TestStartEndHandler(sampleStore);
             sampleStore.RegisterSpanNamesForCollection(new List<string>() { RegisteredSpanName });
+
+            // TODO find good place for config - it will go away with Activity.SetIdFormat in the next .NET preview
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
         }
-
-
 
         [Fact]
         public void AddSpansWithRegisteredNamesInAllLatencyBuckets()
@@ -312,8 +310,12 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private Span CreateSampledSpan(string spanName)
         {
+            var sampledActivity = new Activity(spanName);
+            sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            sampledActivity.Start();
+
             return (Span)Span.StartSpan(
-                sampledSpanContext,
+                SpanContext.Create(sampledActivity.TraceId, sampledActivity.SpanId, sampledActivity.ActivityTraceFlags, Tracestate.Empty),
                 recordSpanOptions,
                 spanName,
                 SpanKind.Internal,
@@ -321,13 +323,17 @@ namespace OpenTelemetry.Trace.Export.Test
                 TraceParams.Default,
                 startEndHandler,
                 timestampConverter,
-                null);
+                sampledActivity);
         }
 
         private Span CreateNotSampledSpan(string spanName)
         {
+            var notSampledActivity = new Activity(spanName);
+            notSampledActivity.Start();
+            notSampledActivity.ActivityTraceFlags = ActivityTraceFlags.None;
+
             return (Span)Span.StartSpan(
-                notSampledSpanContext,
+                SpanContext.Create(notSampledActivity.TraceId, notSampledActivity.SpanId, notSampledActivity.ActivityTraceFlags, Tracestate.Empty),
                 recordSpanOptions,
                 spanName,
                 SpanKind.Internal,
@@ -335,7 +341,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 TraceParams.Default,
                 startEndHandler,
                 timestampConverter,
-                null);
+                notSampledActivity);
         }
 
         private void AddSpanNameToAllLatencyBuckets(string spanName)
@@ -361,6 +367,8 @@ namespace OpenTelemetry.Trace.Export.Test
                     interval += TimeSpan.FromTicks(10);
                     sampledSpan.End(EndSpanOptions.Builder().SetStatus(code.ToStatus()).Build());
                     notSampledSpan.End(EndSpanOptions.Builder().SetStatus(code.ToStatus()).Build());
+                    sampledSpan.Activity.Stop();
+                    notSampledSpan.Activity.Stop();
                 }
             }
         }
@@ -383,6 +391,11 @@ namespace OpenTelemetry.Trace.Export.Test
             {
                 sampleStore.ConsiderForSampling(span);
             }
+        }
+
+        public void Dispose()
+        {
+            Activity.Current = null;
         }
     }
 }

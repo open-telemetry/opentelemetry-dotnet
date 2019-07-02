@@ -29,12 +29,13 @@ namespace OpenTelemetry.Trace.Test
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 
-    public class SpanTest
+    public class SpanTest : IDisposable
     {
         private const string SpanName = "MySpanName";
         private const string EventDescription = "MyEvent";
 
         private readonly SpanContext spanContext;
+        private readonly Activity activity;
         private readonly ActivitySpanId parentSpanId;
         private TimeSpan interval = TimeSpan.FromMilliseconds(0);
         private readonly DateTimeOffset startTime = DateTimeOffset.Now;
@@ -50,7 +51,8 @@ namespace OpenTelemetry.Trace.Test
         {
             timestamp = Timestamp.FromDateTimeOffset(startTime);
             timestampConverter = Timer.StartNew(startTime, () => interval);
-            spanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty);
+            activity = new Activity("foo").SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None).Start();
+            spanContext = SpanContext.Create(activity.TraceId, activity.SpanId, activity.ActivityTraceFlags, Tracestate.Empty);
             parentSpanId = ActivitySpanId.CreateRandom();
             attributes.Add(
                 "MyStringAttributeKey", AttributeValue.StringAttributeValue("MyStringAttributeValue"));
@@ -75,7 +77,7 @@ namespace OpenTelemetry.Trace.Test
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
             // Check that adding trace events after Span#End() does not throw any exception.
             foreach (var attribute in attributes)
             {
@@ -102,7 +104,7 @@ namespace OpenTelemetry.Trace.Test
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
             span.End();
             // Check that adding trace events after Span#End() does not throw any exception and are not
             // recorded.
@@ -138,7 +140,7 @@ namespace OpenTelemetry.Trace.Test
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
    
             span.SetAttribute(
                 "MySingleStringAttributeKey",
@@ -193,7 +195,7 @@ namespace OpenTelemetry.Trace.Test
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
      
             span.SetAttribute(
                 "MySingleStringAttributeKey",
@@ -251,7 +253,7 @@ namespace OpenTelemetry.Trace.Test
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
             interval = TimeSpan.FromMilliseconds(100);
             Assert.Equal(Status.Ok, span.Status);
             ((Span)span).Status = Status.Cancelled;
@@ -277,7 +279,7 @@ namespace OpenTelemetry.Trace.Test
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
             interval = TimeSpan.FromMilliseconds(100);
             Assert.Equal(Status.Ok, span.Status);
             ((Span)span).Status = Status.Cancelled;
@@ -306,7 +308,7 @@ namespace OpenTelemetry.Trace.Test
                     traceParams,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
             for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
             {
                 IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
@@ -358,7 +360,7 @@ namespace OpenTelemetry.Trace.Test
                     traceParams,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
             for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
             {
                 IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
@@ -425,7 +427,7 @@ namespace OpenTelemetry.Trace.Test
                     traceParams,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
             var testEvent = Event.Create(EventDescription);
             var i = 0;
             for (i = 0; i < 2 * maxNumberOfEvents; i++)
@@ -472,7 +474,7 @@ namespace OpenTelemetry.Trace.Test
                     traceParams,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
             var link = Link.FromSpanContext(spanContext);
             for (var i = 0; i < 2 * maxNumberOfLinks; i++)
             {
@@ -508,7 +510,7 @@ namespace OpenTelemetry.Trace.Test
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
             span.End(EndSpanOptions.Builder().SetSampleToLocalSpanStore(true).Build());
 
             Assert.True(((Span)span).IsSampleToLocalSpanStore);
@@ -522,7 +524,7 @@ namespace OpenTelemetry.Trace.Test
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
             span2.End();
 
             Assert.False(((Span)span2).IsSampleToLocalSpanStore);
@@ -547,9 +549,14 @@ namespace OpenTelemetry.Trace.Test
                     TraceParams.Default,
                     startEndHandler,
                     timestampConverter,
-                    null);
+                    activity);
 
             Assert.Throws<InvalidOperationException>(() => ((Span)span).IsSampleToLocalSpanStore);
+        }
+
+        public void Dispose()
+        {
+            Activity.Current = null;
         }
     }
 }

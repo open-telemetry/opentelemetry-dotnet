@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace
                 IStartEndHandler startEndHandler,
                 Timer timestampConverter,
                 Activity activity)
-            : base(context, options)
+            : base(context, activity, options)
         {
             this.parentSpanId = parentSpanId;
             this.Name = name;
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace
             this.hasBeenEnded = false;
             this.sampleToLocalSpanStore = false;
             this.Kind = spanKind;
-            this.Activity = activity;
+
             if (this.IsRecordingEvents)
             {
                 if (timestampConverter == null)

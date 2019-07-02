@@ -31,12 +31,12 @@ namespace OpenTelemetry.Trace.Export.Test
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 
-    public class SpanExporterTest
+    public class SpanExporterTest : IDisposable
     {
         private const string SpanName1 = "MySpanName/1";
         private const string SpanName2 = "MySpanName/2";
         private readonly SpanContext sampledSpanContext;
-        private readonly SpanContext notSampledSpanContext;
+
         private readonly ISpanExporter spanExporter = SpanExporter.Create(4, Duration.Create(1, 0));
         private readonly IRunningSpanStore runningSpanStore = new InProcessRunningSpanStore();
         private readonly IStartEndHandler startEndHandler;
@@ -47,7 +47,6 @@ namespace OpenTelemetry.Trace.Export.Test
         public SpanExporterTest()
         {
             sampledSpanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, Tracestate.Empty);
-            notSampledSpanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty);
             startEndHandler = new StartEndHandler(spanExporter, runningSpanStore, null, new SimpleEventQueue());
 
             spanExporter.RegisterHandler("test.service", serviceHandler);
@@ -55,34 +54,40 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private Span CreateSampledEndedSpan(string spanName)
         {
-            var span =
-                Span.StartSpan(
-                    sampledSpanContext,
-                    recordSpanOptions,
-                    spanName,
-                    SpanKind.Internal,
-                    default,
-                    TraceParams.Default,
-                    startEndHandler,
-                    null,
-                    null);
+            var sampledActivity = new Activity(spanName);
+            sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            sampledActivity.Start();
+
+            var span = Span.StartSpan(
+                SpanContext.Create(sampledActivity.TraceId, sampledActivity.SpanId, sampledActivity.ActivityTraceFlags, Tracestate.Empty),
+                recordSpanOptions,
+                spanName,
+                SpanKind.Internal,
+                default,
+                TraceParams.Default,
+                startEndHandler,
+                null,
+                sampledActivity);
             span.End();
             return span as Span;
         }
 
         private Span CreateNotSampledEndedSpan(string spanName)
         {
-            var span =
-                Span.StartSpan(
-                    notSampledSpanContext,
-                    recordSpanOptions,
-                    spanName,
-                    SpanKind.Internal,
-                    default,
-                    TraceParams.Default,
-                    startEndHandler,
-                    null,
-                    null);
+            var notSampledActivity = new Activity(spanName);
+            notSampledActivity.Start();
+            notSampledActivity.ActivityTraceFlags = ActivityTraceFlags.None;
+
+            var span = Span.StartSpan(
+                SpanContext.Create(notSampledActivity.TraceId, notSampledActivity.SpanId, notSampledActivity.ActivityTraceFlags, Tracestate.Empty),
+                recordSpanOptions,
+                spanName,
+                SpanKind.Internal,
+                default,
+                TraceParams.Default,
+                startEndHandler,
+                null,
+                notSampledActivity);
             span.End();
             return span as Span;
         }
@@ -204,6 +209,12 @@ namespace OpenTelemetry.Trace.Export.Test
             handler1.Verify(c => c.ExportAsync(It.Is<IEnumerable<SpanData>>(
                 (x) => x.Where((s) => s == span1).Count() > 0 &&
                        x.Count() == 1)));
+        }
+
+        public void Dispose()
+        {
+            Activity.Current = null;
+            spanExporter?.Dispose();
         }
     }
 
