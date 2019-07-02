@@ -25,13 +25,13 @@ namespace Samples
 
     internal class TestHttpClient
     {
-        private static readonly ITracer tracer = Tracing.Tracer;
+        private static readonly ITracer Tracer = Tracing.Tracer;
 
         internal static object Run()
         {
             Console.WriteLine("Hello World!");
 
-            var collector = new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample);
+            var collector = new DependenciesCollector(new DependenciesCollectorOptions(), Tracer, Samplers.AlwaysSample);
 
             var exporter = new ZipkinTraceExporter(
                 new ZipkinTraceExporterOptions()
@@ -42,7 +42,7 @@ namespace Samples
                 Tracing.ExportComponent);
             exporter.Start();
 
-            var scope = tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartScopedSpan();
+            var scope = Tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartScopedSpan();
 
             var client = new HttpClient();
             var t = client.GetStringAsync("http://bing.com");

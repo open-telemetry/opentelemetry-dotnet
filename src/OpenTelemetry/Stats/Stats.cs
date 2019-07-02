@@ -18,7 +18,7 @@ namespace OpenTelemetry.Stats
 {
     public class Stats
     {
-        private static readonly Stats stats = new Stats();
+        private static readonly Stats StatsValue = new Stats();
 
         private readonly IStatsComponent statsComponent = new StatsComponent();
 
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Stats
         {
             get
             {
-                return stats.statsComponent.StatsRecorder;
+                return StatsValue.statsComponent.StatsRecorder;
             }
         }
 
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Stats
         {
             get
             {
-                return stats.statsComponent.ViewManager;
+                return StatsValue.statsComponent.ViewManager;
             }
         }
 
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Stats
         {
             get
             {
-                return stats.statsComponent.State;
+                return StatsValue.statsComponent.State;
             }
         }
     }

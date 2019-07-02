@@ -30,10 +30,10 @@ namespace Samples
 
     internal class TestApplicationInsights
     {
-        private static readonly ITracer tracer = Tracing.Tracer;
-        private static readonly ITagger tagger = Tags.Tagger;
+        private static readonly ITracer Tracer = Tracing.Tracer;
+        private static readonly ITagger Tagger = Tags.Tagger;
 
-        private static readonly IStatsRecorder statsRecorder = Stats.StatsRecorder;
+        private static readonly IStatsRecorder StatsRecorder = Stats.StatsRecorder;
         private static readonly IMeasureLong VideoSize = MeasureLong.Create("my.org/measure/video_size", "size of processed videos", "By");
         private static readonly TagKey FrontendKey = TagKey.Create("my.org/keys/frontend");
 
@@ -54,9 +54,9 @@ namespace Samples
             var exporter = new ApplicationInsightsExporter(Tracing.ExportComponent, Stats.ViewManager, TelemetryConfiguration.Active);
             exporter.Start();
 
-            var tagContextBuilder = tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
+            var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
-            var spanBuilder = tracer
+            var spanBuilder = Tracer
                 .SpanBuilder("incoming request")
                 .SetRecordEvents(true)
                 .SetSampler(Samplers.AlwaysSample);
@@ -67,10 +67,10 @@ namespace Samples
             {
                 using (var scopedSpan = spanBuilder.StartScopedSpan())
                 {
-                    tracer.CurrentSpan.AddEvent("Start processing video.");
+                    Tracer.CurrentSpan.AddEvent("Start processing video.");
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));
-                    statsRecorder.NewMeasureMap().Put(VideoSize, 25 * MiB).Record();
-                    tracer.CurrentSpan.AddEvent("Finished processing video.");
+                    StatsRecorder.NewMeasureMap().Put(VideoSize, 25 * MiB).Record();
+                    Tracer.CurrentSpan.AddEvent("Finished processing video.");
                 }
             }
 

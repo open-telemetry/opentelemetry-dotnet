@@ -29,10 +29,10 @@ namespace Samples
 
     internal class TestPrometheus
     {
-        private static readonly ITracer tracer = Tracing.Tracer;
-        private static readonly ITagger tagger = Tags.Tagger;
+        private static readonly ITracer Tracer = Tracing.Tracer;
+        private static readonly ITagger Tagger = Tags.Tagger;
 
-        private static readonly IStatsRecorder statsRecorder = Stats.StatsRecorder;
+        private static readonly IStatsRecorder StatsRecorder = Stats.StatsRecorder;
         private static readonly IMeasureLong VideoSize = MeasureLong.Create("my.org/measure/video_size", "size of processed videos", "By");
         private static readonly TagKey FrontendKey = TagKey.Create("my.org/keys/frontend");
 
@@ -60,7 +60,7 @@ namespace Samples
 
             try
             {
-                var tagContextBuilder = tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
+                var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
                 Stats.ViewManager.RegisterView(VideoSizeView);
 
@@ -74,7 +74,7 @@ namespace Samples
                         using (var scopedTags = tagContextBuilder.BuildScoped())
                         {
                             r.NextBytes(values);
-                            statsRecorder.NewMeasureMap().Put(VideoSize, values[0] * MiB).Record();
+                            StatsRecorder.NewMeasureMap().Put(VideoSize, values[0] * MiB).Record();
                             Thread.Sleep(TimeSpan.FromSeconds(1));
                         }
                     }

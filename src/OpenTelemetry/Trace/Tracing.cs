@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Tracing
     {
-        private static readonly Tracing tracing = new Tracing();
+        private static readonly Tracing TracingValue = new Tracing();
 
         private readonly ITraceComponent traceComponent = null;
 
@@ -38,16 +38,16 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the tracer to record spans.
         /// </summary>
-        public static ITracer Tracer => tracing.traceComponent.Tracer;
+        public static ITracer Tracer => TracingValue.traceComponent.Tracer;
 
         /// <summary>
         /// Gets the export component to upload spans to.
         /// </summary>
-        public static IExportComponent ExportComponent => tracing.traceComponent.ExportComponent;
+        public static IExportComponent ExportComponent => TracingValue.traceComponent.ExportComponent;
 
         /// <summary>
         /// Gets the tracer configuration.
         /// </summary>
-        public static ITraceConfig TraceConfig => tracing.traceComponent.TraceConfig;
+        public static ITraceConfig TraceConfig => TracingValue.traceComponent.TraceConfig;
     }
 }
