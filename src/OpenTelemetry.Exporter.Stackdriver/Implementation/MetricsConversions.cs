@@ -136,6 +136,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 var labelDescriptor = tagKey.ToLabelDescriptor();
                 metricDescriptor.Labels.Add(labelDescriptor);
             }
+
             metricDescriptor.Labels.Add(
                 new LabelDescriptor
                 {
@@ -238,6 +239,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 var labelKey = GetStackdriverLabelKey(key.Name);
                 metric.Labels.Add(labelKey, value.AsString);
             }
+
             metric.Labels.Add(Constants.OpenTelemetry_TASK, Constants.OpenTelemetry_TASK_VALUE_DEFAULT);
 
             // TODO - zeltser - make sure all the labels from the metric descriptor were fulfilled

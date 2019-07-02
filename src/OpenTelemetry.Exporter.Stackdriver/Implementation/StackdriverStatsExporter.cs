@@ -186,6 +186,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 // Ignore views that are already registered.
                 return existing.Equals(view);
             }
+
             this.registeredViews.Add(view.Name, view);
 
             var metricDescriptorTypeName = GenerateMetricDescriptorTypeName(view.Name, this.domain);
@@ -211,6 +212,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             {
                 this.metricDescriptors.Add(view, metricDescriptor);
             }
+
             return this.EnsureMetricDescriptorExists(metricDescriptor);
         }
 
@@ -318,6 +320,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                     domain = metricNamePrefix;
                 }
             }
+
             return domain;
         }
 
@@ -333,6 +336,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 {
                     metricNamePrefix += '/';
                 }
+
                 return metricNamePrefix;
             }
         }
