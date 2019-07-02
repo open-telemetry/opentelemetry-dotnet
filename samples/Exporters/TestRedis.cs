@@ -85,7 +85,6 @@
                     var myVal = db.StringGet("key");
 
                     Console.WriteLine(myVal);
-
                 }
                 catch (ArgumentOutOfRangeException e)
                 {
