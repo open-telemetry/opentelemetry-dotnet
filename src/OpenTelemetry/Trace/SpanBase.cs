@@ -126,7 +126,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public abstract void AddLink(ILink link);
 
-        /// <inheritdoc/>
+        /// <inheritdoc cref="ISpan" />
         public abstract void End(EndSpanOptions options);
 
         /// <inheritdoc/>
