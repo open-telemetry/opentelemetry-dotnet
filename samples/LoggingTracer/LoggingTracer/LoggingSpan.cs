@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using OpenTelemetry.Trace;
-
-namespace LoggingTracer
+﻿namespace LoggingTracer
 {
+    using System.Collections.Generic;
+    using OpenTelemetry.Trace;
+
     public class LoggingSpan : ISpan
     {
         public string Name { get; set; }
@@ -15,77 +15,78 @@ namespace LoggingTracer
 
         public bool HasEnded { get; set; }
 
-        public bool IsRecordingEvents => throw new System.NotImplementedException();
+        public bool IsRecordingEvents => true;
 
         public LoggingSpan(string name, SpanKind kind)
         {
-            Logger.Log($"Span.ctor({name})");
+            Logger.Log($"Span.ctor({name}, {kind})");
             this.Name = name;
             this.Kind = kind;
         }
 
         public void AddEvent(string name)
         {
-            Logger.Log($"Span.AddEvent");
+            Logger.Log($"Span.AddEvent({name})");
         }
 
         public void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
         {
-            Logger.Log($"Span.AddEvent");
+            Logger.Log($"Span.AddEvent({name}, attributes: {attributes.Count})");
         }
 
         public void AddEvent(IEvent newEvent)
         {
-            Logger.Log($"Span.AddEvent");
+            Logger.Log($"Span.AddEvent({newEvent})");
         }
 
         public void AddLink(ILink link)
         {
-            Logger.Log($"Span.AddLink");
+            Logger.Log($"Span.AddLink({link})");
         }
 
         public void End()
         {
-            Logger.Log($"Span.End({Name})");
+            Logger.Log($"Span.End, Name: {this.Name}");
         }
 
         public void SetAttribute(string key, IAttributeValue value)
         {
-            Logger.Log($"Span.SetAttribute({key}={value})");
+            Logger.Log($"Span.SetAttribute({key}, {value})");
         }
 
         public void SetAttribute(string key, string value)
         {
-            Logger.Log($"Span.SetAttribute({key}={value})");
+            Logger.Log($"Span.SetAttribute({key}, {value})");
         }
 
         public void SetAttribute(string key, long value)
         {
-            Logger.Log($"Span.SetAttribute({key}={value})");
+            Logger.Log($"Span.SetAttribute({key}, {value})");
         }
 
         public void SetAttribute(string key, double value)
         {
-            Logger.Log($"Span.SetAttribute({key}={value})");
+            Logger.Log($"Span.SetAttribute({key}, {value})");
         }
 
         public void SetAttribute(string key, bool value)
         {
-            Logger.Log($"Span.SetAttribute({key}={value})");
+            Logger.Log($"Span.SetAttribute({key}, {value})");
         }
 
         public void SetAttributes(IDictionary<string, IAttributeValue> attributes)
         {
-            Logger.Log($"Span.SetAttributes");
+            Logger.Log($"Span.SetAttributes(attributes: {attributes.Count})");
             foreach (var attribute in attributes)
             {
-                SetAttribute(attribute.Key, attribute.Value);
+                this.SetAttribute(attribute.Key, attribute.Value);
             }
         }
 
         public void UpdateName(string name)
         {
             Logger.Log($"Span.UpdateName({name})");
+            this.Name = name;
         }
     }
 }

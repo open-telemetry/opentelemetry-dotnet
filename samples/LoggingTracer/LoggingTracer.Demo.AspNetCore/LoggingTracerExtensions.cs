@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Collector.AspNetCore;
-using OpenTelemetry.Collector.Dependencies;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Sampler;
-
-namespace LoggingTracer.Demo.AspNetCore
+﻿namespace LoggingTracer.Demo.AspNetCore
 {
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.Extensions.DependencyInjection;
+    using OpenTelemetry.Collector.AspNetCore;
+    using OpenTelemetry.Collector.Dependencies;
+    using OpenTelemetry.Trace;
+    using OpenTelemetry.Trace.Sampler;
 
     static class LoggingTracerExtensions {
         internal static void AddLoggingTracer(this IServiceCollection services)

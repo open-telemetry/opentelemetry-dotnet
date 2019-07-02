@@ -1,16 +1,24 @@
-﻿using System;
-using System.Threading;
-
-namespace LoggingTracer
+﻿namespace LoggingTracer
 {
+    using System;
+    using System.Threading;
 
     public static class Logger
     {
-        static DateTime startTime = DateTime.UtcNow;
+        private static DateTime startTime = DateTime.UtcNow;
+
+        static Logger() {
+            PrintHeader();
+        }
+
+        public static void PrintHeader()
+        {
+            Console.WriteLine("MsSinceStart | ThreadId | API");
+        }
 
         public static void Log(string s)
         {
-            Console.WriteLine($"OT {MillisSinceStart(),8} {Thread.CurrentThread.ManagedThreadId,2}: {s}");
+            Console.WriteLine($"{MillisSinceStart(),12} | {Thread.CurrentThread.ManagedThreadId,8} | {s}");
         }
 
         private static int MillisSinceStart()

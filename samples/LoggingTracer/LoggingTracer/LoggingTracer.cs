@@ -1,21 +1,14 @@
-﻿using OpenTelemetry.Context;
-using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Trace;
-
-namespace LoggingTracer
+﻿namespace LoggingTracer
 {
+    using OpenTelemetry.Context;
+    using OpenTelemetry.Context.Propagation;
+    using OpenTelemetry.Trace;
+
     public class LoggingTracer : ITracer
     {
-        public ISpan CurrentSpan
-        {
-            get
-            {
-                Logger.Log("LoggingTracer.CurrentSpan");
-                return CurrentSpanUtils.CurrentSpan;
-            }
-        }
+        public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
 
-        public IBinaryFormat BinaryFormat => throw new System.NotImplementedException();
+        public IBinaryFormat BinaryFormat => new LoggingBinaryFormat();
 
         public ITextFormat TextFormat => new LoggingTextFormat();
 
@@ -23,7 +16,6 @@ namespace LoggingTracer
         {
             Logger.Log($"Tracer.RecordSpanData");
         }
-
 
         public ISpanBuilder SpanBuilder(string spanName, SpanKind spanKind = SpanKind.Internal)
         {
@@ -48,6 +40,5 @@ namespace LoggingTracer
             Logger.Log($"Tracer.WithSpan");
             return new CurrentSpanUtils.LoggingScope(span);
         }
-
     }
 }

@@ -1,14 +1,13 @@
-﻿using System;
-using System.Threading;
-using OpenTelemetry.Trace;
-
-namespace LoggingTracer.ConsoleApp
+﻿namespace LoggingTracer.ConsoleApp
 {
-    class Program
-    {
-        static ITracer tracer = new LoggingTracer();
+    using System.Threading;
+    using OpenTelemetry.Trace;
 
-        static void Main(string[] args)
+    public class Program
+    {
+        private static ITracer tracer = new LoggingTracer();
+
+        public static void Main(string[] args)
         {
 
             var builder = tracer.SpanBuilder("Main (span1)");

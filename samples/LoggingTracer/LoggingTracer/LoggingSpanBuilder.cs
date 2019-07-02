@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
-using OpenTelemetry.Context;
-using OpenTelemetry.Trace;
-
-namespace LoggingTracer
+﻿namespace LoggingTracer
 {
+    using System.Collections.Generic;
+    using OpenTelemetry.Context;
+    using OpenTelemetry.Trace;
+
     public class LoggingSpanBuilder : ISpanBuilder
     {
         private string spanName;
@@ -15,7 +15,6 @@ namespace LoggingTracer
         public LoggingSpanBuilder(string spanName, SpanKind spanKind)
         {
             Logger.Log($"SpanBuilder.ctor({spanName})");
-
             this.spanName = spanName;
             this.spanKind = spanKind;
             this.span = new LoggingSpan(spanName, spanKind);

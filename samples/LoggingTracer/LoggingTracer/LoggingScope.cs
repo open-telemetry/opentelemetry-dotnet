@@ -1,26 +1,21 @@
-﻿using System.Threading;
-using OpenTelemetry.Context;
-using OpenTelemetry.Trace;
-
-namespace LoggingTracer
+﻿namespace LoggingTracer
 {
+    using System.Threading;
+    using OpenTelemetry.Context;
+    using OpenTelemetry.Trace;
+
     public static class CurrentSpanUtils
     {
         private static AsyncLocal<ISpan> asyncLocalContext = new AsyncLocal<ISpan>();
 
-        public static ISpan CurrentSpan
-        {
-            get
-            {
-                return asyncLocalContext.Value;
-            }
-        }
+        public static ISpan CurrentSpan => asyncLocalContext.Value;
 
         public class LoggingScope : IScope
         {
             private readonly ISpan origContext;
             private readonly ISpan span;
             private readonly bool endSpan;
+            private readonly int depth;
 
             public LoggingScope(ISpan span, bool endSpan = true)
             {
