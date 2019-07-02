@@ -71,7 +71,7 @@ namespace OpenTelemetry.Trace.Test
         public void PutAttributeCallsAddAttributeByDefault()
         {
             var mockSpan = new Mock<TestSpan>(spanContext, spanOptions) { CallBase = true };
-            TestSpan span = mockSpan.Object;
+            var span = mockSpan.Object;
             IAttributeValue val = AttributeValue<bool>.Create(true);
             span.SetAttribute("MyKey", val);
             span.End();
@@ -90,10 +90,10 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void AddEventDefaultImplementation()
         {
-            Mock<SpanBase> mockSpan = new Mock<SpanBase>();
+            var mockSpan = new Mock<SpanBase>();
             var span = mockSpan.Object;
 
-            IEvent @event = Event.Create("MyEvent");
+            var @event = Event.Create("MyEvent");
             span.AddEvent(@event);
 
             mockSpan.Verify((s) => s.AddEvent(@event));

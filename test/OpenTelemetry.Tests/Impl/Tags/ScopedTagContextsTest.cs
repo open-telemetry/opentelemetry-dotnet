@@ -33,7 +33,7 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void DefaultTagContext()
         {
-            ITagContext defaultTagContext = tagger.CurrentTagContext;
+            var defaultTagContext = tagger.CurrentTagContext;
             Assert.Empty(TagsTestUtil.TagContextToList(defaultTagContext));
             Assert.IsType<TagContext>(defaultTagContext);
         }
@@ -42,8 +42,8 @@ namespace OpenTelemetry.Tags.Test
         public void WithTagContext()
         {
             Assert.Empty(TagsTestUtil.TagContextToList(tagger.CurrentTagContext));
-            ITagContext scopedTags = tagger.EmptyBuilder.Put(KEY_1, VALUE_1).Build();
-            IScope scope = tagger.WithTagContext(scopedTags);
+            var scopedTags = tagger.EmptyBuilder.Put(KEY_1, VALUE_1).Build();
+            var scope = tagger.WithTagContext(scopedTags);
             try
             {
                 Assert.Same(scopedTags, tagger.CurrentTagContext);
@@ -58,11 +58,11 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void CreateBuilderFromCurrentTags()
         {
-            ITagContext scopedTags = tagger.EmptyBuilder.Put(KEY_1, VALUE_1).Build();
-            IScope scope = tagger.WithTagContext(scopedTags);
+            var scopedTags = tagger.EmptyBuilder.Put(KEY_1, VALUE_1).Build();
+            var scope = tagger.WithTagContext(scopedTags);
             try
             {
-                ITagContext newTags = tagger.CurrentBuilder.Put(KEY_2, VALUE_2).Build();
+                var newTags = tagger.CurrentBuilder.Put(KEY_2, VALUE_2).Build();
                 Assert.Equal(new List<Tag>() { Tag.Create(KEY_1, VALUE_1), Tag.Create(KEY_2, VALUE_2) },
                     TagsTestUtil.TagContextToList(newTags));
                 Assert.Same(scopedTags, tagger.CurrentTagContext);
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Tags.Test
         public void SetCurrentTagsWithBuilder()
         {
             Assert.Empty(TagsTestUtil.TagContextToList(tagger.CurrentTagContext));
-            IScope scope = tagger.EmptyBuilder.Put(KEY_1, VALUE_1).BuildScoped();
+            var scope = tagger.EmptyBuilder.Put(KEY_1, VALUE_1).BuildScoped();
             try
             {
                 Assert.Equal(new List<Tag>() { Tag.Create(KEY_1, VALUE_1) }, TagsTestUtil.TagContextToList(tagger.CurrentTagContext));
@@ -92,11 +92,11 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void AddToCurrentTagsWithBuilder()
         {
-            ITagContext scopedTags = tagger.EmptyBuilder.Put(KEY_1, VALUE_1).Build();
-            IScope scope1 = tagger.WithTagContext(scopedTags);
+            var scopedTags = tagger.EmptyBuilder.Put(KEY_1, VALUE_1).Build();
+            var scope1 = tagger.WithTagContext(scopedTags);
             try
             {
-                IScope scope2 = tagger.CurrentBuilder.Put(KEY_2, VALUE_2).BuildScoped();
+                var scope2 = tagger.CurrentBuilder.Put(KEY_2, VALUE_2).BuildScoped();
                 try
                 {
                     Assert.Equal(new List<Tag>() { Tag.Create(KEY_1, VALUE_1), Tag.Create(KEY_2, VALUE_2) },

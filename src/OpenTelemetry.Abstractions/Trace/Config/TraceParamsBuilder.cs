@@ -100,7 +100,7 @@ namespace OpenTelemetry.Trace.Config
         /// <exception cref="ArgumentOutOfRangeException">If maximum values are not set or set to less than one.</exception>
         public TraceParams Build()
         {
-            string missing = string.Empty;
+            var missing = string.Empty;
             if (this.sampler == null)
             {
                 missing += " sampler";

@@ -345,11 +345,11 @@ namespace OpenTelemetry.Trace
                 throw new InvalidOperationException("Getting SpanData for a Span without RECORD_EVENTS option.");
             }
 
-            Attributes attributesSpanData = this.attributes == null ? Attributes.Create(new Dictionary<string, IAttributeValue>(), 0)
+            var attributesSpanData = this.attributes == null ? Attributes.Create(new Dictionary<string, IAttributeValue>(), 0)
                         : Attributes.Create(this.attributes, this.attributes.NumberOfDroppedAttributes);
 
-            ITimedEvents<IEvent> annotationsSpanData = CreateTimedEvents(this.InitializedEvents, this.TimestampConverter);
-            LinkList linksSpanData = this.links == null ? LinkList.Create(new List<ILink>(), 0) : LinkList.Create(this.links.Events, this.links.NumberOfDroppedEvents);
+            var annotationsSpanData = CreateTimedEvents(this.InitializedEvents, this.TimestampConverter);
+            var linksSpanData = this.links == null ? LinkList.Create(new List<ILink>(), 0) : LinkList.Create(this.links.Events, this.links.NumberOfDroppedEvents);
 
             return SpanData.Create(
                 this.Context,
@@ -449,7 +449,7 @@ namespace OpenTelemetry.Trace
             }
 
             var eventsList = new List<ITimedEvent<T>>(events.Events.Count);
-            foreach (EventWithTime<T> networkEvent in events.Events)
+            foreach (var networkEvent in events.Events)
             {
                 eventsList.Add(networkEvent.ToSpanDataTimedEvent(timestampConverter));
             }

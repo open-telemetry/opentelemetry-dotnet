@@ -30,8 +30,8 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void CreateWithMessageAndCause()
         {
-            Exception cause = new Exception();
-            TagContextSerializationException exception = new TagContextSerializationException("my message", cause);
+            var cause = new Exception();
+            var exception = new TagContextSerializationException("my message", cause);
             Assert.Equal("my message", exception.Message);
             Assert.Equal(cause, exception.InnerException);
         }

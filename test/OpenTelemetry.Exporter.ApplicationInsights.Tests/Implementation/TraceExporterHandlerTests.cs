@@ -67,7 +67,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             configuration.TelemetryChannel = channel;
 
-            TraceExporterHandler exporter = new TraceExporterHandler(configuration);
+            var exporter = new TraceExporterHandler(configuration);
             exporter.ExportAsync(new List<SpanData> { data }).Wait();
 
             return sentItems;

@@ -52,7 +52,7 @@ namespace OpenTelemetry.Stats
                 throw new ArgumentException("MutableLastValue expected.");
             }
 
-            MutableLastValue otherValue = (MutableLastValue)other;
+            var otherValue = (MutableLastValue)other;
 
             // Assume other is always newer than this, because we combined interval buckets in time order.
             // If there's a newer value, overwrite current value.

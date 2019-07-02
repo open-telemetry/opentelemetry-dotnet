@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
+    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.8.0-beta1" />
   </ItemGroup>
 </Project>

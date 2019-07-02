@@ -36,7 +36,7 @@
             var exporter = new PrometheusExporter(
                 new PrometheusExporterOptions()
                 {
-                    Url = "http://localhost:9184/metrics/"
+                    Url = "http://+:9184/metrics/"  // "+" is a wildcard used to listen to all hostnames
                 },
                 Stats.ViewManager);
 
@@ -44,14 +44,14 @@
 
             try
             {
-                ITagContextBuilder tagContextBuilder = tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
+                var tagContextBuilder = tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
                 Stats.ViewManager.RegisterView(VideoSizeView);
 
                 var t = new Task(() =>
                 {
-                    Random r = new Random();
-                    byte[] values = new byte[1];
+                    var r = new Random();
+                    var values = new byte[1];
 
                     while (true)
                     {

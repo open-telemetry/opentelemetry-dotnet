@@ -64,10 +64,10 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestCumulativeViewData()
         {
-            IView view = View.Create(NAME, DESCRIPTION, MEASURE_DOUBLE, DISTRIBUTION, TAG_KEYS);
+            var view = View.Create(NAME, DESCRIPTION, MEASURE_DOUBLE, DISTRIBUTION, TAG_KEYS);
             var start = DateTimeOffset.FromUnixTimeMilliseconds(1000);
             var end = DateTimeOffset.FromUnixTimeMilliseconds(2000);
-            IViewData viewData = ViewData.Create(view, ENTRIES, start, end);
+            var viewData = ViewData.Create(view, ENTRIES, start, end);
             Assert.Equal(view, viewData.View);
             Assert.Equal(ENTRIES, viewData.AggregationMap);
         }
@@ -88,25 +88,25 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestViewDataEquals()
         {
-            IView cumulativeView =
+            var cumulativeView =
                 View.Create(NAME, DESCRIPTION, MEASURE_DOUBLE, DISTRIBUTION, TAG_KEYS);
             // View intervalView =
             //    View.Create(NAME, DESCRIPTION, MEASURE_DOUBLE, DISTRIBUTION, TAG_KEYS, INTERVAL_HOUR);
 
             // new EqualsTester()
             //    .addEqualityGroup(
-            IViewData data1 = ViewData.Create(
+            var data1 = ViewData.Create(
                         cumulativeView,
                         ENTRIES,
                         DateTimeOffset.FromUnixTimeMilliseconds(1000), DateTimeOffset.FromUnixTimeMilliseconds(2000));
-            IViewData data2 = ViewData.Create(
+            var data2 = ViewData.Create(
                         cumulativeView,
                         ENTRIES,
                         DateTimeOffset.FromUnixTimeMilliseconds(1000), DateTimeOffset.FromUnixTimeMilliseconds(2000));
             Assert.Equal(data1, data2);
 
             // .addEqualityGroup(
-            IViewData data3 = ViewData.Create(
+            var data3 = ViewData.Create(
                         cumulativeView,
                         ENTRIES,
                         DateTimeOffset.FromUnixTimeMilliseconds(1000), DateTimeOffset.FromUnixTimeMilliseconds(3000));

@@ -36,26 +36,26 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void Create_AllowTagKeyNameWithMaxLength()
         {
-            char[] chars = new char[TagKey.MaxLength];
-            for (int i = 0; i < chars.Length; i++)
+            var chars = new char[TagKey.MaxLength];
+            for (var i = 0; i < chars.Length; i++)
             {
                 chars[i] = 'k';
             }
 
-            String key = new String(chars);
+            var key = new String(chars);
             Assert.Equal(key, TagKey.Create(key).Name);
         }
 
         [Fact]
         public void Create_DisallowTagKeyNameOverMaxLength()
         {
-            char[] chars = new char[TagKey.MaxLength + 1];
-            for (int i = 0; i < chars.Length; i++)
+            var chars = new char[TagKey.MaxLength + 1];
+            for (var i = 0; i < chars.Length; i++)
             {
                 chars[i] = 'k';
             }
 
-            String key = new String(chars);
+            var key = new String(chars);
             Assert.Throws<ArgumentOutOfRangeException>(() => TagKey.Create(key));
         }
 

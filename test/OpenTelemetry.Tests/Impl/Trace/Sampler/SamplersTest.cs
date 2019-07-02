@@ -184,7 +184,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
             ISampler defaultProbability = ProbabilitySampler.Create(0.0001);
             // This traceId will not be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is not less than probability * Long.MAX_VALUE;
-            TraceId notSampledtraceId =
+            var notSampledtraceId =
                 TraceId.FromBytes(
                     new byte[] 
                     {
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                         new List<ISpan>()));
             // This traceId will be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is less than probability * Long.MAX_VALUE;
-            TraceId sampledtraceId =
+            var sampledtraceId =
                 TraceId.FromBytes(
                     new byte[] 
                     {
@@ -261,9 +261,9 @@ namespace OpenTelemetry.Trace.Sampler.Test
         private static void AssertSamplerSamplesWithProbability(
             ISampler sampler, SpanContext parent, IEnumerable<ISpan> parentLinks, double probability)
         {
-            RandomGenerator random = new RandomGenerator(1234);
-            int count = 0; // Count of spans with sampling enabled
-            for (int i = 0; i < NUM_SAMPLE_TRIES; i++)
+            var random = new RandomGenerator(1234);
+            var count = 0; // Count of spans with sampling enabled
+            for (var i = 0; i < NUM_SAMPLE_TRIES; i++)
             {
                 if (sampler.ShouldSample(
                     parent,
@@ -275,7 +275,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     count++;
                 }
             }
-            double proportionSampled = (double)count / NUM_SAMPLE_TRIES;
+            var proportionSampled = (double)count / NUM_SAMPLE_TRIES;
             // Allow for a large amount of slop (+/- 10%) in number of sampled traces, to avoid flakiness.
             Assert.True(proportionSampled < probability + 0.1 && proportionSampled > probability - 0.1);
         }

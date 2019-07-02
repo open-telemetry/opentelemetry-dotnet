@@ -58,7 +58,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
         private static IEnumerable<object[]> readTestCases()
         {
-            Assembly assembly = Assembly.GetExecutingAssembly();
+            var assembly = Assembly.GetExecutingAssembly();
             var serializer = new JsonSerializer();
             var input = serializer.Deserialize<HttpOutTestCase[]>(new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream("OpenTelemetry.Collector.Dependencies.Tests.http-out-test-cases.json"))));
 
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
         private static IEnumerable<object[]> getArgumentsFromTestCaseObject(IEnumerable<HttpOutTestCase> input)
         {
-            List<object[]> result = new List<object[]>();
+            var result = new List<object[]>();
 
             foreach (var testCase in input)
             {
@@ -97,8 +97,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     ctx.Response.StatusCode = tc.responseCode == 0 ? 200 : tc.responseCode;
                     ctx.Response.OutputStream.Close();
                 },
-                out string host, 
-                out int port);
+                out var host, 
+                out var port);
 
             var startEndHandler = new Mock<IStartEndHandler>();
             var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);

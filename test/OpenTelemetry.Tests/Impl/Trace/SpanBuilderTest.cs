@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.Context.IsValid);
             Assert.True(span.IsRecordingEvents);
             Assert.True(span.Context.TraceOptions.IsSampled);
-            SpanData spanData = ((Span)span).ToSpanData();
+            var spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
             Assert.InRange(spanData.StartTimestamp, Timestamp.FromDateTimeOffset(DateTimeOffset.Now).AddDuration(Duration.Create(-1, 0)), Timestamp.FromDateTimeOffset(DateTimeOffset.Now).AddDuration(Duration.Create(1, 0)));
             Assert.Equal(SPAN_NAME, spanData.Name);
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.Context.IsValid);
             Assert.True(span.IsRecordingEvents);
             Assert.False(span.Context.TraceOptions.IsSampled);
-            SpanData spanData = ((Span)span).ToSpanData();
+            var spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
         }
 
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(rootSpan.Context.IsValid);
             Assert.True(rootSpan.IsRecordingEvents);
             Assert.True(rootSpan.Context.TraceOptions.IsSampled);
-            ISpan childSpan =
+            var childSpan =
                 SpanBuilder.Create(SPAN_NAME, SpanKind.Internal, rootSpan, spanBuilderOptions).StartSpan();
             Assert.True(childSpan.Context.IsValid);
             Assert.Equal(rootSpan.Context.TraceId, childSpan.Context.TraceId);
@@ -109,39 +109,39 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.Context.IsValid);
             Assert.True(span.IsRecordingEvents);
             Assert.True(span.Context.TraceOptions.IsSampled);
-            SpanData spanData = ((Span)span).ToSpanData();
+            var spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
         }
 
         [Fact]
         public void StartSpanInvalidParent()
         {
-            ISpan span =
+            var span =
                 SpanBuilder.Create(SPAN_NAME, SpanKind.Internal, SpanContext.Blank, spanBuilderOptions)
                     .StartSpan();
             Assert.True(span.Context.IsValid);
             Assert.True(span.IsRecordingEvents);
             Assert.True(span.Context.TraceOptions.IsSampled);
-            SpanData spanData = ((Span)span).ToSpanData();
+            var spanData = ((Span)span).ToSpanData();
             Assert.Null(spanData.ParentSpanId);
         }
 
         [Fact]
         public void StartRemoteSpan()
         {
-            SpanContext spanContext =
+            var spanContext =
                 SpanContext.Create(
                     TraceId.GenerateRandomId(randomHandler),
                     SpanId.GenerateRandomId(randomHandler),
                     TraceOptions.Default, Tracestate.Empty);
-            ISpan span =
+            var span =
                 SpanBuilder.Create(SPAN_NAME, SpanKind.Internal, spanContext, spanBuilderOptions)
                     .SetRecordEvents(true)
                     .StartSpan();
             Assert.True(span.Context.IsValid);
             Assert.Equal(spanContext.TraceId, span.Context.TraceId);
             Assert.False(span.Context.TraceOptions.IsSampled);
-            SpanData spanData = ((Span)span).ToSpanData();
+            var spanData = ((Span)span).ToSpanData();
             Assert.Equal(spanContext.SpanId, spanData.ParentSpanId);
         }
 
@@ -177,7 +177,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(rootSpan.Context.IsValid);
             Assert.True(rootSpan.Context.TraceOptions.IsSampled);
             // Apply given sampler before default sampler for spans with remote parent.
-            ISpan childSpan =
+            var childSpan =
                 SpanBuilder.Create(SPAN_NAME, SpanKind.Internal, rootSpan.Context, spanBuilderOptions)
                     .SetSampler(Samplers.NeverSample)
                     .StartSpan();
@@ -196,7 +196,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(rootSpan.Context.IsValid);
             Assert.False(rootSpan.Context.TraceOptions.IsSampled);
             // Apply default sampler (always true in the tests) for spans with remote parent.
-            ISpan childSpan =
+            var childSpan =
                 SpanBuilder.Create(SPAN_NAME, SpanKind.Internal, rootSpan.Context, spanBuilderOptions)
                     .StartSpan();
             Assert.True(childSpan.Context.IsValid);
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(rootSpan.Context.IsValid);
             Assert.True(rootSpan.Context.TraceOptions.IsSampled);
             // Apply the given sampler for child spans.
-            ISpan childSpan =
+            var childSpan =
                 SpanBuilder.Create(SPAN_NAME, SpanKind.Internal, rootSpan, spanBuilderOptions)
                     .SetSampler(Samplers.NeverSample)
                     .StartSpan();
@@ -233,7 +233,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(rootSpan.Context.IsValid);
             Assert.False(rootSpan.Context.TraceOptions.IsSampled);
             // Don't apply the default sampler (always true) for child spans.
-            ISpan childSpan =
+            var childSpan =
                 SpanBuilder.Create(SPAN_NAME, SpanKind.Internal, rootSpan, spanBuilderOptions).StartSpan();
             Assert.True(childSpan.Context.IsValid);
             Assert.Equal(rootSpan.Context.TraceId, childSpan.Context.TraceId);
@@ -254,7 +254,7 @@ namespace OpenTelemetry.Trace.Test
                     .StartSpan();
             Assert.True(rootSpanSampled.Context.TraceOptions.IsSampled);
             // Sampled because the linked parent is sampled.
-            ISpan childSpan =
+            var childSpan =
                 SpanBuilder.Create(SPAN_NAME, SpanKind.Internal, rootSpanUnsampled, spanBuilderOptions)
                     .SetParentLinks(new List<ISpan>() { rootSpanSampled })
                     .StartSpan();
@@ -270,7 +270,7 @@ namespace OpenTelemetry.Trace.Test
             configMock.Setup((c) => c.ActiveTraceParams).Returns(TraceParams.Default);
             // This traceId will not be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is not less than probability * Long.MAX_VALUE;
-            TraceId traceId =
+            var traceId =
                 TraceId.FromBytes(
                     new byte[] 
                     {
@@ -293,7 +293,7 @@ namespace OpenTelemetry.Trace.Test
                     });
 
             // If parent is sampled then the remote child must be sampled.
-            ISpan childSpan =
+            var childSpan =
                 SpanBuilder.Create(
                         SPAN_NAME,
                         SpanKind.Internal,
