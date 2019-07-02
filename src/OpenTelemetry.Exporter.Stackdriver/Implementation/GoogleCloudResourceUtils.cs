@@ -16,10 +16,10 @@
 
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
-    using Google.Api;
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using Google.Api;
 
     /// <summary>
     /// Utility methods for working with Google Cloud Resources

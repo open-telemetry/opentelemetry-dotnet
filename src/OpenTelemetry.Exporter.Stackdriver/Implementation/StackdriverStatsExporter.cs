@@ -16,6 +16,13 @@
 
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Linq;
+    using System.Reflection;
+    using System.Threading;
+    using System.Threading.Tasks;
     using Google.Api;
     using Google.Api.Gax;
     using Google.Api.Gax.Grpc;
@@ -25,13 +32,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     using Grpc.Core;
     using OpenTelemetry.Exporter.Stackdriver.Utils;
     using OpenTelemetry.Stats;
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Reflection;
-    using System.Threading;
-    using System.Threading.Tasks;
 
     internal class StackdriverStatsExporter
     {

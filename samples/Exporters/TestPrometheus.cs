@@ -1,15 +1,15 @@
 ﻿namespace Samples
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Threading;
+    using System.Threading.Tasks;
     using OpenTelemetry.Exporter.Prometheus;
     using OpenTelemetry.Stats;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
     using OpenTelemetry.Trace;
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
 
     internal class TestPrometheus
     {

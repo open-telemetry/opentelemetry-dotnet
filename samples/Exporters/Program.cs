@@ -1,7 +1,7 @@
 ﻿namespace Samples
 {
-    using CommandLine;
     using System;
+    using CommandLine;
 
     [Verb("stackdriver", HelpText = "Specify the options required to test Stackdriver exporter", Hidden = false)]
     class StackdriverOptions

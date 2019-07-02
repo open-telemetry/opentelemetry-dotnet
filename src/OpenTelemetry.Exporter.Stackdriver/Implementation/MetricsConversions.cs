@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
+    using System.Collections.Generic;
     using Google.Api;
     using Google.Cloud.Monitoring.V3;
     using Google.Protobuf.WellKnownTypes;
@@ -24,7 +25,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
-    using System.Collections.Generic;
     using static Google.Api.Distribution.Types;
     using static Google.Api.MetricDescriptor.Types;
 
