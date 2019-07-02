@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
-    static class SpanExtensions
+    internal static class SpanExtensions
     {
         /// <summary>
         /// Translating <see cref="SpanData"/> to Stackdriver's Span

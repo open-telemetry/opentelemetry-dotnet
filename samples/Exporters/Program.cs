@@ -4,36 +4,36 @@
     using CommandLine;
 
     [Verb("stackdriver", HelpText = "Specify the options required to test Stackdriver exporter", Hidden = false)]
-    class StackdriverOptions
+    internal class StackdriverOptions
     {
         [Option('p', "projectId", HelpText = "Please specify the projectId of your GCP project", Required = true)]
         public string ProjectId { get; set; }
     }
 
     [Verb("zipkin", HelpText = "Specify the options required to test Zipkin exporter")]
-    class ZipkinOptions
+    internal class ZipkinOptions
     {
         [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
         public string Uri { get; set; }
     }
 
     [Verb("appInsights", HelpText = "Specify the options required to test ApplicationInsights")]
-    class ApplicationInsightsOptions
+    internal class ApplicationInsightsOptions
     {
     }
 
     [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
-    class PrometheusOptions
+    internal class PrometheusOptions
     {
     }
 
     [Verb("httpclient", HelpText = "Specify the options required to test HttpClient")]
-    class HttpClientOptions
+    internal class HttpClientOptions
     {
     }
 
     [Verb("redis", HelpText = "Specify the options required to test Redis with Zipkin")]
-    class RedisOptions
+    internal class RedisOptions
     {
         [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
         public string Uri { get; set; }
