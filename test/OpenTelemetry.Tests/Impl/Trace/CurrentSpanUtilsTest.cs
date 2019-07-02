@@ -14,55 +14,55 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+
 namespace OpenTelemetry.Trace.Test
 {
     using Moq;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 
     public class CurrentSpanUtilsTest
     {
         private ISpan span;
-        private RandomGenerator random;
         private SpanContext spanContext;
         private SpanOptions spanOptions;
-
+        private CurrentSpanUtils currentUtils;
         public CurrentSpanUtilsTest()
         {
-            random = new RandomGenerator(1234);
             spanContext =
                 SpanContext.Create(
-                    TraceId.GenerateRandomId(random),
-                    SpanId.GenerateRandomId(random),
-                    TraceOptions.Builder().SetIsSampled(true).Build(),
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.Recorded,
                     Tracestate.Empty);
 
             spanOptions = SpanOptions.RecordEvents;
-            var mockSpan = new Mock<TestSpan>(spanContext, spanOptions) { CallBase = true };
-            span = mockSpan.Object;
+            currentUtils = new CurrentSpanUtils();
         }
 
         [Fact]
         public void CurrentSpan_WhenNoContext()
         {
-            Assert.Null(CurrentSpanUtils.CurrentSpan);
+            Assert.Equal(BlankSpan.Instance, currentUtils.CurrentSpan);
         }
 
         [Fact]
         public void WithSpan_CloseDetaches()
         {
-            Assert.Null(CurrentSpanUtils.CurrentSpan);
-            var ws = CurrentSpanUtils.WithSpan(span, false);
-            try
+            var mockSpan = new Mock<TestSpan>(spanContext, spanOptions, new Activity("foo").Start()) { CallBase = true };
+            span = mockSpan.Object;
+
+            Assert.Same(BlankSpan.Instance, currentUtils.CurrentSpan);
+            using (currentUtils.WithSpan(span, false))
             {
-                Assert.Same(span, CurrentSpanUtils.CurrentSpan);
+                Assert.Same(span, currentUtils.CurrentSpan);
+                Assert.Same(span.Activity, Activity.Current);
+
             }
-            finally
-            {
-                ws.Dispose();
-            }
-            Assert.Null(CurrentSpanUtils.CurrentSpan);
+
+            Assert.Same(BlankSpan.Instance, currentUtils.CurrentSpan);
+            Assert.Null(Activity.Current);
         }
     }
 }

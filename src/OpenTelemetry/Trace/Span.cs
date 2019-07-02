@@ -18,6 +18,7 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Resources;
@@ -28,7 +29,7 @@ namespace OpenTelemetry.Trace
     /// <inheritdoc/>
     public sealed class Span : SpanBase
     {
-        private readonly SpanId parentSpanId;
+        private readonly ActivitySpanId parentSpanId;
         private readonly ITraceParams traceParams;
         private readonly IStartEndHandler startEndHandler;
         private readonly DateTimeOffset startTime;
@@ -46,10 +47,11 @@ namespace OpenTelemetry.Trace
                 SpanOptions options,
                 string name,
                 SpanKind spanKind,
-                SpanId parentSpanId,
+                ActivitySpanId parentSpanId,
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
-                Timer timestampConverter)
+                Timer timestampConverter,
+                Activity activity)
             : base(context, options)
         {
             this.parentSpanId = parentSpanId;
@@ -59,6 +61,7 @@ namespace OpenTelemetry.Trace
             this.hasBeenEnded = false;
             this.sampleToLocalSpanStore = false;
             this.Kind = spanKind;
+            this.Activity = activity;
             if (this.IsRecordingEvents)
             {
                 if (timestampConverter == null)
@@ -155,19 +158,13 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override SpanId ParentSpanId => this.parentSpanId;
+        public override ActivitySpanId ParentSpanId => this.parentSpanId;
 
         /// <inheritdoc/>
         public override bool HasEnded => this.hasBeenEnded;
 
         /// <inheritdoc/>
-        public override bool IsRecordingEvents
-        {
-            get
-            {
-                return this.Options.HasFlag(SpanOptions.RecordEvents);
-            }
-        }
+        public override bool IsRecordingEvents => this.Options.HasFlag(SpanOptions.RecordEvents);
 
         /// <summary>
         /// Gets or sets span kind.
@@ -180,12 +177,8 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                if (this.attributes == null)
-                {
-                    this.attributes = new AttributesWithCapacity(this.traceParams.MaxNumberOfAttributes);
-                }
-
-                return this.attributes;
+                return this.attributes ??
+                       (this.attributes = new AttributesWithCapacity(this.traceParams.MaxNumberOfAttributes));
             }
         }
 
@@ -193,13 +186,8 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                if (this.events == null)
-                {
-                    this.events =
-                        new TraceEvents<EventWithTime<IEvent>>(this.traceParams.MaxNumberOfEvents);
-                }
-
-                return this.events;
+                return this.events ??
+                       (this.events = new TraceEvents<EventWithTime<IEvent>>(this.traceParams.MaxNumberOfEvents));
             }
         }
 
@@ -207,16 +195,11 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                if (this.links == null)
-                {
-                    this.links = new TraceEvents<ILink>(this.traceParams.MaxNumberOfLinks);
-                }
-
-                return this.links;
+                return this.links ?? (this.links = new TraceEvents<ILink>(this.traceParams.MaxNumberOfLinks));
             }
         }
 
-        private Status StatusWithDefault => this.status ?? Trace.Status.Ok;
+        private Status StatusWithDefault => this.status ?? Status.Ok;
 
         /// <inheritdoc/>
         public override void SetAttribute(string key, IAttributeValue value)
@@ -415,10 +398,11 @@ namespace OpenTelemetry.Trace
                         SpanOptions options,
                         string name,
                         SpanKind spanKind,
-                        SpanId parentSpanId,
+                        ActivitySpanId parentSpanId,
                         ITraceParams traceParams,
                         IStartEndHandler startEndHandler,
-                        Timer timestampConverter)
+                        Timer timestampConverter,
+                        Activity activity)
         {
             var span = new Span(
                context,
@@ -428,7 +412,10 @@ namespace OpenTelemetry.Trace
                parentSpanId,
                traceParams,
                startEndHandler,
-               timestampConverter);
+               timestampConverter,
+               activity);
+
+            // TODO activity must be started
 
             // Call onStart here instead of calling in the constructor to make sure the span is completely
             // initialized.

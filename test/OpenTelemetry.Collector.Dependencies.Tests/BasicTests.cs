@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     using Moq;
@@ -46,8 +48,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             var url = $"http://{host}:{port}/";
 
-            var expectedTraceId = TraceId.Invalid;
-            var expectedSpanId = SpanId.Invalid;
+            var expectedTraceId = default(ActivityTraceId);
+            var expectedSpanId = default(ActivitySpanId);
 
             using (serverLifeTime)
             {
@@ -60,7 +62,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                         expectedSpanId = sc.SpanId;
                     });
 
-                var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
+                var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
 
                 using (var dc = new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
                 {

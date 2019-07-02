@@ -23,7 +23,6 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Http.Features;
     using OpenTelemetry.Collector.AspNetCore.Common;
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
 
     internal class HttpInListener : ListenerHandler
@@ -60,13 +59,14 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
-            ISpan span = null;
-            this.Tracer.SpanBuilderWithParentContext(path, SpanKind.Server, ctx).SetSampler(this.SamplerFactory(request)).StartScopedSpan(out span);
+            ISpan span = this.Tracer.SpanBuilderFromActivity(path, SpanKind.Server, Activity.Current).SetSampler(this.SamplerFactory(request)).StartSpan();
             if (span == null)
             {
                 // Debug.WriteLine("span is null");
                 return;
             }
+
+            this.Tracer.WithSpan(span);
 
             // Note, route is missing at this stage. It will be available later
 
@@ -90,10 +90,15 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             }
 
             var span = this.Tracer.CurrentSpan;
-
             if (span == null)
             {
                 // TODO: report lost span
+                return;
+            }
+
+            if (span.Activity != Activity.Current)
+            {
+                // TODO: report broken correlation
                 return;
             }
 
@@ -112,6 +117,12 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                 if (span == null)
                 {
                     // TODO: report lost span
+                    return;
+                }
+
+                if (span.Activity != Activity.Current)
+                {
+                    // TODO: report broken correlation
                     return;
                 }
 

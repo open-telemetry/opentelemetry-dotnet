@@ -49,7 +49,8 @@
 
             using (var scopedTags = tagContextBuilder.BuildScoped())
             {
-                using (var scopedSpan = spanBuilder.StartScopedSpan())
+                var span = spanBuilder.StartSpan();
+                using (tracer.WithSpan(span))
                 {
                     tracer.CurrentSpan.AddEvent("Start processing video.");
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));

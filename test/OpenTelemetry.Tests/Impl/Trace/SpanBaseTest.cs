@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+
 namespace OpenTelemetry.Trace.Test
 {
     using System;
@@ -24,45 +26,45 @@ namespace OpenTelemetry.Trace.Test
 
     public class SpanBaseTest
     {
-        private RandomGenerator random;
         private SpanContext spanContext;
         private SpanContext notSampledSpanContext;
         private SpanOptions spanOptions;
 
         public SpanBaseTest()
         {
-            random = new RandomGenerator(1234);
             spanContext =
                 SpanContext.Create(
-                    TraceId.GenerateRandomId(random),
-                    SpanId.GenerateRandomId(random),
-                    TraceOptions.Builder().SetIsSampled(true).Build(), Tracestate.Empty);
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.Recorded,
+                    Tracestate.Empty);
             notSampledSpanContext =
                 SpanContext.Create(
-                    TraceId.GenerateRandomId(random),
-                    SpanId.GenerateRandomId(random),
-                    TraceOptions.Default, Tracestate.Empty);
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.None,
+                    Tracestate.Empty);
             spanOptions = SpanOptions.RecordEvents;
         }
 
         [Fact]
         public void NewSpan_WithNullContext()
         {
-            Assert.Throws<ArgumentNullException>(() => new TestSpan(null, default(SpanOptions)));
+            Assert.Throws<ArgumentNullException>(() => new TestSpan(null, default(SpanOptions), null));
         }
 
 
         [Fact]
         public void GetOptions_WhenNullOptions()
         {
-            var span = new TestSpan(notSampledSpanContext, default(SpanOptions));
+            var span = new TestSpan(notSampledSpanContext, default(SpanOptions), null);
             Assert.Equal(SpanOptions.None, span.Options);
         }
 
         [Fact]
         public void GetContextAndOptions()
         {
-            var span = new TestSpan(spanContext, spanOptions);
+            var span = new TestSpan(spanContext, spanOptions, null);
             Assert.Equal(spanContext, span.Context);
             Assert.Equal(spanOptions, span.Options);
         }

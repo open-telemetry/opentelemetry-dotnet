@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     /// <summary>
     /// Sampler to reduce data volume. This sampler executes before Span object was created.
@@ -41,6 +42,6 @@ namespace OpenTelemetry.Trace
         /// </param>
         /// <param name="parentLinks">Links associated with the parent span.</param>
         /// <returns>True of span needs to be created. False otherwise.</returns>
-        bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ISpan> parentLinks);
+        bool ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ISpan> parentLinks);
     }
 }

@@ -18,6 +18,7 @@ namespace OpenTelemetry.Context.Propagation
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Trace;
 
@@ -68,39 +69,39 @@ namespace OpenTelemetry.Context.Propagation
 
             try
             {
-                TraceId traceId;
+                ActivityTraceId traceId;
                 var traceIdStr = getter(carrier, XB3TraceId)?.FirstOrDefault();
                 if (traceIdStr != null)
                 {
-                    if (traceIdStr.Length == TraceId.Size)
+                    if (traceIdStr.Length == 16)
                     {
                         // This is an 8-byte traceID.
                         traceIdStr = UpperTraceId + traceIdStr;
                     }
 
-                    traceId = TraceId.FromLowerBase16(traceIdStr);
+                    traceId = ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
                 }
                 else
                 {
                     throw new SpanContextParseException("Missing X_B3_TRACE_ID.");
                 }
 
-                SpanId spanId;
+                ActivitySpanId spanId;
                 var spanIdStr = getter(carrier, XB3SpanId)?.FirstOrDefault();
                 if (spanIdStr != null)
                 {
-                    spanId = SpanId.FromLowerBase16(spanIdStr);
+                    spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
                 }
                 else
                 {
                     throw new SpanContextParseException("Missing X_B3_SPAN_ID.");
                 }
 
-                var traceOptions = TraceOptions.Default;
+                var traceOptions = ActivityTraceFlags.None;
                 if (SampledValue.Equals(getter(carrier, XB3Sampled)?.FirstOrDefault())
                     || FlagsValue.Equals(getter(carrier, XB3Flags)?.FirstOrDefault()))
                 {
-                    traceOptions = TraceOptions.Builder().SetIsSampled(true).Build();
+                    traceOptions |= ActivityTraceFlags.Recorded;
                 }
 
                 return SpanContext.Create(traceId, spanId, traceOptions, Tracestate.Empty);
@@ -129,9 +130,9 @@ namespace OpenTelemetry.Context.Propagation
                 throw new ArgumentNullException(nameof(setter));
             }
 
-            setter(carrier, XB3TraceId, spanContext.TraceId.ToLowerBase16());
-            setter(carrier, XB3SpanId, spanContext.SpanId.ToLowerBase16());
-            if (spanContext.TraceOptions.IsSampled)
+            setter(carrier, XB3TraceId, spanContext.TraceId.ToHexString());
+            setter(carrier, XB3SpanId, spanContext.SpanId.ToHexString());
+            if ((spanContext.TraceOptions & ActivityTraceFlags.Recorded) != 0)
             {
                 setter(carrier, XB3Sampled, SampledValue);
             }

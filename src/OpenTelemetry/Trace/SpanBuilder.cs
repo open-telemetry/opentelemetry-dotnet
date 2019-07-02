@@ -14,10 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Context;
+
 namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
@@ -25,12 +28,18 @@ namespace OpenTelemetry.Trace
     /// <inheritdoc/>
     public class SpanBuilder : SpanBuilderBase
     {
-        private SpanBuilder(string name, SpanKind kind, SpanBuilderOptions options, SpanContext parentContext = null, ISpan parent = null) : base(kind)
+        private SpanBuilder(string name, SpanKind kind, SpanBuilderOptions options, SpanContext parentContext = null, ISpan parent = null, Activity activity = null, bool createSpanAsChildOfActivity = true) : base(kind)
         {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.Parent = parent;
             this.ParentSpanContext = parentContext;
+            this.Activity = activity;
+            this.CreateSpanAsChildOfActivity = createSpanAsChildOfActivity;
             this.Options = options;
+
+            // TODO find good place for config - it will go away with Activity.SetIdFormat in the next .NET preview
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
         }
 
         private SpanBuilderOptions Options { get; set; }
@@ -41,6 +50,10 @@ namespace OpenTelemetry.Trace
 
         private SpanContext ParentSpanContext { get; set; }
 
+        private Activity Activity { get; set; }
+
+        private bool CreateSpanAsChildOfActivity { get; set; }
+
         private ISampler Sampler { get; set; }
 
         private IEnumerable<ISpan> ParentLinks { get; set; } = Enumerable.Empty<ISpan>();
@@ -50,24 +63,51 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override ISpan StartSpan()
         {
-            var parentContext = this.ParentSpanContext;
-            Timer timestampConverter = null;
-            if (this.ParentSpanContext == null)
-            {
-                // This is not a child of a remote Span. Get the parent SpanContext from the parent Span if
-                // any.
-                var parent = this.Parent;
-                if (parent != null)
-                {
-                    parentContext = parent.Context;
+            SpanContext parentContext = null;
+            Activity finalActivityForSpan = null;
+            Timer finalTimestampConverter = null;
 
-                    // Pass the timestamp converter from the parent to ensure that the recorded events are in
-                    // the right order. Implementation uses System.nanoTime() which is monotonically increasing.
-                    if (parent is Span)
-                    {
-                        timestampConverter = ((Span)parent).TimestampConverter;
-                    }
+            if (this.ParentSpanContext != null)
+            {
+                parentContext = this.ParentSpanContext;
+                finalActivityForSpan = this.StartActivityFromSpanContext(parentContext);
+            }
+            else if (this.Parent != null)
+            {
+                parentContext = this.Parent.Context;
+                finalTimestampConverter = ((Span)this.Parent).TimestampConverter;
+                finalActivityForSpan = this.StartActivityFromSpanContext(parentContext);
+            }
+            else if (this.Activity != null)
+            {
+                if (this.CreateSpanAsChildOfActivity)
+                {
+                    // activity.SetIdFormat(W3C);
+                    finalActivityForSpan = new Activity(this.Name)
+                        .SetParentId(this.Activity.TraceId, this.Activity.SpanId, this.Activity.ActivityTraceFlags)
+                        .Start();
                 }
+                else
+                {
+                    finalActivityForSpan = this.Activity;
+                }
+            }
+            else if (Activity.Current != null)
+            {
+                finalActivityForSpan = this.CreateSpanAsChildOfActivity ? new Activity(this.Name).Start() : Activity.Current;
+            }
+
+            if (finalActivityForSpan == null)
+            {
+                finalActivityForSpan = new Activity(this.Name).Start();
+
+                // TODO SetIdFormat();
+            }
+
+            if (parentContext == null && finalActivityForSpan.ParentSpanId != default)
+            {
+                parentContext = SpanContext.Create(finalActivityForSpan.TraceId, finalActivityForSpan.ParentSpanId,
+                    finalActivityForSpan.ActivityTraceFlags, /*TODO*/ Tracestate.Empty);
             }
 
             return this.StartSpanInternal(
@@ -76,7 +116,8 @@ namespace OpenTelemetry.Trace
                 this.Sampler,
                 this.ParentLinks,
                 this.RecordEvents,
-                timestampConverter);
+                finalTimestampConverter,
+                finalActivityForSpan);
         }
 
         /// <inheritdoc/>
@@ -87,6 +128,11 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
+        public override ISpanBuilder SetParentLinks(IEnumerable<Activity> parentLinks)
+        {
+            throw new NotImplementedException();
+        }
+
         public override ISpanBuilder SetParentLinks(IEnumerable<ISpan> parentLinks)
         {
             this.ParentLinks = parentLinks ?? throw new ArgumentNullException(nameof(parentLinks));
@@ -102,19 +148,24 @@ namespace OpenTelemetry.Trace
 
         internal static ISpanBuilder Create(string name, SpanKind kind, ISpan parent, SpanBuilderOptions options)
         {
-            return new SpanBuilder(name, kind, options, null, parent);
+            return new SpanBuilder(name, kind, options, null, parent, null, true);
         }
 
         internal static ISpanBuilder Create(string name, SpanKind kind, SpanContext parentContext, SpanBuilderOptions options)
         {
-            return new SpanBuilder(name, kind, options, parentContext, null);
+            return new SpanBuilder(name, kind, options, parentContext, null, null, true);
+        }
+
+        internal static ISpanBuilder Create(string name, SpanKind kind, Activity activity, bool asChildOfActivity, SpanBuilderOptions options)
+        {
+            return new SpanBuilder(name, kind, options, null, null, activity, asChildOfActivity);
         }
 
         private static bool IsAnyParentLinkSampled(IEnumerable<ISpan> parentLinks)
         {
             foreach (var parentLink in parentLinks)
             {
-                if (parentLink.Context.TraceOptions.IsSampled)
+                if ((parentLink.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0) // TODO
                 {
                     return true;
                 }
@@ -141,8 +192,8 @@ namespace OpenTelemetry.Trace
             string name,
             ISampler sampler,
             IEnumerable<ISpan> parentLinks,
-            TraceId traceId,
-            SpanId spanId,
+            ActivityTraceId traceId,
+            ActivitySpanId spanId,
             ITraceParams activeTraceParams)
         {
             // If users set a specific sampler in the SpanBuilder, use it.
@@ -161,7 +212,8 @@ namespace OpenTelemetry.Trace
             }
 
             // Parent is always different than null because otherwise we use the default sampler.
-            return parent.TraceOptions.IsSampled || IsAnyParentLinkSampled(parentLinks);
+            // TODO extension method
+            return (parent.TraceOptions & ActivityTraceFlags.Recorded) != 0 || IsAnyParentLinkSampled(parentLinks);
         }
 
         private ISpan StartSpanInternal(
@@ -170,56 +222,58 @@ namespace OpenTelemetry.Trace
                      ISampler sampler,
                      IEnumerable<ISpan> parentLinks,
                      bool recordEvents,
-                     Timer timestampConverter)
+                     Timer timestampConverter,
+                     Activity activityForSpan)
         {
             var activeTraceParams = this.Options.TraceConfig.ActiveTraceParams;
-            var random = this.Options.RandomHandler;
-            TraceId traceId;
-            var spanId = SpanId.GenerateRandomId(random);
-            SpanId parentSpanId = null;
-            TraceOptionsBuilder traceOptionsBuilder;
-            if (parent == null || !parent.IsValid)
+
+            bool sampledIn = MakeSamplingDecision(
+                parent,
+                name,
+                sampler,
+                parentLinks,
+                activityForSpan.TraceId,
+                activityForSpan.SpanId,
+                activeTraceParams);
+
+            var spanOptions = SpanOptions.None;
+
+            if (sampledIn || recordEvents)
             {
-                // New root span.
-                traceId = TraceId.GenerateRandomId(random);
-                traceOptionsBuilder = TraceOptions.Builder();
+                activityForSpan.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                spanOptions = SpanOptions.RecordEvents;
             }
             else
             {
-                // New child span.
-                traceId = parent.TraceId;
-                parentSpanId = parent.SpanId;
-                traceOptionsBuilder = TraceOptions.Builder(parent.TraceOptions);
-            }
-
-            traceOptionsBuilder.SetIsSampled(
-                 MakeSamplingDecision(
-                    parent,
-                    name,
-                    sampler,
-                    parentLinks,
-                    traceId,
-                    spanId,
-                    activeTraceParams));
-            var traceOptions = traceOptionsBuilder.Build();
-            var spanOptions = SpanOptions.None;
-
-            if (traceOptions.IsSampled || recordEvents)
-            {
-                spanOptions = SpanOptions.RecordEvents;
+                activityForSpan.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
             }
 
             var span = Span.StartSpan(
-                        SpanContext.Create(traceId, spanId, traceOptions, parent?.Tracestate ?? Tracestate.Empty),
+                        SpanContext.Create(activityForSpan.TraceId, activityForSpan.SpanId, activityForSpan.ActivityTraceFlags, parent?.Tracestate ?? Tracestate.Empty),
                         spanOptions,
                         name,
                         this.Kind,
-                        parentSpanId,
+                        activityForSpan.ParentSpanId,
                         activeTraceParams,
                         this.Options.StartEndHandler,
-                        timestampConverter);
+                        timestampConverter,
+                        activityForSpan);
             LinkSpans(span, parentLinks);
             return span;
+        }
+
+        private Activity StartActivityFromSpanContext(SpanContext context)
+        {
+            var activity = new Activity(this.Name);
+            //activity.SetIdFormat(W3C);
+
+            if (context.IsValid)
+            {
+                activity.SetParentId(context.TraceId, context.SpanId, context.TraceOptions);
+                // TODO tracestate
+            }
+
+            return activity.Start();
         }
     }
 }

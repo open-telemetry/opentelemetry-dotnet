@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     using System;
+    using System.Diagnostics;
     using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Internal;
@@ -27,14 +28,7 @@ namespace OpenTelemetry.Trace
         private static readonly NoopTracer NoopTracerInstance = new NoopTracer();
 
         /// <inheritdoc/>
-        public ISpan CurrentSpan
-        {
-            get
-            {
-                var currentSpan = CurrentSpanUtils.CurrentSpan;
-                return currentSpan ?? BlankSpan.Instance;
-            }
-        }
+        public abstract ISpan CurrentSpan { get; }
 
         /// <inheritdoc/>
         public abstract IBinaryFormat BinaryFormat { get; }
@@ -54,27 +48,19 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public IScope WithSpan(ISpan span)
-        {
-            if (span == null)
-            {
-                throw new ArgumentNullException(nameof(span));
-            }
-
-            return CurrentSpanUtils.WithSpan(span, false);
-        }
+        public abstract IScope WithSpan(ISpan span);
 
         /// <inheritdoc/>
-        public ISpanBuilder SpanBuilder(string spanName, SpanKind spanKind = SpanKind.Internal)
-        {
-            return this.SpanBuilderWithParent(spanName, spanKind, CurrentSpanUtils.CurrentSpan);
-        }
+        public abstract ISpanBuilder SpanBuilder(string spanName, SpanKind spanKind = SpanKind.Internal);
 
         /// <inheritdoc/>
         public abstract ISpanBuilder SpanBuilderWithParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpan parent = null);
 
         /// <inheritdoc/>
         public abstract ISpanBuilder SpanBuilderWithParentContext(string spanName, SpanKind spanKind = SpanKind.Internal, SpanContext remoteParentSpanContext = null);
+
+        public abstract ISpanBuilder SpanBuilderFromActivity(string name, SpanKind kind = SpanKind.Internal,
+            Activity activity = null);
 
         /// <inheritdoc/>
         public abstract void RecordSpanData(SpanData span);

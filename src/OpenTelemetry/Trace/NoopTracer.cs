@@ -14,6 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+using OpenTelemetry.Context;
+using OpenTelemetry.Internal;
+using OpenTelemetry.Trace.Internal;
+
 namespace OpenTelemetry.Trace
 {
     using OpenTelemetry.Context.Propagation;
@@ -21,7 +26,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// No-op tracer.
     /// </summary>
-    public sealed class NoopTracer : TracerBase, ITracer
+    public sealed class NoopTracer : TracerBase
     {
         private static IBinaryFormat binaryFormat = new BinaryFormat();
         private static ITextFormat textFormat = new TraceContextFormat();
@@ -30,22 +35,22 @@ namespace OpenTelemetry.Trace
         {
         }
 
-        /// <inheritdoc/>
-        public override IBinaryFormat BinaryFormat
-        {
-            get
-            {
-                return binaryFormat;
-            }
-        }
+        public override ISpan CurrentSpan => BlankSpan.Instance;
 
         /// <inheritdoc/>
-        public override ITextFormat TextFormat
+        public override IBinaryFormat BinaryFormat => binaryFormat;
+
+        /// <inheritdoc/>
+        public override ITextFormat TextFormat => textFormat;
+
+        public override IScope WithSpan(ISpan span)
         {
-            get
-            {
-                return textFormat;
-            }
+            return NoopScope.Instance;
+        }
+
+        public override ISpanBuilder SpanBuilder(string name, SpanKind kind = SpanKind.Internal)
+        {
+            return NoopSpanBuilder.SetParent(name, kind, parent:null);
         }
 
         /// <inheritdoc/>
@@ -58,6 +63,11 @@ namespace OpenTelemetry.Trace
         public override ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, SpanContext parentContext = null)
         {
             return NoopSpanBuilder.SetParent(name, kind, parentContext);
+        }
+
+        public override ISpanBuilder SpanBuilderFromActivity(string name, SpanKind kind = SpanKind.Internal, Activity activity = null)
+        {
+            return NoopSpanBuilder.SetParent(name, kind, activity);
         }
 
         /// <inheritdoc/>

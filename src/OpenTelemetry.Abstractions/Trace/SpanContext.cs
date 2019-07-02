@@ -16,6 +16,8 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System.Diagnostics;
+
     /// <summary>
     /// A class that represents a span context. A span context contains the state that must propagate to
     /// child <see cref="ISpan"/> and across process boundaries. It contains the identifiers <see cref="TraceId"/>
@@ -26,9 +28,12 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// A blank <see cref="SpanContext"/> that can be used for no-op operations.
         /// </summary>
-        public static readonly SpanContext Blank = new SpanContext(Trace.TraceId.Invalid, Trace.SpanId.Invalid, TraceOptions.Default, Tracestate.Empty);
+        public static readonly SpanContext Blank = new SpanContext(default, default, ActivityTraceFlags.None, Tracestate.Empty);
 
-        private SpanContext(TraceId traceId, SpanId spanId, TraceOptions traceOptions, Tracestate tracestate)
+        private static readonly ActivityTraceId InvalidTraceId = default(ActivityTraceId);
+        private static readonly ActivitySpanId InvalidSpanId = default(ActivitySpanId);
+
+        private SpanContext(ActivityTraceId traceId, ActivitySpanId spanId, ActivityTraceFlags traceOptions, Tracestate tracestate)
         {
             this.TraceId = traceId;
             this.SpanId = spanId;
@@ -39,22 +44,22 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the <see cref="TraceId"/> associated with this <see cref="SpanContext"/>.
         /// </summary>
-        public TraceId TraceId { get; }
+        public ActivityTraceId TraceId { get; }
 
         /// <summary>
         /// Gets the <see cref="SpanId"/> associated with this <see cref="SpanContext"/>.
         /// </summary>
-        public SpanId SpanId { get; }
+        public ActivitySpanId SpanId { get; }
 
         /// <summary>
         /// Gets the <see cref="TraceOptions"/> associated with this <see cref="SpanContext"/>.
         /// </summary>
-        public TraceOptions TraceOptions { get; }
+        public ActivityTraceFlags TraceOptions { get; }
 
         /// <summary>
         /// Gets a value indicating whether this <see cref="SpanContext"/> is valid.
         /// </summary>
-        public bool IsValid => this.TraceId.IsValid && this.SpanId.IsValid;
+        public bool IsValid => this.IsTraceIdValid(this.TraceId) && this.IsSpanIdValid(this.SpanId);
 
         /// <summary>
         /// Gets the <see cref="Tracestate"/> associated with this <see cref="SpanContext"/>.
@@ -69,7 +74,7 @@ namespace OpenTelemetry.Trace
         /// <param name="traceOptions">The <see cref="TraceOptions"/> to associate with the <see cref="SpanContext"/>.</param>
         /// <param name="tracestate">The <see cref="Tracestate"/> to associate with the <see cref="SpanContext"/>.</param>
         /// <returns>A new <see cref="SpanContext"/> with the given identifiers and options.</returns>
-        public static SpanContext Create(TraceId traceId, SpanId spanId, TraceOptions traceOptions, Tracestate tracestate)
+        public static SpanContext Create(ActivityTraceId traceId, ActivitySpanId spanId, ActivityTraceFlags traceOptions, Tracestate tracestate)
         {
             return new SpanContext(traceId, spanId, traceOptions, tracestate);
         }
@@ -78,9 +83,9 @@ namespace OpenTelemetry.Trace
         public override int GetHashCode()
         {
             var result = 1;
-            result = (31 * result) + (this.TraceId == null ? 0 : this.TraceId.GetHashCode());
-            result = (31 * result) + (this.SpanId == null ? 0 : this.SpanId.GetHashCode());
-            result = (31 * result) + (this.TraceOptions == null ? 0 : this.TraceOptions.GetHashCode());
+            result = (31 * result) + this.TraceId.GetHashCode();
+            result = (31 * result) + this.SpanId.GetHashCode();
+            result = (31 * result) + this.TraceOptions.GetHashCode();
             return result;
         }
 
@@ -109,8 +114,18 @@ namespace OpenTelemetry.Trace
             return "SpanContext{"
                    + "traceId=" + this.TraceId + ", "
                    + "spanId=" + this.SpanId + ", "
-                   + "traceOptions=" + this.TraceOptions
+                   + "traceOptions=" + ((byte)this.TraceOptions).ToString("x2")
                    + "}";
+        }
+
+        private bool IsTraceIdValid(ActivityTraceId traceId)
+        {
+            return traceId != InvalidTraceId;
+        }
+
+        private bool IsSpanIdValid(ActivitySpanId spanId)
+        {
+            return spanId != InvalidSpanId;
         }
     }
 }

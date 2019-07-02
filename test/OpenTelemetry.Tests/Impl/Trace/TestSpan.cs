@@ -18,12 +18,14 @@ namespace OpenTelemetry.Trace.Test
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     public class TestSpan : SpanBase
     {
-        public TestSpan(SpanContext context, SpanOptions options)
+        public TestSpan(SpanContext context, SpanOptions options, Activity activity)
             : base(context, options)
         {
+            this.Activity = activity;
         }
 
         public override DateTimeOffset EndTime { get; }
@@ -36,7 +38,7 @@ namespace OpenTelemetry.Trace.Test
 
         public override string Name { get; protected set; }
 
-        public override SpanId ParentSpanId { get; }
+        public override ActivitySpanId ParentSpanId { get; }
 
         public override bool HasEnded => true;
 

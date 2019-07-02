@@ -52,6 +52,13 @@ namespace OpenTelemetry.Collector.Dependencies
             this.WriteEvent(2, ex);
         }
 
+        // TODO: activity ids for debugging
+        [Event(3, Message = "Context is not related to current activity. Span will not be recorded.", Level = EventLevel.Warning)]
+        public void WrongActivity()
+        {
+            this.WriteEvent(3);
+        }
+
         /// <summary>
         /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
         /// appropriate for diagnostics tracing.

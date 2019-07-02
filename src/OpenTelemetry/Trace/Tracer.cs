@@ -14,8 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Context;
+
 namespace OpenTelemetry.Trace
 {
+    using System.Diagnostics;
     using System.Threading;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Config;
@@ -26,26 +29,29 @@ namespace OpenTelemetry.Trace
     {
         private readonly SpanBuilderOptions spanBuilderOptions;
         private readonly IExportComponent exportComponent;
-        private readonly IBinaryFormat binaryFormat;
-        private readonly ITextFormat textFormat;
+        private readonly CurrentSpanUtils currentUtils; // TODO ctor args
 
-        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent)
-            : this(randomGenerator, startEndHandler, traceConfig, exportComponent, null, null)
+        public Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent)
+            : this(startEndHandler, traceConfig, exportComponent, null, null)
         {
         }
 
-        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent, IBinaryFormat binaryFormat, ITextFormat textFormat)
+        public Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent, IBinaryFormat binaryFormat, ITextFormat textFormat)
         {
-            this.spanBuilderOptions = new SpanBuilderOptions(randomGenerator, startEndHandler, traceConfig);
-            this.binaryFormat = binaryFormat ?? new BinaryFormat();
-            this.textFormat = textFormat ?? new TraceContextFormat();
+            this.spanBuilderOptions = new SpanBuilderOptions(startEndHandler, traceConfig);
+            this.BinaryFormat = binaryFormat ?? new BinaryFormat();
+            this.TextFormat = textFormat ?? new TraceContextFormat();
+            this.currentUtils = new CurrentSpanUtils(); // TODO args
         }
 
-        /// <inheritdoc/>
-        public override IBinaryFormat BinaryFormat => this.binaryFormat;
+        public override ISpan CurrentSpan => this.currentUtils.CurrentSpan;
 
         /// <inheritdoc/>
-        public override ITextFormat TextFormat => this.textFormat;
+        public override IBinaryFormat BinaryFormat { get; }
+
+        /// <inheritdoc/>
+        public override ITextFormat TextFormat { get; }
+
 
         /// <inheritdoc/>
         public override void RecordSpanData(SpanData span)
@@ -53,16 +59,32 @@ namespace OpenTelemetry.Trace
             this.exportComponent.SpanExporter.ExportAsync(span, CancellationToken.None);
         }
 
+        public override IScope WithSpan(ISpan span)
+        {
+            return this.currentUtils.WithSpan(span, false);
+        }
+
+        public override ISpanBuilder SpanBuilder(string name, SpanKind kind = SpanKind.Internal)
+        {
+            return OpenTelemetry.Trace.SpanBuilder.Create(name, kind, null, true, this.spanBuilderOptions);
+        }
+
         /// <inheritdoc/>
         public override ISpanBuilder SpanBuilderWithParent(string name, SpanKind kind = SpanKind.Internal, ISpan parent = null)
         {
-            return Trace.SpanBuilder.Create(name, kind, parent, this.spanBuilderOptions);
+
+            return OpenTelemetry.Trace.SpanBuilder.Create(name, kind, parent, this.spanBuilderOptions);
         }
 
         /// <inheritdoc/>
         public override ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, SpanContext parentContext = null)
         {
-            return Trace.SpanBuilder.Create(name, kind, parentContext, this.spanBuilderOptions);
+            return OpenTelemetry.Trace.SpanBuilder.Create(name, kind, parentContext, this.spanBuilderOptions);
+        }
+
+        public override ISpanBuilder SpanBuilderFromActivity(string name, SpanKind kind = SpanKind.Internal, Activity activity = null)
+        {
+            return OpenTelemetry.Trace.SpanBuilder.Create(name, kind, activity, asChildOfActivity:false, this.spanBuilderOptions);
         }
     }
 }

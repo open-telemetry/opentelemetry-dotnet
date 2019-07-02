@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+
 namespace OpenTelemetry.Trace.Export
 {
     using System;
@@ -240,7 +242,7 @@ namespace OpenTelemetry.Trace.Export
             public void ConsiderForSampling(SpanBase span)
             {
                 var spanEndTime = span.EndTime;
-                if (span.Context.TraceOptions.IsSampled)
+                if ((span.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
                 {
                     // Need to compare by doing the subtraction all the time because in case of an overflow,
                     // this may never sample again (at least for the next ~200 years). No real chance to

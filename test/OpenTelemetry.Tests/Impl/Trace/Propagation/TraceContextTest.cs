@@ -14,13 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+
 namespace OpenTelemetry.Impl.Trace.Propagation
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
-    using OpenTelemetry.Trace;
     using OpenTelemetry.Context.Propagation;
     using Xunit;
+    using System.Diagnostics;
 
     public class TraceContextTest
     {
@@ -36,9 +38,9 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var f = new TraceContextFormat();
             var ctx = f.Extract(headers, (h, n) => new string[] { h[n] } );
 
-            Assert.Equal(TraceId.FromLowerBase16("0af7651916cd43dd8448eb211c80319c"), ctx.TraceId);
-            Assert.Equal(SpanId.FromLowerBase16("b9c7c989f97918e1"), ctx.SpanId);
-            Assert.True(ctx.TraceOptions.IsSampled);
+            Assert.Equal(ActivityTraceId.CreateFromString("0af7651916cd43dd8448eb211c80319c".AsSpan()), ctx.TraceId);
+            Assert.Equal(ActivitySpanId.CreateFromString("b9c7c989f97918e1".AsSpan()), ctx.SpanId);
+            Assert.True((ctx.TraceOptions & ActivityTraceFlags.Recorded) != 0);
 
             Assert.Equal(2, ctx.Tracestate.Entries.Count());
 

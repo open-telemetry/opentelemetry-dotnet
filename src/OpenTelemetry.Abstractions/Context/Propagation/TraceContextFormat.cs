@@ -18,6 +18,7 @@ namespace OpenTelemetry.Context.Propagation
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Text;
     using OpenTelemetry.Trace;
@@ -44,26 +45,23 @@ namespace OpenTelemetry.Context.Propagation
         {
             try
             {
-                var traceparentCollection = getter(carrier, "traceparent");
-                var tracestateCollection = getter(carrier, "tracestate");
+                var traceparentCollection = getter(carrier, "traceparent").ToArray();
+                var tracestateCollection = getter(carrier, "tracestate").ToArray();
 
-                if (traceparentCollection.Count() > 1)
+                Activity activity = new Activity("TODO");
+                if (traceparentCollection.Count() == 1)
                 {
-                    // multiple traceparent are not allowed
-                    return null;
-                }
-
-                var traceparent = traceparentCollection?.FirstOrDefault();
-                var traceparentParsed = this.TryExtractTraceparent(traceparent, out var traceId, out var spanId, out var traceoptions);
-
-                if (!traceparentParsed)
-                {
-                    return null;
+                    var traceparent = traceparentCollection?.FirstOrDefault();
+                    if (traceparent != null)
+                    {
+                        activity.SetParentId(traceparent);
+                    }
                 }
 
                 var tracestateResult = Tracestate.Empty;
                 try
                 {
+                    // TODO tracestate on activity
                     var entries = new List<KeyValuePair<string, string>>();
                     var names = new HashSet<string>();
                     var discardTracestate = false;
@@ -151,7 +149,7 @@ namespace OpenTelemetry.Context.Propagation
                     // TODO: logging
                 }
 
-                return SpanContext.Create(traceId, spanId, traceoptions, tracestateResult);
+                return SpanContext.Create(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, tracestateResult);
             }
             catch (Exception ex)
             {
@@ -165,8 +163,8 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
         {
-            var traceparent = string.Concat("00-", spanContext.TraceId.ToLowerBase16(), "-", spanContext.SpanId.ToLowerBase16());
-            traceparent = string.Concat(traceparent, spanContext.TraceOptions.IsSampled ? "-01" : "-00");
+            // TODO extensions methods on trace flags to get string
+            var traceparent = string.Concat("00-", spanContext.TraceId.ToHexString(), "-", spanContext.SpanId.ToHexString(), "-", (spanContext.TraceOptions & ActivityTraceFlags.Recorded) != 0 ? "01" : "00");
 
             setter(carrier, "traceparent", traceparent);
 
@@ -191,111 +189,6 @@ namespace OpenTelemetry.Context.Propagation
             {
                 setter(carrier, "tracestate", sb.ToString());
             }
-        }
-
-        private bool TryExtractTraceparent(string traceparent, out TraceId traceId, out SpanId spanId, out TraceOptions traceoptions)
-        {
-            // from https://github.com/w3c/distributed-tracing/blob/master/trace_context/HTTP_HEADER_FORMAT.md
-            // traceparent: 00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01
-
-            traceId = TraceId.Invalid;
-            spanId = SpanId.Invalid;
-            traceoptions = TraceOptions.Default;
-            var bestAttempt = false;
-
-            if (string.IsNullOrWhiteSpace(traceparent))
-            {
-                return false;
-            }
-
-            // if version does not end with delimeter
-            if (traceparent.Length < VersionPrefixIdLength || traceparent[VersionPrefixIdLength - 1] != '-')
-            {
-                return false;
-            }
-
-            // or version is not a hex (will throw)
-            var versionArray = Arrays.StringToByteArray(traceparent, 0, VersionLength);
-
-            if (versionArray[0] == 255)
-            {
-                return false;
-            }
-
-            if (versionArray[0] > 0)
-            {
-                // expected version is 00
-                // for higher versions - best attempt parsing of trace id, span id, etc.
-                bestAttempt = true;
-            }
-
-            if (traceparent.Length < VersionAndTraceIdLength || traceparent[VersionAndTraceIdLength - 1] != '-')
-            {
-                return false;
-            }
-
-            try
-            {
-                traceId = TraceId.FromBytes(Arrays.StringToByteArray(traceparent, VersionPrefixIdLength, TraceIdLength));
-            }
-            catch (ArgumentOutOfRangeException)
-            {
-                // it's ok to still parse tracestate
-                return false;
-            }
-
-            if (traceparent.Length < VersionAndTraceIdAndSpanIdLength || traceparent[VersionAndTraceIdAndSpanIdLength - 1] != '-')
-            {
-                return false;
-            }
-
-            try
-            {
-                spanId = SpanId.FromBytes(Arrays.StringToByteArray(traceparent, VersionAndTraceIdLength, SpanIdLength));
-            }
-            catch (ArgumentOutOfRangeException)
-            {
-                // it's ok to still parse tracestate
-                return false;
-            }
-
-            if (traceparent.Length < VersionAndTraceIdAndSpanIdLength + OptionsLength)
-            {
-                return false;
-            }
-
-            byte[] optionsArray;
-
-            try
-            {
-                optionsArray = Arrays.StringToByteArray(traceparent, VersionAndTraceIdAndSpanIdLength, OptionsLength);
-            }
-            catch (ArgumentOutOfRangeException)
-            {
-                // it's ok to still parse tracestate
-                return false;
-            }
-
-            if ((optionsArray[0] | 1) == 1)
-            {
-                traceoptions = TraceOptions.Builder().SetIsSampled(true).Build();
-            }
-
-            if ((!bestAttempt) && (traceparent.Length != VersionAndTraceIdAndSpanIdLength + OptionsLength))
-            {
-                return false;
-            }
-
-            if (bestAttempt)
-            {
-                if ((traceparent.Length > VersionAndTraceIdAndSpanIdLength + OptionsLength) &&
-                   (traceparent[VersionAndTraceIdAndSpanIdLength + OptionsLength] != '-'))
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
     }
 }

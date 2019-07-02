@@ -48,7 +48,8 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 return;
             }
 
-            this.Tracer.SpanBuilder(request.RequestUri.AbsolutePath, SpanKind.Client).SetSampler(this.SamplerFactory(request)).StartScopedSpan(out var span);
+            var span = this.Tracer.SpanBuilder(request.RequestUri.AbsolutePath, SpanKind.Client).SetSampler(this.SamplerFactory(request)).StartSpan();
+            this.Tracer.WithSpan(span);
             span.PutHttpMethodAttribute(request.Method.ToString());
             span.PutHttpHostAttribute(request.RequestUri.Host, request.RequestUri.Port);
             span.PutHttpPathAttribute(request.RequestUri.AbsolutePath);
@@ -66,6 +67,12 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             if (span == null)
             {
                 DependenciesCollectorEventSource.Log.NullContext();
+                return;
+            }
+
+            if (span.Activity != Activity.Current)
+            {
+                DependenciesCollectorEventSource.Log.WrongActivity();
                 return;
             }
 

@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Context;
 
     /// <summary>
@@ -38,6 +39,8 @@ namespace OpenTelemetry.Trace
         /// <returns>This span builder for chaining.</returns>
         ISpanBuilder SetParentLinks(IEnumerable<ISpan> parentLinks);
 
+        ISpanBuilder SetParentLinks(IEnumerable<Activity> parentLinks);
+
         /// <summary>
         /// Set the record events value.
         /// </summary>
@@ -50,20 +53,5 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <returns>Span that was just started.</returns>
         ISpan StartSpan();
-
-        /// <summary>
-        /// Starts the span and set it as a current on the current context.
-        /// </summary>
-        /// <returns>Scoped event to control the scope of span in the context.
-        /// Dispose to stop the span and disassiciate it from the current context.</returns>
-        IScope StartScopedSpan();
-
-        /// <summary>
-        /// Starts the span and set it as a current on the current context, setting the out param to current span.
-        /// </summary>
-        /// <param name="currentSpan">Current span.</param>
-        /// <returns>Scoped event to control the scope of span in the context.
-        /// Dispose to stop the span and disassiciate it from the current context.</returns>
-        IScope StartScopedSpan(out ISpan currentSpan);
     }
 }

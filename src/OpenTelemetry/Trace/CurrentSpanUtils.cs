@@ -14,51 +14,76 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using OpenTelemetry.Trace.Internal;
+
 namespace OpenTelemetry.Trace
 {
-    using System.Threading;
     using OpenTelemetry.Context;
 
-    internal static class CurrentSpanUtils
+    internal class CurrentSpanUtils
     {
-        private static AsyncLocal<ISpan> asyncLocalContext = new AsyncLocal<ISpan>();
+        private readonly ConditionalWeakTable<Activity, ISpan> activitySpanTable = new ConditionalWeakTable<Activity, ISpan>();
 
-        public static ISpan CurrentSpan
+        public ISpan CurrentSpan
         {
             get
             {
-                return asyncLocalContext.Value;
+                var currentActivity = Activity.Current;
+                if (currentActivity == null)
+                {
+                    return BlankSpan.Instance;
+                }
+
+                if (this.activitySpanTable.TryGetValue(currentActivity, out var currentSpan))
+                {
+                    return currentSpan;
+                }
+
+                return BlankSpan.Instance;
             }
         }
 
-        public static IScope WithSpan(ISpan span, bool endSpan)
+        private void SetSpan(Activity activity, ISpan span)
         {
-            return new ScopeInSpan(span, endSpan);
+            if (activity == null)
+            {
+                // log error
+                return;
+            }
+
+            if (this.activitySpanTable.TryGetValue(activity, out _))
+            {
+                // log warning
+            }
+
+            this.activitySpanTable.Add(activity, span);
+        }
+
+        public IScope WithSpan(ISpan span, bool endSpan)
+        {
+            return new ScopeInSpan(span, endSpan, this);
         }
 
         private sealed class ScopeInSpan : IScope
         {
-            private readonly ISpan origContext;
             private readonly ISpan span;
             private readonly bool endSpan;
+            private readonly CurrentSpanUtils currentUtils;
 
-            public ScopeInSpan(ISpan span, bool endSpan)
+            public ScopeInSpan(ISpan span, bool endSpan, CurrentSpanUtils currentUtils)
             {
                 this.span = span;
                 this.endSpan = endSpan;
-                this.origContext = asyncLocalContext.Value;
-                asyncLocalContext.Value = span;
+                this.currentUtils = currentUtils;
+                this.currentUtils.SetSpan(Activity.Current, span);
             }
 
             public void Dispose()
             {
-                var current = asyncLocalContext.Value;
-                asyncLocalContext.Value = this.origContext;
-
-                if (current != this.origContext)
-                {
-                    // Log
-                }
+                var current = this.currentUtils.CurrentSpan;
+                current?.Activity?.Stop();
 
                 if (this.endSpan)
                 {

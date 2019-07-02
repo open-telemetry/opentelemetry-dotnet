@@ -18,6 +18,7 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Common;
     using OpenTelemetry.Resources;
@@ -30,7 +31,7 @@ namespace OpenTelemetry.Trace
     {
         internal SpanData(
             SpanContext context,
-            SpanId parentSpanId,
+            ActivitySpanId parentSpanId,
             Resource resource,
             string name,
             Timestamp startTimestamp,
@@ -64,7 +65,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the parent <see cref="SpanId"/>.
         /// </summary>
-        public SpanId ParentSpanId { get; }
+        public ActivitySpanId ParentSpanId { get; }
 
         /// <summary>
         /// Gets the <see cref="Resource"/> this span was executed on.
@@ -134,7 +135,7 @@ namespace OpenTelemetry.Trace
         /// <returns>A new immutable <see cref="SpanData"/>.</returns>
         public static SpanData Create(
                         SpanContext context,
-                        SpanId parentSpanId,
+                        ActivitySpanId parentSpanId,
                         Resource resource,
                         string name,
                         Timestamp startTimestamp,

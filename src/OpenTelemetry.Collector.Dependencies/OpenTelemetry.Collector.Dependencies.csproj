@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.5.0" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.6.0-preview6.19303.8" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net46'">

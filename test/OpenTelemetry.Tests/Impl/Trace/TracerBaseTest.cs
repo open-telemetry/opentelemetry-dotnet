@@ -25,10 +25,10 @@ namespace OpenTelemetry.Trace.Test
     public class TracerBaseTest
     {
         private static readonly ITracer noopTracer = TracerBase.NoopTracer;
-        private static readonly string SPAN_NAME = "MySpanName";
-        private TracerBase tracer = Mock.Of<TracerBase>();
-        private SpanBuilderBase spanBuilder = new Mock<SpanBuilderBase>(SpanKind.Internal).Object;
-        private SpanBase span = Mock.Of<SpanBase>();
+        private const string SpanName = "MySpanName";
+        private readonly TracerBase tracer = Mock.Of<TracerBase>();
+        private readonly SpanBuilderBase spanBuilder = new Mock<SpanBuilderBase>(SpanKind.Internal).Object;
+        private readonly SpanBase span = Mock.Of<SpanBase>();
 
         public TracerBaseTest()
         {
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DefaultSpanBuilderWithName()
         {
-            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilder(SPAN_NAME).StartSpan());
+            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilder(SpanName).StartSpan());
         }
 
         [Fact]
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DefaultSpanBuilderWithParentAndName()
         {
-            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithParent(SPAN_NAME, parent: null).StartSpan());
+            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithParent(SpanName, parent: null).StartSpan());
         }
 
         [Fact]
@@ -139,45 +139,13 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DefaultSpanBuilderWithParentContext_NullParent()
         {
-            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithParentContext(SPAN_NAME, parentContext: null).StartSpan());
+            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithParentContext(SpanName, parentContext: null).StartSpan());
         }
 
         [Fact]
         public void DefaultSpanBuilderWithParentContext()
         {
-            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithParentContext(SPAN_NAME, parentContext: SpanContext.Blank).StartSpan());
-        }
-
-        [Fact]
-        public void StartSpanWithParentFromContext()
-        {
-            var ws = tracer.WithSpan(span);
-            try
-            {
-                Assert.Same(span, tracer.CurrentSpan);
-                Mock.Get(tracer).Setup((tracer) => tracer.SpanBuilderWithParent(SPAN_NAME, SpanKind.Internal, span)).Returns(spanBuilder);
-                Assert.Same(spanBuilder, tracer.SpanBuilder(SPAN_NAME));
-            }
-            finally
-            {
-                ws.Dispose();
-            }
-        }
-
-        [Fact]
-        public void StartSpanWithInvalidParentFromContext()
-        {
-            var ws = tracer.WithSpan(BlankSpan.Instance);
-            try
-            {
-                Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
-                Mock.Get(tracer).Setup((t) => t.SpanBuilderWithParent(SPAN_NAME, SpanKind.Internal, BlankSpan.Instance)).Returns(spanBuilder);
-                Assert.Same(spanBuilder, tracer.SpanBuilder(SPAN_NAME));
-            }
-            finally
-            {
-                ws.Dispose();
-            }
+            Assert.Same(BlankSpan.Instance, noopTracer.SpanBuilderWithParentContext(SpanName, parentContext: SpanContext.Blank).StartSpan());
         }
     }
 }

@@ -14,10 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Context;
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Trace.Internal;
 
     public class NoopSpanBuilder : SpanBuilderBase
@@ -45,6 +49,11 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
+        public override ISpanBuilder SetParentLinks(IEnumerable<Activity> parentLinks)
+        {
+            return this;
+        }
+
         public override ISpanBuilder SetRecordEvents(bool recordEvents)
         {
             return this;
@@ -56,6 +65,11 @@ namespace OpenTelemetry.Trace
         }
 
         internal static ISpanBuilder SetParent(string name, SpanKind kind, SpanContext parentContext = null)
+        {
+            return new NoopSpanBuilder(name, kind);
+        }
+
+        internal static ISpanBuilder SetParent(string name, SpanKind kind, Activity parentActivity = null)
         {
             return new NoopSpanBuilder(name, kind);
         }

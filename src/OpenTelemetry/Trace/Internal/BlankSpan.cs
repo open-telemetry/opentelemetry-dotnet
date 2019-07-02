@@ -18,11 +18,12 @@ namespace OpenTelemetry.Trace.Internal
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Trace.Export;
+    using System.Diagnostics;
 
     internal sealed class BlankSpan : SpanBase
     {
         public static readonly BlankSpan Instance = new BlankSpan();
+        private static readonly Activity BlankActivity = new Activity("Blank");
 
         private BlankSpan()
             : base(SpanContext.Blank, default(SpanOptions))
@@ -33,37 +34,13 @@ namespace OpenTelemetry.Trace.Internal
 
         public override Status Status { get; set; }
 
-        public override DateTimeOffset EndTime
-        {
-            get
-            {
-                return DateTimeOffset.MinValue;
-            }
-        }
+        public override DateTimeOffset EndTime => DateTimeOffset.MinValue;
 
-        public override TimeSpan Latency
-        {
-            get
-            {
-                return TimeSpan.Zero;
-            }
-        }
+        public override TimeSpan Latency => TimeSpan.Zero;
 
-        public override bool IsSampleToLocalSpanStore
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public override bool IsSampleToLocalSpanStore => false;
 
-        public override SpanId ParentSpanId
-        {
-            get
-            {
-                return null;
-            }
-        }
+        public override ActivitySpanId ParentSpanId => default;
 
         public override bool HasEnded => true;
 

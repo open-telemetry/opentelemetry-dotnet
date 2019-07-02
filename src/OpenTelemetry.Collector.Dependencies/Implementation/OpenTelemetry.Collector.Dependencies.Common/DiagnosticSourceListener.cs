@@ -43,7 +43,9 @@ namespace OpenTelemetry.Collector.Dependencies.Common
 
         public void OnNext(KeyValuePair<string, object> value)
         {
-            if (Activity.Current == null)
+            Activity current = Activity.Current;
+
+            if (current == null)
             {
                 Debug.WriteLine("Activity is null " + value.Key);
                 return;
@@ -53,19 +55,19 @@ namespace OpenTelemetry.Collector.Dependencies.Common
             {
                 if (value.Key.EndsWith("Start"))
                 {
-                    this.handler.OnStartActivity(Activity.Current, value.Value);
+                    this.handler.OnStartActivity(current, value.Value);
                 }
                 else if (value.Key.EndsWith("Stop"))
                 {
-                    this.handler.OnStopActivity(Activity.Current, value.Value);
+                    this.handler.OnStopActivity(current, value.Value);
                 }
                 else if (value.Key.EndsWith("Exception"))
                 {
-                    this.handler.OnException(Activity.Current, value.Value);
+                    this.handler.OnException(current, value.Value);
                 }
                 else
                 {
-                    this.handler.OnCustom(value.Key, Activity.Current, value.Value);
+                    this.handler.OnCustom(value.Key, current, value.Value);
                 }
             }
             catch (Exception e)

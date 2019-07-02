@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System.Diagnostics;
     using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
 
@@ -52,7 +53,7 @@ namespace OpenTelemetry.Trace
         /// <param name="spanName">Span name.</param>
         /// <param name="spanKind">Span kind.</param>
         /// <returns>Span builder for the span with the given name.</returns>
-        ISpanBuilder SpanBuilder(string spanName, SpanKind spanKind = SpanKind.Internal);
+        ISpanBuilder SpanBuilder(string spanName, SpanKind spanKind = SpanKind.Internal); // TODO as child of current activity
 
         /// <summary>
         /// Gets the span builder for the span with the given name and parent.
@@ -61,7 +62,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Span kind.</param>
         /// <param name="parent">Parent of the span.</param>
         /// <returns>Span builder for the span with the given name and specified parent.</returns>
-        ISpanBuilder SpanBuilderWithParent(string name, SpanKind kind = SpanKind.Internal, ISpan parent = null);
+        ISpanBuilder SpanBuilderWithParent(string name, SpanKind kind = SpanKind.Internal, ISpan parent = null); // as child of activity attached to this span
 
         /// <summary>
         /// Gets the span builder for the span with the give name and remote parent context.
@@ -70,7 +71,9 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Span kind.</param>
         /// <param name="parentContext">Remote parent context extracted from the wire.</param>
         /// <returns>Span builder for the span with the given name and specified parent span context.</returns>
-        ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, SpanContext parentContext = null);
+        ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, SpanContext parentContext = null); // as child of context
+
+        ISpanBuilder SpanBuilderFromActivity(string name, SpanKind kind = SpanKind.Internal, Activity activity = null); // as span for this activity
 
         /// <summary>
         /// Records <see cref="SpanData"/>. This API allows to send a pre-populated span object to the

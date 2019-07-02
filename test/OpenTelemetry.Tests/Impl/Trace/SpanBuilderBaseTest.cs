@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace.Test
         public void StartScopedSpan()
         {
             Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
-            var scope = spanBuilder.Object.StartScopedSpan();
+            var scope = tracer.WithSpan(spanBuilder.Object.StartSpan());
             try
             {
                 Assert.Same(span.Object, tracer.CurrentSpan);
@@ -55,7 +55,8 @@ namespace OpenTelemetry.Trace.Test
         {
             Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
 
-            var scope = spanBuilder.Object.StartScopedSpan(out var outSpan);
+            var outSpan = spanBuilder.Object.StartSpan();
+            var scope = tracer.WithSpan(outSpan);
             try
             {
                 Assert.Same(outSpan, tracer.CurrentSpan);

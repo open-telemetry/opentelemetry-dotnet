@@ -14,35 +14,35 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+
 namespace OpenTelemetry.Trace.Sampler.Test
 {
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    using OpenTelemetry.Trace.Internal;
     using OpenTelemetry.Trace.Test;
     using Xunit;
 
     public class SamplersTest
     {
-        private static readonly String SPAN_NAME = "MySpanName";
-        private static readonly int NUM_SAMPLE_TRIES = 1000;
-        private readonly IRandomGenerator random = new RandomGenerator(1234);
-        private readonly TraceId traceId;
-        private readonly SpanId parentSpanId;
-        private readonly SpanId spanId;
+        private static readonly string SpanName = "MySpanName";
+        private static readonly int NumSampleTries = 1000;
+        private readonly ActivityTraceId traceId;
+        private readonly ActivitySpanId parentSpanId;
+        private readonly ActivitySpanId spanId;
         private readonly SpanContext sampledSpanContext;
         private readonly SpanContext notSampledSpanContext;
         private readonly ISpan sampledSpan;
 
         public SamplersTest()
         {
-            traceId = TraceId.GenerateRandomId(random);
-            parentSpanId = SpanId.GenerateRandomId(random);
-            spanId = SpanId.GenerateRandomId(random);
-            sampledSpanContext = SpanContext.Create(traceId, parentSpanId, TraceOptions.Builder().SetIsSampled(true).Build(), Tracestate.Empty);
-            notSampledSpanContext = SpanContext.Create(traceId, parentSpanId, TraceOptions.Default, Tracestate.Empty);
-            sampledSpan = new TestSpan(sampledSpanContext, SpanOptions.RecordEvents);
+            traceId = ActivityTraceId.CreateRandom();
+            parentSpanId = ActivitySpanId.CreateRandom();
+            spanId = ActivitySpanId.CreateRandom();
+            sampledSpanContext = SpanContext.Create(traceId, parentSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty);
+            notSampledSpanContext = SpanContext.Create(traceId, parentSpanId, ActivityTraceFlags.None, Tracestate.Empty);
+            sampledSpan = new TestSpan(sampledSpanContext, SpanOptions.RecordEvents, null);
         }
 
         [Fact]
@@ -185,7 +185,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
             // This traceId will not be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is not less than probability * Long.MAX_VALUE;
             var notSampledtraceId =
-                TraceId.FromBytes(
+                ActivityTraceId.CreateFromBytes(
                     new byte[] 
                     {
                       0x8F,
@@ -209,13 +209,13 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     defaultProbability.ShouldSample(
                         null,
                         notSampledtraceId,
-                        SpanId.GenerateRandomId(random),
-                        SPAN_NAME,
+                        ActivitySpanId.CreateRandom(), 
+                        SpanName,
                         new List<ISpan>()));
             // This traceId will be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is less than probability * Long.MAX_VALUE;
             var sampledtraceId =
-                TraceId.FromBytes(
+                ActivityTraceId.CreateFromBytes(
                     new byte[] 
                     {
                       0x00,
@@ -239,15 +239,15 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     defaultProbability.ShouldSample(
                         null,
                         sampledtraceId,
-                        SpanId.GenerateRandomId(random),
-                        SPAN_NAME,
+                        ActivitySpanId.CreateRandom(),
+                        SpanName,
                         new List<ISpan>()));
         }
 
         [Fact]
         public void ProbabilitySampler_getDescription()
         {
-            Assert.Equal(String.Format("ProbabilitySampler({0:F6})", 0.5), ProbabilitySampler.Create(0.5).Description);
+            Assert.Equal(string.Format("ProbabilitySampler({0:F6})", 0.5), ProbabilitySampler.Create(0.5).Description);
         }
 
         [Fact]
@@ -261,21 +261,20 @@ namespace OpenTelemetry.Trace.Sampler.Test
         private static void AssertSamplerSamplesWithProbability(
             ISampler sampler, SpanContext parent, IEnumerable<ISpan> parentLinks, double probability)
         {
-            var random = new RandomGenerator(1234);
             var count = 0; // Count of spans with sampling enabled
-            for (var i = 0; i < NUM_SAMPLE_TRIES; i++)
+            for (var i = 0; i < NumSampleTries; i++)
             {
                 if (sampler.ShouldSample(
                     parent,
-                    TraceId.GenerateRandomId(random),
-                    SpanId.GenerateRandomId(random),
-                    SPAN_NAME,
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
+                    SpanName,
                     parentLinks))
                 {
                     count++;
                 }
             }
-            var proportionSampled = (double)count / NUM_SAMPLE_TRIES;
+            var proportionSampled = (double)count / NumSampleTries;
             // Allow for a large amount of slop (+/- 10%) in number of sampled traces, to avoid flakiness.
             Assert.True(proportionSampled < probability + 0.1 && proportionSampled > probability - 0.1);
         }

@@ -39,21 +39,21 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <returns></returns>
         public static Google.Cloud.Trace.V2.Span ToSpan(this SpanData spanData, string projectId)
         {
-            var spanId = spanData.Context.SpanId.ToLowerBase16();
+            var spanId = spanData.Context.SpanId.ToHexString();
 
             // Base span settings
             var span = new Google.Cloud.Trace.V2.Span
             {
-                SpanName = new SpanName(projectId, spanData.Context.TraceId.ToLowerBase16(), spanId),
+                SpanName = new SpanName(projectId, spanData.Context.TraceId.ToHexString(), spanId),
                 SpanId = spanId,
                 DisplayName = new TruncatableString { Value = spanData.Name },
                 StartTime = spanData.StartTimestamp.ToTimestamp(),
                 EndTime = spanData.EndTimestamp.ToTimestamp(),
                 ChildSpanCount = spanData.ChildSpanCount,
             };
-            if (spanData.ParentSpanId != null)
+            if (spanData.ParentSpanId != default)
             {
-                var parentSpanId = spanData.ParentSpanId.ToLowerBase16();
+                var parentSpanId = spanData.ParentSpanId.ToHexString();
                 if (!string.IsNullOrEmpty(parentSpanId))
                 {
                     span.ParentSpanId = parentSpanId;
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 span.Links = new Google.Cloud.Trace.V2.Span.Types.Links
                 {
                     DroppedLinksCount = spanData.Links.DroppedLinksCount,
-                    Link = { spanData.Links.Links.Select(l => l.ToLink()) }
+                    Link = { spanData.Links.Links.Select(l => l.ToLink()) },
                 };
             }
 
@@ -75,11 +75,11 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             {
                 span.Attributes = new Google.Cloud.Trace.V2.Span.Types.Attributes
                 {
-                    DroppedAttributesCount = spanData.Attributes != null ? spanData.Attributes.DroppedAttributesCount : 0,
+                    DroppedAttributesCount = spanData.Attributes?.DroppedAttributesCount ?? 0,
 
                     AttributeMap = { spanData.Attributes?.AttributeMap?.ToDictionary(
                                         s => s.Key,
-                                        s => s.Value?.ToAttributeValue()) },
+                                        s => s.Value?.ToAttributeValue()), },
                 };
             }
 
@@ -89,8 +89,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         public static Google.Cloud.Trace.V2.Span.Types.Link ToLink(this ILink link)
         {
             var ret = new Google.Cloud.Trace.V2.Span.Types.Link();
-            ret.SpanId = link.Context.SpanId.ToLowerBase16();
-            ret.TraceId = link.Context.TraceId.ToLowerBase16();
+            ret.SpanId = link.Context.SpanId.ToHexString();
+            ret.TraceId = link.Context.TraceId.ToHexString();
 
             if (link.Attributes != null)
             {

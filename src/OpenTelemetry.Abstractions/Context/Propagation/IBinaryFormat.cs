@@ -36,5 +36,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <param name="spanContext">Span context to serialize.</param>
         /// <returns>Byte array with the encoded span context in it.</returns>
         byte[] ToByteArray(SpanContext spanContext);
+
+        // TODO Span<T> ???
     }
 }

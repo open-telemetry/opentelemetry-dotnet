@@ -18,6 +18,7 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Utils;
 
@@ -44,7 +45,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (context.TraceOptions.IsSampled && !options.HasFlag(SpanOptions.RecordEvents))
+            if ((context.TraceOptions & ActivityTraceFlags.Recorded) != 0 && !options.HasFlag(SpanOptions.RecordEvents))
             {
                 throw new ArgumentOutOfRangeException("Span is sampled, but does not have RECORD_EVENTS set.");
             }
@@ -93,12 +94,14 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the parent span id.
         /// </summary>
-        public abstract SpanId ParentSpanId { get; }
+        public abstract ActivitySpanId ParentSpanId { get; }
 
         /// <summary>
         /// Gets a value indicating whether this span was already stopped.
         /// </summary>
         public abstract bool HasEnded { get; }
+
+        public Activity Activity { get; protected set; }
 
         /// <inheritdoc/>
         public abstract bool IsRecordingEvents { get; }

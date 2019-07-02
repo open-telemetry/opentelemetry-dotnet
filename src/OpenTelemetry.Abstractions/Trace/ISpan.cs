@@ -16,11 +16,13 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     /// <summary>
     /// <para>Span represents the execution of the certain span of code or span of time between two events which is part of
-    /// a distributed trace and has result of execution, context of executuion and other properties.</para>
+    /// a distributed trace and has result of execution, context of execution and other properties.</para>
     ///
     /// <para>This class is mostly write only. Span should not be used to exchange information. Only to add properties
     /// to it for monitoring purposes. It will be converted to SpanData that is readable.</para>
@@ -48,8 +50,10 @@ namespace OpenTelemetry.Trace
         /// <remarks>This method is not compliant with the specification. https://github.com/open-telemetry/opentelemetry-specification/issues/55 .</remarks>
         bool HasEnded { get; }
 
+        Activity Activity { get; }
+
         /// <summary>
-        /// Updates the <see cref="Span"/> name.
+        /// Updates the <see cref="Span{T}"/> name.
         ///
         /// If used, this will override the name provided via <see cref="ISpanBuilder"/>.
         /// Upon this update, any sampling behavior based on <see cref="Span"/> name will depend on the

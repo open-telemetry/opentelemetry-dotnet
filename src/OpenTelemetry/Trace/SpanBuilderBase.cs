@@ -14,17 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+
 namespace OpenTelemetry.Trace
 {
     using System.Collections.Generic;
-    using OpenTelemetry.Context;
 
     public abstract class SpanBuilderBase : ISpanBuilder
     {
-        private SpanBuilderBase()
-        {
-        }
-
         protected SpanKind Kind { get; private set; }
 
         protected SpanBuilderBase(SpanKind kind)
@@ -36,19 +33,10 @@ namespace OpenTelemetry.Trace
 
         public abstract ISpanBuilder SetParentLinks(IEnumerable<ISpan> parentLinks);
 
+        public abstract ISpanBuilder SetParentLinks(IEnumerable<Activity> parentLinks);
+
         public abstract ISpanBuilder SetRecordEvents(bool recordEvents);
 
         public abstract ISpan StartSpan();
-
-        public IScope StartScopedSpan()
-        {
-            return CurrentSpanUtils.WithSpan(this.StartSpan(), true);
-        }
-
-        public IScope StartScopedSpan(out ISpan currentSpan)
-        {
-            currentSpan = this.StartSpan();
-            return CurrentSpanUtils.WithSpan(currentSpan, true);
-        }
     }
 }

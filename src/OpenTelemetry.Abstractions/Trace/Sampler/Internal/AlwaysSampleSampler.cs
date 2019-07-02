@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace.Sampler.Internal
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     internal sealed class AlwaysSampleSampler : ISampler
     {
@@ -24,15 +25,9 @@ namespace OpenTelemetry.Trace.Sampler.Internal
         {
         }
 
-        public string Description
-        {
-            get
-            {
-                return this.ToString();
-            }
-        }
+        public string Description => this.ToString();
 
-        public bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ISpan> parentLinks)
+        public bool ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ISpan> parentLinks)
         {
             return true;
         }

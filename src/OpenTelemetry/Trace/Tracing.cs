@@ -16,7 +16,6 @@
 
 namespace OpenTelemetry.Trace
 {
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
@@ -33,7 +32,7 @@ namespace OpenTelemetry.Trace
 
         internal Tracing()
         {
-            this.traceComponent = new TraceComponent(new RandomGenerator(), new SimpleEventQueue());
+            this.traceComponent = new TraceComponent(new SimpleEventQueue());
         }
 
         /// <summary>
