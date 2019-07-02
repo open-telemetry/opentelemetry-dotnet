@@ -78,38 +78,38 @@ namespace OpenTelemetry.Exporter.Stackdriver
         /// </summary>
         public void Start()
         {
-            lock (locker)
+            lock (this.locker)
             {
-                if (isInitialized)
+                if (this.isInitialized)
                 {
                     return;
                 }
 
                 // Register trace exporter
-                if (exportComponent != null)
+                if (this.exportComponent != null)
                 {
-                    var traceExporter = new StackdriverTraceExporter(projectId);
-                    exportComponent.SpanExporter.RegisterHandler(ExporterName, traceExporter);
+                    var traceExporter = new StackdriverTraceExporter(this.projectId);
+                    this.exportComponent.SpanExporter.RegisterHandler(ExporterName, traceExporter);
                 }
 
                 // Register stats(metrics) exporter
-                if (viewManager != null)
+                if (this.viewManager != null)
                 {
-                    var credential = GetGoogleCredential();
+                    var credential = this.GetGoogleCredential();
 
                     var statsConfig = StackdriverStatsConfiguration.Default;
                     statsConfig.GoogleCredential = credential;
-                    if (statsConfig.ProjectId != projectId)
+                    if (statsConfig.ProjectId != this.projectId)
                     {
-                        statsConfig.ProjectId = projectId;
-                        statsConfig.MonitoredResource = GoogleCloudResourceUtils.GetDefaultResource(projectId);
+                        statsConfig.ProjectId = this.projectId;
+                        statsConfig.MonitoredResource = GoogleCloudResourceUtils.GetDefaultResource(this.projectId);
                     }
 
-                    statsExporter = new StackdriverStatsExporter(viewManager, statsConfig);
-                    statsExporter.Start();
+                    this.statsExporter = new StackdriverStatsExporter(this.viewManager, statsConfig);
+                    this.statsExporter.Start();
                 }
 
-                isInitialized = true;
+                this.isInitialized = true;
             }
         }
 
@@ -118,39 +118,39 @@ namespace OpenTelemetry.Exporter.Stackdriver
         /// </summary>
         public void Stop()
         {
-            lock (locker)
+            lock (this.locker)
             {
-                if (!isInitialized)
+                if (!this.isInitialized)
                 {
                     return;
                 }
 
                 // Stop tracing exporter
-                if (exportComponent != null)
+                if (this.exportComponent != null)
                 {
-                    exportComponent.SpanExporter.UnregisterHandler(ExporterName);
+                    this.exportComponent.SpanExporter.UnregisterHandler(ExporterName);
                 }
 
                 // Stop metrics exporter
-                if (statsExporter != null)
+                if (this.statsExporter != null)
                 {
-                    statsExporter.Stop();
+                    this.statsExporter.Stop();
                 }
 
-                isInitialized = false;
+                this.isInitialized = false;
             }
         }
 
         private GoogleCredential GetGoogleCredential()
         {
             GoogleCredential credential;
-            if (string.IsNullOrEmpty(jsonPath))
+            if (string.IsNullOrEmpty(this.jsonPath))
             {
                 credential = GoogleCredential.GetApplicationDefault();
             }
             else
             {
-                credential = GoogleCredential.FromFile(jsonPath)
+                credential = GoogleCredential.FromFile(this.jsonPath)
                  .CreateScoped(MetricServiceClient.DefaultScopes);
             }
 

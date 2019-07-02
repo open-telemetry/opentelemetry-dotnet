@@ -134,13 +134,13 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
         public StackdriverTraceExporter(string projectId)
         {
-            googleCloudProjectId = new Google.Api.Gax.ResourceNames.ProjectName(projectId);
+            this.googleCloudProjectId = new Google.Api.Gax.ResourceNames.ProjectName(projectId);
 
             // Set header mutation for every outgoing API call to Stackdriver so the BE knows
             // which version of OC client is calling it as well as which version of the exporter
             var callSettings = CallSettings.FromHeaderMutation(StackdriverCallHeaderAppender);
-            traceServiceSettings = new TraceServiceSettings();
-            traceServiceSettings.CallSettings = callSettings;
+            this.traceServiceSettings = new TraceServiceSettings();
+            this.traceServiceSettings.CallSettings = callSettings;
         }
 
         static StackdriverTraceExporter()
@@ -167,12 +167,12 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
         public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
         {
-            var traceWriter = TraceServiceClient.Create(settings: traceServiceSettings);
+            var traceWriter = TraceServiceClient.Create(settings: this.traceServiceSettings);
             
             var batchSpansRequest = new BatchWriteSpansRequest
             {
-                ProjectName = googleCloudProjectId,
-                Spans = { spanDataList.Select(s => s.ToSpan(googleCloudProjectId.ProjectId)) },
+                ProjectName = this.googleCloudProjectId,
+                Spans = { spanDataList.Select(s => s.ToSpan(this.googleCloudProjectId.ProjectId)) },
             };
             
             await traceWriter.BatchWriteSpansAsync(batchSpansRequest);

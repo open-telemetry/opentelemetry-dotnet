@@ -84,13 +84,13 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 message: "Export interval can't be zero. Typically it's 1 minute");
 
             this.viewManager = viewManager;
-            monitoredResource = configuration.MonitoredResource;
-            collectionInterval = configuration.ExportInterval;
-            project = new ProjectName(configuration.ProjectId);
-            credential = configuration.GoogleCredential;
+            this.monitoredResource = configuration.MonitoredResource;
+            this.collectionInterval = configuration.ExportInterval;
+            this.project = new ProjectName(configuration.ProjectId);
+            this.credential = configuration.GoogleCredential;
 
-            domain = GetDomain(configuration.MetricNamePrefix);
-            displayNamePrefix = GetDisplayNamePrefix(configuration.MetricNamePrefix);
+            this.domain = GetDomain(configuration.MetricNamePrefix);
+            this.displayNamePrefix = this.GetDisplayNamePrefix(configuration.MetricNamePrefix);
         }
 
         static StackdriverStatsExporter()
@@ -108,30 +108,30 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
         public void Start()
         {
-            lock (locker)
+            lock (this.locker)
             {
-                if (!isStarted)
+                if (!this.isStarted)
                 {
-                    tokenSource = new CancellationTokenSource();
-                    metricServiceClient = CreateMetricServiceClient(credential, tokenSource);
+                    this.tokenSource = new CancellationTokenSource();
+                    this.metricServiceClient = CreateMetricServiceClient(this.credential, this.tokenSource);
 
-                    Task.Factory.StartNew(DoWork, tokenSource.Token);
+                    Task.Factory.StartNew(this.DoWork, this.tokenSource.Token);
 
-                    isStarted = true;
+                    this.isStarted = true;
                 }
             }
         }
 
         public void Stop()
         {
-            lock (locker)
+            lock (this.locker)
             {
-                if (!isStarted)
+                if (!this.isStarted)
                 {
                     return;
                 }
 
-                tokenSource.Cancel();
+                this.tokenSource.Cancel();
             }
         }
 
@@ -143,30 +143,30 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         {
             try
             {
-                var sleepTime = collectionInterval;
+                var sleepTime = this.collectionInterval;
                 var stopWatch = new Stopwatch();
 
-                while (!tokenSource.IsCancellationRequested)
+                while (!this.tokenSource.IsCancellationRequested)
                 {
                     // Calculate the duration of collection iteration
                     stopWatch.Start();
 
                     // Collect metrics
-                    Export();
+                    this.Export();
 
                     stopWatch.Stop();
 
                     // Adjust the wait time - reduce export operation duration
-                    sleepTime = collectionInterval.Subtract(stopWatch.Elapsed);
+                    sleepTime = this.collectionInterval.Subtract(stopWatch.Elapsed);
                     sleepTime = sleepTime.Duration();
 
                     // If the cancellation was requested, we should honor
                     // that within the cancellation interval, so we wait in 
                     // intervals of <cancellationInterval>
-                    while (sleepTime > cancellationInterval && !tokenSource.IsCancellationRequested)
+                    while (sleepTime > this.cancellationInterval && !this.tokenSource.IsCancellationRequested)
                     {
-                        Thread.Sleep(cancellationInterval);
-                        sleepTime = sleepTime.Subtract(cancellationInterval);
+                        Thread.Sleep(this.cancellationInterval);
+                        sleepTime = sleepTime.Subtract(this.cancellationInterval);
                     }
 
                     Thread.Sleep(sleepTime);
@@ -181,14 +181,14 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private bool RegisterView(IView view)
         {
             IView existing = null;
-            if (registeredViews.TryGetValue(view.Name, out existing))
+            if (this.registeredViews.TryGetValue(view.Name, out existing))
             {
                 // Ignore views that are already registered.
                 return existing.Equals(view);
             }
-            registeredViews.Add(view.Name, view);
+            this.registeredViews.Add(view.Name, view);
 
-            var metricDescriptorTypeName = GenerateMetricDescriptorTypeName(view.Name, domain);
+            var metricDescriptorTypeName = GenerateMetricDescriptorTypeName(view.Name, this.domain);
 
             // TODO - zeltser: don't need to create MetricDescriptor for RpcViewConstants once we defined
             // canonical metrics. Registration is required only for custom view definitions. Canonical
@@ -196,9 +196,9 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             var metricDescriptor = MetricsConversions.CreateMetricDescriptor(
                 metricDescriptorTypeName,
                 view,
-                project,
-                domain,
-                displayNamePrefix);
+                this.project,
+                this.domain,
+                this.displayNamePrefix);
 
             if (metricDescriptor == null)
             {
@@ -207,11 +207,11 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             }
 
             // Cache metric descriptor and ensure it exists in Stackdriver
-            if (!metricDescriptors.ContainsKey(view))
+            if (!this.metricDescriptors.ContainsKey(view))
             {
-                metricDescriptors.Add(view, metricDescriptor);
+                this.metricDescriptors.Add(view, metricDescriptor);
             }
-            return EnsureMetricDescriptorExists(metricDescriptor);
+            return this.EnsureMetricDescriptorExists(metricDescriptor);
         }
 
         private bool EnsureMetricDescriptorExists(MetricDescriptor metricDescriptor)
@@ -219,9 +219,9 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             try
             {
                 var request = new CreateMetricDescriptorRequest();
-                request.ProjectName = project;
+                request.ProjectName = this.project;
                 request.MetricDescriptor = metricDescriptor;
-                metricServiceClient.CreateMetricDescriptor(request);
+                this.metricServiceClient.CreateMetricDescriptor(request);
             }
             catch (RpcException e)
             {
@@ -240,11 +240,11 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private void Export()
         {
             var viewDataList = new List<IViewData>();
-            foreach (var view in viewManager.AllExportedViews)
+            foreach (var view in this.viewManager.AllExportedViews)
             {
-                if (RegisterView(view))
+                if (this.RegisterView(view))
                 {
-                    var data = viewManager.GetView(view.Name);
+                    var data = this.viewManager.GetView(view.Name);
                     viewDataList.Add(data);
                 }
             }
@@ -253,8 +253,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             var timeSeriesList = new List<TimeSeries>();
             foreach (var viewData in viewDataList)
             {
-                var metricDescriptor = metricDescriptors[viewData.View];
-                var timeSeries = MetricsConversions.CreateTimeSeriesList(viewData, monitoredResource, metricDescriptor, domain);
+                var metricDescriptor = this.metricDescriptors[viewData.View];
+                var timeSeries = MetricsConversions.CreateTimeSeriesList(viewData, this.monitoredResource, metricDescriptor, this.domain);
                 timeSeriesList.AddRange(timeSeries);
             }
 
@@ -262,12 +262,12 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             foreach (var batchedTimeSeries in timeSeriesList.Partition(MAX_BATCH_EXPORT_SIZE))
             {
                 var request = new CreateTimeSeriesRequest();
-                request.ProjectName = project;
+                request.ProjectName = this.project;
                 request.TimeSeries.AddRange(batchedTimeSeries);
 
                 try
                 {
-                    metricServiceClient.CreateTimeSeries(request);
+                    this.metricServiceClient.CreateTimeSeries(request);
                 }
                 catch (RpcException e)
                 {
