@@ -55,7 +55,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// </summary>
         /// <param name="measure">OpenTelemetry Measure definition.</param>
         /// <param name="aggregation">OpenTelemetry Aggregation definition.</param>
-        /// <returns></returns>
+        /// <returns><see cref="ValueType"/>.</returns>
         public static ValueType ToValueType(
             this IMeasure measure, IAggregation aggregation)
         {
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <param name="project">Google Cloud Project Name.</param>
         /// <param name="domain"></param>
         /// <param name="displayNamePrefix"></param>
-        /// <returns></returns>
+        /// <returns><see cref="MetricDescriptor"/>.</returns>
         public static MetricDescriptor CreateMetricDescriptor(
             string metricDescriptorTypeName,
             IView view,
@@ -174,7 +174,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// Create a list of counts for Stackdriver from the list of counts in OpenTelemetry.
         /// </summary>
         /// <param name="bucketCounts">OpenTelemetry list of counts.</param>
-        /// <returns></returns>
+        /// <returns><see cref="IEnumerable{T}"/>.</returns>
         private static IEnumerable<long> CreateBucketCounts(IReadOnlyList<long> bucketCounts)
         {
             // The first bucket (underflow bucket) should always be 0 count because the Metrics first bucket
@@ -189,7 +189,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// Converts <see cref="IBucketBoundaries"/> to Stackdriver's <see cref="BucketOptions"/>.
         /// </summary>
         /// <param name="bucketBoundaries"></param>
-        /// <returns></returns>
+        /// <returns><see cref="BucketOptions"/>.</returns>
         private static BucketOptions ToBucketOptions(this IBucketBoundaries bucketBoundaries)
         {
             // The first bucket bound should be 0.0 because the Metrics first bucket is
@@ -216,7 +216,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <param name="tagValues"></param>
         /// <param name="metricDescriptor">Stackdriver Metric Descriptor.</param>
         /// <param name="domain"></param>
-        /// <returns></returns>
+        /// <returns><see cref="Metric"/>.</returns>
         public static Metric GetMetric(
             IView view,
             IReadOnlyList<TagValue> tagValues,
@@ -255,7 +255,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <param name="metricDescriptor">Stackdriver Metric Descriptor.</param>
         /// <param name="monitoredResource">Stackdriver Resource to which the metrics belong.</param>
         /// <param name="domain">The metrics domain (namespace).</param>
-        /// <returns></returns>
+        /// <returns><see cref="List{T}"/>.</returns>
         public static List<TimeSeries> CreateTimeSeriesList(
             IViewData viewData,
             MonitoredResource monitoredResource,

@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Utils
         /// <typeparam name="T">The type of the list.</typeparam>
         /// <param name="source">The list.</param>
         /// <param name="size">Size of the batch.</param>
-        /// <returns></returns>
+        /// <returns><see cref="IEnumerable{T}"/>.</returns>
         public static IEnumerable<IEnumerable<T>> Partition<T>(this IEnumerable<T> source, int size)
         {
             using (var enumerator = source.GetEnumerator())

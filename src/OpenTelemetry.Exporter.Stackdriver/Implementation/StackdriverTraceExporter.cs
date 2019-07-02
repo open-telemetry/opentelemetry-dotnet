@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// </summary>
         /// <param name="spanData">Span in OpenTelemetry format.</param>
         /// <param name="projectId">Google Cloud Platform Project Id.</param>
-        /// <returns></returns>
+        /// <returns><see cref="Span"/>.</returns>
         public static Google.Cloud.Trace.V2.Span ToSpan(this SpanData spanData, string projectId)
         {
             var spanId = spanData.Context.SpanId.ToLowerBase16();
