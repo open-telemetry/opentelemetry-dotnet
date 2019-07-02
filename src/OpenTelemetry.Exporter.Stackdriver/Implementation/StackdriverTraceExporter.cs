@@ -99,7 +99,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             {
                 ret.Attributes = new Google.Cloud.Trace.V2.Span.Types.Attributes
                 {
-
                     DroppedAttributesCount = OpenTelemetry.Trace.Config.TraceParams.Default.MaxNumberOfAttributes - link.Attributes.Count,
 
                     AttributeMap =
@@ -190,7 +189,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <param name="metadata">The metadata that is sent with every outgoing http request</param>
         private static void StackdriverCallHeaderAppender(Metadata metadata)
         {
-            
             metadata.Add("AGENT_LABEL_KEY", "g.co/agent");
             metadata.Add("AGENT_LABEL_VALUE_STRING", $"{OpenTelemetry_EXPORTER_VERSION}; stackdriver-exporter {STACKDRIVER_EXPORTER_VERSION}");
         }
