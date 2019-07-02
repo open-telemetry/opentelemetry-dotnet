@@ -66,7 +66,7 @@ namespace Samples
                 Console.WriteLine("About to do a busy work");
                 for (var i = 0; i < 10; i++)
                 {
-                    DoWork(db, i);
+                    DoWork(db);
                 }
             }
 
@@ -76,7 +76,7 @@ namespace Samples
             return null;
         }
 
-        private static void DoWork(IDatabase db, int i)
+        private static void DoWork(IDatabase db)
         {
             // 6. Get the global singleton Tracer object
             var tracer = Tracing.Tracer;
@@ -108,8 +108,10 @@ namespace Samples
                 }
 
                 // 7. Annotate our span to capture metadata about our operation
-                var attributes = new Dictionary<string, IAttributeValue>();
-                attributes.Add("use", AttributeValue.StringAttributeValue("demo"));
+                var attributes = new Dictionary<string, IAttributeValue>
+                {
+                    { "use", AttributeValue.StringAttributeValue("demo") }
+                };
                 span.AddEvent("Invoking DoWork", attributes);
             }
         }
