@@ -61,7 +61,9 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         {
             var metricKind = aggregation.ToMetricKind();
             if (aggregation is IDistribution && (metricKind == MetricKind.Cumulative || metricKind == MetricKind.Gauge))
+            {
                 return ValueType.Distribution;
+            }
 
             if (measure is IMeasureDouble && (metricKind == MetricKind.Cumulative || metricKind == MetricKind.Gauge))
             {

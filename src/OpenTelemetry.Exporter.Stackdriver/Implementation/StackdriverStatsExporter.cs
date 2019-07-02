@@ -354,13 +354,21 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             public bool Equals(IView x, IView y)
             {
                 if (x == null && y == null)
+                {
                     return true;
+                }
                 else if (x == null || y == null)
+                {
                     return false;
+                }
                 else if (x.Name.AsString.Equals(y.Name.AsString))
+                {
                     return true;
+                }
                 else
+                {
                     return false;
+                }
             }
 
             public int GetHashCode(IView obj)
