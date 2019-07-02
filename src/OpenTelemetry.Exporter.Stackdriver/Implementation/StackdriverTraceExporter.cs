@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 span.Links = new Google.Cloud.Trace.V2.Span.Types.Links
                 {
                     DroppedLinksCount = spanData.Links.DroppedLinksCount,
-                    Link = { spanData.Links.Links.Select(l => l.ToLink()) }
+                    Link = { spanData.Links.Links.Select(l => l.ToLink()) },
                 };
             }
 
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
                     AttributeMap = { spanData.Attributes?.AttributeMap?.ToDictionary(
                                         s => s.Key,
-                                        s => s.Value?.ToAttributeValue()) },
+                                        s => s.Value?.ToAttributeValue()), },
                 };
             }
 
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
                     AttributeMap = { link.Attributes.ToDictionary(
                          att => att.Key,
-                         att => att.Value.ToAttributeValue()) }
+                         att => att.Value.ToAttributeValue()), },
                 };
             }
 

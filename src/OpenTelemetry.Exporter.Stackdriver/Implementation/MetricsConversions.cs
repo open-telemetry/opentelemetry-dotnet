@@ -101,7 +101,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 Count = distributionData.Count,
                 Mean = distributionData.Mean,
                 SumOfSquaredDeviation = distributionData.SumOfSquaredDeviations,
-                Range = new Range { Max = distributionData.Max, Min = distributionData.Min }
+                Range = new Range { Max = distributionData.Max, Min = distributionData.Min },
             };
 
             return distribution;
@@ -196,8 +196,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             {
                 ExplicitBuckets = new BucketOptions.Types.Explicit
                 {
-                    Bounds = { 0.0 }
-                }
+                    Bounds = { 0.0 },
+                },
             };
             bucketOptions.ExplicitBuckets.Bounds.AddRange(bucketBoundaries.Boundaries);
 
@@ -299,7 +299,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             return new Point
             {
                 Value = CreateTypedValue(aggregation, points),
-                Interval = CreateTimeInterval(startTime, endTime)
+                Interval = CreateTimeInterval(startTime, endTime),
             };
         }
 

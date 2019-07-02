@@ -294,7 +294,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
             var metricServiceSettings = new MetricServiceSettings()
             {
-                CallSettings = callSettings
+                CallSettings = callSettings,
             };
 
             return MetricServiceClient.Create(channel, settings: metricServiceSettings);
