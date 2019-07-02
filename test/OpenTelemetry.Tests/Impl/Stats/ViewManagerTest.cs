@@ -348,8 +348,8 @@ namespace OpenTelemetry.Stats.Test
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
                 {
-                { tv, StatsTestUtil.CreateAggregationData(DISTRIBUTION, MEASURE_DOUBLE, 10.0)},
                 { tv2, StatsTestUtil.CreateAggregationData(DISTRIBUTION, MEASURE_DOUBLE, 30.0, 50.0)},
+                { tv, StatsTestUtil.CreateAggregationData(DISTRIBUTION, MEASURE_DOUBLE, 10.0)},
                 },
                 EPSILON);
         }
@@ -369,6 +369,8 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestRecordWithEmptyStatsContext()
         {
+            Stats.State = StatsCollectionState.ENABLED;
+
             IView view = CreateCumulativeView(CreateRandomViewName(), MEASURE_DOUBLE, DISTRIBUTION, new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             // DEFAULT doesn't have tags, but the view has tag key "KEY".
@@ -422,6 +424,8 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestRecordWithTagsThatDoNotMatchViewData()
         {
+            Stats.State = StatsCollectionState.ENABLED;
+
             IView view = CreateCumulativeView(CreateRandomViewName(), MEASURE_DOUBLE, DISTRIBUTION, new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             statsRecorder

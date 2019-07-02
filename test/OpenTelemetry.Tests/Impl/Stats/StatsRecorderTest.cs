@@ -47,6 +47,8 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void Record_CurrentContextNotSet()
         {
+            Stats.State = StatsCollectionState.ENABLED;
+
             IViewName viewName = CreateRandomViewName();
 
             IView view =
@@ -70,6 +72,8 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void Record_CurrentContextSet()
         {
+            Stats.State = StatsCollectionState.ENABLED;
+
             IViewName viewName = CreateRandomViewName();
 
             IView view =
@@ -103,6 +107,8 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void Record_UnregisteredMeasure()
         {
+            Stats.State = StatsCollectionState.ENABLED;
+
             IViewName viewName = CreateRandomViewName();
 
             IView view =
@@ -133,6 +139,8 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void RecordTwice()
         {
+            Stats.State = StatsCollectionState.ENABLED;
+
             IViewName viewName = CreateRandomViewName();
 
             IView view =
