@@ -34,7 +34,7 @@
         internal static object Run(string projectId)
         {
             var exporter = new StackdriverExporter(
-                projectId, 
+                projectId,
                 Tracing.ExportComponent,
                 Stats.ViewManager);
             exporter.Start();

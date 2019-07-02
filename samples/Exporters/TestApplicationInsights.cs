@@ -26,7 +26,7 @@
         private static readonly IViewName VideoSizeViewName = ViewName.Create("my.org/views/video_size");
 
         private static readonly IView VideoSizeView = View.Create(
-            VideoSizeViewName, 
+            VideoSizeViewName,
             "processed video size over time",
             VideoSize,
             Distribution.Create(BucketBoundaries.Create(new List<double>() { 0.0, 16.0 * MiB, 256.0 * MiB })),
