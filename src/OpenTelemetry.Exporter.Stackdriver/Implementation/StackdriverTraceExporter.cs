@@ -77,9 +77,12 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 {
                     DroppedAttributesCount = spanData.Attributes != null ? spanData.Attributes.DroppedAttributesCount : 0,
 
-                    AttributeMap = { spanData.Attributes?.AttributeMap?.ToDictionary(
+                    AttributeMap =
+                    {
+                        spanData.Attributes?.AttributeMap?.ToDictionary(
                                         s => s.Key,
-                                        s => s.Value?.ToAttributeValue()), },
+                                        s => s.Value?.ToAttributeValue()),
+                    },
                 };
             }
 
@@ -99,9 +102,12 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
                     DroppedAttributesCount = OpenTelemetry.Trace.Config.TraceParams.Default.MaxNumberOfAttributes - link.Attributes.Count,
 
-                    AttributeMap = { link.Attributes.ToDictionary(
+                    AttributeMap =
+                    {
+                        link.Attributes.ToDictionary(
                          att => att.Key,
-                         att => att.Value.ToAttributeValue()), },
+                         att => att.Value.ToAttributeValue()),
+                    },
                 };
             }
 
