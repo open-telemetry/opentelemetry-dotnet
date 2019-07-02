@@ -161,7 +161,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 v => new TypedValue { Int64Value = v.Sum }, // Long
                 v => new TypedValue { Int64Value = v.Count }, // Count
                 v => new TypedValue { DoubleValue = v.Count }, // Mean
-                v => new TypedValue { DistributionValue = CreateDistribution(v, ((IDistribution)aggregation).BucketBoundaries) }, //Distribution
+                v => new TypedValue { DistributionValue = CreateDistribution(v, ((IDistribution)aggregation).BucketBoundaries) }, // Distribution
                 v => new TypedValue { DoubleValue = v.LastValue }, // LastValue Double
                 v => new TypedValue { Int64Value = v.LastValue }, // LastValue Long
                 v => new TypedValue { BoolValue = false }); // Default
