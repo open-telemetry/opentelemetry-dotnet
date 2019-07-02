@@ -45,7 +45,6 @@
             // select a database (by default, DB = 0)
             var db = connection.GetDatabase();
 
-
             // 4. Create a scoped span. It will end automatically when using statement ends
             using (var scope = tracer.SpanBuilder("Main").StartScopedSpan())
             {
