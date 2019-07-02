@@ -21,7 +21,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     using Google.Api;
 
     /// <summary>
-    /// Utility methods for working with Google Cloud Resources
+    /// Utility methods for working with Google Cloud Resources.
     /// </summary>
     public static class GoogleCloudResourceUtils
     {
@@ -29,9 +29,9 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// Detects Google Cloud ProjectId based on the environment on which the code runs.
         /// Supports GCE/GKE/GAE and projectId tied to service account
         /// In case the code runs in a different environment,
-        /// the method returns null
+        /// the method returns null.
         /// </summary>
-        /// <returns>Google Cloud Project ID</returns>
+        /// <returns>Google Cloud Project ID.</returns>
         public static string GetProjectId()
         {
             // Try to detect projectId from the environment where the code is running
@@ -58,9 +58,9 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         }
 
         /// <summary>
-        /// Determining the resource to which the metrics belong
+        /// Determining the resource to which the metrics belong.
         /// </summary>
-        /// <returns>Stackdriver Monitored Resource</returns>
+        /// <returns>Stackdriver Monitored Resource.</returns>
         public static MonitoredResource GetDefaultResource(string projectId)
         {
             var resource = new MonitoredResource();

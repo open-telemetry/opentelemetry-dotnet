@@ -30,7 +30,7 @@ namespace Samples
         ///
         /// Samples.dll zipkin http://localhost:9411/api/v2/spans
         /// Sample.dll appInsights
-        /// Sample.dll prometheus
+        /// Sample.dll prometheus.
         /// </summary>
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)

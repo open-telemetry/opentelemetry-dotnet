@@ -31,7 +31,7 @@ namespace OpenTelemetry.Collector.Dependencies
         /// <summary>
         /// Initializes a new instance of the <see cref="DependenciesCollectorOptions"/> class.
         /// </summary>
-        /// <param name="sampler">Custom sampling function, if any</param>
+        /// <param name="sampler">Custom sampling function, if any.</param>
         public DependenciesCollectorOptions(Func<HttpRequestMessage, ISampler> sampler = null)
         {
             this.CustomSampler = sampler ?? DefaultSampler;

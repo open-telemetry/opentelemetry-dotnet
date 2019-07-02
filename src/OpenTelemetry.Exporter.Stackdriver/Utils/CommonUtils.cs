@@ -19,16 +19,16 @@ namespace OpenTelemetry.Exporter.Stackdriver.Utils
     using System.Collections.Generic;
 
     /// <summary>
-    /// Common Utility Methods that are not metrics/trace specific
+    /// Common Utility Methods that are not metrics/trace specific.
     /// </summary>
     public static class CommonUtils
     {
         /// <summary>
         /// Divide the source list into batches of lists of given size.
         /// </summary>
-        /// <typeparam name="T">The type of the list</typeparam>
-        /// <param name="source">The list</param>
-        /// <param name="size">Size of the batch</param>
+        /// <typeparam name="T">The type of the list.</typeparam>
+        /// <param name="source">The list.</param>
+        /// <param name="size">Size of the batch.</param>
         /// <returns></returns>
         public static IEnumerable<IEnumerable<T>> Partition<T>(this IEnumerable<T> source, int size)
         {

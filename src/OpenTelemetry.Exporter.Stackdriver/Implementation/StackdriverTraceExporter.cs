@@ -32,10 +32,10 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     {
         /// <summary>
         /// Translating <see cref="SpanData"/> to Stackdriver's Span
-        /// According to <see href="https://cloud.google.com/trace/docs/reference/v2/rpc/google.devtools.cloudtrace.v2"/> specifications
+        /// According to <see href="https://cloud.google.com/trace/docs/reference/v2/rpc/google.devtools.cloudtrace.v2"/> specifications.
         /// </summary>
-        /// <param name="spanData">Span in OpenTelemetry format</param>
-        /// <param name="projectId">Google Cloud Platform Project Id</param>
+        /// <param name="spanData">Span in OpenTelemetry format.</param>
+        /// <param name="projectId">Google Cloud Platform Project Id.</param>
         /// <returns></returns>
         public static Google.Cloud.Trace.V2.Span ToSpan(this SpanData spanData, string projectId)
         {
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     }
 
     /// <summary>
-    /// Exports a group of spans to Stackdriver
+    /// Exports a group of spans to Stackdriver.
     /// </summary>
     internal class StackdriverTraceExporter : IHandler
     {
@@ -184,9 +184,9 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         }
 
         /// <summary>
-        /// Appends OpenTelemetry headers for every outgoing request to Stackdriver Backend
+        /// Appends OpenTelemetry headers for every outgoing request to Stackdriver Backend.
         /// </summary>
-        /// <param name="metadata">The metadata that is sent with every outgoing http request</param>
+        /// <param name="metadata">The metadata that is sent with every outgoing http request.</param>
         private static void StackdriverCallHeaderAppender(Metadata metadata)
         {
             metadata.Add("AGENT_LABEL_KEY", "g.co/agent");

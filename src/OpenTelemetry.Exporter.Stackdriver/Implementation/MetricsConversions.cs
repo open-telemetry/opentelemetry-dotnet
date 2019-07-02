@@ -29,15 +29,15 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     using static Google.Api.MetricDescriptor.Types;
 
     /// <summary>
-    /// Conversion methods from OpenTelemetry Stats API to Stackdriver Metrics API
+    /// Conversion methods from OpenTelemetry Stats API to Stackdriver Metrics API.
     /// </summary>
     internal static class MetricsConversions
     {
         /// <summary>
-        /// Converts between OpenTelemetry aggregation and Stackdriver metric kind
+        /// Converts between OpenTelemetry aggregation and Stackdriver metric kind.
         /// </summary>
-        /// <param name="aggregation">Stats Aggregation</param>
-        /// <returns>Stackdriver Metric Kind</returns>
+        /// <param name="aggregation">Stats Aggregation.</param>
+        /// <returns>Stackdriver Metric Kind.</returns>
         public static MetricKind ToMetricKind(
             this IAggregation aggregation)
         {
@@ -51,10 +51,10 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         }
 
         /// <summary>
-        /// Converts from OpenTelemetry Measure+Aggregation to Stackdriver's ValueType
+        /// Converts from OpenTelemetry Measure+Aggregation to Stackdriver's ValueType.
         /// </summary>
-        /// <param name="measure">OpenTelemetry Measure definition</param>
-        /// <param name="aggregation">OpenTelemetry Aggregation definition</param>
+        /// <param name="measure">OpenTelemetry Measure definition.</param>
+        /// <param name="aggregation">OpenTelemetry Aggregation definition.</param>
         /// <returns></returns>
         public static ValueType ToValueType(
             this IMeasure measure, IAggregation aggregation)
@@ -110,11 +110,11 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         }
 
         /// <summary>
-        /// Creates Stackdriver MetricDescriptor from OpenTelemetry View
+        /// Creates Stackdriver MetricDescriptor from OpenTelemetry View.
         /// </summary>
-        /// <param name="metricDescriptorTypeName">Metric Descriptor full type name</param>
-        /// <param name="view">OpenTelemetry View</param>
-        /// <param name="project">Google Cloud Project Name</param>
+        /// <param name="metricDescriptorTypeName">Metric Descriptor full type name.</param>
+        /// <param name="view">OpenTelemetry View.</param>
+        /// <param name="project">Google Cloud Project Name.</param>
         /// <param name="domain"></param>
         /// <param name="displayNamePrefix"></param>
         /// <returns></returns>
@@ -171,9 +171,9 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         }
 
         /// <summary>
-        /// Create a list of counts for Stackdriver from the list of counts in OpenTelemetry
+        /// Create a list of counts for Stackdriver from the list of counts in OpenTelemetry.
         /// </summary>
-        /// <param name="bucketCounts">OpenTelemetry list of counts</param>
+        /// <param name="bucketCounts">OpenTelemetry list of counts.</param>
         /// <returns></returns>
         private static IEnumerable<long> CreateBucketCounts(IReadOnlyList<long> bucketCounts)
         {
@@ -186,7 +186,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         }
 
         /// <summary>
-        /// Converts <see cref="IBucketBoundaries"/> to Stackdriver's <see cref="BucketOptions"/>
+        /// Converts <see cref="IBucketBoundaries"/> to Stackdriver's <see cref="BucketOptions"/>.
         /// </summary>
         /// <param name="bucketBoundaries"></param>
         /// <returns></returns>
@@ -210,11 +210,11 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         // Create a Metric using the TagKeys and TagValues.
 
         /// <summary>
-        /// Generate Stackdriver Metric from OpenTelemetry View
+        /// Generate Stackdriver Metric from OpenTelemetry View.
         /// </summary>
         /// <param name="view"></param>
         /// <param name="tagValues"></param>
-        /// <param name="metricDescriptor">Stackdriver Metric Descriptor</param>
+        /// <param name="metricDescriptor">Stackdriver Metric Descriptor.</param>
         /// <param name="domain"></param>
         /// <returns></returns>
         public static Metric GetMetric(
@@ -251,10 +251,10 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <summary>
         /// Convert ViewData to a list of TimeSeries, so that ViewData can be uploaded to Stackdriver.
         /// </summary>
-        /// <param name="viewData">OpenTelemetry View</param>
-        /// <param name="metricDescriptor">Stackdriver Metric Descriptor</param>
-        /// <param name="monitoredResource">Stackdriver Resource to which the metrics belong</param>
-        /// <param name="domain">The metrics domain (namespace)</param>
+        /// <param name="viewData">OpenTelemetry View.</param>
+        /// <param name="metricDescriptor">Stackdriver Metric Descriptor.</param>
+        /// <param name="monitoredResource">Stackdriver Resource to which the metrics belong.</param>
+        /// <param name="domain">The metrics domain (namespace).</param>
         /// <returns></returns>
         public static List<TimeSeries> CreateTimeSeriesList(
             IViewData viewData,
@@ -328,10 +328,10 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         }
 
         /// <summary>
-        /// Creates Stackdriver Label name
+        /// Creates Stackdriver Label name.
         /// </summary>
-        /// <param name="label">OpenTelemetry label</param>
-        /// <returns>Label name that complies with Stackdriver label naming rules</returns>
+        /// <param name="label">OpenTelemetry label.</param>
+        /// <returns>Label name that complies with Stackdriver label naming rules.</returns>
         internal static string GetStackdriverLabelKey(string label)
         {
             return label.Replace('/', '_');

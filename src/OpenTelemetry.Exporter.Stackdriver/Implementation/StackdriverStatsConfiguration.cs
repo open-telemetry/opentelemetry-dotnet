@@ -21,29 +21,29 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     using Google.Apis.Auth.OAuth2;
 
     /// <summary>
-    /// Configuration for exporting stats into Stackdriver
+    /// Configuration for exporting stats into Stackdriver.
     /// </summary>
     public class StackdriverStatsConfiguration
     {
         private static readonly TimeSpan DEFAULT_INTERVAL = TimeSpan.FromMinutes(1);
 
         /// <summary>
-        /// Frequency of the export operation
+        /// Frequency of the export operation.
         /// </summary>
         public TimeSpan ExportInterval { get; set; }
 
         /// <summary>
-        /// The prefix to append to every OpenTelemetry metric name in Stackdriver
+        /// The prefix to append to every OpenTelemetry metric name in Stackdriver.
         /// </summary>
         public string MetricNamePrefix { get; set; }
 
         /// <summary>
-        /// Google Cloud Project Id
+        /// Google Cloud Project Id.
         /// </summary>
         public string ProjectId { get; set; }
 
         /// <summary>
-        /// Credential used to authenticate against Google Stackdriver Monitoring APIs
+        /// Credential used to authenticate against Google Stackdriver Monitoring APIs.
         /// </summary>
         public GoogleCredential GoogleCredential { get; set; }
 
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         public MonitoredResource MonitoredResource { get; set; }
 
         /// <summary>
-        /// Default Stats Configuration for Stackdriver
+        /// Default Stats Configuration for Stackdriver.
         /// </summary>
         public static StackdriverStatsConfiguration Default
         {

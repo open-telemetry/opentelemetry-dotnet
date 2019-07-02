@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
     using OpenTelemetry.Trace.Export;
 
     /// <summary>
-    /// Implementation of the exporter to Stackdriver
+    /// Implementation of the exporter to Stackdriver.
     /// </summary>
     public class StackdriverExporter
     {
@@ -41,9 +41,9 @@ namespace OpenTelemetry.Exporter.Stackdriver
         /// <summary>
         /// Initializes a new instance of the <see cref="StackdriverExporter"/> class.
         /// </summary>
-        /// <param name="projectId">Google Cloud ProjectId that is used to send data to Stackdriver</param>
-        /// <param name="exportComponent">Exporter to get traces from</param>
-        /// <param name="viewManager">View manager to get the stats from</param>
+        /// <param name="projectId">Google Cloud ProjectId that is used to send data to Stackdriver.</param>
+        /// <param name="exportComponent">Exporter to get traces from.</param>
+        /// <param name="viewManager">View manager to get the stats from.</param>
         public StackdriverExporter(
             string projectId,
             IExportComponent exportComponent,
@@ -54,10 +54,10 @@ namespace OpenTelemetry.Exporter.Stackdriver
         /// <summary>
         /// Initializes a new instance of the <see cref="StackdriverExporter"/> class.
         /// </summary>
-        /// <param name="projectId">Google Cloud ProjectId that is used to send data to Stackdriver</param>
-        /// <param name="jsonPath">File path to the json file containing the service credential used to authenticate against Stackdriver APIs</param>
-        /// <param name="exportComponent">Exporter to get traces from</param>
-        /// <param name="viewManager">View manager to get the stats from</param>
+        /// <param name="projectId">Google Cloud ProjectId that is used to send data to Stackdriver.</param>
+        /// <param name="jsonPath">File path to the json file containing the service credential used to authenticate against Stackdriver APIs.</param>
+        /// <param name="exportComponent">Exporter to get traces from.</param>
+        /// <param name="viewManager">View manager to get the stats from.</param>
         public StackdriverExporter(
             string projectId,
             string jsonPath,
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
         }
 
         /// <summary>
-        /// Starts the exporter
+        /// Starts the exporter.
         /// </summary>
         public void Start()
         {
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
         }
 
         /// <summary>
-        /// Stops the exporter
+        /// Stops the exporter.
         /// </summary>
         public void Stop()
         {

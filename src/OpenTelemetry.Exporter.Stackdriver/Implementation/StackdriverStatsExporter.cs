@@ -59,13 +59,13 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private bool isStarted;
 
         /// <summary>
-        /// Interval between two subsequent stats collection operations
+        /// Interval between two subsequent stats collection operations.
         /// </summary>
         private readonly TimeSpan collectionInterval = TimeSpan.FromMinutes(1);
 
         /// <summary>
         /// Interval within which the cancellation should be honored
-        /// from the point it was requested
+        /// from the point it was requested.
         /// </summary>
         private readonly TimeSpan cancellationInterval = TimeSpan.FromSeconds(3);
 
@@ -137,7 +137,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
         /// <summary>
         /// Periodic operation happening on a dedicated thread that is 
-        /// capturing the metrics collected within a collection interval
+        /// capturing the metrics collected within a collection interval.
         /// </summary>
         private void DoWork()
         {
@@ -347,7 +347,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         }
 
         /// <summary>
-        /// Comparison between two OpenTelemetry Views
+        /// Comparison between two OpenTelemetry Views.
         /// </summary>
         private class ViewNameComparer : IEqualityComparer<IView>
         {
