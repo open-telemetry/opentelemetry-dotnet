@@ -27,13 +27,55 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Tracing
     {
+        private static Tracing tracing = new Tracing();
+        private static Tracer tracer;
+
         internal Tracing()
         {
+            IRandomGenerator randomHandler = new RandomGenerator();
+            IEventQueue eventQueue = new SimpleEventQueue();
+
+            this.TraceConfig = new Config.TraceConfig();
+
+            // TODO(bdrutu): Add a config/argument for supportInProcessStores.
+            if (eventQueue is SimpleEventQueue)
+            {
+                this.ExportComponent = Export.ExportComponent.CreateWithoutInProcessStores(eventQueue);
+            }
+            else
+            {
+                this.ExportComponent = Export.ExportComponent.CreateWithInProcessStores(eventQueue);
+            }
+
+            IStartEndHandler startEndHandler =
+                new StartEndHandler(
+                    this.ExportComponent.SpanExporter,
+                    ((ExportComponent)this.ExportComponent).RunningSpanStore,
+                    ((ExportComponent)this.ExportComponent).SampledSpanStore,
+                    eventQueue);
+
+            tracer = new Tracer(randomHandler, startEndHandler, this.TraceConfig);
         }
 
         /// <summary>
         /// Gets the tracer to record spans.
         /// </summary>
-        public static ITracer Tracer => TracerBase.NoopTracer;
+        public static ITracer Tracer
+        {
+            get
+            {
+                return tracer;
+            }
+        }
+
+        /// <summary>
+        /// Gets the exporter to use to upload spans.
+        /// </summary>
+        public IExportComponent ExportComponent { get; }
+
+        /// <summary>
+        /// Gets the trace config.
+        /// </summary>
+        public ITraceConfig TraceConfig { get; }
     }
 }

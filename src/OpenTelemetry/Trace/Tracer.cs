@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     using System.Threading;
+    using OpenTelemetry.Common;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
@@ -24,7 +25,13 @@ namespace OpenTelemetry.Trace
     /// <inheritdoc/>
     public sealed class Tracer : TracerBase
     {
+        private const int ExporterBufferSize = 32;
+
+        // Enforces that trace export exports data at least once every 5 seconds.
+        private static readonly Duration ExporterScheduleDelay = Duration.Create(5, 0);
+
         private readonly SpanBuilderOptions spanBuilderOptions;
+        private readonly SpanExporter spanExporter;
         private readonly IBinaryFormat binaryFormat;
         private readonly ITextFormat textFormat;
 
@@ -35,7 +42,7 @@ namespace OpenTelemetry.Trace
         /// <param name="startEndHandler">Start/end event handler.</param>
         /// <param name="traceConfig">Trace configuration.</param>
         public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig)
-            : this(randomGenerator, startEndHandler, traceConfig, null, null)
+            : this(randomGenerator, startEndHandler, traceConfig, null, null, null)
         {
         }
 
@@ -45,11 +52,13 @@ namespace OpenTelemetry.Trace
         /// <param name="randomGenerator">Span id generator.</param>
         /// <param name="startEndHandler">Start/end event handler.</param>
         /// <param name="traceConfig">Trace configuration.</param>
+        /// <param name="spanExporter">Exporter for span.</param>
         /// <param name="binaryFormat">Binary format context propagator.</param>
         /// <param name="textFormat">Text format context propagator.</param>
-        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, IBinaryFormat binaryFormat, ITextFormat textFormat)
+        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, SpanExporter spanExporter, IBinaryFormat binaryFormat, ITextFormat textFormat)
         {
             this.spanBuilderOptions = new SpanBuilderOptions(randomGenerator, startEndHandler, traceConfig);
+            this.spanExporter = spanExporter ?? (SpanExporter)SpanExporter.Create(ExporterBufferSize, ExporterScheduleDelay);
             this.binaryFormat = binaryFormat ?? new BinaryFormat();
             this.textFormat = textFormat ?? new TraceContextFormat();
         }
@@ -63,6 +72,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override void RecordSpanData(SpanData span)
         {
+            this.spanExporter.ExportAsync(span, CancellationToken.None);
         }
 
         /// <inheritdoc/>

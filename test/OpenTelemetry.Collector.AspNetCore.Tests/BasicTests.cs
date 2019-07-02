@@ -105,7 +105,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 Tracestate.Empty
                 ));
 
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null, tf.Object);
+            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
 
             // Arrange
             using (var client = this.factory
