@@ -17,8 +17,6 @@
 using System;
 using System.Runtime.CompilerServices;
 
-[assembly:CLSCompliant(true)]
-
 [assembly: InternalsVisibleTo("OpenTelemetry.Collector.StackExchangeRedis.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2" + AssemblyInfo.MoqPublicKey)]
 
