@@ -27,18 +27,22 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         /// Tag contains a string
         /// </summary>
         STRING = 0,
+
         /// <summary>
         /// Tag contains a double
         /// </summary>
         DOUBLE = 1,
+
         /// <summary>
         /// Tag contains a boolean
         /// </summary>
         BOOL = 2,
+
         /// <summary>
         /// Tag contains a long
         /// </summary>
         LONG = 3,
+
         /// <summary>
         /// Tag contains binary data
         /// </summary>
