@@ -50,7 +50,7 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Returns a new <see cref="Resource"/>.
         /// </summary>
-        /// <param name="labels">An <see cref="IDictionary{string, string}"/> of labels that describe the resource.</param>
+        /// <param name="labels">An <see cref="IDictionary{String, String}"/> of labels that describe the resource.</param>
         /// <returns><see cref="Resource"/>.</returns>
         public static Resource Create(IDictionary<string, string> labels)
         {
