@@ -55,6 +55,7 @@ namespace Samples
             // 4. Create a scoped span. It will end automatically when using statement ends
             using (var scope = tracer.SpanBuilder("Main").StartScopedSpan())
             {
+                tracer.CurrentSpan.SetAttribute("custom-attribute", 55);
                 Console.WriteLine("About to do a busy work");
                 for (int i = 0; i < 10; i++)
                 {
