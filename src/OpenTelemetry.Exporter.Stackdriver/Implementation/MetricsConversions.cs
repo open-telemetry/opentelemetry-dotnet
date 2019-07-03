@@ -84,7 +84,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             var labelDescriptor = new LabelDescriptor();
             
             labelDescriptor.Key = GetStackdriverLabelKey(tagKey.Name);
-            labelDescriptor.Description = Constants.LABEL_DESCRIPTION;
+            labelDescriptor.Description = Constants.LabelDescription;
 
             // TODO - zeltser - Now we only support string tags
             labelDescriptor.ValueType = LabelDescriptor.Types.ValueType.String;
@@ -142,8 +142,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             metricDescriptor.Labels.Add(
                 new LabelDescriptor
                 {
-                    Key = Constants.OpenTelemetry_TASK,
-                    Description = Constants.OpenTelemetry_TASK_DESCRIPTION,
+                    Key = Constants.OpenTelemetryTask,
+                    Description = Constants.OpenTelemetryTaskDescription,
                     ValueType = LabelDescriptor.Types.ValueType.String,
                 });
 
@@ -242,7 +242,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 metric.Labels.Add(labelKey, value.AsString);
             }
 
-            metric.Labels.Add(Constants.OpenTelemetry_TASK, Constants.OpenTelemetry_TASK_VALUE_DEFAULT);
+            metric.Labels.Add(Constants.OpenTelemetryTask, Constants.OpenTelemetryTaskValueDefault);
 
             // TODO - zeltser - make sure all the labels from the metric descriptor were fulfilled
             return metric;

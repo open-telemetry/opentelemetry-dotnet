@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     /// </summary>
     public class StackdriverStatsConfiguration
     {
-        private static readonly TimeSpan DEFAULT_INTERVAL = TimeSpan.FromMinutes(1);
+        private static readonly TimeSpan DefaultInterval = TimeSpan.FromMinutes(1);
 
         /// <summary>
         /// Frequency of the export operation.
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             {
                 var defaultConfig = new StackdriverStatsConfiguration
                 {
-                    ExportInterval = DEFAULT_INTERVAL,
+                    ExportInterval = DefaultInterval,
                     ProjectId = GoogleCloudResourceUtils.GetProjectId(),
                     MetricNamePrefix = string.Empty,
                 };

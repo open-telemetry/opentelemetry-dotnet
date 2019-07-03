@@ -45,13 +45,13 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private MetricServiceClient metricServiceClient;
         private CancellationTokenSource tokenSource;
 
-        private const int MAX_BATCH_EXPORT_SIZE = 200;
-        private static readonly string DEFAULT_DISPLAY_NAME_PREFIX = "OpenTelemetry/";
-        private static readonly string CUSTOM_METRIC_DOMAIN = "custom.googleapis.com/";
-        private static readonly string CUSTOM_OpenTelemetry_DOMAIN = CUSTOM_METRIC_DOMAIN + "OpenTelemetry/";
+        private const int MaxBatchExportSize = 200;
+        private static readonly string DefaultDisplayNamePrefix = "OpenTelemetry/";
+        private static readonly string CustomMetricsDomain = "custom.googleapis.com/";
+        private static readonly string CustomOpenTelemetryDomain = CustomMetricsDomain + "OpenTelemetry/";
 
-        private static readonly string USER_AGENT_KEY = "user-agent";
-        private static readonly string USER_AGENT;
+        private static readonly string UserAgentKey = "user-agent";
+        private static readonly string UserAgent;
 
         private readonly string domain;
         private readonly string displayNamePrefix;
@@ -98,11 +98,11 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             try
             {
                 var assemblyPackageVersion = typeof(StackdriverStatsExporter).GetTypeInfo().Assembly.GetCustomAttributes<AssemblyInformationalVersionAttribute>().First().InformationalVersion;
-                USER_AGENT = $"OpenTelemetry-dotnet/{assemblyPackageVersion}";
+                UserAgent = $"OpenTelemetry-dotnet/{assemblyPackageVersion}";
             }
             catch (Exception)
             {
-                USER_AGENT = $"OpenTelemetry-dotnet/{Constants.PACKAGE_VERSION_UNDEFINED}";
+                UserAgent = $"OpenTelemetry-dotnet/{Constants.PackagVersionUndefined}";
             }
         }
 
@@ -261,7 +261,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             }
 
             // Perform the operation in batches of MAX_BATCH_EXPORT_SIZE
-            foreach (var batchedTimeSeries in timeSeriesList.Partition(MAX_BATCH_EXPORT_SIZE))
+            foreach (var batchedTimeSeries in timeSeriesList.Partition(MaxBatchExportSize))
             {
                 var request = new CreateTimeSeriesRequest();
                 request.ProjectName = this.project;
@@ -281,7 +281,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private static MetricServiceClient CreateMetricServiceClient(GoogleCredential credential, CancellationTokenSource tokenSource)
         {
             // Make sure to add OpenTelemetry header to every outgoing call to Stackdriver APIs
-            Action<Metadata> addOpenTelemetryHeader = m => m.Add(USER_AGENT_KEY, USER_AGENT);
+            Action<Metadata> addOpenTelemetryHeader = m => m.Add(UserAgentKey, UserAgent);
             var callSettings = new CallSettings(
                 cancellationToken: tokenSource.Token,
                 credentials: null,
@@ -307,7 +307,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             string domain;
             if (string.IsNullOrEmpty(metricNamePrefix))
             {
-                domain = CUSTOM_OpenTelemetry_DOMAIN;
+                domain = CustomOpenTelemetryDomain;
             }
             else
             {
@@ -328,7 +328,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         {
             if (metricNamePrefix == null)
             {
-                return DEFAULT_DISPLAY_NAME_PREFIX;
+                return DefaultDisplayNamePrefix;
             }
             else
             {

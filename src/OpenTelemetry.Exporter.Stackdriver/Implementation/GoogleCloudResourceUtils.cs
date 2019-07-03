@@ -64,8 +64,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         public static MonitoredResource GetDefaultResource(string projectId)
         {
             var resource = new MonitoredResource();
-            resource.Type = Constants.GLOBAL;
-            resource.Labels.Add(Constants.PROJECT_ID_LABEL_KEY, projectId);
+            resource.Type = Constants.Global;
+            resource.Labels.Add(Constants.ProjectIdLabelKey, projectId);
 
             // TODO - zeltser - setting monitored resource labels for detected resource
             // along with all the other metadata

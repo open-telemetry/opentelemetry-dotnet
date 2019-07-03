@@ -131,8 +131,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     /// </summary>
     internal class StackdriverTraceExporter : IHandler
     {
-        private static readonly string STACKDRIVER_EXPORTER_VERSION;
-        private static readonly string OpenTelemetry_EXPORTER_VERSION;
+        private static readonly string StackdriverExportVersion;
+        private static readonly string OpenTelemetryExporterVersion;
 
         private readonly Google.Api.Gax.ResourceNames.ProjectName googleCloudProjectId;
         private readonly TraceServiceSettings traceServiceSettings;
@@ -153,20 +153,20 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             try
             {
                 var assemblyPackageVersion = typeof(StackdriverTraceExporter).GetTypeInfo().Assembly.GetCustomAttributes<AssemblyInformationalVersionAttribute>().First().InformationalVersion;
-                STACKDRIVER_EXPORTER_VERSION = assemblyPackageVersion;
+                StackdriverExportVersion = assemblyPackageVersion;
             }
             catch (Exception)
             {
-                STACKDRIVER_EXPORTER_VERSION = $"{Constants.PACKAGE_VERSION_UNDEFINED}";
+                StackdriverExportVersion = $"{Constants.PackagVersionUndefined}";
             }
 
             try
             {
-                OpenTelemetry_EXPORTER_VERSION = Assembly.GetCallingAssembly().GetName().Version.ToString();
+                OpenTelemetryExporterVersion = Assembly.GetCallingAssembly().GetName().Version.ToString();
             }
             catch (Exception)
             {
-                OpenTelemetry_EXPORTER_VERSION = $"{Constants.PACKAGE_VERSION_UNDEFINED}";
+                OpenTelemetryExporterVersion = $"{Constants.PackagVersionUndefined}";
             }
         }
 
@@ -190,7 +190,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private static void StackdriverCallHeaderAppender(Metadata metadata)
         {
             metadata.Add("AGENT_LABEL_KEY", "g.co/agent");
-            metadata.Add("AGENT_LABEL_VALUE_STRING", $"{OpenTelemetry_EXPORTER_VERSION}; stackdriver-exporter {STACKDRIVER_EXPORTER_VERSION}");
+            metadata.Add("AGENT_LABEL_VALUE_STRING", $"{OpenTelemetryExporterVersion}; stackdriver-exporter {StackdriverExportVersion}");
         }
     }
 }
