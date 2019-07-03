@@ -7,7 +7,8 @@
     {
         private static DateTime startTime = DateTime.UtcNow;
 
-        static Logger() {
+        static Logger()
+        {
             PrintHeader();
         }
 
