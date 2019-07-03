@@ -28,27 +28,27 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private static readonly TimeSpan DefaultInterval = TimeSpan.FromMinutes(1);
 
         /// <summary>
-        /// Frequency of the export operation.
+        /// Gets or sets frequency of the export operation.
         /// </summary>
         public TimeSpan ExportInterval { get; set; }
 
         /// <summary>
-        /// The prefix to append to every OpenTelemetry metric name in Stackdriver.
+        /// Gets or sets the prefix to append to every OpenTelemetry metric name in Stackdriver.
         /// </summary>
         public string MetricNamePrefix { get; set; }
 
         /// <summary>
-        /// Google Cloud Project Id.
+        /// Gets or sets google Cloud Project Id.
         /// </summary>
         public string ProjectId { get; set; }
 
         /// <summary>
-        /// Credential used to authenticate against Google Stackdriver Monitoring APIs.
+        /// Gets or sets credential used to authenticate against Google Stackdriver Monitoring APIs.
         /// </summary>
         public GoogleCredential GoogleCredential { get; set; }
 
         /// <summary>
-        /// Monitored Resource associated with metrics collection.
+        /// Gets or sets monitored Resource associated with metrics collection.
         /// By default, the exporter detects the environment where the export is happening,
         /// such as GKE/AWS/GCE. If the exporter is running on a different environment,
         /// monitored resource will be identified as "general".
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         public MonitoredResource MonitoredResource { get; set; }
 
         /// <summary>
-        /// Default Stats Configuration for Stackdriver.
+        /// Gets default Stats Configuration for Stackdriver.
         /// </summary>
         public static StackdriverStatsConfiguration Default
         {

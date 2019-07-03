@@ -115,8 +115,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <param name="metricDescriptorTypeName">Metric Descriptor full type name.</param>
         /// <param name="view">OpenTelemetry View.</param>
         /// <param name="project">Google Cloud Project Name.</param>
-        /// <param name="domain"></param>
-        /// <param name="displayNamePrefix"></param>
+        /// <param name="domain">The Domain.</param>
+        /// <param name="displayNamePrefix">Display Name Prefix.</param>
         /// <returns><see cref="MetricDescriptor"/>.</returns>
         public static MetricDescriptor CreateMetricDescriptor(
             string metricDescriptorTypeName,
@@ -188,7 +188,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <summary>
         /// Converts <see cref="IBucketBoundaries"/> to Stackdriver's <see cref="BucketOptions"/>.
         /// </summary>
-        /// <param name="bucketBoundaries"></param>
+        /// <param name="bucketBoundaries">A <see cref="IBucketBoundaries"/> representing the bucket boundaries.</param>
         /// <returns><see cref="BucketOptions"/>.</returns>
         private static BucketOptions ToBucketOptions(this IBucketBoundaries bucketBoundaries)
         {
@@ -212,10 +212,10 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <summary>
         /// Generate Stackdriver Metric from OpenTelemetry View.
         /// </summary>
-        /// <param name="view"></param>
-        /// <param name="tagValues"></param>
+        /// <param name="view">A <see cref="IView"/>.</param>
+        /// <param name="tagValues">A list of <see cref="TagValue"/>.</param>
         /// <param name="metricDescriptor">Stackdriver Metric Descriptor.</param>
-        /// <param name="domain"></param>
+        /// <param name="domain">The domain.</param>
         /// <returns><see cref="Metric"/>.</returns>
         public static Metric GetMetric(
             IView view,
@@ -252,8 +252,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// Convert ViewData to a list of TimeSeries, so that ViewData can be uploaded to Stackdriver.
         /// </summary>
         /// <param name="viewData">OpenTelemetry View.</param>
-        /// <param name="metricDescriptor">Stackdriver Metric Descriptor.</param>
         /// <param name="monitoredResource">Stackdriver Resource to which the metrics belong.</param>
+        /// <param name="metricDescriptor">Stackdriver Metric Descriptor.</param>
         /// <param name="domain">The metrics domain (namespace).</param>
         /// <returns><see cref="List{T}"/>.</returns>
         public static List<TimeSeries> CreateTimeSeriesList(

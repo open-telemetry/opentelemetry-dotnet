@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets the span name. Use <see cref="UpdateName"/> to explicitly set the span name.
+        /// Gets or sets the span name. Use <see cref="UpdateName"/> to explicitly set the span name.
         /// </summary>
         public abstract string Name { get; protected set; }
 

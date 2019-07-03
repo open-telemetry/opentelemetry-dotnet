@@ -428,11 +428,13 @@ namespace OpenTelemetry.Stats.Test
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
                 { 
-                // Won't Record the unregistered tag key, for missing registered keys will use default
-                // tag value : "unknown/not set".
-                { tv,
-                    // Should Record stats with default tag value: "KEY" : "unknown/not set".
-                    StatsTestUtil.CreateAggregationData(DISTRIBUTION, MEASURE_DOUBLE, 10.0, 50.0)                                 },
+                    // Won't Record the unregistered tag key, for missing registered keys will use default
+                    // tag value : "unknown/not set".
+                    {
+                        tv,
+                        // Should Record stats with default tag value: "KEY" : "unknown/not set".
+                        StatsTestUtil.CreateAggregationData(DISTRIBUTION, MEASURE_DOUBLE, 10.0, 50.0)
+                    },
                 },
                 EPSILON);
         }

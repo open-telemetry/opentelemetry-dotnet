@@ -60,6 +60,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <summary>
         /// Determining the resource to which the metrics belong.
         /// </summary>
+        /// <param name="projectId">The project id.</param>
         /// <returns>Stackdriver Monitored Resource.</returns>
         public static MonitoredResource GetDefaultResource(string projectId)
         {
