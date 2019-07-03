@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// </summary>
         /// <param name="spanData">Span in OpenTelemetry format.</param>
         /// <param name="projectId">Google Cloud Platform Project Id.</param>
-        /// <returns><see cref="Span"/>.</returns>
+        /// <returns><see cref="ISpan"/>.</returns>
         public static Google.Cloud.Trace.V2.Span ToSpan(this SpanData spanData, string projectId)
         {
             var spanId = spanData.Context.SpanId.ToLowerBase16();
@@ -137,17 +137,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private readonly Google.Api.Gax.ResourceNames.ProjectName googleCloudProjectId;
         private readonly TraceServiceSettings traceServiceSettings;
 
-        public StackdriverTraceExporter(string projectId)
-        {
-            this.googleCloudProjectId = new Google.Api.Gax.ResourceNames.ProjectName(projectId);
-
-            // Set header mutation for every outgoing API call to Stackdriver so the BE knows
-            // which version of OC client is calling it as well as which version of the exporter
-            var callSettings = CallSettings.FromHeaderMutation(StackdriverCallHeaderAppender);
-            this.traceServiceSettings = new TraceServiceSettings();
-            this.traceServiceSettings.CallSettings = callSettings;
-        }
-
         static StackdriverTraceExporter()
         {
             try
@@ -168,6 +157,17 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             {
                 OpenTelemetryExporterVersion = $"{Constants.PackagVersionUndefined}";
             }
+        }
+
+        public StackdriverTraceExporter(string projectId)
+        {
+            this.googleCloudProjectId = new Google.Api.Gax.ResourceNames.ProjectName(projectId);
+
+            // Set header mutation for every outgoing API call to Stackdriver so the BE knows
+            // which version of OC client is calling it as well as which version of the exporter
+            var callSettings = CallSettings.FromHeaderMutation(StackdriverCallHeaderAppender);
+            this.traceServiceSettings = new TraceServiceSettings();
+            this.traceServiceSettings.CallSettings = callSettings;
         }
 
         public async Task ExportAsync(IEnumerable<SpanData> spanDataList)

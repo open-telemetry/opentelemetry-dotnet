@@ -73,7 +73,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     // Act
                     var response = await client.GetAsync("/api/values");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // ignore errors
                 }

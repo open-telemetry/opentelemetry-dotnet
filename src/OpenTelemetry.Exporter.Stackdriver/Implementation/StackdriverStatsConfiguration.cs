@@ -28,6 +28,25 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private static readonly TimeSpan DefaultInterval = TimeSpan.FromMinutes(1);
 
         /// <summary>
+        /// Gets default Stats Configuration for Stackdriver.
+        /// </summary>
+        public static StackdriverStatsConfiguration Default
+        {
+            get
+            {
+                var defaultConfig = new StackdriverStatsConfiguration
+                {
+                    ExportInterval = DefaultInterval,
+                    ProjectId = GoogleCloudResourceUtils.GetProjectId(),
+                    MetricNamePrefix = string.Empty,
+                };
+
+                defaultConfig.MonitoredResource = GoogleCloudResourceUtils.GetDefaultResource(defaultConfig.ProjectId);
+                return defaultConfig;
+            }
+        }
+
+        /// <summary>
         /// Gets or sets frequency of the export operation.
         /// </summary>
         public TimeSpan ExportInterval { get; set; }
@@ -54,24 +73,5 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// monitored resource will be identified as "general".
         /// </summary>
         public MonitoredResource MonitoredResource { get; set; }
-
-        /// <summary>
-        /// Gets default Stats Configuration for Stackdriver.
-        /// </summary>
-        public static StackdriverStatsConfiguration Default
-        {
-            get
-            {
-                var defaultConfig = new StackdriverStatsConfiguration
-                {
-                    ExportInterval = DefaultInterval,
-                    ProjectId = GoogleCloudResourceUtils.GetProjectId(),
-                    MetricNamePrefix = string.Empty,
-                };
-
-                defaultConfig.MonitoredResource = GoogleCloudResourceUtils.GetDefaultResource(defaultConfig.ProjectId);
-                return defaultConfig;
-            }
-        }
     }
 }

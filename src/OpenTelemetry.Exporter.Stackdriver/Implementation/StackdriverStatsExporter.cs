@@ -45,6 +45,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private MetricServiceClient metricServiceClient;
         private CancellationTokenSource tokenSource;
 
+#pragma warning disable SA1203 // Sensible grouping is more important than ordering by accessability
+#pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
         private const int MaxBatchExportSize = 200;
         private static readonly string DefaultDisplayNamePrefix = "OpenTelemetry/";
         private static readonly string CustomMetricsDomain = "custom.googleapis.com/";
@@ -58,9 +60,9 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
         private bool isStarted;
 
-        /// <summary>
-        /// Interval between two subsequent stats collection operations.
-        /// </summary>
+                              /// <summary>
+                              /// Interval between two subsequent stats collection operations.
+                              /// </summary>
         private readonly TimeSpan collectionInterval = TimeSpan.FromMinutes(1);
 
         /// <summary>
@@ -70,6 +72,21 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         private readonly TimeSpan cancellationInterval = TimeSpan.FromSeconds(3);
 
         private readonly object locker = new object();
+#pragma warning restore SA1203 // Constants should appear before fields
+#pragma warning restore SA1214 // Sensible grouping is more important than ordering by accessability
+
+        static StackdriverStatsExporter()
+        {
+            try
+            {
+                var assemblyPackageVersion = typeof(StackdriverStatsExporter).GetTypeInfo().Assembly.GetCustomAttributes<AssemblyInformationalVersionAttribute>().First().InformationalVersion;
+                UserAgent = $"OpenTelemetry-dotnet/{assemblyPackageVersion}";
+            }
+            catch (Exception)
+            {
+                UserAgent = $"OpenTelemetry-dotnet/{Constants.PackagVersionUndefined}";
+            }
+        }
 
         public StackdriverStatsExporter(
            IViewManager viewManager,
@@ -91,19 +108,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
             this.domain = GetDomain(configuration.MetricNamePrefix);
             this.displayNamePrefix = this.GetDisplayNamePrefix(configuration.MetricNamePrefix);
-        }
-
-        static StackdriverStatsExporter()
-        {
-            try
-            {
-                var assemblyPackageVersion = typeof(StackdriverStatsExporter).GetTypeInfo().Assembly.GetCustomAttributes<AssemblyInformationalVersionAttribute>().First().InformationalVersion;
-                UserAgent = $"OpenTelemetry-dotnet/{assemblyPackageVersion}";
-            }
-            catch (Exception)
-            {
-                UserAgent = $"OpenTelemetry-dotnet/{Constants.PackagVersionUndefined}";
-            }
         }
 
         public void Start()
@@ -133,6 +137,57 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
                 this.tokenSource.Cancel();
             }
+        }
+
+        private static MetricServiceClient CreateMetricServiceClient(GoogleCredential credential, CancellationTokenSource tokenSource)
+        {
+            // Make sure to add OpenTelemetry header to every outgoing call to Stackdriver APIs
+            Action<Metadata> addOpenTelemetryHeader = m => m.Add(UserAgentKey, UserAgent);
+            var callSettings = new CallSettings(
+                cancellationToken: tokenSource.Token,
+                credentials: null,
+                timing: null,
+                headerMutation: addOpenTelemetryHeader,
+                writeOptions: WriteOptions.Default,
+                propagationToken: null);
+
+            var channel = new Channel(
+                MetricServiceClient.DefaultEndpoint.ToString(),
+                credential.ToChannelCredentials());
+
+            var metricServiceSettings = new MetricServiceSettings()
+            {
+                CallSettings = callSettings,
+            };
+
+            return MetricServiceClient.Create(channel, settings: metricServiceSettings);
+        }
+
+        private static string GetDomain(string metricNamePrefix)
+        {
+            string domain;
+            if (string.IsNullOrEmpty(metricNamePrefix))
+            {
+                domain = CustomOpenTelemetryDomain;
+            }
+            else
+            {
+                if (!metricNamePrefix.EndsWith("/"))
+                {
+                    domain = metricNamePrefix + '/';
+                }
+                else
+                {
+                    domain = metricNamePrefix;
+                }
+            }
+
+            return domain;
+        }
+
+        private static string GenerateMetricDescriptorTypeName(IViewName viewName, string domain)
+        {
+            return domain + viewName.AsString;
         }
 
         /// <summary>
@@ -278,52 +333,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             }
         }
 
-        private static MetricServiceClient CreateMetricServiceClient(GoogleCredential credential, CancellationTokenSource tokenSource)
-        {
-            // Make sure to add OpenTelemetry header to every outgoing call to Stackdriver APIs
-            Action<Metadata> addOpenTelemetryHeader = m => m.Add(UserAgentKey, UserAgent);
-            var callSettings = new CallSettings(
-                cancellationToken: tokenSource.Token,
-                credentials: null,
-                timing: null,
-                headerMutation: addOpenTelemetryHeader,
-                writeOptions: WriteOptions.Default,
-                propagationToken: null);
-
-            var channel = new Channel(
-                MetricServiceClient.DefaultEndpoint.ToString(),
-                credential.ToChannelCredentials());
-
-            var metricServiceSettings = new MetricServiceSettings()
-            {
-                CallSettings = callSettings,
-            };
-
-            return MetricServiceClient.Create(channel, settings: metricServiceSettings);
-        }
-
-        private static string GetDomain(string metricNamePrefix)
-        {
-            string domain;
-            if (string.IsNullOrEmpty(metricNamePrefix))
-            {
-                domain = CustomOpenTelemetryDomain;
-            }
-            else
-            {
-                if (!metricNamePrefix.EndsWith("/"))
-                {
-                    domain = metricNamePrefix + '/';
-                }
-                else
-                {
-                    domain = metricNamePrefix;
-                }
-            }
-
-            return domain;
-        }
-
         private string GetDisplayNamePrefix(string metricNamePrefix)
         {
             if (metricNamePrefix == null)
@@ -339,11 +348,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
                 return metricNamePrefix;
             }
-        }
-
-        private static string GenerateMetricDescriptorTypeName(IViewName viewName, string domain)
-        {
-            return domain + viewName.AsString;
         }
 
         /// <summary>

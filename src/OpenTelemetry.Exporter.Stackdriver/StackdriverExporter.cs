@@ -34,8 +34,8 @@ namespace OpenTelemetry.Exporter.Stackdriver
         private readonly IViewManager viewManager;
         private readonly string projectId;
         private readonly string jsonPath;
-        private StackdriverStatsExporter statsExporter;
         private readonly object locker = new object();
+        private StackdriverStatsExporter statsExporter;
         private bool isInitialized = false;
 
         /// <summary>

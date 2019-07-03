@@ -170,43 +170,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 v => new TypedValue { BoolValue = false }); // Default
         }
 
-        /// <summary>
-        /// Create a list of counts for Stackdriver from the list of counts in OpenTelemetry.
-        /// </summary>
-        /// <param name="bucketCounts">OpenTelemetry list of counts.</param>
-        /// <returns><see cref="IEnumerable{T}"/>.</returns>
-        private static IEnumerable<long> CreateBucketCounts(IReadOnlyList<long> bucketCounts)
-        {
-            // The first bucket (underflow bucket) should always be 0 count because the Metrics first bucket
-            // is [0, first_bound) but Stackdriver distribution consists of an underflow bucket (number 0).
-            var ret = new List<long>();
-            ret.Add(0L);
-            ret.AddRange(bucketCounts);
-            return ret;
-        }
-
-        /// <summary>
-        /// Converts <see cref="IBucketBoundaries"/> to Stackdriver's <see cref="BucketOptions"/>.
-        /// </summary>
-        /// <param name="bucketBoundaries">A <see cref="IBucketBoundaries"/> representing the bucket boundaries.</param>
-        /// <returns><see cref="BucketOptions"/>.</returns>
-        private static BucketOptions ToBucketOptions(this IBucketBoundaries bucketBoundaries)
-        {
-            // The first bucket bound should be 0.0 because the Metrics first bucket is
-            // [0, first_bound) but Stackdriver monitoring bucket bounds begin with -infinity
-            // (first bucket is (-infinity, 0))
-            var bucketOptions = new BucketOptions
-            {
-                ExplicitBuckets = new BucketOptions.Types.Explicit
-                {
-                    Bounds = { 0.0 },
-                },
-            };
-            bucketOptions.ExplicitBuckets.Bounds.AddRange(bucketBoundaries.Boundaries);
-
-            return bucketOptions;
-        }
-
         // Create a Metric using the TagKeys and TagValues.
 
         /// <summary>
@@ -294,24 +257,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             return timeSeriesList;
         }
 
-        private static Point ExtractPointInInterval(
-            System.DateTimeOffset startTime,
-            System.DateTimeOffset endTime, 
-            IAggregation aggregation, 
-            IAggregationData points)
-        {
-            return new Point
-            {
-                Value = CreateTypedValue(aggregation, points),
-                Interval = CreateTimeInterval(startTime, endTime),
-            };
-        }
-
-        private static TimeInterval CreateTimeInterval(System.DateTimeOffset start, System.DateTimeOffset end)
-        {
-            return new TimeInterval { StartTime = start.ToTimestamp(), EndTime = end.ToTimestamp() };
-        }
-
         internal static string GetUnit(IAggregation aggregation, IMeasure measure)
         {
             if (aggregation is ICount)
@@ -335,6 +280,61 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         internal static string GetStackdriverLabelKey(string label)
         {
             return label.Replace('/', '_');
+        }
+
+        private static Point ExtractPointInInterval(
+            System.DateTimeOffset startTime,
+            System.DateTimeOffset endTime, 
+            IAggregation aggregation, 
+            IAggregationData points)
+        {
+            return new Point
+            {
+                Value = CreateTypedValue(aggregation, points),
+                Interval = CreateTimeInterval(startTime, endTime),
+            };
+        }
+
+        /// <summary>
+        /// Create a list of counts for Stackdriver from the list of counts in OpenTelemetry.
+        /// </summary>
+        /// <param name="bucketCounts">OpenTelemetry list of counts.</param>
+        /// <returns><see cref="IEnumerable{T}"/>.</returns>
+        private static IEnumerable<long> CreateBucketCounts(IReadOnlyList<long> bucketCounts)
+        {
+            // The first bucket (underflow bucket) should always be 0 count because the Metrics first bucket
+            // is [0, first_bound) but Stackdriver distribution consists of an underflow bucket (number 0).
+            var ret = new List<long>();
+            ret.Add(0L);
+            ret.AddRange(bucketCounts);
+            return ret;
+        }
+
+        /// <summary>
+        /// Converts <see cref="IBucketBoundaries"/> to Stackdriver's <see cref="BucketOptions"/>.
+        /// </summary>
+        /// <param name="bucketBoundaries">A <see cref="IBucketBoundaries"/> representing the bucket boundaries.</param>
+        /// <returns><see cref="BucketOptions"/>.</returns>
+        private static BucketOptions ToBucketOptions(this IBucketBoundaries bucketBoundaries)
+        {
+            // The first bucket bound should be 0.0 because the Metrics first bucket is
+            // [0, first_bound) but Stackdriver monitoring bucket bounds begin with -infinity
+            // (first bucket is (-infinity, 0))
+            var bucketOptions = new BucketOptions
+            {
+                ExplicitBuckets = new BucketOptions.Types.Explicit
+                {
+                    Bounds = { 0.0 },
+                },
+            };
+            bucketOptions.ExplicitBuckets.Bounds.AddRange(bucketBoundaries.Boundaries);
+
+            return bucketOptions;
+        }
+
+        private static TimeInterval CreateTimeInterval(System.DateTimeOffset start, System.DateTimeOffset end)
+        {
+            return new TimeInterval { StartTime = start.ToTimestamp(), EndTime = end.ToTimestamp() };
         }
     }
 }
