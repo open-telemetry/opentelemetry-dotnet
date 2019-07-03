@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using Thrift.Protocols;
     using Thrift.Protocols.Entities;
 
-    public partial class Process : TAbstractBase
+    public class Process : TAbstractBase
     {
         public Process()
         {

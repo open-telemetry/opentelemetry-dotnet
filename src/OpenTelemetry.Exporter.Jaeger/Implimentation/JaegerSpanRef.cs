@@ -100,7 +100,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         /// <summary>
         /// <seealso cref="SpanRefType"/>
         /// </summary>
-
+        /// <returns>A string representation of the object</returns>
         public override string ToString()
         {
             var sb = new StringBuilder("SpanRef(");

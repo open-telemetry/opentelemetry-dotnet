@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using Thrift.Protocols;
     using Thrift.Protocols.Entities;
 
-    public partial class EmitBatchArgs : TAbstractBase
+    public class EmitBatchArgs : TAbstractBase
     {
         public EmitBatchArgs()
         {

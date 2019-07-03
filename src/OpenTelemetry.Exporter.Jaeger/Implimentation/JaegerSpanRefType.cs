@@ -18,9 +18,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 {
     using System;
 
+    /// <summary>
+    /// Represents the different types of Jaeger Spans
+    /// </summary>
     public enum JaegerSpanRefType
     {
+        /// <summary>
+        /// A child span
+        /// </summary>
         CHILD_OF = 0,
+
+        /// <summary>
+        /// A sibling span
+        /// </summary>
         FOLLOWS_FROM = 1,
     }
 }

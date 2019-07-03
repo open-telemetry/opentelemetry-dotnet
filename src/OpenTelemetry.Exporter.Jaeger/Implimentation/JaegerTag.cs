@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using Thrift.Protocols;
     using Thrift.Protocols.Entities;
 
-    public partial class JaegerTag : TAbstractBase
+    public class JaegerTag : TAbstractBase
     {
         public JaegerTag()
         {

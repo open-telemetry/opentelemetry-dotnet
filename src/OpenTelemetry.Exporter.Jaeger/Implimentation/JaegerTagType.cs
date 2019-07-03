@@ -18,12 +18,30 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 {
     using System;
 
+    /// <summary>
+    /// Indicates the data type of a Jaeger tag
+    /// </summary>
     public enum JaegerTagType
     {
+        /// <summary>
+        /// Tag contains a string
+        /// </summary>
         STRING = 0,
+        /// <summary>
+        /// Tag contains a double
+        /// </summary>
         DOUBLE = 1,
+        /// <summary>
+        /// Tag contains a boolean
+        /// </summary>
         BOOL = 2,
+        /// <summary>
+        /// Tag contains a long
+        /// </summary>
         LONG = 3,
+        /// <summary>
+        /// Tag contains binary data
+        /// </summary>
         BINARY = 4,
     }
 }
