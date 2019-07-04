@@ -79,7 +79,7 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override void ConsiderForSampling(ISpan ispan)
         {
-            if (ispan is SpanBase span)
+            if (ispan is Span span)
             {
                 lock (this.samples)
                 {
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Trace.Export
         public override IEnumerable<SpanData> GetErrorSampledSpans(ISampledSpanStoreErrorFilter filter)
         {
             var numSpansToReturn = filter.MaxSpansToReturn == 0 ? MaxPerSpanNameSamples : filter.MaxSpansToReturn;
-            var spans = Enumerable.Empty<SpanBase>();
+            var spans = Enumerable.Empty<Span>();
 
             // Try to not keep the lock to much, do the SpanImpl -> SpanData conversion outside the lock.
             lock (this.samples)
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Trace.Export
         public override IEnumerable<SpanData> GetLatencySampledSpans(ISampledSpanStoreLatencyFilter filter)
         {
             var numSpansToReturn = filter.MaxSpansToReturn == 0 ? MaxPerSpanNameSamples : filter.MaxSpansToReturn;
-            var spans = Enumerable.Empty<SpanBase>();
+            var spans = Enumerable.Empty<Span>();
 
             // Try to not keep the lock to much, do the SpanImpl -> SpanData conversion outside the lock.
             lock (this.samples)
@@ -187,19 +187,19 @@ namespace OpenTelemetry.Trace.Export
 
         private sealed class Bucket
         {
-            private readonly EvictingQueue<SpanBase> sampledSpansQueue;
-            private readonly EvictingQueue<SpanBase> notSampledSpansQueue;
+            private readonly EvictingQueue<Span> sampledSpansQueue;
+            private readonly EvictingQueue<Span> notSampledSpansQueue;
             private DateTimeOffset lastSampledTime;
             private DateTimeOffset lastNotSampledTime;
 
             public Bucket(int numSamples)
             {
-                this.sampledSpansQueue = new EvictingQueue<SpanBase>(numSamples);
-                this.notSampledSpansQueue = new EvictingQueue<SpanBase>(numSamples);
+                this.sampledSpansQueue = new EvictingQueue<Span>(numSamples);
+                this.notSampledSpansQueue = new EvictingQueue<Span>(numSamples);
             }
 
             public static void GetSamples(
-                int maxSpansToReturn, ICollection<SpanBase> output, EvictingQueue<SpanBase> queue)
+                int maxSpansToReturn, ICollection<Span> output, EvictingQueue<Span> queue)
             {
                 var copy = queue.ToArray();
 
@@ -218,8 +218,8 @@ namespace OpenTelemetry.Trace.Export
                 TimeSpan latencyLower,
                 TimeSpan latencyUpper,
                 int maxSpansToReturn,
-                ICollection<SpanBase> output,
-                EvictingQueue<SpanBase> queue)
+                ICollection<Span> output,
+                EvictingQueue<Span> queue)
             {
                 var copy = queue.ToArray();
                 foreach (var span in copy)
@@ -237,7 +237,7 @@ namespace OpenTelemetry.Trace.Export
                 }
             }
 
-            public void ConsiderForSampling(SpanBase span)
+            public void ConsiderForSampling(Span span)
             {
                 var spanEndTime = span.EndTime;
                 if (span.Context.TraceOptions.IsSampled)
@@ -264,14 +264,14 @@ namespace OpenTelemetry.Trace.Export
                 }
             }
 
-            public void GetSamples(int maxSpansToReturn, ICollection<SpanBase> output)
+            public void GetSamples(int maxSpansToReturn, ICollection<Span> output)
             {
                 GetSamples(maxSpansToReturn, output, this.sampledSpansQueue);
                 GetSamples(maxSpansToReturn, output, this.notSampledSpansQueue);
             }
 
             public void GetSamplesFilteredByLatency(
-                TimeSpan latencyLower, TimeSpan latencyUpper, int maxSpansToReturn, ICollection<SpanBase> output)
+                TimeSpan latencyLower, TimeSpan latencyUpper, int maxSpansToReturn, ICollection<Span> output)
             {
                 GetSamplesFilteredByLatency(
                     latencyLower, latencyUpper, maxSpansToReturn, output, this.sampledSpansQueue);
@@ -327,7 +327,7 @@ namespace OpenTelemetry.Trace.Export
                 return this.errorBuckets[(int)code - 1];
             }
 
-            public void ConsiderForSampling(SpanBase span)
+            public void ConsiderForSampling(Span span)
             {
                 var status = span.Status;
 
@@ -370,9 +370,9 @@ namespace OpenTelemetry.Trace.Export
                 return errorBucketSummaries;
             }
 
-            public IEnumerable<SpanBase> GetErrorSamples(CanonicalCode? code, int maxSpansToReturn)
+            public IEnumerable<Span> GetErrorSamples(CanonicalCode? code, int maxSpansToReturn)
             {
-                var output = new List<SpanBase>(maxSpansToReturn);
+                var output = new List<Span>(maxSpansToReturn);
                 if (code.HasValue)
                 {
                     this.GetErrorBucket(code.Value).GetSamples(maxSpansToReturn, output);
@@ -388,9 +388,9 @@ namespace OpenTelemetry.Trace.Export
                 return output;
             }
 
-            public IEnumerable<SpanBase> GetLatencySamples(TimeSpan latencyLower, TimeSpan latencyUpper, int maxSpansToReturn)
+            public IEnumerable<Span> GetLatencySamples(TimeSpan latencyLower, TimeSpan latencyUpper, int maxSpansToReturn)
             {
-                var output = new List<SpanBase>(maxSpansToReturn);
+                var output = new List<Span>(maxSpansToReturn);
                 for (var i = 0; i < NumLatencyBuckets; i++)
                 {
                     var boundaries = LatencyBucketBoundaries.Values[i];

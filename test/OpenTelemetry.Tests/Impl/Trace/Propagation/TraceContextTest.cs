@@ -29,12 +29,15 @@ namespace OpenTelemetry.Impl.Trace.Propagation
         {
             var headers = new Dictionary<string, string>()
             {
-                { "traceparent", "00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01" },
-                { "tracestate", "congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01" },
+                {"traceparent", "00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01"},
+                {
+                    "tracestate",
+                    "congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01"
+                },
             };
 
             var f = new TraceContextFormat();
-            var ctx = f.Extract(headers, (h, n) => new string[] { h[n] } );
+            var ctx = f.Extract(headers, (h, n) => new string[] {h[n]});
 
             Assert.Equal(TraceId.FromLowerBase16("0af7651916cd43dd8448eb211c80319c"), ctx.TraceId);
             Assert.Equal(SpanId.FromLowerBase16("b9c7c989f97918e1"), ctx.SpanId);
@@ -51,6 +54,31 @@ namespace OpenTelemetry.Impl.Trace.Propagation
 
             Assert.Equal("rojo", last.Key);
             Assert.Equal("00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01", last.Value);
+        }
+
+        [Fact]
+        public void TraceContextFormat_IsBlankIfNoHeader()
+        {
+            var headers = new Dictionary<string, string>();
+
+            var f = new TraceContextFormat();
+            var ctx = f.Extract(headers, (h, n) => new string[] { h[n] });
+
+            Assert.Same(SpanContext.Blank, ctx);
+        }
+
+        [Fact]
+        public void TraceContextFormat_IsBlankIfInvalid()
+        {
+            var headers = new Dictionary<string, string>
+            {
+                {"traceparent", "00-xyz7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01"}
+            };
+
+            var f = new TraceContextFormat();
+            var ctx = f.Extract(headers, (h, n) => new string[] { h[n] });
+
+            Assert.Same(SpanContext.Blank, ctx);
         }
     }
 }

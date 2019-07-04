@@ -37,10 +37,10 @@ namespace OpenTelemetry.Trace
         /// <param name="name"> Name of a span to be created. Note, that the name of the span is settable.
         /// So this name can be changed later and <see cref="ISampler"/> implementation should assume that.
         /// Typical example of a name change is when <see cref="ISpan"/> representing incoming http request
-        /// has a name of url path and then being updated with route name when rouing complete.
+        /// has a name of url path and then being updated with route name when routing complete.
         /// </param>
-        /// <param name="parentLinks">Links associated with the parent span.</param>
+        /// <param name="links">Links associated with the span.</param>
         /// <returns>True of span needs to be created. False otherwise.</returns>
-        bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ISpan> parentLinks);
+        bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ILink> links);
     }
 }

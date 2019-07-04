@@ -24,15 +24,10 @@ namespace OpenTelemetry.Trace.Sampler.Internal
         {
         }
 
-        public string Description
-        {
-            get
-            {
-                return this.ToString();
-            }
-        }
+        public string Description => this.ToString();
 
-        public bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ISpan> parentLinks)
+        /// <inheritdoc />
+        public bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ILink> parentLinks)
         {
             return true;
         }

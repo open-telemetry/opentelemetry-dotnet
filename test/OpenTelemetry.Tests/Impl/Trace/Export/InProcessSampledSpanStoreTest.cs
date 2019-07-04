@@ -107,7 +107,9 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Contains(REGISTERED_SPAN_NAME, sampleStore.RegisteredSpanNamesForCollection);
             Assert.Equal(1, sampleStore.RegisteredSpanNamesForCollection.Count);
 
-            CreateSampledSpan(NOT_REGISTERED_SPAN_NAME).End(EndSpanOptions.Builder().SetSampleToLocalSpanStore(true).Build());
+            var span = CreateSampledSpan(NOT_REGISTERED_SPAN_NAME);
+            span.IsSampleToLocalSpanStore = true;
+            span.End();
 
             Assert.Contains(REGISTERED_SPAN_NAME, sampleStore.RegisteredSpanNamesForCollection);
             Assert.Contains(NOT_REGISTERED_SPAN_NAME, sampleStore.RegisteredSpanNamesForCollection);
@@ -144,7 +146,9 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
-            span.End(EndSpanOptions.Builder().SetStatus(Status.Cancelled).Build());
+            span.Status = Status.Cancelled;
+            span.End();
+
             var samples =
                 sampleStore.GetErrorSampledSpans(
                     SampledSpanStoreErrorFilter.Create(REGISTERED_SPAN_NAME, CanonicalCode.Cancelled, 0));
@@ -157,12 +161,16 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
-            span1.End(EndSpanOptions.Builder().SetStatus(Status.Cancelled).Build());
+            span1.Status = Status.Cancelled;
+            span1.End();
+
             // Advance time to allow other spans to be sampled.
             interval += TimeSpan.FromSeconds(5);
             var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
-            span2.End(EndSpanOptions.Builder().SetStatus(Status.Cancelled).Build());
+            span2.Status = Status.Cancelled;
+            span2.End();
+
             var samples =
                 sampleStore.GetErrorSampledSpans(
                     SampledSpanStoreErrorFilter.Create(REGISTERED_SPAN_NAME, CanonicalCode.Cancelled, 1));
@@ -176,10 +184,15 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
-            span1.End(EndSpanOptions.Builder().SetStatus(Status.Cancelled).Build());
+
+            span1.Status = Status.Cancelled;;
+            span1.End();
+
             var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
-            span2.End(EndSpanOptions.Builder().SetStatus(Status.Unknown).Build());
+            span2.Status = Status.Unknown;
+            span2.End();
+
             var samples =
                 sampleStore.GetErrorSampledSpans(SampledSpanStoreErrorFilter.Create(REGISTERED_SPAN_NAME, null, 0));
             Assert.Equal(2, samples.Count());
@@ -192,10 +205,13 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
-            span1.End(EndSpanOptions.Builder().SetStatus(Status.Cancelled).Build());
+            span1.Status = Status.Cancelled;
+            span1.End();
             var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
             interval += TimeSpan.FromTicks(10);
-            span2.End(EndSpanOptions.Builder().SetStatus(Status.Unknown).Build());
+            span2.Status = Status.Unknown;
+            span2.End();
+
             var samples =
                 sampleStore.GetErrorSampledSpans(SampledSpanStoreErrorFilter.Create(REGISTERED_SPAN_NAME, null, 1));
             Assert.Single(samples);
@@ -356,8 +372,11 @@ namespace OpenTelemetry.Trace.Export.Test
                     var sampledSpan = CreateSampledSpan(spanName);
                     var notSampledSpan = CreateNotSampledSpan(spanName);
                     interval += TimeSpan.FromTicks(10);
-                    sampledSpan.End(EndSpanOptions.Builder().SetStatus(code.ToStatus()).Build());
-                    notSampledSpan.End(EndSpanOptions.Builder().SetStatus(code.ToStatus()).Build());
+
+                    sampledSpan.Status = code.ToStatus();
+                    notSampledSpan.Status = code.ToStatus();
+                    sampledSpan.End();
+                    notSampledSpan.End();
                 }
             }
         }

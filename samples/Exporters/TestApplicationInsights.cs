@@ -47,9 +47,9 @@
 
             Stats.ViewManager.RegisterView(VideoSizeView);
 
-            using (var scopedTags = tagContextBuilder.BuildScoped())
+            using (tagContextBuilder.BuildScoped())
             {
-                using (var scopedSpan = spanBuilder.StartScopedSpan())
+                using (tracer.WithSpan(spanBuilder.StartSpan()))
                 {
                     tracer.CurrentSpan.AddEvent("Start processing video.");
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));

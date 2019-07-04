@@ -5,41 +5,40 @@
     using OpenTelemetry.Collector.Dependencies;
     using OpenTelemetry.Exporter.Zipkin;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Sampler;
 
     internal class TestHttpClient
     {
-        private static ITracer tracer = Tracing.Tracer;
+        private static readonly ITracer tracer = Tracing.Tracer;
 
         internal static object Run()
         {
             Console.WriteLine("Hello World!");
 
-            var collector = new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample);
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
+            {
 
-            var exporter = new ZipkinTraceExporter(
-                new ZipkinTraceExporterOptions()
+                var exporter = new ZipkinTraceExporter(
+                    new ZipkinTraceExporterOptions()
+                    {
+                        Endpoint = new Uri("https://zipkin.azurewebsites.net/api/v2/spans"),
+                        ServiceName = typeof(Program).Assembly.GetName().Name,
+                    },
+                    Tracing.ExportComponent);
+                exporter.Start();
+
+                using (tracer.WithSpan(tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartSpan()))
                 {
-                    Endpoint = new Uri("https://zipkin.azurewebsites.net/api/v2/spans"),
-                    ServiceName = typeof(Program).Assembly.GetName().Name,
-                },
-                Tracing.ExportComponent);
-            exporter.Start();
+                    using (var client = new HttpClient())
+                    {
+                        client.GetStringAsync("http://bing.com").GetAwaiter().GetResult();
+                    }
+                }
 
-            var scope = tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartScopedSpan();
-            //Thread.Sleep(TimeSpan.FromSeconds(1));
+                Console.ReadLine();
 
-            var client = new HttpClient();
-            var t = client.GetStringAsync("http://bing.com");
-
-            t.Wait();
-
-            scope.Dispose();
-
-            Console.ReadLine();
-
-            return null;
+                return null;
+            }
         }
     }
 }
