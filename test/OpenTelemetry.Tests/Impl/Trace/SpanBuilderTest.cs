@@ -498,6 +498,20 @@ namespace OpenTelemetry.Trace.Test
             childSpan.End();
         }
 
+        [Fact]
+        public void SpanBuilder_BadArguments()
+        {
+            var spanBuilder = new SpanBuilder(SpanName, spanBuilderOptions);
+
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((ISpan)null));
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((SpanContext)null));
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.SetSampler(null));
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((ILink)null));
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((SpanContext)null));
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink(null, null));
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink(SpanContext.Blank, null));
+        }
+
         class FakeRandomHandler : IRandomGenerator
         {
             private readonly Random random;
