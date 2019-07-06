@@ -18,6 +18,7 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Common;
     using OpenTelemetry.Resources;
@@ -30,7 +31,7 @@ namespace OpenTelemetry.Trace
     {
         internal SpanData(
             SpanContext context,
-            SpanId parentSpanId,
+            ActivitySpanId parentSpanId,
             Resource resource,
             string name,
             Timestamp startTimestamp,
@@ -62,9 +63,9 @@ namespace OpenTelemetry.Trace
         public SpanContext Context { get; }
 
         /// <summary>
-        /// Gets the parent <see cref="SpanId"/>.
+        /// Gets the parent <see cref="ActivitySpanId"/>.
         /// </summary>
-        public SpanId ParentSpanId { get; }
+        public ActivitySpanId ParentSpanId { get; }
 
         /// <summary>
         /// Gets the <see cref="Resource"/> this span was executed on.
@@ -120,7 +121,7 @@ namespace OpenTelemetry.Trace
         /// Returns a new immutable <see cref="SpanData"/>.
         /// </summary>
         /// <param name="context">The <see cref="SpanContext"/> of the <see cref="ISpan"/>.</param>
-        /// <param name="parentSpanId">The parent <see cref="SpanId"/> of the <see cref="ISpan"/>. <c>null</c> if the <see cref="ISpan"/> is a root.</param>
+        /// <param name="parentSpanId">The parent <see cref="ActivitySpanId"/> of the <see cref="ISpan"/>. <c>null</c> if the <see cref="ISpan"/> is a root.</param>
         /// <param name="resource">The <see cref="Resource"/> this span was executed on.</param>
         /// <param name="name">The name of the <see cref="ISpan"/>.</param>
         /// <param name="startTimestamp">The start <see cref="Timestamp"/> of the <see cref="ISpan"/>.</param>
@@ -134,7 +135,7 @@ namespace OpenTelemetry.Trace
         /// <returns>A new immutable <see cref="SpanData"/>.</returns>
         public static SpanData Create(
                         SpanContext context,
-                        SpanId parentSpanId,
+                        ActivitySpanId parentSpanId,
                         Resource resource,
                         string name,
                         Timestamp startTimestamp,

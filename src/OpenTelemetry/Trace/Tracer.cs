@@ -30,14 +30,14 @@ namespace OpenTelemetry.Trace
         private readonly SpanBuilderOptions spanBuilderOptions;
         private readonly IExportComponent exportComponent;
 
-        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent)
-            : this(randomGenerator, startEndHandler, traceConfig, exportComponent, null, null)
+        public Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent)
+            : this(startEndHandler, traceConfig, exportComponent, null, null)
         {
         }
 
-        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent, IBinaryFormat binaryFormat, ITextFormat textFormat)
+        public Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent, IBinaryFormat binaryFormat, ITextFormat textFormat)
         {
-            this.spanBuilderOptions = new SpanBuilderOptions(randomGenerator, startEndHandler, traceConfig);
+            this.spanBuilderOptions = new SpanBuilderOptions(startEndHandler, traceConfig);
             this.BinaryFormat = binaryFormat ?? new BinaryFormat();
             this.TextFormat = textFormat ?? new TraceContextFormat();
             this.exportComponent = exportComponent;

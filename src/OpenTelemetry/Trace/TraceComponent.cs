@@ -30,16 +30,15 @@ namespace OpenTelemetry.Trace
         /// Initializes a new instance of the <see cref="TraceComponent"/> class.
         /// </summary>
         public TraceComponent()
-            : this(new RandomGenerator(), new SimpleEventQueue())
+            : this(new SimpleEventQueue())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TraceComponent"/> class.
         /// </summary>
-        /// <param name="randomHandler">Random numbers generator.</param>
         /// <param name="eventQueue">Event queue to use before the exporter.</param>
-        public TraceComponent(IRandomGenerator randomHandler, IEventQueue eventQueue)
+        public TraceComponent(IEventQueue eventQueue)
         {
             this.TraceConfig = new Config.TraceConfig();
 
@@ -59,7 +58,7 @@ namespace OpenTelemetry.Trace
                     ((ExportComponent)this.ExportComponent).RunningSpanStore,
                     ((ExportComponent)this.ExportComponent).SampledSpanStore,
                     eventQueue);
-            this.Tracer = new Tracer(randomHandler, startEndHandler, this.TraceConfig, null);
+            this.Tracer = new Tracer(startEndHandler, this.TraceConfig, null);
         }
 
         /// <inheritdoc/>

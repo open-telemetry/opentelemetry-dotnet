@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace
 
         internal Tracing()
         {
-            this.traceComponent = new TraceComponent(new RandomGenerator(), new SimpleEventQueue());
+            this.traceComponent = new TraceComponent(new SimpleEventQueue());
         }
 
         /// <summary>

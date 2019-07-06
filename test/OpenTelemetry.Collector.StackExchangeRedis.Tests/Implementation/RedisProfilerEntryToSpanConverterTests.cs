@@ -20,8 +20,8 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
     using Moq;
     using StackExchange.Redis.Profiling;
     using Xunit;
-    using OpenTelemetry.Trace.Internal;
     using System;
+    using System.Diagnostics;
     using OpenTelemetry.Common;
     using System.Collections.Generic;
 
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var parentSpan = BlankSpan.Instance;
             var profiledCommand = new Mock<IProfiledCommand>();
             var sampler = new Mock<ISampler>();
-            sampler.Setup(x => x.ShouldSample(It.IsAny<SpanContext>(), It.IsAny<TraceId>(), It.IsAny<SpanId>(), It.IsAny<string>(), It.IsAny<IEnumerable<ILink>>())).Returns(true);
+            sampler.Setup(x => x.ShouldSample(It.IsAny<SpanContext>(), It.IsAny<ActivityTraceId>(), It.IsAny<ActivitySpanId>(), It.IsAny<string>(), It.IsAny<IEnumerable<ILink>>())).Returns(true);
             profiledCommand.Setup(m => m.Command).Returns("SET");
             var result = new List<SpanData>();
             RedisProfilerEntryToSpanConverter.DrainSession(parentSpan, new IProfiledCommand[] { profiledCommand.Object }, sampler.Object, result);
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var profiledCommand = new Mock<IProfiledCommand>();
             var now = DateTimeOffset.Now;
             profiledCommand.Setup(m => m.CommandCreated).Returns(now.DateTime);
-            var result = RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "SET", SpanId.Invalid, profiledCommand.Object);
+            var result = RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "SET", default, profiledCommand.Object);
             Assert.Equal(Timestamp.FromMillis(now.ToUnixTimeMilliseconds()), result.StartTimestamp);
         }
 
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
         public void ProfiledCommandToSpanDataSetsDbTypeAttributeAsRedis()
         {
             var profiledCommand = new Mock<IProfiledCommand>();
-            var result = RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "SET", SpanId.Invalid, profiledCommand.Object);
+            var result = RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "SET", default, profiledCommand.Object);
             Assert.Contains("db.type", result.Attributes.AttributeMap.Keys);
             Assert.Equal(AttributeValue.StringAttributeValue("redis"), result.Attributes.AttributeMap["db.type"]);
         }
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
         {
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.Command).Returns("SET");
-            var result = RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "another name", SpanId.Invalid, profiledCommand.Object);
+            var result = RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "another name", default, profiledCommand.Object);
             Assert.Contains("db.statement", result.Attributes.AttributeMap.Keys);
             Assert.Equal(AttributeValue.StringAttributeValue("SET"), result.Attributes.AttributeMap["db.statement"]);
         }
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var profiledCommand = new Mock<IProfiledCommand>();
             var expectedFlags = StackExchange.Redis.CommandFlags.FireAndForget | StackExchange.Redis.CommandFlags.NoRedirect;
             profiledCommand.Setup(m => m.Flags).Returns(expectedFlags);
-            var result = RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "SET", SpanId.Invalid, profiledCommand.Object);
+            var result = RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "SET", default, profiledCommand.Object);
             Assert.Contains("redis.flags", result.Attributes.AttributeMap.Keys);
             Assert.Equal(AttributeValue.StringAttributeValue("None, FireAndForget, NoRedirect"), result.Attributes.AttributeMap["redis.flags"]);
         }

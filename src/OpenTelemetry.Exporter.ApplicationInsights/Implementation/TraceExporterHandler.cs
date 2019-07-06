@@ -73,7 +73,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                 foreach (var attr in span.Attributes.AttributeMap)
                 {
                     var key = attr.Key;
-
                     switch (attr.Key)
                     {
                         case "span.kind":
@@ -123,8 +122,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                 var linkId = 0;
                 foreach (var link in span.Links.Links)
                 {
-                    AddPropertyWithAdjustedName(props, "link" + linkId + "_traceId", link.Context.TraceId.ToLowerBase16());
-                    AddPropertyWithAdjustedName(props, "link" + linkId + "_spanId", link.Context.SpanId.ToLowerBase16());
+                    AddPropertyWithAdjustedName(props, "link" + linkId + "_traceId", link.Context.TraceId.ToHexString());
+                    AddPropertyWithAdjustedName(props, "link" + linkId + "_spanId", link.Context.SpanId.ToHexString());
 
                     foreach (var attr in link.Attributes)
                     {
@@ -273,12 +272,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
             props = new Dictionary<string, string>();
 
-            traceId = span.Context.TraceId.ToLowerBase16();
-            spanId = span.Context.SpanId.ToLowerBase16();
+            traceId = span.Context.TraceId.ToHexString();
+            spanId = span.Context.SpanId.ToHexString();
             parentId = null;
-            if (span.ParentSpanId != null && span.ParentSpanId.IsValid)
+            if (span.ParentSpanId != default)
             {
-                parentId = span.ParentSpanId.ToLowerBase16();
+                parentId = span.ParentSpanId.ToHexString();
             }
 
             resultCode = null;

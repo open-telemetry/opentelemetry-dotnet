@@ -1,4 +1,4 @@
-﻿// <copyright file="IRandomGenerator.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AssemblyInfo.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +13,3 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-
-namespace OpenTelemetry.Trace
-{
-    public interface IRandomGenerator
-    {
-        void NextBytes(byte[] bytes);
-    }
-}

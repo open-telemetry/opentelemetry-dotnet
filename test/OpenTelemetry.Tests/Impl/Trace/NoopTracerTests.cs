@@ -59,7 +59,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.RecordSpanData(null));
 
             // does not throw
-            NoopTracer.Instance.RecordSpanData(SpanData.Create(SpanContext.Blank, null, Resource.Empty, "foo", Timestamp.Zero, null, null, null, null, Status.Ok, SpanKind.Internal, Timestamp.Zero));
+            NoopTracer.Instance.RecordSpanData(SpanData.Create(SpanContext.Blank, default, Resource.Empty, "foo", Timestamp.Zero, null, null, null, null, Status.Ok, SpanKind.Internal, Timestamp.Zero));
         }
     }
 }

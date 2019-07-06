@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Trace.Export.Test
 {
+    using System.Diagnostics;
     using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
@@ -24,10 +25,8 @@ namespace OpenTelemetry.Trace.Export.Test
 
     public class InProcessRunningSpanStoreTest
     {
-
-        private static readonly string SPAN_NAME_1 = "MySpanName/1";
-        private static readonly string SPAN_NAME_2 = "MySpanName/2";
-        private readonly RandomGenerator random = new RandomGenerator(1234);
+        private const string SpanName1 = "MySpanName/1";
+        private const string SpanName2 = "MySpanName/2";
         private readonly ISpanExporter sampledSpansServiceExporter = SpanExporter.Create(4, Duration.Create(1, 0));
         private readonly InProcessRunningSpanStore activeSpansExporter = new InProcessRunningSpanStore();
         private readonly StartEndHandler startEndHandler;
@@ -42,15 +41,15 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var spanContext =
                 SpanContext.Create(
-                    TraceId.GenerateRandomId(random),
-                    SpanId.GenerateRandomId(random),
-                    TraceOptions.Default, Tracestate.Empty);
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.None, Tracestate.Empty);
             return Span.StartSpan(
                 spanContext,
                 recordSpanOptions,
                 spanName,
                 SpanKind.Internal,
-                SpanId.GenerateRandomId(random),
+                ActivitySpanId.CreateRandom(),
                 TraceParams.Default,
                 startEndHandler,
                 null);
@@ -59,26 +58,26 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetSummary_SpansWithDifferentNames()
         {
-            var span1 = CreateSpan(SPAN_NAME_1);
-            var span2 = CreateSpan(SPAN_NAME_2);
+            var span1 = CreateSpan(SpanName1);
+            var span2 = CreateSpan(SpanName2);
             Assert.Equal(2, activeSpansExporter.Summary.PerSpanNameSummary.Count);
             Assert.Equal(1,
                     activeSpansExporter
                         .Summary
-                        .PerSpanNameSummary[SPAN_NAME_1]
+                        .PerSpanNameSummary[SpanName1]
                         .NumRunningSpans);
             Assert.Equal(1,
                     activeSpansExporter
                         .Summary
-                        .PerSpanNameSummary[SPAN_NAME_2]
+                        .PerSpanNameSummary[SpanName2]
                         .NumRunningSpans);
             span1.End();
             Assert.Equal(1, activeSpansExporter.Summary.PerSpanNameSummary.Count);
-            Assert.False(activeSpansExporter.Summary.PerSpanNameSummary.ContainsKey(SPAN_NAME_1));
+            Assert.False(activeSpansExporter.Summary.PerSpanNameSummary.ContainsKey(SpanName1));
             Assert.Equal(1,
                     activeSpansExporter
                         .Summary
-                        .PerSpanNameSummary[SPAN_NAME_2]
+                        .PerSpanNameSummary[SpanName2]
                         .NumRunningSpans);
             span2.End();
             Assert.Equal(0, activeSpansExporter.Summary.PerSpanNameSummary.Count);
@@ -87,28 +86,28 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetSummary_SpansWithSameName()
         {
-            var span1 = CreateSpan(SPAN_NAME_1);
-            var span2 = CreateSpan(SPAN_NAME_1);
-            var span3 = CreateSpan(SPAN_NAME_1);
+            var span1 = CreateSpan(SpanName1);
+            var span2 = CreateSpan(SpanName1);
+            var span3 = CreateSpan(SpanName1);
             Assert.Equal(1, activeSpansExporter.Summary.PerSpanNameSummary.Count);
             Assert.Equal(3,
                     activeSpansExporter
                         .Summary
-                        .PerSpanNameSummary[SPAN_NAME_1]
+                        .PerSpanNameSummary[SpanName1]
                         .NumRunningSpans);
             span1.End();
             Assert.Equal(1, activeSpansExporter.Summary.PerSpanNameSummary.Count);
             Assert.Equal(2,
                     activeSpansExporter
                         .Summary
-                        .PerSpanNameSummary[SPAN_NAME_1]
+                        .PerSpanNameSummary[SpanName1]
                         .NumRunningSpans);
             span2.End();
             Assert.Equal(1, activeSpansExporter.Summary.PerSpanNameSummary.Count);
             Assert.Equal(1,
                     activeSpansExporter
                         .Summary
-                        .PerSpanNameSummary[SPAN_NAME_1]
+                        .PerSpanNameSummary[SpanName1]
                         .NumRunningSpans);
             span3.End();
             Assert.Equal(0, activeSpansExporter.Summary.PerSpanNameSummary.Count);
@@ -117,11 +116,11 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetActiveSpans_SpansWithDifferentNames()
         {
-            var span1 = CreateSpan(SPAN_NAME_1) as Span;
-            var span2 = CreateSpan(SPAN_NAME_2) as Span;
-            Assert.Contains(span1.ToSpanData(), activeSpansExporter.GetRunningSpans(RunningSpanStoreFilter.Create(SPAN_NAME_1, 0)));
-            Assert.Contains(span1.ToSpanData(), activeSpansExporter.GetRunningSpans(RunningSpanStoreFilter.Create(SPAN_NAME_1, 2)));
-            Assert.Contains(span2.ToSpanData(), activeSpansExporter.GetRunningSpans(RunningSpanStoreFilter.Create(SPAN_NAME_2, 0)));
+            var span1 = CreateSpan(SpanName1) as Span;
+            var span2 = CreateSpan(SpanName2) as Span;
+            Assert.Contains(span1.ToSpanData(), activeSpansExporter.GetRunningSpans(RunningSpanStoreFilter.Create(SpanName1, 0)));
+            Assert.Contains(span1.ToSpanData(), activeSpansExporter.GetRunningSpans(RunningSpanStoreFilter.Create(SpanName1, 2)));
+            Assert.Contains(span2.ToSpanData(), activeSpansExporter.GetRunningSpans(RunningSpanStoreFilter.Create(SpanName2, 0)));
             span1.End();
             span2.End();
         }

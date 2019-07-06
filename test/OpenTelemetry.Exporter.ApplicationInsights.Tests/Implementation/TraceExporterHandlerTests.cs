@@ -27,6 +27,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Threading;
     using Xunit;
@@ -43,13 +44,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
         private DateTimeOffset nowDateTimeOffset;
 
-        private Timestamp NowTimestamp
-        {
-            get
-            {
-                return Timestamp.FromDateTimeOffset(nowDateTimeOffset);
-            }
-        }
+        private Timestamp NowTimestamp => Timestamp.FromDateTimeOffset(nowDateTimeOffset);
 
         public OpenTelemetryTelemetryConverterTests()
         {
@@ -142,7 +137,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             // ARRANGE
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
-            parentSpanId = SpanId.FromBytes(this.testParentSpanIdBytes);
+            parentSpanId = ActivitySpanId.CreateFromBytes(this.testParentSpanIdBytes);
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -159,7 +154,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             // ARRANGE
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
-            parentSpanId = SpanId.Invalid;
+            parentSpanId = default;
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -433,7 +428,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             // ARRANGE
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
-            parentSpanId = SpanId.FromBytes(this.testParentSpanIdBytes);
+            parentSpanId = ActivitySpanId.CreateFromBytes(this.testParentSpanIdBytes);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
@@ -599,7 +594,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnSpanKindProperty()
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
-            parentSpanId = SpanId.FromBytes(this.testParentSpanIdBytes);
+            parentSpanId = ActivitySpanId.CreateFromBytes(this.testParentSpanIdBytes);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
@@ -612,7 +607,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
-            parentSpanId = SpanId.FromBytes(this.testParentSpanIdBytes);
+            parentSpanId = ActivitySpanId.CreateFromBytes(this.testParentSpanIdBytes);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
@@ -1293,11 +1288,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 new List<ILink>()
                 {
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link0TraceIdBytes), SpanId.FromBytes(link0SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link0TraceIdBytes), ActivitySpanId.CreateFromBytes(link0SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link1TraceIdBytes), SpanId.FromBytes(link1SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link1TraceIdBytes), ActivitySpanId.CreateFromBytes(link1SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link2TraceIdBytes), SpanId.FromBytes(link2SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link2TraceIdBytes), ActivitySpanId.CreateFromBytes(link2SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
                 }, 0);
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
@@ -1336,9 +1331,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 {
                     Link.FromSpanContext(
                         SpanContext.Create(
-                            TraceId.FromBytes(GenerateRandomId(16).Item2),
-                            SpanId.FromBytes(GenerateRandomId(8).Item2),
-                            TraceOptions.Default,
+                            ActivityTraceId.CreateFromBytes(GenerateRandomId(16).Item2),
+                            ActivitySpanId.CreateFromBytes(GenerateRandomId(8).Item2),
+                            ActivityTraceFlags.None,
                             Tracestate.Empty),
                         new Dictionary<string, IAttributeValue>()
                         {
@@ -1384,11 +1379,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             links = LinkList.Create(new List<ILink>()
             {
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link0TraceIdBytes), SpanId.FromBytes(link0SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link0TraceIdBytes), ActivitySpanId.CreateFromBytes(link0SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link1TraceIdBytes), SpanId.FromBytes(link1SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link1TraceIdBytes), ActivitySpanId.CreateFromBytes(link1SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link2TraceIdBytes), SpanId.FromBytes(link2SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link2TraceIdBytes), ActivitySpanId.CreateFromBytes(link2SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
             }, 0);
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
@@ -1427,9 +1422,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 {
                     Link.FromSpanContext(
                         SpanContext.Create(
-                            TraceId.FromBytes(GenerateRandomId(16).Item2),
-                            SpanId.FromBytes(GenerateRandomId(8).Item2),
-                            TraceOptions.Default,
+                            ActivityTraceId.CreateFromBytes(GenerateRandomId(16).Item2),
+                            ActivitySpanId.CreateFromBytes(GenerateRandomId(8).Item2),
+                            ActivityTraceFlags.None,
                             Tracestate.Empty),
                         new Dictionary<string, IAttributeValue>()
                         {
@@ -1864,7 +1859,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
         private void GetDefaults(
             out SpanContext context,
-            out SpanId parentSpanId,
+            out ActivitySpanId parentSpanId,
             out Resource resource,
             out string name,
             out Timestamp startTimestamp,
@@ -1876,8 +1871,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             out SpanKind kind,
             out Timestamp endTimestamp)
         {
-            context = SpanContext.Create(TraceId.FromBytes(this.testTraceIdBytes), SpanId.FromBytes(this.testSpanIdBytes), TraceOptions.Default, Tracestate.Empty);
-            parentSpanId = SpanId.Invalid;
+            context = SpanContext.Create(ActivityTraceId.CreateFromBytes(this.testTraceIdBytes), ActivitySpanId.CreateFromBytes(this.testSpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty);
+            parentSpanId = default;
             resource = Resource.Empty;
             name = "spanName";
             startTimestamp = NowTimestamp.AddDuration(Duration.Create(TimeSpan.FromSeconds(-1)));
