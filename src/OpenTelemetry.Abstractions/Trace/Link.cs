@@ -19,6 +19,7 @@ namespace OpenTelemetry.Trace
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Abstractions.Utils;
 
@@ -38,6 +39,18 @@ namespace OpenTelemetry.Trace
 
         /// <inheritdoc/>
         public IDictionary<string, object> Attributes { get; }
+
+        /// <summary>
+        /// Creates a <see cref="ILink"/> from Activity.
+        /// </summary>
+        /// <param name="activity">Activity to create link from.</param>
+        /// <returns>New <see cref="ILink"/> instance.</returns>
+        public static ILink FromActivity(Activity activity)
+        {
+            return new Link(
+                SpanContext.Create(activity.TraceId, activity.SpanId, activity.ActivityTraceFlags, /*TODO*/ Tracestate.Empty),
+                EmptyAttributes);
+        }
 
         public static ILink FromSpanContext(SpanContext context)
         {

@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     /// <summary>
     /// Span builder.
@@ -39,6 +40,14 @@ namespace OpenTelemetry.Trace
         ISpanBuilder SetParent(ISpan parent);
 
         /// <summary>
+        /// Sets the <see cref="Activity"/> to use as a parent for the new span.
+        /// Any parent that was set previously will be discarded.
+        /// </summary>
+        /// <param name="parent"><see cref="Activity"/> to set as parent.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder SetParent(Activity parent);
+
+        /// <summary>
         /// Sets the remote <see cref="SpanContext"/> to use as a parent for the new span.
         /// Any parent that was set previously will be discarded.
         /// </summary>
@@ -54,6 +63,14 @@ namespace OpenTelemetry.Trace
         ISpanBuilder SetNoParent();
 
         /// <summary>
+        /// Sets the <see cref="Activity"/> to create a span from. Use it when library creates Activity on its own.
+        /// Any parent that was set previously will be discarded.
+        /// </summary>
+        /// <param name="activity"><see cref="Activity"/> to set as parent.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder SetActivity(Activity activity);
+
+        /// <summary>
         /// Set <see cref="SpanKind"/> on the span.
         /// </summary>
         /// <param name="spanKind"><see cref="SpanKind"/> to set.</param>
@@ -63,9 +80,16 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Set the <see cref="Link"/> on the span.
         /// </summary>
-        /// <param name="spanContext"><see cref="Link"/> context to set on span.</param>
+        /// <param name="spanContext"><see cref="SpanContext"/> context to set on span.</param>
         /// <returns>This span builder for chaining.</returns>
         ISpanBuilder AddLink(SpanContext spanContext);
+
+        /// <summary>
+        /// Set the <see cref="Link"/> on the span.
+        /// </summary>
+        /// <param name="activity"><see cref="Activity"/> context to set on span.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder AddLink(Activity activity);
 
         /// <summary>
         /// Set the <see cref="Link"/> on the span.
@@ -88,6 +112,13 @@ namespace OpenTelemetry.Trace
         /// <param name="recordEvents">Value indicating whether to record span.</param>
         /// <returns>This span builder for chaining.</returns>
         ISpanBuilder SetRecordEvents(bool recordEvents);
+
+        /// <summary>
+        /// Disable Activity creation for the span. Is not compatible with implicit Span propagation and auto-collectors. Use with caution.
+        /// </summary>
+        /// <param name="disableActivity">Value indicating whether to disable Activity creation for the span.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder SetDisableActivity(bool disableActivity);
 
         /// <summary>
         /// Starts the span.
