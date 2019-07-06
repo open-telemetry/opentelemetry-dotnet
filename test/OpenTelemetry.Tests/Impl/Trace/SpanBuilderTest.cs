@@ -14,6 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+
 namespace OpenTelemetry.Trace.Test
 {
     using System;
@@ -25,7 +29,7 @@ namespace OpenTelemetry.Trace.Test
     using OpenTelemetry.Trace.Sampler;
     using Xunit;
 
-    public class SpanBuilderTest
+    public class SpanBuilderTest : IDisposable
     {
         private static readonly string SpanName = "MySpanName";
         private readonly SpanBuilderOptions spanBuilderOptions;
@@ -38,6 +42,10 @@ namespace OpenTelemetry.Trace.Test
 
         public SpanBuilderTest()
         {
+            // TODO: remove with next DiagnosticSource preview, switch to Activity setidformat
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+
             // MockitoAnnotations.initMocks(this);
             spanBuilderOptions =
                 new SpanBuilderOptions(startEndHandler, traceConfig);
@@ -62,6 +70,10 @@ namespace OpenTelemetry.Trace.Test
                 Timestamp.FromDateTimeOffset(DateTimeOffset.Now).AddDuration(Duration.Create(-1, 0)),
                 Timestamp.FromDateTimeOffset(DateTimeOffset.Now).AddDuration(Duration.Create(1, 0)));
             Assert.Equal(SpanName, spanData.Name);
+
+            Assert.NotNull(Activity.Current);
+            Assert.Equal(Activity.Current.TraceId, span.Context.TraceId);
+            Assert.Equal(Activity.Current.SpanId, span.Context.SpanId);
         }
 
         [Fact]
@@ -145,6 +157,66 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
+        public void StartSpanLastParentWins5()
+        {
+            var spanContext =
+                SpanContext.Create(
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.None, Tracestate.Empty);
+            var activity = new Activity("foo").Start();
+
+            var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetParent(spanContext)
+                .SetParent(activity)
+                .StartSpan();
+
+            Assert.True(childSpan.Context.IsValid);
+            Assert.Equal(activity.TraceId, childSpan.Context.TraceId);
+            Assert.Equal(activity.SpanId, childSpan.ParentSpanId);
+        }
+
+        [Fact]
+        public void StartSpanLastParentWins6()
+        {
+            var spanContext =
+                SpanContext.Create(
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.None, Tracestate.Empty);
+            var activity = new Activity("foo").Start();
+
+            var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetParent(spanContext)
+                .FromCurrentActivity()
+                .StartSpan();
+
+            Assert.True(childSpan.Context.IsValid);
+            Assert.Equal(activity.TraceId, childSpan.Context.TraceId);
+            Assert.Equal(activity.SpanId, childSpan.Context.SpanId);
+        }
+
+        [Fact]
+        public void StartSpanLastParentWins7()
+        {
+            var spanContext =
+                SpanContext.Create(
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.None, Tracestate.Empty);
+            var activity = new Activity("foo").Start();
+
+            var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+                .FromCurrentActivity()
+                .SetParent(spanContext)
+                .StartSpan();
+
+            Assert.True(childSpan.Context.IsValid);
+            Assert.Equal(spanContext.TraceId, childSpan.Context.TraceId);
+            Assert.Equal(spanContext.SpanId, childSpan.ParentSpanId);
+        }
+
+        [Fact]
         public void StartSpanNullParentWithRecordEvents()
         {
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
@@ -195,6 +267,135 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(((Span)rootSpan).TimestampConverter, ((Span)childSpan).TimestampConverter);
         }
 
+
+        [Fact]
+        public void StartSpanInScopeOfCurrentActivity()
+        {
+            var parentActivity = new Activity(SpanName).Start();
+
+            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .StartSpan();
+
+            Assert.True(childSpan.Context.IsValid);
+            Assert.Equal(parentActivity.TraceId, childSpan.Context.TraceId);
+            Assert.Equal(parentActivity.SpanId, ((Span)childSpan).ParentSpanId);
+
+            Assert.NotNull(Activity.Current);
+            Assert.Equal(Activity.Current.Parent, parentActivity);
+        }
+
+        [Fact]
+        public void StartSpanInScopeOfCurrentActivityRecorded()
+        {
+            var parentActivity = new Activity(SpanName).Start();
+            parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+
+            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .StartSpan();
+
+            Assert.True(childSpan.Context.IsValid);
+            Assert.Equal(parentActivity.TraceId, childSpan.Context.TraceId);
+            Assert.Equal(parentActivity.SpanId, ((Span)childSpan).ParentSpanId);
+            Assert.True((childSpan.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
+            parentActivity.Stop();
+        }
+
+        [Fact]
+        public void StartSpanInScopeOfCurrentActivityNoParent()
+        {
+            var parentActivity = new Activity(SpanName).Start();
+
+            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .SetNoParent()
+                .StartSpan();
+
+            Assert.True(childSpan.Context.IsValid);
+            Assert.NotEqual(parentActivity.TraceId, childSpan.Context.TraceId);
+            Assert.True(((Span)childSpan).ToSpanData().ParentSpanId == default);
+
+            Assert.NotNull(Activity.Current);
+            Assert.Equal(Activity.Current.TraceId, childSpan.Context.TraceId);
+            Assert.Equal(Activity.Current.SpanId, childSpan.Context.SpanId);
+        }
+
+        [Fact]
+        public void StartSpanFromExplicitActivity()
+        {
+            var parentActivity = new Activity(SpanName).Start();
+            parentActivity.Stop();
+
+            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .SetParent(parentActivity)
+                .StartSpan();
+
+            Assert.True(childSpan.Context.IsValid);
+            Assert.Equal(parentActivity.TraceId, childSpan.Context.TraceId);
+            Assert.Equal(parentActivity.SpanId, ((Span)childSpan).ParentSpanId);
+
+            Assert.NotNull(Activity.Current);
+            Assert.Equal(Activity.Current.Parent, parentActivity);
+        }
+
+        [Fact]
+        public void StartSpanFromExplicitRecordedActivity()
+        {
+            var parentActivity = new Activity(SpanName).Start();
+            parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            parentActivity.Stop();
+
+            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .SetParent(parentActivity)
+                .StartSpan();
+
+            Assert.True(childSpan.Context.IsValid);
+            Assert.Equal(parentActivity.TraceId, childSpan.Context.TraceId);
+            Assert.Equal(parentActivity.SpanId, ((Span)childSpan).ParentSpanId);
+            Assert.True((childSpan.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
+        }
+
+        [Fact]
+        public void StartSpanFromCurrentActivity()
+        {
+            var activity = new Activity(SpanName).Start();
+
+            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .FromCurrentActivity()
+                .StartSpan();
+
+            Assert.True(span.Context.IsValid);
+            Assert.Equal(activity.TraceId, span.Context.TraceId);
+            Assert.Equal(activity.SpanId, span.Context.SpanId);
+            Assert.True(((Span)span).ParentSpanId == default);
+
+            Assert.NotNull(Activity.Current);
+            Assert.Equal(Activity.Current, activity);
+        }
+
+        [Fact]
+        public void StartSpanFromCurrentRecordedActivity()
+        {
+            var activity = new Activity(SpanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+
+            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .FromCurrentActivity()
+                .StartSpan();
+
+            Assert.True(span.Context.IsValid);
+            Assert.Equal(activity.TraceId, span.Context.TraceId);
+            Assert.Equal(activity.SpanId, span.Context.SpanId);
+            Assert.True(((Span)span).ParentSpanId == default);
+            Assert.True((span.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
+            activity.Stop();
+        }
+
         [Fact]
         public void StartSpan_ExplicitNoParent()
         {
@@ -208,6 +409,10 @@ namespace OpenTelemetry.Trace.Test
             Assert.True((span.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
             var spanData = ((Span)span).ToSpanData();
             Assert.True(spanData.ParentSpanId == default);
+
+            Assert.NotNull(Activity.Current);
+            Assert.Equal(Activity.Current.TraceId, span.Context.TraceId);
+            Assert.Equal(Activity.Current.SpanId, span.Context.SpanId);
         }
 
         [Fact]
@@ -291,6 +496,115 @@ namespace OpenTelemetry.Trace.Test
             Assert.True((span.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
             var spanData = ((Span)span).ToSpanData();
             Assert.Equal(spanContext.SpanId, spanData.ParentSpanId);
+        }
+
+        [Fact]
+        public void StartSpan_WithLink()
+        {
+            var link = Link.FromSpanContext(
+                SpanContext.Create(
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.None, Tracestate.Empty));
+
+            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .AddLink(link)
+                .StartSpan();
+
+            var spanData = ((Span)span).ToSpanData();
+            var links = spanData.Links.Links.ToArray();
+
+            Assert.Single(links);
+
+            Assert.Equal(link.Context.TraceId, links[0].Context.TraceId);
+            Assert.Equal(link.Context.SpanId, links[0].Context.SpanId);
+            Assert.Equal(link.Context.TraceOptions, links[0].Context.TraceOptions);
+            Assert.Equal(link.Context.Tracestate, links[0].Context.Tracestate);
+            Assert.Equal(0, links[0].Attributes.Count);
+        }
+
+        [Fact]
+        public void StartSpan_WithLinkFromActivity()
+        {
+            var activityLink = new Activity("foo").Start();
+            activityLink.Stop();
+
+            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .AddLink(activityLink)
+                .StartSpan();
+
+            var spanData = ((Span)span).ToSpanData();
+            var links = spanData.Links.Links.ToArray();
+
+            Assert.Single(links);
+
+            Assert.Equal(activityLink.TraceId, links[0].Context.TraceId);
+            Assert.Equal(activityLink.SpanId, links[0].Context.SpanId);
+            Assert.Equal(activityLink.ActivityTraceFlags, links[0].Context.TraceOptions);
+            Assert.Equal(0, links[0].Context.Tracestate.Entries.Count());
+            Assert.Equal(0, links[0].Attributes.Count);
+        }
+
+        [Fact]
+        public void StartSpan_WithLinkFromSpanContextAndAttributes()
+        {
+            var linkContext =
+                SpanContext.Create(
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.None, Tracestate.Empty);
+
+            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .AddLink(linkContext, new Dictionary<string, IAttributeValue>
+                    {
+                        ["k"] = AttributeValue.StringAttributeValue("v"),
+                    })
+                .StartSpan();
+
+            var spanData = ((Span)span).ToSpanData();
+            var links = spanData.Links.Links.ToArray();
+
+            Assert.Single(links);
+
+            Assert.Equal(linkContext.TraceId, links[0].Context.TraceId);
+            Assert.Equal(linkContext.SpanId, links[0].Context.SpanId);
+            Assert.Equal(linkContext.TraceOptions, links[0].Context.TraceOptions);
+            Assert.Equal(linkContext.Tracestate, links[0].Context.Tracestate);
+            Assert.Equal(1, links[0].Attributes.Count);
+            Assert.True(links[0].Attributes.ContainsKey("k"));
+            Assert.Equal("v", links[0].Attributes["k"].Match( (s) => s,
+                b => b.ToString(),
+                l => l.ToString(),
+                d => d.ToString(CultureInfo.InvariantCulture),
+                o => o.ToString()));
+        }
+
+        [Fact]
+        public void StartSpan_WithLinkFromSpanContext()
+        {
+            var linkContext =
+                SpanContext.Create(
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.None, Tracestate.Empty);
+
+            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .AddLink(linkContext)
+                .StartSpan();
+
+            var spanData = ((Span)span).ToSpanData();
+            var links = spanData.Links.Links.ToArray();
+
+            Assert.Single(links);
+
+            Assert.Equal(linkContext.TraceId, links[0].Context.TraceId);
+            Assert.Equal(linkContext.SpanId, links[0].Context.SpanId);
+            Assert.Equal(linkContext.TraceOptions, links[0].Context.TraceOptions);
+            Assert.Equal(linkContext.Tracestate, links[0].Context.Tracestate);
         }
 
         [Fact]
@@ -491,15 +805,35 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SpanBuilder_BadArguments()
         {
-            var spanBuilder = new SpanBuilder(SpanName, spanBuilderOptions);
+            Assert.Throws<ArgumentNullException>(() => new SpanBuilder(null, spanBuilderOptions));
+            Assert.Throws<ArgumentNullException>(() => new SpanBuilder(SpanName, null));
 
+            var spanBuilder = new SpanBuilder(SpanName, spanBuilderOptions);
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((ISpan)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((SpanContext)null));
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((Activity)null));
+
+            // no Activity.Current
+            Assert.Throws<ArgumentException>(() => spanBuilder.FromCurrentActivity());
+
+            // Activity.Current wrong format
+            Activity.DefaultIdFormat = ActivityIdFormat.Hierarchical;
+            Activity.ForceDefaultIdFormat = true;
+            var a = new Activity("foo").Start(); // TODO SetIdFormat
+            Assert.Throws<ArgumentException>(() => spanBuilder.FromCurrentActivity());
+            a.Stop();
+
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetSampler(null));
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((Activity)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((ILink)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((SpanContext)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink(null, null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink(SpanContext.Blank, null));
+        }
+
+        public void Dispose()
+        {
+            Activity.Current = null;
         }
     }
 }

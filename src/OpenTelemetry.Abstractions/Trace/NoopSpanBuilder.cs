@@ -101,11 +101,23 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpanBuilder SetActivity(Activity activity)
+        public ISpanBuilder FromCurrentActivity()
         {
-            if (activity == null)
+            var currentActivity = Activity.Current;
+
+            if (currentActivity == null)
             {
-                throw new ArgumentNullException(nameof(activity));
+                throw new ArgumentException("Current Activity cannot be null");
+            }
+
+            if (currentActivity.IdFormat != ActivityIdFormat.W3C)
+            {
+                throw new ArgumentException("Current Activity is not in W3C format");
+            }
+
+            if (currentActivity.StartTimeUtc == default || currentActivity.Duration != default)
+            {
+                throw new ArgumentException("Current Activity is not running: it has not been started or has been stopped");
             }
 
             return this;
