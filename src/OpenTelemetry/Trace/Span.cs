@@ -31,7 +31,6 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Span : ISpan, IElement<Span>
     {
-        private readonly ActivitySpanId parentSpanId;
         private readonly ITraceParams traceParams;
         private readonly IStartEndHandler startEndHandler;
         private readonly DateTimeOffset startTime;
@@ -43,20 +42,24 @@ namespace OpenTelemetry.Trace
         private DateTimeOffset endTime;
         private bool hasBeenEnded;
         private bool sampleToLocalSpanStore;
+        private Lazy<SpanContext> spanContext;
 
         private Span(
-                SpanContext context,
+                Activity activity,
                 SpanOptions options,
                 string name,
                 SpanKind spanKind,
-                ActivitySpanId parentSpanId,
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
                 Timer timestampConverter)
         {
-            this.Context = context;
+            this.Activity = activity;
+            this.spanContext = new Lazy<SpanContext>(() => SpanContext.Create(
+                this.Activity.TraceId, 
+                this.Activity.SpanId, 
+                this.Activity.ActivityTraceFlags, 
+                /*TODO*/ Tracestate.Empty));
             this.Options = options;
-            this.parentSpanId = parentSpanId;
             this.Name = name;
             this.traceParams = traceParams ?? throw new ArgumentNullException(nameof(traceParams));
             this.startEndHandler = startEndHandler;
@@ -83,7 +86,9 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public SpanContext Context { get; }
+        public Activity Activity { get; }
+
+        public SpanContext Context => this.spanContext.Value;
 
         public SpanOptions Options { get; }
 
@@ -172,7 +177,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public ActivitySpanId ParentSpanId => this.parentSpanId;
+        public ActivitySpanId ParentSpanId => this.Activity.ParentSpanId;
 
         public bool HasEnded => this.hasBeenEnded;
 
@@ -411,8 +416,8 @@ namespace OpenTelemetry.Trace
             var linksSpanData = this.links == null ? LinkList.Create(new List<ILink>(), 0) : LinkList.Create(this.links.Events, this.links.NumberOfDroppedEvents);
 
             return SpanData.Create(
-                this.Context,
-                this.parentSpanId,
+                this.Context, // TODO avoid using context, use Activity instead
+                this.ParentSpanId,
                 Resource.Empty, // TODO: determine what to do with Resource in this context
                 this.Name,
                 Timestamp.FromDateTimeOffset(this.startTime),
@@ -495,21 +500,19 @@ namespace OpenTelemetry.Trace
         }
 
         internal static ISpan StartSpan(
-                        SpanContext context,
+                        Activity activity,
                         SpanOptions options,
                         string name,
                         SpanKind spanKind,
-                        ActivitySpanId parentSpanId,
                         ITraceParams traceParams,
                         IStartEndHandler startEndHandler,
                         Timer timestampConverter)
         {
             var span = new Span(
-               context,
+               activity,
                options,
                name,
                spanKind,
-               parentSpanId,
                traceParams,
                startEndHandler,
                timestampConverter);

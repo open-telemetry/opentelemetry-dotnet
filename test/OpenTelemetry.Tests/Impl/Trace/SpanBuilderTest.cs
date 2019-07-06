@@ -337,7 +337,8 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(parentActivity.SpanId, ((Span)childSpan).ParentSpanId);
 
             Assert.NotNull(Activity.Current);
-            Assert.Equal(Activity.Current.Parent, parentActivity);
+            Assert.Equal(Activity.Current.TraceId, parentActivity.TraceId);
+            Assert.Equal(Activity.Current.ParentSpanId, parentActivity.SpanId);
         }
 
         [Fact]

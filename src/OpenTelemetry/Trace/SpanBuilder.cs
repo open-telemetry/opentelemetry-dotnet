@@ -232,24 +232,22 @@ namespace OpenTelemetry.Trace
                     activityForSpan.SpanId,
                     activeTraceParams);
 
-            ActivityTraceFlags traceOptions = ActivityTraceFlags.None;
             var spanOptions = SpanOptions.None;
             if (sampledIn || this.recordEvents)
             {
-                traceOptions |= ActivityTraceFlags.Recorded;
+                activityForSpan.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
                 spanOptions = SpanOptions.RecordEvents;
             }
             else
             {
-                traceOptions &= ~ActivityTraceFlags.Recorded;
+                activityForSpan.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
             }
 
             var span = Span.StartSpan(
-                        SpanContext.Create(activityForSpan.TraceId, activityForSpan.SpanId, traceOptions, parentContext?.Tracestate ?? Tracestate.Empty),
+                        activityForSpan, /*TODO* tracestate*/
                         spanOptions,
                         this.name,
                         this.kind,
-                        activityForSpan.ParentSpanId,
                         activeTraceParams,
                         this.options.StartEndHandler,
                         this.timestampConverter);
