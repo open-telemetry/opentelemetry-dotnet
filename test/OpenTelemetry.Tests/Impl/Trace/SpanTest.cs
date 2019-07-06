@@ -89,6 +89,52 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
+        public void GetSpanContextFromActivity()
+        {
+            var activity = new Activity(SpanName).Start();
+
+            var span =
+                Span.StartSpan(
+                    activity,
+                    recordSpanOptions,
+                    SpanName,
+                    SpanKind.Internal,
+                    TraceParams.Default,
+                    startEndHandler,
+                    timestampConverter);
+            Assert.NotNull(span.Context);
+            Assert.Equal(activity.TraceId, span.Context.TraceId);
+            Assert.Equal(activity.SpanId, span.Context.SpanId);
+            Assert.Equal(activity.ParentSpanId, ((Span)span).ParentSpanId);
+            Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
+            // TODO tracestate
+        }
+
+        [Fact]
+        public void GetSpanContextFromActivityRecordedWithParent()
+        {
+            var parent = new Activity(SpanName).Start();
+            var activity = new Activity(SpanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+
+            var span =
+                Span.StartSpan(
+                    activity,
+                    recordSpanOptions,
+                    SpanName,
+                    SpanKind.Internal,
+                    TraceParams.Default,
+                    startEndHandler,
+                    timestampConverter);
+            Assert.NotNull(span.Context);
+            Assert.Equal(activity.TraceId, span.Context.TraceId);
+            Assert.Equal(activity.SpanId, span.Context.SpanId);
+            Assert.Equal(activity.ParentSpanId, ((Span)span).ParentSpanId);
+            Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
+            // TODO tracestate
+        }
+
+        [Fact]
         public void NoEventsRecordedAfterEnd()
         {
             var activityLink = new Activity(SpanName).Start();
