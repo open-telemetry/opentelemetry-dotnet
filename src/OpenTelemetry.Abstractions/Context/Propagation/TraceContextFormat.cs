@@ -228,40 +228,10 @@ namespace OpenTelemetry.Context.Propagation
                     // front of the list.
                     for (int i = tracestateCollection.Length - 1; i >= 0; i--)
                     {
-                        if (string.IsNullOrWhiteSpace(tracestateCollection[i]))
+                        if (!tracestateCollection[i].TryExtractTracestate(tracestateBuilder))
                         {
-                            continue;
+                            return false;
                         }
-
-                        var tracestate = tracestateCollection[i].AsSpan();
-                        do
-                        {
-                            // tracestate: rojo=00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01,congo=BleGNlZWRzIHRohbCBwbGVhc3VyZS4
-                            int pairStart = tracestate.LastIndexOf(',') + 1;
-
-                            if (!this.TryParseKeyValue(tracestate.Slice(pairStart, tracestate.Length - pairStart), out var key, out var value))
-                            {
-                                return false;
-                            }
-
-                            var keyStr = key.ToString();
-                            if (names.Add(keyStr))
-                            {
-                                tracestateBuilder.Set(keyStr, value.ToString());
-                            }
-                            else
-                            {
-                                return false;
-                            }
-
-                            if (pairStart == 0)
-                            {
-                                break;
-                            }
-
-                            tracestate = tracestate.Slice(0, pairStart - 1);
-                        }
-                        while (tracestate.Length > 0);
                     }
                 }
 
