@@ -22,6 +22,7 @@ namespace OpenTelemetry.Trace
     using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Abstractions.Utils;
+    using OpenTelemetry.Context.Propagation;
 
     /// <inheritdoc/>
     public sealed class Link : ILink
@@ -47,8 +48,15 @@ namespace OpenTelemetry.Trace
         /// <returns>New <see cref="ILink"/> instance.</returns>
         public static ILink FromActivity(Activity activity)
         {
+            var tracestate = Tracestate.Empty;
+            var tracestateBuilder = Tracestate.Builder;
+            if (activity.TraceStateString.TryExtractTracestate(tracestateBuilder))
+            {
+                tracestate = tracestateBuilder.Build();
+            }
+
             return new Link(
-                SpanContext.Create(activity.TraceId, activity.SpanId, activity.ActivityTraceFlags, /*TODO*/ Tracestate.Empty),
+                SpanContext.Create(activity.TraceId, activity.SpanId, activity.ActivityTraceFlags, tracestate),
                 EmptyAttributes);
         }
 

@@ -42,7 +42,7 @@ namespace OpenTelemetry.Context.Propagation
             {
                 var names = new HashSet<string>();
 
-                var tracestate = tracestateString.AsSpan();
+                var tracestate = tracestateString.AsSpan().Trim(' ').Trim(',');
                 do
                 {
                     // tracestate: rojo=00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01,congo=BleGNlZWRzIHRohbCBwbGVhc3VyZS4

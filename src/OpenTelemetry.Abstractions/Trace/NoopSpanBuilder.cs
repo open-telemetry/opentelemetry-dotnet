@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace
 
         public ISpanBuilder SetDisableActivity(bool disableActivity)
         {
-            throw new NotImplementedException();
+            return this;
         }
 
         /// <inheritdoc/>

@@ -219,7 +219,6 @@ namespace OpenTelemetry.Trace
         private static Tracestate Create(ICollection<Entry> entries)
         {
             // TODO: discard last entries instead of throwing
-
             if (entries.Count > MaxKeyValuePairsCount)
             {
                 throw new ArgumentException("Too many entries.", nameof(entries));
@@ -303,8 +302,12 @@ namespace OpenTelemetry.Trace
             /// <returns>Tracestate builder for chained calls.</returns>
             public TracestateBuilder Set(string key, string value)
             {
-                // Initially create the Entry to validate input.
+                if (this.entries != null && this.entries.Count > MaxKeyValuePairsCount)
+                {
+                    throw new ArgumentException("Too many entries.");
+                }
 
+                // Initially create the Entry to validate input.
                 var entry = Entry.Create(key, value);
 
                 if (this.entries == null)

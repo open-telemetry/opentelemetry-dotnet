@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Context.Propagation;
+
 namespace OpenTelemetry.Trace
 {
     using System;
@@ -216,21 +218,18 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ISpan StartSpan()
         {
-            Activity activityForSpan = this.CreateActivityForSpan(this.contextSource, this.parentSpan, this.parentSpanContext, this.parentActivity, this.fromActivity);
+            var activityForSpan = this.CreateActivityForSpan(this.contextSource, this.parentSpan, this.parentSpanContext, this.parentActivity, this.fromActivity);
 
             var activeTraceParams = this.options.TraceConfig.ActiveTraceParams;
 
-            // TODO: avoid possible allocation 
-            var parentContext = this.GetParentSpanContext(activityForSpan);
-
             bool sampledIn = MakeSamplingDecision(
-                    parentContext,
-                    this.name,
-                    this.sampler,
-                    this.links,
-                    activityForSpan.TraceId,
-                    activityForSpan.SpanId,
-                    activeTraceParams);
+                this.parentSpanContext, // it is updated in CreateActivityForSpan
+                this.name,
+                this.sampler,
+                this.links,
+                activityForSpan.TraceId,
+                activityForSpan.SpanId,
+                activeTraceParams);
 
             var spanOptions = SpanOptions.None;
             if (sampledIn || this.recordEvents)
@@ -244,8 +243,8 @@ namespace OpenTelemetry.Trace
             }
 
             var span = Span.StartSpan(
-                        activityForSpan, /*TODO* tracestate*/
-                        Tracestate.Empty, 
+                        activityForSpan,
+                        this.parentSpanContext?.Tracestate ?? Tracestate.Empty, // it is updated in CreateActivityForSpan, 
                         spanOptions,
                         this.name,
                         this.kind,
@@ -311,34 +310,20 @@ namespace OpenTelemetry.Trace
             return (parent.TraceOptions & ActivityTraceFlags.Recorded) != 0 || IsAnyParentLinkSampled(parentLinks);
         }
 
-        // TODO clean up
-        private SpanContext GetParentSpanContext(Activity activityForSpan)
+        private static SpanContext ParentContextFromActivity(Activity activity)
         {
-            switch (this.contextSource)
+            var tracestate = Tracestate.Empty;
+            var tracestateBuilder = Tracestate.Builder;
+            if (activity.TraceStateString.TryExtractTracestate(tracestateBuilder))
             {
-                case ContextSource.Activity:
-                case ContextSource.CurrentActivityParent:
-                case ContextSource.ExplicitActivityParent:
-                    if (activityForSpan.ParentSpanId != default)
-                    {
-                        return SpanContext.Create(activityForSpan.TraceId, activityForSpan.ParentSpanId,
-                            ActivityTraceFlags.Recorded, /* TODO*/ Tracestate.Empty);
-                    }
-                    else
-                    {
-                        return null;
-                    }
-
-                case ContextSource.NoParent:
-                    return null;
-                case ContextSource.ExplicitRemoteParent:
-                    return this.parentSpanContext;
-                case ContextSource.ExplicitSpanParent:
-                    return this.parentSpan.Context;
-
-                default:
-                    throw new ArgumentException($"Unknown parentType {this.contextSource}");
+                tracestate = tracestateBuilder.Build();
             }
+
+            return SpanContext.Create(
+                activity.TraceId,
+                activity.ParentSpanId,
+                ActivityTraceFlags.Recorded,
+                tracestate);
         }
 
         private Activity CreateActivityForSpan(ContextSource contextSource, ISpan explicitParent, SpanContext remoteParent, Activity explicitParentActivity, Activity fromActivity)
@@ -348,7 +333,10 @@ namespace OpenTelemetry.Trace
                 case ContextSource.CurrentActivityParent:
                 {
                     // Activity will figure out its parent
-                    return new Activity(this.name).Start();
+                    var activity = new Activity(this.name).Start();
+
+                    this.parentSpanContext = ParentContextFromActivity(activity);
+                    return activity;
                 }
 
                 case ContextSource.ExplicitActivityParent:
@@ -358,17 +346,23 @@ namespace OpenTelemetry.Trace
                         this.parentActivity.ActivityTraceFlags);
                     activity.TraceStateString = this.parentActivity.TraceStateString;
 
-                    return activity.Start();
+                    activity.Start();
+
+                    this.parentSpanContext = ParentContextFromActivity(activity);
+                    return activity;
                 }
 
                 case ContextSource.NoParent:
                 {
                     // TODO fix after next DiagnosticSource preview comes out - this is a hack to force activity to become orphan
-                    return new Activity(this.name).SetParentId(" ").Start();
+                    var activity = new Activity(this.name).SetParentId(" ").Start();
+                    this.parentSpanContext = null;
+                    return activity;
                 }
 
                 case ContextSource.Activity:
                 {
+                    this.parentSpanContext = ParentContextFromActivity(this.fromActivity);
                     return this.fromActivity;
                 }
 
@@ -382,9 +376,10 @@ namespace OpenTelemetry.Trace
                             this.parentSpanContext.TraceOptions);
                     }
 
-                    // TODO tracestate!
                     activity.TraceStateString = this.parentSpanContext.Tracestate.ToString();
-                    return activity.Start();
+                    activity.Start();
+
+                    return activity;
                 }
 
                 case ContextSource.ExplicitSpanParent:
@@ -393,9 +388,11 @@ namespace OpenTelemetry.Trace
                         this.parentSpan.Context.SpanId,
                         this.parentSpan.Context.TraceOptions);
 
-                    // TODO tracestate!
                     activity.TraceStateString = this.parentSpan.Context.Tracestate.ToString();
-                    return activity.Start();
+                    activity.Start();
+
+                    this.parentSpanContext = this.parentSpan.Context;
+                    return activity;
                 }
 
                 default:
