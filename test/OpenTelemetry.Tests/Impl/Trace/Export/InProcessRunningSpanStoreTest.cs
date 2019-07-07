@@ -44,6 +44,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var activity = new Activity(spanName).Start();
             return Span.StartSpan(
                 activity,
+                Tracestate.Empty,
                 recordSpanOptions,
                 spanName,
                 SpanKind.Internal,

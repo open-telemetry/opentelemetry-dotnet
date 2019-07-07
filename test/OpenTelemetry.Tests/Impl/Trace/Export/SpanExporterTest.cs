@@ -60,6 +60,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var span =
                 Span.StartSpan(
                     sampledActivity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     spanName,
                     SpanKind.Internal,
@@ -76,6 +77,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var span =
                 Span.StartSpan(
                     notSampledActivity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     spanName,
                     SpanKind.Internal,

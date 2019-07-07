@@ -324,6 +324,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
             return (Span)Span.StartSpan(
                 activity,
+                Tracestate.Empty,
                 recordSpanOptions,
                 spanName,
                 SpanKind.Internal,
@@ -339,6 +340,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
             return (Span)Span.StartSpan(
                 activity,
+                Tracestate.Empty,
                 recordSpanOptions,
                 spanName,
                 SpanKind.Internal,

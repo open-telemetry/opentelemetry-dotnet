@@ -20,9 +20,7 @@ namespace OpenTelemetry.Context.Propagation
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using System.Text;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Utils;
 
     /// <summary>
     /// W3C trace context text wire protocol formatter. See https://github.com/w3c/distributed-tracing/.
@@ -63,97 +61,13 @@ namespace OpenTelemetry.Context.Propagation
                     return SpanContext.Blank;
                 }
 
-                var tracestateResult = Tracestate.Empty;
-                try
+                var tracestate = Tracestate.Empty;
+                if (tracestateCollection != null)
                 {
-                    var entries = new List<KeyValuePair<string, string>>();
-                    var names = new HashSet<string>();
-                    var discardTracestate = false;
-                    if (tracestateCollection != null)
-                    {
-                        foreach (var tracestate in tracestateCollection)
-                        {
-                            if (string.IsNullOrWhiteSpace(tracestate))
-                            {
-                                continue;
-                            }
-
-                            // tracestate: rojo=00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01,congo=BleGNlZWRzIHRohbCBwbGVhc3VyZS4
-                            var keyStartIdx = 0;
-                            var length = tracestate.Length;
-                            while (keyStartIdx < length)
-                            {
-                                // first skip any prefix commas and OWS
-                                var c = tracestate[keyStartIdx];
-                                while (c == ' ' || c == '\t' || c == ',')
-                                {
-                                    keyStartIdx++;
-                                    if (keyStartIdx == length)
-                                    {
-                                        break;
-                                    }
-
-                                    c = tracestate[keyStartIdx];
-                                }
-
-                                if (keyStartIdx == length)
-                                {
-                                    break;
-                                }
-
-                                var keyEndIdx = tracestate.IndexOf("=", keyStartIdx);
-
-                                if (keyEndIdx == -1)
-                                {
-                                    discardTracestate = true;
-                                    break;
-                                }
-
-                                var valueStartIdx = keyEndIdx + 1;
-
-                                var valueEndIdx = tracestate.IndexOf(",", valueStartIdx);
-                                valueEndIdx = valueEndIdx == -1 ? length : valueEndIdx;
-
-                                // this will throw for duplicated keys
-                                var key = tracestate.Substring(keyStartIdx, keyEndIdx - keyStartIdx).TrimStart();
-                                if (names.Add(key))
-                                {
-                                    entries.Add(
-                                        new KeyValuePair<string, string>(
-                                            key,
-                                            tracestate.Substring(valueStartIdx, valueEndIdx - valueStartIdx).TrimEnd()));
-                                }
-                                else
-                                {
-                                    discardTracestate = true;
-                                    break;
-                                }
-
-                                keyStartIdx = valueEndIdx + 1;
-                            }
-                        }
-                    }
-
-                    if (!discardTracestate)
-                    {
-                        var tracestateBuilder = Tracestate.Builder;
-
-                        entries.Reverse();
-                        foreach (var entry in entries)
-                        {
-                            tracestateBuilder.Set(entry.Key, entry.Value);
-                        }
-
-                        tracestateResult = tracestateBuilder.Build();
-                    }
-                }
-                catch (Exception)
-                {
-                    // failure to parse tracestate should not disregard traceparent
-                    // TODO: logging
+                    this.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
                 }
 
-                return SpanContext.Create(traceId, spanId, traceoptions, tracestateResult);
+                return SpanContext.Create(traceId, spanId, traceoptions, tracestate);
             }
             catch (Exception)
             {
@@ -172,26 +86,10 @@ namespace OpenTelemetry.Context.Propagation
 
             setter(carrier, "traceparent", traceparent);
 
-            var sb = new StringBuilder();
-            var isFirst = true;
-
-            foreach (var entry in spanContext.Tracestate.Entries)
+            string tracestateStr = spanContext.Tracestate.ToString();
+            if (tracestateStr.Length > 0)
             {
-                if (isFirst)
-                {
-                    isFirst = false;
-                }
-                else
-                {
-                    sb.Append(",");
-                }
-
-                sb.Append(entry.Key).Append("=").Append(entry.Value);
-            }
-
-            if (sb.Length > 0)
-            {
-                setter(carrier, "tracestate", sb.ToString());
+                setter(carrier, "tracestate", tracestateStr);
             }
         }
 
@@ -210,7 +108,7 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            // if version does not end with delimeter
+            // if version does not end with delimiter
             if (traceparent[VersionPrefixIdLength - 1] != '-')
             {
                 return false;
@@ -268,7 +166,7 @@ namespace OpenTelemetry.Context.Propagation
             try
             {
                 options0 = this.HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength]);
-                options1 = this.HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength]);
+                options1 = this.HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength + 1]);
             }
             catch (ArgumentOutOfRangeException)
             {
@@ -276,7 +174,7 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            if ((options0 | 1) == 1)
+            if ((options1 & 1) == 1)
             {
                 traceoptions |= ActivityTraceFlags.Recorded;
             }
@@ -315,6 +213,90 @@ namespace OpenTelemetry.Context.Propagation
             }
 
             throw new ArgumentOutOfRangeException("Invalid character: " + c);
+        }
+
+        private bool TryExtractTracestate(string[] tracestateCollection, out Tracestate tracestateResult)
+        {
+            tracestateResult = Tracestate.Empty;
+            var tracestateBuilder = Tracestate.Builder;
+            try
+            {
+                var names = new HashSet<string>();
+                if (tracestateCollection != null)
+                {
+                    // Iterate in reverse order because when call builder set the elements is added in the
+                    // front of the list.
+                    for (int i = tracestateCollection.Length - 1; i >= 0; i--)
+                    {
+                        if (string.IsNullOrWhiteSpace(tracestateCollection[i]))
+                        {
+                            continue;
+                        }
+
+                        var tracestate = tracestateCollection[i].AsSpan();
+                        do
+                        {
+                            // tracestate: rojo=00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01,congo=BleGNlZWRzIHRohbCBwbGVhc3VyZS4
+                            int pairStart = tracestate.LastIndexOf(',') + 1;
+
+                            if (!this.TryParseKeyValue(tracestate.Slice(pairStart, tracestate.Length - pairStart), out var key, out var value))
+                            {
+                                return false;
+                            }
+
+                            var keyStr = key.ToString();
+                            if (names.Add(keyStr))
+                            {
+                                tracestateBuilder.Set(keyStr, value.ToString());
+                            }
+                            else
+                            {
+                                return false;
+                            }
+
+                            if (pairStart == 0)
+                            {
+                                break;
+                            }
+
+                            tracestate = tracestate.Slice(0, pairStart - 1);
+                        }
+                        while (tracestate.Length > 0);
+                    }
+                }
+
+                tracestateResult = tracestateBuilder.Build();
+                return true;
+            }
+            catch (Exception)
+            {
+                // failure to parse tracestate should not disregard traceparent
+                // TODO: logging
+            }
+
+            return false;
+        }
+
+        private bool TryParseKeyValue(ReadOnlySpan<char> pair, out ReadOnlySpan<char> key, out ReadOnlySpan<char> value)
+        {
+            key = default;
+            value = default;
+
+            var keyEndIdx = pair.IndexOf('=');
+            if (keyEndIdx <= 0)
+            {
+                return false;
+            }
+
+            var valueStartIdx = keyEndIdx + 1;
+            if (valueStartIdx >= pair.Length)
+            {
+                return false;
+            }
+
+            key = pair.Slice(0, keyEndIdx).Trim();
+            value = pair.Slice(valueStartIdx, pair.Length - valueStartIdx).Trim();
+            return true;
         }
     }
 }

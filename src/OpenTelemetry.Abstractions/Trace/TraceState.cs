@@ -19,6 +19,7 @@ namespace OpenTelemetry.Trace
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text;
 
     /// <summary>
     /// Tracestate entries allowing different vendors to participate in a trace.
@@ -87,6 +88,35 @@ namespace OpenTelemetry.Trace
         public TracestateBuilder ToBuilder()
         {
             return new TracestateBuilder(this);
+        }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            if (this.Entries.Any())
+            {
+                var sb = new StringBuilder();
+
+                var isFirst = true;
+
+                foreach (var entry in this.Entries)
+                {
+                    if (isFirst)
+                    {
+                        isFirst = false;
+                    }
+                    else
+                    {
+                        sb.Append(",");
+                    }
+
+                    sb.Append(entry.Key).Append("=").Append(entry.Value);
+                }
+
+                return sb.ToString();
+            }
+
+            return string.Empty;
         }
 
         private static bool ValidateKey(string key)

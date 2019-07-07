@@ -68,6 +68,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     noRecordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -96,6 +97,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -120,6 +122,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -145,6 +148,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -187,6 +191,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -252,6 +257,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 (Span)Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -316,6 +322,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 (Span)Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -341,6 +348,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 (Span)Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -370,6 +378,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -424,6 +433,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -496,6 +506,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -552,6 +563,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
+                    Tracestate.Empty, 
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -590,6 +602,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 (Span)Span.StartSpan(
                     activity1,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -605,6 +618,7 @@ namespace OpenTelemetry.Trace.Test
             var span2 =
                 Span.StartSpan(
                     activity2,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -629,6 +643,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -647,6 +662,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
+                    Tracestate.Empty,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -675,6 +691,7 @@ namespace OpenTelemetry.Trace.Test
 
             var span = (Span)Span.StartSpan(
                 activity,
+                Tracestate.Empty,
                 recordSpanOptions,
                 SpanName,
                 SpanKind.Internal,

@@ -245,6 +245,7 @@ namespace OpenTelemetry.Trace
 
             var span = Span.StartSpan(
                         activityForSpan, /*TODO* tracestate*/
+                        Tracestate.Empty, 
                         spanOptions,
                         this.name,
                         this.kind,
