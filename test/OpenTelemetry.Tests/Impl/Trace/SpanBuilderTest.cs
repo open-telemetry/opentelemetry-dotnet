@@ -40,6 +40,7 @@ namespace OpenTelemetry.Trace.Test
         private readonly IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
         private readonly ITraceConfig traceConfig = Mock.Of<ITraceConfig>();
 
+        private readonly ITracer tracer;
         public SpanBuilderTest()
         {
             // TODO: remove with next DiagnosticSource preview, switch to Activity setidformat
@@ -51,7 +52,9 @@ namespace OpenTelemetry.Trace.Test
                 new SpanBuilderOptions(startEndHandler, traceConfig);
             var configMock = Mock.Get<ITraceConfig>(traceConfig);
             configMock.Setup((c) => c.ActiveTraceParams).Returns(alwaysSampleTraceParams);
-            // when(traceConfig.getActiveTraceParams()).thenReturn(alwaysSampleTraceParams);
+
+            startEndHandler = Mock.Of<IStartEndHandler>();
+            tracer = new Tracer(startEndHandler, traceConfig, null);
         }
 
         [Fact]
@@ -451,7 +454,7 @@ namespace OpenTelemetry.Trace.Test
                         ActivityTraceFlags.None, 
                         Tracestate.Builder.Set("k1", "v1").Build()))
                 .StartSpan();
-            using (CurrentSpanUtils.WithSpan(rootSpan, true))
+            using (tracer.WithSpan(rootSpan))
             {
                 var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
                     .StartSpan();
@@ -468,7 +471,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var rootSpan = new SpanBuilder(SpanName, spanBuilderOptions)
                 .StartSpan();
-            using (CurrentSpanUtils.WithSpan(rootSpan, true))
+            using (tracer.WithSpan(rootSpan))
             {
                 var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
                     .SetNoParent()

@@ -246,27 +246,5 @@ namespace OpenTelemetry.Context.Propagation
 
             return false;
         }
-
-        private bool TryParseKeyValue(ReadOnlySpan<char> pair, out ReadOnlySpan<char> key, out ReadOnlySpan<char> value)
-        {
-            key = default;
-            value = default;
-
-            var keyEndIdx = pair.IndexOf('=');
-            if (keyEndIdx <= 0)
-            {
-                return false;
-            }
-
-            var valueStartIdx = keyEndIdx + 1;
-            if (valueStartIdx >= pair.Length)
-            {
-                return false;
-            }
-
-            key = pair.Slice(0, keyEndIdx).Trim();
-            value = pair.Slice(valueStartIdx, pair.Length - valueStartIdx).Trim();
-            return true;
-        }
     }
 }

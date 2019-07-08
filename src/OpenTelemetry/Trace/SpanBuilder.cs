@@ -250,7 +250,8 @@ namespace OpenTelemetry.Trace
                         this.kind,
                         activeTraceParams,
                         this.options.StartEndHandler,
-                        this.timestampConverter);
+                        this.timestampConverter,
+                        ownsActivity: this.contextSource != ContextSource.Activity);
             LinkSpans(span, this.links);
             return span;
         }

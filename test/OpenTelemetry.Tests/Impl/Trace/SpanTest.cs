@@ -92,12 +92,14 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetSpanContextFromActivity()
         {
+            var tracestate = Tracestate.Builder.Set("k1", "v1").Build();
             var activity = new Activity(SpanName).Start();
+            activity.TraceStateString = tracestate.ToString();
 
             var span =
                 Span.StartSpan(
                     activity,
-                    Tracestate.Empty,
+                    tracestate,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -109,12 +111,13 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(activity.SpanId, span.Context.SpanId);
             Assert.Equal(activity.ParentSpanId, ((Span)span).ParentSpanId);
             Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
-            // TODO tracestate
+            Assert.Same(tracestate, span.Context.Tracestate);
         }
 
         [Fact]
         public void GetSpanContextFromActivityRecordedWithParent()
         {
+            var tracestate = Tracestate.Builder.Set("k1", "v1").Build();
             var parent = new Activity(SpanName).Start();
             var activity = new Activity(SpanName).Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -122,7 +125,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
-                    Tracestate.Empty,
+                    tracestate,
                     recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
@@ -134,7 +137,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(activity.SpanId, span.Context.SpanId);
             Assert.Equal(activity.ParentSpanId, ((Span)span).ParentSpanId);
             Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
-            // TODO tracestate
+            Assert.Same(tracestate, span.Context.Tracestate);
         }
 
         [Fact]
@@ -181,6 +184,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void ToSpanData_ActiveSpan()
         {
+
             var activityLink = new Activity(SpanName);
             activityLink.Stop();
 
@@ -220,7 +224,8 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(activity.SpanId, spanData.Context.SpanId);
             Assert.Equal(activity.ParentSpanId, spanData.ParentSpanId);
             Assert.Equal(activity.ActivityTraceFlags, spanData.Context.TraceOptions);
-            // TODO tracestate
+            Assert.Same(Tracestate.Empty, spanData.Context.Tracestate);
+
             Assert.Equal(SpanName, spanData.Name);
             Assert.Equal(activity.ParentSpanId, spanData.ParentSpanId);
             Assert.Equal(0, spanData.Attributes.DroppedAttributesCount);
@@ -289,7 +294,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(activity.SpanId, spanData.Context.SpanId);
             Assert.Equal(activity.ParentSpanId, spanData.ParentSpanId);
             Assert.Equal(activity.ActivityTraceFlags, spanData.Context.TraceOptions);
-            // TODO tracestate
+
             Assert.Equal(SpanName, spanData.Name);
             Assert.Equal(activity.ParentSpanId, spanData.ParentSpanId);
             Assert.Equal(0, spanData.Attributes.DroppedAttributesCount);
@@ -702,6 +707,81 @@ namespace OpenTelemetry.Trace.Test
             span.IsSampleToLocalSpanStore = true;
             span.End();
             Assert.True(span.IsSampleToLocalSpanStore);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void EndSpanStopsActivity(bool recordEvents)
+        {
+            var parentActivity = new Activity(SpanName).Start();
+            var activity = new Activity(SpanName).Start();
+
+            var span =
+                Span.StartSpan(
+                    activity,
+                    Tracestate.Empty, 
+                    recordEvents ? recordSpanOptions : noRecordSpanOptions,
+                    SpanName,
+                    SpanKind.Internal,
+                    TraceParams.Default,
+                    startEndHandler,
+                    timestampConverter,
+                    ownsActivity: true);
+            
+            span.End();
+            Assert.Same(parentActivity, Activity.Current);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void EndSpanDoesNotStopActivityWhenDoesNotOwnIt(bool recordEvents)
+        {
+            var activity = new Activity(SpanName).Start();
+
+            var span =
+                Span.StartSpan(
+                    activity,
+                    Tracestate.Empty,
+                    recordEvents ? recordSpanOptions : noRecordSpanOptions,
+                    SpanName,
+                    SpanKind.Internal,
+                    TraceParams.Default,
+                    startEndHandler,
+                    timestampConverter,
+                    ownsActivity: false);
+
+            span.End();
+            Assert.Equal(recordEvents, span.HasEnded);
+            Assert.Same(activity, Activity.Current);
+        }
+
+        [Theory]
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(false, false)]
+        public void EndSpanStopActivity_NotCurrentActivity(bool recordEvents, bool ownsActivity)
+        {
+            var activity = new Activity(SpanName).Start();
+
+            var span =
+                Span.StartSpan(
+                    activity,
+                    Tracestate.Empty,
+                    recordEvents ? recordSpanOptions : noRecordSpanOptions,
+                    SpanName,
+                    SpanKind.Internal,
+                    TraceParams.Default,
+                    startEndHandler,
+                    timestampConverter,
+                    ownsActivity: ownsActivity);
+
+            var anotherActivity = new Activity(SpanName).Start();
+            span.End();
+            Assert.Equal(recordEvents, span.HasEnded);
+            Assert.Same(anotherActivity, Activity.Current);
         }
 
         public void Dispose()

@@ -34,6 +34,7 @@ namespace OpenTelemetry.Trace
 
         private readonly SpanBuilderOptions spanBuilderOptions;
         private readonly SpanExporter spanExporter;
+        private readonly CurrentSpanUtils currentSpanUtils = new CurrentSpanUtils();
 
         /// <summary>
         /// Creates an instance of <see cref="ITracer"/>.
@@ -62,7 +63,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan ?? BlankSpan.Instance;
+        public ISpan CurrentSpan => this.currentSpanUtils.CurrentSpan;
 
         /// <inheritdoc/>
         public IBinaryFormat BinaryFormat { get; }
@@ -89,7 +90,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(span));
             }
 
-            return CurrentSpanUtils.WithSpan(span, false);
+            return this.currentSpanUtils.WithSpan(span, true);
         }
     }
 }

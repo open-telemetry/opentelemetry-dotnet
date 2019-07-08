@@ -52,7 +52,8 @@ namespace OpenTelemetry.Trace
                 SpanKind spanKind,
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
-                Timer timestampConverter)
+                Timer timestampConverter,
+                bool stopActivity)
         {
             this.Activity = activity;
             this.spanContext = new Lazy<SpanContext>(() => SpanContext.Create(
@@ -85,6 +86,8 @@ namespace OpenTelemetry.Trace
                 this.startTime = DateTimeOffset.MinValue;
                 this.TimestampConverter = timestampConverter;
             }
+
+            this.OwnsActivity = stopActivity;
         }
 
         public Activity Activity { get; }
@@ -189,6 +192,8 @@ namespace OpenTelemetry.Trace
         /// Gets or sets span kind.
         /// </summary>
         internal SpanKind? Kind { get; set; }
+
+        internal bool OwnsActivity { get; }
 
         internal Timer TimestampConverter { get; private set; }
 
@@ -383,6 +388,12 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void End()
         {
+            if (this.OwnsActivity && this.Activity == Activity.Current)
+            {
+                // TODO log if current is not span activity
+                this.Activity.Stop();
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -508,7 +519,8 @@ namespace OpenTelemetry.Trace
                         SpanKind spanKind,
                         ITraceParams traceParams,
                         IStartEndHandler startEndHandler,
-                        Timer timestampConverter)
+                        Timer timestampConverter,
+                        bool ownsActivity = true)
         {
             var span = new Span(
                activity,
@@ -518,7 +530,8 @@ namespace OpenTelemetry.Trace
                spanKind,
                traceParams,
                startEndHandler,
-               timestampConverter);
+               timestampConverter,
+               ownsActivity);
 
             // Call onStart here instead of calling in the constructor to make sure the span is completely
             // initialized.
