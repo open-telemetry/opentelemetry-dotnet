@@ -88,7 +88,7 @@ namespace Thrift.Transports.Client
             await OutputStream.WriteAsync(buffer, offset, length, cancellationToken);
         }
 
-        public override async Task FlushAsync(CancellationToken cancellationToken)
+        public override Task FlushAsync(CancellationToken cancellationToken)
         {
             return OutputStream.FlushAsync(cancellationToken);
         }
