@@ -90,7 +90,7 @@ namespace Thrift.Transports.Client
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
         {
-            await OutputStream.FlushAsync(cancellationToken);
+            return OutputStream.FlushAsync(cancellationToken);
         }
 
         // IDisposable
