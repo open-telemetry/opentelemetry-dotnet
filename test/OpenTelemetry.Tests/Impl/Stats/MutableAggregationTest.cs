@@ -33,8 +33,8 @@ namespace OpenTelemetry.Stats.Test
             Assert.InRange(MutableMean.Create().Mean, 0 - TOLERANCE, 0 + TOLERANCE);
             Assert.True(Double.IsNaN(MutableLastValue.Create().LastValue));
 
-            IBucketBoundaries bucketBoundaries = BucketBoundaries.Create(new List<double>() { 0.1, 2.2, 33.3 });
-            MutableDistribution mutableDistribution = MutableDistribution.Create(bucketBoundaries);
+            var bucketBoundaries = BucketBoundaries.Create(new List<double>() { 0.1, 2.2, 33.3 });
+            var mutableDistribution = MutableDistribution.Create(bucketBoundaries);
             Assert.InRange(mutableDistribution.Mean, 0, TOLERANCE);
             Assert.Equal(0, mutableDistribution.Count);
             Assert.Equal(double.PositiveInfinity, mutableDistribution.Min);
@@ -53,8 +53,8 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestNoBoundaries()
         {
-            List<Double> buckets = new List<double>();
-            MutableDistribution noBoundaries = MutableDistribution.Create(BucketBoundaries.Create(buckets));
+            var buckets = new List<double>();
+            var noBoundaries = MutableDistribution.Create(BucketBoundaries.Create(buckets));
             Assert.Single(noBoundaries.BucketCounts);
             Assert.Equal(0, noBoundaries.BucketCounts[0]);
         }
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestAdd()
         {
-            List<MutableAggregation> aggregations =
+            var aggregations =
                 new List<MutableAggregation>(){
                 MutableSum.Create(),
                 MutableCount.Create(),
@@ -70,17 +70,17 @@ namespace OpenTelemetry.Stats.Test
                 MutableDistribution.Create(BUCKET_BOUNDARIES),
                 MutableLastValue.Create(),};
 
-            List<double> values = new List<double>() { -1.0, 1.0, -5.0, 20.0, 5.0 };
+            var values = new List<double>() { -1.0, 1.0, -5.0, 20.0, 5.0 };
 
-            foreach (double value in values)
+            foreach (var value in values)
             {
-                foreach (MutableAggregation aggregation in aggregations)
+                foreach (var aggregation in aggregations)
                 {
                     aggregation.Add(value);
                 }
             }
 
-            foreach (MutableAggregation aggregation in aggregations)
+            foreach (var aggregation in aggregations)
             {
                 aggregation.Match<object>(
                     (arg) =>
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestMatch()
         {
-            List<MutableAggregation> aggregations =
+            var aggregations =
                 new List<MutableAggregation>(){
                 MutableSum.Create(),
                 MutableCount.Create(),
@@ -129,8 +129,8 @@ namespace OpenTelemetry.Stats.Test
                 MutableDistribution.Create(BUCKET_BOUNDARIES),
                 MutableLastValue.Create(),};
 
-            List<String> actual = new List<String>();
-            foreach (MutableAggregation aggregation in aggregations)
+            var actual = new List<String>();
+            foreach (var aggregation in aggregations)
             {
                 actual.Add(
                     aggregation.Match(
@@ -167,31 +167,31 @@ namespace OpenTelemetry.Stats.Test
         public void TestCombine_SumCountMean()
         {
             // combine() for Mutable Sum, Count and Mean will pick up fractional stats
-            List<MutableAggregation> aggregations1 =
+            var aggregations1 =
                 new List<MutableAggregation>() { MutableSum.Create(), MutableCount.Create(), MutableMean.Create() };
-            List<MutableAggregation> aggregations2 =
+            var aggregations2 =
                 new List<MutableAggregation>() { MutableSum.Create(), MutableCount.Create(), MutableMean.Create() };
 
-            foreach (double val in new List<double>() { -1.0, -5.0 })
+            foreach (var val in new List<double>() { -1.0, -5.0 })
             {
-                foreach (MutableAggregation aggregation in aggregations1)
+                foreach (var aggregation in aggregations1)
                 {
                     aggregation.Add(val);
                 }
             }
-            foreach (double val in new List<double>() { 10.0, 50.0 })
+            foreach (var val in new List<double>() { 10.0, 50.0 })
             {
-                foreach (MutableAggregation aggregation in aggregations2)
+                foreach (var aggregation in aggregations2)
                 {
                     aggregation.Add(val);
                 }
             }
 
-            List<MutableAggregation> combined =
+            var combined =
                 new List<MutableAggregation>() { MutableSum.Create(), MutableCount.Create(), MutableMean.Create() };
-            double fraction1 = 1.0;
-            double fraction2 = 0.6;
-            for (int i = 0; i < combined.Count; i++)
+            var fraction1 = 1.0;
+            var fraction2 = 0.6;
+            for (var i = 0; i < combined.Count; i++)
             {
                 combined[i].Combine(aggregations1[i], fraction1);
                 combined[i].Combine(aggregations2[i], fraction2);
@@ -206,24 +206,24 @@ namespace OpenTelemetry.Stats.Test
         public void TestCombine_Distribution()
         {
             // combine() for Mutable Distribution will ignore fractional stats
-            MutableDistribution distribution1 = MutableDistribution.Create(BUCKET_BOUNDARIES);
-            MutableDistribution distribution2 = MutableDistribution.Create(BUCKET_BOUNDARIES);
-            MutableDistribution distribution3 = MutableDistribution.Create(BUCKET_BOUNDARIES);
+            var distribution1 = MutableDistribution.Create(BUCKET_BOUNDARIES);
+            var distribution2 = MutableDistribution.Create(BUCKET_BOUNDARIES);
+            var distribution3 = MutableDistribution.Create(BUCKET_BOUNDARIES);
 
-            foreach (double val in new List<double>() { 5.0, -5.0 })
+            foreach (var val in new List<double>() { 5.0, -5.0 })
             {
                 distribution1.Add(val);
             }
-            foreach (double val in new List<double>() { 10.0, 20.0 })
+            foreach (var val in new List<double>() { 10.0, 20.0 })
             {
                 distribution2.Add(val);
             }
-            foreach (double val in new List<double>() { -10.0, 15.0, -15.0, -20.0 })
+            foreach (var val in new List<double>() { -10.0, 15.0, -15.0, -20.0 })
             {
                 distribution3.Add(val);
             }
 
-            MutableDistribution combined = MutableDistribution.Create(BUCKET_BOUNDARIES);
+            var combined = MutableDistribution.Create(BUCKET_BOUNDARIES);
             combined.Combine(distribution1, 1.0); // distribution1 will be combined
             combined.Combine(distribution2, 0.6); // distribution2 will be ignored
             VerifyMutableDistribution(combined, 0, 2, -5, 5, 50.0, new long[] { 0, 1, 1, 0 }, TOLERANCE);

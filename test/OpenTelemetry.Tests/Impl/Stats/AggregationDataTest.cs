@@ -28,7 +28,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestCreateDistributionData()
         {
-            IDistributionData distributionData =
+            var distributionData =
                 DistributionData.Create(7.7, 10, 1.1, 9.9, 32.2, new List<long>() { 4L, 1L, 5L });
 
             Assert.InRange(distributionData.Mean, 7.7 - TOLERANCE, 7.7 + TOLERANCE);
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestMatchAndGet()
         {
-            List<IAggregationData> aggregations =
+            var aggregations =
                 new List<IAggregationData>() {
                     SumDataDouble.Create(10.0),
                     SumDataLong.Create(100000000),
@@ -127,8 +127,8 @@ namespace OpenTelemetry.Stats.Test
                     LastValueDataLong.Create(200000000L),
                     };
 
-            List<object> actual = new List<object>();
-            foreach (IAggregationData aggregation in aggregations)
+            var actual = new List<object>();
+            foreach (var aggregation in aggregations)
             {
                 aggregation.Match<object>(
                     (arg) =>

@@ -77,7 +77,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int result = 1;
+            var result = 1;
             result = (31 * result) + (this.TraceId == null ? 0 : this.TraceId.GetHashCode());
             result = (31 * result) + (this.SpanId == null ? 0 : this.SpanId.GetHashCode());
             result = (31 * result) + (this.TraceOptions == null ? 0 : this.TraceOptions.GetHashCode());
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Trace
                 return false;
             }
 
-            SpanContext that = (SpanContext)obj;
+            var that = (SpanContext)obj;
             return this.TraceId.Equals(that.TraceId)
                 && this.SpanId.Equals(that.SpanId)
                 && this.TraceOptions.Equals(that.TraceOptions);

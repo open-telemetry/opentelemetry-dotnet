@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span options instance.</returns>
         public EndSpanOptions Build()
         {
-            string missing = string.Empty;
+            var missing = string.Empty;
             if (!this.sampleToLocalSpanStore.HasValue)
             {
                 missing += " sampleToLocalSpanStore";

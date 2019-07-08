@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace.Test
         public void GetCurrentSpan_WithSpan()
         {
             Assert.Same(BlankSpan.Instance, noopTracer.CurrentSpan);
-            IScope ws = noopTracer.WithSpan(span);
+            var ws = noopTracer.WithSpan(span);
             try
             {
                 Assert.Same(span, noopTracer.CurrentSpan);
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanWithParentFromContext()
         {
-            IScope ws = tracer.WithSpan(span);
+            var ws = tracer.WithSpan(span);
             try
             {
                 Assert.Same(span, tracer.CurrentSpan);
@@ -167,7 +167,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanWithInvalidParentFromContext()
         {
-            IScope ws = tracer.WithSpan(BlankSpan.Instance);
+            var ws = tracer.WithSpan(BlankSpan.Instance);
             try
             {
                 Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);

@@ -95,9 +95,9 @@ namespace OpenTelemetry.Exporter.Stackdriver
                 // Register stats(metrics) exporter
                 if (viewManager != null)
                 {
-                    GoogleCredential credential = GetGoogleCredential();
+                    var credential = GetGoogleCredential();
 
-                    StackdriverStatsConfiguration statsConfig = StackdriverStatsConfiguration.Default;
+                    var statsConfig = StackdriverStatsConfiguration.Default;
                     statsConfig.GoogleCredential = credential;
                     if (statsConfig.ProjectId != projectId)
                     {

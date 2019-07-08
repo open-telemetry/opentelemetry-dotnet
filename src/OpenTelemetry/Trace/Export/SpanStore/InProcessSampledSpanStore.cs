@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace.Export
         {
             get
             {
-                Dictionary<string, ISampledPerSpanNameSummary> ret = new Dictionary<string, ISampledPerSpanNameSummary>();
+                var ret = new Dictionary<string, ISampledPerSpanNameSummary>();
                 lock (this.samples)
                 {
                     foreach (var it in this.samples)
@@ -83,13 +83,13 @@ namespace OpenTelemetry.Trace.Export
             {
                 lock (this.samples)
                 {
-                    string spanName = span.Name;
+                    var spanName = span.Name;
                     if (span.IsSampleToLocalSpanStore && !this.samples.ContainsKey(spanName))
                     {
                         this.samples[spanName] = new PerSpanNameSamples();
                     }
 
-                    this.samples.TryGetValue(spanName, out PerSpanNameSamples perSpanNameSamples);
+                    this.samples.TryGetValue(spanName, out var perSpanNameSamples);
                     if (perSpanNameSamples != null)
                     {
                         perSpanNameSamples.ConsiderForSampling(span);
@@ -101,21 +101,21 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override IEnumerable<SpanData> GetErrorSampledSpans(ISampledSpanStoreErrorFilter filter)
         {
-            int numSpansToReturn = filter.MaxSpansToReturn == 0 ? MaxPerSpanNameSamples : filter.MaxSpansToReturn;
-            IEnumerable<SpanBase> spans = Enumerable.Empty<SpanBase>();
+            var numSpansToReturn = filter.MaxSpansToReturn == 0 ? MaxPerSpanNameSamples : filter.MaxSpansToReturn;
+            var spans = Enumerable.Empty<SpanBase>();
 
             // Try to not keep the lock to much, do the SpanImpl -> SpanData conversion outside the lock.
             lock (this.samples)
             {
-                PerSpanNameSamples perSpanNameSamples = this.samples[filter.SpanName];
+                var perSpanNameSamples = this.samples[filter.SpanName];
                 if (perSpanNameSamples != null)
                 {
                     spans = perSpanNameSamples.GetErrorSamples(filter.CanonicalCode, numSpansToReturn);
                 }
             }
 
-            List<SpanData> ret = new List<SpanData>(spans.Count());
-            foreach (SpanBase span in spans)
+            var ret = new List<SpanData>(spans.Count());
+            foreach (var span in spans)
             {
                 ret.Add(span.ToSpanData());
             }
@@ -126,21 +126,21 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override IEnumerable<SpanData> GetLatencySampledSpans(ISampledSpanStoreLatencyFilter filter)
         {
-            int numSpansToReturn = filter.MaxSpansToReturn == 0 ? MaxPerSpanNameSamples : filter.MaxSpansToReturn;
-            IEnumerable<SpanBase> spans = Enumerable.Empty<SpanBase>();
+            var numSpansToReturn = filter.MaxSpansToReturn == 0 ? MaxPerSpanNameSamples : filter.MaxSpansToReturn;
+            var spans = Enumerable.Empty<SpanBase>();
 
             // Try to not keep the lock to much, do the SpanImpl -> SpanData conversion outside the lock.
             lock (this.samples)
             {
-                PerSpanNameSamples perSpanNameSamples = this.samples[filter.SpanName];
+                var perSpanNameSamples = this.samples[filter.SpanName];
                 if (perSpanNameSamples != null)
                 {
                     spans = perSpanNameSamples.GetLatencySamples(filter.LatencyLower, filter.LatencyUpper, numSpansToReturn);
                 }
             }
 
-            List<SpanData> ret = new List<SpanData>(spans.Count());
-            foreach (SpanBase span in spans)
+            var ret = new List<SpanData>(spans.Count());
+            foreach (var span in spans)
             {
                 ret.Add(span.ToSpanData());
             }
@@ -164,7 +164,7 @@ namespace OpenTelemetry.Trace.Export
         {
             lock (this.samples)
             {
-                foreach (string spanName in spanNames)
+                foreach (var spanName in spanNames)
                 {
                     this.samples.Remove(spanName);
                 }
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Trace.Export
         {
             lock (this.samples)
             {
-                foreach (string spanName in spanNames)
+                foreach (var spanName in spanNames)
                 {
                     if (!this.samples.ContainsKey(spanName))
                     {
@@ -201,9 +201,9 @@ namespace OpenTelemetry.Trace.Export
             public static void GetSamples(
                 int maxSpansToReturn, ICollection<SpanBase> output, EvictingQueue<SpanBase> queue)
             {
-                SpanBase[] copy = queue.ToArray();
+                var copy = queue.ToArray();
 
-                foreach (SpanBase span in copy)
+                foreach (var span in copy)
                 {
                     if (output.Count >= maxSpansToReturn)
                     {
@@ -221,8 +221,8 @@ namespace OpenTelemetry.Trace.Export
                 ICollection<SpanBase> output,
                 EvictingQueue<SpanBase> queue)
             {
-                SpanBase[] copy = queue.ToArray();
-                foreach (SpanBase span in copy)
+                var copy = queue.ToArray();
+                foreach (var span in copy)
                 {
                     if (output.Count >= maxSpansToReturn)
                     {
@@ -293,13 +293,13 @@ namespace OpenTelemetry.Trace.Export
             public PerSpanNameSamples()
             {
                 this.latencyBuckets = new Bucket[NumLatencyBuckets];
-                for (int i = 0; i < NumLatencyBuckets; i++)
+                for (var i = 0; i < NumLatencyBuckets; i++)
                 {
                     this.latencyBuckets[i] = new Bucket(NumSamplesPerLatencySamples);
                 }
 
                 this.errorBuckets = new Bucket[NumErrorBuckets];
-                for (int i = 0; i < NumErrorBuckets; i++)
+                for (var i = 0; i < NumErrorBuckets; i++)
                 {
                     this.errorBuckets[i] = new Bucket(NumSamplesPerErrorSamples);
                 }
@@ -307,9 +307,9 @@ namespace OpenTelemetry.Trace.Export
 
             public Bucket GetLatencyBucket(TimeSpan latency)
             {
-                for (int i = 0; i < NumLatencyBuckets; i++)
+                for (var i = 0; i < NumLatencyBuckets; i++)
                 {
-                    ISampledLatencyBucketBoundaries boundaries = LatencyBucketBoundaries.Values[i];
+                    var boundaries = LatencyBucketBoundaries.Values[i];
                     if (latency >= boundaries.LatencyLower
                         && latency < boundaries.LatencyUpper)
                     {
@@ -329,13 +329,13 @@ namespace OpenTelemetry.Trace.Export
 
             public void ConsiderForSampling(SpanBase span)
             {
-                Status status = span.Status;
+                var status = span.Status;
 
                 // Null status means running Span, this should not happen in production, but the library
                 // should not crash because of this.
                 if (status != null)
                 {
-                    Bucket bucket =
+                    var bucket =
                         status.IsOk
                             ? this.GetLatencyBucket(span.Latency)
                             : this.GetErrorBucket(status.CanonicalCode);
@@ -351,7 +351,7 @@ namespace OpenTelemetry.Trace.Export
             public IDictionary<ISampledLatencyBucketBoundaries, int> GetNumbersOfLatencySampledSpans()
             {
                 IDictionary<ISampledLatencyBucketBoundaries, int> latencyBucketSummaries = new Dictionary<ISampledLatencyBucketBoundaries, int>();
-                for (int i = 0; i < NumLatencyBuckets; i++)
+                for (var i = 0; i < NumLatencyBuckets; i++)
                 {
                     latencyBucketSummaries[LatencyBucketBoundaries.Values[i]] = this.latencyBuckets[i].GetNumSamples();
                 }
@@ -362,7 +362,7 @@ namespace OpenTelemetry.Trace.Export
             public IDictionary<CanonicalCode, int> GetNumbersOfErrorSampledSpans()
             {
                 IDictionary<CanonicalCode, int> errorBucketSummaries = new Dictionary<CanonicalCode, int>();
-                for (int i = 0; i < NumErrorBuckets; i++)
+                for (var i = 0; i < NumErrorBuckets; i++)
                 {
                     errorBucketSummaries[(CanonicalCode)i + 1] = this.errorBuckets[i].GetNumSamples();
                 }
@@ -372,14 +372,14 @@ namespace OpenTelemetry.Trace.Export
 
             public IEnumerable<SpanBase> GetErrorSamples(CanonicalCode? code, int maxSpansToReturn)
             {
-                List<SpanBase> output = new List<SpanBase>(maxSpansToReturn);
+                var output = new List<SpanBase>(maxSpansToReturn);
                 if (code.HasValue)
                 {
                     this.GetErrorBucket(code.Value).GetSamples(maxSpansToReturn, output);
                 }
                 else
                 {
-                    for (int i = 0; i < NumErrorBuckets; i++)
+                    for (var i = 0; i < NumErrorBuckets; i++)
                     {
                         this.errorBuckets[i].GetSamples(maxSpansToReturn, output);
                     }
@@ -390,10 +390,10 @@ namespace OpenTelemetry.Trace.Export
 
             public IEnumerable<SpanBase> GetLatencySamples(TimeSpan latencyLower, TimeSpan latencyUpper, int maxSpansToReturn)
             {
-                List<SpanBase> output = new List<SpanBase>(maxSpansToReturn);
-                for (int i = 0; i < NumLatencyBuckets; i++)
+                var output = new List<SpanBase>(maxSpansToReturn);
+                for (var i = 0; i < NumLatencyBuckets; i++)
                 {
-                    ISampledLatencyBucketBoundaries boundaries = LatencyBucketBoundaries.Values[i];
+                    var boundaries = LatencyBucketBoundaries.Values[i];
                     if (latencyUpper >= boundaries.LatencyLower
                         && latencyLower < boundaries.LatencyUpper)
                     {

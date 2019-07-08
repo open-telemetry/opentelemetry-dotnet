@@ -34,21 +34,21 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void getTags_empty()
         {
-            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>());
+            var tags = new TagContext(new Dictionary<TagKey, TagValue>());
             Assert.Empty(tags.Tags);
         }
 
         [Fact]
         public void getTags_nonEmpty()
         {
-            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } });
+            var tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } });
             Assert.Equal(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } }, tags.Tags);
         }
 
         [Fact]
         public void Put_NewKey()
         {
-            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
+            var tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
             Assert.Equal(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } },
                 ((TagContext)tagger.ToBuilder(tags).Put(K2, V2).Build()).Tags);
         }
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void Put_ExistingKey()
         {
-            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
+            var tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
             Assert.Equal(new Dictionary<TagKey, TagValue>() { { K1, V2 } },
                 ((TagContext)tagger.ToBuilder(tags).Put(K1, V2).Build()).Tags);
         }
@@ -64,50 +64,50 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void Put_NullKey()
         {
-            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
-            ITagContextBuilder builder = tagger.ToBuilder(tags);
+            var tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
+            var builder = tagger.ToBuilder(tags);
             Assert.Throws<ArgumentNullException>(() => builder.Put(null, V2));
         }
 
         [Fact]
         public void Put_NullValue()
         {
-            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
-            ITagContextBuilder builder = tagger.ToBuilder(tags);
+            var tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
+            var builder = tagger.ToBuilder(tags);
             Assert.Throws<ArgumentNullException>(() => builder.Put(K2, null));
         }
 
         [Fact]
         public void Remove_ExistingKey()
         {
-            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } });
+            var tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } });
             Assert.Equal(new Dictionary<TagKey, TagValue>() { { K2, V2 } }, ((TagContext)tagger.ToBuilder(tags).Remove(K1).Build()).Tags);
         }
 
         [Fact]
         public void Remove_DifferentKey()
         {
-            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
+            var tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
             Assert.Equal(new Dictionary<TagKey, TagValue>() { { K1, V1 } }, ((TagContext)tagger.ToBuilder(tags).Remove(K2).Build()).Tags);
         }
 
         [Fact]
         public void Remove_NullKey()
         {
-            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
-            ITagContextBuilder builder = tagger.ToBuilder(tags);
+            var tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 } });
+            var builder = tagger.ToBuilder(tags);
             Assert.Throws<ArgumentNullException>(() => builder.Remove(null));
         }
 
         [Fact]
         public void TestIterator()
         {
-            TagContext tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } });
+            var tags = new TagContext(new Dictionary<TagKey, TagValue>() { { K1, V1 }, { K2, V2 } });
             var i = tags.GetEnumerator();
             Assert.True(i.MoveNext());
-            Tag tag1 = i.Current;
+            var tag1 = i.Current;
             Assert.True(i.MoveNext());
-            Tag tag2 = i.Current;
+            var tag2 = i.Current;
             Assert.False(i.MoveNext());
             Assert.Equal(new List<Tag>() { Tag.Create(K1, V1), Tag.Create(K2, V2)}, new List<Tag>() { tag1, tag2 });
 

@@ -29,8 +29,8 @@ namespace OpenTelemetry.Internal
 
         public static int VarIntSize(int i)
         {
-            int result = 0;
-            uint ui = (uint)i;
+            var result = 0;
+            var ui = (uint)i;
             do
             {
                 result++;
@@ -42,8 +42,8 @@ namespace OpenTelemetry.Internal
 
         public static int GetVarInt(byte[] src, int offset, int[] dst)
         {
-            int result = 0;
-            int shift = 0;
+            var result = 0;
+            var shift = 0;
             int b;
             do
             {
@@ -65,13 +65,13 @@ namespace OpenTelemetry.Internal
 
         public static int PutVarInt(int v, byte[] sink, int offset)
         {
-            uint uv = (uint)v;
+            var uv = (uint)v;
             do
             {
                 // Encode next 7 bits + terminator bit
-                uint bits = uv & 0x7F;
+                var bits = uv & 0x7F;
                 uv >>= 7;
-                byte b = (byte)(bits + ((uv != 0) ? 0x80 : 0));
+                var b = (byte)(bits + ((uv != 0) ? 0x80 : 0));
                 sink[offset++] = b;
             }
             while (uv != 0);
@@ -143,8 +143,8 @@ namespace OpenTelemetry.Internal
          */
         public static int GetVarInt(Stream inputStream)
         {
-            int result = 0;
-            int shift = 0;
+            var result = 0;
+            var shift = 0;
             int b;
             do
             {
@@ -165,15 +165,15 @@ namespace OpenTelemetry.Internal
 
         public static void PutVarInt(int v, Stream outputStream)
         {
-            byte[] bytes = new byte[VarIntSize(v)];
+            var bytes = new byte[VarIntSize(v)];
             PutVarInt(v, bytes, 0);
             outputStream.Write(bytes, 0, bytes.Length);
         }
 
         public static int VarLongSize(long v)
         {
-            int result = 0;
-            ulong uv = (ulong)v;
+            var result = 0;
+            var uv = (ulong)v;
             do
             {
                 result++;

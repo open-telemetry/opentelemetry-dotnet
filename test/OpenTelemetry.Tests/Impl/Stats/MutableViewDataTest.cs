@@ -58,14 +58,14 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void CreateMutableAggregation()
         {
-            IBucketBoundaries bucketBoundaries = BucketBoundaries.Create(new List<double>() { -1.0, 0.0, 1.0 });
+            var bucketBoundaries = BucketBoundaries.Create(new List<double>() { -1.0, 0.0, 1.0 });
 
             Assert.InRange(((MutableSum)MutableViewData.CreateMutableAggregation(Sum.Create())).Sum, 0.0 - EPSILON, 0.0 + EPSILON);
             Assert.Equal(0, ((MutableCount)MutableViewData.CreateMutableAggregation(Count.Create())).Count);
             Assert.InRange(((MutableMean)MutableViewData.CreateMutableAggregation(Mean.Create())).Mean, 0.0 - EPSILON, 0.0 + EPSILON);
             Assert.True(Double.IsNaN( ((MutableLastValue)MutableViewData.CreateMutableAggregation(LastValue.Create())).LastValue));
 
-            MutableDistribution mutableDistribution =
+            var mutableDistribution =
                 (MutableDistribution)MutableViewData.CreateMutableAggregation(Distribution.Create(bucketBoundaries));
             Assert.Equal(double.PositiveInfinity, mutableDistribution.Min);
             Assert.Equal(double.NegativeInfinity, mutableDistribution.Max);
@@ -76,24 +76,24 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void CreateAggregationData()
         {
-            IBucketBoundaries bucketBoundaries = BucketBoundaries.Create(new List<double>() { -1.0, 0.0, 1.0 });
-            List<MutableAggregation> mutableAggregations =
+            var bucketBoundaries = BucketBoundaries.Create(new List<double>() { -1.0, 0.0, 1.0 });
+            var mutableAggregations =
                 new List<MutableAggregation>() {
                     MutableCount.Create(),
                     MutableMean.Create(),
                     MutableDistribution.Create(bucketBoundaries),};
-            List<IAggregationData> aggregates = new List<IAggregationData>();
+            var aggregates = new List<IAggregationData>();
 
             aggregates.Add(MutableViewData.CreateAggregationData(MutableSum.Create(), MEASURE_DOUBLE));
             aggregates.Add(MutableViewData.CreateAggregationData(MutableSum.Create(), MEASURE_LONG));
             aggregates.Add(MutableViewData.CreateAggregationData(MutableLastValue.Create(), MEASURE_DOUBLE));
             aggregates.Add(MutableViewData.CreateAggregationData(MutableLastValue.Create(), MEASURE_LONG));
 
-            foreach (MutableAggregation mutableAggregation in mutableAggregations)
+            foreach (var mutableAggregation in mutableAggregations)
             {
                 aggregates.Add(MutableViewData.CreateAggregationData(mutableAggregation, MEASURE_DOUBLE));
             }
-            List<IAggregationData> expected = new List<IAggregationData>()
+            var expected = new List<IAggregationData>()
             {
                 SumDataDouble.Create(0),
                 SumDataLong.Create(0),

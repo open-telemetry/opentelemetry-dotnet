@@ -30,8 +30,8 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void createWithMessageAndCause()
         {
-            Exception cause = new Exception();
-            SpanContextParseException parseException = new SpanContextParseException("my message", cause);
+            var cause = new Exception();
+            var parseException = new SpanContextParseException("my message", cause);
             Assert.Equal("my message", parseException.Message);
             Assert.Equal(cause, parseException.InnerException);
         }

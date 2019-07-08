@@ -50,7 +50,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                 return;
             }
 
-            HttpRequest request = context.Request;
+            var request = context.Request;
 
             var ctx = this.Tracer.TextFormat.Extract<HttpRequest>(
                 request,
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
             // see the spec https://github.com/open-telemetry/OpenTelemetry-specs/blob/master/trace/HTTP.md
 
-            string path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
+            var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
             ISpan span = null;
             this.Tracer.SpanBuilderWithParentContext(path, SpanKind.Server, ctx).SetSampler(this.SamplerFactory(request)).StartScopedSpan(out span);

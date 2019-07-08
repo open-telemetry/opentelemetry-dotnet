@@ -40,7 +40,7 @@ namespace OpenTelemetry.Utils
                 return false;
             }
 
-            for (int i = 0; i < array1.Length; i++)
+            for (var i = 0; i < array1.Length; i++)
             {
                 if (array1[i] != array2[i])
                 {
@@ -58,8 +58,8 @@ namespace OpenTelemetry.Utils
                 return 0;
             }
 
-            int result = 1;
-            foreach (byte b in array)
+            var result = 1;
+            foreach (var b in array)
             {
                 result = (31 * result) + b;
             }
@@ -90,10 +90,10 @@ namespace OpenTelemetry.Utils
         // https://stackoverflow.com/a/24343727
         internal static uint[] CreateLookupTable()
         {
-            uint[] table = new uint[256];
-            for (int i = 0; i < 256; i++)
+            var table = new uint[256];
+            for (var i = 0; i < 256; i++)
             {
-                string s = i.ToString("x2");
+                var s = i.ToString("x2");
                 table[i] = (uint)s[0];
                 table[i] += (uint)s[1] << 16;
             }
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Utils
         // https://stackoverflow.com/a/24343727
         internal static char[] ByteToHexCharArray(byte b)
         {
-            char[] result = new char[2];
+            var result = new char[2];
 
             result[0] = (char)ByteToHexLookupTable[b];
             result[1] = (char)(ByteToHexLookupTable[b] >> 16);
@@ -119,12 +119,12 @@ namespace OpenTelemetry.Utils
                 len = src.Length;
             }
 
-            int size = len / 2;
-            byte[] bytes = new byte[size];
+            var size = len / 2;
+            var bytes = new byte[size];
             for (int i = 0, j = start; i < size; i++)
             {
-                int high = HexCharToInt(src[j++]);
-                int low = HexCharToInt(src[j++]);
+                var high = HexCharToInt(src[j++]);
+                var low = HexCharToInt(src[j++]);
                 bytes[i] = (byte)(high << 4 | low);
             }
 
@@ -133,8 +133,8 @@ namespace OpenTelemetry.Utils
 
         internal static string ByteArrayToString(byte[] bytes)
         {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < bytes.Length; i++)
+            var sb = new StringBuilder();
+            for (var i = 0; i < bytes.Length; i++)
             {
                 sb.Append(ByteToHexCharArray(bytes[i]));
             }

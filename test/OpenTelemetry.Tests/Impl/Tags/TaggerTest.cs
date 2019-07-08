@@ -61,7 +61,7 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void EmptyBuilder()
         {
-            ITagContextBuilder builder = tagger.EmptyBuilder;
+            var builder = tagger.EmptyBuilder;
             Assert.IsType<TagContextBuilder>(builder);
             Assert.Empty(TagsTestUtil.TagContextToList(builder.Build()));
         }
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Tags.Test
         public void CurrentBuilder()
         {
             ITagContext tags = new SimpleTagContext(TAG1, TAG2, TAG3);
-            ITagContextBuilder result = GetResultOfCurrentBuilder(tags);
+            var result = GetResultOfCurrentBuilder(tags);
             Assert.IsType<TagContextBuilder>(result);
             Assert.Equal(new List<Tag>() { TAG1, TAG2, TAG3 }, TagsTestUtil.TagContextToList(result.Build()));
         }
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void CurrentBuilder_DefaultIsEmpty()
         {
-            ITagContextBuilder currentBuilder = tagger.CurrentBuilder;
+            var currentBuilder = tagger.CurrentBuilder;
             Assert.IsType<TagContextBuilder>(currentBuilder);
             Assert.Empty(TagsTestUtil.TagContextToList(currentBuilder.Build()));
         }
@@ -104,10 +104,10 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void CurrentBuilder_RemoveDuplicateTags()
         {
-            Tag tag1 = Tag.Create(K1, V1);
-            Tag tag2 = Tag.Create(K1, V2);
+            var tag1 = Tag.Create(K1, V1);
+            var tag2 = Tag.Create(K1, V2);
             ITagContext tagContextWithDuplicateTags = new SimpleTagContext(tag1, tag2);
-            ITagContextBuilder result = GetResultOfCurrentBuilder(tagContextWithDuplicateTags);
+            var result = GetResultOfCurrentBuilder(tagContextWithDuplicateTags);
             Assert.Equal(new List<Tag>() { tag2 }, TagsTestUtil.TagContextToList(result.Build()));
         }
 
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Tags.Test
         public void CurrentBuilder_SkipNullTag()
         {
             ITagContext tagContextWithNullTag = new SimpleTagContext(TAG1, null, TAG2);
-            ITagContextBuilder result = GetResultOfCurrentBuilder(tagContextWithNullTag);
+            var result = GetResultOfCurrentBuilder(tagContextWithNullTag);
             Assert.Equal(new List<Tag>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(result.Build()));
         }
 
@@ -141,7 +141,7 @@ namespace OpenTelemetry.Tags.Test
 
         private ITagContextBuilder GetResultOfCurrentBuilder(ITagContext tagsToSet)
         {
-            ITagContext orig = AsyncLocalContext.CurrentTagContext;  // Context.current().withValue(ContextUtils.TAG_CONTEXT_KEY, tagsToSet).attach();
+            var orig = AsyncLocalContext.CurrentTagContext;  // Context.current().withValue(ContextUtils.TAG_CONTEXT_KEY, tagsToSet).attach();
             AsyncLocalContext.CurrentTagContext = tagsToSet;
             try
             {
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Tags.Test
         public void ToBuilder_ConvertUnknownTagContextToTagContext()
         {
             ITagContext unknownTagContext = new SimpleTagContext(TAG1, TAG2, TAG3);
-            ITagContext newTagContext = tagger.ToBuilder(unknownTagContext).Build();
+            var newTagContext = tagger.ToBuilder(unknownTagContext).Build();
             Assert.Equal(new List<Tag>() { TAG1, TAG2, TAG3 }, TagsTestUtil.TagContextToList(newTagContext));
             Assert.IsType<TagContext>(newTagContext);
         }
@@ -165,10 +165,10 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void ToBuilder_RemoveDuplicatesFromUnknownTagContext()
         {
-            Tag tag1 = Tag.Create(K1, V1);
-            Tag tag2 = Tag.Create(K1, V2);
+            var tag1 = Tag.Create(K1, V1);
+            var tag2 = Tag.Create(K1, V2);
             ITagContext tagContextWithDuplicateTags = new SimpleTagContext(tag1, tag2);
-            ITagContext newTagContext = tagger.ToBuilder(tagContextWithDuplicateTags).Build();
+            var newTagContext = tagger.ToBuilder(tagContextWithDuplicateTags).Build();
             Assert.Equal(new List<Tag>() { tag2 }, TagsTestUtil.TagContextToList(newTagContext));
         }
 
@@ -176,7 +176,7 @@ namespace OpenTelemetry.Tags.Test
         public void ToBuilder_SkipNullTag()
         {
             ITagContext tagContextWithNullTag = new SimpleTagContext(TAG1, null, TAG2);
-            ITagContext newTagContext = tagger.ToBuilder(tagContextWithNullTag).Build();
+            var newTagContext = tagger.ToBuilder(tagContextWithNullTag).Build();
             Assert.Equal(new List<Tag>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(newTagContext));
         }
 
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void GetCurrentTagContext_DefaultIsEmptyTagContext()
         {
-            ITagContext currentTagContext = tagger.CurrentTagContext;
+            var currentTagContext = tagger.CurrentTagContext;
             Assert.Empty(TagsTestUtil.TagContextToList(currentTagContext));
             Assert.IsType<TagContext>(currentTagContext);
         }
@@ -212,7 +212,7 @@ namespace OpenTelemetry.Tags.Test
         public void GetCurrentTagContext_ConvertUnknownTagContextToTagContext()
         {
             ITagContext unknownTagContext = new SimpleTagContext(TAG1, TAG2, TAG3);
-            ITagContext result = GetResultOfGetCurrentTagContext(unknownTagContext);
+            var result = GetResultOfGetCurrentTagContext(unknownTagContext);
             Assert.IsType<TagContext>(result);
             Assert.Equal(new List<Tag>() { TAG1, TAG2, TAG3 }, TagsTestUtil.TagContextToList(result));
         }
@@ -220,10 +220,10 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void GetCurrentTagContext_RemoveDuplicatesFromUnknownTagContext()
         {
-            Tag tag1 = Tag.Create(K1, V1);
-            Tag tag2 = Tag.Create(K1, V2);
+            var tag1 = Tag.Create(K1, V1);
+            var tag2 = Tag.Create(K1, V2);
             ITagContext tagContextWithDuplicateTags = new SimpleTagContext(tag1, tag2);
-            ITagContext result = GetResultOfGetCurrentTagContext(tagContextWithDuplicateTags);
+            var result = GetResultOfGetCurrentTagContext(tagContextWithDuplicateTags);
             Assert.Equal(new List<Tag>() { tag2 }, TagsTestUtil.TagContextToList(result));
         }
 
@@ -231,7 +231,7 @@ namespace OpenTelemetry.Tags.Test
         public void GetCurrentTagContext_SkipNullTag()
         {
             ITagContext tagContextWithNullTag = new SimpleTagContext(TAG1, null, TAG2);
-            ITagContext result = GetResultOfGetCurrentTagContext(tagContextWithNullTag);
+            var result = GetResultOfGetCurrentTagContext(tagContextWithNullTag);
             Assert.Equal(new List<Tag>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(result));
         }
 
@@ -255,7 +255,7 @@ namespace OpenTelemetry.Tags.Test
 
         private ITagContext GetResultOfGetCurrentTagContext(ITagContext tagsToSet)
         {
-            ITagContext orig = AsyncLocalContext.CurrentTagContext;
+            var orig = AsyncLocalContext.CurrentTagContext;
             AsyncLocalContext.CurrentTagContext = tagsToSet;
             // Context orig = Context.current().withValue(ContextUtils.TAG_CONTEXT_KEY, tagsToSet).attach();
             try
@@ -272,7 +272,7 @@ namespace OpenTelemetry.Tags.Test
         public void WithTagContext_ConvertUnknownTagContextToTagContext()
         {
             ITagContext unknownTagContext = new SimpleTagContext(TAG1, TAG2, TAG3);
-            ITagContext result = GetResultOfWithTagContext(unknownTagContext);
+            var result = GetResultOfWithTagContext(unknownTagContext);
             Assert.IsType<TagContext>(result);
             Assert.Equal(new List<Tag>() { TAG1, TAG2, TAG3 }, TagsTestUtil.TagContextToList(result));
         }
@@ -280,10 +280,10 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void WithTagContext_RemoveDuplicatesFromUnknownTagContext()
         {
-            Tag tag1 = Tag.Create(K1, V1);
-            Tag tag2 = Tag.Create(K1, V2);
+            var tag1 = Tag.Create(K1, V1);
+            var tag2 = Tag.Create(K1, V2);
             ITagContext tagContextWithDuplicateTags = new SimpleTagContext(tag1, tag2);
-            ITagContext result = GetResultOfWithTagContext(tagContextWithDuplicateTags);
+            var result = GetResultOfWithTagContext(tagContextWithDuplicateTags);
             Assert.Equal(new List<Tag>() { tag2 }, TagsTestUtil.TagContextToList(result));
         }
 
@@ -291,7 +291,7 @@ namespace OpenTelemetry.Tags.Test
         public void WithTagContext_SkipNullTag()
         {
             ITagContext tagContextWithNullTag = new SimpleTagContext(TAG1, null, TAG2);
-            ITagContext result = GetResultOfWithTagContext(tagContextWithNullTag);
+            var result = GetResultOfWithTagContext(tagContextWithNullTag);
             Assert.Equal(new List<Tag>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(result));
         }
 
@@ -321,7 +321,7 @@ namespace OpenTelemetry.Tags.Test
 
         private ITagContext GetResultOfWithTagContext(ITagContext tagsToSet)
         {
-            IScope scope = tagger.WithTagContext(tagsToSet);
+            var scope = tagger.WithTagContext(tagsToSet);
             try
             {
                 return AsyncLocalContext.CurrentTagContext;
