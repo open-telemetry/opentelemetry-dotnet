@@ -118,21 +118,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
             return this.FlushAsync(cancellationToken);
         }
 
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~JaegerUdpBatcher()
-        // {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
         public void Dispose()
         {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            // Do not change this code. Put cleanup code in Dispose(bool disposing).
             this.Dispose(true);
-
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
         }
 
         protected async Task SendAsync(Process process, List<JaegerSpan> spans, CancellationToken cancellationToken)
@@ -157,9 +146,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                     this.thriftClient.Dispose();
                     this.clientTransport.Dispose();
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
 
                 this.disposedValue = true;
             }
