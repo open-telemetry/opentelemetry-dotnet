@@ -5,8 +5,8 @@
     <TargetFrameworks Condition="$(OS) != 'Windows_NT'">netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
-  <ItemGroup Condition="$(OS) == 'Windows_NT'">
-    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
+    <Reference Include="System.Net.Http" Version="4.3.4" />
   </ItemGroup>
 
 </Project>
