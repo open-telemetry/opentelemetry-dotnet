@@ -29,10 +29,25 @@ namespace OpenTelemetry.Trace
 
         public enum Type
         {
-            STRING,
-            BOOLEAN,
-            LONG,
-            DOUBLE,
+            /// <summary>
+            /// A String AttributeValue
+            /// </summary>
+            String,
+
+            /// <summary>
+            /// A Boolean AttributeValue
+            /// </summary>
+            Boolean,
+
+            /// <summary>
+            /// A Long AttributeValue
+            /// </summary>
+            Long,
+
+            /// <summary>
+            /// A Double AttributeValue
+            /// </summary>
+            Double,
         }
 
         public static IAttributeValue<string> StringAttributeValue(string stringValue)
@@ -80,9 +95,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Creates string attribute value from value provided.
         /// </summary>
-        /// <param name="stringValue">String value.</param>
-        /// <returns>Attribute value encapsulating the provided string value.</returns>
-
+        /// <returns>String value of the AttributeValue.</returns>
         public string GetStringValue()
         {
             throw new InvalidOperationException($"This type can only return {this.GetType()} data");
@@ -103,7 +116,6 @@ namespace OpenTelemetry.Trace
             throw new InvalidOperationException($"This type can only return {this.GetType()} data");
         }
 
-        /// <inheritdoc/>
         public abstract T Match<T>(
             Func<string, T> stringFunction,
             Func<bool, T> booleanFunction,

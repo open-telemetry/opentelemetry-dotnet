@@ -1,4 +1,4 @@
-// <copyright file="AttributeValueBoolean.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AttributeValueBoolean.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace
 
         public override Type GetType()
         {
-            return AttributeValue.Type.BOOLEAN;
+            return AttributeValue.Type.Boolean;
         }
 
         public new abstract bool GetBooleanValue();
