@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Export
             (NumSamplesPerLatencySamples * NumLatencyBuckets)
                 + (NumSamplesPerErrorSamples * NumErrorBuckets);
 
-        private static TimeSpan timeBetweenSamples = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan TimeBetweenSamples = TimeSpan.FromSeconds(1);
 
         private readonly IEventQueue eventQueue;
         private readonly Dictionary<string, PerSpanNameSamples> samples;
@@ -245,7 +245,7 @@ namespace OpenTelemetry.Trace.Export
                     // Need to compare by doing the subtraction all the time because in case of an overflow,
                     // this may never sample again (at least for the next ~200 years). No real chance to
                     // overflow two times because that means the process runs for ~200 years.
-                    if (spanEndTime - this.lastSampledTime > timeBetweenSamples)
+                    if (spanEndTime - this.lastSampledTime > TimeBetweenSamples)
                     {
                         this.sampledSpansQueue.Add(span);
                         this.lastSampledTime = spanEndTime;
@@ -256,7 +256,7 @@ namespace OpenTelemetry.Trace.Export
                     // Need to compare by doing the subtraction all the time because in case of an overflow,
                     // this may never sample again (at least for the next ~200 years). No real chance to
                     // overflow two times because that means the process runs for ~200 years.
-                    if (spanEndTime - this.lastNotSampledTime > timeBetweenSamples)
+                    if (spanEndTime - this.lastNotSampledTime > TimeBetweenSamples)
                     {
                         this.notSampledSpansQueue.Add(span);
                         this.lastNotSampledTime = spanEndTime;

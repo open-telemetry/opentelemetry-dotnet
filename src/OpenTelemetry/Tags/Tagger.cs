@@ -14,12 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace;
-
 namespace OpenTelemetry.Tags
 {
     using OpenTelemetry.Context;
-    using OpenTelemetry.Internal;
+    using OpenTelemetry.Trace;
 
     public sealed class Tagger : TaggerBase
     {

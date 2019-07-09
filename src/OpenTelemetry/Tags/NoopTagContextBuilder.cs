@@ -14,13 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace;
-
 namespace OpenTelemetry.Tags
 {
     using System;
     using OpenTelemetry.Context;
-    using OpenTelemetry.Internal;
+    using OpenTelemetry.Trace;
 
     internal sealed class NoopTagContextBuilder : TagContextBuilderBase
     {

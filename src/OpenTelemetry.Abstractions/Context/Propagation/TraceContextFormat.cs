@@ -145,7 +145,7 @@ namespace OpenTelemetry.Context.Propagation
                         tracestateResult = tracestateBuilder.Build();
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // failure to parse tracestate should not disregard traceparent
                     // TODO: logging
@@ -153,7 +153,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 return SpanContext.Create(traceId, spanId, traceoptions, tracestateResult);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // TODO: logging
             }

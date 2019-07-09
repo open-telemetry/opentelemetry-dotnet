@@ -19,22 +19,21 @@ namespace OpenTelemetry.Collector.AspNetCore
     using System;
     using Microsoft.AspNetCore.Http;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Sampler;
 
     /// <summary>
     /// Options for dependencies collector.
     /// </summary>
     public class RequestsCollectorOptions
     {
-        private static Func<HttpRequest, ISampler> defaultSampler = (req) => { return null; };
+        private static readonly Func<HttpRequest, ISampler> DefaultSampler = (req) => { return null; };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RequestsCollectorOptions"/> class.
         /// </summary>
-        /// <param name="sampler">Custom sampling function, if any</param>
+        /// <param name="sampler">Custom sampling function, if any.</param>
         public RequestsCollectorOptions(Func<HttpRequest, ISampler> sampler = null)
         {
-            this.CustomSampler = sampler ?? defaultSampler;
+            this.CustomSampler = sampler ?? DefaultSampler;
         }
 
         /// <summary>

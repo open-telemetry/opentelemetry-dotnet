@@ -66,7 +66,7 @@ namespace OpenTelemetry.Stats.Test
                 using (var cts = new CancellationTokenSource())
                 {
                     var _ = Task.Run(
-                        async () =>
+                        () =>
                         {
                             while (!cts.IsCancellationRequested)
                             {

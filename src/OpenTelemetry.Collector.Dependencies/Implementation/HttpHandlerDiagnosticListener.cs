@@ -17,16 +17,13 @@
 namespace OpenTelemetry.Collector.Dependencies.Implementation
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Threading.Tasks;
     using OpenTelemetry.Collector.Dependencies.Common;
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Sampler;
 
     internal class HttpHandlerDiagnosticListener : ListenerHandler
     {

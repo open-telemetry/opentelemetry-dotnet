@@ -1,4 +1,4 @@
-﻿// <copyright file="ApplicationInsightsExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Constants.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,30 +20,30 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
     internal class Constants
     {
-        public static readonly string PACKAGE_VERSION_UNDEFINED = "undefined";
+        public static readonly string PackagVersionUndefined = "undefined";
 
-        public static readonly string LABEL_DESCRIPTION = "OpenTelemetry TagKey";
-        public static readonly string OpenTelemetry_TASK = "OpenTelemetry_task";
-        public static readonly string OpenTelemetry_TASK_DESCRIPTION = "OpenTelemetry task identifier";
+        public static readonly string LabelDescription = "OpenTelemetry TagKey";
+        public static readonly string OpenTelemetryTask = "OpenTelemetry_task";
+        public static readonly string OpenTelemetryTaskDescription = "OpenTelemetry task identifier";
 
-        public static readonly string GCP_GKE_CONTAINER = "k8s_container";
-        public static readonly string GCP_GCE_INSTANCE = "gce_instance";
-        public static readonly string AWS_EC2_INSTANCE = "aws_ec2_instance";
-        public static readonly string GLOBAL = "global";
+        public static readonly string GcpGkeContainer = "k8s_container";
+        public static readonly string GcpGceInstance = "gce_instance";
+        public static readonly string AwsEc2Instance = "aws_ec2_instance";
+        public static readonly string Global = "global";
 
-        public static readonly string PROJECT_ID_LABEL_KEY = "project_id";
-        public static readonly string OpenTelemetry_TASK_VALUE_DEFAULT = GenerateDefaultTaskValue();
+        public static readonly string ProjectIdLabelKey = "project_id";
+        public static readonly string OpenTelemetryTaskValueDefault = GenerateDefaultTaskValue();
 
-        public static readonly string GCP_GCE_INSTANCE_TYPE = "cloud.google.com/gce/instance";
-        public static readonly string GCP_INSTANCE_ID_KEY = "cloud.google.com/gce/instance_id";
-        public static readonly string GCP_ACCOUNT_ID_KEY = "cloud.google.com/gce/project_id";
-        public static readonly string GCP_ZONE_KEY = "cloud.google.com/gce/zone";
+        public static readonly string GceGcpInstanceType = "cloud.google.com/gce/instance";
+        public static readonly string GcpInstanceIdKey = "cloud.google.com/gce/instance_id";
+        public static readonly string GcpAccountIdKey = "cloud.google.com/gce/project_id";
+        public static readonly string GcpZoneKey = "cloud.google.com/gce/zone";
 
-        public static readonly string K8S_CONTAINER_TYPE = "k8s.io/container";
-        public static readonly string K8S_CLUSTER_NAME_KEY = "k8s.io/cluster/name";
-        public static readonly string K8S_CONTAINER_NAME_KEY = "k8s.io/container/name";
-        public static readonly string K8S_NAMESPACE_NAME_KEY = "k8s.io/namespace/name";
-        public static readonly string K8S_POD_NAME_KEY = "k8s.io/pod/name";
+        public static readonly string K8sContainerType = "k8s.io/container";
+        public static readonly string K8sClusterNameKey = "k8s.io/cluster/name";
+        public static readonly string K8sContainerNameKey = "k8s.io/container/name";
+        public static readonly string K8sNamespaceNameKey = "k8s.io/namespace/name";
+        public static readonly string K8sPodNameKey = "k8s.io/pod/name";
 
         private static string GenerateDefaultTaskValue()
         {

@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Trace.Export.Test
 {
     using System;
-    using System.Collections.Generic;
     using Xunit;
 
     public class NoopRunningSpanStoreTest

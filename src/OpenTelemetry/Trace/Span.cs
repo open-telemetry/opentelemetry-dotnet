@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Utils;
 
     /// <summary>
-    /// Span implementation
+    /// Span implementation.
     /// </summary>
     public sealed class Span : ISpan, IElement<Span>
     {
