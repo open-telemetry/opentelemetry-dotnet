@@ -23,7 +23,6 @@ namespace OpenTelemetry.Trace.Test
     using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 
@@ -42,7 +41,7 @@ namespace OpenTelemetry.Trace.Test
         private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
         private readonly IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
         private readonly IDictionary<String, IAttributeValue> expectedAttributes;
-        private IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
+        private readonly IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
 
         public SpanTest()
         {

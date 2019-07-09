@@ -17,17 +17,16 @@
 namespace OpenTelemetry.Trace.Test
 {
     using System;
-    using System.Collections.Generic;
     using Moq;
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 
     public class SpanBaseTest
     {
-        private RandomGenerator random;
-        private SpanContext spanContext;
-        private SpanContext notSampledSpanContext;
-        private SpanOptions spanOptions;
+        private readonly RandomGenerator random;
+        private readonly SpanContext spanContext;
+        private readonly SpanContext notSampledSpanContext;
+        private readonly SpanOptions spanOptions;
 
         public SpanBaseTest()
         {

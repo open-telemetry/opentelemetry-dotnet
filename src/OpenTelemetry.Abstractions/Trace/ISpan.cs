@@ -49,10 +49,10 @@ namespace OpenTelemetry.Trace
         bool HasEnded { get; }
 
         /// <summary>
-        /// Updates the <see cref="Span"/> name.
+        /// Updates the <see cref="ISpan"/> name.
         ///
         /// If used, this will override the name provided via <see cref="ISpanBuilder"/>.
-        /// Upon this update, any sampling behavior based on <see cref="Span"/> name will depend on the
+        /// Upon this update, any sampling behavior based on <see cref="ISpan"/> name will depend on the
         /// implementation.
         /// </summary>
         /// <param name="name">Name of the span.</param>

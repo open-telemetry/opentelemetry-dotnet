@@ -1,4 +1,20 @@
-﻿namespace Samples
+﻿// <copyright file="TestStackdriver.cs" company="OpenTelemetry Authors">
+// Copyright 2018, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
+namespace Samples
 {
     using System;
     using System.Collections.Generic;
@@ -13,14 +29,14 @@
 
     internal class TestStackdriver
     {
-        private static ITracer tracer = Tracing.Tracer;
-        private static ITagger tagger = Tags.Tagger;
+        private static readonly ITracer Tracer = Tracing.Tracer;
+        private static readonly ITagger Tagger = Tags.Tagger;
 
-        private static IStatsRecorder statsRecorder = Stats.StatsRecorder;
+        private static readonly IStatsRecorder StatsRecorder = Stats.StatsRecorder;
         private static readonly IMeasureDouble VideoSize = MeasureDouble.Create("my_org/measure/video_size", "size of processed videos", "MiB");
         private static readonly TagKey FrontendKey = TagKey.Create("my_org/keys/frontend");
 
-        private static long MiB = 1 << 20;
+        private static readonly long MiB = 1 << 20;
 
         private static readonly IViewName VideoSizeViewName = ViewName.Create("my_org/views/video_size");
 
@@ -34,14 +50,14 @@
         internal static object Run(string projectId)
         {
             var exporter = new StackdriverExporter(
-                projectId, 
+                projectId,
                 Tracing.ExportComponent,
                 Stats.ViewManager);
             exporter.Start();
 
-            var tagContextBuilder = tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
+            var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
-            var spanBuilder = tracer
+            var spanBuilder = Tracer
                 .SpanBuilder("incoming request")
                 .SetRecordEvents(true)
                 .SetSampler(Samplers.AlwaysSample);
@@ -52,10 +68,10 @@
             {
                 using (var scopedSpan = spanBuilder.StartScopedSpan())
                 {
-                    tracer.CurrentSpan.AddEvent("Processing video.");
+                    Tracer.CurrentSpan.AddEvent("Processing video.");
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));
 
-                    statsRecorder.NewMeasureMap()
+                    StatsRecorder.NewMeasureMap()
                         .Put(VideoSize, 25 * MiB)
                         .Record();
                 }

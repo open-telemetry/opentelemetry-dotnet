@@ -1,4 +1,20 @@
-﻿namespace Samples
+﻿// <copyright file="TestApplicationInsights.cs" company="OpenTelemetry Authors">
+// Copyright 2018, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
+namespace Samples
 {
     using System;
     using System.Collections.Generic;
@@ -14,19 +30,19 @@
 
     internal class TestApplicationInsights
     {
-        private static ITracer tracer = Tracing.Tracer;
-        private static ITagger tagger = Tags.Tagger;
+        private static readonly ITracer Tracer = Tracing.Tracer;
+        private static readonly ITagger Tagger = Tags.Tagger;
 
-        private static IStatsRecorder statsRecorder = Stats.StatsRecorder;
+        private static readonly IStatsRecorder StatsRecorder = Stats.StatsRecorder;
         private static readonly IMeasureLong VideoSize = MeasureLong.Create("my.org/measure/video_size", "size of processed videos", "By");
         private static readonly TagKey FrontendKey = TagKey.Create("my.org/keys/frontend");
 
-        private static long MiB = 1 << 20;
+        private static readonly long MiB = 1 << 20;
 
         private static readonly IViewName VideoSizeViewName = ViewName.Create("my.org/views/video_size");
 
         private static readonly IView VideoSizeView = View.Create(
-            VideoSizeViewName, 
+            VideoSizeViewName,
             "processed video size over time",
             VideoSize,
             Distribution.Create(BucketBoundaries.Create(new List<double>() { 0.0, 16.0 * MiB, 256.0 * MiB })),
@@ -38,9 +54,9 @@
             var exporter = new ApplicationInsightsExporter(Tracing.ExportComponent, Stats.ViewManager, TelemetryConfiguration.Active);
             exporter.Start();
 
-            var tagContextBuilder = tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
+            var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
-            var spanBuilder = tracer
+            var spanBuilder = Tracer
                 .SpanBuilder("incoming request")
                 .SetRecordEvents(true)
                 .SetSampler(Samplers.AlwaysSample);
@@ -51,10 +67,10 @@
             {
                 using (var scopedSpan = spanBuilder.StartScopedSpan())
                 {
-                    tracer.CurrentSpan.AddEvent("Start processing video.");
+                    Tracer.CurrentSpan.AddEvent("Start processing video.");
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));
-                    statsRecorder.NewMeasureMap().Put(VideoSize, 25 * MiB).Record();
-                    tracer.CurrentSpan.AddEvent("Finished processing video.");
+                    StatsRecorder.NewMeasureMap().Put(VideoSize, 25 * MiB).Record();
+                    Tracer.CurrentSpan.AddEvent("Finished processing video.");
                 }
             }
 

@@ -17,15 +17,14 @@
 namespace OpenTelemetry.Trace.Test
 {
     using Moq;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 
     public class SpanBuilderBaseTest
     {
-        private ITracer tracer;
-        private Mock<SpanBuilderBase> spanBuilder = new Mock<SpanBuilderBase>(SpanKind.Internal);
-        private Mock<SpanBase> span = new Mock<SpanBase>();
+        private readonly ITracer tracer;
+        private readonly Mock<SpanBuilderBase> spanBuilder = new Mock<SpanBuilderBase>(SpanKind.Internal);
+        private readonly Mock<SpanBase> span = new Mock<SpanBase>();
 
         public SpanBuilderBaseTest()
         {

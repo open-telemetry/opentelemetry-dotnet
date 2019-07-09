@@ -35,9 +35,9 @@ namespace OpenTelemetry.Stats.Test
         private static readonly IMeasureDouble MEASURE_DOUBLE_NO_VIEW_2 = MeasureDouble.Create("my measurement no view 2", "description", "us");
         private static readonly IViewName VIEW_NAME = ViewName.Create("my view");
 
-        private StatsComponent statsComponent;
-        private IViewManager viewManager;
-        private IStatsRecorder statsRecorder;
+        private readonly StatsComponent statsComponent;
+        private readonly IViewManager viewManager;
+        private readonly IStatsRecorder statsRecorder;
 
         public StatsRecorderTest()
         {

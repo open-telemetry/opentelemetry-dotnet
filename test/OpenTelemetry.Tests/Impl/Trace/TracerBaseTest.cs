@@ -18,7 +18,6 @@ namespace OpenTelemetry.Trace.Test
 {
     using System;
     using Moq;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 
@@ -26,9 +25,9 @@ namespace OpenTelemetry.Trace.Test
     {
         private static readonly ITracer noopTracer = TracerBase.NoopTracer;
         private static readonly string SPAN_NAME = "MySpanName";
-        private TracerBase tracer = Mock.Of<TracerBase>();
-        private SpanBuilderBase spanBuilder = new Mock<SpanBuilderBase>(SpanKind.Internal).Object;
-        private SpanBase span = Mock.Of<SpanBase>();
+        private readonly TracerBase tracer = Mock.Of<TracerBase>();
+        private readonly SpanBuilderBase spanBuilder = new Mock<SpanBuilderBase>(SpanKind.Internal).Object;
+        private readonly SpanBase span = Mock.Of<SpanBase>();
 
         public TracerBaseTest()
         {

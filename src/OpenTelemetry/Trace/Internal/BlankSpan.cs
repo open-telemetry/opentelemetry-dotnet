@@ -18,7 +18,6 @@ namespace OpenTelemetry.Trace.Internal
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Trace.Export;
 
     internal sealed class BlankSpan : SpanBase
     {

@@ -1,4 +1,4 @@
-﻿// <copyright file="ApplicationInsightsExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MetricsConversions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
+    using System.Collections.Generic;
     using Google.Api;
     using Google.Cloud.Monitoring.V3;
     using Google.Protobuf.WellKnownTypes;
@@ -24,20 +25,19 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
-    using System.Collections.Generic;
     using static Google.Api.Distribution.Types;
     using static Google.Api.MetricDescriptor.Types;
 
     /// <summary>
-    /// Conversion methods from OpenTelemetry Stats API to Stackdriver Metrics API
+    /// Conversion methods from OpenTelemetry Stats API to Stackdriver Metrics API.
     /// </summary>
     internal static class MetricsConversions
     {
         /// <summary>
-        /// Converts between OpenTelemetry aggregation and Stackdriver metric kind
+        /// Converts between OpenTelemetry aggregation and Stackdriver metric kind.
         /// </summary>
-        /// <param name="aggregation">Stats Aggregation</param>
-        /// <returns>Stackdriver Metric Kind</returns>
+        /// <param name="aggregation">Stats Aggregation.</param>
+        /// <returns>Stackdriver Metric Kind.</returns>
         public static MetricKind ToMetricKind(
             this IAggregation aggregation)
         {
@@ -51,17 +51,19 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         }
 
         /// <summary>
-        /// Converts from OpenTelemetry Measure+Aggregation to Stackdriver's ValueType
+        /// Converts from OpenTelemetry Measure+Aggregation to Stackdriver's ValueType.
         /// </summary>
-        /// <param name="measure">OpenTelemetry Measure definition</param>
-        /// <param name="aggregation">OpenTelemetry Aggregation definition</param>
-        /// <returns></returns>
+        /// <param name="measure">OpenTelemetry Measure definition.</param>
+        /// <param name="aggregation">OpenTelemetry Aggregation definition.</param>
+        /// <returns><see cref="ValueType"/>.</returns>
         public static ValueType ToValueType(
             this IMeasure measure, IAggregation aggregation)
         {
             var metricKind = aggregation.ToMetricKind();
             if (aggregation is IDistribution && (metricKind == MetricKind.Cumulative || metricKind == MetricKind.Gauge))
+            {
                 return ValueType.Distribution;
+            }
 
             if (measure is IMeasureDouble && (metricKind == MetricKind.Cumulative || metricKind == MetricKind.Gauge))
             {
@@ -82,7 +84,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             var labelDescriptor = new LabelDescriptor();
             
             labelDescriptor.Key = GetStackdriverLabelKey(tagKey.Name);
-            labelDescriptor.Description = Constants.LABEL_DESCRIPTION;
+            labelDescriptor.Description = Constants.LabelDescription;
 
             // TODO - zeltser - Now we only support string tags
             labelDescriptor.ValueType = LabelDescriptor.Types.ValueType.String;
@@ -101,21 +103,21 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 Count = distributionData.Count,
                 Mean = distributionData.Mean,
                 SumOfSquaredDeviation = distributionData.SumOfSquaredDeviations,
-                Range = new Range { Max = distributionData.Max, Min = distributionData.Min }
+                Range = new Range { Max = distributionData.Max, Min = distributionData.Min },
             };
 
             return distribution;
         }
 
         /// <summary>
-        /// Creates Stackdriver MetricDescriptor from OpenTelemetry View
+        /// Creates Stackdriver MetricDescriptor from OpenTelemetry View.
         /// </summary>
-        /// <param name="metricDescriptorTypeName">Metric Descriptor full type name</param>
-        /// <param name="view">OpenTelemetry View</param>
-        /// <param name="project">Google Cloud Project Name</param>
-        /// <param name="domain"></param>
-        /// <param name="displayNamePrefix"></param>
-        /// <returns></returns>
+        /// <param name="metricDescriptorTypeName">Metric Descriptor full type name.</param>
+        /// <param name="view">OpenTelemetry View.</param>
+        /// <param name="project">Google Cloud Project Name.</param>
+        /// <param name="domain">The Domain.</param>
+        /// <param name="displayNamePrefix">Display Name Prefix.</param>
+        /// <returns><see cref="MetricDescriptor"/>.</returns>
         public static MetricDescriptor CreateMetricDescriptor(
             string metricDescriptorTypeName,
             IView view,
@@ -136,11 +138,12 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 var labelDescriptor = tagKey.ToLabelDescriptor();
                 metricDescriptor.Labels.Add(labelDescriptor);
             }
+
             metricDescriptor.Labels.Add(
                 new LabelDescriptor
                 {
-                    Key = Constants.OpenTelemetry_TASK,
-                    Description = Constants.OpenTelemetry_TASK_DESCRIPTION,
+                    Key = Constants.OpenTelemetryTask,
+                    Description = Constants.OpenTelemetryTaskDescription,
                     ValueType = LabelDescriptor.Types.ValueType.String,
                 });
 
@@ -161,59 +164,22 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 v => new TypedValue { Int64Value = v.Sum }, // Long
                 v => new TypedValue { Int64Value = v.Count }, // Count
                 v => new TypedValue { DoubleValue = v.Count }, // Mean
-                v => new TypedValue { DistributionValue = CreateDistribution(v, ((IDistribution)aggregation).BucketBoundaries) }, //Distribution
+                v => new TypedValue { DistributionValue = CreateDistribution(v, ((IDistribution)aggregation).BucketBoundaries) }, // Distribution
                 v => new TypedValue { DoubleValue = v.LastValue }, // LastValue Double
                 v => new TypedValue { Int64Value = v.LastValue }, // LastValue Long
                 v => new TypedValue { BoolValue = false }); // Default
         }
 
-        /// <summary>
-        /// Create a list of counts for Stackdriver from the list of counts in OpenTelemetry
-        /// </summary>
-        /// <param name="bucketCounts">OpenTelemetry list of counts</param>
-        /// <returns></returns>
-        private static IEnumerable<long> CreateBucketCounts(IReadOnlyList<long> bucketCounts)
-        {
-            // The first bucket (underflow bucket) should always be 0 count because the Metrics first bucket
-            // is [0, first_bound) but Stackdriver distribution consists of an underflow bucket (number 0).
-            var ret = new List<long>();
-            ret.Add(0L);
-            ret.AddRange(bucketCounts);
-            return ret;
-        }
-
-        /// <summary>
-        /// Converts <see cref="IBucketBoundaries"/> to Stackdriver's <see cref="BucketOptions"/>
-        /// </summary>
-        /// <param name="bucketBoundaries"></param>
-        /// <returns></returns>
-        private static BucketOptions ToBucketOptions(this IBucketBoundaries bucketBoundaries)
-        {
-            // The first bucket bound should be 0.0 because the Metrics first bucket is
-            // [0, first_bound) but Stackdriver monitoring bucket bounds begin with -infinity
-            // (first bucket is (-infinity, 0))
-            var bucketOptions = new BucketOptions
-            {
-                ExplicitBuckets = new BucketOptions.Types.Explicit
-                {
-                    Bounds = { 0.0 }
-                }
-            };
-            bucketOptions.ExplicitBuckets.Bounds.AddRange(bucketBoundaries.Boundaries);
-
-            return bucketOptions;
-        }
-
         // Create a Metric using the TagKeys and TagValues.
 
         /// <summary>
-        /// Generate Stackdriver Metric from OpenTelemetry View
+        /// Generate Stackdriver Metric from OpenTelemetry View.
         /// </summary>
-        /// <param name="view"></param>
-        /// <param name="tagValues"></param>
-        /// <param name="metricDescriptor">Stackdriver Metric Descriptor</param>
-        /// <param name="domain"></param>
-        /// <returns></returns>
+        /// <param name="view">A <see cref="IView"/>.</param>
+        /// <param name="tagValues">A list of <see cref="TagValue"/>.</param>
+        /// <param name="metricDescriptor">Stackdriver Metric Descriptor.</param>
+        /// <param name="domain">The domain.</param>
+        /// <returns><see cref="Metric"/>.</returns>
         public static Metric GetMetric(
             IView view,
             IReadOnlyList<TagValue> tagValues,
@@ -238,7 +204,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 var labelKey = GetStackdriverLabelKey(key.Name);
                 metric.Labels.Add(labelKey, value.AsString);
             }
-            metric.Labels.Add(Constants.OpenTelemetry_TASK, Constants.OpenTelemetry_TASK_VALUE_DEFAULT);
+
+            metric.Labels.Add(Constants.OpenTelemetryTask, Constants.OpenTelemetryTaskValueDefault);
 
             // TODO - zeltser - make sure all the labels from the metric descriptor were fulfilled
             return metric;
@@ -247,11 +214,11 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <summary>
         /// Convert ViewData to a list of TimeSeries, so that ViewData can be uploaded to Stackdriver.
         /// </summary>
-        /// <param name="viewData">OpenTelemetry View</param>
-        /// <param name="metricDescriptor">Stackdriver Metric Descriptor</param>
-        /// <param name="monitoredResource">Stackdriver Resource to which the metrics belong</param>
-        /// <param name="domain">The metrics domain (namespace)</param>
-        /// <returns></returns>
+        /// <param name="viewData">OpenTelemetry View.</param>
+        /// <param name="monitoredResource">Stackdriver Resource to which the metrics belong.</param>
+        /// <param name="metricDescriptor">Stackdriver Metric Descriptor.</param>
+        /// <param name="domain">The metrics domain (namespace).</param>
+        /// <returns><see cref="List{T}"/>.</returns>
         public static List<TimeSeries> CreateTimeSeriesList(
             IViewData viewData,
             MonitoredResource monitoredResource,
@@ -290,24 +257,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             return timeSeriesList;
         }
 
-        private static Point ExtractPointInInterval(
-            System.DateTimeOffset startTime,
-            System.DateTimeOffset endTime, 
-            IAggregation aggregation, 
-            IAggregationData points)
-        {
-            return new Point
-            {
-                Value = CreateTypedValue(aggregation, points),
-                Interval = CreateTimeInterval(startTime, endTime)
-            };
-        }
-
-        private static TimeInterval CreateTimeInterval(System.DateTimeOffset start, System.DateTimeOffset end)
-        {
-            return new TimeInterval { StartTime = start.ToTimestamp(), EndTime = end.ToTimestamp() };
-        }
-
         internal static string GetUnit(IAggregation aggregation, IMeasure measure)
         {
             if (aggregation is ICount)
@@ -324,13 +273,68 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         }
 
         /// <summary>
-        /// Creates Stackdriver Label name
+        /// Creates Stackdriver Label name.
         /// </summary>
-        /// <param name="label">OpenTelemetry label</param>
-        /// <returns>Label name that complies with Stackdriver label naming rules</returns>
+        /// <param name="label">OpenTelemetry label.</param>
+        /// <returns>Label name that complies with Stackdriver label naming rules.</returns>
         internal static string GetStackdriverLabelKey(string label)
         {
             return label.Replace('/', '_');
+        }
+
+        private static Point ExtractPointInInterval(
+            System.DateTimeOffset startTime,
+            System.DateTimeOffset endTime, 
+            IAggregation aggregation, 
+            IAggregationData points)
+        {
+            return new Point
+            {
+                Value = CreateTypedValue(aggregation, points),
+                Interval = CreateTimeInterval(startTime, endTime),
+            };
+        }
+
+        /// <summary>
+        /// Create a list of counts for Stackdriver from the list of counts in OpenTelemetry.
+        /// </summary>
+        /// <param name="bucketCounts">OpenTelemetry list of counts.</param>
+        /// <returns><see cref="IEnumerable{T}"/>.</returns>
+        private static IEnumerable<long> CreateBucketCounts(IReadOnlyList<long> bucketCounts)
+        {
+            // The first bucket (underflow bucket) should always be 0 count because the Metrics first bucket
+            // is [0, first_bound) but Stackdriver distribution consists of an underflow bucket (number 0).
+            var ret = new List<long>();
+            ret.Add(0L);
+            ret.AddRange(bucketCounts);
+            return ret;
+        }
+
+        /// <summary>
+        /// Converts <see cref="IBucketBoundaries"/> to Stackdriver's <see cref="BucketOptions"/>.
+        /// </summary>
+        /// <param name="bucketBoundaries">A <see cref="IBucketBoundaries"/> representing the bucket boundaries.</param>
+        /// <returns><see cref="BucketOptions"/>.</returns>
+        private static BucketOptions ToBucketOptions(this IBucketBoundaries bucketBoundaries)
+        {
+            // The first bucket bound should be 0.0 because the Metrics first bucket is
+            // [0, first_bound) but Stackdriver monitoring bucket bounds begin with -infinity
+            // (first bucket is (-infinity, 0))
+            var bucketOptions = new BucketOptions
+            {
+                ExplicitBuckets = new BucketOptions.Types.Explicit
+                {
+                    Bounds = { 0.0 },
+                },
+            };
+            bucketOptions.ExplicitBuckets.Bounds.AddRange(bucketBoundaries.Boundaries);
+
+            return bucketOptions;
+        }
+
+        private static TimeInterval CreateTimeInterval(System.DateTimeOffset start, System.DateTimeOffset end)
+        {
+            return new TimeInterval { StartTime = start.ToTimestamp(), EndTime = end.ToTimestamp() };
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="ApplicationInsightsExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="GoogleCloudResourceUtils.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,13 +16,12 @@
 
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
-    using Google.Api;
     using System;
-    using System.Collections.Generic;
     using System.IO;
+    using Google.Api;
 
     /// <summary>
-    /// Utility methods for working with Google Cloud Resources
+    /// Utility methods for working with Google Cloud Resources.
     /// </summary>
     public static class GoogleCloudResourceUtils
     {
@@ -30,9 +29,9 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// Detects Google Cloud ProjectId based on the environment on which the code runs.
         /// Supports GCE/GKE/GAE and projectId tied to service account
         /// In case the code runs in a different environment,
-        /// the method returns null
+        /// the method returns null.
         /// </summary>
-        /// <returns>Google Cloud Project ID</returns>
+        /// <returns>Google Cloud Project ID.</returns>
         public static string GetProjectId()
         {
             // Try to detect projectId from the environment where the code is running
@@ -59,14 +58,15 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         }
 
         /// <summary>
-        /// Determining the resource to which the metrics belong
+        /// Determining the resource to which the metrics belong.
         /// </summary>
-        /// <returns>Stackdriver Monitored Resource</returns>
+        /// <param name="projectId">The project id.</param>
+        /// <returns>Stackdriver Monitored Resource.</returns>
         public static MonitoredResource GetDefaultResource(string projectId)
         {
             var resource = new MonitoredResource();
-            resource.Type = Constants.GLOBAL;
-            resource.Labels.Add(Constants.PROJECT_ID_LABEL_KEY, projectId);
+            resource.Type = Constants.Global;
+            resource.Labels.Add(Constants.ProjectIdLabelKey, projectId);
 
             // TODO - zeltser - setting monitored resource labels for detected resource
             // along with all the other metadata

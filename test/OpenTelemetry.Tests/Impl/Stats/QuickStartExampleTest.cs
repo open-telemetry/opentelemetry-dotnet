@@ -26,7 +26,7 @@ namespace OpenTelemetry.Stats.Test
 
     public class QuickStartExampleTest
     {
-        ITestOutputHelper output;
+        readonly ITestOutputHelper output;
 
         public QuickStartExampleTest(ITestOutputHelper output)
         {

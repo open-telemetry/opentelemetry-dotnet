@@ -1,4 +1,20 @@
-﻿namespace Samples
+﻿// <copyright file="TestRedis.cs" company="OpenTelemetry Authors">
+// Copyright 2018, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
+namespace Samples
 {
     using System;
     using System.Collections.Generic;
@@ -6,7 +22,6 @@
     using OpenTelemetry.Collector.StackExchangeRedis;
     using OpenTelemetry.Exporter.Zipkin;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Sampler;
     using StackExchange.Redis;
 
@@ -36,7 +51,7 @@
             // but if not - you can use it as follows:
             var tracer = Tracing.Tracer;
 
-            var collector = new StackExchangeRedisCallsCollector(null, tracer, null, Tracing.ExportComponent);
+            var collector = new StackExchangeRedisCallsCollector(tracer, null, Tracing.ExportComponent);
 
             // connect to the server
             var connection = ConnectionMultiplexer.Connect("localhost:6379");
@@ -45,14 +60,13 @@
             // select a database (by default, DB = 0)
             var db = connection.GetDatabase();
 
-
             // 4. Create a scoped span. It will end automatically when using statement ends
             using (var scope = tracer.SpanBuilder("Main").StartScopedSpan())
             {
                 Console.WriteLine("About to do a busy work");
                 for (var i = 0; i < 10; i++)
                 {
-                    DoWork(db, i);
+                    DoWork(db);
                 }
             }
 
@@ -62,7 +76,7 @@
             return null;
         }
 
-        private static void DoWork(IDatabase db, int i)
+        private static void DoWork(IDatabase db)
         {
             // 6. Get the global singleton Tracer object
             var tracer = Tracing.Tracer;
@@ -86,7 +100,6 @@
                     var myVal = db.StringGet("key");
 
                     Console.WriteLine(myVal);
-
                 }
                 catch (ArgumentOutOfRangeException e)
                 {
@@ -95,8 +108,10 @@
                 }
 
                 // 7. Annotate our span to capture metadata about our operation
-                var attributes = new Dictionary<string, IAttributeValue>();
-                attributes.Add("use", AttributeValue.StringAttributeValue("demo"));
+                var attributes = new Dictionary<string, IAttributeValue>
+                {
+                    { "use", AttributeValue.StringAttributeValue("demo") },
+                };
                 span.AddEvent("Invoking DoWork", attributes);
             }
         }
