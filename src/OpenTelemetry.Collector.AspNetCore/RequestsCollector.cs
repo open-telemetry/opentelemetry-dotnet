@@ -18,12 +18,9 @@ namespace OpenTelemetry.Collector.AspNetCore
 {
     using System;
     using System.Collections.Generic;
-    using System.Globalization;
-    using System.Threading;
     using Microsoft.AspNetCore.Http;
     using OpenTelemetry.Collector.AspNetCore.Common;
     using OpenTelemetry.Collector.AspNetCore.Implementation;
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
 
     /// <summary>
@@ -39,7 +36,6 @@ namespace OpenTelemetry.Collector.AspNetCore
         /// <param name="options">Configuration options for dependencies collector.</param>
         /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="sampler">Sampler to use to sample dependency calls.</param>
-        /// <param name="propagationComponent">Wire context propagation component.</param>
         public RequestsCollector(RequestsCollectorOptions options, ITracer tracer, ISampler sampler)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(

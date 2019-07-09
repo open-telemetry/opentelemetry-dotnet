@@ -50,7 +50,7 @@ namespace OpenTelemetry.Context.Propagation
                 if (traceparentCollection.Count() > 1)
                 {
                     // multiple traceparent are not allowed
-                    return null;
+                    return SpanContext.Blank;
                 }
 
                 var traceparent = traceparentCollection?.FirstOrDefault();
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 if (!traceparentParsed)
                 {
-                    return null;
+                    return SpanContext.Blank;
                 }
 
                 var tracestateResult = Tracestate.Empty;
@@ -145,7 +145,7 @@ namespace OpenTelemetry.Context.Propagation
                         tracestateResult = tracestateBuilder.Build();
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // failure to parse tracestate should not disregard traceparent
                     // TODO: logging
@@ -153,13 +153,13 @@ namespace OpenTelemetry.Context.Propagation
 
                 return SpanContext.Create(traceId, spanId, traceoptions, tracestateResult);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // TODO: logging
             }
 
             // in case of exception indicate to upstream that there is no parseable context from the top
-            return null;
+            return SpanContext.Blank;
         }
 
         /// <inheritdoc/>

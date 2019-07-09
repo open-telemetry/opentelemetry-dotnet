@@ -38,6 +38,7 @@ namespace OpenTelemetry.Trace.Internal
         /// You might get the same values if a random is accessed from different threads.
         /// Use only for unit tests...
         /// </summary>
+        /// <param name="seed">The seeds value for the rng.</param>
         internal RandomGenerator(int seed)
         {
             this.sameSeed = true;

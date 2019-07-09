@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Tags.Test
 {
     using System.Collections.Generic;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Tags.Unsafe;
     using Xunit;
 

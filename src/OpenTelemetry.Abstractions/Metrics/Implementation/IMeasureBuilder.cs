@@ -16,8 +16,6 @@
 
 namespace OpenTelemetry.Metrics.Implementation
 {
-    using System;
-
     /// <summary>
     /// Builder for the <see cref="IMeasure"/>.
     /// </summary>

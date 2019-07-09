@@ -20,6 +20,7 @@ namespace OpenTelemetry.Trace.Sampler
     using System.Collections.Generic;
     using OpenTelemetry.Utils;
 
+    /// <inheritdoc />
     public sealed class ProbabilitySampler : ISampler
     {
         private ProbabilitySampler(double probability, long idUpperBound)
@@ -28,84 +29,12 @@ namespace OpenTelemetry.Trace.Sampler
             this.IdUpperBound = idUpperBound;
         }
 
-        public string Description
-        {
-            get
-            {
-                return string.Format("ProbabilitySampler({0:F6})", this.Probability);
-            }
-        }
+        /// <inheritdoc />
+        public string Description => $"ProbabilitySampler({this.Probability:F6})";
 
         public double Probability { get; }
 
         public long IdUpperBound { get; }
-
-        public bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ISpan> parentLinks)
-        {
-            // If the parent is sampled keep the sampling decision.
-            if (parentContext != null && parentContext.TraceOptions.IsSampled)
-            {
-                return true;
-            }
-
-            if (parentLinks != null)
-            {
-                // If any parent link is sampled keep the sampling decision.
-                foreach (var parentLink in parentLinks)
-                {
-                    if (parentLink.Context.TraceOptions.IsSampled)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            // Always sample if we are within probability range. This is true even for child spans (that
-            // may have had a different sampling decision made) to allow for different sampling policies,
-            // and dynamic increases to sampling probabilities for debugging purposes.
-            // Note use of '<' for comparison. This ensures that we never sample for probability == 0.0,
-            // while allowing for a (very) small chance of *not* sampling if the id == Long.MAX_VALUE.
-            // This is considered a reasonable tradeoff for the simplicity/performance requirements (this
-            // code is executed in-line for every Span creation).
-            return Math.Abs(traceId.LowerLong) < this.IdUpperBound;
-        }
-
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return "ProbabilitySampler{"
-                + "probability=" + this.Probability + ", "
-                + "idUpperBound=" + this.IdUpperBound
-                + "}";
-        }
-
-    /// <inheritdoc/>
-        public override bool Equals(object o)
-        {
-            if (o == this)
-            {
-                return true;
-            }
-
-            if (o is ProbabilitySampler that)
-            {
-                return DoubleUtil.ToInt64(this.Probability) == DoubleUtil.ToInt64(that.Probability)
-                     && (this.IdUpperBound == that.IdUpperBound);
-            }
-
-            return false;
-        }
-
-    /// <inheritdoc/>
-        public override int GetHashCode()
-        {
-            long h = 1;
-            h *= 1000003;
-            h ^= (DoubleUtil.ToInt64(this.Probability) >> 32) ^ DoubleUtil.ToInt64(this.Probability);
-            h *= 1000003;
-            h ^= (this.IdUpperBound >> 32) ^ this.IdUpperBound;
-            return (int)h;
-        }
 
         public static ProbabilitySampler Create(double probability)
         {
@@ -134,6 +63,74 @@ namespace OpenTelemetry.Trace.Sampler
             }
 
             return new ProbabilitySampler(probability, idUpperBound);
+        }
+
+        /// <inheritdoc />
+        public bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ILink> links)
+        {
+            // If the parent is sampled keep the sampling decision.
+            if (parentContext != null && parentContext.TraceOptions.IsSampled)
+            {
+                return true;
+            }
+
+            if (links != null)
+            {
+                // If any parent link is sampled keep the sampling decision.
+                foreach (var parentLink in links)
+                {
+                    if (parentLink.Context.TraceOptions.IsSampled)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            // Always sample if we are within probability range. This is true even for child spans (that
+            // may have had a different sampling decision made) to allow for different sampling policies,
+            // and dynamic increases to sampling probabilities for debugging purposes.
+            // Note use of '<' for comparison. This ensures that we never sample for probability == 0.0,
+            // while allowing for a (very) small chance of *not* sampling if the id == Long.MAX_VALUE.
+            // This is considered a reasonable tradeoff for the simplicity/performance requirements (this
+            // code is executed in-line for every Span creation).
+            return Math.Abs(traceId.LowerLong) < this.IdUpperBound;
+        }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return "ProbabilitySampler{"
+                + "probability=" + this.Probability + ", "
+                + "idUpperBound=" + this.IdUpperBound
+                + "}";
+        }
+
+        /// <inheritdoc/>
+        public override bool Equals(object o)
+        {
+            if (o == this)
+            {
+                return true;
+            }
+
+            if (o is ProbabilitySampler that)
+            {
+                return DoubleUtil.ToInt64(this.Probability) == DoubleUtil.ToInt64(that.Probability)
+                     && (this.IdUpperBound == that.IdUpperBound);
+            }
+
+            return false;
+        }
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            long h = 1;
+            h *= 1000003;
+            h ^= (DoubleUtil.ToInt64(this.Probability) >> 32) ^ DoubleUtil.ToInt64(this.Probability);
+            h *= 1000003;
+            h ^= (this.IdUpperBound >> 32) ^ this.IdUpperBound;
+            return (int)h;
         }
     }
 }

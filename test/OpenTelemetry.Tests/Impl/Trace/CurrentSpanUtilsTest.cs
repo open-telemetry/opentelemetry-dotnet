@@ -17,16 +17,15 @@
 namespace OpenTelemetry.Trace.Test
 {
     using Moq;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 
     public class CurrentSpanUtilsTest
     {
-        private ISpan span;
-        private RandomGenerator random;
-        private SpanContext spanContext;
-        private SpanOptions spanOptions;
+        private readonly ISpan span;
+        private readonly RandomGenerator random;
+        private readonly SpanContext spanContext;
+        private readonly SpanOptions spanOptions;
 
         public CurrentSpanUtilsTest()
         {
@@ -39,7 +38,7 @@ namespace OpenTelemetry.Trace.Test
                     Tracestate.Empty);
 
             spanOptions = SpanOptions.RecordEvents;
-            var mockSpan = new Mock<TestSpan>(spanContext, spanOptions) { CallBase = true };
+            var mockSpan = new Mock<TestSpan>() { CallBase = true };
             span = mockSpan.Object;
         }
 

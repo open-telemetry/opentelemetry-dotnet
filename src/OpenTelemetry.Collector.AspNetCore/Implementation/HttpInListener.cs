@@ -23,7 +23,6 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Http.Features;
     using OpenTelemetry.Collector.AspNetCore.Common;
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
 
     internal class HttpInListener : ListenerHandler
@@ -60,13 +59,13 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
-            ISpan span = null;
-            this.Tracer.SpanBuilderWithParentContext(path, SpanKind.Server, ctx).SetSampler(this.SamplerFactory(request)).StartScopedSpan(out span);
-            if (span == null)
-            {
-                // Debug.WriteLine("span is null");
-                return;
-            }
+            ISpan span = this.Tracer.SpanBuilder(path)
+                .SetSpanKind(SpanKind.Server)
+                .SetParent(ctx)
+                .SetSampler(this.SamplerFactory(request))
+                .StartSpan();
+
+            this.Tracer.WithSpan(span);
 
             // Note, route is missing at this stage. It will be available later
 

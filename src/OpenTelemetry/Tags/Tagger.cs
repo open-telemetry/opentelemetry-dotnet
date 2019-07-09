@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Tags
 {
     using OpenTelemetry.Context;
-    using OpenTelemetry.Internal;
+    using OpenTelemetry.Trace;
 
     public sealed class Tagger : TaggerBase
     {

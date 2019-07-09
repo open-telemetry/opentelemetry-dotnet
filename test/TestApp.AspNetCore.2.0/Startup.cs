@@ -22,7 +22,6 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Collector.AspNetCore;
 using OpenTelemetry.Collector.Dependencies;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace.Sampler;
 using System.Net.Http;
 using OpenTelemetry.Exporter.Ocagent;

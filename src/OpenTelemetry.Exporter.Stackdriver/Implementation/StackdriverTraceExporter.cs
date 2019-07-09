@@ -1,4 +1,4 @@
-﻿// <copyright file="ApplicationInsightsExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="StackdriverTraceExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,165 +28,71 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
-    static class SpanExtensions
-    {
-        /// <summary>
-        /// Translating <see cref="SpanData"/> to Stackdriver's Span
-        /// According to <see href="https://cloud.google.com/trace/docs/reference/v2/rpc/google.devtools.cloudtrace.v2"/> specifications
-        /// </summary>
-        /// <param name="spanData">Span in OpenTelemetry format</param>
-        /// <param name="projectId">Google Cloud Platform Project Id</param>
-        /// <returns></returns>
-        public static Google.Cloud.Trace.V2.Span ToSpan(this SpanData spanData, string projectId)
-        {
-            var spanId = spanData.Context.SpanId.ToLowerBase16();
-
-            // Base span settings
-            var span = new Google.Cloud.Trace.V2.Span
-            {
-                SpanName = new SpanName(projectId, spanData.Context.TraceId.ToLowerBase16(), spanId),
-                SpanId = spanId,
-                DisplayName = new TruncatableString { Value = spanData.Name },
-                StartTime = spanData.StartTimestamp.ToTimestamp(),
-                EndTime = spanData.EndTimestamp.ToTimestamp(),
-                ChildSpanCount = spanData.ChildSpanCount,
-            };
-            if (spanData.ParentSpanId != null)
-            {
-                var parentSpanId = spanData.ParentSpanId.ToLowerBase16();
-                if (!string.IsNullOrEmpty(parentSpanId))
-                {
-                    span.ParentSpanId = parentSpanId;
-                }
-            }
-
-            // Span Links
-            if (spanData.Links != null)
-            {
-                span.Links = new Google.Cloud.Trace.V2.Span.Types.Links
-                {
-                    DroppedLinksCount = spanData.Links.DroppedLinksCount,
-                    Link = { spanData.Links.Links.Select(l => l.ToLink()) }
-                };
-            }
-
-            // Span Attributes
-            if (spanData.Attributes != null)
-            {
-                span.Attributes = new Google.Cloud.Trace.V2.Span.Types.Attributes
-                {
-                    DroppedAttributesCount = spanData.Attributes != null ? spanData.Attributes.DroppedAttributesCount : 0,
-
-                    AttributeMap = { spanData.Attributes?.AttributeMap?.ToDictionary(
-                                        s => s.Key,
-                                        s => s.Value?.ToAttributeValue()) },
-                };
-            }
-
-            return span;
-        }
-
-        public static Google.Cloud.Trace.V2.Span.Types.Link ToLink(this ILink link)
-        {
-            var ret = new Google.Cloud.Trace.V2.Span.Types.Link();
-            ret.SpanId = link.Context.SpanId.ToLowerBase16();
-            ret.TraceId = link.Context.TraceId.ToLowerBase16();
-
-            if (link.Attributes != null)
-            {
-                ret.Attributes = new Google.Cloud.Trace.V2.Span.Types.Attributes
-                {
-
-                    DroppedAttributesCount = OpenTelemetry.Trace.Config.TraceParams.Default.MaxNumberOfAttributes - link.Attributes.Count,
-
-                    AttributeMap = { link.Attributes.ToDictionary(
-                         att => att.Key,
-                         att => att.Value.ToAttributeValue()) }
-                };
-            }
-
-            return ret;
-        }
-
-        public static Google.Cloud.Trace.V2.AttributeValue ToAttributeValue(this IAttributeValue av)
-        {
-            var ret = av.Match(
-                (s) => new Google.Cloud.Trace.V2.AttributeValue() { StringValue = new TruncatableString() { Value = s } },
-                (b) => new Google.Cloud.Trace.V2.AttributeValue() { BoolValue = b },
-                (l) => new Google.Cloud.Trace.V2.AttributeValue() { IntValue = l },
-                (d) => new Google.Cloud.Trace.V2.AttributeValue() { StringValue = new TruncatableString() { Value = d.ToString() } },
-                (obj) => new Google.Cloud.Trace.V2.AttributeValue() { StringValue = new TruncatableString() { Value = obj.ToString() } });
-
-            return ret;
-        }
-    }
-
     /// <summary>
-    /// Exports a group of spans to Stackdriver
+    /// Exports a group of spans to Stackdriver.
     /// </summary>
     internal class StackdriverTraceExporter : IHandler
     {
-        private static string STACKDRIVER_EXPORTER_VERSION;
-        private static string OpenTelemetry_EXPORTER_VERSION;
+        private static readonly string StackdriverExportVersion;
+        private static readonly string OpenTelemetryExporterVersion;
 
         private readonly Google.Api.Gax.ResourceNames.ProjectName googleCloudProjectId;
         private readonly TraceServiceSettings traceServiceSettings;
-
-        public StackdriverTraceExporter(string projectId)
-        {
-            googleCloudProjectId = new Google.Api.Gax.ResourceNames.ProjectName(projectId);
-
-            // Set header mutation for every outgoing API call to Stackdriver so the BE knows
-            // which version of OC client is calling it as well as which version of the exporter
-            var callSettings = CallSettings.FromHeaderMutation(StackdriverCallHeaderAppender);
-            traceServiceSettings = new TraceServiceSettings();
-            traceServiceSettings.CallSettings = callSettings;
-        }
 
         static StackdriverTraceExporter()
         {
             try
             {
                 var assemblyPackageVersion = typeof(StackdriverTraceExporter).GetTypeInfo().Assembly.GetCustomAttributes<AssemblyInformationalVersionAttribute>().First().InformationalVersion;
-                STACKDRIVER_EXPORTER_VERSION = assemblyPackageVersion;
+                StackdriverExportVersion = assemblyPackageVersion;
             }
             catch (Exception)
             {
-                STACKDRIVER_EXPORTER_VERSION = $"{Constants.PACKAGE_VERSION_UNDEFINED}";
+                StackdriverExportVersion = $"{Constants.PackagVersionUndefined}";
             }
 
             try
             {
-                OpenTelemetry_EXPORTER_VERSION = Assembly.GetCallingAssembly().GetName().Version.ToString();
+                OpenTelemetryExporterVersion = Assembly.GetCallingAssembly().GetName().Version.ToString();
             }
             catch (Exception)
             {
-                OpenTelemetry_EXPORTER_VERSION = $"{Constants.PACKAGE_VERSION_UNDEFINED}";
+                OpenTelemetryExporterVersion = $"{Constants.PackagVersionUndefined}";
             }
+        }
+
+        public StackdriverTraceExporter(string projectId)
+        {
+            this.googleCloudProjectId = new Google.Api.Gax.ResourceNames.ProjectName(projectId);
+
+            // Set header mutation for every outgoing API call to Stackdriver so the BE knows
+            // which version of OC client is calling it as well as which version of the exporter
+            var callSettings = CallSettings.FromHeaderMutation(StackdriverCallHeaderAppender);
+            this.traceServiceSettings = new TraceServiceSettings();
+            this.traceServiceSettings.CallSettings = callSettings;
         }
 
         public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
         {
-            var traceWriter = TraceServiceClient.Create(settings: traceServiceSettings);
+            var traceWriter = TraceServiceClient.Create(settings: this.traceServiceSettings);
             
             var batchSpansRequest = new BatchWriteSpansRequest
             {
-                ProjectName = googleCloudProjectId,
-                Spans = { spanDataList.Select(s => s.ToSpan(googleCloudProjectId.ProjectId)) },
+                ProjectName = this.googleCloudProjectId,
+                Spans = { spanDataList.Select(s => s.ToSpan(this.googleCloudProjectId.ProjectId)) },
             };
             
             await traceWriter.BatchWriteSpansAsync(batchSpansRequest);
         }
 
         /// <summary>
-        /// Appends OpenTelemetry headers for every outgoing request to Stackdriver Backend
+        /// Appends OpenTelemetry headers for every outgoing request to Stackdriver Backend.
         /// </summary>
-        /// <param name="metadata">The metadata that is sent with every outgoing http request</param>
+        /// <param name="metadata">The metadata that is sent with every outgoing http request.</param>
         private static void StackdriverCallHeaderAppender(Metadata metadata)
         {
-            
             metadata.Add("AGENT_LABEL_KEY", "g.co/agent");
-            metadata.Add("AGENT_LABEL_VALUE_STRING", $"{OpenTelemetry_EXPORTER_VERSION}; stackdriver-exporter {STACKDRIVER_EXPORTER_VERSION}");
+            metadata.Add("AGENT_LABEL_VALUE_STRING", $"{OpenTelemetryExporterVersion}; stackdriver-exporter {StackdriverExportVersion}");
         }
     }
 }
