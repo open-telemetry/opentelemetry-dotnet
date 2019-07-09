@@ -39,11 +39,6 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        public ISpanBuilder SetDisableActivity(bool disableActivity)
-        {
-            return this;
-        }
-
         /// <inheritdoc/>
         public ISpan StartSpan()
         {

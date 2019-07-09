@@ -24,7 +24,6 @@ namespace OpenTelemetry.Trace.Test
 
     public class CurrentSpanUtilsTest: IDisposable
     {
-        private readonly CurrentSpanUtils currentSpanUtils = new CurrentSpanUtils();
         private readonly IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
 
         public CurrentSpanUtilsTest()
@@ -37,14 +36,14 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void CurrentSpan_WhenNoContext()
         {
-            Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
+            Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
         }
 
         [Fact]
         public void CurrentSpan_WhenNoSpanOnActivity()
         {
             var a = new Activity("foo").Start();
-            Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
+            Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
         }
 
         [Theory]
@@ -65,15 +64,15 @@ namespace OpenTelemetry.Trace.Test
                 startEndHandler,
                 null);
 
-            Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
-            using (currentSpanUtils.WithSpan(span, stopSpan))
+            Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
+            using (CurrentSpanUtils.WithSpan(span, stopSpan))
             {
                 Assert.Same(activity, Activity.Current);
-                Assert.Same(span, currentSpanUtils.CurrentSpan);
+                Assert.Same(span, CurrentSpanUtils.CurrentSpan);
             }
 
             Assert.Equal(stopSpan & recordEvents, span.HasEnded);
-            Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
+            Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             Assert.Null(Activity.Current);
         }
 
@@ -96,14 +95,14 @@ namespace OpenTelemetry.Trace.Test
                 null,
                 false);
 
-            Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
-            using (currentSpanUtils.WithSpan(span, stopSpan))
+            Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
+            using (CurrentSpanUtils.WithSpan(span, stopSpan))
             {
                 Assert.Same(activity, Activity.Current);
-                Assert.Same(span, currentSpanUtils.CurrentSpan);
+                Assert.Same(span, CurrentSpanUtils.CurrentSpan);
             }
 
-            Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
+            Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             Assert.Equal(activity, Activity.Current);
         }
 
@@ -124,7 +123,7 @@ namespace OpenTelemetry.Trace.Test
                 TraceParams.Default,
                 startEndHandler,
                 null);
-            var parentScope = currentSpanUtils.WithSpan(parentSpan, stopSpan);
+            var parentScope = CurrentSpanUtils.WithSpan(parentSpan, stopSpan);
 
             var childActivity = new Activity("child").Start();
             var childSpan = Span.StartSpan(
@@ -137,15 +136,15 @@ namespace OpenTelemetry.Trace.Test
                 startEndHandler,
                 null);
 
-            Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
+            Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
 
-            var childScope = currentSpanUtils.WithSpan(childSpan, stopSpan);
+            var childScope = CurrentSpanUtils.WithSpan(childSpan, stopSpan);
 
             parentScope.Dispose();
 
             Assert.Equal(stopSpan & recordEvents, parentSpan.HasEnded);
             Assert.False(childSpan.HasEnded);
-            Assert.Same(childSpan, currentSpanUtils.CurrentSpan);
+            Assert.Same(childSpan, CurrentSpanUtils.CurrentSpan);
             Assert.Equal(childActivity, Activity.Current);
         }
 
@@ -166,7 +165,7 @@ namespace OpenTelemetry.Trace.Test
                 TraceParams.Default,
                 startEndHandler,
                 null);
-            var parentScope = currentSpanUtils.WithSpan(parentSpan, stopSpan);
+            var parentScope = CurrentSpanUtils.WithSpan(parentSpan, stopSpan);
 
             var childActivity = new Activity("child").Start();
             var childSpan = Span.StartSpan(
@@ -179,16 +178,16 @@ namespace OpenTelemetry.Trace.Test
                 startEndHandler,
                 null);
 
-            Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
+            Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
 
-            var childScope = currentSpanUtils.WithSpan(childSpan, stopSpan);
+            var childScope = CurrentSpanUtils.WithSpan(childSpan, stopSpan);
 
             childScope.Dispose();
 
             Assert.Equal(stopSpan & recordEvents, childSpan.HasEnded);
             Assert.False(parentSpan.HasEnded);
 
-            Assert.Same(parentSpan, currentSpanUtils.CurrentSpan);
+            Assert.Same(parentSpan, CurrentSpanUtils.CurrentSpan);
             Assert.Equal(parentActivity, Activity.Current);
         }
 
@@ -206,14 +205,14 @@ namespace OpenTelemetry.Trace.Test
                 startEndHandler,
                 null);
 
-            using (currentSpanUtils.WithSpan(span, true))
-            using(currentSpanUtils.WithSpan(span, true))
+            using (CurrentSpanUtils.WithSpan(span, true))
+            using(CurrentSpanUtils.WithSpan(span, true))
             {
                 Assert.Same(activity, Activity.Current);
-                Assert.Same(span, currentSpanUtils.CurrentSpan);
+                Assert.Same(span, CurrentSpanUtils.CurrentSpan);
             }
 
-            Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
+            Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             Assert.Null(Activity.Current);
         }
 
@@ -233,14 +232,14 @@ namespace OpenTelemetry.Trace.Test
 
             activity.Stop();
 
-            using (currentSpanUtils.WithSpan(span, true))
+            using (CurrentSpanUtils.WithSpan(span, true))
             {
                 Assert.Null(Activity.Current);
-                Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
+                Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             }
 
             Assert.Null(Activity.Current);
-            Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
+            Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
         }
 
         [Theory]
@@ -261,17 +260,17 @@ namespace OpenTelemetry.Trace.Test
                 startEndHandler,
                 null);
 
-            Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
-            using (currentSpanUtils.WithSpan(span, stopSpan))
+            Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
+            using (CurrentSpanUtils.WithSpan(span, stopSpan))
             {
                 Assert.Same(activity, Activity.Current);
-                Assert.Same(span, currentSpanUtils.CurrentSpan);
+                Assert.Same(span, CurrentSpanUtils.CurrentSpan);
 
                 var anotherActivity = new Activity("foo").Start();
             }
 
             Assert.Equal(stopSpan & recordEvents, span.HasEnded);
-            Assert.Same(BlankSpan.Instance, currentSpanUtils.CurrentSpan);
+            Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             Assert.NotSame(activity, Activity.Current);
             Assert.NotNull(Activity.Current);
         }

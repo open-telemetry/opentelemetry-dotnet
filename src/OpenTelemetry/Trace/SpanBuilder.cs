@@ -337,8 +337,17 @@ namespace OpenTelemetry.Trace
                 {
                     // Activity will figure out its parent
                     spanActivity = new Activity(this.name).Start();
-                    needRestoreOriginal = true;
-                    this.parentSpanContext = ParentContextFromActivity(spanActivity);
+                    
+                    // chances are, Activity.Current has span attached
+                    if (CurrentSpanUtils.CurrentSpan is Span currentSpan)
+                    {
+                        this.parentSpanContext = currentSpan.Context;
+                    }
+                    else
+                    {
+                        this.parentSpanContext = ParentContextFromActivity(spanActivity);
+                    }
+
                     break;
                 }
 
@@ -350,7 +359,6 @@ namespace OpenTelemetry.Trace
                             this.parentActivity.ActivityTraceFlags)
                         .Start();
                     spanActivity.TraceStateString = this.parentActivity.TraceStateString;
-                    needRestoreOriginal = true;
                     this.parentSpanContext = ParentContextFromActivity(spanActivity);
                     break;
                 }
@@ -360,7 +368,6 @@ namespace OpenTelemetry.Trace
                     // TODO fix after next DiagnosticSource preview comes out - this is a hack to force activity to become orphan
                     spanActivity = new Activity(this.name).SetParentId(" ").Start();
                     this.parentSpanContext = null;
-                    needRestoreOriginal = true;
                     break;
                 }
 
@@ -385,7 +392,6 @@ namespace OpenTelemetry.Trace
                     spanActivity.TraceStateString = this.parentSpanContext.Tracestate.ToString();
                     spanActivity.Start();
 
-                    needRestoreOriginal = true;
                     break;
                 }
 
@@ -397,8 +403,6 @@ namespace OpenTelemetry.Trace
 
                     spanActivity.TraceStateString = this.parentSpan.Context.Tracestate.ToString();
                     spanActivity.Start();
-
-                    needRestoreOriginal = true;
 
                     this.parentSpanContext = this.parentSpan.Context;
                     break;

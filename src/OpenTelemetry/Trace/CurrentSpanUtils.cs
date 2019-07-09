@@ -20,11 +20,11 @@ namespace OpenTelemetry.Trace
     using System.Runtime.CompilerServices;
     using OpenTelemetry.Context;
 
-    internal class CurrentSpanUtils
+    internal static class CurrentSpanUtils
     {
         private static readonly ConditionalWeakTable<Activity, ISpan> ActivitySpanTable = new ConditionalWeakTable<Activity, ISpan>();
 
-        public ISpan CurrentSpan
+        public static ISpan CurrentSpan
         {
             get
             {
@@ -43,12 +43,12 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public IScope WithSpan(ISpan span, bool endSpan)
+        public static IScope WithSpan(ISpan span, bool endSpan)
         {
-            return new ScopeInSpan(span, endSpan, this);
+            return new ScopeInSpan(span, endSpan);
         }
 
-        private void SetSpan(Span span)
+        private static void SetSpan(Span span)
         {
             if (span.Activity == null)
             {
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace
             ActivitySpanTable.Add(span.Activity, span);
         }
 
-        private void DetachSpanFromActivity(Activity activity)
+        private static void DetachSpanFromActivity(Activity activity)
         {
             ActivitySpanTable.Remove(activity);
         }
@@ -74,13 +74,11 @@ namespace OpenTelemetry.Trace
         {
             private readonly ISpan span;
             private readonly bool endSpan;
-            private readonly CurrentSpanUtils currentUtils;
 
-            public ScopeInSpan(ISpan span, bool endSpan, CurrentSpanUtils currentUtils)
+            public ScopeInSpan(ISpan span, bool endSpan)
             {
                 this.span = span;
                 this.endSpan = endSpan;
-                this.currentUtils = currentUtils;
 
                 if (span is Span spanImpl)
                 {
@@ -89,7 +87,7 @@ namespace OpenTelemetry.Trace
                         Activity.Current = spanImpl.Activity;
                     }
 
-                    this.currentUtils.SetSpan(spanImpl);
+                    SetSpan(spanImpl);
                 }
             }
 
@@ -101,7 +99,7 @@ namespace OpenTelemetry.Trace
                 {
                     if (!current.OwnsActivity)
                     {
-                        this.currentUtils.DetachSpanFromActivity(current.Activity);
+                        DetachSpanFromActivity(current.Activity);
                     }
                     else
                     {
