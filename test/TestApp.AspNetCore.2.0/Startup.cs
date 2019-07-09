@@ -50,7 +50,7 @@ namespace TestApp.AspNetCore._2._0
             services.AddSingleton<RequestsCollector>();
             services.AddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
             services.AddSingleton<DependenciesCollector>();
-            services.AddSingleton<IExportComponent>(ExportComponent.NewNoopExportComponent);
+            services.AddSingleton<IExportComponent>(Tracing.ExportComponent);
             services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new CallbackMiddleware.CallbackMiddlewareImpl());
             services.AddSingleton<OcagentExporter>((p) =>
             {

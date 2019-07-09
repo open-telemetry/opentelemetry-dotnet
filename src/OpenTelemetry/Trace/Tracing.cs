@@ -35,26 +35,26 @@ namespace OpenTelemetry.Trace
             IRandomGenerator randomHandler = new RandomGenerator();
             IEventQueue eventQueue = new SimpleEventQueue();
 
-            this.TraceConfig = new Config.TraceConfig();
+            TraceConfig = new Config.TraceConfig();
 
             // TODO(bdrutu): Add a config/argument for supportInProcessStores.
             if (eventQueue is SimpleEventQueue)
             {
-                this.ExportComponent = Export.ExportComponent.CreateWithoutInProcessStores(eventQueue);
+                ExportComponent = Export.ExportComponent.CreateWithoutInProcessStores(eventQueue);
             }
             else
             {
-                this.ExportComponent = Export.ExportComponent.CreateWithInProcessStores(eventQueue);
+                ExportComponent = Export.ExportComponent.CreateWithInProcessStores(eventQueue);
             }
 
             IStartEndHandler startEndHandler =
                 new StartEndHandler(
-                    this.ExportComponent.SpanExporter,
-                    ((ExportComponent)this.ExportComponent).RunningSpanStore,
-                    ((ExportComponent)this.ExportComponent).SampledSpanStore,
+                    ExportComponent.SpanExporter,
+                    ((ExportComponent)ExportComponent).RunningSpanStore,
+                    ((ExportComponent)ExportComponent).SampledSpanStore,
                     eventQueue);
 
-            tracer = new Tracer(randomHandler, startEndHandler, this.TraceConfig);
+            tracer = new Tracer(randomHandler, startEndHandler, TraceConfig);
         }
 
         /// <summary>
@@ -71,11 +71,11 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the exporter to use to upload spans.
         /// </summary>
-        public IExportComponent ExportComponent { get; }
+        public static IExportComponent ExportComponent { get; private set; }
 
         /// <summary>
         /// Gets the trace config.
         /// </summary>
-        public ITraceConfig TraceConfig { get; }
+        public static ITraceConfig TraceConfig { get; private set; }
     }
 }
