@@ -54,15 +54,15 @@ namespace OpenTelemetry.Exporter.Stackriver.Tests
         {
             Assert.NotNull(StackdriverStatsConfiguration.Default.MonitoredResource);
 
-            Assert.Equal(Constants.GLOBAL, StackdriverStatsConfiguration.Default.MonitoredResource.Type);
+            Assert.Equal(Constants.Global, StackdriverStatsConfiguration.Default.MonitoredResource.Type);
 
             Assert.NotNull(StackdriverStatsConfiguration.Default.MonitoredResource.Labels);
 
             Assert.True(StackdriverStatsConfiguration.Default.MonitoredResource.Labels.ContainsKey("project_id"));
-            Assert.True(StackdriverStatsConfiguration.Default.MonitoredResource.Labels.ContainsKey(Constants.PROJECT_ID_LABEL_KEY));
+            Assert.True(StackdriverStatsConfiguration.Default.MonitoredResource.Labels.ContainsKey(Constants.ProjectIdLabelKey));
             Assert.Equal(
                 StackdriverStatsConfiguration.Default.ProjectId,
-                StackdriverStatsConfiguration.Default.MonitoredResource.Labels[Constants.PROJECT_ID_LABEL_KEY]);
+                StackdriverStatsConfiguration.Default.MonitoredResource.Labels[Constants.ProjectIdLabelKey]);
         }
     }
 }

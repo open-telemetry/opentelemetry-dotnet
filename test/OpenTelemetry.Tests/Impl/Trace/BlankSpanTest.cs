@@ -14,21 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Trace.Test
 {
     using System.Collections.Generic;
-    using OpenTelemetry.Trace.Internal;
     using Xunit;
 
     public class BlankSpanTest
     {
-        [Fact]
-        public void HasInvalidContextAndDefaultSpanOptions()
-        {
-            Assert.Equal(SpanContext.Blank, BlankSpan.Instance.Context);
-            Assert.True(BlankSpan.Instance.Options.HasFlag(SpanOptions.None));
-        }
-
         [Fact]
         public void DoNotCrash()
         {
@@ -60,9 +54,28 @@ namespace OpenTelemetry.Trace.Test
             BlankSpan.Instance.AddEvent(Event.Create("MyEvent"));
             BlankSpan.Instance.AddLink(
                 Link.FromSpanContext(SpanContext.Blank));
+
+            Assert.False(BlankSpan.Instance.Context.IsValid);
+            Assert.False(BlankSpan.Instance.IsRecordingEvents);
+            Assert.Equal(Status.Ok, BlankSpan.Instance.Status);
             BlankSpan.Instance.Status = Status.Ok;
-            BlankSpan.Instance.End(EndSpanOptions.Default);
             BlankSpan.Instance.End();
+        }
+
+        [Fact]
+        public void BadArguments()
+        {
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.Status = null);
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.UpdateName(null));
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, string.Empty));
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(string.Empty, (IAttributeValue)null));
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, AttributeValue.StringAttributeValue("foo")));
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, 1L));
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, 0.1d));
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, true));
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.AddEvent((string)null));
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.AddEvent((IEvent)null));
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.AddLink(null));
         }
     }
 }

@@ -25,8 +25,10 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Utils;
 
-    /// <inheritdoc/>
-    public sealed class Span : SpanBase
+    /// <summary>
+    /// Span implementation.
+    /// </summary>
+    public sealed class Span : ISpan, IElement<Span>
     {
         private readonly SpanId parentSpanId;
         private readonly ITraceParams traceParams;
@@ -50,8 +52,9 @@ namespace OpenTelemetry.Trace
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
                 Timer timestampConverter)
-            : base(context, options)
         {
+            this.Context = context;
+            this.Options = options;
             this.parentSpanId = parentSpanId;
             this.Name = name;
             this.traceParams = traceParams ?? throw new ArgumentNullException(nameof(traceParams));
@@ -79,11 +82,20 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        /// <inheritdoc/>
-        public override string Name { get; protected set; }
+        public SpanContext Context { get; }
+
+        public SpanOptions Options { get; }
+
+        public string Name { get; private set; }
 
         /// <inheritdoc/>
-        public override Status Status
+        public Span Next { get; set; }
+        
+        /// <inheritdoc/>
+        public Span Previous { get; set; }
+
+        /// <inheritdoc/>
+        public Status Status
         {
             get
             {
@@ -108,13 +120,12 @@ namespace OpenTelemetry.Trace
                         return;
                     }
 
-                    this.status = value;
+                    this.status = value ?? throw new ArgumentNullException(nameof(value));
                 }
             }
         }
 
-        /// <inheritdoc/>
-        public override DateTimeOffset EndTime
+        public DateTimeOffset EndTime
         {
             get
             {
@@ -125,8 +136,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        /// <inheritdoc/>
-        public override TimeSpan Latency
+        public TimeSpan Latency
         {
             get
             {
@@ -137,8 +147,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        /// <inheritdoc/>
-        public override bool IsSampleToLocalSpanStore
+        public bool IsSampleToLocalSpanStore
         {
             get
             {
@@ -152,22 +161,22 @@ namespace OpenTelemetry.Trace
                     return this.sampleToLocalSpanStore;
                 }
             }
-        }
 
-        /// <inheritdoc/>
-        public override SpanId ParentSpanId => this.parentSpanId;
-
-        /// <inheritdoc/>
-        public override bool HasEnded => this.hasBeenEnded;
-
-        /// <inheritdoc/>
-        public override bool IsRecordingEvents
-        {
-            get
+            set
             {
-                return this.Options.HasFlag(SpanOptions.RecordEvents);
+                lock (this.@lock)
+                {
+                    this.sampleToLocalSpanStore = value;
+                }
             }
         }
+
+        public SpanId ParentSpanId => this.parentSpanId;
+
+        public bool HasEnded => this.hasBeenEnded;
+
+        /// <inheritdoc/>
+        public bool IsRecordingEvents => this.Options.HasFlag(SpanOptions.RecordEvents);
 
         /// <summary>
         /// Gets or sets span kind.
@@ -218,9 +227,25 @@ namespace OpenTelemetry.Trace
 
         private Status StatusWithDefault => this.status ?? Trace.Status.Ok;
 
-        /// <inheritdoc/>
-        public override void SetAttribute(string key, IAttributeValue value)
+        /// <inheritdoc />
+        public void UpdateName(string name)
         {
+            this.Name = name ?? throw new ArgumentNullException(nameof(name));
+        }
+
+        /// <inheritdoc/>
+        public void SetAttribute(string key, IAttributeValue value)
+        {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -239,8 +264,13 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
+        public void AddEvent(string name)
         {
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -254,13 +284,48 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.TimestampConverter.Now, Event.Create(name, attributes)));
+                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.TimestampConverter.Now, Event.Create(name)));
             }
         }
 
         /// <inheritdoc/>
-        public override void AddEvent(IEvent addEvent)
+        public void AddEvent(string name, IDictionary<string, IAttributeValue> eventAttributes)
         {
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
+            if (eventAttributes == null)
+            {
+                throw new ArgumentNullException(nameof(eventAttributes));
+            }
+
+            if (!this.IsRecordingEvents)
+            {
+                return;
+            }
+
+            lock (this.@lock)
+            {
+                if (this.hasBeenEnded)
+                {
+                    // logger.log(Level.FINE, "Calling AddEvent() on an ended Span.");
+                    return;
+                }
+
+                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.TimestampConverter.Now, Event.Create(name, eventAttributes)));
+            }
+        }
+
+        /// <inheritdoc/>
+        public void AddEvent(IEvent addEvent)
+        {
+            if (addEvent == null)
+            {
+                throw new ArgumentNullException(nameof(addEvent));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -284,8 +349,13 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void AddLink(ILink link)
+        public void AddLink(ILink link)
         {
+            if (link == null)
+            {
+                throw new ArgumentNullException(nameof(link));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -309,7 +379,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void End(EndSpanOptions options)
+        public void End()
         {
             if (!this.IsRecordingEvents)
             {
@@ -324,12 +394,6 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                if (options.Status != null)
-                {
-                    this.status = options.Status;
-                }
-
-                this.sampleToLocalSpanStore = options.SampleToLocalSpanStore;
                 this.endTime = this.TimestampConverter.Now;
                 this.hasBeenEnded = true;
             }
@@ -337,8 +401,7 @@ namespace OpenTelemetry.Trace
             this.startEndHandler.OnEnd(this);
         }
 
-        /// <inheritdoc/>
-        public override SpanData ToSpanData()
+        public SpanData ToSpanData()
         {
             if (!this.IsRecordingEvents)
             {
@@ -367,8 +430,18 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void SetAttribute(string key, string value)
+        public void SetAttribute(string key, string value)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -378,8 +451,13 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void SetAttribute(string key, long value)
+        public void SetAttribute(string key, long value)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -389,8 +467,13 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void SetAttribute(string key, double value)
+        public void SetAttribute(string key, double value)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -400,8 +483,13 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void SetAttribute(string key, bool value)
+        public void SetAttribute(string key, bool value)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;

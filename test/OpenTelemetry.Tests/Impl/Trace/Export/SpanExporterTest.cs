@@ -24,7 +24,6 @@ namespace OpenTelemetry.Trace.Export.Test
     using Moq;
     using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
-    using OpenTelemetry.Resources;
     using OpenTelemetry.Testing.Export;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;

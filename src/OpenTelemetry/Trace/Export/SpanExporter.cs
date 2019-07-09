@@ -16,7 +16,6 @@
 
 namespace OpenTelemetry.Trace.Export
 {
-    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using OpenTelemetry.Common;
@@ -54,9 +53,7 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override Task ExportAsync(SpanData export, CancellationToken token)
         {
-            this.worker.ExportAsync(export, token);
-
-            return Task.CompletedTask;
+            return this.worker.ExportAsync(export, token);
         }
 
         public override void RegisterHandler(string name, IHandler handler)

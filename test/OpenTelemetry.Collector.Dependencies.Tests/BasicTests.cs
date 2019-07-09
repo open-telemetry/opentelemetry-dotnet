@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     using Moq;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;

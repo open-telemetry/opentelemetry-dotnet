@@ -28,14 +28,15 @@ namespace OpenTelemetry.Testing.Export
         private readonly object monitor = new object();
         private readonly List<SpanData> spanDataList = new List<SpanData>();
 
-        public async Task ExportAsync(IEnumerable<SpanData> data)
+        public Task ExportAsync(IEnumerable<SpanData> data)
         {
             lock (monitor)
             {
                 this.spanDataList.AddRange(data);
                 Monitor.PulseAll(monitor);
             }
-            
+
+            return Task.CompletedTask;
         }
 
         public IEnumerable<SpanData> WaitForExport(int numberOfSpans)

@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private readonly ISpanExporter sampledSpansServiceExporter = SpanExporter.Create(4, Duration.Create(1, 0));
         private readonly InProcessRunningSpanStore activeSpansExporter = new InProcessRunningSpanStore();
         private readonly StartEndHandler startEndHandler;
-        private SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
+        private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
 
         public InProcessRunningSpanStoreTest()
         {

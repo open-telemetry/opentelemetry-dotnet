@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Trace
 {
     using System.Collections.Generic;
-    using OpenTelemetry.Context;
 
     /// <summary>
     /// Span builder.
@@ -32,11 +31,56 @@ namespace OpenTelemetry.Trace
         ISpanBuilder SetSampler(ISampler sampler);
 
         /// <summary>
-        /// Set the parent links on the span.
+        /// Sets the <see cref="ISpan"/> to use as a parent for the new span.
+        /// Any parent that was set previously will be discarded.
         /// </summary>
-        /// <param name="parentLinks">Parent links to set on span.</param>
+        /// <param name="parent"><see cref="ISpan"/> to set.</param>
         /// <returns>This span builder for chaining.</returns>
-        ISpanBuilder SetParentLinks(IEnumerable<ISpan> parentLinks);
+        ISpanBuilder SetParent(ISpan parent);
+
+        /// <summary>
+        /// Sets the remote <see cref="SpanContext"/> to use as a parent for the new span.
+        /// Any parent that was set previously will be discarded.
+        /// </summary>
+        /// <param name="remoteParent"><see cref="SpanContext"/> to set.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder SetParent(SpanContext remoteParent);
+
+        /// <summary>
+        /// Makes the result span to become a root <see cref="ISpan"/> for a new trace.
+        /// Any parent that was set previously will be discarded.
+        /// </summary>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder SetNoParent();
+
+        /// <summary>
+        /// Set <see cref="SpanKind"/> on the span.
+        /// </summary>
+        /// <param name="spanKind"><see cref="SpanKind"/> to set.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder SetSpanKind(SpanKind spanKind);
+
+        /// <summary>
+        /// Set the <see cref="Link"/> on the span.
+        /// </summary>
+        /// <param name="spanContext"><see cref="Link"/> context to set on span.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder AddLink(SpanContext spanContext);
+
+        /// <summary>
+        /// Set the <see cref="Link"/> on the span.
+        /// </summary>
+        /// <param name="link"><see cref="Link"/> to set on span.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder AddLink(ILink link);
+
+        /// <summary>
+        /// Set the <see cref="Link"/> on the span.
+        /// </summary>
+        /// <param name="context"><see cref="Link"/> context.</param>
+        /// <param name="attributes">The attributes of the <see cref="Link"/>.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder AddLink(SpanContext context, IDictionary<string, IAttributeValue> attributes);
 
         /// <summary>
         /// Set the record events value.
@@ -50,20 +94,5 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <returns>Span that was just started.</returns>
         ISpan StartSpan();
-
-        /// <summary>
-        /// Starts the span and set it as a current on the current context.
-        /// </summary>
-        /// <returns>Scoped event to control the scope of span in the context.
-        /// Dispose to stop the span and disassiciate it from the current context.</returns>
-        IScope StartScopedSpan();
-
-        /// <summary>
-        /// Starts the span and set it as a current on the current context, setting the out param to current span.
-        /// </summary>
-        /// <param name="currentSpan">Current span.</param>
-        /// <returns>Scoped event to control the scope of span in the context.
-        /// Dispose to stop the span and disassiciate it from the current context.</returns>
-        IScope StartScopedSpan(out ISpan currentSpan);
     }
 }
