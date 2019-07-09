@@ -20,6 +20,7 @@ namespace OpenTelemetry.Trace.Sampler
     using System.Collections.Generic;
     using OpenTelemetry.Utils;
 
+    /// <inheritdoc />
     public sealed class ProbabilitySampler : ISampler
     {
         private ProbabilitySampler(double probability, long idUpperBound)
@@ -28,13 +29,8 @@ namespace OpenTelemetry.Trace.Sampler
             this.IdUpperBound = idUpperBound;
         }
 
-        public string Description
-        {
-            get
-            {
-                return string.Format("ProbabilitySampler({0:F6})", this.Probability);
-            }
-        }
+        /// <inheritdoc />
+        public string Description => $"ProbabilitySampler({this.Probability:F6})";
 
         public double Probability { get; }
 
@@ -69,7 +65,8 @@ namespace OpenTelemetry.Trace.Sampler
             return new ProbabilitySampler(probability, idUpperBound);
         }
 
-        public bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ISpan> parentLinks)
+        /// <inheritdoc />
+        public bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ILink> links)
         {
             // If the parent is sampled keep the sampling decision.
             if (parentContext != null && parentContext.TraceOptions.IsSampled)
@@ -77,10 +74,10 @@ namespace OpenTelemetry.Trace.Sampler
                 return true;
             }
 
-            if (parentLinks != null)
+            if (links != null)
             {
                 // If any parent link is sampled keep the sampling decision.
-                foreach (var parentLink in parentLinks)
+                foreach (var parentLink in links)
                 {
                     if (parentLink.Context.TraceOptions.IsSampled)
                     {

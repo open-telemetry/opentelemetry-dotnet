@@ -33,7 +33,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var parentSpan = BlankSpan.Instance;
             var profiledCommand = new Mock<IProfiledCommand>();
             var sampler = new Mock<ISampler>();
-            sampler.Setup(x => x.ShouldSample(It.IsAny<SpanContext>(), It.IsAny<TraceId>(), It.IsAny<SpanId>(), It.IsAny<string>(), It.IsAny<IEnumerable<ISpan>>())).Returns(true);
+            sampler.Setup(x => x.ShouldSample(It.IsAny<SpanContext>(), It.IsAny<TraceId>(), It.IsAny<SpanId>(), It.IsAny<string>(), It.IsAny<IEnumerable<ILink>>())).Returns(true);
             profiledCommand.Setup(m => m.Command).Returns("SET");
             var result = new List<SpanData>();
             RedisProfilerEntryToSpanConverter.DrainSession(parentSpan, new IProfiledCommand[] { profiledCommand.Object }, sampler.Object, result);

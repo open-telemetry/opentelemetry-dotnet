@@ -16,18 +16,19 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System;
     using System.Threading;
+    using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
+    using OpenTelemetry.Trace.Internal;
 
     /// <inheritdoc/>
-    public sealed class Tracer : TracerBase
+    public sealed class Tracer : ITracer
     {
         private readonly SpanBuilderOptions spanBuilderOptions;
         private readonly IExportComponent exportComponent;
-        private readonly IBinaryFormat binaryFormat;
-        private readonly ITextFormat textFormat;
 
         public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent)
             : this(randomGenerator, startEndHandler, traceConfig, exportComponent, null, null)
@@ -37,33 +38,41 @@ namespace OpenTelemetry.Trace
         public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent, IBinaryFormat binaryFormat, ITextFormat textFormat)
         {
             this.spanBuilderOptions = new SpanBuilderOptions(randomGenerator, startEndHandler, traceConfig);
-            this.binaryFormat = binaryFormat ?? new BinaryFormat();
-            this.textFormat = textFormat ?? new TraceContextFormat();
+            this.BinaryFormat = binaryFormat ?? new BinaryFormat();
+            this.TextFormat = textFormat ?? new TraceContextFormat();
             this.exportComponent = exportComponent;
         }
 
         /// <inheritdoc/>
-        public override IBinaryFormat BinaryFormat => this.binaryFormat;
+        public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan ?? BlankSpan.Instance;
 
         /// <inheritdoc/>
-        public override ITextFormat TextFormat => this.textFormat;
+        public IBinaryFormat BinaryFormat { get; }
 
         /// <inheritdoc/>
-        public override void RecordSpanData(SpanData span)
+        public ITextFormat TextFormat { get; }
+
+        /// <inheritdoc/>
+        public IScope WithSpan(ISpan span)
+        {
+            if (span == null)
+            {
+                throw new ArgumentNullException(nameof(span));
+            }
+
+            return CurrentSpanUtils.WithSpan(span, true);
+        }
+
+        /// <inheritdoc/>
+        public ISpanBuilder SpanBuilder(string spanName)
+        {
+            return new SpanBuilder(spanName, this.spanBuilderOptions);
+        }
+
+        /// <inheritdoc/>
+        public void RecordSpanData(SpanData span)
         {
             this.exportComponent.SpanExporter.ExportAsync(span, CancellationToken.None);
-        }
-
-        /// <inheritdoc/>
-        public override ISpanBuilder SpanBuilderWithParent(string name, SpanKind kind = SpanKind.Internal, ISpan parent = null)
-        {
-            return Trace.SpanBuilder.Create(name, kind, parent, this.spanBuilderOptions);
-        }
-
-        /// <inheritdoc/>
-        public override ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, SpanContext parentContext = null)
-        {
-            return Trace.SpanBuilder.Create(name, kind, parentContext, this.spanBuilderOptions);
         }
     }
 }

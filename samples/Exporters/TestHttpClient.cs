@@ -31,29 +31,29 @@ namespace Samples
         {
             Console.WriteLine("Hello World!");
 
-            var collector = new DependenciesCollector(new DependenciesCollectorOptions(), Tracer, Samplers.AlwaysSample);
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), Tracer, Samplers.AlwaysSample))
+            {
+                var exporter = new ZipkinTraceExporter(
+                    new ZipkinTraceExporterOptions()
+                    {
+                        Endpoint = new Uri("https://zipkin.azurewebsites.net/api/v2/spans"),
+                        ServiceName = typeof(Program).Assembly.GetName().Name,
+                    },
+                    Tracing.ExportComponent);
+                exporter.Start();
 
-            var exporter = new ZipkinTraceExporter(
-                new ZipkinTraceExporterOptions()
+                using (Tracer.WithSpan(Tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartSpan()))
                 {
-                    Endpoint = new Uri("https://zipkin.azurewebsites.net/api/v2/spans"),
-                    ServiceName = typeof(Program).Assembly.GetName().Name,
-                },
-                Tracing.ExportComponent);
-            exporter.Start();
+                    using (var client = new HttpClient())
+                    {
+                        client.GetStringAsync("http://bing.com").GetAwaiter().GetResult();
+                    }
+                }
 
-            var scope = Tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartScopedSpan();
+                Console.ReadLine();
 
-            var client = new HttpClient();
-            var t = client.GetStringAsync("http://bing.com");
-
-            t.Wait();
-
-            scope.Dispose();
-
-            Console.ReadLine();
-
-            return null;
+                return null;
+            }
         }
     }
 }

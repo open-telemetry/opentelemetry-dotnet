@@ -18,18 +18,13 @@ namespace OpenTelemetry.Trace
 {
     using System.Threading;
     using OpenTelemetry.Context;
+    using OpenTelemetry.Trace.Internal;
 
     internal static class CurrentSpanUtils
     {
         private static readonly AsyncLocal<ISpan> AsyncLocalContext = new AsyncLocal<ISpan>();
 
-        public static ISpan CurrentSpan
-        {
-            get
-            {
-                return AsyncLocalContext.Value;
-            }
-        }
+        public static ISpan CurrentSpan => AsyncLocalContext.Value;
 
         public static IScope WithSpan(ISpan span, bool endSpan)
         {

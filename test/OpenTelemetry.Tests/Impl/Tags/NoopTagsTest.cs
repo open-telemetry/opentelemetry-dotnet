@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Tags.Test
 {
     using System;

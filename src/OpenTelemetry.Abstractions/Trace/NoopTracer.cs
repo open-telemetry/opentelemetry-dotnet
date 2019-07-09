@@ -16,53 +16,52 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System;
+    using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
 
     /// <summary>
     /// No-op tracer.
     /// </summary>
-    public sealed class NoopTracer : TracerBase, ITracer
+    public sealed class NoopTracer : ITracer
     {
-        private static readonly IBinaryFormat BinaryFormatValue = new BinaryFormat();
-        private static readonly ITextFormat TextFormatValue = new TraceContextFormat();
+        /// <summary>
+        /// Instance of the noop tracer.
+        /// </summary>
+        public static readonly NoopTracer Instance = new NoopTracer();
 
         internal NoopTracer()
         {
         }
 
         /// <inheritdoc/>
-        public override IBinaryFormat BinaryFormat
+        public ISpan CurrentSpan => BlankSpan.Instance;
+
+        /// <inheritdoc/>
+        public IBinaryFormat BinaryFormat => new BinaryFormat();
+
+        /// <inheritdoc/>
+        public ITextFormat TextFormat => new TraceContextFormat();
+
+        /// <inheritdoc/>
+        public IScope WithSpan(ISpan span)
         {
-            get
+            return NoopScope.Instance;
+        }
+
+        /// <inheritdoc/>
+        public ISpanBuilder SpanBuilder(string spanName)
+        {
+            return new NoopSpanBuilder(spanName);
+        }
+
+        /// <inheritdoc/>
+        public void RecordSpanData(SpanData span)
+        {
+            if (span == null)
             {
-                return BinaryFormatValue;
+                throw new ArgumentNullException(nameof(span));
             }
-        }
-
-        /// <inheritdoc/>
-        public override ITextFormat TextFormat
-        {
-            get
-            {
-                return TextFormatValue;
-            }
-        }
-
-        /// <inheritdoc/>
-        public override ISpanBuilder SpanBuilderWithParent(string name, SpanKind kind = SpanKind.Internal, ISpan parent = null)
-        {
-            return NoopSpanBuilder.SetParent(name, kind, parent);
-        }
-
-        /// <inheritdoc/>
-        public override ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, SpanContext parentContext = null)
-        {
-            return NoopSpanBuilder.SetParent(name, kind, parentContext);
-        }
-
-        /// <inheritdoc/>
-        public override void RecordSpanData(SpanData span)
-        {
         }
     }
 }

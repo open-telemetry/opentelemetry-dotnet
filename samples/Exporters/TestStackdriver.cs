@@ -64,9 +64,9 @@ namespace Samples
 
             Stats.ViewManager.RegisterView(VideoSizeView);
 
-            using (var scopedTags = tagContextBuilder.BuildScoped())
+            using (tagContextBuilder.BuildScoped())
             {
-                using (var scopedSpan = spanBuilder.StartScopedSpan())
+                using (Tracer.WithSpan(spanBuilder.StartSpan()))
                 {
                     Tracer.CurrentSpan.AddEvent("Processing video.");
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));
