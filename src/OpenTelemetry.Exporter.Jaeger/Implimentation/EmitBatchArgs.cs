@@ -68,7 +68,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
             if (this.Batch != null)
             {
                 sb.Append("Batch: ");
-                sb.Append(this.Batch == null ? "<null>" : this.Batch.ToString());
+                sb.Append(this.Batch?.ToString() ?? "<null>");
             }
 
             sb.Append(")");
