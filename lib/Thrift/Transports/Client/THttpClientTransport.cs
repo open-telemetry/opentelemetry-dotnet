@@ -112,7 +112,7 @@ namespace Thrift.Transports.Client
 
             try
             {
-                var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken);
+                var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
 
                 if (ret == -1)
                 {
@@ -134,12 +134,16 @@ namespace Thrift.Transports.Client
                 await Task.FromCanceled(cancellationToken);
             }
 
-            await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
+            await _outputStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         private HttpClient CreateClient()
         {
+#if NET46
+            var handler = new WebRequestHandler();
+#else
             var handler = new HttpClientHandler();
+#endif
             if (_certificates.Length > 0)
             {
                 handler.ClientCertificates.AddRange(_certificates);

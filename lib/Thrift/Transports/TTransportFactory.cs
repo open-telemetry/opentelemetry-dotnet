@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -18,11 +18,11 @@
 namespace Thrift.Transports
 {
     /// <summary>
-    ///     From Mark Slee & Aditya Agarwal of Facebook:
+    ///     From Mark Slee &amp; Aditya Agarwal of Facebook:
     ///     Factory class used to create wrapped instance of Transports.
     ///     This is used primarily in servers, which get Transports from
     ///     a ServerTransport and then may want to mutate them (i.e. create
-    ///     a BufferedTransport from the underlying base transport)
+    ///     a BufferedTransport from the underlying base transport).
     /// </summary>
     // ReSharper disable once InconsistentNaming
     public class TTransportFactory

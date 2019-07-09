@@ -1,4 +1,4 @@
-// <copyright file="JaegerSpanRefType.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerSpanRefType.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System;
 
     /// <summary>
-    /// Represents the different types of Jaeger Spans
+    /// Represents the different types of Jaeger Spans.
     /// </summary>
     public enum JaegerSpanRefType
     {

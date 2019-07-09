@@ -1,4 +1,4 @@
-// <copyright file="JaegerTagType.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerTagType.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System;
 
     /// <summary>
-    /// Indicates the data type of a Jaeger tag
+    /// Indicates the data type of a Jaeger tag.
     /// </summary>
     public enum JaegerTagType
     {

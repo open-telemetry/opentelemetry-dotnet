@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -49,7 +49,7 @@ namespace Thrift.Transports.Client
 
         public override void Close()
         {
-            /** do nothing **/
+            // do nothing
         }
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
