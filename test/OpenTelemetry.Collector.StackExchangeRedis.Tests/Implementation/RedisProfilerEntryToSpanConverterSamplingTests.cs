@@ -33,7 +33,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
                 It.IsAny<TraceId>(), 
                 It.IsAny<SpanId>(), 
                 It.IsAny<string>(), 
-                It.IsAny<IEnumerable<ISpan>>())).Returns(true);
+                It.IsAny<IEnumerable<ILink>>())).Returns(true);
 
             Assert.True(RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Blank, "SET", m.Object, out var context, out var parentId));
 
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
                 It.IsAny<TraceId>(), 
                 It.IsAny<SpanId>(), 
                 It.IsAny<string>(), 
-                It.IsAny<IEnumerable<ISpan>>())).Returns(false);
+                It.IsAny<IEnumerable<ILink>>())).Returns(false);
 
             Assert.False(RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Blank, "SET", m.Object, out context, out parentId));
         }
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
                 It.Is<TraceId>(y => y == traceId && y == context.TraceId),
                 It.Is<SpanId>(y => y.IsValid && y == context.SpanId),
                 It.Is<string>(y => y == "SET"),
-                It.Is<IEnumerable<ISpan>>(y => y == null)));
+                It.Is<IEnumerable<ILink>>(y => y == null)));
         }
 
         [Fact]
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
                 It.IsAny<TraceId>(), 
                 It.IsAny<SpanId>(), 
                 It.IsAny<string>(), 
-                It.IsAny<IEnumerable<ISpan>>())).Returns((SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ISpan> parentLinks) => parentContext.TraceOptions.IsSampled);
+                It.IsAny<IEnumerable<ILink>>())).Returns((SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ISpan> parentLinks) => parentContext.TraceOptions.IsSampled);
 
             RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Blank, "SET", m.Object, out var context, out var parentId);
 
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
                 It.Is<TraceId>(y => y.IsValid && y == context.TraceId),
                 It.Is<SpanId>(y => y.IsValid && y == context.SpanId),
                 It.Is<string>(y => y == "SET"),
-                It.Is<IEnumerable<ISpan>>(y => y == null)));
+                It.Is<IEnumerable<ILink>>(y => y == null)));
 
             Assert.Equal(TraceOptions.Default, context.TraceOptions);
         }

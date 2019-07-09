@@ -22,14 +22,14 @@ namespace OpenTelemetry.Trace.Export
     /// <inheritdoc/>
     public sealed class InProcessRunningSpanStore : RunningSpanStoreBase
     {
-        private readonly ConcurrentIntrusiveList<SpanBase> runningSpans;
+        private readonly ConcurrentIntrusiveList<Span> runningSpans;
 
         /// <summary>
         /// Constructs a new <see cref="InProcessRunningSpanStore"/>.
         /// </summary>
         public InProcessRunningSpanStore()
         {
-            this.runningSpans = new ConcurrentIntrusiveList<SpanBase>();
+            this.runningSpans = new ConcurrentIntrusiveList<Span>();
         }
 
         /// <inheritdoc/>
@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace.Export
         {
             get
             {
-                IEnumerable<SpanBase> allRunningSpans = this.runningSpans.Copy();
+                IEnumerable<Span> allRunningSpans = this.runningSpans.Copy();
                 var numSpansPerName = new Dictionary<string, int>();
                 foreach (var span in allRunningSpans)
                 {
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override IEnumerable<SpanData> GetRunningSpans(IRunningSpanStoreFilter filter)
         {
-            IReadOnlyCollection<SpanBase> allRunningSpans = this.runningSpans.Copy();
+            IReadOnlyCollection<Span> allRunningSpans = this.runningSpans.Copy();
             var maxSpansToReturn = filter.MaxSpansToReturn == 0 ? allRunningSpans.Count : filter.MaxSpansToReturn;
             var ret = new List<SpanData>(maxSpansToReturn);
             foreach (var span in allRunningSpans)
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override void OnEnd(ISpan span)
         {
-            if (span is SpanBase spanBase)
+            if (span is Span spanBase)
             {
                 this.runningSpans.RemoveElement(spanBase);
             }
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override void OnStart(ISpan span)
         {
-            if (span is SpanBase spanBase)
+            if (span is Span spanBase)
             {
                 this.runningSpans.AddElement(spanBase);
             }

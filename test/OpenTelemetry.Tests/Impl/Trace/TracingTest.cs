@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact(Skip = "need to fix the way tracer being instantiated")]
         public void DefaultTracer()
         {
-            Assert.Same(Tracer.NoopTracer, Tracing.Tracer);
+            Assert.Same(NoopTracer.Instance, Tracing.Tracer);
         }
 
         [Fact(Skip = "need to fix the way tracer being instantiated")]

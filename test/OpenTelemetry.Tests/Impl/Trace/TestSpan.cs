@@ -19,68 +19,59 @@ namespace OpenTelemetry.Trace.Test
     using System;
     using System.Collections.Generic;
 
-    public class TestSpan : SpanBase
+    public class TestSpan : ISpan
     {
-        public TestSpan(SpanContext context, SpanOptions options)
-            : base(context, options)
+        public TestSpan()
         {
         }
 
-        public override DateTimeOffset EndTime { get; }
+        public SpanContext Context { get; }
+        public bool IsRecordingEvents { get; }
+        public Status Status { get; set; }
+        public bool HasEnded { get; }
+        public void UpdateName(string name)
+        {
+            throw new NotImplementedException();
+        }
 
-        public override TimeSpan Latency { get; }
-
-        public override bool IsSampleToLocalSpanStore { get; }
-
-        public override Status Status { get; set; }
-
-        public override string Name { get; protected set; }
-
-        public override SpanId ParentSpanId { get; }
-
-        public override bool HasEnded => true;
-
-        public override bool IsRecordingEvents => this.Options.HasFlag(SpanOptions.RecordEvents);
-
-        public override void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
+        public void SetAttribute(string key, IAttributeValue value)
         {
         }
 
-        public override void AddEvent(IEvent addEvent)
+        public void SetAttribute(string key, string value)
         {
         }
 
-        public override void AddLink(ILink link)
+        public void SetAttribute(string key, long value)
         {
         }
 
-        public override void End(EndSpanOptions options)
+        public void SetAttribute(string key, double value)
         {
         }
 
-        public override void SetAttribute(string key, IAttributeValue value)
+        public void SetAttribute(string key, bool value)
         {
         }
 
-        public override void SetAttribute(string key, string value)
+        public void AddEvent(string name)
         {
         }
 
-        public override void SetAttribute(string key, long value)
+        public void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
         {
         }
 
-        public override void SetAttribute(string key, double value)
+        public void AddEvent(IEvent newEvent)
         {
         }
 
-        public override void SetAttribute(string key, bool value)
+        public void AddLink(ILink link)
         {
         }
 
-        public override SpanData ToSpanData()
+        public void End()
         {
-            return null;
         }
     }
 }
