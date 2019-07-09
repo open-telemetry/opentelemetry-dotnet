@@ -77,7 +77,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // failure to parse tracestate
                 // TODO: logging

@@ -14,13 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Context.Propagation;
-
 namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
 
