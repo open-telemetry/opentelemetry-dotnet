@@ -48,21 +48,21 @@ namespace OpenTelemetry.Trace
             return new ScopeInSpan(span, endSpan, this);
         }
 
-        private void SetSpan(Activity activity, ISpan span)
+        private void SetSpan(Span span)
         {
-            if (activity == null)
+            if (span.Activity == null)
             {
                 // log error
                 return;
             }
 
-            if (ActivitySpanTable.TryGetValue(activity, out _))
+            if (ActivitySpanTable.TryGetValue(span.Activity, out _))
             {
                 // log warning
                 return;
             }
 
-            ActivitySpanTable.Add(activity, span);
+            ActivitySpanTable.Add(span.Activity, span);
         }
 
         private void DetachSpanFromActivity(Activity activity)
@@ -81,7 +81,16 @@ namespace OpenTelemetry.Trace
                 this.span = span;
                 this.endSpan = endSpan;
                 this.currentUtils = currentUtils;
-                this.currentUtils.SetSpan(Activity.Current, span);
+
+                if (span is Span spanImpl)
+                {
+                    if (spanImpl.OwnsActivity)
+                    {
+                        Activity.Current = spanImpl.Activity;
+                    }
+
+                    this.currentUtils.SetSpan(spanImpl);
+                }
             }
 
             public void Dispose()

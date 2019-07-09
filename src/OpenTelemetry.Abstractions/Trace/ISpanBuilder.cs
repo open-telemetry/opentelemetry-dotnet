@@ -114,13 +114,6 @@ namespace OpenTelemetry.Trace
         ISpanBuilder SetRecordEvents(bool recordEvents);
 
         /// <summary>
-        /// Disable Activity creation for the span. Is not compatible with implicit Span propagation and auto-collectors. Use with caution.
-        /// </summary>
-        /// <param name="disableActivity">Value indicating whether to disable Activity creation for the span.</param>
-        /// <returns>This span builder for chaining.</returns>
-        ISpanBuilder SetDisableActivity(bool disableActivity);
-
-        /// <summary>
         /// Starts the span.
         /// </summary>
         /// <returns>Span that was just started.</returns>

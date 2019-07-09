@@ -39,7 +39,6 @@ namespace OpenTelemetry.Trace
         private List<ILink> links;
         private bool recordEvents;
         private Timer timestampConverter;
-        private bool disableActivityCreation = false;
 
         internal SpanBuilder(string name, SpanBuilderOptions options)
         {
@@ -208,17 +207,10 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpanBuilder SetDisableActivity(bool disableActivity)
-        {
-            this.disableActivityCreation = disableActivity;
-            return this;
-        }
-
-        /// <inheritdoc/>
         public ISpan StartSpan()
         {
-            var activityForSpan = this.CreateActivityForSpan(this.contextSource, this.parentSpan, this.parentSpanContext, this.parentActivity, this.fromActivity);
-
+            var activityForSpan = this.CreateActivityForSpan(this.contextSource, this.parentSpan,
+                this.parentSpanContext, this.parentActivity, this.fromActivity);
             var activeTraceParams = this.options.TraceConfig.ActiveTraceParams;
 
             bool sampledIn = MakeSamplingDecision(
@@ -241,9 +233,16 @@ namespace OpenTelemetry.Trace
                 activityForSpan.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
             }
 
+            var childTracestate = Tracestate.Empty;
+
+            if (this.parentSpanContext?.Tracestate != null && this.parentSpanContext.Tracestate != Tracestate.Empty)
+            {
+                childTracestate = this.parentSpanContext.Tracestate.ToBuilder().Build();
+            }
+
             var span = Span.StartSpan(
                         activityForSpan,
-                        this.parentSpanContext?.Tracestate ?? Tracestate.Empty, // it is updated in CreateActivityForSpan, 
+                        childTracestate, // it is updated in CreateActivityForSpan, 
                         spanOptions,
                         this.name,
                         this.kind,
@@ -328,76 +327,98 @@ namespace OpenTelemetry.Trace
 
         private Activity CreateActivityForSpan(ContextSource contextSource, ISpan explicitParent, SpanContext remoteParent, Activity explicitParentActivity, Activity fromActivity)
         {
+            Activity spanActivity = null;
+            Activity originalActivity = Activity.Current;
+            bool needRestoreOriginal = true;
+
             switch (contextSource)
             {
                 case ContextSource.CurrentActivityParent:
                 {
                     // Activity will figure out its parent
-                    var activity = new Activity(this.name).Start();
-
-                    this.parentSpanContext = ParentContextFromActivity(activity);
-                    return activity;
+                    spanActivity = new Activity(this.name).Start();
+                    needRestoreOriginal = true;
+                    this.parentSpanContext = ParentContextFromActivity(spanActivity);
+                    break;
                 }
 
                 case ContextSource.ExplicitActivityParent:
                 {
-                    var activity = new Activity(this.name).SetParentId(this.parentActivity.TraceId,
-                        this.parentActivity.SpanId,
-                        this.parentActivity.ActivityTraceFlags);
-                    activity.TraceStateString = this.parentActivity.TraceStateString;
-
-                    activity.Start();
-
-                    this.parentSpanContext = ParentContextFromActivity(activity);
-                    return activity;
+                    spanActivity = new Activity(this.name)
+                        .SetParentId(this.parentActivity.TraceId,
+                            this.parentActivity.SpanId,
+                            this.parentActivity.ActivityTraceFlags)
+                        .Start();
+                    spanActivity.TraceStateString = this.parentActivity.TraceStateString;
+                    needRestoreOriginal = true;
+                    this.parentSpanContext = ParentContextFromActivity(spanActivity);
+                    break;
                 }
 
                 case ContextSource.NoParent:
                 {
                     // TODO fix after next DiagnosticSource preview comes out - this is a hack to force activity to become orphan
-                    var activity = new Activity(this.name).SetParentId(" ").Start();
+                    spanActivity = new Activity(this.name).SetParentId(" ").Start();
                     this.parentSpanContext = null;
-                    return activity;
+                    needRestoreOriginal = true;
+                    break;
                 }
 
                 case ContextSource.Activity:
                 {
                     this.parentSpanContext = ParentContextFromActivity(this.fromActivity);
-                    return this.fromActivity;
+                    spanActivity = this.fromActivity;
+                    needRestoreOriginal = false;
+                    break;
                 }
 
                 case ContextSource.ExplicitRemoteParent:
                 {
-                    var activity = new Activity(this.name);
+                    spanActivity = new Activity(this.name);
                     if (this.parentSpanContext.IsValid)
                     {
-                        activity.SetParentId(this.parentSpanContext.TraceId,
+                        spanActivity.SetParentId(this.parentSpanContext.TraceId,
                             this.parentSpanContext.SpanId,
                             this.parentSpanContext.TraceOptions);
                     }
 
-                    activity.TraceStateString = this.parentSpanContext.Tracestate.ToString();
-                    activity.Start();
+                    spanActivity.TraceStateString = this.parentSpanContext.Tracestate.ToString();
+                    spanActivity.Start();
 
-                    return activity;
+                    needRestoreOriginal = true;
+                    break;
                 }
 
                 case ContextSource.ExplicitSpanParent:
                 {
-                    var activity = new Activity(this.name).SetParentId(this.parentSpan.Context.TraceId,
+                    spanActivity = new Activity(this.name).SetParentId(this.parentSpan.Context.TraceId,
                         this.parentSpan.Context.SpanId,
                         this.parentSpan.Context.TraceOptions);
 
-                    activity.TraceStateString = this.parentSpan.Context.Tracestate.ToString();
-                    activity.Start();
+                    spanActivity.TraceStateString = this.parentSpan.Context.Tracestate.ToString();
+                    spanActivity.Start();
+
+                    needRestoreOriginal = true;
 
                     this.parentSpanContext = this.parentSpan.Context;
-                    return activity;
+                    break;
                 }
 
                 default:
                     throw new ArgumentException($"Unknown parentType {contextSource}");
             }
+
+            if (needRestoreOriginal)
+            {
+                // Activity Start always puts Activity on top of Current stack
+                // in OpenTelemetry we ask users to enable implicit propagation by calling WithSpan
+                // it will set Current Activity and attach span to it.
+                // we need to work with .NET team to allow starting Activities without updating Current
+                // As a workaround here we are undoing updating Current
+                Activity.Current = originalActivity;
+            }
+
+            return spanActivity;
         }
     }
 }

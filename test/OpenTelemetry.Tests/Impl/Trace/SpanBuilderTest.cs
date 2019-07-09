@@ -74,9 +74,10 @@ namespace OpenTelemetry.Trace.Test
                 Timestamp.FromDateTimeOffset(DateTimeOffset.Now).AddDuration(Duration.Create(1, 0)));
             Assert.Equal(SpanName, spanData.Name);
 
-            Assert.NotNull(Activity.Current);
-            Assert.Equal(Activity.Current.TraceId, span.Context.TraceId);
-            Assert.Equal(Activity.Current.SpanId, span.Context.SpanId);
+            var activity = ((Span)span).Activity;
+            Assert.Null(Activity.Current);
+            Assert.Equal(activity.TraceId, span.Context.TraceId);
+            Assert.Equal(activity.SpanId, span.Context.SpanId);
         }
 
         [Fact]
@@ -285,8 +286,9 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(parentActivity.TraceId, childSpan.Context.TraceId);
             Assert.Equal(parentActivity.SpanId, ((Span)childSpan).ParentSpanId);
 
-            Assert.NotNull(Activity.Current);
-            Assert.Equal(Activity.Current.Parent, parentActivity);
+            var activity = ((Span)childSpan).Activity;
+            Assert.Equal(parentActivity, Activity.Current);
+            Assert.Equal(activity.Parent, parentActivity);
 
             Assert.Equal("k1=v1,k2=v2", childSpan.Context.Tracestate.ToString());
         }
@@ -323,9 +325,11 @@ namespace OpenTelemetry.Trace.Test
             Assert.NotEqual(parentActivity.TraceId, childSpan.Context.TraceId);
             Assert.True(((Span)childSpan).ToSpanData().ParentSpanId == default);
 
-            Assert.NotNull(Activity.Current);
-            Assert.Equal(Activity.Current.TraceId, childSpan.Context.TraceId);
-            Assert.Equal(Activity.Current.SpanId, childSpan.Context.SpanId);
+            var activity = ((Span)childSpan).Activity;
+            Assert.Equal(parentActivity, Activity.Current);
+            Assert.Null(activity.Parent);
+            Assert.Equal(activity.TraceId, childSpan.Context.TraceId);
+            Assert.Equal(activity.SpanId, childSpan.Context.SpanId);
             Assert.Empty(childSpan.Context.Tracestate.Entries);
         }
 
@@ -345,9 +349,12 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(parentActivity.TraceId, childSpan.Context.TraceId);
             Assert.Equal(parentActivity.SpanId, ((Span)childSpan).ParentSpanId);
 
-            Assert.NotNull(Activity.Current);
-            Assert.Equal(Activity.Current.TraceId, parentActivity.TraceId);
-            Assert.Equal(Activity.Current.ParentSpanId, parentActivity.SpanId);
+            var activity = ((Span)childSpan).Activity;
+            Assert.NotNull(activity);
+            Assert.Null(Activity.Current);
+            Assert.Equal(activity.TraceId, parentActivity.TraceId);
+            Assert.Equal(activity.ParentSpanId, parentActivity.SpanId);
+            Assert.Equal(activity.SpanId, childSpan.Context.SpanId);
             Assert.Equal("k1=v1,k2=v2", childSpan.Context.Tracestate.ToString());
         }
 
@@ -423,9 +430,10 @@ namespace OpenTelemetry.Trace.Test
             var spanData = ((Span)span).ToSpanData();
             Assert.True(spanData.ParentSpanId == default);
 
-            Assert.NotNull(Activity.Current);
-            Assert.Equal(Activity.Current.TraceId, span.Context.TraceId);
-            Assert.Equal(Activity.Current.SpanId, span.Context.SpanId);
+            var activity = ((Span)span).Activity;
+            Assert.Null(Activity.Current);
+            Assert.Equal(activity.TraceId, span.Context.TraceId);
+            Assert.Equal(activity.SpanId, span.Context.SpanId);
             Assert.Empty(span.Context.Tracestate.Entries);
         }
 
