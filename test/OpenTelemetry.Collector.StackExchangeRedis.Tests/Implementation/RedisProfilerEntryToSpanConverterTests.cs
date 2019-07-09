@@ -24,7 +24,6 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
     using System;
     using OpenTelemetry.Common;
     using System.Collections.Generic;
-    using OpenTelemetry.Trace.Export;
 
     public class RedisProfilerEntryToSpanConverterTests
     {

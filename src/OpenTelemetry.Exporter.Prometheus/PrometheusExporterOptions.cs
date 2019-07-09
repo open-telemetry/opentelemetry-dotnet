@@ -16,8 +16,6 @@
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
-    using System;
-
     /// <summary>
     /// Options to run prometheus exporter.
     /// </summary>

@@ -1,4 +1,4 @@
-﻿// <copyright file="ApplicationInsightsExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ProtoExtensions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,15 +20,15 @@ namespace OpenTelemetry.Exporter.Stackdriver.Utils
 
     /// <summary>
     /// Translation methods from OpenTelemetry structures to common
-    /// Protobuf structures
+    /// Protobuf structures.
     /// </summary>
     public static class ProtoExtensions
     {
         /// <summary>
-        /// Translates OpenTelemetry Timestamp to Protobuf's timestamp
+        /// Translates OpenTelemetry Timestamp to Protobuf's timestamp.
         /// </summary>
-        /// <param name="timestamp">OpenTelemetry timestamp</param>
-        /// <returns>Protobuf's timestamp</returns>
+        /// <param name="timestamp">OpenTelemetry timestamp.</param>
+        /// <returns>Protobuf's timestamp.</returns>
         public static Google.Protobuf.WellKnownTypes.Timestamp ToTimestamp(this Timestamp timestamp)
         {
             return new Google.Protobuf.WellKnownTypes.Timestamp { Seconds = timestamp.Seconds, Nanos = timestamp.Nanos };

@@ -21,18 +21,17 @@ namespace OpenTelemetry.Trace.Test
     using Moq;
     using OpenTelemetry.Common;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
     using Xunit;
 
     public class SpanBuilderTest
     {
         private static readonly String SPAN_NAME = "MySpanName";
-        private SpanBuilderOptions spanBuilderOptions;
-        private TraceParams alwaysSampleTraceParams = TraceParams.Default.ToBuilder().SetSampler(Samplers.AlwaysSample).Build();
+        private readonly SpanBuilderOptions spanBuilderOptions;
+        private readonly TraceParams alwaysSampleTraceParams = TraceParams.Default.ToBuilder().SetSampler(Samplers.AlwaysSample).Build();
         private readonly IRandomGenerator randomHandler = new FakeRandomHandler();
-        private IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
-        private ITraceConfig traceConfig = Mock.Of<ITraceConfig>();
+        private readonly IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
+        private readonly ITraceConfig traceConfig = Mock.Of<ITraceConfig>();
 
         public SpanBuilderTest()
         {

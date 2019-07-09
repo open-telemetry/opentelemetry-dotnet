@@ -40,6 +40,35 @@ namespace OpenTelemetry.Trace.Sampler
 
         public long IdUpperBound { get; }
 
+        public static ProbabilitySampler Create(double probability)
+        {
+            if (probability < 0.0 || probability > 1.0)
+            {
+                throw new ArgumentOutOfRangeException("probability must be in range [0.0, 1.0]");
+            }
+
+            long idUpperBound;
+
+            // Special case the limits, to avoid any possible issues with lack of precision across
+            // double/long boundaries. For probability == 0.0, we use Long.MIN_VALUE as this guarantees
+            // that we will never sample a trace, even in the case where the id == Long.MIN_VALUE, since
+            // Math.Abs(Long.MIN_VALUE) == Long.MIN_VALUE.
+            if (probability == 0.0)
+            {
+                idUpperBound = long.MinValue;
+            }
+            else if (probability == 1.0)
+            {
+                idUpperBound = long.MaxValue;
+            }
+            else
+            {
+                idUpperBound = (long)(probability * long.MaxValue);
+            }
+
+            return new ProbabilitySampler(probability, idUpperBound);
+        }
+
         public bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ISpan> parentLinks)
         {
             // If the parent is sampled keep the sampling decision.
@@ -79,7 +108,7 @@ namespace OpenTelemetry.Trace.Sampler
                 + "}";
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override bool Equals(object o)
         {
             if (o == this)
@@ -96,7 +125,7 @@ namespace OpenTelemetry.Trace.Sampler
             return false;
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             long h = 1;
@@ -105,35 +134,6 @@ namespace OpenTelemetry.Trace.Sampler
             h *= 1000003;
             h ^= (this.IdUpperBound >> 32) ^ this.IdUpperBound;
             return (int)h;
-        }
-
-        public static ProbabilitySampler Create(double probability)
-        {
-            if (probability < 0.0 || probability > 1.0)
-            {
-                throw new ArgumentOutOfRangeException("probability must be in range [0.0, 1.0]");
-            }
-
-            long idUpperBound;
-
-            // Special case the limits, to avoid any possible issues with lack of precision across
-            // double/long boundaries. For probability == 0.0, we use Long.MIN_VALUE as this guarantees
-            // that we will never sample a trace, even in the case where the id == Long.MIN_VALUE, since
-            // Math.Abs(Long.MIN_VALUE) == Long.MIN_VALUE.
-            if (probability == 0.0)
-            {
-                idUpperBound = long.MinValue;
-            }
-            else if (probability == 1.0)
-            {
-                idUpperBound = long.MaxValue;
-            }
-            else
-            {
-                idUpperBound = (long)(probability * long.MaxValue);
-            }
-
-            return new ProbabilitySampler(probability, idUpperBound);
         }
     }
 }

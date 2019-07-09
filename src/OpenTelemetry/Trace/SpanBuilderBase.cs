@@ -21,16 +21,16 @@ namespace OpenTelemetry.Trace
 
     public abstract class SpanBuilderBase : ISpanBuilder
     {
+        protected SpanBuilderBase(SpanKind kind)
+        {
+            this.Kind = kind;
+        }
+
         private SpanBuilderBase()
         {
         }
 
         protected SpanKind Kind { get; private set; }
-
-        protected SpanBuilderBase(SpanKind kind)
-        {
-            this.Kind = kind;
-        }
 
         public abstract ISpanBuilder SetSampler(ISampler sampler);
 

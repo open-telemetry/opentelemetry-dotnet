@@ -364,7 +364,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
         class TestStartEndHandler : IStartEndHandler
         {
-            InProcessSampledSpanStore sampleStore;
+            readonly InProcessSampledSpanStore sampleStore;
 
             public TestStartEndHandler(InProcessSampledSpanStore store)
             {

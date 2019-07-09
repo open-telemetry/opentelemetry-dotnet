@@ -18,7 +18,6 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Utils;
 
     /// <summary>
@@ -54,7 +53,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets the span name. Use <see cref="UpdateName"/> to explicitly set the span name.
+        /// Gets or sets the span name. Use <see cref="UpdateName"/> to explicitly set the span name.
         /// </summary>
         public abstract string Name { get; protected set; }
 
@@ -127,7 +126,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public abstract void AddLink(ILink link);
 
-        /// <inheritdoc/>
+        /// <inheritdoc cref="ISpan" />
         public abstract void End(EndSpanOptions options);
 
         /// <inheritdoc/>

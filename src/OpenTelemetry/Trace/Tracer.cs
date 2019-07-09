@@ -39,6 +39,7 @@ namespace OpenTelemetry.Trace
             this.spanBuilderOptions = new SpanBuilderOptions(randomGenerator, startEndHandler, traceConfig);
             this.binaryFormat = binaryFormat ?? new BinaryFormat();
             this.textFormat = textFormat ?? new TraceContextFormat();
+            this.exportComponent = exportComponent;
         }
 
         /// <inheritdoc/>

@@ -18,7 +18,6 @@ namespace OpenTelemetry.Metrics
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Resources;
 
     /// <summary>
     /// Base interface for all metrics defined in this package.
@@ -43,7 +42,7 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Returns a time series for a metric with all labels not set (default label values).
         /// </summary>
-        /// <returns>A time series for a metric with all labels not set (default label values)</returns>
+        /// <returns>A time series for a metric with all labels not set (default label values).</returns>
         T GetDefaultTimeSeries();
 
         /// <summary>
@@ -61,7 +60,7 @@ namespace OpenTelemetry.Metrics
         ///
         /// If value is missing for one of the predefined keys null must be used for that value.
         /// </summary>
-        /// <param name="labelValues">The list of label values</param>
+        /// <param name="labelValues">The list of label values.</param>
         void RemoveTimeSeries(IEnumerable<string> labelValues);
 
         /// <summary>

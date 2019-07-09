@@ -64,7 +64,10 @@ namespace OpenTelemetry.Stats
             }
         }
 
-        /** Enable stats collection for the given {@link View}. */
+        /// <summary>
+        /// Enable stats collection for the given <see cref="IView"/>.
+        /// </summary>
+        /// <param name="view">The view.</param>
         internal void RegisterView(IView view)
         {
             lock (this.lck)

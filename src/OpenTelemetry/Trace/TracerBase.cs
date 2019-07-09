@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
         public abstract ITextFormat TextFormat { get; }
 
         /// <summary>
-        /// No-op tracer.
+        /// Gets no-op tracer.
         /// </summary>
         internal static NoopTracer NoopTracer
         {

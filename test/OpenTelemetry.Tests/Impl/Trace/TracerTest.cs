@@ -24,9 +24,9 @@ namespace OpenTelemetry.Trace.Test
     public class TracerTest
     {
         private const string SPAN_NAME = "MySpanName";
-        private IStartEndHandler startEndHandler;
-        private ITraceConfig traceConfig;
-        private Tracer tracer;
+        private readonly IStartEndHandler startEndHandler;
+        private readonly ITraceConfig traceConfig;
+        private readonly Tracer tracer;
 
 
         public TracerTest()
