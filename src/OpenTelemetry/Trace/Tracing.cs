@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System.Runtime.CompilerServices;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
@@ -59,7 +60,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the tracer to record spans.
         /// </summary>
-        public static ITracer Tracer => TracingValue.traceComponent.Tracer;
+        public static ITracer Tracer => (ITracer)tracer;
 
         /// <summary>
         /// Gets the exporter to use to upload spans.

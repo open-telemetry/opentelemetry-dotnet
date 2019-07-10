@@ -18,12 +18,13 @@ namespace OpenTelemetry.Trace
 {
     using System.Threading;
     using OpenTelemetry.Common;
+    using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
 
     /// <inheritdoc/>
-    public sealed class Tracer : TracerBase
+    public sealed class Tracer : ITracer
     {
         private const int ExporterBufferSize = 32;
 
@@ -73,7 +74,7 @@ namespace OpenTelemetry.Trace
         public ITextFormat TextFormat { get; }
 
         /// <inheritdoc/>
-        public override void RecordSpanData(SpanData span)
+        public void RecordSpanData(SpanData span)
         {
             this.spanExporter.ExportAsync(span, CancellationToken.None);
         }
@@ -88,6 +89,11 @@ namespace OpenTelemetry.Trace
         public void RecordSpanData(SpanData span)
         {
             this.exportComponent.SpanExporter.ExportAsync(span, CancellationToken.None);
+        }
+
+        public IScope WithSpan(ISpan span)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }
