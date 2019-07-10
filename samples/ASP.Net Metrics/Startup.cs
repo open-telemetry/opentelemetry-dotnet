@@ -97,10 +97,6 @@ namespace hellocs
             // Starts the Exporter server in a thread
             metricsExporter.Start();
 
-            // This is where the app routes are declared and would be using authentification as opposed to
-            // statusExporter, healthExporter and metricsExporter which is answering to anonymous requests.
-            // The 3 anonymous routes are exposed on other port to ensure health and metrics are only accessible
-            // from inside the cluster and status accessible by anonymous clients outside of the cluster.
             app.UseMvc(routes =>
             {
                 routes.MapRoute(name: "Home", template: "{controller}/{action}/{id?}/");
