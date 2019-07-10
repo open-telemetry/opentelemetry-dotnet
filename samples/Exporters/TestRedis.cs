@@ -1,14 +1,27 @@
-﻿namespace Samples
+﻿// <copyright file="TestRedis.cs" company="OpenTelemetry Authors">
+// Copyright 2018, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
+namespace Samples
 {
     using System;
     using System.Collections.Generic;
     using System.Threading;
     using OpenTelemetry.Collector.StackExchangeRedis;
     using OpenTelemetry.Exporter.Zipkin;
-    using OpenTelemetry.Internal;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Sampler;
     using StackExchange.Redis;
 
@@ -16,10 +29,6 @@
     {
         internal static object Run(string zipkinUri)
         {
-            // 0. Initialization
-            SimpleEventQueue eventQueue = new SimpleEventQueue();
-            ExportComponent exportComponent = ExportComponent.CreateWithInProcessStores(eventQueue);
-
             // 1. Configure exporter to export traces to Zipkin
             var exporter = new ZipkinTraceExporter(
                 new ZipkinTraceExporterOptions()
@@ -27,12 +36,12 @@
                     Endpoint = new Uri(zipkinUri),
                     ServiceName = "tracing-to-zipkin-service",
                 },
-                exportComponent);
+                Tracing.ExportComponent);
             exporter.Start();
 
             // 2. Configure 100% sample rate for the purposes of the demo
-            ITraceConfig traceConfig = new TraceConfig();
-            ITraceParams currentConfig = traceConfig.ActiveTraceParams;
+            var traceConfig = Tracing.TraceConfig;
+            var currentConfig = traceConfig.ActiveTraceParams;
             var newConfig = currentConfig.ToBuilder()
                 .SetSampler(Samplers.AlwaysSample)
                 .Build();
@@ -42,44 +51,43 @@
             // but if not - you can use it as follows:
             var tracer = Tracing.Tracer;
 
-            var collector = new StackExchangeRedisCallsCollector(null, tracer, null, exportComponent);
+            var collector = new StackExchangeRedisCallsCollector(tracer, null, Tracing.ExportComponent);
 
             // connect to the server
-            ConnectionMultiplexer connection = ConnectionMultiplexer.Connect("localhost:6379");
+            var connection = ConnectionMultiplexer.Connect("localhost:6379");
             connection.RegisterProfiler(collector.GetProfilerSessionsFactory());
 
             // select a database (by default, DB = 0)
-            IDatabase db = connection.GetDatabase();
-
+            var db = connection.GetDatabase();
 
             // 4. Create a scoped span. It will end automatically when using statement ends
-            using (var scope = tracer.SpanBuilder("Main").StartScopedSpan())
+            using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))
             {
                 Console.WriteLine("About to do a busy work");
-                for (int i = 0; i < 10; i++)
+                for (var i = 0; i < 10; i++)
                 {
-                    DoWork(db, i);
+                    DoWork(db);
                 }
             }
 
             // 5. Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
-            exportComponent.SpanExporter.Dispose();
+            Tracing.ExportComponent.SpanExporter.Dispose();
 
             return null;
         }
 
-        private static void DoWork(IDatabase db, int i)
+        private static void DoWork(IDatabase db)
         {
             // 6. Get the global singleton Tracer object
-            ITracer tracer = Tracing.Tracer;
+            var tracer = Tracing.Tracer;
 
             // 7. Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be
             // a child span.
-            using (OpenTelemetry.Context.IScope scope = tracer.SpanBuilder("DoWork").StartScopedSpan())
+            using (tracer.WithSpan(tracer.SpanBuilder("DoWork").StartSpan()))
             {
                 // Simulate some work.
-                ISpan span = tracer.CurrentSpan;
+                var span = tracer.CurrentSpan;
 
                 try
                 {
@@ -89,10 +97,9 @@
                     Thread.Sleep(1000);
 
                     // run a command, in this case a GET
-                    RedisValue myVal = db.StringGet("key");
+                    var myVal = db.StringGet("key");
 
                     Console.WriteLine(myVal);
-
                 }
                 catch (ArgumentOutOfRangeException e)
                 {
@@ -101,8 +108,10 @@
                 }
 
                 // 7. Annotate our span to capture metadata about our operation
-                var attributes = new Dictionary<string, IAttributeValue>();
-                attributes.Add("use", AttributeValue.StringAttributeValue("demo"));
+                var attributes = new Dictionary<string, IAttributeValue>
+                {
+                    { "use", AttributeValue.StringAttributeValue("demo") },
+                };
                 span.AddEvent("Invoking DoWork", attributes);
             }
         }

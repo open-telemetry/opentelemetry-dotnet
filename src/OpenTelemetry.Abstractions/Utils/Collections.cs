@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Abstractions.Utils
 {
     using System.Collections.Generic;
-    using System.Linq;
     using System.Text;
 
     internal static class Collections

@@ -20,7 +20,7 @@ namespace OpenTelemetry.Stats
 
     public class Stats
     {
-        private static Stats stats = new Stats();
+        private static readonly Stats StatsValue = new Stats();
 
         private readonly CurrentStatsState state = new CurrentStatsState();
         private readonly StatsManager statsManager;
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Stats
         {
             get
             {
-                return stats.statsRecorder;
+                return StatsValue.statsRecorder;
             }
         }
 
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Stats
         {
             get
             {
-                return stats.viewManager;
+                return StatsValue.viewManager;
             }
         }
 
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Stats
         {
             get
             {
-                return stats.state.Value;
+                return StatsValue.state.Value;
             }
 
             set
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Stats
                     return;
                 }
 
-                var result = stats.state.Set(value);
+                var result = StatsValue.state.Set(value);
                 if (result)
                 {
                     if (value == StatsCollectionState.DISABLED)

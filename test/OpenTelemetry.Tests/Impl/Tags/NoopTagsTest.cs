@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Tags.Test
 {
     using System;
@@ -21,7 +23,6 @@ namespace OpenTelemetry.Tags.Test
     using System.Collections.Generic;
     using System.Linq;
     using OpenTelemetry.Internal;
-    using OpenTelemetry.Tags.Propagation;
     using Xunit;
 
     public class NoopTagsTest

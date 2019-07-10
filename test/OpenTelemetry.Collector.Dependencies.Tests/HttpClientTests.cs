@@ -18,11 +18,9 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     using Moq;
     using Newtonsoft.Json;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Sampler;
     using System;
     using System.Collections.Generic;

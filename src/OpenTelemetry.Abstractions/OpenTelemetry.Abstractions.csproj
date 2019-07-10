@@ -5,8 +5,4 @@
     <Description>OpenTelemetry .NET API abstractions</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Utils\AttributesWithCapacity.cs" />
-  </ItemGroup>
 </Project>

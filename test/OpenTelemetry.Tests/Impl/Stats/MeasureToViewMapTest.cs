@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Stats.Test
 {
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;

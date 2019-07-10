@@ -59,15 +59,18 @@ namespace OpenTelemetry.Trace
         {
             this.spanBuilderOptions = new SpanBuilderOptions(randomGenerator, startEndHandler, traceConfig);
             this.spanExporter = spanExporter ?? (SpanExporter)SpanExporter.Create(ExporterBufferSize, ExporterScheduleDelay);
-            this.binaryFormat = binaryFormat ?? new BinaryFormat();
-            this.textFormat = textFormat ?? new TraceContextFormat();
+            this.BinaryFormat = binaryFormat ?? new BinaryFormat();
+            this.TextFormat = textFormat ?? new TraceContextFormat();
         }
 
         /// <inheritdoc/>
-        public override IBinaryFormat BinaryFormat => this.binaryFormat;
+        public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan ?? BlankSpan.Instance;
 
         /// <inheritdoc/>
-        public override ITextFormat TextFormat => this.textFormat;
+        public IBinaryFormat BinaryFormat { get; }
+
+        /// <inheritdoc/>
+        public ITextFormat TextFormat { get; }
 
         /// <inheritdoc/>
         public override void RecordSpanData(SpanData span)
@@ -76,15 +79,15 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override ISpanBuilder SpanBuilderWithParent(string name, SpanKind kind = SpanKind.Internal, ISpan parent = null)
+        public ISpanBuilder SpanBuilder(string spanName)
         {
-            return Trace.SpanBuilder.Create(name, kind, parent, this.spanBuilderOptions);
+            return new SpanBuilder(spanName, this.spanBuilderOptions);
         }
 
         /// <inheritdoc/>
-        public override ISpanBuilder SpanBuilderWithParentContext(string name, SpanKind kind = SpanKind.Internal, SpanContext parentContext = null)
+        public void RecordSpanData(SpanData span)
         {
-            return Trace.SpanBuilder.Create(name, kind, parentContext, this.spanBuilderOptions);
+            this.exportComponent.SpanExporter.ExportAsync(span, CancellationToken.None);
         }
     }
 }

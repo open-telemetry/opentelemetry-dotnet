@@ -14,26 +14,25 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Internal
+namespace OpenTelemetry.Trace
 {
     using OpenTelemetry.Context;
 
+    /// <summary>
+    /// No-op scope.
+    /// </summary>
     public sealed class NoopScope : IScope
     {
-        public static readonly IScope NoopInstance = new NoopScope();
+        /// <summary>
+        /// Gets Instance of the noop scope.
+        /// </summary>
+        public static IScope Instance = new NoopScope();
 
         private NoopScope()
         {
         }
 
-        public static IScope Instance
-        {
-            get
-            {
-                return NoopInstance;
-            }
-        }
-
+        /// <inheritdoc />
         public void Dispose()
         {
         }

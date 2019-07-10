@@ -18,7 +18,6 @@ namespace OpenTelemetry.Metrics
 {
     using System;
     using System.Collections.Generic;
-    using System.Net.NetworkInformation;
     using OpenTelemetry.Metrics.Implementation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Tags;
@@ -29,26 +28,26 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public class DefaultMeter : IMeter
     {
-        private static CounterDoubleBuilder counterDoubleBuilder = new CounterDoubleBuilder();
-        private static CounterLongBuilder counterLongBuilder = new CounterLongBuilder();
-        private static GaugeDoubleBuilder gaugeDoubleBuilder = new GaugeDoubleBuilder();
-        private static GaugeLongBuilder gaugeLongBuilder = new GaugeLongBuilder();
-        private static MeasureBuilder measureBuilder = new MeasureBuilder();
+        private static readonly CounterDoubleBuilder CounterDoubleBuilderValue = new CounterDoubleBuilder();
+        private static readonly CounterLongBuilder CounterLongBuilderValue = new CounterLongBuilder();
+        private static readonly GaugeDoubleBuilder GaugeDoubleBuilderValue = new GaugeDoubleBuilder();
+        private static readonly GaugeLongBuilder GaugeLongBuilderValue = new GaugeLongBuilder();
+        private static readonly MeasureBuilder MeasureBuilderValue = new MeasureBuilder();
 
         /// <inheritdoc/>
-        public ICounterDoubleBuilder GetCounterDoubleBuilder(string name) => counterDoubleBuilder;
+        public ICounterDoubleBuilder GetCounterDoubleBuilder(string name) => CounterDoubleBuilderValue;
 
         /// <inheritdoc/>
-        public ICounterLongBuilder GetCounterLongBuilder(string name) => counterLongBuilder;
+        public ICounterLongBuilder GetCounterLongBuilder(string name) => CounterLongBuilderValue;
 
         /// <inheritdoc/>
-        public IGaugeDoubleBuilder GetGaugeDoubleBuilder(string name) => gaugeDoubleBuilder;
+        public IGaugeDoubleBuilder GetGaugeDoubleBuilder(string name) => GaugeDoubleBuilderValue;
 
         /// <inheritdoc/>
-        public IGaugeLongBuilder GetGaugeLongBuilder(string name) => gaugeLongBuilder;
+        public IGaugeLongBuilder GetGaugeLongBuilder(string name) => GaugeLongBuilderValue;
 
         /// <inheritdoc/>
-        public IMeasureBuilder GetMeasureBuilder(string name) => measureBuilder;
+        public IMeasureBuilder GetMeasureBuilder(string name) => MeasureBuilderValue;
 
         /// <inheritdoc/>
         public void Record(IEnumerable<IMeasurement> measurements)
@@ -78,15 +77,15 @@ namespace OpenTelemetry.Metrics
 
         private class CounterDouble : ICounterDouble
         {
-            private static CounterDoubleTimeSeries timeSeries = new CounterDoubleTimeSeries();
+            private static readonly CounterDoubleTimeSeries TimeSeries = new CounterDoubleTimeSeries();
 
             public void Clear()
             {
             }
 
-            public ICounterDoubleTimeSeries GetDefaultTimeSeries() => timeSeries;
+            public ICounterDoubleTimeSeries GetDefaultTimeSeries() => TimeSeries;
 
-            public ICounterDoubleTimeSeries GetOrCreateTimeSeries(IEnumerable<string> labelValues) => timeSeries;
+            public ICounterDoubleTimeSeries GetOrCreateTimeSeries(IEnumerable<string> labelValues) => TimeSeries;
 
             public void RemoveTimeSeries(IEnumerable<string> labelValues)
             {
@@ -99,9 +98,9 @@ namespace OpenTelemetry.Metrics
 
         private class CounterDoubleBuilder : ICounterDoubleBuilder
         {
-            private static CounterDouble counterDouble = new CounterDouble();
+            private static readonly CounterDouble CounterDouble = new CounterDouble();
 
-            public IMetric<ICounterDoubleTimeSeries> Build() => counterDouble;
+            public IMetric<ICounterDoubleTimeSeries> Build() => CounterDouble;
 
             public IMetricBuilder<ICounterDoubleTimeSeries> SetComponent(string component) => this;
 
@@ -129,15 +128,15 @@ namespace OpenTelemetry.Metrics
 
         private class CounterLong : ICounterLong
         {
-            private static CounterLongTimeSeries timeSeries = new CounterLongTimeSeries();
+            private static readonly CounterLongTimeSeries TimeSeries = new CounterLongTimeSeries();
 
             public void Clear()
             {
             }
 
-            public ICounterLongTimeSeries GetDefaultTimeSeries() => timeSeries;
+            public ICounterLongTimeSeries GetDefaultTimeSeries() => TimeSeries;
 
-            public ICounterLongTimeSeries GetOrCreateTimeSeries(IEnumerable<string> labelValues) => timeSeries;
+            public ICounterLongTimeSeries GetOrCreateTimeSeries(IEnumerable<string> labelValues) => TimeSeries;
 
             public void RemoveTimeSeries(IEnumerable<string> labelValues)
             {
@@ -150,9 +149,9 @@ namespace OpenTelemetry.Metrics
 
         private class CounterLongBuilder : ICounterLongBuilder
         {
-            private static CounterLong counterLong = new CounterLong();
+            private static readonly CounterLong CounterLong = new CounterLong();
 
-            public IMetric<ICounterLongTimeSeries> Build() => counterLong;
+            public IMetric<ICounterLongTimeSeries> Build() => CounterLong;
 
             public IMetricBuilder<ICounterLongTimeSeries> SetComponent(string component) => this;
 
@@ -180,15 +179,15 @@ namespace OpenTelemetry.Metrics
 
         private class GaugeDouble : IGaugeDouble
         {
-            private static GaugeDoubleTimeSeries timeSeries = new GaugeDoubleTimeSeries();
+            private static readonly GaugeDoubleTimeSeries TimeSeries = new GaugeDoubleTimeSeries();
 
             public void Clear()
             {
             }
 
-            public IGaugeDoubleTimeSeries GetDefaultTimeSeries() => timeSeries;
+            public IGaugeDoubleTimeSeries GetDefaultTimeSeries() => TimeSeries;
 
-            public IGaugeDoubleTimeSeries GetOrCreateTimeSeries(IEnumerable<string> labelValues) => timeSeries;
+            public IGaugeDoubleTimeSeries GetOrCreateTimeSeries(IEnumerable<string> labelValues) => TimeSeries;
 
             public void RemoveTimeSeries(IEnumerable<string> labelValues)
             {
@@ -201,9 +200,9 @@ namespace OpenTelemetry.Metrics
 
         private class GaugeDoubleBuilder : IGaugeDoubleBuilder
         {
-            private static GaugeDouble gaugeDouble = new GaugeDouble();
+            private static readonly GaugeDouble GaugeDouble = new GaugeDouble();
 
-            public IMetric<IGaugeDoubleTimeSeries> Build() => gaugeDouble;
+            public IMetric<IGaugeDoubleTimeSeries> Build() => GaugeDouble;
 
             public IMetricBuilder<IGaugeDoubleTimeSeries> SetComponent(string component) => this;
 
@@ -231,15 +230,15 @@ namespace OpenTelemetry.Metrics
 
         private class GaugeLong : IGaugeLong
         {
-            private static GaugeLongTimeSeries timeSeries = new GaugeLongTimeSeries();
+            private static readonly GaugeLongTimeSeries TimeSeries = new GaugeLongTimeSeries();
 
             public void Clear()
             {
             }
 
-            public IGaugeLongTimeSeries GetDefaultTimeSeries() => timeSeries;
+            public IGaugeLongTimeSeries GetDefaultTimeSeries() => TimeSeries;
 
-            public IGaugeLongTimeSeries GetOrCreateTimeSeries(IEnumerable<string> labelValues) => timeSeries;
+            public IGaugeLongTimeSeries GetOrCreateTimeSeries(IEnumerable<string> labelValues) => TimeSeries;
 
             public void RemoveTimeSeries(IEnumerable<string> labelValues)
             {
@@ -252,9 +251,9 @@ namespace OpenTelemetry.Metrics
 
         private class GaugeLongBuilder : IGaugeLongBuilder
         {
-            private static GaugeLong counterLong = new GaugeLong();
+            private static readonly GaugeLong CounterLong = new GaugeLong();
 
-            public IMetric<IGaugeLongTimeSeries> Build() => counterLong;
+            public IMetric<IGaugeLongTimeSeries> Build() => CounterLong;
 
             public IMetricBuilder<IGaugeLongTimeSeries> SetComponent(string component) => this;
 
@@ -275,18 +274,18 @@ namespace OpenTelemetry.Metrics
 
         private class Measure : IMeasure
         {
-            private static IMeasurement measurement = new Measurement();
+            private static readonly IMeasurement Measurement = new Measurement();
 
-            public IMeasurement CreateDoubleMeasurement(double value) => measurement;
+            public IMeasurement CreateDoubleMeasurement(double value) => Measurement;
 
-            public IMeasurement CreateLongMeasurement(long value) => measurement;
+            public IMeasurement CreateLongMeasurement(long value) => Measurement;
         }
 
         private class MeasureBuilder : IMeasureBuilder
         {
-            private static Measure measure = new Measure();
+            private static readonly Measure Measure = new Measure();
 
-            public IMeasure Build() => measure;
+            public IMeasure Build() => Measure;
 
             public IMeasureBuilder SetDescription(string description) => this;
 

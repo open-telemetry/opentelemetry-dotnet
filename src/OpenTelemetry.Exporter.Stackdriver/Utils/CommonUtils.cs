@@ -1,4 +1,4 @@
-﻿// <copyright file="ApplicationInsightsExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CommonUtils.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,22 +16,20 @@
 
 namespace OpenTelemetry.Exporter.Stackdriver.Utils
 {
-    using System;
     using System.Collections.Generic;
-    using System.Linq;
 
     /// <summary>
-    /// Common Utility Methods that are not metrics/trace specific
+    /// Common Utility Methods that are not metrics/trace specific.
     /// </summary>
     public static class CommonUtils
     {
         /// <summary>
         /// Divide the source list into batches of lists of given size.
         /// </summary>
-        /// <typeparam name="T">The type of the list</typeparam>
-        /// <param name="source">The list</param>
-        /// <param name="size">Size of the batch</param>
-        /// <returns></returns>
+        /// <typeparam name="T">The type of the list.</typeparam>
+        /// <param name="source">The list.</param>
+        /// <param name="size">Size of the batch.</param>
+        /// <returns><see cref="IEnumerable{T}"/>.</returns>
         public static IEnumerable<IEnumerable<T>> Partition<T>(this IEnumerable<T> source, int size)
         {
             using (var enumerator = source.GetEnumerator())

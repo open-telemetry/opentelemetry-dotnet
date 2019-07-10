@@ -24,14 +24,12 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Common;
     using Moq;
     using Microsoft.AspNetCore.TestHost;
     using System;
     using OpenTelemetry.Context.Propagation;
     using Microsoft.AspNetCore.Http;
     using System.Collections.Generic;
-    using System.Text;
 
     // See https://github.com/aspnet/Docs/tree/master/aspnetcore/test/integration-tests/samples/2.x/IntegrationTestsSample
     public class BasicTests
