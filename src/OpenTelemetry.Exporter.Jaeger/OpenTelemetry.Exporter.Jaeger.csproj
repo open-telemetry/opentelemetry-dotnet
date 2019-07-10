@@ -10,10 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ApacheThrift" Version="0.12.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
+    <ProjectReference Include="..\..\lib\Thrift\Thrift.csproj" />
   </ItemGroup>
 </Project>

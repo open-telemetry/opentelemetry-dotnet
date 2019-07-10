@@ -89,7 +89,7 @@ namespace Thrift.Transports.Server
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<TClientTransport>(cancellationToken).ConfigureAwait(false);
+                return await Task.FromCanceled<TClientTransport>(cancellationToken);
             }
 
             if (_server == null)
