@@ -1,4 +1,4 @@
-// <copyright file="JaegerSpan.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerSpan.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+#if NET46
+    using Thrift.Protocol;
+#else
     using Thrift.Protocols;
     using Thrift.Protocols.Entities;
+#endif
 
     public class JaegerSpan : TAbstractBase
     {
@@ -65,6 +69,152 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
         public List<JaegerLog> Logs { get; set; }
 
+#if NET46
+        public void Write(TProtocol oprot)
+        {
+            oprot.IncrementRecursionDepth();
+            try
+            {
+                var struc = new TStruct("Span");
+                oprot.WriteStructBegin(struc);
+
+                var field = new TField
+                {
+                    Name = "traceIdLow",
+                    Type = TType.I64,
+                    ID = 1,
+                };
+
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI64(this.TraceIdLow);
+                oprot.WriteFieldEnd();
+
+                field.Name = "traceIdHigh";
+                field.Type = TType.I64;
+                field.ID = 2;
+
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI64(this.TraceIdHigh);
+                oprot.WriteFieldEnd();
+
+                field.Name = "spanId";
+                field.Type = TType.I64;
+                field.ID = 3;
+
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI64(this.SpanId);
+                oprot.WriteFieldEnd();
+
+                field.Name = "parentSpanId";
+                field.Type = TType.I64;
+                field.ID = 4;
+
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI64(this.ParentSpanId);
+                oprot.WriteFieldEnd();
+
+                field.Name = "operationName";
+                field.Type = TType.String;
+                field.ID = 5;
+
+                oprot.WriteFieldBegin(field);
+                oprot.WriteString(this.OperationName);
+                oprot.WriteFieldEnd();
+
+                if (this.References != null)
+                {
+                    field.Name = "references";
+                    field.Type = TType.List;
+                    field.ID = 6;
+                    oprot.WriteFieldBegin(field);
+                    {
+                        oprot.WriteListBegin(new TList(TType.Struct, this.References.Count));
+
+                        foreach (JaegerSpanRef sr in this.References)
+                        {
+                            sr.Write(oprot);
+                        }
+
+                        oprot.WriteListEnd();
+                    }
+
+                    oprot.WriteFieldEnd();
+                }
+
+                field.Name = "flags";
+                field.Type = TType.I32;
+                field.ID = 7;
+
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI32(this.Flags);
+                oprot.WriteFieldEnd();
+
+                field.Name = "startTime";
+                field.Type = TType.I64;
+                field.ID = 8;
+
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI64(this.StartTime);
+                oprot.WriteFieldEnd();
+
+                field.Name = "duration";
+                field.Type = TType.I64;
+                field.ID = 9;
+
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI64(this.Duration);
+                oprot.WriteFieldEnd();
+
+                if (this.JaegerTags != null)
+                {
+                    field.Name = "JaegerTags";
+                    field.Type = TType.List;
+                    field.ID = 10;
+
+                    oprot.WriteFieldBegin(field);
+                    {
+                        oprot.WriteListBegin(new TList(TType.Struct, this.JaegerTags.Count));
+
+                        foreach (JaegerTag jt in this.JaegerTags)
+                        {
+                            await jt.Write(oprot);
+                        }
+
+                        oprot.WriteListEnd();
+                    }
+
+                    oprot.WriteFieldEnd();
+                }
+
+                if (this.Logs != null)
+                {
+                    field.Name = "logs";
+                    field.Type = TType.List;
+                    field.ID = 11;
+                    oprot.WriteFieldBegin(field);
+                    {
+                        oprot.WriteListBegin(new TList(TType.Struct, this.Logs.Count));
+
+                        foreach (JaegerLog jl in this.Logs)
+                        {
+                            await jl.Write(oprot);
+                        }
+
+                        oprot.WriteListEnd();
+                    }
+
+                    oprot.WriteFieldEnd();
+                }
+
+                oprot.WriteFieldStop();
+                oprot.WriteStructEnd();
+            }
+            finally
+            {
+                oprot.DecrementRecursionDepth();
+            }
+        }
+#else
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
@@ -209,6 +359,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                 oprot.DecrementRecursionDepth();
             }
         }
+#endif
 
         public override string ToString()
         {
