@@ -49,7 +49,7 @@ We encourage contributions. Use tags [up-for-grabs][up-for-grabs-issues] and
 
 ## OpenTelemetry QuickStart: collecting data
 
-You can use Open Census API to instrument code and report data. Or use one of
+You can use OpenTelemetry API to instrument code and report data. Or use one of
 automatic data collection modules.
 
 ### Using ASP.NET Core incoming requests collector
@@ -199,7 +199,7 @@ Configure Prometheus exporter to have stats collected by Prometheus.
 var exporter = new PrometheusExporter(
     new PrometheusExporterOptions()
     {
-        Url = new Uri("http://localhost:9184/metrics/")
+        Url = "http://+:9184/metrics/"
     },
     Stats.ViewManager);
 
@@ -323,8 +323,9 @@ deprecate it for 18 months before removing it, if possible.
 [GKE]: https://codelabs.developers.google.com/codelabs/cloud-kubernetes-aspnetcore/index.html?index=..%2F..index#0
 [gcp-auth]: https://cloud.google.com/docs/authentication/getting-started
 [semver]: http://semver.org/
-[ai-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestApplicationInsights.cs
-[stackdriver-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestStackdriver.cs
-[zipkin-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestZipkin.cs
+[ai-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestApplicationInsights.cs
+[stackdriver-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestStackdriver.cs
+[zipkin-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestZipkin.cs
 [prometheus-get-started]: https://prometheus.io/docs/introduction/first_steps/
-[prometheus-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestPrometheus.cs
+[prometheus-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestPrometheus.cs
+

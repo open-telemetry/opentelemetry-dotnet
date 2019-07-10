@@ -17,10 +17,8 @@
 namespace OpenTelemetry.Collector.Dependencies
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics.Tracing;
     using System.Globalization;
-    using System.Text;
     using System.Threading;
 
     /// <summary>

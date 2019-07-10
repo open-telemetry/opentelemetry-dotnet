@@ -24,7 +24,6 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Common;
     using Moq;
     using Microsoft.AspNetCore.TestHost;
     using System;
@@ -74,7 +73,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     // Act
                     var response = await client.GetAsync("/api/values");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // ignore errors
                 }

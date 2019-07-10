@@ -1,4 +1,4 @@
-﻿// <copyright file="AssemblyInfo.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="IGaugeLongTimeSeries.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,4 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-[assembly: System.CLSCompliant(true)]
+namespace OpenTelemetry.Metrics.Implementation
+{
+    /// <summary>
+    /// Time series type for <see cref="IGaugeLong"/>.
+    /// </summary>
+    public interface IGaugeLongTimeSeries
+    {
+        void Add(long delta);
+
+        void Set(long val);
+    }
+}

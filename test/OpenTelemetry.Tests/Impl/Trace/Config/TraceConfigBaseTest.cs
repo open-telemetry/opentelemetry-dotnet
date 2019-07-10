@@ -21,7 +21,7 @@ namespace OpenTelemetry.Trace.Config.Test
 
     public class TraceConfigBaseTest
     {
-        ITraceConfig traceConfig = TraceConfigBase.NoopTraceConfig;
+        readonly ITraceConfig traceConfig = TraceConfigBase.NoopTraceConfig;
 
         [Fact]
         public void ActiveTraceParams_NoOpImplementation()

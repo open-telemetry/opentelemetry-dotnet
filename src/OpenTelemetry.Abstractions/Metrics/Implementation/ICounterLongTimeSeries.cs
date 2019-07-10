@@ -1,4 +1,4 @@
-﻿// <copyright file="NoopScope.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ICounterLongTimeSeries.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,28 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Internal
+namespace OpenTelemetry.Metrics.Implementation
 {
-    using OpenTelemetry.Context;
-
-    public sealed class NoopScope : IScope
+    /// <summary>
+    /// Time series type for <see cref="ICounterDouble"/>.
+    /// </summary>
+    public interface ICounterLongTimeSeries
     {
-        public static readonly IScope NoopInstance = new NoopScope();
+        void Add(long delta);
 
-        private NoopScope()
-        {
-        }
-
-        public static IScope Instance
-        {
-            get
-            {
-                return NoopInstance;
-            }
-        }
-
-        public void Dispose()
-        {
-        }
+        void Set(long val);
     }
 }

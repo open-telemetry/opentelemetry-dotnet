@@ -44,11 +44,10 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         /// <summary>
         /// Initializes a new instance of the <see cref="StackExchangeRedisCallsCollector"/> class.
         /// </summary>
-        /// <param name="options">Configuration options for dependencies collector.</param>
         /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="sampler">Sampler to use to sample dependnecy calls.</param>
         /// <param name="exportComponent">TEMPORARY: handler to send data to.</param>
-        public StackExchangeRedisCallsCollector(StackExchangeRedisCallsCollectorOptions options, ITracer tracer, ISampler sampler, IExportComponent exportComponent)
+        public StackExchangeRedisCallsCollector(ITracer tracer, ISampler sampler, IExportComponent exportComponent)
         {
             this.tracer = tracer;
             this.exporter = exportComponent;
