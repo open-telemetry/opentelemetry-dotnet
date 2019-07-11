@@ -1,4 +1,4 @@
-// <copyright file="JaegerThriftClient.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerThriftClient.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+
+#if NET46
+    using Thrift.Protocol;
+#else
     using Thrift;
     using Thrift.Protocols;
     using Thrift.Protocols.Entities;
+#endif
 
     public class JaegerThriftClient : TBaseClient, IDisposable
     {
@@ -35,6 +40,22 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         {
         }
 
+#if NET46
+
+        public void EmitBatch(Batch batch)
+        {
+            this.OutputProtocol.WriteMessageBegin(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId));
+
+            var args = new EmitBatchArgs();
+            args.Batch = batch;
+
+            args.Write(this.OutputProtocol);
+            this.OutputProtocol.WriteMessageEnd();
+            this.OutputProtocol.Transport.Flush();
+        }
+
+#else
+
         public async Task EmitBatchAsync(Batch batch, CancellationToken cancellationToken)
         {
             await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
@@ -46,5 +67,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
             await this.OutputProtocol.WriteMessageEndAsync(cancellationToken);
             await this.OutputProtocol.Transport.FlushAsync(cancellationToken);
         }
+#endif
     }
 }

@@ -20,8 +20,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+
+#if NET46
+    using Thrift.Protocol;
+#else
     using Thrift.Protocols;
     using Thrift.Protocols.Entities;
+#endif
 
     public class JaegerSpanRef : TAbstractBase
     {
@@ -46,6 +51,58 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
         public long SpanId { get; set; }
 
+#if NET46
+        public void Write(TProtocol oprot)
+        {
+            oprot.IncrementRecursionDepth();
+            try
+            {
+                var struc = new TStruct("SpanRef");
+                oprot.WriteStructBegin(struc);
+
+                var field = new TField
+                {
+                    Name = "refType",
+                    Type = TType.I32,
+                    ID = 1,
+                };
+
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI32((int)this.RefType);
+                oprot.WriteFieldEnd();
+
+                field.Name = "traceIdLow";
+                field.Type = TType.I64;
+                field.ID = 2;
+
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI64(this.TraceIdLow);
+                oprot.WriteFieldEnd();
+
+                field.Name = "traceIdHigh";
+                field.Type = TType.I64;
+                field.ID = 3;
+
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI64(this.TraceIdHigh);
+                oprot.WriteFieldEnd();
+
+                field.Name = "spanId";
+                field.Type = TType.I64;
+                field.ID = 4;
+
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI64(this.SpanId);
+                oprot.WriteFieldEnd();
+                oprot.WriteFieldStop();
+                oprot.WriteStructEnd();
+            }
+            finally
+            {
+                oprot.DecrementRecursionDepth();
+            }
+        }
+#else
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
@@ -96,6 +153,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                 oprot.DecrementRecursionDepth();
             }
         }
+#endif
 
         /// <summary>
         /// <seealso cref="JaegerSpanRefType"/>
