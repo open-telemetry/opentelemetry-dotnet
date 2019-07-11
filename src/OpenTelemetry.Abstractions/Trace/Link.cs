@@ -25,9 +25,9 @@ namespace OpenTelemetry.Trace
     /// <inheritdoc/>
     public sealed class Link : ILink
     {
-        private static readonly IDictionary<string, IAttributeValue> EmptyAttributes = new Dictionary<string, IAttributeValue>();
+        private static readonly IDictionary<string, object> EmptyAttributes = new Dictionary<string, object>();
 
-        private Link(SpanContext context, IDictionary<string, IAttributeValue> attributes)
+        private Link(SpanContext context, IDictionary<string, object> attributes)
         {
             this.Context = context ?? throw new ArgumentNullException(nameof(context));
             this.Attributes = attributes ?? throw new ArgumentNullException(nameof(attributes));
@@ -37,19 +37,19 @@ namespace OpenTelemetry.Trace
         public SpanContext Context { get; }
 
         /// <inheritdoc/>
-        public IDictionary<string, IAttributeValue> Attributes { get; }
+        public IDictionary<string, object> Attributes { get; }
 
         public static ILink FromSpanContext(SpanContext context)
         {
             return new Link(context, EmptyAttributes);
         }
 
-        public static ILink FromSpanContext(SpanContext context, IDictionary<string, IAttributeValue> attributes)
+        public static ILink FromSpanContext(SpanContext context, IDictionary<string, object> attributes)
         {
-            IDictionary<string, IAttributeValue> copy = new Dictionary<string, IAttributeValue>(attributes);
+            IDictionary<string, object> copy = new Dictionary<string, object>(attributes);
             return new Link(
                 context,
-                new ReadOnlyDictionary<string, IAttributeValue>(copy));
+                new ReadOnlyDictionary<string, object>(copy));
         }
 
         /// <inheritdoc/>

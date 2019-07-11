@@ -39,8 +39,8 @@ namespace OpenTelemetry.Trace.Test
         private readonly Timer timestampConverter;
         private readonly SpanOptions noRecordSpanOptions = SpanOptions.None;
         private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
-        private readonly IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
-        private readonly IDictionary<String, IAttributeValue> expectedAttributes;
+        private readonly IDictionary<String, object> attributes = new Dictionary<String, object>();
+        private readonly IDictionary<String, object> expectedAttributes;
         private readonly IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
 
         public SpanTest()
@@ -54,10 +54,10 @@ namespace OpenTelemetry.Trace.Test
                 "MyStringAttributeKey", AttributeValue.StringAttributeValue("MyStringAttributeValue"));
             attributes.Add("MyLongAttributeKey", AttributeValue.LongAttributeValue(123L));
             attributes.Add("MyBooleanAttributeKey", AttributeValue.BooleanAttributeValue(false));
-            expectedAttributes = new Dictionary<String, IAttributeValue>(attributes);
+            expectedAttributes = new Dictionary<String, object>(attributes);
             expectedAttributes.Add(
                 "MySingleStringAttributeKey",
-                AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
+                "MySingleStringAttributeValue");
         }
 
         [Fact]
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Trace.Test
             // Check that adding trace events after Span#End() does not throw any exception.
             foreach (var attribute in attributes)
             {
-                span.SetAttribute(attribute.Key, attribute.Value);
+                span.SetAttribute(attribute);
             }
 
             span.AddEvent(Event.Create(EVENT_DESCRIPTION));
@@ -105,12 +105,12 @@ namespace OpenTelemetry.Trace.Test
             // recorded.
             foreach (var attribute in attributes)
             {
-                span.SetAttribute(attribute.Key, attribute.Value);
+                span.SetAttribute(attribute);
             }
 
             span.SetAttribute(
                 "MySingleStringAttributeKey",
-                AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
+                "MySingleStringAttributeValue");
             span.AddEvent(Event.Create(EVENT_DESCRIPTION));
             span.AddEvent(EVENT_DESCRIPTION, attributes);
             span.AddLink(Link.FromSpanContext(spanContext));
@@ -139,10 +139,10 @@ namespace OpenTelemetry.Trace.Test
 
             span.SetAttribute(
                 "MySingleStringAttributeKey",
-                AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
+                "MySingleStringAttributeValue");
             foreach (var attribute in attributes)
             {
-                span.SetAttribute(attribute.Key, attribute.Value);
+                span.SetAttribute(attribute);
             }
 
             interval = TimeSpan.FromMilliseconds(100);
@@ -194,10 +194,10 @@ namespace OpenTelemetry.Trace.Test
 
             span.SetAttribute(
                 "MySingleStringAttributeKey",
-                AttributeValue.StringAttributeValue("MySingleStringAttributeValue"));
+                "MySingleStringAttributeValue");
             foreach (var attribute in attributes)
             {
-                span.SetAttribute(attribute.Key, attribute.Value);
+                span.SetAttribute(attribute);
             }
 
             interval = TimeSpan.FromMilliseconds(100);
@@ -304,11 +304,11 @@ namespace OpenTelemetry.Trace.Test
                     timestampConverter);
             for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
             {
-                IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
-                attributes.Add("MyStringAttributeKey" + i, AttributeValue.LongAttributeValue(i));
+                IDictionary<String, object> attributes = new Dictionary<String, object>();
+                attributes.Add("MyStringAttributeKey" + i, i);
                 foreach (var attribute in attributes)
                 {
-                    span.SetAttribute(attribute.Key, attribute.Value);
+                    span.SetAttribute(attribute);
                 }
 
             }
@@ -357,11 +357,11 @@ namespace OpenTelemetry.Trace.Test
                     timestampConverter);
             for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
             {
-                IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
-                attributes.Add("MyStringAttributeKey" + i, AttributeValue.LongAttributeValue(i));
+                IDictionary<String, object> attributes = new Dictionary<String, object>();
+                attributes.Add("MyStringAttributeKey" + i, i);
                 foreach (var attribute in attributes)
                 {
-                    span.SetAttribute(attribute.Key, attribute.Value);
+                    span.SetAttribute(attribute);
                 }
 
             }
@@ -380,11 +380,11 @@ namespace OpenTelemetry.Trace.Test
 
             for (var i = 0; i < maxNumberOfAttributes / 2; i++)
             {
-                IDictionary<String, IAttributeValue> attributes = new Dictionary<String, IAttributeValue>();
-                attributes.Add("MyStringAttributeKey" + i, AttributeValue.LongAttributeValue(i));
+                IDictionary<String, object> attributes = new Dictionary<String, object>();
+                attributes.Add("MyStringAttributeKey" + i, i);
                 foreach (var attribute in attributes)
                 {
-                    span.SetAttribute(attribute.Key, attribute.Value);
+                    span.SetAttribute(attribute);
                 }
 
             }
@@ -405,7 +405,7 @@ namespace OpenTelemetry.Trace.Test
             // Test that we have the newest re-added initial entries.
             for (var i = 0; i < maxNumberOfAttributes / 2; i++)
             {
-                Assert.Equal(AttributeValue.LongAttributeValue(i),
+                Assert.Equal(i,
                     spanData.Attributes.AttributeMap["MyStringAttributeKey" + i]);
             }
         }
@@ -573,9 +573,9 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentNullException>(() => span.Status = null);
             Assert.Throws<ArgumentNullException>(() => span.UpdateName(null));
             Assert.Throws<ArgumentNullException>(() => span.SetAttribute(null, string.Empty));
-            Assert.Throws<ArgumentNullException>(() => span.SetAttribute(string.Empty, (IAttributeValue)null));
+            Assert.Throws<ArgumentNullException>(() => span.SetAttribute(string.Empty, null));
             Assert.Throws<ArgumentNullException>(() =>
-                span.SetAttribute(null, AttributeValue.StringAttributeValue("foo")));
+                span.SetAttribute(null, "foo"));
             Assert.Throws<ArgumentNullException>(() => span.SetAttribute(null, 1L));
             Assert.Throws<ArgumentNullException>(() => span.SetAttribute(null, 0.1d));
             Assert.Throws<ArgumentNullException>(() => span.SetAttribute(null, true));

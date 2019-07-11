@@ -108,9 +108,9 @@ namespace Samples
                 }
 
                 // 7. Annotate our span to capture metadata about our operation
-                var attributes = new Dictionary<string, IAttributeValue>
+                var attributes = new Dictionary<string, object>
                 {
-                    { "use", AttributeValue.StringAttributeValue("demo") },
+                    { "use", "demo" },
                 };
                 span.AddEvent("Invoking DoWork", attributes);
             }

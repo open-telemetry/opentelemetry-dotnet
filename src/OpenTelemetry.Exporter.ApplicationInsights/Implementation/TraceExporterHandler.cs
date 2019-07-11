@@ -59,16 +59,16 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                 string type = null;
                 string userAgent = null;
 
-                IAttributeValue spanKindAttr = null;
-                IAttributeValue errorAttr = null;
-                IAttributeValue httpStatusCodeAttr = null;
-                IAttributeValue httpMethodAttr = null;
-                IAttributeValue httpPathAttr = null;
-                IAttributeValue httpHostAttr = null;
-                IAttributeValue httpUrlAttr = null;
-                IAttributeValue httpUserAgentAttr = null;
-                IAttributeValue httpRouteAttr = null;
-                IAttributeValue httpPortAttr = null;
+                string spanKindAttr = null;
+                string errorAttr = null;
+                int httpStatusCodeAttr = 0;
+                string httpMethodAttr = null;
+                string httpPathAttr = null;
+                string httpHostAttr = null;
+                string httpUrlAttr = null;
+                string httpUserAgentAttr = null;
+                string httpRouteAttr = null;
+                string httpPortAttr = null;
 
                 foreach (var attr in span.Attributes.AttributeMap)
                 {
@@ -77,42 +77,37 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     switch (attr.Key)
                     {
                         case "span.kind":
-                            spanKindAttr = attr.Value;
+                            spanKindAttr = (string)attr.Value;
                             break;
                         case "error":
-                            errorAttr = attr.Value;
+                            errorAttr = (string)attr.Value;
                             break;
                         case "http.method":
-                            httpMethodAttr = attr.Value;
+                            httpMethodAttr = (string)attr.Value;
                             break;
                         case "http.path":
-                            httpPathAttr = attr.Value;
+                            httpPathAttr = (string)attr.Value;
                             break;
                         case "http.host":
-                            httpHostAttr = attr.Value;
+                            httpHostAttr = (string)attr.Value;
                             break;
                         case "http.url":
-                            httpUrlAttr = attr.Value;
+                            httpUrlAttr = (string)attr.Value;
                             break;
                         case "http.status_code":
-                            httpStatusCodeAttr = attr.Value;
+                            httpStatusCodeAttr = (int)attr.Value;
                             break;
                         case "http.user_agent":
-                            httpUserAgentAttr = attr.Value;
+                            httpUserAgentAttr = (string)attr.Value;
                             break;
                         case "http.route":
-                            httpRouteAttr = attr.Value;
+                            httpRouteAttr = (string)attr.Value;
                             break;
                         case "http.port":
-                            httpPortAttr = attr.Value;
+                            httpPortAttr = (string)attr.Value;
                             break;
                         default:
-                            var value = attr.Value.Match<string>(
-                                (s) => { return s; },
-                                (b) => { return b.ToString(); },
-                                (l) => { return l.ToString(); },
-                                (d) => { return d.ToString(); },
-                                (obj) => { return obj.ToString(); });
+                            var value = attr.Value.ToString();
 
                             AddPropertyWithAdjustedName(props, attr.Key, value);
 
@@ -128,7 +123,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
                     foreach (var attr in link.Attributes)
                     {
-                        AddPropertyWithAdjustedName(props, "link" + linkId + "_" + attr.Key, attr.Value.Match((s) => s, (b) => b.ToString(), (l) => l.ToString(), (d) => d.ToString(), (obj) => obj.ToString()));
+                        AddPropertyWithAdjustedName(props, "link" + linkId + "_" + attr.Key, attr.Value.ToString());
                     }
 
                     ++linkId;
@@ -147,12 +142,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
                     foreach (var attr in t.Event.Attributes)
                     {
-                        var value = attr.Value.Match<string>(
-                            (s) => { return s; },
-                            (b) => { return b.ToString(); },
-                            (l) => { return l.ToString(); },
-                            (d) => { return d.ToString(); },
-                            (obj) => { return obj.ToString(); });
+                        var value = attr.Value.ToString();
 
                         AddPropertyWithAdjustedName(log.Properties, attr.Key, value);
                     }
@@ -299,12 +289,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             duration = TimeSpan.FromTicks((durationTs.Seconds * TimeSpan.TicksPerSecond) + (durationTs.Nanos / 100));
         }
 
-        private void OverwriteSpanKindFromAttribute(IAttributeValue spanKindAttr, ref SpanKind resultKind)
+        private void OverwriteSpanKindFromAttribute(string spanKindAttr, ref SpanKind resultKind)
         {
             // override span kind with attribute named span.kind
             if (spanKindAttr != null)
             {
-                var kind = spanKindAttr.Match((s) => s, null, null, null, null);
+                var kind = spanKindAttr;
 
                 switch (kind.ToLower(CultureInfo.InvariantCulture))
                 {
@@ -327,23 +317,23 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             }
         }
 
-        private void OverwriteErrorAttribute(IAttributeValue errorAttr, ref bool? success)
+        private void OverwriteErrorAttribute(string errorAttr, ref bool? success)
         {
             if (errorAttr != null)
             {
-                success = errorAttr.Match((s) => !(s == "true"), (b) => !b, null, null, null);
+                success = errorAttr != "true";
             }
         }
 
         private void OverwriteFieldsForHttpSpans(
-            IAttributeValue httpMethodAttr,
-            IAttributeValue httpUrlAttr,
-            IAttributeValue httpHostAttr,
-            IAttributeValue httpPathAttr,
-            IAttributeValue httpStatusCodeAttr,
-            IAttributeValue httpUserAgentAttr,
-            IAttributeValue httpRouteAttr,
-            IAttributeValue httpPortAttr,
+            string httpMethodAttr,
+            string httpUrlAttr,
+            string httpHostAttr,
+            string httpPathAttr,
+            int httpStatusCodeAttr,
+            string httpUserAgentAttr,
+            string httpRouteAttr,
+            string httpPortAttr,
             ref string name,
             ref string resultCode,
             ref string data,
@@ -353,7 +343,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
         {
             if (httpStatusCodeAttr != null)
             {
-                resultCode = httpStatusCodeAttr.Match((s) => s, null, (l) => l.ToString(CultureInfo.InvariantCulture), null, null);
+                resultCode = httpStatusCodeAttr.ToString(CultureInfo.InvariantCulture);
                 type = "Http";
             }
 
@@ -361,7 +351,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
             if (httpUrlAttr != null)
             {
-                var urlString = httpUrlAttr.Match((s) => s, null, null, null, null);
+                var urlString = httpUrlAttr;
                 Uri.TryCreate(urlString, UriKind.RelativeOrAbsolute, out url);
            }
 
@@ -373,43 +363,43 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
             if (httpMethodAttr != null)
             {
-                httpMethod = httpMethodAttr.Match((s) => s, null, null, null, null);
+                httpMethod = httpMethodAttr;
                 type = "Http";
             }
 
             if (httpPathAttr != null)
             {
-                httpPath = httpPathAttr.Match((s) => s, null, null, null, null);
+                httpPath = httpPathAttr;
                 type = "Http";
             }
 
             if (httpHostAttr != null)
             {
-                httpHost = httpHostAttr.Match((s) => s, null, null, null, null);
+                httpHost = httpHostAttr;
                 type = "Http";
             }
 
             if (httpUserAgentAttr != null)
             {
-                userAgent = httpUserAgentAttr.Match((s) => s, null, null, null, null);
+                userAgent = httpUserAgentAttr;
                 type = "Http";
             }
 
             if (httpRouteAttr != null)
             {
-                httpRoute = httpRouteAttr.Match((s) => s, null, null, null, null);
+                httpRoute = httpRouteAttr;
                 type = "Http";
             }
 
             if (httpRouteAttr != null)
             {
-                httpRoute = httpRouteAttr.Match((s) => s, null, null, null, null);
+                httpRoute = httpRouteAttr;
                 type = "Http";
             }
 
             if (httpPortAttr != null)
             {
-                httpPort = httpPortAttr.Match((s) => s, null, (l) => l.ToString(), null, null);
+                httpPort = httpPortAttr;
                 type = "Http";
             }
 

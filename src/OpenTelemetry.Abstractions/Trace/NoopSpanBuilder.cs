@@ -112,7 +112,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpanBuilder AddLink(SpanContext context, IDictionary<string, IAttributeValue> attributes)
+        public ISpanBuilder AddLink(SpanContext context, IDictionary<string, object> attributes)
         {
             if (context == null)
             {
