@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace
             tracer = new Tracer(randomHandler, startEndHandler, TraceConfig);
         }
 
-        /// <summary>
+        /// <summary>   
         /// Gets the tracer to record spans.
         /// </summary>
         public static ITracer Tracer => (ITracer)tracer;

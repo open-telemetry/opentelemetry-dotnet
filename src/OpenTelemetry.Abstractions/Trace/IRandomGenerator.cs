@@ -1,4 +1,4 @@
-﻿// <copyright file="SpanBuilderOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="IRandomGenerator.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,21 +16,8 @@
 
 namespace OpenTelemetry.Trace
 {
-    using OpenTelemetry.Trace.Config;
-
-    internal class SpanBuilderOptions
+    public interface IRandomGenerator
     {
-        internal SpanBuilderOptions(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig)
-        {
-            this.RandomHandler = randomGenerator;
-            this.StartEndHandler = startEndHandler;
-            this.TraceConfig = traceConfig;
-        }
-
-        internal IRandomGenerator RandomHandler { get; }
-
-        internal IStartEndHandler StartEndHandler { get; }
-
-        internal ITraceConfig TraceConfig { get; }
+        void NextBytes(byte[] bytes);
     }
 }

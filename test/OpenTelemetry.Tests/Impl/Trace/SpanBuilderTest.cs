@@ -21,6 +21,7 @@ namespace OpenTelemetry.Trace.Test
     using Moq;
     using OpenTelemetry.Common;
     using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Internal;
     using OpenTelemetry.Trace.Sampler;
     using Xunit;
 
@@ -39,7 +40,7 @@ namespace OpenTelemetry.Trace.Test
         {
             // MockitoAnnotations.initMocks(this);
             spanBuilderOptions =
-                new SpanBuilderOptions(startEndHandler, traceConfig);
+                new SpanBuilderOptions(new RandomGenerator(), startEndHandler, traceConfig);
             var configMock = Mock.Get<ITraceConfig>(traceConfig);
             configMock.Setup((c) => c.ActiveTraceParams).Returns(alwaysSampleTraceParams);
             // when(traceConfig.getActiveTraceParams()).thenReturn(alwaysSampleTraceParams);
