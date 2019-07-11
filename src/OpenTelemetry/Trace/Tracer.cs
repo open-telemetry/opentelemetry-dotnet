@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System;
     using System.Threading;
     using OpenTelemetry.Common;
     using OpenTelemetry.Context;
@@ -33,8 +34,6 @@ namespace OpenTelemetry.Trace
 
         private readonly SpanBuilderOptions spanBuilderOptions;
         private readonly SpanExporter spanExporter;
-        private readonly IBinaryFormat binaryFormat;
-        private readonly ITextFormat textFormat;
 
         /// <summary>
         /// Creates an instance of <see cref="ITracer"/>.
@@ -85,15 +84,14 @@ namespace OpenTelemetry.Trace
             return new SpanBuilder(spanName, this.spanBuilderOptions);
         }
 
-        /// <inheritdoc/>
-        public void RecordSpanData(SpanData span)
-        {
-            this.exportComponent.SpanExporter.ExportAsync(span, CancellationToken.None);
-        }
-
         public IScope WithSpan(ISpan span)
         {
-            throw new System.NotImplementedException();
+            if (span == null)
+            {
+                throw new ArgumentNullException(nameof(span));
+            }
+
+            return CurrentSpanUtils.WithSpan(span, false);
         }
     }
 }

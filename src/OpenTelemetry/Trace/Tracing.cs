@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Tracing
     {
-        private static Tracing TracingValue = new Tracing();
+        private static Tracing tracingValue = new Tracing();
         private static Tracer tracer;
 
         internal Tracing()

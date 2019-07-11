@@ -59,7 +59,7 @@ namespace OpenTelemetry.Stats
 
             set
             {
-                if (!(stats.viewManager is ViewManager manager))
+                if (!(StatsValue.viewManager is ViewManager manager))
                 {
                     return;
                 }
