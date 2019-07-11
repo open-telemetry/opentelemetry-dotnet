@@ -574,7 +574,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(activityLink.TraceId, links[0].Context.TraceId);
             Assert.Equal(activityLink.SpanId, links[0].Context.SpanId);
             Assert.Equal(activityLink.ActivityTraceFlags, links[0].Context.TraceOptions);
-            Assert.Equal(0, links[0].Context.Tracestate.Entries.Count());
+            Assert.Empty(links[0].Context.Tracestate.Entries);
             Assert.Equal(0, links[0].Attributes.Count);
         }
 

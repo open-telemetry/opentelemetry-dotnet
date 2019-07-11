@@ -14,10 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Impl.Trace.Propagation
 {
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
@@ -116,7 +115,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
         {
             var headers = new Dictionary<string, string>
             {
-                {"traceparent", "00-abc7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01"}
+                {"traceparent", "00-abc7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01"},
             };
 
             var f = new TraceContextFormat();

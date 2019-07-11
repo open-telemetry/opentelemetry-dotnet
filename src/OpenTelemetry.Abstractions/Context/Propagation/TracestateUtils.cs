@@ -1,4 +1,4 @@
-﻿// <copyright file="StringExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracestateUtils.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ namespace OpenTelemetry.Context.Propagation
     /// <summary>
     /// Extension methods to extract Tracestate from string.
     /// </summary>
-    public static class StringExtensions
+    internal static class TracestateUtils
     {
         /// <summary>
         /// Extracts <see cref="Tracestate"/> from the given string and sets it on provided <see cref="Tracestate.TracestateBuilder"/>.
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <param name="tracestateString">String with comma separated tracestate key value pairs.</param>
         /// <param name="tracestateBuilder"><see cref="Tracestate.TracestateBuilder"/> to set tracestate pairs on.</param>
         /// <returns>True if string was parsed successfully and tracestate was recognized, false otherwise.</returns>
-        public static bool TryExtractTracestate(this string tracestateString, Tracestate.TracestateBuilder tracestateBuilder)
+        internal static bool TryExtractTracestate(string tracestateString, Tracestate.TracestateBuilder tracestateBuilder)
         {
             if (string.IsNullOrWhiteSpace(tracestateString))
             {

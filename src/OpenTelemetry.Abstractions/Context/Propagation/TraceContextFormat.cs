@@ -228,7 +228,7 @@ namespace OpenTelemetry.Context.Propagation
                     // front of the list.
                     for (int i = tracestateCollection.Length - 1; i >= 0; i--)
                     {
-                        if (!tracestateCollection[i].TryExtractTracestate(tracestateBuilder))
+                        if (!TracestateUtils.TryExtractTracestate(tracestateCollection[i], tracestateBuilder))
                         {
                             return false;
                         }

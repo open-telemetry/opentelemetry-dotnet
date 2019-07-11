@@ -22,7 +22,7 @@ using Xunit;
 
 namespace OpenTelemetry.Tests.Impl.Trace.Propagation
 {
-    public class StringExtensionsTests
+    public class TracestateUtilsTests
     {
         [Theory]
         [InlineData("")]
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         public void EmptyTracestate(string tracestate)
         {
             var builder = Tracestate.Builder;
-            Assert.True(tracestate.TryExtractTracestate(builder));
+            Assert.True(TracestateUtils.TryExtractTracestate(tracestate, builder));
             Assert.Empty(builder.Build().Entries);
         }
 
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         public void InvalidTracestate(string tracestate, int validEntriesCount)
         {
             var builder = Tracestate.Builder;
-            Assert.False(tracestate.TryExtractTracestate(builder));
+            Assert.False(TracestateUtils.TryExtractTracestate(tracestate, builder));
             Assert.Equal(validEntriesCount, builder.Build().Entries.Count());
         }
 
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
             var builder = Tracestate.Builder;
             var tracestate =
                 "k0=v,k1=v,k2=v,k3=v,k4=v,k5=v,k6=v,k7=v1,k8=v,k9=v,k10=v,k11=v,k12=v,k13=v,k14=v,k15=v,k16=v,k17=v,k18=v,k19=v,k20=v,k21=v,k22=v,k23=v,k24=v,k25=v,k26=v,k27=v1,k28=v,k29=v,k30=v,k31=v,k32=v,k33=v";
-            Assert.False(tracestate.TryExtractTracestate(builder));
+            Assert.False(TracestateUtils.TryExtractTracestate(tracestate, builder));
             Assert.Throws<ArgumentException>(() => builder.Build());
         }
 
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         public void ValidPair(string pair)
         {
             var builder = Tracestate.Builder;
-            Assert.True(pair.TryExtractTracestate(builder));
+            Assert.True(TracestateUtils.TryExtractTracestate(pair, builder));
             Assert.Equal("k=v", builder.Build().ToString());
         }
 
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         public void ValidPairs(string tracestate)
         {
             var builder = Tracestate.Builder;
-            Assert.True(tracestate.TryExtractTracestate(builder));
+            Assert.True(TracestateUtils.TryExtractTracestate(tracestate, builder));
             Assert.Equal("k1=v1,k2=v2", builder.Build().ToString());
         }
     }

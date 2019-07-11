@@ -313,7 +313,7 @@ namespace OpenTelemetry.Trace
         {
             var tracestate = Tracestate.Empty;
             var tracestateBuilder = Tracestate.Builder;
-            if (activity.TraceStateString.TryExtractTracestate(tracestateBuilder))
+            if (TracestateUtils.TryExtractTracestate(activity.TraceStateString, tracestateBuilder))
             {
                 tracestate = tracestateBuilder.Build();
             }
