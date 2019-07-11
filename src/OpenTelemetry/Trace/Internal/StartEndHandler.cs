@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Trace.Internal
 {
+    using System.Diagnostics;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Export;
 
@@ -42,7 +43,7 @@ namespace OpenTelemetry.Trace.Internal
         public void OnEnd(ISpan span)
         {
             if ((span.IsRecordingEvents && this.enqueueEventForNonSampledSpans)
-                || span.Context.TraceOptions.IsSampled)
+                || (span.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
             {
                 this.eventQueue.Enqueue(new SpanEndEvent(span, this.spanExporter, this.runningSpanStore, this.sampledSpanStore));
             }
@@ -97,7 +98,7 @@ namespace OpenTelemetry.Trace.Internal
 
             public void Process()
             {
-                if (this.span.Context.TraceOptions.IsSampled)
+                if ((this.span.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
                 {
                     this.spanExporter.AddSpan(this.span);
                 }

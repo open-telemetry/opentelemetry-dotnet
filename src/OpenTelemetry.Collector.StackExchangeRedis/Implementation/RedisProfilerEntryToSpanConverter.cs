@@ -18,6 +18,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Common;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
@@ -46,12 +47,12 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             }
         }
 
-        internal static bool ShouldSample(SpanContext parentContext, string name, ISampler sampler, out SpanContext context, out SpanId parentSpanId)
+        internal static bool ShouldSample(SpanContext parentContext, string name, ISampler sampler, out SpanContext context, out ActivitySpanId parentSpanId)
         {
-            var traceId = TraceId.Invalid;
+            ActivityTraceId traceId = default;
             var tracestate = Tracestate.Empty;
-            parentSpanId = SpanId.Invalid;
-            var parentOptions = TraceOptions.Default;
+            parentSpanId = default;
+            var parentOptions = ActivityTraceFlags.None;
 
             if (parentContext.IsValid)
             {
@@ -61,19 +62,21 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             }
             else
             {
-                traceId = TraceId.FromBytes(Guid.NewGuid().ToByteArray());
+                traceId = ActivityTraceId.CreateRandom();
             }
 
-            var result = parentOptions.IsSampled;
-            var spanId = SpanId.FromBytes(Guid.NewGuid().ToByteArray(), 8);
-            var traceOptions = TraceOptions.Default;
+            var result = (parentOptions & ActivityTraceFlags.Recorded) != 0;
+            var spanId = ActivitySpanId.CreateRandom();
+            var traceOptions = ActivityTraceFlags.None;
 
             if (sampler != null)
             {
-                var builder = TraceOptions.Builder(parentContext.TraceOptions);
+                traceOptions = parentContext.TraceOptions;
                 result = sampler.ShouldSample(parentContext, traceId, spanId, name, null);
-                builder = builder.SetIsSampled(result);
-                traceOptions = builder.Build();
+                if (result)
+                {
+                    traceOptions |= ActivityTraceFlags.Recorded;
+                }
             }
 
             context = SpanContext.Create(traceId, spanId, traceOptions, parentContext.Tracestate);
@@ -81,7 +84,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             return result;
         }
 
-        internal static SpanData ProfiledCommandToSpanData(SpanContext context, string name, SpanId parentSpanId, IProfiledCommand command)
+        internal static SpanData ProfiledCommandToSpanData(SpanContext context, string name, ActivitySpanId parentSpanId, IProfiledCommand command)
         {
             // use https://github.com/opentracing/specification/blob/master/semantic_conventions.md for now
 

@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace.Sampler.Internal
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     /// <inheritdoc />
     internal sealed class NeverSampleSampler : ISampler
@@ -28,7 +29,7 @@ namespace OpenTelemetry.Trace.Sampler.Internal
         public string Description => this.ToString();
 
         /// <inheritdoc />
-        public bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ILink> links)
+        public bool ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ILink> links)
         {
             return false;
         }

@@ -18,6 +18,7 @@ namespace OpenTelemetry.Context.Propagation
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Text;
     using OpenTelemetry.Trace;
@@ -35,6 +36,7 @@ namespace OpenTelemetry.Context.Propagation
         private static readonly int SpanIdLength = "00f067aa0ba902b7".Length;
         private static readonly int VersionAndTraceIdAndSpanIdLength = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-".Length;
         private static readonly int OptionsLength = "00".Length;
+        private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
 
         /// <inheritdoc/>
         public ISet<string> Fields => new HashSet<string> { "tracestate", "traceparent" };
@@ -47,13 +49,13 @@ namespace OpenTelemetry.Context.Propagation
                 var traceparentCollection = getter(carrier, "traceparent");
                 var tracestateCollection = getter(carrier, "tracestate");
 
-                if (traceparentCollection.Count() > 1)
+                if (traceparentCollection != null && traceparentCollection.Count() > 1)
                 {
                     // multiple traceparent are not allowed
                     return SpanContext.Blank;
                 }
 
-                var traceparent = traceparentCollection?.FirstOrDefault();
+                var traceparent = traceparentCollection.First();
                 var traceparentParsed = this.TryExtractTraceparent(traceparent, out var traceId, out var spanId, out var traceoptions);
 
                 if (!traceparentParsed)
@@ -165,8 +167,8 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
         {
-            var traceparent = string.Concat("00-", spanContext.TraceId.ToLowerBase16(), "-", spanContext.SpanId.ToLowerBase16());
-            traceparent = string.Concat(traceparent, spanContext.TraceOptions.IsSampled ? "-01" : "-00");
+            var traceparent = string.Concat("00-", spanContext.TraceId.ToHexString(), "-", spanContext.SpanId.ToHexString());
+            traceparent = string.Concat(traceparent, (spanContext.TraceOptions & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
 
             setter(carrier, "traceparent", traceparent);
 
@@ -193,50 +195,51 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
-        private bool TryExtractTraceparent(string traceparent, out TraceId traceId, out SpanId spanId, out TraceOptions traceoptions)
+        private bool TryExtractTraceparent(string traceparent, out ActivityTraceId traceId, out ActivitySpanId spanId, out ActivityTraceFlags traceoptions)
         {
             // from https://github.com/w3c/distributed-tracing/blob/master/trace_context/HTTP_HEADER_FORMAT.md
             // traceparent: 00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01
 
-            traceId = TraceId.Invalid;
-            spanId = SpanId.Invalid;
-            traceoptions = TraceOptions.Default;
+            traceId = default;
+            spanId = default;
+            traceoptions = default;
             var bestAttempt = false;
 
-            if (string.IsNullOrWhiteSpace(traceparent))
+            if (string.IsNullOrWhiteSpace(traceparent) || traceparent.Length < TraceparentLengthV0)
             {
                 return false;
             }
 
             // if version does not end with delimeter
-            if (traceparent.Length < VersionPrefixIdLength || traceparent[VersionPrefixIdLength - 1] != '-')
+            if (traceparent[VersionPrefixIdLength - 1] != '-')
             {
                 return false;
             }
 
             // or version is not a hex (will throw)
-            var versionArray = Arrays.StringToByteArray(traceparent, 0, VersionLength);
+            var version0 = this.HexCharToByte(traceparent[0]);
+            var version1 = this.HexCharToByte(traceparent[1]);
 
-            if (versionArray[0] == 255)
+            if (version0 == 0xf && version1 == 0xf)
             {
                 return false;
             }
 
-            if (versionArray[0] > 0)
+            if (version0 > 0)
             {
                 // expected version is 00
                 // for higher versions - best attempt parsing of trace id, span id, etc.
                 bestAttempt = true;
             }
 
-            if (traceparent.Length < VersionAndTraceIdLength || traceparent[VersionAndTraceIdLength - 1] != '-')
+            if (traceparent[VersionAndTraceIdLength - 1] != '-')
             {
                 return false;
             }
 
             try
             {
-                traceId = TraceId.FromBytes(Arrays.StringToByteArray(traceparent, VersionPrefixIdLength, TraceIdLength));
+                traceId = ActivityTraceId.CreateFromString(traceparent.AsSpan().Slice(VersionPrefixIdLength, TraceIdLength));
             }
             catch (ArgumentOutOfRangeException)
             {
@@ -244,14 +247,14 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            if (traceparent.Length < VersionAndTraceIdAndSpanIdLength || traceparent[VersionAndTraceIdAndSpanIdLength - 1] != '-')
+            if (traceparent[VersionAndTraceIdAndSpanIdLength - 1] != '-')
             {
                 return false;
             }
 
             try
             {
-                spanId = SpanId.FromBytes(Arrays.StringToByteArray(traceparent, VersionAndTraceIdLength, SpanIdLength));
+                spanId = ActivitySpanId.CreateFromString(traceparent.AsSpan().Slice(VersionAndTraceIdLength, SpanIdLength));
             }
             catch (ArgumentOutOfRangeException)
             {
@@ -259,16 +262,13 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            if (traceparent.Length < VersionAndTraceIdAndSpanIdLength + OptionsLength)
-            {
-                return false;
-            }
-
-            byte[] optionsArray;
+            byte options0;
+            byte options1;
 
             try
             {
-                optionsArray = Arrays.StringToByteArray(traceparent, VersionAndTraceIdAndSpanIdLength, OptionsLength);
+                options0 = this.HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength]);
+                options1 = this.HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength]);
             }
             catch (ArgumentOutOfRangeException)
             {
@@ -276,9 +276,9 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            if ((optionsArray[0] | 1) == 1)
+            if ((options0 | 1) == 1)
             {
-                traceoptions = TraceOptions.Builder().SetIsSampled(true).Build();
+                traceoptions |= ActivityTraceFlags.Recorded;
             }
 
             if ((!bestAttempt) && (traceparent.Length != VersionAndTraceIdAndSpanIdLength + OptionsLength))
@@ -288,14 +288,33 @@ namespace OpenTelemetry.Context.Propagation
 
             if (bestAttempt)
             {
-                if ((traceparent.Length > VersionAndTraceIdAndSpanIdLength + OptionsLength) &&
-                   (traceparent[VersionAndTraceIdAndSpanIdLength + OptionsLength] != '-'))
+                if ((traceparent.Length > TraceparentLengthV0) && (traceparent[TraceparentLengthV0] != '-'))
                 {
                     return false;
                 }
             }
 
             return true;
+        }
+
+        private byte HexCharToByte(char c)
+        {
+            if ((c >= '0') && (c <= '9'))
+            {
+                return (byte)(c - '0');
+            }
+
+            if ((c >= 'a') && (c <= 'f'))
+            {
+                return (byte)(c - 'a' + 10);
+            }
+
+            if ((c >= 'A') && (c <= 'F'))
+            {
+                return (byte)(c - 'A' + 10);
+            }
+
+            throw new ArgumentOutOfRangeException("Invalid character: " + c);
         }
     }
 }

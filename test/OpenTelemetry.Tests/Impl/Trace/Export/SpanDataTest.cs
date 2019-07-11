@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace.Export.Test
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Common;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Internal;
@@ -35,9 +36,8 @@ namespace OpenTelemetry.Trace.Export.Test
         private static readonly Timestamp endTimestamp = Timestamp.Create(123, 460);
         private static readonly IEvent spanEvent = Event.Create(EVENT_TEXT);
         private static readonly Status status = Status.DeadlineExceeded.WithDescription("TooSlow");
-        private readonly IRandomGenerator random = new RandomGenerator(1234);
         private readonly SpanContext spanContext;
-        private readonly SpanId parentSpanId;
+        private readonly ActivitySpanId parentSpanId;
         private readonly Resource resource = Resource.Empty;
         private readonly IDictionary<string, IAttributeValue> attributesMap = new Dictionary<string, IAttributeValue>();
         private readonly List<ITimedEvent<IEvent>> eventList = new List<ITimedEvent<IEvent>>();
@@ -49,8 +49,8 @@ namespace OpenTelemetry.Trace.Export.Test
 
         public SpanDataTest()
         {
-            spanContext = SpanContext.Create(TraceId.GenerateRandomId(random), SpanId.GenerateRandomId(random), TraceOptions.Default, Tracestate.Empty);
-            parentSpanId = SpanId.GenerateRandomId(random);
+            spanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty);
+            parentSpanId = ActivitySpanId.CreateRandom();
 
             attributesMap.Add("MyAttributeKey1", AttributeValue.LongAttributeValue(10));
             attributesMap.Add("MyAttributeKey2", AttributeValue.BooleanAttributeValue(true));
@@ -100,7 +100,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var spanData =
                 SpanData.Create(
                     spanContext,
-                    null,
+                    default,
                     resource,
                     SPAN_NAME,
                     startTimestamp,
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     SPAN_KIND,
                     null);
             Assert.Equal(spanContext, spanData.Context);
-            Assert.Null(spanData.ParentSpanId);
+            Assert.True(spanData.ParentSpanId == default);
             Assert.Equal(resource, spanData.Resource);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(startTimestamp, spanData.StartTimestamp);
