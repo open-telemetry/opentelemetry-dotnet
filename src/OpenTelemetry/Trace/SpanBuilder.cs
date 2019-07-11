@@ -72,7 +72,11 @@ namespace OpenTelemetry.Trace
         {
             this.parentSpan = parentSpan ?? throw new ArgumentNullException(nameof(parentSpan));
             this.contextSource = ContextSource.ExplicitSpanParent;
-            this.timestampConverter = ((Span)parentSpan)?.TimestampConverter;
+            if (parentSpan is Span parentSpanImpl)
+            {
+                this.timestampConverter = parentSpanImpl.TimestampConverter;
+            }
+
             this.parentSpanContext = null;
             this.parentActivity = null;
             return this;
@@ -397,9 +401,13 @@ namespace OpenTelemetry.Trace
 
                 case ContextSource.ExplicitSpanParent:
                 {
-                    spanActivity = new Activity(this.name).SetParentId(this.parentSpan.Context.TraceId,
-                        this.parentSpan.Context.SpanId,
-                        this.parentSpan.Context.TraceOptions);
+                    spanActivity = new Activity(this.name);
+                    if (this.parentSpan.Context.IsValid)
+                    {
+                        spanActivity.SetParentId(this.parentSpan.Context.TraceId,
+                            this.parentSpan.Context.SpanId,
+                            this.parentSpan.Context.TraceOptions);
+                    }
 
                     spanActivity.TraceStateString = this.parentSpan.Context.Tracestate.ToString();
                     spanActivity.Start();

@@ -451,6 +451,38 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(spanData.ParentSpanId == default);
         }
 
+
+        [Fact]
+        public void StartSpan_BlankSpanParent()
+        {
+            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .SetParent(BlankSpan.Instance)
+                .StartSpan();
+
+            Assert.True(span.Context.IsValid);
+            Assert.True(span.IsRecordingEvents);
+            Assert.True((span.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
+            var spanData = ((Span)span).ToSpanData();
+            Assert.True(spanData.ParentSpanId == default);
+        }
+
+        [Fact]
+        public void StartSpan_BlankSpanContextParent()
+        {
+            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .SetParent(SpanContext.Blank)
+                .StartSpan();
+
+            Assert.True(span.Context.IsValid);
+            Assert.True(span.IsRecordingEvents);
+            Assert.True((span.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
+            var spanData = ((Span)span).ToSpanData();
+            Assert.True(spanData.ParentSpanId == default);
+        }
+
+
         [Fact]
         public void StartSpan_CurrentSpanParent()
         {
