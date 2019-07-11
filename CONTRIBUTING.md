@@ -42,6 +42,12 @@ Remember to always work in a branch of your local copy, as you might otherwise h
 
 Please also see [GitHub workflow](https://github.com/open-telemetry/community/blob/master/CONTRIBUTING.md#github-workflow) section of general project contributing guide.
 
+### Prerequisites
+
+* Git client and command line tools. You may use Visual Studio to clone the repo, but we use [SourceLink](https://github.com/dotnet/sourcelink) to build and it needs git.
+* Visual Studio 2017+ or VS Code
+* .NET Framework 4.6+ and .NET Core 2.1+
+
 ### Build
 
 You can use Visual Studio 2017+ or VS Code to contribute. Just open root folder
