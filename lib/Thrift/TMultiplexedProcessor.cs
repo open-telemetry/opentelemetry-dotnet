@@ -35,19 +35,19 @@ namespace Thrift
 
         public async Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot)
         {
-            return await ProcessAsync(iprot, oprot, CancellationToken.None);
+            return await ProcessAsync(iprot, oprot, CancellationToken.None).ConfigureAwait(false);
         }
 
         public async Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<bool>(cancellationToken);
+                return await Task.FromCanceled<bool>(cancellationToken).ConfigureAwait(false);
             }
 
             try
             {
-                var message = await iprot.ReadMessageBeginAsync(cancellationToken);
+                var message = await iprot.ReadMessageBeginAsync(cancellationToken).ConfigureAwait(false);
 
                 if ((message.Type != TMessageType.Call) && (message.Type != TMessageType.Oneway))
                 {
@@ -113,10 +113,10 @@ namespace Thrift
 
             var newMessage = new TMessage(message.Name, TMessageType.Exception, message.SeqID);
 
-            await oprot.WriteMessageBeginAsync(newMessage, cancellationToken);
-            await appex.WriteAsync(oprot, cancellationToken);
-            await oprot.WriteMessageEndAsync(cancellationToken);
-            await oprot.Transport.FlushAsync(cancellationToken);
+            await oprot.WriteMessageBeginAsync(newMessage, cancellationToken).ConfigureAwait(false);
+            await appex.WriteAsync(oprot, cancellationToken).ConfigureAwait(false);
+            await oprot.WriteMessageEndAsync(cancellationToken).ConfigureAwait(false);
+            await oprot.Transport.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
         private class StoredMessageProtocol : TProtocolDecorator
@@ -133,7 +133,7 @@ namespace Thrift
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    return await Task.FromCanceled<TMessage>(cancellationToken);
+                    return await Task.FromCanceled<TMessage>(cancellationToken).ConfigureAwait(false);
                 }
 
                 return _msgBegin;

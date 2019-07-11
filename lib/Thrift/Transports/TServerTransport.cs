@@ -29,19 +29,19 @@ namespace Thrift.Transports
 
         protected virtual async Task<TClientTransport> AcceptImplementationAsync()
         {
-            return await AcceptImplementationAsync(CancellationToken.None);
+            return await AcceptImplementationAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         protected abstract Task<TClientTransport> AcceptImplementationAsync(CancellationToken cancellationToken);
 
         public async Task<TClientTransport> AcceptAsync()
         {
-            return await AcceptAsync(CancellationToken.None);
+            return await AcceptAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         public async Task<TClientTransport> AcceptAsync(CancellationToken cancellationToken)
         {
-            var transport = await AcceptImplementationAsync(cancellationToken);
+            var transport = await AcceptImplementationAsync(cancellationToken).ConfigureAwait(false);
 
             if (transport == null)
             {

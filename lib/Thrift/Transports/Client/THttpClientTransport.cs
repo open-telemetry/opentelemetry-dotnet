@@ -72,7 +72,7 @@ namespace Thrift.Transports.Client
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -102,7 +102,7 @@ namespace Thrift.Transports.Client
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<int>(cancellationToken);
+                return await Task.FromCanceled<int>(cancellationToken).ConfigureAwait(false);
             }
 
             if (_inputStream == null)
@@ -131,7 +131,7 @@ namespace Thrift.Transports.Client
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
 
             await _outputStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
@@ -184,7 +184,7 @@ namespace Thrift.Transports.Client
                     using (var outStream = new StreamContent(_outputStream))
                     {
                         outStream.Headers.ContentType = ApacheThriftMediaType;
-                        var msg = await _httpClient.PostAsync(_uri, outStream, cancellationToken);
+                        var msg = await _httpClient.PostAsync(_uri, outStream, cancellationToken).ConfigureAwait(false);
 
                         msg.EnsureSuccessStatusCode();
 
@@ -194,7 +194,7 @@ namespace Thrift.Transports.Client
                             _inputStream = null;
                         }
 
-                        _inputStream = await msg.Content.ReadAsStreamAsync();
+                        _inputStream = await msg.Content.ReadAsStreamAsync().ConfigureAwait(false);
                         if (_inputStream.CanSeek)
                         {
                             _inputStream.Seek(0, SeekOrigin.Begin);

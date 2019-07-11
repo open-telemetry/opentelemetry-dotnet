@@ -107,7 +107,7 @@ namespace Thrift.Transports.Server
             {
                 EnsurePipeInstance();
 
-                await _stream.WaitForConnectionAsync(cancellationToken);
+                await _stream.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
 
                 var trans = new ServerTransport(_stream);
                 _stream = null; // pass ownership to ServerTransport
@@ -143,7 +143,7 @@ namespace Thrift.Transports.Server
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    await Task.FromCanceled(cancellationToken);
+                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
                 }
             }
 
@@ -160,7 +160,7 @@ namespace Thrift.Transports.Server
                     throw new TTransportException(TTransportException.ExceptionType.NotOpen);
                 }
 
-                return await _stream.ReadAsync(buffer, offset, length, cancellationToken);
+                return await _stream.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
             }
 
             public override async Task WriteAsync(byte[] buffer, int offset, int length,
@@ -171,14 +171,14 @@ namespace Thrift.Transports.Server
                     throw new TTransportException(TTransportException.ExceptionType.NotOpen);
                 }
 
-                await _stream.WriteAsync(buffer, offset, length, cancellationToken);
+                await _stream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
             }
 
             public override async Task FlushAsync(CancellationToken cancellationToken)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    await Task.FromCanceled(cancellationToken);
+                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
                 }
             }
 

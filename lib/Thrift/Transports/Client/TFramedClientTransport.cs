@@ -48,7 +48,7 @@ namespace Thrift.Transports.Client
         {
             CheckNotDisposed();
 
-            await _transport.OpenAsync(cancellationToken);
+            await _transport.OpenAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override void Close()
@@ -70,21 +70,21 @@ namespace Thrift.Transports.Client
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            var got = await _readBuffer.ReadAsync(buffer, offset, length, cancellationToken);
+            var got = await _readBuffer.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
             if (got > 0)
             {
                 return got;
             }
 
             // Read another frame of data
-            await ReadFrameAsync(cancellationToken);
+            await ReadFrameAsync(cancellationToken).ConfigureAwait(false);
 
-            return await _readBuffer.ReadAsync(buffer, offset, length, cancellationToken);
+            return await _readBuffer.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task ReadFrameAsync(CancellationToken cancellationToken)
         {
-            await _transport.ReadAllAsync(_headerBuf, 0, HeaderSize, cancellationToken);
+            await _transport.ReadAllAsync(_headerBuf, 0, HeaderSize, cancellationToken).ConfigureAwait(false);
 
             var size = DecodeFrameSize(_headerBuf);
 
@@ -96,7 +96,7 @@ namespace Thrift.Transports.Client
 
             var buff = bufSegment.Array;
 
-            await _transport.ReadAllAsync(buff, 0, size, cancellationToken);
+            await _transport.ReadAllAsync(buff, 0, size, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
@@ -112,10 +112,10 @@ namespace Thrift.Transports.Client
 
             if (_writeBuffer.Length + length > int.MaxValue)
             {
-                await FlushAsync(cancellationToken);
+                await FlushAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            await _writeBuffer.WriteAsync(buffer, offset, length, cancellationToken);
+            await _writeBuffer.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
@@ -143,11 +143,11 @@ namespace Thrift.Transports.Client
             EncodeFrameSize(dataLen, buf);
 
             // Send the entire message at once
-            await _transport.WriteAsync(buf, cancellationToken);
+            await _transport.WriteAsync(buf, cancellationToken).ConfigureAwait(false);
 
             InitWriteBuffer();
 
-            await _transport.FlushAsync(cancellationToken);
+            await _transport.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
         private void InitWriteBuffer()

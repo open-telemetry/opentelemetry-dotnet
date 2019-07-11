@@ -89,23 +89,23 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await Trans.WriteAsync(new[] {ProtocolId}, cancellationToken);
+            await Trans.WriteAsync(new[] {ProtocolId}, cancellationToken).ConfigureAwait(false);
             await
                 Trans.WriteAsync(
                     new[] {(byte) ((Version & VersionMask) | (((uint) message.Type << TypeShiftAmount) & TypeMask))},
                     cancellationToken);
 
             var bufferTuple = CreateWriteVarInt32((uint) message.SeqID);
-            await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
+            await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken).ConfigureAwait(false);
 
-            await WriteStringAsync(message.Name, cancellationToken);
+            await WriteStringAsync(message.Name, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteMessageEndAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -118,7 +118,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
 
             _lastField.Push(_lastFieldId);
@@ -129,7 +129,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
 
             _lastFieldId = _lastField.Pop();
@@ -146,13 +146,13 @@ namespace Thrift.Protocols
             {
                 var b = (byte) (((field.ID - _lastFieldId) << 4) | typeToWrite);
                 // Write them together
-                await Trans.WriteAsync(new[] {b}, cancellationToken);
+                await Trans.WriteAsync(new[] {b}, cancellationToken).ConfigureAwait(false);
             }
             else
             {
                 // Write them separate
-                await Trans.WriteAsync(new[] {typeToWrite}, cancellationToken);
-                await WriteI16Async(field.ID, cancellationToken);
+                await Trans.WriteAsync(new[] {typeToWrite}, cancellationToken).ConfigureAwait(false);
+                await WriteI16Async(field.ID, cancellationToken).ConfigureAwait(false);
             }
 
             _lastFieldId = field.ID;
@@ -166,7 +166,7 @@ namespace Thrift.Protocols
             }
             else
             {
-                await WriteFieldBeginInternalAsync(field, 0xFF, cancellationToken);
+                await WriteFieldBeginInternalAsync(field, 0xFF, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -174,7 +174,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -185,7 +185,7 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await Trans.WriteAsync(new[] {Types.Stop}, cancellationToken);
+            await Trans.WriteAsync(new[] {Types.Stop}, cancellationToken).ConfigureAwait(false);
         }
 
         protected async Task WriteCollectionBeginAsync(TType elemType, int size, CancellationToken cancellationToken)
@@ -202,27 +202,27 @@ namespace Thrift.Protocols
 
             if (size <= 14)
             {
-                await Trans.WriteAsync(new[] {(byte) ((size << 4) | GetCompactType(elemType))}, cancellationToken);
+                await Trans.WriteAsync(new[] {(byte) ((size << 4) | GetCompactType(elemType))}, cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                await Trans.WriteAsync(new[] {(byte) (0xf0 | GetCompactType(elemType))}, cancellationToken);
+                await Trans.WriteAsync(new[] {(byte) (0xf0 | GetCompactType(elemType))}, cancellationToken).ConfigureAwait(false);
 
                 var bufferTuple = CreateWriteVarInt32((uint) size);
-                await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
+                await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken).ConfigureAwait(false);
             }
         }
 
         public override async Task WriteListBeginAsync(TList list, CancellationToken cancellationToken)
         {
-            await WriteCollectionBeginAsync(list.ElementType, list.Count, cancellationToken);
+            await WriteCollectionBeginAsync(list.ElementType, list.Count, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteListEndAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -233,14 +233,14 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await WriteCollectionBeginAsync(set.ElementType, set.Count, cancellationToken);
+            await WriteCollectionBeginAsync(set.ElementType, set.Count, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteSetEndAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -269,7 +269,7 @@ namespace Thrift.Protocols
             else
             {
                 // we're not part of a field, so just Write the value.
-                await Trans.WriteAsync(new[] {b ? Types.BooleanTrue : Types.BooleanFalse}, cancellationToken);
+                await Trans.WriteAsync(new[] {b ? Types.BooleanTrue : Types.BooleanFalse}, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -280,7 +280,7 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await Trans.WriteAsync(new[] {(byte) b}, cancellationToken);
+            await Trans.WriteAsync(new[] {(byte) b}, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteI16Async(short i16, CancellationToken cancellationToken)
@@ -291,7 +291,7 @@ namespace Thrift.Protocols
             }
 
             var bufferTuple = CreateWriteVarInt32(IntToZigzag(i16));
-            await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
+            await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken).ConfigureAwait(false);
         }
 
         protected internal Tuple<byte[], int> CreateWriteVarInt32(uint n)
@@ -323,7 +323,7 @@ namespace Thrift.Protocols
             }
 
             var bufferTuple = CreateWriteVarInt32(IntToZigzag(i32));
-            await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
+            await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken).ConfigureAwait(false);
         }
 
         protected internal Tuple<byte[], int> CreateWriteVarInt64(ulong n)
@@ -354,7 +354,7 @@ namespace Thrift.Protocols
             }
 
             var bufferTuple = CreateWriteVarInt64(LongToZigzag(i64));
-            await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
+            await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteDoubleAsync(double d, CancellationToken cancellationToken)
@@ -366,7 +366,7 @@ namespace Thrift.Protocols
 
             var data = new byte[8];
             FixedLongToBytes(BitConverter.DoubleToInt64Bits(d), data, 0);
-            await Trans.WriteAsync(data, cancellationToken);
+            await Trans.WriteAsync(data, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteStringAsync(string str, CancellationToken cancellationToken)
@@ -379,8 +379,8 @@ namespace Thrift.Protocols
             var bytes = Encoding.UTF8.GetBytes(str);
 
             var bufferTuple = CreateWriteVarInt32((uint) bytes.Length);
-            await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
-            await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
+            await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken).ConfigureAwait(false);
+            await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteBinaryAsync(byte[] bytes, CancellationToken cancellationToken)
@@ -391,8 +391,8 @@ namespace Thrift.Protocols
             }
 
             var bufferTuple = CreateWriteVarInt32((uint) bytes.Length);
-            await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
-            await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
+            await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken).ConfigureAwait(false);
+            await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteMapBeginAsync(TMap map, CancellationToken cancellationToken)
@@ -404,12 +404,12 @@ namespace Thrift.Protocols
 
             if (map.Count == 0)
             {
-                await Trans.WriteAsync(new[] {(byte) 0}, cancellationToken);
+                await Trans.WriteAsync(new[] {(byte) 0}, cancellationToken).ConfigureAwait(false);
             }
             else
             {
                 var bufferTuple = CreateWriteVarInt32((uint) map.Count);
-                await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
+                await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken).ConfigureAwait(false);
                 await
                     Trans.WriteAsync(
                         new[] {(byte) ((GetCompactType(map.KeyType) << 4) | GetCompactType(map.ValueType))},
@@ -421,7 +421,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -429,16 +429,16 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<TMessage>(cancellationToken);
+                return await Task.FromCanceled<TMessage>(cancellationToken).ConfigureAwait(false);
             }
 
-            var protocolId = (byte) await ReadByteAsync(cancellationToken);
+            var protocolId = (byte) await ReadByteAsync(cancellationToken).ConfigureAwait(false);
             if (protocolId != ProtocolId)
             {
                 throw new TProtocolException($"Expected protocol id {ProtocolId:X} but got {protocolId:X}");
             }
 
-            var versionAndType = (byte) await ReadByteAsync(cancellationToken);
+            var versionAndType = (byte) await ReadByteAsync(cancellationToken).ConfigureAwait(false);
             var version = (byte) (versionAndType & VersionMask);
 
             if (version != Version)
@@ -447,8 +447,8 @@ namespace Thrift.Protocols
             }
 
             var type = (byte) ((versionAndType >> TypeShiftAmount) & TypeBits);
-            var seqid = (int) await ReadVarInt32Async(cancellationToken);
-            var messageName = await ReadStringAsync(cancellationToken);
+            var seqid = (int) await ReadVarInt32Async(cancellationToken).ConfigureAwait(false);
+            var messageName = await ReadStringAsync(cancellationToken).ConfigureAwait(false);
 
             return new TMessage(messageName, (TMessageType) type, seqid);
         }
@@ -457,7 +457,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -465,7 +465,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<TStruct>(cancellationToken);
+                return await Task.FromCanceled<TStruct>(cancellationToken).ConfigureAwait(false);
             }
 
             // some magic is here )
@@ -480,7 +480,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
 
             /*
@@ -495,7 +495,7 @@ namespace Thrift.Protocols
         public override async Task<TField> ReadFieldBeginAsync(CancellationToken cancellationToken)
         {
             // Read a field header off the wire.
-            var type = (byte) await ReadByteAsync(cancellationToken);
+            var type = (byte) await ReadByteAsync(cancellationToken).ConfigureAwait(false);
             // if it's a stop, then we can return immediately, as the struct is over.
             if (type == Types.Stop)
             {
@@ -507,7 +507,7 @@ namespace Thrift.Protocols
             var modifier = (short) ((type & 0xf0) >> 4);
             if (modifier == 0)
             {
-                fieldId = await ReadI16Async(cancellationToken);
+                fieldId = await ReadI16Async(cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -530,7 +530,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -538,7 +538,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled<TMap>(cancellationToken);
+                await Task.FromCanceled<TMap>(cancellationToken).ConfigureAwait(false);
             }
 
             /*
@@ -547,8 +547,8 @@ namespace Thrift.Protocols
             "correct" types.
             */
 
-            var size = (int) await ReadVarInt32Async(cancellationToken);
-            var keyAndValueType = size == 0 ? (byte) 0 : (byte) await ReadByteAsync(cancellationToken);
+            var size = (int) await ReadVarInt32Async(cancellationToken).ConfigureAwait(false);
+            var keyAndValueType = size == 0 ? (byte) 0 : (byte) await ReadByteAsync(cancellationToken).ConfigureAwait(false);
             return new TMap(GetTType((byte) (keyAndValueType >> 4)), GetTType((byte) (keyAndValueType & 0xf)), size);
         }
 
@@ -556,7 +556,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -568,15 +568,15 @@ namespace Thrift.Protocols
             of the element exType header will be 0xF, and a varint will follow with the
             true size.
             */
-
-            return new TSet(await ReadListBeginAsync(cancellationToken));
+            
+            return new TSet(await ReadListBeginAsync(cancellationToken).ConfigureAwait(false));
         }
 
         public override async Task<bool> ReadBoolAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<bool>(cancellationToken);
+                return await Task.FromCanceled<bool>(cancellationToken).ConfigureAwait(false);
             }
 
             /*
@@ -592,19 +592,19 @@ namespace Thrift.Protocols
                 return result;
             }
 
-            return await ReadByteAsync(cancellationToken) == Types.BooleanTrue;
+            return (await ReadByteAsync(cancellationToken).ConfigureAwait(false)) == Types.BooleanTrue;
         }
 
         public override async Task<sbyte> ReadByteAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<sbyte>(cancellationToken);
+                return await Task.FromCanceled<sbyte>(cancellationToken).ConfigureAwait(false);
             }
 
             // Read a single byte off the wire. Nothing interesting here.
             var buf = new byte[1];
-            await Trans.ReadAllAsync(buf, 0, 1, cancellationToken);
+            await Trans.ReadAllAsync(buf, 0, 1, cancellationToken).ConfigureAwait(false);
             return (sbyte) buf[0];
         }
 
@@ -612,41 +612,41 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<short>(cancellationToken);
+                return await Task.FromCanceled<short>(cancellationToken).ConfigureAwait(false);
             }
 
-            return (short) ZigzagToInt(await ReadVarInt32Async(cancellationToken));
+            return (short) ZigzagToInt(await ReadVarInt32Async(cancellationToken).ConfigureAwait(false));
         }
 
         public override async Task<int> ReadI32Async(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<int>(cancellationToken);
+                return await Task.FromCanceled<int>(cancellationToken).ConfigureAwait(false);
             }
 
-            return ZigzagToInt(await ReadVarInt32Async(cancellationToken));
+            return ZigzagToInt(await ReadVarInt32Async(cancellationToken).ConfigureAwait(false));
         }
 
         public override async Task<long> ReadI64Async(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<long>(cancellationToken);
+                return await Task.FromCanceled<long>(cancellationToken).ConfigureAwait(false);
             }
 
-            return ZigzagToLong(await ReadVarInt64Async(cancellationToken));
+            return ZigzagToLong(await ReadVarInt64Async(cancellationToken).ConfigureAwait(false));
         }
 
         public override async Task<double> ReadDoubleAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<double>(cancellationToken);
+                return await Task.FromCanceled<double>(cancellationToken).ConfigureAwait(false);
             }
 
             var longBits = new byte[8];
-            await Trans.ReadAllAsync(longBits, 0, 8, cancellationToken);
+            await Trans.ReadAllAsync(longBits, 0, 8, cancellationToken).ConfigureAwait(false);
 
             return BitConverter.Int64BitsToDouble(BytesToLong(longBits));
         }
@@ -655,11 +655,11 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled<string>(cancellationToken);
+                await Task.FromCanceled<string>(cancellationToken).ConfigureAwait(false);
             }
 
             // Reads a byte[] (via ReadBinary), and then UTF-8 decodes it.
-            var length = (int) await ReadVarInt32Async(cancellationToken);
+            var length = (int) await ReadVarInt32Async(cancellationToken).ConfigureAwait(false);
 
             if (length == 0)
             {
@@ -667,7 +667,7 @@ namespace Thrift.Protocols
             }
 
             var buf = new byte[length];
-            await Trans.ReadAllAsync(buf, 0, length, cancellationToken);
+            await Trans.ReadAllAsync(buf, 0, length, cancellationToken).ConfigureAwait(false);
 
             return Encoding.UTF8.GetString(buf);
         }
@@ -676,18 +676,18 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<byte[]>(cancellationToken);
+                return await Task.FromCanceled<byte[]>(cancellationToken).ConfigureAwait(false);
             }
 
             // Read a byte[] from the wire.
-            var length = (int) await ReadVarInt32Async(cancellationToken);
+            var length = (int) await ReadVarInt32Async(cancellationToken).ConfigureAwait(false);
             if (length == 0)
             {
                 return new byte[0];
             }
 
             var buf = new byte[length];
-            await Trans.ReadAllAsync(buf, 0, length, cancellationToken);
+            await Trans.ReadAllAsync(buf, 0, length, cancellationToken).ConfigureAwait(false);
             return buf;
         }
 
@@ -695,7 +695,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled<TList>(cancellationToken);
+                await Task.FromCanceled<TList>(cancellationToken).ConfigureAwait(false);
             }
 
             /*
@@ -705,11 +705,11 @@ namespace Thrift.Protocols
             true size.
             */
 
-            var sizeAndType = (byte) await ReadByteAsync(cancellationToken);
+            var sizeAndType = (byte) await ReadByteAsync(cancellationToken).ConfigureAwait(false);
             var size = (sizeAndType >> 4) & 0x0f;
             if (size == 15)
             {
-                size = (int) await ReadVarInt32Async(cancellationToken);
+                size = (int) await ReadVarInt32Async(cancellationToken).ConfigureAwait(false);
             }
 
             var type = GetTType(sizeAndType);
@@ -720,7 +720,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -728,7 +728,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -743,7 +743,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<uint>(cancellationToken);
+                return await Task.FromCanceled<uint>(cancellationToken).ConfigureAwait(false);
             }
 
             /*
@@ -756,7 +756,7 @@ namespace Thrift.Protocols
 
             while (true)
             {
-                var b = (byte) await ReadByteAsync(cancellationToken);
+                var b = (byte) await ReadByteAsync(cancellationToken).ConfigureAwait(false);
                 result |= (uint) (b & 0x7f) << shift;
                 if ((b & 0x80) != 0x80)
                 {
@@ -772,7 +772,7 @@ namespace Thrift.Protocols
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<uint>(cancellationToken);
+                return await Task.FromCanceled<uint>(cancellationToken).ConfigureAwait(false);
             }
 
             /*
@@ -784,7 +784,7 @@ namespace Thrift.Protocols
             ulong result = 0;
             while (true)
             {
-                var b = (byte) await ReadByteAsync(cancellationToken);
+                var b = (byte) await ReadByteAsync(cancellationToken).ConfigureAwait(false);
                 result |= (ulong) (b & 0x7f) << shift;
                 if ((b & 0x80) != 0x80)
                 {

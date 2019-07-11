@@ -86,7 +86,7 @@ namespace Thrift.Transports.Client
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
 
             if (IsOpen)
@@ -104,7 +104,7 @@ namespace Thrift.Transports.Client
                 throw new InvalidOperationException("Invalid or not initialized tcp client");
             }
 
-            await TcpClient.ConnectAsync(Host, Port);
+            await TcpClient.ConnectAsync(Host, Port).ConfigureAwait(false);
 
             InputStream = TcpClient.GetStream();
             OutputStream = TcpClient.GetStream();

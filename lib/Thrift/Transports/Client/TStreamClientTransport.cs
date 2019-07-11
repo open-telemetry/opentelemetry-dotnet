@@ -46,7 +46,7 @@ namespace Thrift.Transports.Client
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -74,7 +74,7 @@ namespace Thrift.Transports.Client
                     "Cannot read from null inputstream");
             }
 
-            return await InputStream.ReadAsync(buffer, offset, length, cancellationToken);
+            return await InputStream.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
@@ -85,7 +85,7 @@ namespace Thrift.Transports.Client
                     "Cannot read from null inputstream");
             }
 
-            await OutputStream.WriteAsync(buffer, offset, length, cancellationToken);
+            await OutputStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         public override Task FlushAsync(CancellationToken cancellationToken)

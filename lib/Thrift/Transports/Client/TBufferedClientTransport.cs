@@ -59,7 +59,7 @@ namespace Thrift.Transports.Client
         {
             CheckNotDisposed();
 
-            await _transport.OpenAsync(cancellationToken);
+            await _transport.OpenAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override void Close()
@@ -87,7 +87,7 @@ namespace Thrift.Transports.Client
                 _inputBuffer.Capacity = _bufSize;
             }
 
-            var got = await _inputBuffer.ReadAsync(buffer, offset, length, cancellationToken);
+            var got = await _inputBuffer.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
             if (got > 0)
             {
                 return got;
@@ -100,7 +100,7 @@ namespace Thrift.Transports.Client
             _inputBuffer.TryGetBuffer(out bufSegment);
 
             // investigate
-            var filled = await _transport.ReadAsync(bufSegment.Array, 0, (int) _inputBuffer.Length, cancellationToken);
+            var filled = await _transport.ReadAsync(bufSegment.Array, 0, (int) _inputBuffer.Length, cancellationToken).ConfigureAwait(false);
             _inputBuffer.SetLength(filled);
 
             if (filled == 0)
@@ -108,7 +108,7 @@ namespace Thrift.Transports.Client
                 return 0;
             }
 
-            return await ReadAsync(buffer, offset, length, cancellationToken);
+            return await ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
@@ -128,7 +128,7 @@ namespace Thrift.Transports.Client
             {
                 var capa = (int) (_outputBuffer.Capacity - _outputBuffer.Length);
                 var writeSize = capa <= length ? capa : length;
-                await _outputBuffer.WriteAsync(buffer, offset, writeSize, cancellationToken);
+                await _outputBuffer.WriteAsync(buffer, offset, writeSize, cancellationToken).ConfigureAwait(false);
 
                 writtenCount += writeSize;
                 if (writeSize == capa)
@@ -136,15 +136,15 @@ namespace Thrift.Transports.Client
                     //ArraySegment<byte> bufSegment;
                     //_outputBuffer.TryGetBuffer(out bufSegment);
                     var data = _outputBuffer.ToArray();
-                    //await _transport.WriteAsync(bufSegment.Array, cancellationToken);
-                    await _transport.WriteAsync(data, cancellationToken);
+                    //await _transport.WriteAsync(bufSegment.Array, cancellationToken).ConfigureAwait(false);
+                    await _transport.WriteAsync(data, cancellationToken).ConfigureAwait(false);
                     _outputBuffer.SetLength(0);
                 }
             }
 
             while (length - writtenCount >= _bufSize)
             {
-                await _transport.WriteAsync(buffer, offset + writtenCount, _bufSize, cancellationToken);
+                await _transport.WriteAsync(buffer, offset + writtenCount, _bufSize, cancellationToken).ConfigureAwait(false);
                 writtenCount += _bufSize;
             }
 
@@ -155,7 +155,7 @@ namespace Thrift.Transports.Client
                 {
                     _outputBuffer.Capacity = _bufSize;
                 }
-                await _outputBuffer.WriteAsync(buffer, offset + writtenCount, remain, cancellationToken);
+                await _outputBuffer.WriteAsync(buffer, offset + writtenCount, remain, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -173,11 +173,11 @@ namespace Thrift.Transports.Client
                 //ArraySegment<byte> bufSegment;
                 var data = _outputBuffer.ToArray(); // TryGetBuffer(out bufSegment);
 
-                await _transport.WriteAsync(data /*bufSegment.Array*/, cancellationToken);
+                await _transport.WriteAsync(data /*bufSegment.Array*/, cancellationToken).ConfigureAwait(false);
                 _outputBuffer.SetLength(0);
             }
 
-            await _transport.FlushAsync(cancellationToken);
+            await _transport.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
         private void CheckNotDisposed()

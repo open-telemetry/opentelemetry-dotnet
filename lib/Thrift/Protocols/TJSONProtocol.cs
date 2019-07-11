@@ -90,7 +90,7 @@ namespace Thrift.Protocols
         /// </summary>
         protected async Task ReadJsonSyntaxCharAsync(byte[] bytes, CancellationToken cancellationToken)
         {
-            var ch = await Reader.ReadAsync(cancellationToken);
+            var ch = await Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
             if (ch != bytes[0])
             {
                 throw new TProtocolException(TProtocolException.INVALID_DATA, $"Unexpected character: {(char) ch}");
@@ -102,8 +102,8 @@ namespace Thrift.Protocols
         /// </summary>
         private async Task WriteJsonStringAsync(byte[] bytes, CancellationToken cancellationToken)
         {
-            await Context.WriteAsync(cancellationToken);
-            await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken);
+            await Context.WriteAsync(cancellationToken).ConfigureAwait(false);
+            await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken).ConfigureAwait(false);
 
             var len = bytes.Length;
             for (var i = 0; i < len; i++)
@@ -112,12 +112,12 @@ namespace Thrift.Protocols
                 {
                     if (bytes[i] == TJSONProtocolConstants.Backslash[0])
                     {
-                        await Trans.WriteAsync(TJSONProtocolConstants.Backslash, cancellationToken);
-                        await Trans.WriteAsync(TJSONProtocolConstants.Backslash, cancellationToken);
+                        await Trans.WriteAsync(TJSONProtocolConstants.Backslash, cancellationToken).ConfigureAwait(false);
+                        await Trans.WriteAsync(TJSONProtocolConstants.Backslash, cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
-                        await Trans.WriteAsync(bytes.ToArray(), i, 1, cancellationToken);
+                        await Trans.WriteAsync(bytes.ToArray(), i, 1, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 else
@@ -125,23 +125,23 @@ namespace Thrift.Protocols
                     _tempBuffer[0] = TJSONProtocolConstants.JsonCharTable[bytes[i]];
                     if (_tempBuffer[0] == 1)
                     {
-                        await Trans.WriteAsync(bytes, i, 1, cancellationToken);
+                        await Trans.WriteAsync(bytes, i, 1, cancellationToken).ConfigureAwait(false);
                     }
                     else if (_tempBuffer[0] > 1)
                     {
-                        await Trans.WriteAsync(TJSONProtocolConstants.Backslash, cancellationToken);
-                        await Trans.WriteAsync(_tempBuffer, 0, 1, cancellationToken);
+                        await Trans.WriteAsync(TJSONProtocolConstants.Backslash, cancellationToken).ConfigureAwait(false);
+                        await Trans.WriteAsync(_tempBuffer, 0, 1, cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
-                        await Trans.WriteAsync(TJSONProtocolConstants.EscSequences, cancellationToken);
+                        await Trans.WriteAsync(TJSONProtocolConstants.EscSequences, cancellationToken).ConfigureAwait(false);
                         _tempBuffer[0] = TJSONProtocolHelper.ToHexChar((byte) (bytes[i] >> 4));
                         _tempBuffer[1] = TJSONProtocolHelper.ToHexChar(bytes[i]);
-                        await Trans.WriteAsync(_tempBuffer, 0, 2, cancellationToken);
+                        await Trans.WriteAsync(_tempBuffer, 0, 2, cancellationToken).ConfigureAwait(false);
                     }
                 }
             }
-            await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken);
+            await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -150,21 +150,21 @@ namespace Thrift.Protocols
         /// </summary>
         private async Task WriteJsonIntegerAsync(long num, CancellationToken cancellationToken)
         {
-            await Context.WriteAsync(cancellationToken);
+            await Context.WriteAsync(cancellationToken).ConfigureAwait(false);
             var str = num.ToString();
 
             var escapeNum = Context.EscapeNumbers();
             if (escapeNum)
             {
-                await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken);
+                await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken).ConfigureAwait(false);
             }
 
             var bytes = Utf8Encoding.GetBytes(str);
-            await Trans.WriteAsync(bytes, cancellationToken);
+            await Trans.WriteAsync(bytes, cancellationToken).ConfigureAwait(false);
 
             if (escapeNum)
             {
-                await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken);
+                await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -174,7 +174,7 @@ namespace Thrift.Protocols
         /// </summary>
         private async Task WriteJsonDoubleAsync(double num, CancellationToken cancellationToken)
         {
-            await Context.WriteAsync(cancellationToken);
+            await Context.WriteAsync(cancellationToken).ConfigureAwait(false);
             var str = num.ToString("G17", CultureInfo.InvariantCulture);
             var special = false;
 
@@ -197,14 +197,14 @@ namespace Thrift.Protocols
 
             if (escapeNum)
             {
-                await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken);
+                await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken).ConfigureAwait(false);
             }
 
-            await Trans.WriteAsync(Utf8Encoding.GetBytes(str), cancellationToken);
+            await Trans.WriteAsync(Utf8Encoding.GetBytes(str), cancellationToken).ConfigureAwait(false);
 
             if (escapeNum)
             {
-                await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken);
+                await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -214,8 +214,8 @@ namespace Thrift.Protocols
         /// </summary>
         private async Task WriteJsonBase64Async(byte[] bytes, CancellationToken cancellationToken)
         {
-            await Context.WriteAsync(cancellationToken);
-            await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken);
+            await Context.WriteAsync(cancellationToken).ConfigureAwait(false);
+            await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken).ConfigureAwait(false);
 
             var len = bytes.Length;
             var off = 0;
@@ -224,7 +224,7 @@ namespace Thrift.Protocols
             {
                 // Encode 3 bytes at a time
                 TBase64Helper.Encode(bytes, off, 3, _tempBuffer, 0);
-                await Trans.WriteAsync(_tempBuffer, 0, 4, cancellationToken);
+                await Trans.WriteAsync(_tempBuffer, 0, 4, cancellationToken).ConfigureAwait(false);
                 off += 3;
                 len -= 3;
             }
@@ -233,163 +233,163 @@ namespace Thrift.Protocols
             {
                 // Encode remainder
                 TBase64Helper.Encode(bytes, off, len, _tempBuffer, 0);
-                await Trans.WriteAsync(_tempBuffer, 0, len + 1, cancellationToken);
+                await Trans.WriteAsync(_tempBuffer, 0, len + 1, cancellationToken).ConfigureAwait(false);
             }
 
-            await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken);
+            await Trans.WriteAsync(TJSONProtocolConstants.Quote, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task WriteJsonObjectStartAsync(CancellationToken cancellationToken)
         {
-            await Context.WriteAsync(cancellationToken);
-            await Trans.WriteAsync(TJSONProtocolConstants.LeftBrace, cancellationToken);
+            await Context.WriteAsync(cancellationToken).ConfigureAwait(false);
+            await Trans.WriteAsync(TJSONProtocolConstants.LeftBrace, cancellationToken).ConfigureAwait(false);
             PushContext(new JSONPairContext(this));
         }
 
         private async Task WriteJsonObjectEndAsync(CancellationToken cancellationToken)
         {
             PopContext();
-            await Trans.WriteAsync(TJSONProtocolConstants.RightBrace, cancellationToken);
+            await Trans.WriteAsync(TJSONProtocolConstants.RightBrace, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task WriteJsonArrayStartAsync(CancellationToken cancellationToken)
         {
-            await Context.WriteAsync(cancellationToken);
-            await Trans.WriteAsync(TJSONProtocolConstants.LeftBracket, cancellationToken);
+            await Context.WriteAsync(cancellationToken).ConfigureAwait(false);
+            await Trans.WriteAsync(TJSONProtocolConstants.LeftBracket, cancellationToken).ConfigureAwait(false);
             PushContext(new JSONListContext(this));
         }
 
         private async Task WriteJsonArrayEndAsync(CancellationToken cancellationToken)
         {
             PopContext();
-            await Trans.WriteAsync(TJSONProtocolConstants.RightBracket, cancellationToken);
+            await Trans.WriteAsync(TJSONProtocolConstants.RightBracket, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteMessageBeginAsync(TMessage message, CancellationToken cancellationToken)
         {
-            await WriteJsonArrayStartAsync(cancellationToken);
-            await WriteJsonIntegerAsync(Version, cancellationToken);
+            await WriteJsonArrayStartAsync(cancellationToken).ConfigureAwait(false);
+            await WriteJsonIntegerAsync(Version, cancellationToken).ConfigureAwait(false);
 
             var b = Utf8Encoding.GetBytes(message.Name);
-            await WriteJsonStringAsync(b, cancellationToken);
+            await WriteJsonStringAsync(b, cancellationToken).ConfigureAwait(false);
 
-            await WriteJsonIntegerAsync((long) message.Type, cancellationToken);
-            await WriteJsonIntegerAsync(message.SeqID, cancellationToken);
+            await WriteJsonIntegerAsync((long) message.Type, cancellationToken).ConfigureAwait(false);
+            await WriteJsonIntegerAsync(message.SeqID, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteMessageEndAsync(CancellationToken cancellationToken)
         {
-            await WriteJsonArrayEndAsync(cancellationToken);
+            await WriteJsonArrayEndAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteStructBeginAsync(TStruct @struct, CancellationToken cancellationToken)
         {
-            await WriteJsonObjectStartAsync(cancellationToken);
+            await WriteJsonObjectStartAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteStructEndAsync(CancellationToken cancellationToken)
         {
-            await WriteJsonObjectEndAsync(cancellationToken);
+            await WriteJsonObjectEndAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteFieldBeginAsync(TField field, CancellationToken cancellationToken)
         {
-            await WriteJsonIntegerAsync(field.ID, cancellationToken);
-            await WriteJsonObjectStartAsync(cancellationToken);
-            await WriteJsonStringAsync(TJSONProtocolHelper.GetTypeNameForTypeId(field.Type), cancellationToken);
+            await WriteJsonIntegerAsync(field.ID, cancellationToken).ConfigureAwait(false);
+            await WriteJsonObjectStartAsync(cancellationToken).ConfigureAwait(false);
+            await WriteJsonStringAsync(TJSONProtocolHelper.GetTypeNameForTypeId(field.Type), cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteFieldEndAsync(CancellationToken cancellationToken)
         {
-            await WriteJsonObjectEndAsync(cancellationToken);
+            await WriteJsonObjectEndAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteFieldStopAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
         public override async Task WriteMapBeginAsync(TMap map, CancellationToken cancellationToken)
         {
-            await WriteJsonArrayStartAsync(cancellationToken);
-            await WriteJsonStringAsync(TJSONProtocolHelper.GetTypeNameForTypeId(map.KeyType), cancellationToken);
-            await WriteJsonStringAsync(TJSONProtocolHelper.GetTypeNameForTypeId(map.ValueType), cancellationToken);
-            await WriteJsonIntegerAsync(map.Count, cancellationToken);
-            await WriteJsonObjectStartAsync(cancellationToken);
+            await WriteJsonArrayStartAsync(cancellationToken).ConfigureAwait(false);
+            await WriteJsonStringAsync(TJSONProtocolHelper.GetTypeNameForTypeId(map.KeyType), cancellationToken).ConfigureAwait(false);
+            await WriteJsonStringAsync(TJSONProtocolHelper.GetTypeNameForTypeId(map.ValueType), cancellationToken).ConfigureAwait(false);
+            await WriteJsonIntegerAsync(map.Count, cancellationToken).ConfigureAwait(false);
+            await WriteJsonObjectStartAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteMapEndAsync(CancellationToken cancellationToken)
         {
-            await WriteJsonObjectEndAsync(cancellationToken);
-            await WriteJsonArrayEndAsync(cancellationToken);
+            await WriteJsonObjectEndAsync(cancellationToken).ConfigureAwait(false);
+            await WriteJsonArrayEndAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteListBeginAsync(TList list, CancellationToken cancellationToken)
         {
-            await WriteJsonArrayStartAsync(cancellationToken);
-            await WriteJsonStringAsync(TJSONProtocolHelper.GetTypeNameForTypeId(list.ElementType), cancellationToken);
-            await WriteJsonIntegerAsync(list.Count, cancellationToken);
+            await WriteJsonArrayStartAsync(cancellationToken).ConfigureAwait(false);
+            await WriteJsonStringAsync(TJSONProtocolHelper.GetTypeNameForTypeId(list.ElementType), cancellationToken).ConfigureAwait(false);
+            await WriteJsonIntegerAsync(list.Count, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteListEndAsync(CancellationToken cancellationToken)
         {
-            await WriteJsonArrayEndAsync(cancellationToken);
+            await WriteJsonArrayEndAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteSetBeginAsync(TSet set, CancellationToken cancellationToken)
         {
-            await WriteJsonArrayStartAsync(cancellationToken);
-            await WriteJsonStringAsync(TJSONProtocolHelper.GetTypeNameForTypeId(set.ElementType), cancellationToken);
-            await WriteJsonIntegerAsync(set.Count, cancellationToken);
+            await WriteJsonArrayStartAsync(cancellationToken).ConfigureAwait(false);
+            await WriteJsonStringAsync(TJSONProtocolHelper.GetTypeNameForTypeId(set.ElementType), cancellationToken).ConfigureAwait(false);
+            await WriteJsonIntegerAsync(set.Count, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteSetEndAsync(CancellationToken cancellationToken)
         {
-            await WriteJsonArrayEndAsync(cancellationToken);
+            await WriteJsonArrayEndAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteBoolAsync(bool b, CancellationToken cancellationToken)
         {
-            await WriteJsonIntegerAsync(b ? 1 : 0, cancellationToken);
+            await WriteJsonIntegerAsync(b ? 1 : 0, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteByteAsync(sbyte b, CancellationToken cancellationToken)
         {
-            await WriteJsonIntegerAsync(b, cancellationToken);
+            await WriteJsonIntegerAsync(b, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteI16Async(short i16, CancellationToken cancellationToken)
         {
-            await WriteJsonIntegerAsync(i16, cancellationToken);
+            await WriteJsonIntegerAsync(i16, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteI32Async(int i32, CancellationToken cancellationToken)
         {
-            await WriteJsonIntegerAsync(i32, cancellationToken);
+            await WriteJsonIntegerAsync(i32, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteI64Async(long i64, CancellationToken cancellationToken)
         {
-            await WriteJsonIntegerAsync(i64, cancellationToken);
+            await WriteJsonIntegerAsync(i64, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteDoubleAsync(double d, CancellationToken cancellationToken)
         {
-            await WriteJsonDoubleAsync(d, cancellationToken);
+            await WriteJsonDoubleAsync(d, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteStringAsync(string s, CancellationToken cancellationToken)
         {
             var b = Utf8Encoding.GetBytes(s);
-            await WriteJsonStringAsync(b, cancellationToken);
+            await WriteJsonStringAsync(b, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteBinaryAsync(byte[] bytes, CancellationToken cancellationToken)
         {
-            await WriteJsonBase64Async(bytes, cancellationToken);
+            await WriteJsonBase64Async(bytes, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -405,14 +405,14 @@ namespace Thrift.Protocols
 
                 if (!skipContext)
                 {
-                    await Context.ReadAsync(cancellationToken);
+                    await Context.ReadAsync(cancellationToken).ConfigureAwait(false);
                 }
 
-                await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.Quote, cancellationToken);
+                await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.Quote, cancellationToken).ConfigureAwait(false);
 
                 while (true)
                 {
-                    var ch = await Reader.ReadAsync(cancellationToken);
+                    var ch = await Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
                     if (ch == TJSONProtocolConstants.Quote[0])
                     {
                         break;
@@ -421,12 +421,12 @@ namespace Thrift.Protocols
                     // escaped?
                     if (ch != TJSONProtocolConstants.EscSequences[0])
                     {
-                        await buffer.WriteAsync(new[] {ch}, 0, 1, cancellationToken);
+                        await buffer.WriteAsync(new[] {ch}, 0, 1, cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 
                     // distinguish between \uXXXX and \?
-                    ch = await Reader.ReadAsync(cancellationToken);
+                    ch = await Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
                     if (ch != TJSONProtocolConstants.EscSequences[1]) // control chars like \n
                     {
                         var off = Array.IndexOf(TJSONProtocolConstants.EscapeChars, (char) ch);
@@ -435,12 +435,12 @@ namespace Thrift.Protocols
                             throw new TProtocolException(TProtocolException.INVALID_DATA, "Expected control char");
                         }
                         ch = TJSONProtocolConstants.EscapeCharValues[off];
-                        await buffer.WriteAsync(new[] {ch}, 0, 1, cancellationToken);
+                        await buffer.WriteAsync(new[] {ch}, 0, 1, cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 
                     // it's \uXXXX
-                    await Trans.ReadAllAsync(_tempBuffer, 0, 4, cancellationToken);
+                    await Trans.ReadAllAsync(_tempBuffer, 0, 4, cancellationToken).ConfigureAwait(false);
 
                     var wch = (short) ((TJSONProtocolHelper.ToHexVal(_tempBuffer[0]) << 12) +
                                        (TJSONProtocolHelper.ToHexVal(_tempBuffer[1]) << 8) +
@@ -464,13 +464,13 @@ namespace Thrift.Protocols
 
                         codeunits.Add((char) wch);
                         var tmp = Utf8Encoding.GetBytes(codeunits.ToArray());
-                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
+                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken).ConfigureAwait(false);
                         codeunits.Clear();
                     }
                     else
                     {
                         var tmp = Utf8Encoding.GetBytes(new[] {(char) wch});
-                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
+                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken).ConfigureAwait(false);
                     }
                 }
 
@@ -495,12 +495,12 @@ namespace Thrift.Protocols
                 //TODO: workaround for primitive types with TJsonProtocol, think - how to rewrite into more easy form without exceptions
                 try
                 {
-                    var ch = await Reader.PeekAsync(cancellationToken);
+                    var ch = await Reader.PeekAsync(cancellationToken).ConfigureAwait(false);
                     if (!TJSONProtocolHelper.IsJsonNumeric(ch))
                     {
                         break;
                     }
-                    var c = (char)await Reader.ReadAsync(cancellationToken);
+                    var c = (char)await Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
                     strbld.Append(c);
                 }
                 catch (TTransportException)
@@ -516,16 +516,16 @@ namespace Thrift.Protocols
         /// </summary>
         private async Task<long> ReadJsonIntegerAsync(CancellationToken cancellationToken)
         {
-            await Context.ReadAsync(cancellationToken);
+            await Context.ReadAsync(cancellationToken).ConfigureAwait(false);
             if (Context.EscapeNumbers())
             {
-                await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.Quote, cancellationToken);
+                await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.Quote, cancellationToken).ConfigureAwait(false);
             }
 
-            var str = await ReadJsonNumericCharsAsync(cancellationToken);
+            var str = await ReadJsonNumericCharsAsync(cancellationToken).ConfigureAwait(false);
             if (Context.EscapeNumbers())
             {
-                await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.Quote, cancellationToken);
+                await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.Quote, cancellationToken).ConfigureAwait(false);
             }
 
             try
@@ -544,10 +544,10 @@ namespace Thrift.Protocols
         /// </summary>
         private async Task<double> ReadJsonDoubleAsync(CancellationToken cancellationToken)
         {
-            await Context.ReadAsync(cancellationToken);
+            await Context.ReadAsync(cancellationToken).ConfigureAwait(false);
             if (await Reader.PeekAsync(cancellationToken) == TJSONProtocolConstants.Quote[0])
             {
-                var arr = await ReadJsonStringAsync(true, cancellationToken);
+                var arr = await ReadJsonStringAsync(true, cancellationToken).ConfigureAwait(false);
                 var dub = double.Parse(Utf8Encoding.GetString(arr, 0, arr.Length), CultureInfo.InvariantCulture);
 
                 if (!Context.EscapeNumbers() && !double.IsNaN(dub) && !double.IsInfinity(dub))
@@ -562,12 +562,12 @@ namespace Thrift.Protocols
             if (Context.EscapeNumbers())
             {
                 // This will throw - we should have had a quote if escapeNum == true
-                await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.Quote, cancellationToken);
+                await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.Quote, cancellationToken).ConfigureAwait(false);
             }
 
             try
             {
-                return double.Parse(await ReadJsonNumericCharsAsync(cancellationToken), CultureInfo.InvariantCulture);
+                return double.Parse(await ReadJsonNumericCharsAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
             }
             catch (FormatException)
             {
@@ -580,7 +580,7 @@ namespace Thrift.Protocols
         /// </summary>
         private async Task<byte[]> ReadJsonBase64Async(CancellationToken cancellationToken)
         {
-            var b = await ReadJsonStringAsync(false, cancellationToken);
+            var b = await ReadJsonStringAsync(false, cancellationToken).ConfigureAwait(false);
             var len = b.Length;
             var off = 0;
             var size = 0;
@@ -618,168 +618,168 @@ namespace Thrift.Protocols
 
         private async Task ReadJsonObjectStartAsync(CancellationToken cancellationToken)
         {
-            await Context.ReadAsync(cancellationToken);
-            await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.LeftBrace, cancellationToken);
+            await Context.ReadAsync(cancellationToken).ConfigureAwait(false);
+            await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.LeftBrace, cancellationToken).ConfigureAwait(false);
             PushContext(new JSONPairContext(this));
         }
 
         private async Task ReadJsonObjectEndAsync(CancellationToken cancellationToken)
         {
-            await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.RightBrace, cancellationToken);
+            await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.RightBrace, cancellationToken).ConfigureAwait(false);
             PopContext();
         }
 
         private async Task ReadJsonArrayStartAsync(CancellationToken cancellationToken)
         {
-            await Context.ReadAsync(cancellationToken);
-            await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.LeftBracket, cancellationToken);
+            await Context.ReadAsync(cancellationToken).ConfigureAwait(false);
+            await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.LeftBracket, cancellationToken).ConfigureAwait(false);
             PushContext(new JSONListContext(this));
         }
 
         private async Task ReadJsonArrayEndAsync(CancellationToken cancellationToken)
         {
-            await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.RightBracket, cancellationToken);
+            await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.RightBracket, cancellationToken).ConfigureAwait(false);
             PopContext();
         }
 
         public override async Task<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
         {
             var message = new TMessage();
-            await ReadJsonArrayStartAsync(cancellationToken);
+            await ReadJsonArrayStartAsync(cancellationToken).ConfigureAwait(false);
             if (await ReadJsonIntegerAsync(cancellationToken) != Version)
             {
                 throw new TProtocolException(TProtocolException.BAD_VERSION, "Message contained bad version.");
             }
 
-            var buf = await ReadJsonStringAsync(false, cancellationToken);
+            var buf = await ReadJsonStringAsync(false, cancellationToken).ConfigureAwait(false);
             message.Name = Utf8Encoding.GetString(buf, 0, buf.Length);
-            message.Type = (TMessageType) await ReadJsonIntegerAsync(cancellationToken);
-            message.SeqID = (int) await ReadJsonIntegerAsync(cancellationToken);
+            message.Type = (TMessageType) await ReadJsonIntegerAsync(cancellationToken).ConfigureAwait(false);
+            message.SeqID = (int) await ReadJsonIntegerAsync(cancellationToken).ConfigureAwait(false);
             return message;
         }
 
         public override async Task ReadMessageEndAsync(CancellationToken cancellationToken)
         {
-            await ReadJsonArrayEndAsync(cancellationToken);
+            await ReadJsonArrayEndAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken)
         {
-            await ReadJsonObjectStartAsync(cancellationToken);
+            await ReadJsonObjectStartAsync(cancellationToken).ConfigureAwait(false);
             return new TStruct();
         }
 
         public override async Task ReadStructEndAsync(CancellationToken cancellationToken)
         {
-            await ReadJsonObjectEndAsync(cancellationToken);
+            await ReadJsonObjectEndAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task<TField> ReadFieldBeginAsync(CancellationToken cancellationToken)
         {
             var field = new TField();
-            var ch = await Reader.PeekAsync(cancellationToken);
+            var ch = await Reader.PeekAsync(cancellationToken).ConfigureAwait(false);
             if (ch == TJSONProtocolConstants.RightBrace[0])
             {
                 field.Type = TType.Stop;
             }
             else
             {
-                field.ID = (short) await ReadJsonIntegerAsync(cancellationToken);
-                await ReadJsonObjectStartAsync(cancellationToken);
-                field.Type = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
+                field.ID = (short) await ReadJsonIntegerAsync(cancellationToken).ConfigureAwait(false);
+                await ReadJsonObjectStartAsync(cancellationToken).ConfigureAwait(false);
+                field.Type = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken).ConfigureAwait(false));
             }
             return field;
         }
 
         public override async Task ReadFieldEndAsync(CancellationToken cancellationToken)
         {
-            await ReadJsonObjectEndAsync(cancellationToken);
+            await ReadJsonObjectEndAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task<TMap> ReadMapBeginAsync(CancellationToken cancellationToken)
         {
             var map = new TMap();
-            await ReadJsonArrayStartAsync(cancellationToken);
-            map.KeyType = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
-            map.ValueType = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
-            map.Count = (int) await ReadJsonIntegerAsync(cancellationToken);
-            await ReadJsonObjectStartAsync(cancellationToken);
+            await ReadJsonArrayStartAsync(cancellationToken).ConfigureAwait(false);
+            map.KeyType = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken).ConfigureAwait(false));
+            map.ValueType = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken).ConfigureAwait(false));
+            map.Count = (int) await ReadJsonIntegerAsync(cancellationToken).ConfigureAwait(false);
+            await ReadJsonObjectStartAsync(cancellationToken).ConfigureAwait(false);
             return map;
         }
 
         public override async Task ReadMapEndAsync(CancellationToken cancellationToken)
         {
-            await ReadJsonObjectEndAsync(cancellationToken);
-            await ReadJsonArrayEndAsync(cancellationToken);
+            await ReadJsonObjectEndAsync(cancellationToken).ConfigureAwait(false);
+            await ReadJsonArrayEndAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task<TList> ReadListBeginAsync(CancellationToken cancellationToken)
         {
             var list = new TList();
-            await ReadJsonArrayStartAsync(cancellationToken);
-            list.ElementType = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
-            list.Count = (int) await ReadJsonIntegerAsync(cancellationToken);
+            await ReadJsonArrayStartAsync(cancellationToken).ConfigureAwait(false);
+            list.ElementType = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken).ConfigureAwait(false));
+            list.Count = (int) await ReadJsonIntegerAsync(cancellationToken).ConfigureAwait(false);
             return list;
         }
 
         public override async Task ReadListEndAsync(CancellationToken cancellationToken)
         {
-            await ReadJsonArrayEndAsync(cancellationToken);
+            await ReadJsonArrayEndAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task<TSet> ReadSetBeginAsync(CancellationToken cancellationToken)
         {
             var set = new TSet();
-            await ReadJsonArrayStartAsync(cancellationToken);
-            set.ElementType = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
-            set.Count = (int) await ReadJsonIntegerAsync(cancellationToken);
+            await ReadJsonArrayStartAsync(cancellationToken).ConfigureAwait(false);
+            set.ElementType = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken).ConfigureAwait(false));
+            set.Count = (int) await ReadJsonIntegerAsync(cancellationToken).ConfigureAwait(false);
             return set;
         }
 
         public override async Task ReadSetEndAsync(CancellationToken cancellationToken)
         {
-            await ReadJsonArrayEndAsync(cancellationToken);
+            await ReadJsonArrayEndAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task<bool> ReadBoolAsync(CancellationToken cancellationToken)
         {
-            return await ReadJsonIntegerAsync(cancellationToken) != 0;
+            return (await ReadJsonIntegerAsync(cancellationToken).ConfigureAwait(false)) != 0;
         }
 
         public override async Task<sbyte> ReadByteAsync(CancellationToken cancellationToken)
         {
-            return (sbyte) await ReadJsonIntegerAsync(cancellationToken);
+            return (sbyte) await ReadJsonIntegerAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task<short> ReadI16Async(CancellationToken cancellationToken)
         {
-            return (short) await ReadJsonIntegerAsync(cancellationToken);
+            return (short) await ReadJsonIntegerAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task<int> ReadI32Async(CancellationToken cancellationToken)
         {
-            return (int) await ReadJsonIntegerAsync(cancellationToken);
+            return (int) await ReadJsonIntegerAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task<long> ReadI64Async(CancellationToken cancellationToken)
         {
-            return await ReadJsonIntegerAsync(cancellationToken);
+            return await ReadJsonIntegerAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task<double> ReadDoubleAsync(CancellationToken cancellationToken)
         {
-            return await ReadJsonDoubleAsync(cancellationToken);
+            return await ReadJsonDoubleAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task<string> ReadStringAsync(CancellationToken cancellationToken)
         {
-            var buf = await ReadJsonStringAsync(false, cancellationToken);
+            var buf = await ReadJsonStringAsync(false, cancellationToken).ConfigureAwait(false);
             return Utf8Encoding.GetString(buf, 0, buf.Length);
         }
 
         public override async Task<byte[]> ReadBinaryAsync(CancellationToken cancellationToken)
         {
-            return await ReadJsonBase64Async(cancellationToken);
+            return await ReadJsonBase64Async(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -811,7 +811,7 @@ namespace Thrift.Protocols
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    await Task.FromCanceled(cancellationToken);
+                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
                 }
             }
 
@@ -819,7 +819,7 @@ namespace Thrift.Protocols
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    await Task.FromCanceled(cancellationToken);
+                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
                 }
             }
 
@@ -850,7 +850,7 @@ namespace Thrift.Protocols
                 }
                 else
                 {
-                    await Proto.Trans.WriteAsync(TJSONProtocolConstants.Comma, cancellationToken);
+                    await Proto.Trans.WriteAsync(TJSONProtocolConstants.Comma, cancellationToken).ConfigureAwait(false);
                 }
             }
 
@@ -862,7 +862,7 @@ namespace Thrift.Protocols
                 }
                 else
                 {
-                    await Proto.ReadJsonSyntaxCharAsync(TJSONProtocolConstants.Comma, cancellationToken);
+                    await Proto.ReadJsonSyntaxCharAsync(TJSONProtocolConstants.Comma, cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -894,7 +894,7 @@ namespace Thrift.Protocols
                 }
                 else
                 {
-                    await Proto.Trans.WriteAsync(_colon ? TJSONProtocolConstants.Colon : TJSONProtocolConstants.Comma, cancellationToken);
+                    await Proto.Trans.WriteAsync(_colon ? TJSONProtocolConstants.Colon : TJSONProtocolConstants.Comma, cancellationToken).ConfigureAwait(false);
                     _colon = !_colon;
                 }
             }
@@ -908,7 +908,7 @@ namespace Thrift.Protocols
                 }
                 else
                 {
-                    await Proto.ReadJsonSyntaxCharAsync(_colon ? TJSONProtocolConstants.Colon : TJSONProtocolConstants.Comma, cancellationToken);
+                    await Proto.ReadJsonSyntaxCharAsync(_colon ? TJSONProtocolConstants.Colon : TJSONProtocolConstants.Comma, cancellationToken).ConfigureAwait(false);
                     _colon = !_colon;
                 }
             }
@@ -942,7 +942,7 @@ namespace Thrift.Protocols
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    return await Task.FromCanceled<byte>(cancellationToken);
+                    return await Task.FromCanceled<byte>(cancellationToken).ConfigureAwait(false);
                 }
 
                 if (_hasData)
@@ -952,7 +952,7 @@ namespace Thrift.Protocols
                 else
                 {
                     // find more easy way to avoid exception on reading primitive types
-                    await Proto.Trans.ReadAllAsync(_data, 0, 1, cancellationToken);
+                    await Proto.Trans.ReadAllAsync(_data, 0, 1, cancellationToken).ConfigureAwait(false);
                 }
                 return _data[0];
             }
@@ -965,13 +965,13 @@ namespace Thrift.Protocols
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    return await Task.FromCanceled<byte>(cancellationToken);
+                    return await Task.FromCanceled<byte>(cancellationToken).ConfigureAwait(false);
                 }
 
                 if (!_hasData)
                 {
                     // find more easy way to avoid exception on reading primitive types
-                    await Proto.Trans.ReadAllAsync(_data, 0, 1, cancellationToken);
+                    await Proto.Trans.ReadAllAsync(_data, 0, 1, cancellationToken).ConfigureAwait(false);
                 }
                 _hasData = true;
                 return _data[0];

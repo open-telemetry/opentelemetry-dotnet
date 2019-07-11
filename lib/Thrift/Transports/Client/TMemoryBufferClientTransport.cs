@@ -43,7 +43,7 @@ namespace Thrift.Transports.Client
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -55,24 +55,24 @@ namespace Thrift.Transports.Client
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
             CancellationToken cancellationToken)
         {
-            return await _byteStream.ReadAsync(buffer, offset, length, cancellationToken);
+            return await _byteStream.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteAsync(byte[] buffer, CancellationToken cancellationToken)
         {
-            await _byteStream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
+            await _byteStream.WriteAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
-            await _byteStream.WriteAsync(buffer, offset, length, cancellationToken);
+            await _byteStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 

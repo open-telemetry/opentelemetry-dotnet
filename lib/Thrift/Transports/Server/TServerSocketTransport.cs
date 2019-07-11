@@ -103,7 +103,7 @@ namespace Thrift.Transports.Server
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<TClientTransport>(cancellationToken);
+                return await Task.FromCanceled<TClientTransport>(cancellationToken).ConfigureAwait(false);
             }
 
             if (_server == null)
@@ -114,7 +114,7 @@ namespace Thrift.Transports.Server
             try
             {
                 TClientTransport tSocketTransport = null;
-                var tcpClient = await _server.AcceptTcpClientAsync();
+                var tcpClient = await _server.AcceptTcpClientAsync().ConfigureAwait(false);
 
                 try
                 {

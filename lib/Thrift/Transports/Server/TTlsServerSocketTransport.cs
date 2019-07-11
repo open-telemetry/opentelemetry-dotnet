@@ -118,7 +118,7 @@ namespace Thrift.Transports.Server
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return await Task.FromCanceled<TClientTransport>(cancellationToken);
+                return await Task.FromCanceled<TClientTransport>(cancellationToken).ConfigureAwait(false);
             }
 
             if (_server == null)
@@ -128,14 +128,14 @@ namespace Thrift.Transports.Server
 
             try
             {
-                var client = await _server.AcceptTcpClientAsync();
+                var client = await _server.AcceptTcpClientAsync().ConfigureAwait(false);
                 client.SendTimeout = client.ReceiveTimeout = _clientTimeout;
 
                 //wrap the client in an SSL Socket passing in the SSL cert
                 var tTlsSocket = new TTlsSocketClientTransport(client, _serverCertificate, true, _clientCertValidator,
                     _localCertificateSelectionCallback, _sslProtocols);
 
-                await tTlsSocket.SetupTlsAsync();
+                await tTlsSocket.SetupTlsAsync().ConfigureAwait(false);
 
                 TClientTransport trans = tTlsSocket;
                 

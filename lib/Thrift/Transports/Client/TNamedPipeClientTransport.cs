@@ -46,7 +46,7 @@ namespace Thrift.Transports.Client
                 throw new TTransportException(TTransportException.ExceptionType.AlreadyOpen);
             }
 
-            await _client.ConnectAsync(cancellationToken);
+            await _client.ConnectAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override void Close()
@@ -66,7 +66,7 @@ namespace Thrift.Transports.Client
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            return await _client.ReadAsync(buffer, offset, length, cancellationToken);
+            return await _client.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
@@ -76,14 +76,14 @@ namespace Thrift.Transports.Client
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            await _client.WriteAsync(buffer, offset, length, cancellationToken);
+            await _client.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
         }
 
