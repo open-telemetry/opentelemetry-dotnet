@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerThriftClientTransport.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerThriftClientTransport.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,13 +21,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System.Net.Sockets;
     using System.Threading;
     using System.Threading.Tasks;
-
-#if NET46
-    using Thrift.Transport;
-    using TClientTransport = Thrift.Transport.TTransport;
-#else
     using Thrift.Transports;
-#endif
 
     public class JaegerThriftClientTransport : TClientTransport
     {
@@ -48,56 +42,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         {
             this.udpClient.Close();
         }
-
-#if NET46
-
-        public override void Flush()
-        {
-            var bytes = this.byteStream.ToArray();
-
-            if (bytes.Length == 0)
-            {
-                return;
-            }
-
-            this.byteStream.SetLength(0);
-
-            try
-            {
-                this.udpClient.Send(bytes, bytes.Length);
-            }
-            catch (SocketException se)
-            {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush because of socket exception. UDP Packet size was {bytes.Length}. Exception message: {se.Message}");
-            }
-            catch (Exception e)
-            {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush closed transport. {e.Message}");
-            }
-        }
-
-        public override void Open()
-        {
-            // Do nothing
-            return;
-        }
-
-        public override int Read(byte[] buffer, int offset, int length)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void Write(byte[] buffer)
-        {
-            this.Write(buffer, 0, buffer.Length);
-        }
-
-        public override void Write(byte[] buffer, int offset, int length)
-        {
-            this.byteStream.Write(buffer, offset, length);
-        }
-
-#else
 
         public override Task FlushAsync(CancellationToken cancellationToken)
         {
@@ -144,8 +88,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         {
             return this.byteStream.WriteAsync(buffer, offset, length, cancellationToken);
         }
-
-#endif
 
         public override string ToString()
         {

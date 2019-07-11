@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerTag.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerTag.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,13 +20,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-
-#if NET46
-    using Thrift.Protocol;
-#else
     using Thrift.Protocols;
     using Thrift.Protocols.Entities;
-#endif
 
     public class JaegerTag : TAbstractBase
     {
@@ -54,96 +49,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         public long? VLong { get; set; }
 
         public byte[] VBinary { get; set; }
-
-#if NET46
-
-        public void Write(TProtocol oprot)
-        {
-            oprot.IncrementRecursionDepth();
-            try
-            {
-                var struc = new TStruct("Tag");
-                oprot.WriteStructBegin(struc);
-
-                var field = new TField
-                {
-                    Name = "key",
-                    Type = TType.String,
-                    ID = 1,
-                };
-
-                oprot.WriteFieldBegin(field);
-                oprot.WriteString(this.Key);
-                oprot.WriteFieldEnd();
-
-                field.Name = "vType";
-                field.Type = TType.I32;
-                field.ID = 2;
-
-                oprot.WriteFieldBegin(field);
-                oprot.WriteI32((int)this.VType);
-                oprot.WriteFieldEnd();
-
-                if (this.VStr != null)
-                {
-                    field.Name = "vStr";
-                    field.Type = TType.String;
-                    field.ID = 3;
-                    oprot.WriteFieldBegin(field);
-                    oprot.WriteString(this.VStr);
-                    oprot.WriteFieldEnd();
-                }
-
-                if (this.VDouble.HasValue)
-                {
-                    field.Name = "vDouble";
-                    field.Type = TType.Double;
-                    field.ID = 4;
-                    oprot.WriteFieldBegin(field);
-                    oprot.WriteDouble(this.VDouble.Value);
-                    oprot.WriteFieldEnd();
-                }
-
-                if (this.VBool.HasValue)
-                {
-                    field.Name = "vBool";
-                    field.Type = TType.Bool;
-                    field.ID = 5;
-                    oprot.WriteFieldBegin(field);
-                    oprot.WriteBool(this.VBool.Value);
-                    oprot.WriteFieldEnd();
-                }
-
-                if (this.VLong.HasValue)
-                {
-                    field.Name = "vLong";
-                    field.Type = TType.I64;
-                    field.ID = 6;
-                    oprot.WriteFieldBegin(field);
-                    oprot.WriteI64(this.VLong.Value);
-                    oprot.WriteFieldEnd();
-                }
-
-                if (this.VBinary != null)
-                {
-                    field.Name = "vBinary";
-                    field.Type = TType.String;
-                    field.ID = 7;
-                    oprot.WriteFieldBegin(field);
-                    oprot.WriteBinary(this.VBinary);
-                    oprot.WriteFieldEnd();
-                }
-
-                oprot.WriteFieldStop();
-                oprot.WriteStructEnd();
-            }
-            finally
-            {
-                oprot.DecrementRecursionDepth();
-            }
-        }
-
-#else
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -230,8 +135,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                 oprot.DecrementRecursionDepth();
             }
         }
-
-#endif
 
         public override string ToString()
         {

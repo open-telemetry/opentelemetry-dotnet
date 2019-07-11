@@ -1,4 +1,4 @@
-﻿// <copyright file="Batch.cs" company="OpenTelemetry Authors">
+// <copyright file="Batch.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,14 +21,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-
-#if NET46
-    using Thrift.Protocol;
-#else
     using Thrift.Protocols;
     using Thrift.Protocols.Entities;
     using Thrift.Protocols.Utilities;
-#endif
 
     public class Batch : TAbstractBase
     {
@@ -46,55 +41,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         public Process Process { get; set; }
 
         public List<JaegerSpan> Spans { get; set; }
-
-#if NET46
-
-        public void Write(TProtocol oprot)
-        {
-            oprot.IncrementRecursionDepth();
-            try
-            {
-                var struc = new TStruct("Batch");
-
-                oprot.WriteStructBegin(struc);
-
-                var field = new TField
-                {
-                    Name = "process",
-                    Type = TType.Struct,
-                    ID = 1,
-                };
-
-                oprot.WriteFieldBegin(field);
-                this.Process.Write(oprot);
-                oprot.WriteFieldEnd();
-
-                field.Name = "spans";
-                field.Type = TType.List;
-                field.ID = 2;
-
-                oprot.WriteFieldBegin(field);
-                {
-                    oprot.WriteListBegin(new TList(TType.Struct, this.Spans.Count));
-                    foreach (var s in this.Spans)
-                    {
-                        s.Write(oprot);
-                    }
-
-                    oprot.WriteListEnd();
-                }
-
-                oprot.WriteFieldEnd();
-                oprot.WriteFieldStop();
-                oprot.WriteStructEnd();
-            }
-            finally
-            {
-                oprot.DecrementRecursionDepth();
-            }
-        }
-
-#else
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -140,8 +86,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                 oprot.DecrementRecursionDepth();
             }
         }
-
-#endif
 
         public override string ToString()
         {

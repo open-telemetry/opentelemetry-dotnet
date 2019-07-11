@@ -1,4 +1,4 @@
-﻿// <copyright file="EmitBatchArgs.cs" company="OpenTelemetry Authors">
+// <copyright file="EmitBatchArgs.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,13 +20,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-
-#if NET46
-    using Thrift.Protocol;
-#else
     using Thrift.Protocols;
     using Thrift.Protocols.Entities;
-#endif
 
     public class EmitBatchArgs : TAbstractBase
     {
@@ -35,40 +30,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         }
 
         public Batch Batch { get; set; }
-
-#if NET46
-
-        public void Write(TProtocol oprot)
-        {
-            oprot.IncrementRecursionDepth();
-            try
-            {
-                var struc = new TStruct("emitBatch_args");
-                oprot.WriteStructBegin(struc);
-                if (this.Batch != null)
-                {
-                    var field = new TField
-                    {
-                        Name = "batch",
-                        Type = TType.Struct,
-                        ID = 1,
-                    };
-
-                    oprot.WriteFieldBegin(field);
-                    this.Batch.Write(oprot);
-                    oprot.WriteFieldEnd();
-                }
-
-                oprot.WriteFieldStop();
-                oprot.WriteStructEnd();
-            }
-            finally
-            {
-                oprot.DecrementRecursionDepth();
-            }
-        }
-
-#else
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -99,8 +60,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                 oprot.DecrementRecursionDepth();
             }
         }
-
-#endif
 
         public override string ToString()
         {

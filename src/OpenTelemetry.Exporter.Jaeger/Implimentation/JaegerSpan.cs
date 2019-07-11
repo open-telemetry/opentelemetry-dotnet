@@ -21,7 +21,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-
 #if NET46
     using Thrift.Protocol;
 #else
@@ -178,7 +177,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
                         foreach (JaegerTag jt in this.JaegerTags)
                         {
-                            jt.Write(oprot);
+                            await jt.Write(oprot);
                         }
 
                         oprot.WriteListEnd();
@@ -198,7 +197,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
                         foreach (JaegerLog jl in this.Logs)
                         {
-                            jl.Write(oprot);
+                            await jl.Write(oprot);
                         }
 
                         oprot.WriteListEnd();
