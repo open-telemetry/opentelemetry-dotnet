@@ -18,6 +18,7 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Resources;
@@ -30,7 +31,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Span : ISpan, IElement<Span>
     {
-        private readonly SpanId parentSpanId;
+        private readonly ActivitySpanId parentSpanId;
         private readonly ITraceParams traceParams;
         private readonly IStartEndHandler startEndHandler;
         private readonly DateTimeOffset startTime;
@@ -48,7 +49,7 @@ namespace OpenTelemetry.Trace
                 SpanOptions options,
                 string name,
                 SpanKind spanKind,
-                SpanId parentSpanId,
+                ActivitySpanId parentSpanId,
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
                 Timer timestampConverter)
@@ -171,7 +172,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public SpanId ParentSpanId => this.parentSpanId;
+        public ActivitySpanId ParentSpanId => this.parentSpanId;
 
         public bool HasEnded => this.hasBeenEnded;
 
@@ -225,7 +226,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        private Status StatusWithDefault => this.status ?? Trace.Status.Ok;
+        private Status StatusWithDefault => this.status ?? Status.Ok;
 
         /// <inheritdoc />
         public void UpdateName(string name)
@@ -503,7 +504,7 @@ namespace OpenTelemetry.Trace
                         SpanOptions options,
                         string name,
                         SpanKind spanKind,
-                        SpanId parentSpanId,
+                        ActivitySpanId parentSpanId,
                         ITraceParams traceParams,
                         IStartEndHandler startEndHandler,
                         Timer timestampConverter)

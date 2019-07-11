@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Context.Propagation.Test
 {
+    using System.Diagnostics;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
     using System;
@@ -23,16 +24,16 @@ namespace OpenTelemetry.Context.Propagation.Test
 
     public class BinaryFormatTest
     {
-        private static readonly byte[] TRACE_ID_BYTES = new byte[] { 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79 };
-        private static readonly TraceId TRACE_ID = TraceId.FromBytes(TRACE_ID_BYTES);
-        private static readonly byte[] SPAN_ID_BYTES = new byte[] { 97, 98, 99, 100, 101, 102, 103, 104 };
-        private static readonly SpanId SPAN_ID = SpanId.FromBytes(SPAN_ID_BYTES);
-        private static readonly byte[] TRACE_OPTIONS_BYTES = new byte[] { 1 };
-        private static readonly TraceOptions TRACE_OPTIONS = TraceOptions.FromBytes(TRACE_OPTIONS_BYTES);
-        private static readonly byte[] EXAMPLE_BYTES =
+        private static readonly byte[] TraceIdBytes = new byte[] { 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79 };
+        private static readonly ActivityTraceId TraceId = ActivityTraceId.CreateFromBytes(TraceIdBytes);
+        private static readonly byte[] SpanIdBytes = new byte[] { 97, 98, 99, 100, 101, 102, 103, 104 };
+        private static readonly ActivitySpanId SpanId = ActivitySpanId.CreateFromBytes(SpanIdBytes);
+        private static readonly byte[] TraceOptionsBytes = new byte[] { 1 };
+        private static readonly ActivityTraceFlags TraceOptions = ActivityTraceFlags.Recorded;
+        private static readonly byte[] ExampleBytes =
             new byte[] {0, 0, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 1, 97, 98, 99, 100,101, 102, 103, 104, 2, 1};
 
-        private static readonly SpanContext EXAMPLE_SPAN_CONTEXT = SpanContext.Create(TRACE_ID, SPAN_ID, TRACE_OPTIONS, Tracestate.Empty);
+        private static readonly SpanContext ExampleSpanContext = SpanContext.Create(TraceId, SpanId, TraceOptions, Tracestate.Empty);
 
         private readonly BinaryFormat binaryFormat = new BinaryFormat();
 
@@ -46,13 +47,13 @@ namespace OpenTelemetry.Context.Propagation.Test
         public void Propagate_SpanContextTracingEnabled()
         {
             TestSpanContextConversion(
-            SpanContext.Create(TRACE_ID, SPAN_ID, TraceOptions.Builder().SetIsSampled(true).Build(), Tracestate.Empty));
+            SpanContext.Create(TraceId, SpanId, ActivityTraceFlags.Recorded, Tracestate.Empty));
         }
 
         [Fact]
         public void Propagate_SpanContextNoTracing()
         {
-            TestSpanContextConversion(SpanContext.Create(TRACE_ID, SPAN_ID, TraceOptions.Default, Tracestate.Empty));
+            TestSpanContextConversion(SpanContext.Create(TraceId, SpanId, ActivityTraceFlags.None, Tracestate.Empty));
         }
 
         [Fact]
@@ -73,7 +74,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void FromBinaryValue_BinaryExampleValue()
         {
-            Assert.Equal(EXAMPLE_SPAN_CONTEXT, binaryFormat.FromByteArray(EXAMPLE_BYTES));
+            Assert.Equal(ExampleSpanContext, binaryFormat.FromByteArray(ExampleBytes));
         }
 
         [Fact]
@@ -103,7 +104,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         public void FromBinaryValue_UnsupportedFieldIdFirst()
         {
             Assert.Equal(
-                SpanContext.Create(TraceId.Invalid, SpanId.Invalid, TraceOptions.Default, Tracestate.Empty),
+                SpanContext.Create(default, default, ActivityTraceFlags.None, Tracestate.Empty),
                 binaryFormat.FromByteArray(
                     new byte[] 
                     {
@@ -117,9 +118,9 @@ namespace OpenTelemetry.Context.Propagation.Test
         {
             Assert.Equal(
                  SpanContext.Create(
-                        TraceId.FromBytes(new byte[] { 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79 }),
-                        SpanId.Invalid,
-                        TraceOptions.Default, Tracestate.Empty),
+                        ActivityTraceId.CreateFromBytes(new byte[] { 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79 }),
+                        default,
+                        ActivityTraceFlags.None, Tracestate.Empty),
                  binaryFormat.FromByteArray(
                         new byte[] 
                         {

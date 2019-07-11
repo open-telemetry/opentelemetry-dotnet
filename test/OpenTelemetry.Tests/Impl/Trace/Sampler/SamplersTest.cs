@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace.Sampler.Test
 {
     using System;
+    using System.Diagnostics;
     using System.Collections.Generic;
     using System.Globalization;
     using OpenTelemetry.Trace.Internal;
@@ -27,21 +28,20 @@ namespace OpenTelemetry.Trace.Sampler.Test
     {
         private static readonly String SPAN_NAME = "MySpanName";
         private static readonly int NUM_SAMPLE_TRIES = 1000;
-        private readonly IRandomGenerator random = new RandomGenerator(1234);
-        private readonly TraceId traceId;
-        private readonly SpanId parentSpanId;
-        private readonly SpanId spanId;
+        private readonly ActivityTraceId traceId;
+        private readonly ActivitySpanId parentSpanId;
+        private readonly ActivitySpanId spanId;
         private readonly SpanContext sampledSpanContext;
         private readonly SpanContext notSampledSpanContext;
         private readonly ILink sampledLink;
 
         public SamplersTest()
         {
-            traceId = TraceId.GenerateRandomId(random);
-            parentSpanId = SpanId.GenerateRandomId(random);
-            spanId = SpanId.GenerateRandomId(random);
-            sampledSpanContext = SpanContext.Create(traceId, parentSpanId, TraceOptions.Builder().SetIsSampled(true).Build(), Tracestate.Empty);
-            notSampledSpanContext = SpanContext.Create(traceId, parentSpanId, TraceOptions.Default, Tracestate.Empty);
+            traceId = ActivityTraceId.CreateRandom();
+            parentSpanId = ActivitySpanId.CreateRandom();
+            spanId = ActivitySpanId.CreateRandom();
+            sampledSpanContext = SpanContext.Create(traceId, parentSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty);
+            notSampledSpanContext = SpanContext.Create(traceId, parentSpanId, ActivityTraceFlags.None, Tracestate.Empty);
             sampledLink = Link.FromSpanContext(sampledSpanContext);
         }
 
@@ -185,7 +185,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
             // This traceId will not be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is not less than probability * Long.MAX_VALUE;
             var notSampledtraceId =
-                TraceId.FromBytes(
+                ActivityTraceId.CreateFromBytes(
                     new byte[] 
                     {
                       0x8F,
@@ -209,13 +209,13 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     defaultProbability.ShouldSample(
                         null,
                         notSampledtraceId,
-                        SpanId.GenerateRandomId(random),
+                        ActivitySpanId.CreateRandom(),
                         SPAN_NAME,
                         null));
             // This traceId will be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is less than probability * Long.MAX_VALUE;
             var sampledtraceId =
-                TraceId.FromBytes(
+                ActivityTraceId.CreateFromBytes(
                     new byte[] 
                     {
                       0x00,
@@ -239,7 +239,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     defaultProbability.ShouldSample(
                         null,
                         sampledtraceId,
-                        SpanId.GenerateRandomId(random),
+                        ActivitySpanId.CreateRandom(),
                         SPAN_NAME,
                         null));
         }
@@ -247,7 +247,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
         [Fact]
         public void ProbabilitySampler_getDescription()
         {
-            Assert.Equal(String.Format("ProbabilitySampler({0:F6})", 0.5), ProbabilitySampler.Create(0.5).Description);
+            Assert.Equal($"ProbabilitySampler({0.5:F6})", ProbabilitySampler.Create(0.5).Description);
         }
 
         [Fact]
@@ -261,14 +261,13 @@ namespace OpenTelemetry.Trace.Sampler.Test
         private static void AssertSamplerSamplesWithProbability(
             ISampler sampler, SpanContext parent, List<ILink> links, double probability)
         {
-            var random = new RandomGenerator(1234);
             var count = 0; // Count of spans with sampling enabled
             for (var i = 0; i < NUM_SAMPLE_TRIES; i++)
             {
                 if (sampler.ShouldSample(
                     parent,
-                    TraceId.GenerateRandomId(random),
-                    SpanId.GenerateRandomId(random),
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
                     SPAN_NAME,
                     links))
                 {

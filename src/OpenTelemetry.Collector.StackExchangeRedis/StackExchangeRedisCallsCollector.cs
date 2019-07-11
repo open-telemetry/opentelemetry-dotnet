@@ -86,8 +86,8 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
                 }
 
                 // TODO: As a performance optimization the check for sampling may be implemented here
-                // The problem with this approach would be that SpanId cannot be generated here
-                // So if sampler uses SpanId in algorithm - results would be inconsistent
+                // The problem with this approach would be that ActivitySpanId cannot be generated here
+                // So if sampler uses ActivitySpanId in algorithm - results would be inconsistent
                 var session = this.cache.GetOrAdd(span, (s) => new ProfilingSession(s));
                 return session;
             };
