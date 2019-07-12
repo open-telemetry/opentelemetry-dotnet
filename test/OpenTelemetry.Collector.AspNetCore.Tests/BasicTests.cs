@@ -30,6 +30,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using OpenTelemetry.Context.Propagation;
     using Microsoft.AspNetCore.Http;
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     // See https://github.com/aspnet/Docs/tree/master/aspnetcore/test/integration-tests/samples/2.x/IntegrationTestsSample
     public class BasicTests
@@ -47,7 +48,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         public async Task SuccesfulTemplateControllerCallGeneratesASpan()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
+            var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
 
             void ConfigureTestServices(IServiceCollection services) =>
                 services.AddSingleton<ITracer>(tracer);
@@ -92,18 +93,18 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         {
             var startEndHandler = new Mock<IStartEndHandler>();
 
-            var expectedTraceId = TraceId.GenerateRandomId(new RandomGenerator());
-            var expectedSpanId = SpanId.GenerateRandomId(new RandomGenerator());
+            var expectedTraceId = ActivityTraceId.CreateRandom();
+            var expectedSpanId = ActivitySpanId.CreateRandom();
 
             var tf = new Mock<ITextFormat>();
             tf.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(SpanContext.Create(
                 expectedTraceId,
                 expectedSpanId,
-                TraceOptions.Default,
+                ActivityTraceFlags.None,
                 Tracestate.Empty
                 ));
 
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
+            var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
 
             // Arrange
             using (var client = this.factory

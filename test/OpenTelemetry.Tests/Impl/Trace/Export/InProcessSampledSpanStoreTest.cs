@@ -18,24 +18,23 @@ namespace OpenTelemetry.Trace.Export.Test
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Internal;
     using OpenTelemetry.Utils;
     using Xunit;
 
     public class InProcessSampledSpanStoreTest
     {
-        private static readonly String REGISTERED_SPAN_NAME = "MySpanName/1";
-        private static readonly String NOT_REGISTERED_SPAN_NAME = "MySpanName/2";
-        private readonly RandomGenerator random = new RandomGenerator(1234);
+        private static readonly string REGISTERED_SPAN_NAME = "MySpanName/1";
+        private static readonly string NOT_REGISTERED_SPAN_NAME = "MySpanName/2";
         private readonly SpanContext sampledSpanContext;
 
         private readonly SpanContext notSampledSpanContext;
 
-        private readonly SpanId parentSpanId;
+        private readonly ActivitySpanId parentSpanId;
         private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
         private TimeSpan interval = TimeSpan.FromMilliseconds(0);
         private readonly DateTimeOffset startTime = DateTimeOffset.Now;
@@ -51,14 +50,12 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             timestamp = Timestamp.FromDateTimeOffset(startTime);
             timestampConverter = Timer.StartNew(startTime, () => interval);
-            sampledSpanContext = SpanContext.Create(TraceId.GenerateRandomId(random), SpanId.GenerateRandomId(random), TraceOptions.Builder().SetIsSampled(true).Build(), Tracestate.Empty);
-            notSampledSpanContext = SpanContext.Create(TraceId.GenerateRandomId(random), SpanId.GenerateRandomId(random), TraceOptions.Default, Tracestate.Empty);
-            parentSpanId = SpanId.GenerateRandomId(random);
+            sampledSpanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, Tracestate.Empty);
+            notSampledSpanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty);
+            parentSpanId = ActivitySpanId.CreateRandom();
             startEndHandler = new TestStartEndHandler(sampleStore);
             sampleStore.RegisterSpanNamesForCollection(new List<string>() { REGISTERED_SPAN_NAME });
         }
-
-
 
         [Fact]
         public void AddSpansWithRegisteredNamesInAllLatencyBuckets()

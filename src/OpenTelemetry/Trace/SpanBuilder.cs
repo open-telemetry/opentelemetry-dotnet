@@ -18,6 +18,7 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
 
@@ -149,40 +150,43 @@ namespace OpenTelemetry.Trace
         {
             SpanContext parentContext = FindParent(this.parentType, this.parent, this.parentSpanContext);
             var activeTraceParams = this.options.TraceConfig.ActiveTraceParams;
-            var random = this.options.RandomHandler;
-            TraceId traceId;
-            var spanId = SpanId.GenerateRandomId(random);
-            SpanId parentSpanId = null;
-            TraceOptionsBuilder traceOptionsBuilder;
+            ActivityTraceId traceId;
+            var spanId = ActivitySpanId.CreateRandom();
+
+            ActivitySpanId parentSpanId = default;
+            ActivityTraceFlags traceOptions = ActivityTraceFlags.None;
+
             if (parentContext == null || !parentContext.IsValid)
             {
                 // New root span.
-                traceId = TraceId.GenerateRandomId(random);
-                traceOptionsBuilder = TraceOptions.Builder();
+                traceId = ActivityTraceId.CreateRandom();
             }
             else
             {
                 // New child span.
                 traceId = parentContext.TraceId;
                 parentSpanId = parentContext.SpanId;
-                traceOptionsBuilder = TraceOptions.Builder(parentContext.TraceOptions);
+                traceOptions = parentContext.TraceOptions;
             }
 
-            traceOptionsBuilder.SetIsSampled(
-                 MakeSamplingDecision(
+            bool sampledIn = MakeSamplingDecision(
                     parentContext,
                     this.name,
                     this.sampler,
                     this.links,
                     traceId,
                     spanId,
-                    activeTraceParams));
-            var traceOptions = traceOptionsBuilder.Build();
-            var spanOptions = SpanOptions.None;
+                    activeTraceParams);
 
-            if (traceOptions.IsSampled || this.recordEvents)
+            var spanOptions = SpanOptions.None;
+            if (sampledIn || this.recordEvents)
             {
+                traceOptions |= ActivityTraceFlags.Recorded;
                 spanOptions = SpanOptions.RecordEvents;
+            }
+            else
+            {
+                traceOptions &= ~ActivityTraceFlags.Recorded;
             }
 
             var span = Span.StartSpan(
@@ -204,7 +208,7 @@ namespace OpenTelemetry.Trace
             {
                 foreach (var parentLink in parentLinks)
                 {
-                    if (parentLink.Context.TraceOptions.IsSampled)
+                    if ((parentLink.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
                     {
                         return true;
                     }
@@ -230,8 +234,8 @@ namespace OpenTelemetry.Trace
             string name,
             ISampler sampler,
             List<ILink> parentLinks,
-            TraceId traceId,
-            SpanId spanId,
+            ActivityTraceId traceId,
+            ActivitySpanId spanId,
             ITraceParams activeTraceParams)
         {
             // If users set a specific sampler in the SpanBuilder, use it.
@@ -250,7 +254,7 @@ namespace OpenTelemetry.Trace
             }
 
             // Parent is always different than null because otherwise we use the default sampler.
-            return parent.TraceOptions.IsSampled || IsAnyParentLinkSampled(parentLinks);
+            return (parent.TraceOptions & ActivityTraceFlags.Recorded) != 0 || IsAnyParentLinkSampled(parentLinks);
         }
 
         private static SpanContext FindParent(ParentType parentType, ISpan explicitParent, SpanContext remoteParent)

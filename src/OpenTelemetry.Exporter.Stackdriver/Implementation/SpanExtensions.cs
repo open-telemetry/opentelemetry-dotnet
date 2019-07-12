@@ -32,12 +32,12 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <returns><see cref="ISpan"/>.</returns>
         public static Google.Cloud.Trace.V2.Span ToSpan(this SpanData spanData, string projectId)
         {
-            var spanId = spanData.Context.SpanId.ToLowerBase16();
+            var spanId = spanData.Context.SpanId.ToHexString();
 
             // Base span settings
             var span = new Google.Cloud.Trace.V2.Span
             {
-                SpanName = new SpanName(projectId, spanData.Context.TraceId.ToLowerBase16(), spanId),
+                SpanName = new SpanName(projectId, spanData.Context.TraceId.ToHexString(), spanId),
                 SpanId = spanId,
                 DisplayName = new TruncatableString { Value = spanData.Name },
                 StartTime = spanData.StartTimestamp.ToTimestamp(),
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             };
             if (spanData.ParentSpanId != null)
             {
-                var parentSpanId = spanData.ParentSpanId.ToLowerBase16();
+                var parentSpanId = spanData.ParentSpanId.ToHexString();
                 if (!string.IsNullOrEmpty(parentSpanId))
                 {
                     span.ParentSpanId = parentSpanId;
@@ -85,8 +85,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         public static Google.Cloud.Trace.V2.Span.Types.Link ToLink(this ILink link)
         {
             var ret = new Google.Cloud.Trace.V2.Span.Types.Link();
-            ret.SpanId = link.Context.SpanId.ToLowerBase16();
-            ret.TraceId = link.Context.TraceId.ToLowerBase16();
+            ret.SpanId = link.Context.SpanId.ToHexString();
+            ret.TraceId = link.Context.TraceId.ToHexString();
 
             if (link.Attributes != null)
             {

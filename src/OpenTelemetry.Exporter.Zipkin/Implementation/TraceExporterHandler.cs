@@ -18,6 +18,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Net;
     using System.Net.Http;
     using System.Net.Sockets;
@@ -76,7 +77,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             var spanBuilder =
                 ZipkinSpan.NewBuilder()
-                    .TraceId(this.EncodeTraceId(context.TraceId))
+                    .ActivityTraceId(this.EncodeTraceId(context.TraceId))
                     .Id(this.EncodeSpanId(context.SpanId))
                     .Kind(this.ToSpanKind(spanData))
                     .Name(spanData.Name)
@@ -84,7 +85,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                     .Duration(endTimestamp - startTimestamp)
                     .LocalEndpoint(localEndpoint);
 
-            if (spanData.ParentSpanId != null && spanData.ParentSpanId.IsValid)
+            if (spanData.ParentSpanId != default)
             {
                 spanBuilder.ParentId(this.EncodeSpanId(spanData.ParentSpanId));
             }
@@ -131,9 +132,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 (arg) => { return null; });
         }
 
-        private string EncodeTraceId(TraceId traceId)
+        private string EncodeTraceId(ActivityTraceId traceId)
         {
-            var id = traceId.ToLowerBase16();
+            var id = traceId.ToHexString();
 
             if (id.Length > 16 && this.options.UseShortTraceIds)
             {
@@ -143,9 +144,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return id;
         }
 
-        private string EncodeSpanId(SpanId spanId)
+        private string EncodeSpanId(ActivitySpanId spanId)
         {
-            return spanId.ToLowerBase16();
+            return spanId.ToHexString();
         }
 
         private ZipkinSpanKind ToSpanKind(SpanData spanData)

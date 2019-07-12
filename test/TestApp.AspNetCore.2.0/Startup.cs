@@ -22,10 +22,10 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Collector.AspNetCore;
 using OpenTelemetry.Collector.Dependencies;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Sampler;
 using System.Net.Http;
 using OpenTelemetry.Exporter.Ocagent;
-using OpenTelemetry.Trace.Export;
 
 namespace TestApp.AspNetCore._2._0
 {

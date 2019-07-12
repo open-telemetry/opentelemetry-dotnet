@@ -42,14 +42,15 @@ namespace OpenTelemetry.Tags.Propagation.Test
         private static readonly Tag T3 = Tag.Create(K3, V3);
         private static readonly Tag T4 = Tag.Create(K4, V4);
 
-        private readonly TagsComponent tagsComponent = new TagsComponent();
-        private readonly ITagContextBinarySerializer serializer;
+        private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
+        private readonly ITagContextBinarySerializer serializer;
 
         public TagContextSerializationTest()
         {
-            serializer = tagsComponent.TagPropagationComponent.BinarySerializer;
-            tagger = tagsComponent.Tagger;
+            state = new CurrentTaggingState();
+            tagger = new Tagger(state);
+            serializer = new TagContextBinarySerializer(state);
         }
 
         [Fact]

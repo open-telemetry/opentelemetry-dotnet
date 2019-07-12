@@ -31,15 +31,6 @@ namespace OpenTelemetry.Tags.Test
         private static readonly TagValue VALUE = TagValue.Create("value");
 
         private static readonly ITagContext TAG_CONTEXT = new TestTagContext();
-   
-
-
-        [Fact]
-        public void NoopTagsComponent()
-        {
-            Assert.Same(NoopTags.NoopTagger, NoopTags.NewNoopTagsComponent().Tagger);
-            Assert.Equal(NoopTags.NoopTagPropagationComponent, NoopTags.NewNoopTagsComponent().TagPropagationComponent);
-        }
 
         [Fact]
         public void NoopTagger()
@@ -101,12 +92,6 @@ namespace OpenTelemetry.Tags.Test
         public void NoopTagContext()
         {
             Assert.Empty(NoopTags.NoopTagContext.ToList());
-        }
-
-        [Fact]
-        public void NoopTagPropagationComponent()
-        {
-            Assert.Same(NoopTags.NoopTagContextBinarySerializer, NoopTags.NoopTagPropagationComponent.BinarySerializer);
         }
 
         [Fact]

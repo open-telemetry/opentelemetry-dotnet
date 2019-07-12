@@ -23,19 +23,13 @@ namespace OpenTelemetry.Tags.Test
     {
         public TagsTest()
         {
-            Tags.Initialize(true);
+            Tags.Initialize();
         }
 
         [Fact]
         public void GetTagger()
         {
             Assert.Equal(typeof(Tagger), Tags.Tagger.GetType());
-        }
-
-        [Fact]
-        public void GetTagContextSerializer()
-        {
-            Assert.Equal(typeof(TagPropagationComponent), Tags.TagPropagationComponent.GetType());
         }
     }
 }
