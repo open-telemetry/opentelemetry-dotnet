@@ -17,33 +17,33 @@
 namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 {
     using System;
+    using System.Diagnostics;
 
     public struct Int128
     {
         public static Int128 Empty = new Int128 { };
 
-        public Int128(byte[] bytes)
+        private const int SpanIdBytes = 8;
+        private const int TraceIdBytes = 16;
+
+        public Int128(ActivitySpanId spanId)
         {
-            if (bytes == null)
-            {
-                throw new ArgumentNullException("bytes");
-            }
+            var bytes = new byte[SpanIdBytes];
 
-            if (bytes.Length != 8 && bytes.Length != 16)
-            {
-                throw new ArgumentOutOfRangeException("Number of bytes must be 8 or 16");
-            }
+            spanId.CopyTo(bytes);
 
-            if (bytes.Length == 8)
-            {
-                this.High = 0;
-                this.Low = BitConverter.ToInt64(bytes, 0);
-            }
-            else
-            {
-                this.High = BitConverter.ToInt64(bytes, 0);
-                this.Low = BitConverter.ToInt64(bytes, 8);
-            }
+            this.High = 0;
+            this.Low = BitConverter.ToInt64(bytes, 0);
+        }
+
+        public Int128(ActivityTraceId traceId)
+        {
+            var bytes = new byte[TraceIdBytes];
+
+            traceId.CopyTo(bytes);
+
+            this.High = BitConverter.ToInt64(bytes, 0);
+            this.Low = BitConverter.ToInt64(bytes, 8);
         }
 
         public long High { get; set; }

@@ -18,6 +18,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Common;
     using OpenTelemetry.Trace;
@@ -52,25 +53,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                 refs.AddRange(span.Links.Links.Select(l => l.ToJaegerSpanRef()).Where(l => l != null));
             }
 
-            Int128? parentSpanId = null;
+            var parentSpanId = new Int128(span.ParentSpanId);
 
-            if (span?.ParentSpanId?.Bytes != null)
-            {
-                parentSpanId = new Int128(span.ParentSpanId.Bytes);
-            }
-
-            var traceId = span?.Context?.TraceId?.Bytes == null ? Int128.Empty : new Int128(span.Context.TraceId.Bytes);
-            var spanId = span?.Context?.SpanId?.Bytes == null ? Int128.Empty : new Int128(span.Context.SpanId.Bytes);
+            var traceId = span?.Context?.TraceId == null ? Int128.Empty : new Int128(span.Context.TraceId);
+            var spanId = span?.Context?.SpanId == null ? Int128.Empty : new Int128(span.Context.SpanId);
 
             return new JaegerSpan
             {
                 TraceIdHigh = traceId.High,
                 TraceIdLow = traceId.Low,
                 SpanId = spanId.Low,
-                ParentSpanId = parentSpanId?.Low ?? 0,
+                ParentSpanId = parentSpanId.Low,
                 OperationName = span.Name,
                 References = refs.Count == 0 ? null : refs,
-                Flags = span.Context.TraceOptions.IsSampled ? 0x1 : 0,
+                Flags = (span.Context.TraceOptions & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
                 StartTime = ToEpochMicroseconds(span.StartTimestamp),
                 Duration = ToEpochMicroseconds(span.EndTimestamp) - ToEpochMicroseconds(span.StartTimestamp),
                 JaegerTags = jaegerTags,
@@ -104,8 +100,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
         public static JaegerSpanRef ToJaegerSpanRef(this ILink link)
         {
-            var traceId = link?.Context?.TraceId?.Bytes == null ? Int128.Empty : new Int128(link.Context.TraceId.Bytes);
-            var spanId = link?.Context?.SpanId?.Bytes == null ? Int128.Empty : new Int128(link.Context.SpanId.Bytes);
+            var traceId = link?.Context?.TraceId == null ? Int128.Empty : new Int128(link.Context.TraceId);
+            var spanId = link?.Context?.SpanId == null ? Int128.Empty : new Int128(link.Context.SpanId);
 
             return new JaegerSpanRef
             {

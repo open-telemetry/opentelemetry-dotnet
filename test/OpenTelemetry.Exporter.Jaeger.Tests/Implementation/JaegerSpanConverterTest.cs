@@ -18,6 +18,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Common;
     using OpenTelemetry.Exporter.Jaeger.Implimentation;
@@ -77,10 +78,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         {
             var eventTimestamp = Timestamp.Create(100, 100);
 
-            var rng = new MockRandomGenerator();
-            var traceId = TraceId.GenerateRandomId(rng);
-            var spanId = SpanId.GenerateRandomId(rng);
-            var parentSpanId = SpanId.GenerateRandomId(rng);
+            var traceId = ActivityTraceId.CreateRandom();
+            var spanId = ActivitySpanId.CreateRandom();
+            var parentSpanId = ActivitySpanId.CreateRandom();
             var attributes = Attributes.Create(new Dictionary<string, IAttributeValue>{
                 { "stringKey", AttributeValue.StringAttributeValue("value")},
                 { "longKey", AttributeValue.LongAttributeValue(1)},
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
 
 
-            var linkedSpanId = SpanId.GenerateRandomId(rng);
+            var linkedSpanId = ActivitySpanId.CreateRandom();
             var linkedAttributes = Attributes.Create(new Dictionary<string, IAttributeValue>{
                 { "stringKey", AttributeValue.StringAttributeValue("value")},
                 { "longKey", AttributeValue.LongAttributeValue(1)},
@@ -126,7 +126,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 Link.FromSpanContext(SpanContext.Create(
                     traceId,
                     linkedSpanId,
-                    TraceOptions.Sampled,
+                    ActivityTraceFlags.Recorded,
                     Tracestate.Empty)),
             }, 0);
 
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 SpanContext.Create(
                     traceId,
                     spanId,
-                    TraceOptions.Sampled,
+                    ActivityTraceFlags.Recorded,
                     Tracestate.Empty
                 ),
                 parentSpanId,
