@@ -1,4 +1,4 @@
-﻿// <copyright file="NoopTagPropagationComponent.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="IRandomGenerator.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,20 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Tags
+namespace OpenTelemetry.Trace
 {
-    using OpenTelemetry.Tags.Propagation;
-
-    public class NoopTagPropagationComponent : TagPropagationComponentBase
+    public interface IRandomGenerator
     {
-        internal static readonly ITagPropagationComponent Instance = new NoopTagPropagationComponent();
-
-        public override ITagContextBinarySerializer BinarySerializer
-        {
-            get
-            {
-                return NoopTags.NoopTagContextBinarySerializer;
-            }
-        }
+        void NextBytes(byte[] bytes);
     }
 }

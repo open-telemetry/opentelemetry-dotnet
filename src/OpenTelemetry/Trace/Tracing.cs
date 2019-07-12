@@ -16,38 +16,60 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System.Runtime.CompilerServices;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
 
     /// <summary>
-    /// Helper class that provides easy to use static constructor of the default tracer component.
+    /// Class that manages a global instance of the <see cref="Tracer"/>.
     /// </summary>
     public sealed class Tracing
     {
-        private static readonly Tracing TracingValue = new Tracing();
-
-        private readonly ITraceComponent traceComponent = null;
+        private static Tracing tracingValue = new Tracing();
+        private static Tracer tracer;
 
         internal Tracing()
         {
-            this.traceComponent = new TraceComponent(new SimpleEventQueue());
+            IRandomGenerator randomHandler = new RandomGenerator();
+            IEventQueue eventQueue = new SimpleEventQueue();
+
+            TraceConfig = new Config.TraceConfig();
+
+            // TODO(bdrutu): Add a config/argument for supportInProcessStores.
+            if (eventQueue is SimpleEventQueue)
+            {
+                ExportComponent = Export.ExportComponent.CreateWithoutInProcessStores(eventQueue);
+            }
+            else
+            {
+                ExportComponent = Export.ExportComponent.CreateWithInProcessStores(eventQueue);
+            }
+
+            IStartEndHandler startEndHandler =
+                new StartEndHandler(
+                    ExportComponent.SpanExporter,
+                    ((ExportComponent)ExportComponent).RunningSpanStore,
+                    ((ExportComponent)ExportComponent).SampledSpanStore,
+                    eventQueue);
+
+            tracer = new Tracer(randomHandler, startEndHandler, TraceConfig);
         }
 
-        /// <summary>
+        /// <summary>   
         /// Gets the tracer to record spans.
         /// </summary>
-        public static ITracer Tracer => TracingValue.traceComponent.Tracer;
+        public static ITracer Tracer => (ITracer)tracer;
 
         /// <summary>
-        /// Gets the export component to upload spans to.
+        /// Gets the exporter to use to upload spans.
         /// </summary>
-        public static IExportComponent ExportComponent => TracingValue.traceComponent.ExportComponent;
+        public static IExportComponent ExportComponent { get; private set; }
 
         /// <summary>
-        /// Gets the tracer configuration.
+        /// Gets the trace config.
         /// </summary>
-        public static ITraceConfig TraceConfig => TracingValue.traceComponent.TraceConfig;
+        public static ITraceConfig TraceConfig { get; private set; }
     }
 }

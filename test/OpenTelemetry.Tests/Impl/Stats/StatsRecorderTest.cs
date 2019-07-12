@@ -17,13 +17,14 @@
 namespace OpenTelemetry.Stats.Test
 {
     using System;
+    using System.Linq;
     using System.Collections.Generic;
-    using OpenTelemetry.Internal;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
     using OpenTelemetry.Tags.Unsafe;
     using Xunit;
+    using System.Collections;
 
     public class StatsRecorderTest
     {
@@ -34,43 +35,50 @@ namespace OpenTelemetry.Stats.Test
         private static readonly IMeasureDouble MEASURE_DOUBLE_NO_VIEW_1 = MeasureDouble.Create("my measurement no view 1", "description", "us");
         private static readonly IMeasureDouble MEASURE_DOUBLE_NO_VIEW_2 = MeasureDouble.Create("my measurement no view 2", "description", "us");
         private static readonly IViewName VIEW_NAME = ViewName.Create("my view");
+        private static readonly int RANDOM_NAME_LEN = 8;
 
-        private readonly StatsComponent statsComponent;
-        private readonly IViewManager viewManager;
-        private readonly IStatsRecorder statsRecorder;
+        private static readonly IViewManager viewManager = Stats.ViewManager;
+        private static readonly IStatsRecorder statsRecorder = Stats.StatsRecorder;
 
         public StatsRecorderTest()
         {
-            statsComponent = new StatsComponent(new SimpleEventQueue());
-            viewManager = statsComponent.ViewManager;
-            statsRecorder = statsComponent.StatsRecorder;
         }
 
         [Fact]
         public void Record_CurrentContextNotSet()
         {
-            var view =
+            Stats.State = StatsCollectionState.ENABLED;
+
+            IViewName viewName = CreateRandomViewName();
+
+            IView view =
                 View.Create(
-                    VIEW_NAME,
+                    viewName,
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
                     new List<TagKey>() { KEY });
             viewManager.RegisterView(view);
             statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 1.0).Record();
-            var viewData = viewManager.GetView(VIEW_NAME);
+            IViewData viewData = viewManager.GetView(viewName);
 
             // record() should have used the default TagContext, so the tag value should be null.
             ICollection<TagValues> expected = new List<TagValues>() { TagValues.Create(new List<TagValue>() { null }) };
-            Assert.Equal(expected, viewData.AggregationMap.Keys); 
+            ICollection<TagValues> actual = viewData.AggregationMap.Keys.ToList();
+
+            Assert.Equal(expected, actual);
         }
 
         [Fact]
         public void Record_CurrentContextSet()
         {
-            var view =
+            Stats.State = StatsCollectionState.ENABLED;
+
+            IViewName viewName = CreateRandomViewName();
+
+            IView view =
                 View.Create(
-                    VIEW_NAME,
+                    viewName,
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
@@ -87,19 +95,25 @@ namespace OpenTelemetry.Stats.Test
             {
                 AsyncLocalContext.CurrentTagContext = orig;
             }
-            var viewData = viewManager.GetView(VIEW_NAME);
+            IViewData viewData = viewManager.GetView(viewName);
 
             // record() should have used the given TagContext.
             ICollection<TagValues> expected = new List<TagValues>() { TagValues.Create(new List<TagValue>() { VALUE }) };
-            Assert.Equal(expected, viewData.AggregationMap.Keys);
+            ICollection<TagValues> actual = viewData.AggregationMap.Keys.ToList();
+
+            Assert.Equal(expected, actual);
         }
 
         [Fact]
         public void Record_UnregisteredMeasure()
         {
-            var view =
+            Stats.State = StatsCollectionState.ENABLED;
+
+            IViewName viewName = CreateRandomViewName();
+
+            IView view =
                 View.Create(
-                    VIEW_NAME,
+                    viewName,
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
@@ -112,7 +126,7 @@ namespace OpenTelemetry.Stats.Test
                 .Put(MEASURE_DOUBLE_NO_VIEW_2, 3.0)
                 .Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
 
-            var viewData = viewManager.GetView(VIEW_NAME);
+            IViewData viewData = viewManager.GetView(viewName);
 
             // There should be one entry.
             var tv = TagValues.Create(new List<TagValue>() { VALUE });
@@ -125,19 +139,23 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void RecordTwice()
         {
-            var view =
+            Stats.State = StatsCollectionState.ENABLED;
+
+            IViewName viewName = CreateRandomViewName();
+
+            IView view =
                 View.Create(
-                    VIEW_NAME,
+                    viewName,
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
                     new List<TagKey>() { KEY });
 
             viewManager.RegisterView(view);
-            var statsRecord = statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 1.0);
+            IMeasureMap statsRecord = statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 1.0);
             statsRecord.Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
             statsRecord.Record(new SimpleTagContext(Tag.Create(KEY, VALUE_2)));
-            var viewData = viewManager.GetView(VIEW_NAME);
+            IViewData viewData = viewManager.GetView(viewName);
 
             // There should be two entries.
             var tv = TagValues.Create(new List<TagValue>() { VALUE });
@@ -156,7 +174,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void Record_StatsDisabled()
         {
-            var view =
+            IView view =
                 View.Create(
                     VIEW_NAME,
                     "description",
@@ -165,7 +183,7 @@ namespace OpenTelemetry.Stats.Test
                     new List<TagKey>() { KEY });
 
             viewManager.RegisterView(view);
-            statsComponent.State = StatsCollectionState.DISABLED;
+            Stats.State = StatsCollectionState.DISABLED;
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.0)
@@ -176,7 +194,7 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void Record_StatsReenabled()
         {
-            var view =
+            IView view =
                 View.Create(
                     VIEW_NAME,
                     "description",
@@ -186,14 +204,14 @@ namespace OpenTelemetry.Stats.Test
 
             viewManager.RegisterView(view);
 
-            statsComponent.State = StatsCollectionState.DISABLED;
+            Stats.State = StatsCollectionState.DISABLED;
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.0)
                 .Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
             Assert.Equal(CreateEmptyViewData(view), viewManager.GetView(VIEW_NAME));
 
-            statsComponent.State = StatsCollectionState.ENABLED;
+            Stats.State = StatsCollectionState.ENABLED;
             Assert.Empty(viewManager.GetView(VIEW_NAME).AggregationMap);
             // assertThat(viewManager.getView(VIEW_NAME).getWindowData())
             //    .isNotEqualTo(CumulativeData.Create(ZERO_TIMESTAMP, ZERO_TIMESTAMP));
@@ -201,7 +219,7 @@ namespace OpenTelemetry.Stats.Test
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 4.0)
                 .Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
-            var tv = TagValues.Create(new List<TagValue>() { VALUE });
+            TagValues tv = TagValues.Create(new List<TagValue>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewManager.GetView(VIEW_NAME).AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -218,6 +236,19 @@ namespace OpenTelemetry.Stats.Test
                 view,
                 new Dictionary<TagValues, IAggregationData>(),
                 DateTimeOffset.MinValue, DateTimeOffset.MinValue);
+        }
+
+        private static Random random = new Random();
+        public static string RandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        private static IViewName CreateRandomViewName()
+        {
+            return ViewName.Create(RandomString(RANDOM_NAME_LEN));
         }
 
         class SimpleTagContext : TagContextBase

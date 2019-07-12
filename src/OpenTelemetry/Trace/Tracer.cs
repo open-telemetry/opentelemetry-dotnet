@@ -18,29 +18,49 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Threading;
+    using OpenTelemetry.Common;
     using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Internal;
 
     /// <inheritdoc/>
     public sealed class Tracer : ITracer
     {
-        private readonly SpanBuilderOptions spanBuilderOptions;
-        private readonly IExportComponent exportComponent;
+        private const int ExporterBufferSize = 32;
 
-        public Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent)
-            : this(startEndHandler, traceConfig, exportComponent, null, null)
+        // Enforces that trace export exports data at least once every 5 seconds.
+        private static readonly Duration ExporterScheduleDelay = Duration.Create(5, 0);
+
+        private readonly SpanBuilderOptions spanBuilderOptions;
+        private readonly SpanExporter spanExporter;
+
+        /// <summary>
+        /// Creates an instance of <see cref="ITracer"/>.
+        /// </summary>
+        /// <param name="randomGenerator">Span id generator.</param>
+        /// <param name="startEndHandler">Start/end event handler.</param>
+        /// <param name="traceConfig">Trace configuration.</param>
+        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig)
+            : this(randomGenerator, startEndHandler, traceConfig, null, null, null)
         {
         }
 
-        public Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig, IExportComponent exportComponent, IBinaryFormat binaryFormat, ITextFormat textFormat)
+        /// <summary>
+        /// Creates an instance of <see cref="ITracer"/>.
+        /// </summary>
+        /// <param name="randomGenerator">Span id generator.</param>
+        /// <param name="startEndHandler">Start/end event handler.</param>
+        /// <param name="traceConfig">Trace configuration.</param>
+        /// <param name="spanExporter">Exporter for span.</param>
+        /// <param name="binaryFormat">Binary format context propagator.</param>
+        /// <param name="textFormat">Text format context propagator.</param>
+        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, SpanExporter spanExporter, IBinaryFormat binaryFormat, ITextFormat textFormat)
         {
-            this.spanBuilderOptions = new SpanBuilderOptions(startEndHandler, traceConfig);
+            this.spanBuilderOptions = new SpanBuilderOptions(randomGenerator, startEndHandler, traceConfig);
+            this.spanExporter = spanExporter ?? (SpanExporter)SpanExporter.Create(ExporterBufferSize, ExporterScheduleDelay);
             this.BinaryFormat = binaryFormat ?? new BinaryFormat();
             this.TextFormat = textFormat ?? new TraceContextFormat();
-            this.exportComponent = exportComponent;
         }
 
         /// <inheritdoc/>
@@ -53,14 +73,9 @@ namespace OpenTelemetry.Trace
         public ITextFormat TextFormat { get; }
 
         /// <inheritdoc/>
-        public IScope WithSpan(ISpan span)
+        public void RecordSpanData(SpanData span)
         {
-            if (span == null)
-            {
-                throw new ArgumentNullException(nameof(span));
-            }
-
-            return CurrentSpanUtils.WithSpan(span, true);
+            this.spanExporter.ExportAsync(span, CancellationToken.None);
         }
 
         /// <inheritdoc/>
@@ -69,10 +84,14 @@ namespace OpenTelemetry.Trace
             return new SpanBuilder(spanName, this.spanBuilderOptions);
         }
 
-        /// <inheritdoc/>
-        public void RecordSpanData(SpanData span)
+        public IScope WithSpan(ISpan span)
         {
-            this.exportComponent.SpanExporter.ExportAsync(span, CancellationToken.None);
+            if (span == null)
+            {
+                throw new ArgumentNullException(nameof(span));
+            }
+
+            return CurrentSpanUtils.WithSpan(span, false);
         }
     }
 }

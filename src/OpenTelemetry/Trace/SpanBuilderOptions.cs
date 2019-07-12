@@ -20,11 +20,14 @@ namespace OpenTelemetry.Trace
 
     internal class SpanBuilderOptions
     {
-        internal SpanBuilderOptions(IStartEndHandler startEndHandler, ITraceConfig traceConfig)
+        internal SpanBuilderOptions(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig)
         {
+            this.RandomHandler = randomGenerator;
             this.StartEndHandler = startEndHandler;
             this.TraceConfig = traceConfig;
         }
+
+        internal IRandomGenerator RandomHandler { get; }
 
         internal IStartEndHandler StartEndHandler { get; }
 

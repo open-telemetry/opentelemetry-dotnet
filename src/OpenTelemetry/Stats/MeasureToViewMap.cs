@@ -17,19 +17,19 @@
 namespace OpenTelemetry.Stats
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using OpenTelemetry.Tags;
 
     internal sealed class MeasureToViewMap
     {
-        private readonly object lck = new object();
-        private readonly IDictionary<string, ICollection<MutableViewData>> mutableMap = new Dictionary<string, ICollection<MutableViewData>>();
+        private readonly IDictionary<string, ICollection<MutableViewData>> mutableMap = new ConcurrentDictionary<string, ICollection<MutableViewData>>();
 
-        private readonly IDictionary<IViewName, IView> registeredViews = new Dictionary<IViewName, IView>();
+        private readonly IDictionary<IViewName, IView> registeredViews = new ConcurrentDictionary<IViewName, IView>();
 
         // TODO(songya): consider adding a Measure.Name class
-        private readonly IDictionary<string, IMeasure> registeredMeasures = new Dictionary<string, IMeasure>();
+        private readonly IDictionary<string, IMeasure> registeredMeasures = new ConcurrentDictionary<string, IMeasure>();
 
         // Cached set of exported views. It must be set to null whenever a view is registered or
         // unregistered.
@@ -45,10 +45,7 @@ namespace OpenTelemetry.Stats
                 var views = this.exportedViews;
                 if (views == null)
                 {
-                    lock (this.lck)
-                    {
-                        this.exportedViews = views = FilterExportedViews(this.registeredViews.Values);
-                    }
+                    this.exportedViews = views = FilterExportedViews(this.registeredViews.Values);
                 }
 
                 return views;
@@ -57,11 +54,8 @@ namespace OpenTelemetry.Stats
 
         internal IViewData GetView(IViewName viewName, StatsCollectionState state)
         {
-            lock (this.lck)
-            {
-                var view = this.GetMutableViewData(viewName);
-                return view?.ToViewData(DateTimeOffset.Now, state);
-            }
+            var view = this.GetMutableViewData(viewName);
+            return view?.ToViewData(DateTimeOffset.Now, state);
         }
 
         /// <summary>
@@ -70,74 +64,68 @@ namespace OpenTelemetry.Stats
         /// <param name="view">The view.</param>
         internal void RegisterView(IView view)
         {
-            lock (this.lck)
+            this.exportedViews = null;
+            this.registeredViews.TryGetValue(view.Name, out var existing);
+            if (existing != null)
             {
-                this.exportedViews = null;
-                this.registeredViews.TryGetValue(view.Name, out var existing);
-                if (existing != null)
+                if (existing.Equals(view))
                 {
-                    if (existing.Equals(view))
-                    {
-                        // Ignore views that are already registered.
-                        return;
-                    }
-                    else
-                    {
-                        throw new ArgumentException("A different view with the same name is already registered: " + existing);
-                    }
+                    // Ignore views that are already registered.
+                    return;
                 }
-
-                var measure = view.Measure;
-                this.registeredMeasures.TryGetValue(measure.Name, out var registeredMeasure);
-                if (registeredMeasure != null && !registeredMeasure.Equals(measure))
+                else
                 {
-                    throw new ArgumentException("A different measure with the same name is already registered: " + registeredMeasure);
+                    throw new ArgumentException("A different view with the same name is already registered: " + existing);
                 }
-
-                this.registeredViews.Add(view.Name, view);
-                if (registeredMeasure == null)
-                {
-                    this.registeredMeasures.Add(measure.Name, measure);
-                }
-
-                this.AddMutableViewData(view.Measure.Name, MutableViewData.Create(view, DateTimeOffset.Now));
             }
+
+            var measure = view.Measure;
+            this.registeredMeasures.TryGetValue(measure.Name, out var registeredMeasure);
+            if (registeredMeasure != null && !registeredMeasure.Equals(measure))
+            {
+                throw new ArgumentException("A different measure with the same name is already registered: " + registeredMeasure);
+            }
+
+            this.registeredViews.Add(view.Name, view);
+            if (registeredMeasure == null)
+            {
+                this.registeredMeasures.Add(measure.Name, measure);
+            }
+
+            this.AddMutableViewData(view.Measure.Name, MutableViewData.Create(view, DateTimeOffset.Now));
         }
 
         // Records stats with a set of tags.
         internal void Record(ITagContext tags, IEnumerable<IMeasurement> stats, DateTimeOffset timestamp)
         {
-            lock (this.lck)
+            foreach (var measurement in stats)
             {
-                foreach (var measurement in stats)
+                var measure = measurement.Measure;
+                this.registeredMeasures.TryGetValue(measure.Name, out var value);
+                if (!measure.Equals(value))
                 {
-                    var measure = measurement.Measure;
-                    this.registeredMeasures.TryGetValue(measure.Name, out var value);
-                    if (!measure.Equals(value))
-                    {
-                        // unregistered measures will be ignored.
-                        continue;
-                    }
+                    // unregistered measures will be ignored.
+                    continue;
+                }
 
-                    var views = this.mutableMap[measure.Name];
-                    foreach (var view in views)
-                    {
-                        measurement.Match<object>(
-                            (arg) =>
-                            {
-                                view.Record(tags, arg.Value, timestamp);
-                                return null;
-                            },
-                            (arg) =>
-                            {
-                                view.Record(tags, arg.Value, timestamp);
-                                return null;
-                            },
-                            (arg) =>
-                            {
-                                throw new ArgumentException();
-                            });
-                    }
+                var views = this.mutableMap[measure.Name];
+                foreach (var view in views)
+                {
+                    measurement.Match<object>(
+                        (arg) =>
+                        {
+                            view.Record(tags, arg.Value, timestamp);
+                            return null;
+                        },
+                        (arg) =>
+                        {
+                            view.Record(tags, arg.Value, timestamp);
+                            return null;
+                        },
+                        (arg) =>
+                        {
+                            throw new ArgumentException();
+                        });
                 }
             }
         }
@@ -145,14 +133,11 @@ namespace OpenTelemetry.Stats
         // Clear stats for all the current MutableViewData
         internal void ClearStats()
         {
-            lock (this.lck)
+            foreach (var entry in this.mutableMap)
             {
-                foreach (var entry in this.mutableMap)
+                foreach (var mutableViewData in entry.Value)
                 {
-                    foreach (var mutableViewData in entry.Value)
-                    {
-                        mutableViewData.ClearStats();
-                    }
+                    mutableViewData.ClearStats();
                 }
             }
         }
@@ -160,14 +145,11 @@ namespace OpenTelemetry.Stats
         // Resume stats collection for all MutableViewData.
         internal void ResumeStatsCollection(DateTimeOffset now)
         {
-            lock (this.lck)
+            foreach (var entry in this.mutableMap)
             {
-                foreach (var entry in this.mutableMap)
+                foreach (var mutableViewData in entry.Value)
                 {
-                    foreach (var mutableViewData in entry.Value)
-                    {
-                        mutableViewData.ResumeStatsCollection(now);
-                    }
+                    mutableViewData.ResumeStatsCollection(now);
                 }
             }
         }
@@ -192,34 +174,31 @@ namespace OpenTelemetry.Stats
 
         private MutableViewData GetMutableViewData(IViewName viewName)
         {
-            lock (this.lck)
+            this.registeredViews.TryGetValue(viewName, out var view);
+            if (view == null)
             {
-                this.registeredViews.TryGetValue(viewName, out var view);
-                if (view == null)
-                {
-                    return null;
-                }
+                return null;
+            }
 
-                this.mutableMap.TryGetValue(view.Measure.Name, out var views);
-                if (views != null)
+            this.mutableMap.TryGetValue(view.Measure.Name, out var views);
+            if (views != null)
+            {
+                foreach (var viewData in views)
                 {
-                    foreach (var viewData in views)
+                    if (viewData.View.Name.Equals(viewName))
                     {
-                        if (viewData.View.Name.Equals(viewName))
-                        {
-                            return viewData;
-                        }
+                        return viewData;
                     }
                 }
-
-                throw new InvalidOperationException(
-                    "Internal error: Not recording stats for view: \""
-                        + viewName
-                        + "\" registeredViews="
-                        + this.registeredViews
-                        + ", mutableMap="
-                        + this.mutableMap);
             }
+
+            throw new InvalidOperationException(
+                "Internal error: Not recording stats for view: \""
+                    + viewName
+                    + "\" registeredViews="
+                    + this.registeredViews
+                    + ", mutableMap="
+                    + this.mutableMap);
         }
     }
 }

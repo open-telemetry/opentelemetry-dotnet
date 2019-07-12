@@ -52,12 +52,23 @@ namespace OpenTelemetry.Stats.Test
             double tolerance)
         {
             Assert.Equal(expected.Count, actual.Count);
-            Assert.Equal(expected.Keys, actual.Keys);
 
-            foreach (var tagValues in actual.Keys)
+            // Check actual/expected tags match indpendent of order
+            foreach (var tagValue in actual.Keys)
             {
-                var act = actual[tagValues];
-                var exp = expected[tagValues];
+                Assert.True(expected.Keys.Contains(tagValue));
+            }
+
+            foreach (var tagValue in actual.Keys)
+            {
+                Assert.True(expected.Keys.Contains(tagValue));
+            }
+
+            // Confirm data for tagsValues matches
+            foreach (var tagValue in actual.Keys)
+            {
+                var act = actual[tagValue];
+                var exp = expected[tagValue];
                 AssertAggregationDataEquals(exp, act, tolerance);
             }
         }

@@ -38,12 +38,5 @@ namespace OpenTelemetry.Tags.Test
         {
             Assert.Equal(NoopTags.NoopTagger, Tags.Tagger);
         }
-
-        [Fact(Skip = "Fix statics usage")]
-        public void DefaultTagContextSerializer()
-        {
-            Assert.Equal(NoopTags.NoopTagPropagationComponent, Tags.TagPropagationComponent);
-        }
-
     }
 }
