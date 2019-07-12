@@ -32,7 +32,6 @@ namespace OpenTelemetry.Trace
 
         internal Tracing()
         {
-            IRandomGenerator randomHandler = new RandomGenerator();
             IEventQueue eventQueue = new SimpleEventQueue();
 
             TraceConfig = new Config.TraceConfig();
@@ -54,7 +53,7 @@ namespace OpenTelemetry.Trace
                     ((ExportComponent)ExportComponent).SampledSpanStore,
                     eventQueue);
 
-            tracer = new Tracer(randomHandler, startEndHandler, TraceConfig);
+            tracer = new Tracer(startEndHandler, TraceConfig);
         }
 
         /// <summary>   
