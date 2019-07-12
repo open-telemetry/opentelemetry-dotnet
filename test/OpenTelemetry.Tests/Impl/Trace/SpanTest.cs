@@ -320,7 +320,7 @@ namespace OpenTelemetry.Trace.Test
             for (var i = 0; i < maxNumberOfAttributes; i++)
             {
                 Assert.Equal(
-                    AttributeValue.LongAttributeValue(i + maxNumberOfAttributes),
+                    i + maxNumberOfAttributes,
                     spanData
                         .Attributes
                         .AttributeMap["MyStringAttributeKey" + (i + maxNumberOfAttributes)]);
@@ -333,7 +333,7 @@ namespace OpenTelemetry.Trace.Test
             for (var i = 0; i < maxNumberOfAttributes; i++)
             {
                 Assert.Equal(
-                    AttributeValue.LongAttributeValue(i + maxNumberOfAttributes),
+                    i + maxNumberOfAttributes,
                     spanData
                         .Attributes
                         .AttributeMap["MyStringAttributeKey" + (i + maxNumberOfAttributes)]);
@@ -373,7 +373,7 @@ namespace OpenTelemetry.Trace.Test
             for (var i = 0; i < maxNumberOfAttributes; i++)
             {
                 Assert.Equal(
-                    AttributeValue.LongAttributeValue(i + maxNumberOfAttributes),
+                    i + maxNumberOfAttributes,
                     spanData
                         .Attributes
                         .AttributeMap["MyStringAttributeKey" + (i + maxNumberOfAttributes)]);
@@ -397,7 +397,7 @@ namespace OpenTelemetry.Trace.Test
             for (var i = 0; i < maxNumberOfAttributes / 2; i++)
             {
                 Assert.Equal(
-                    AttributeValue.LongAttributeValue(i + maxNumberOfAttributes * 3 / 2),
+                    i + maxNumberOfAttributes * 3 / 2,
                     spanData
                         .Attributes
                         .AttributeMap["MyStringAttributeKey" + (i + maxNumberOfAttributes * 3 / 2)]);

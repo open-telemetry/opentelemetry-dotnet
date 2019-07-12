@@ -61,7 +61,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
                 string spanKindAttr = null;
                 string errorAttr = null;
-                int httpStatusCodeAttr = 0;
+                string httpStatusCodeAttr = null;
                 string httpMethodAttr = null;
                 string httpPathAttr = null;
                 string httpHostAttr = null;
@@ -76,34 +76,34 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     switch (attr.Key)
                     {
                         case "span.kind":
-                            spanKindAttr = (string)attr.Value;
+                            spanKindAttr = attr.Value.ToString();
                             break;
                         case "error":
-                            errorAttr = (string)attr.Value;
+                            errorAttr = attr.Value.ToString();
                             break;
                         case "http.method":
-                            httpMethodAttr = (string)attr.Value;
+                            httpMethodAttr = attr.Value.ToString();
                             break;
                         case "http.path":
-                            httpPathAttr = (string)attr.Value;
+                            httpPathAttr = attr.Value.ToString();
                             break;
                         case "http.host":
-                            httpHostAttr = (string)attr.Value;
+                            httpHostAttr = attr.Value.ToString();
                             break;
                         case "http.url":
-                            httpUrlAttr = (string)attr.Value;
+                            httpUrlAttr = attr.Value.ToString();
                             break;
                         case "http.status_code":
-                            httpStatusCodeAttr = (int)attr.Value;
+                            httpStatusCodeAttr = attr.Value.ToString();
                             break;
                         case "http.user_agent":
-                            httpUserAgentAttr = (string)attr.Value;
+                            httpUserAgentAttr = attr.Value.ToString();
                             break;
                         case "http.route":
-                            httpRouteAttr = (string)attr.Value;
+                            httpRouteAttr = attr.Value.ToString();
                             break;
                         case "http.port":
-                            httpPortAttr = (string)attr.Value;
+                            httpPortAttr = attr.Value.ToString();
                             break;
                         default:
                             var value = attr.Value.ToString();
@@ -320,7 +320,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
         {
             if (errorAttr != null)
             {
-                success = errorAttr != "true";
+                success = errorAttr.ToLowerInvariant() != "true";
             }
         }
 
@@ -329,7 +329,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             string httpUrlAttr,
             string httpHostAttr,
             string httpPathAttr,
-            int httpStatusCodeAttr,
+            string httpStatusCodeAttr,
             string httpUserAgentAttr,
             string httpRouteAttr,
             string httpPortAttr,
@@ -340,7 +340,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             ref string type,
             ref string userAgent)
         {
-            if (httpStatusCodeAttr != 0)
+            if (httpStatusCodeAttr != null)
             {
                 resultCode = httpStatusCodeAttr.ToString(CultureInfo.InvariantCulture);
                 type = "Http";
