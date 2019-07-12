@@ -34,7 +34,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         public JaegerTraceExporterHandler(JaegerExporterOptions options)
             : this(new JaegerUdpBatcher(options))
         {
-
         }
 
         public JaegerTraceExporterHandler(IJaegerUdpBatcher jaegerAgentUdpBatcher)
