@@ -74,16 +74,36 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
             };
         }
 
-        public static JaegerTag ToJaegerTag(this KeyValuePair<string, IAttributeValue> attribute)
+        public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
         {
-            var ret = attribute.Value.Match(
-                (s) => new JaegerTag { Key = attribute.Key, VType = JaegerTagType.STRING, VStr = s },
-                (b) => new JaegerTag { Key = attribute.Key, VType = JaegerTagType.BOOL, VBool = b },
-                (l) => new JaegerTag { Key = attribute.Key, VType = JaegerTagType.LONG, VLong = l },
-                (d) => new JaegerTag { Key = attribute.Key, VType = JaegerTagType.DOUBLE, VDouble = d },
-                (obj) => new JaegerTag { Key = attribute.Key, VType = JaegerTagType.STRING, VStr = obj.ToString() });
+            var valType = attribute.Value.GetType();
 
-            return ret;
+            if (valType == typeof(string))
+            {
+                return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.STRING, VStr = (string)attribute.Value };
+            }
+            else if (attribute.Value.GetType() == typeof(long))
+            {
+                return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.LONG, VLong = (long)attribute.Value };
+            }
+            else if (attribute.Value.GetType() == typeof(int))
+            {
+                return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.LONG, VLong = Convert.ToInt64(attribute.Value) };
+            }
+            else if (attribute.Value.GetType() == typeof(double))
+            {
+                return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.DOUBLE, VDouble = (double)attribute.Value };
+            }
+            else if (attribute.Value.GetType() == typeof(float))
+            {
+                return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.DOUBLE, VDouble = Convert.ToDouble(attribute.Value) };
+            }
+            else if (attribute.Value.GetType() == typeof(bool))
+            {
+                return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.BOOL, VBool = (bool)attribute.Value };
+            }
+
+            return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.STRING, VStr = attribute.Value.ToString() };
         }
 
         public static JaegerLog ToJaegerLog(this ITimedEvent<IEvent> timedEvent)

@@ -49,11 +49,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var spanId = ActivitySpanId.CreateRandom();
             var spanIdAsInt = new Int128(spanId);
             var parentSpanId = ActivitySpanId.CreateRandom();
-            var attributes = Attributes.Create(new Dictionary<string, IAttributeValue>{
-                { "stringKey", AttributeValue.StringAttributeValue("value")},
-                { "longKey", AttributeValue.LongAttributeValue(1)},
-                { "doubleKey", AttributeValue.DoubleAttributeValue(1)},
-                { "boolKey", AttributeValue.BooleanAttributeValue(true)},
+            var attributes = Attributes.Create(new Dictionary<string, object>{
+                { "stringKey", "value"},
+                { "longKey", 1L},
+                { "longKey2", 1 },
+                { "doubleKey", 1D},
+                { "doubleKey2", 1F},
+                { "boolKey", true},
             }, 0);
             var events = TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>
             {
@@ -61,9 +63,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     eventTimestamp,
                     Event.Create(
                         "Event1",
-                        new Dictionary<string, IAttributeValue>
+                        new Dictionary<string, object>
                         {
-                            {"key", AttributeValue.StringAttributeValue("value") }
+                            { "key", "value" },
                         }
                     )
                 ),
@@ -71,9 +73,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     eventTimestamp,
                     Event.Create(
                         "Event2",
-                        new Dictionary<string, IAttributeValue>
+                        new Dictionary<string, object>
                         {
-                            {"key", AttributeValue.StringAttributeValue("value") },
+                            { "key", "value" },
                         }
                     )
                 ),
@@ -142,10 +144,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("longKey", tag.Key);
             Assert.Equal(1, tag.VLong);
             tag = jaegerSpan.JaegerTags[2];
+            Assert.Equal(JaegerTagType.LONG, tag.VType);
+            Assert.Equal("longKey2", tag.Key);
+            Assert.Equal(1, tag.VLong);
+            tag = jaegerSpan.JaegerTags[3];
             Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
             Assert.Equal("doubleKey", tag.Key);
             Assert.Equal(1, tag.VDouble);
-            tag = jaegerSpan.JaegerTags[3];
+            tag = jaegerSpan.JaegerTags[4];
+            Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
+            Assert.Equal("doubleKey2", tag.Key);
+            Assert.Equal(1, tag.VDouble);
+            tag = jaegerSpan.JaegerTags[5];
             Assert.Equal(JaegerTagType.BOOL, tag.VType);
             Assert.Equal("boolKey", tag.Key);
             Assert.Equal(true, tag.VBool);
