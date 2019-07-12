@@ -113,21 +113,21 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 case string s:
                     return new Google.Cloud.Trace.V2.AttributeValue()
                     {
-                        StringValue = new TruncatableString() {Value = s}
+                        StringValue = new TruncatableString() { Value = s },
                     };
                 case bool b:
-                    return new Google.Cloud.Trace.V2.AttributeValue() {BoolValue = b};
+                    return new Google.Cloud.Trace.V2.AttributeValue() { BoolValue = b };
                 case long l:
-                    return new Google.Cloud.Trace.V2.AttributeValue() {IntValue = l};
+                    return new Google.Cloud.Trace.V2.AttributeValue() { IntValue = l };
                 case double d:
                     return new Google.Cloud.Trace.V2.AttributeValue()
                     {
-                        StringValue = new TruncatableString() {Value = d.ToString()}
+                        StringValue = new TruncatableString() { Value = d.ToString() },
                     };
                 default:
                     return new Google.Cloud.Trace.V2.AttributeValue()
                     {
-                        StringValue = new TruncatableString() {Value = av.ToString()}
+                        StringValue = new TruncatableString() { Value = av.ToString() },
                     };
             }
         }

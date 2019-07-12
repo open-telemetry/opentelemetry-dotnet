@@ -340,7 +340,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             ref string type,
             ref string userAgent)
         {
-            if (httpStatusCodeAttr != null)
+            if (httpStatusCodeAttr != 0)
             {
                 resultCode = httpStatusCodeAttr.ToString(CultureInfo.InvariantCulture);
                 type = "Http";
