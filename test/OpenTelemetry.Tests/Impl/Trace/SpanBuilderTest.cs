@@ -620,10 +620,7 @@ namespace OpenTelemetry.Trace.Test
 
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetSpanKind(SpanKind.Internal)
-                .AddLink(linkContext, new Dictionary<string, IAttributeValue>
-                    {
-                        ["k"] = AttributeValue.StringAttributeValue("v"),
-                    })
+                .AddLink(linkContext, new Dictionary<string, object> { ["k"] = "v", })
                 .StartSpan();
 
             var spanData = ((Span)span).ToSpanData();
@@ -637,11 +634,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(linkContext.Tracestate, links[0].Context.Tracestate);
             Assert.Equal(1, links[0].Attributes.Count);
             Assert.True(links[0].Attributes.ContainsKey("k"));
-            Assert.Equal("v", links[0].Attributes["k"].Match( (s) => s,
-                b => b.ToString(),
-                l => l.ToString(),
-                d => d.ToString(CultureInfo.InvariantCulture),
-                o => o.ToString()));
+            Assert.Equal("v", links[0].Attributes["k"].ToString());
         }
 
         [Fact]

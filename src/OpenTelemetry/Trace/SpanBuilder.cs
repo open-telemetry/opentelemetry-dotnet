@@ -201,7 +201,7 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-	/// <inheritdoc/>
+        /// <inheritdoc/>
         public ISpanBuilder AddLink(Activity activity)
         {
             if (activity == null)
