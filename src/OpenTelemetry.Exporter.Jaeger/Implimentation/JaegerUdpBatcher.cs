@@ -22,11 +22,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System.Threading.Tasks;
     using Thrift.Protocols;
 
-    public class JaegerUdpBatcher : IDisposable
+    public interface IJaegerUdpBatcher : IDisposable
+    {
+        Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken);
+        Task<int> CloseAsync(CancellationToken cancellationToken);
+        Task<int> FlushAsync(CancellationToken cancellationToken);
+    }
+
+    public class JaegerUdpBatcher : IDisposable, IJaegerUdpBatcher
     {
         private const int DefaultMaxPacketSize = 65000;
         private readonly int? maxPacketSize;
-        private readonly TCompactProtocol.Factory protocolFactory;
+        private readonly ITProtocolFactory protocolFactory;
         private readonly JaegerThriftClientTransport clientTransport;
         private readonly JaegerThriftClient thriftClient;
         private readonly Process process;

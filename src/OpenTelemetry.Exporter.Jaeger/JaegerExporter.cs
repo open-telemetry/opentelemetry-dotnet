@@ -22,6 +22,10 @@ namespace OpenTelemetry.Exporter.Jaeger
 
     public class JaegerExporter : IDisposable
     {
+        public const string DefaultAgentUdpHost = "localhost";
+        public const int DefaultAgentUdpCompactPort = 6831;
+        public const int DefaultMaxPacketSize = 65000;
+
         private const string ExporterName = "JaegerTraceExporter";
 
         private readonly object lck = new object();
@@ -34,6 +38,9 @@ namespace OpenTelemetry.Exporter.Jaeger
 
         public JaegerExporter(JaegerExporterOptions options, IExportComponent exportComponent)
         {
+            this.ValidateOptions(options);
+            this.InitializeOptions(options);
+
             this.options = options;
             this.exportComponent = exportComponent;
         }
@@ -89,6 +96,32 @@ namespace OpenTelemetry.Exporter.Jaeger
                 }
 
                 this.disposedValue = true;
+            }
+        }
+
+        private void ValidateOptions(JaegerExporterOptions options)
+        {
+            if (string.IsNullOrWhiteSpace(options.ServiceName))
+            {
+                throw new ArgumentNullException("ServiceName", "Service Name is required.");
+            }
+        }
+
+        private void InitializeOptions(JaegerExporterOptions options)
+        {
+            if (string.IsNullOrWhiteSpace(options.AgentHost))
+            {
+                options.AgentHost = DefaultAgentUdpHost;
+            }
+
+            if (!options.AgentPort.HasValue)
+            {
+                options.AgentPort = DefaultAgentUdpCompactPort;
+            }
+
+            if (!options.MaxPacketSize.HasValue)
+            {
+                options.MaxPacketSize = DefaultMaxPacketSize;
             }
         }
     }

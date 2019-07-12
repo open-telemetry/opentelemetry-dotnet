@@ -28,20 +28,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
     public class JaegerTraceExporterHandler : IHandler, IDisposable
     {
-        public const string DefaultAgentUdpHost = "localhost";
-        public const int DefaultAgentUdpCompactPort = 6831;
-        public const int DefaultMaxPacketSize = 65000;
-
-        private readonly JaegerExporterOptions options;
-        private readonly JaegerUdpBatcher jaegerAgentUdpBatcher;
+        private readonly IJaegerUdpBatcher jaegerAgentUdpBatcher;
         private bool disposedValue = false; // To detect redundant dispose calls
 
         public JaegerTraceExporterHandler(JaegerExporterOptions options)
+            : this(new JaegerUdpBatcher(options))
         {
-            this.ValidateOptions(options);
-            this.InitializeOptions(options);
-            this.options = options;
-            this.jaegerAgentUdpBatcher = new JaegerUdpBatcher(options);
+
+        }
+
+        public JaegerTraceExporterHandler(IJaegerUdpBatcher jaegerAgentUdpBatcher)
+        {
+            this.jaegerAgentUdpBatcher = jaegerAgentUdpBatcher;
         }
 
         public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
@@ -72,32 +70,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                 }
 
                 this.disposedValue = true;
-            }
-        }
-
-        private void ValidateOptions(JaegerExporterOptions options)
-        {
-            if (string.IsNullOrWhiteSpace(options.ServiceName))
-            {
-                throw new ArgumentNullException("ServiceName", "Service Name is required.");
-            }
-        }
-
-        private void InitializeOptions(JaegerExporterOptions options)
-        {
-            if (string.IsNullOrWhiteSpace(options.AgentHost))
-            {
-                options.AgentHost = DefaultAgentUdpHost;
-            }
-
-            if (!options.AgentPort.HasValue)
-            {
-                options.AgentPort = DefaultAgentUdpCompactPort;
-            }
-
-            if (!options.MaxPacketSize.HasValue)
-            {
-                options.MaxPacketSize = DefaultMaxPacketSize;
             }
         }
     }
