@@ -29,7 +29,7 @@
     <ProjectReference Include="..\..\src\OpenTelemetry.Collector.AspNetCore\OpenTelemetry.Collector.AspNetCore.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
     <ProjectReference Include="..\TestApp.AspNetCore.2.0\TestApp.AspNetCore.2.0.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="2.1.2" />
   </ItemGroup>
 
