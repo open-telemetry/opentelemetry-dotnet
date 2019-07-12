@@ -31,6 +31,6 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the collection of attributes associated with the link.
         /// </summary>
-        IDictionary<string, IAttributeValue> Attributes { get; }
+        IDictionary<string, object> Attributes { get; }
     }
 }

@@ -164,7 +164,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             Assert.Equal(tc.spanStatus, d[spanData.Status.CanonicalCode]);
 
-            var normilizedAttributes = spanData.Attributes.AttributeMap.ToDictionary(x => x.Key, x => AttributeToSimpleString(x.Value));
+            var normilizedAttributes = spanData.Attributes.AttributeMap.ToDictionary(x => x.Key, x => x.Value.ToString());
             tc.spanAttributes = tc.spanAttributes.ToDictionary(x => x.Key, x => NormaizeValues(x.Value, host, port));
 
             Assert.Equal(tc.spanAttributes.ToHashSet(), normilizedAttributes.ToHashSet());

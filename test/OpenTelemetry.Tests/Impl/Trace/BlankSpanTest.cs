@@ -26,26 +26,26 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DoNotCrash()
         {
-            IDictionary<string, IAttributeValue> attributes = new Dictionary<string, IAttributeValue>();
+            IDictionary<string, object> attributes = new Dictionary<string, object>();
             attributes.Add(
-                "MyStringAttributeKey", AttributeValue<string>.Create("MyStringAttributeValue"));
-            IDictionary<string, IAttributeValue> multipleAttributes = new Dictionary<string, IAttributeValue>();
+                "MyStringAttributeKey", "MyStringAttributeValue");
+            IDictionary<string, object> multipleAttributes = new Dictionary<string, object>();
             multipleAttributes.Add(
-                "MyStringAttributeKey", AttributeValue<string>.Create("MyStringAttributeValue"));
-            multipleAttributes.Add("MyBooleanAttributeKey", AttributeValue<bool>.Create(true));
-            multipleAttributes.Add("MyLongAttributeKey", AttributeValue<long>.Create(123));
-            multipleAttributes.Add("MyDoubleAttributeKey", AttributeValue<double>.Create(0.005));
+                "MyStringAttributeKey", "MyStringAttributeValue");
+            multipleAttributes.Add("MyBooleanAttributeKey", true);
+            multipleAttributes.Add("MyLongAttributeKey", 123);
+            multipleAttributes.Add("MyDoubleAttributeKey", 0.005);
             // Tests only that all the methods are not crashing/throwing errors.
             BlankSpan.Instance.SetAttribute(
-                "MyStringAttributeKey2", AttributeValue<string>.Create("MyStringAttributeValue2"));
+                "MyStringAttributeKey2", "MyStringAttributeValue2");
             foreach (var a in attributes)
             {
-                BlankSpan.Instance.SetAttribute(a.Key, a.Value);
+                BlankSpan.Instance.SetAttribute(a);
             }
 
             foreach (var a in multipleAttributes)
             {
-                BlankSpan.Instance.SetAttribute(a.Key, a.Value);
+                BlankSpan.Instance.SetAttribute(a);
             }
 
             BlankSpan.Instance.AddEvent("MyEvent");
@@ -68,8 +68,8 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.Status = null);
             Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.UpdateName(null));
             Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, string.Empty));
-            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(string.Empty, (IAttributeValue)null));
-            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, AttributeValue.StringAttributeValue("foo")));
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(string.Empty, null));
+            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, "foo"));
             Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, 1L));
             Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, 0.1d));
             Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, true));

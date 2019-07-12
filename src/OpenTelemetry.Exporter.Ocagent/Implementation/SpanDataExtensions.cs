@@ -108,14 +108,29 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
             attributes.AttributeMap.Add(source.AttributeMap.ToDictionary(
                 kvp => kvp.Key,
-                kvp => kvp.Value.Match(
-                    s => new OpenTelemetry.Proto.Trace.V1.AttributeValue { StringValue = new TruncatableString() { Value = s } },
-                    b => new OpenTelemetry.Proto.Trace.V1.AttributeValue { BoolValue = b },
-                    l => new OpenTelemetry.Proto.Trace.V1.AttributeValue { IntValue = l },
-                    d => new OpenTelemetry.Proto.Trace.V1.AttributeValue { DoubleValue = d },
-                    o => new OpenTelemetry.Proto.Trace.V1.AttributeValue { StringValue = new TruncatableString() { Value = o?.ToString() } })));
+                kvp => FromAttribute(kvp.Value)));
 
             return attributes;
+        }
+
+        private static OpenTelemetry.Proto.Trace.V1.AttributeValue FromAttribute(object value)
+        {
+            switch (value)
+            {
+                case string s:
+                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue { StringValue = new TruncatableString() { Value = s } };
+                case bool b:
+                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue { BoolValue = b };
+                case long l:
+                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue { IntValue = l };
+                case double d:
+                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue { DoubleValue = d };
+                default:
+                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue
+                    {
+                        StringValue = new TruncatableString() { Value = value?.ToString() },
+                    };
+            }
         }
 
         private static Span.Types.TimeEvents FromITimeEvents(ITimedEvents<IEvent> events)
@@ -167,18 +182,13 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             };
         }
 
-        private static Span.Types.Attributes FromIAttributeMap(IDictionary<string, IAttributeValue> source)
+        private static Span.Types.Attributes FromIAttributeMap(IDictionary<string, object> source)
         {
             var attributes = new Span.Types.Attributes();
 
             attributes.AttributeMap.Add(source.ToDictionary(
                 kvp => kvp.Key,
-                kvp => kvp.Value.Match(
-                    s => new OpenTelemetry.Proto.Trace.V1.AttributeValue { StringValue = new TruncatableString() { Value = s } },
-                    b => new OpenTelemetry.Proto.Trace.V1.AttributeValue { BoolValue = b },
-                    l => new OpenTelemetry.Proto.Trace.V1.AttributeValue { IntValue = l },
-                    d => new OpenTelemetry.Proto.Trace.V1.AttributeValue { DoubleValue = d },
-                    o => new OpenTelemetry.Proto.Trace.V1.AttributeValue { StringValue = new TruncatableString() { Value = o?.ToString() } })));
+                kvp => FromAttribute(kvp.Value)));
 
             return attributes;
         }

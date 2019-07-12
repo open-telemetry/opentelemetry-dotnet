@@ -63,13 +63,6 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="key">Key of the attribute.</param>
         /// <param name="value">Attribute value.</param>
-        void SetAttribute(string key, IAttributeValue value);
-
-        /// <summary>
-        /// Puts a new attribute to the span.
-        /// </summary>
-        /// <param name="key">Key of the attribute.</param>
-        /// <param name="value">Attribute value.</param>
         void SetAttribute(string key, string value);
 
         /// <summary>
@@ -93,6 +86,8 @@ namespace OpenTelemetry.Trace
         /// <param name="value">Attribute value.</param>
         void SetAttribute(string key, bool value);
 
+        void SetAttribute(KeyValuePair<string, object> keyValuePair);
+
         /// <summary>
         /// Adds a single <see cref="IEvent"/> to the <see cref="ISpan"/>.
         /// </summary>
@@ -104,7 +99,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="name">Event name.</param>
         /// <param name="attributes"><see cref="IDictionary{String, IAttributeValue}"/> of attributes name/value pairs associated with the <see cref="IEvent"/>.</param>
-        void AddEvent(string name, IDictionary<string, IAttributeValue> attributes);
+        void AddEvent(string name, IDictionary<string, object> attributes);
 
         /// <summary>
         /// Adds an <see cref="IEvent"/> object to the <see cref="ISpan"/>.

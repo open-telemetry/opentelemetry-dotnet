@@ -25,10 +25,10 @@ namespace OpenTelemetry.Trace
     /// <inheritdoc/>
     public sealed class Event : IEvent
     {
-        private static readonly ReadOnlyDictionary<string, IAttributeValue> EmptyAttributes =
-                new ReadOnlyDictionary<string, IAttributeValue>(new Dictionary<string, IAttributeValue>());
+        private static readonly ReadOnlyDictionary<string, object> EmptyAttributes =
+                new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
 
-        internal Event(string name, IDictionary<string, IAttributeValue> attributes)
+        internal Event(string name, IDictionary<string, object> attributes)
         {
             this.Name = name ?? throw new ArgumentNullException("Null event name");
             this.Attributes = attributes ?? throw new ArgumentNullException("Null attributes");
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace
         public string Name { get; }
 
         /// <inheritdoc/>
-        public IDictionary<string, IAttributeValue> Attributes { get; }
+        public IDictionary<string, object> Attributes { get; }
 
         /// <summary>
         /// Returns a new <see cref="Event"/> with the provided name.
@@ -58,14 +58,14 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">The <see cref="IDictionary{String, IAttributeValue}"/> of attributes for the <see cref="Event"/>.</param>
         /// <returns>A new <see cref="Event"/> with the provided name and set of attributes.</returns>
         /// <exception cref="ArgumentNullException">If <c>name</c> or <c>attributes</c> is <c>null</c>.</exception>
-        public static IEvent Create(string name, IDictionary<string, IAttributeValue> attributes)
+        public static IEvent Create(string name, IDictionary<string, object> attributes)
         {
             if (attributes == null)
             {
                 throw new ArgumentNullException(nameof(attributes));
             }
 
-            IDictionary<string, IAttributeValue> readOnly = new ReadOnlyDictionary<string, IAttributeValue>(attributes);
+            IDictionary<string, object> readOnly = new ReadOnlyDictionary<string, object>(attributes);
             return new Event(name, readOnly);
         }
 

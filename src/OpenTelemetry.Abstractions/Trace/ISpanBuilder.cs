@@ -80,7 +80,7 @@ namespace OpenTelemetry.Trace
         /// <param name="context"><see cref="Link"/> context.</param>
         /// <param name="attributes">The attributes of the <see cref="Link"/>.</param>
         /// <returns>This span builder for chaining.</returns>
-        ISpanBuilder AddLink(SpanContext context, IDictionary<string, IAttributeValue> attributes);
+        ISpanBuilder AddLink(SpanContext context, IDictionary<string, object> attributes);
 
         /// <summary>
         /// Set the record events value.
