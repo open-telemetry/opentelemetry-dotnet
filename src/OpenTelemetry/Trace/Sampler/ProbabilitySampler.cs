@@ -18,6 +18,7 @@ namespace OpenTelemetry.Trace.Sampler
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Utils;
 
     /// <inheritdoc />
@@ -66,10 +67,10 @@ namespace OpenTelemetry.Trace.Sampler
         }
 
         /// <inheritdoc />
-        public bool ShouldSample(SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ILink> links)
+        public bool ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ILink> links)
         {
             // If the parent is sampled keep the sampling decision.
-            if (parentContext != null && parentContext.TraceOptions.IsSampled)
+            if (parentContext != null && (parentContext.TraceOptions & ActivityTraceFlags.Recorded) != 0)
             {
                 return true;
             }
@@ -79,7 +80,7 @@ namespace OpenTelemetry.Trace.Sampler
                 // If any parent link is sampled keep the sampling decision.
                 foreach (var parentLink in links)
                 {
-                    if (parentLink.Context.TraceOptions.IsSampled)
+                    if ((parentLink.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
                     {
                         return true;
                     }
@@ -93,7 +94,9 @@ namespace OpenTelemetry.Trace.Sampler
             // while allowing for a (very) small chance of *not* sampling if the id == Long.MAX_VALUE.
             // This is considered a reasonable tradeoff for the simplicity/performance requirements (this
             // code is executed in-line for every Span creation).
-            return Math.Abs(traceId.LowerLong) < this.IdUpperBound;
+            Span<byte> traceIdBytes = stackalloc byte[16];
+            traceId.CopyTo(traceIdBytes);
+            return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.IdUpperBound;
         }
 
         /// <inheritdoc/>
@@ -131,6 +134,20 @@ namespace OpenTelemetry.Trace.Sampler
             h *= 1000003;
             h ^= (this.IdUpperBound >> 32) ^ this.IdUpperBound;
             return (int)h;
+        }
+
+        public long GetLowerLong(ReadOnlySpan<byte> bytes)
+        {
+            long result = 0;
+            for (var i = 0; i < 8; i++)
+            {
+                result <<= 8;
+#pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
+                result |= bytes[i] & 0xff;
+#pragma warning restore CS0675 // Bitwise-or operator used on a sign-extended operand
+            }
+
+            return result;
         }
     }
 }

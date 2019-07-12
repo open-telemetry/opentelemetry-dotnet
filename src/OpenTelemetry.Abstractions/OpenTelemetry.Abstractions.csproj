@@ -5,4 +5,8 @@
     <Description>OpenTelemetry .NET API abstractions</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.6.0-preview6.19303.8" />
+  </ItemGroup>
 </Project>

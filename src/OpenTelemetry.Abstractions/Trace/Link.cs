@@ -56,8 +56,8 @@ namespace OpenTelemetry.Trace
         public override string ToString()
         {
             return "Link{"
-                + "traceId=" + this.Context.TraceId + ", "
-                + "spanId=" + this.Context.SpanId + ", "
+                + "traceId=" + this.Context.TraceId.ToHexString() + ", "
+                + "spanId=" + this.Context.SpanId.ToHexString() + ", "
                 + "tracestate=" + this.Context.Tracestate.ToString() + ", "
                 + "attributes=" + Collections.ToString(this.Attributes)
                 + "}";

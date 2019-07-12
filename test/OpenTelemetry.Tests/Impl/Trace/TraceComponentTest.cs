@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace.Test
 
     public class TraceComponentTest
     {
-        private readonly TraceComponent traceComponent = new TraceComponent(new RandomGenerator(), new SimpleEventQueue());
+        private readonly TraceComponent traceComponent = new TraceComponent(new SimpleEventQueue());
 
         [Fact]
         public void ImplementationOfTracer()

@@ -1,4 +1,4 @@
-﻿// <copyright file="SpanDataExtentions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanDataExtensions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,12 +27,27 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
-    internal static class SpanDataExtentions
+    internal static class SpanDataExtensions
     {
         internal static Span ToProtoSpan(this SpanData spanData)
         {
             try
             {
+                // protobuf doesn't understand Span<T> yet: https://github.com/protocolbuffers/protobuf/issues/3431
+                Span<byte> traceIdBytes = stackalloc byte[16];
+                Span<byte> spanIdBytes = stackalloc byte[8];
+
+                spanData.Context.TraceId.CopyTo(traceIdBytes);
+                spanData.Context.SpanId.CopyTo(spanIdBytes);
+
+                var parentSpanIdString = ByteString.Empty;
+                if (spanData.ParentSpanId != default)
+                {
+                    Span<byte> parentSpanIdBytes = stackalloc byte[8];
+                    spanData.ParentSpanId.CopyTo(parentSpanIdBytes);
+                    parentSpanIdString = ByteString.CopyFrom(parentSpanIdBytes.ToArray());
+                }
+
                 return new Span
                 {
                     Name = new TruncatableString { Value = spanData.Name },
@@ -40,10 +55,9 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                     // TODO: Utilize new Span.Types.SpanKind below when updated protos are incorporated, also confirm default for SpanKind.Internal
                     Kind = spanData.Kind == SpanKind.Client || spanData.Kind == SpanKind.Producer ? Span.Types.SpanKind.Client : Span.Types.SpanKind.Server,
 
-                    TraceId = ByteString.CopyFrom(spanData.Context.TraceId.Bytes),
-                    SpanId = ByteString.CopyFrom(spanData.Context.SpanId.Bytes),
-                    ParentSpanId =
-                        ByteString.CopyFrom(spanData.ParentSpanId?.Bytes ?? new byte[0]),
+                    TraceId = ByteString.CopyFrom(traceIdBytes.ToArray()),
+                    SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
+                    ParentSpanId = parentSpanIdString,
 
                     StartTime = new Timestamp
                     {
@@ -119,11 +133,18 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
         private static Span.Types.Link FromILink(ILink source)
         {
+            // protobuf doesn't understand Span<T> yet: https://github.com/protocolbuffers/protobuf/issues/3431
+            Span<byte> traceIdBytes = stackalloc byte[16];
+            Span<byte> spanIdBytes = stackalloc byte[8];
+
+            source.Context.TraceId.CopyTo(traceIdBytes);
+            source.Context.SpanId.CopyTo(spanIdBytes);
+
             var result = new Span.Types.Link
             {
                 Attributes = FromIAttributeMap(source.Attributes),
-                TraceId = ByteString.CopyFrom(source.Context.TraceId.Bytes),
-                SpanId = ByteString.CopyFrom(source.Context.SpanId.Bytes),
+                TraceId = ByteString.CopyFrom(traceIdBytes.ToArray()),
+                SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
             };
 
             return result;

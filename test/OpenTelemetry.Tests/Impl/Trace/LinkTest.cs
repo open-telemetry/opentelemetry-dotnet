@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace.Test
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Trace.Internal;
     using OpenTelemetry.Utils;
     using Xunit;
@@ -24,13 +25,12 @@ namespace OpenTelemetry.Trace.Test
     public class LinkTest
     {
         private readonly IDictionary<string, IAttributeValue> attributesMap = new Dictionary<string, IAttributeValue>();
-        private readonly IRandomGenerator random = new RandomGenerator(1234);
         private readonly SpanContext spanContext;
           
 
         public LinkTest()
         {
-            spanContext = SpanContext.Create(TraceId.GenerateRandomId(random), SpanId.GenerateRandomId(random), TraceOptions.Default, Tracestate.Empty); ;
+            spanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty); ;
             attributesMap.Add("MyAttributeKey0", AttributeValue<string>.Create("MyStringAttribute"));
             attributesMap.Add("MyAttributeKey1", AttributeValue<long>.Create(10));
             attributesMap.Add("MyAttributeKey2", AttributeValue<bool>.Create(true));
