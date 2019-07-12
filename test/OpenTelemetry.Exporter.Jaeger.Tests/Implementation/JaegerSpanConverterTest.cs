@@ -76,10 +76,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public void TestConvertSpan()
         {
+            var startTimestamp = Timestamp.Create(100, 100);
+            var endTimestamp = Timestamp.Create(200, 100);
             var eventTimestamp = Timestamp.Create(100, 100);
 
             var traceId = ActivityTraceId.CreateRandom();
+            var traceIdAsInt = new Int128(traceId);
             var spanId = ActivitySpanId.CreateRandom();
+            var spanIdAsInt = new Int128(spanId);
             var parentSpanId = ActivitySpanId.CreateRandom();
             var attributes = Attributes.Create(new Dictionary<string, IAttributeValue>{
                 { "stringKey", AttributeValue.StringAttributeValue("value")},
@@ -105,30 +109,24 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                         "Event2",
                         new Dictionary<string, IAttributeValue>
                         {
-                            {"key", AttributeValue.StringAttributeValue("value") }
+                            {"key", AttributeValue.StringAttributeValue("value") },
                         }
                     )
-                )
+                ),
             }, 0);
-
-
 
             var linkedSpanId = ActivitySpanId.CreateRandom();
-            var linkedAttributes = Attributes.Create(new Dictionary<string, IAttributeValue>{
-                { "stringKey", AttributeValue.StringAttributeValue("value")},
-                { "longKey", AttributeValue.LongAttributeValue(1)},
-                { "doubleKey", AttributeValue.DoubleAttributeValue(1)},
-                { "boolKey", AttributeValue.BooleanAttributeValue(true)},
-            }, 0);
 
-            var links = LinkList.Create(new List<ILink>
-            {
-                Link.FromSpanContext(SpanContext.Create(
+            var link = Link.FromSpanContext(SpanContext.Create(
                     traceId,
                     linkedSpanId,
                     ActivityTraceFlags.Recorded,
-                    Tracestate.Empty)),
-            }, 0);
+                    Tracestate.Empty));
+
+            var linkTraceIdAsInt = new Int128(link.Context.TraceId);
+            var linkSpanIdAsInt = new Int128(link.Context.SpanId);
+
+            var links = LinkList.Create(new List<ILink>{ link }, 0);
 
             var spanData = SpanData.Create(
                 SpanContext.Create(
@@ -140,20 +138,54 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 parentSpanId,
                 Resource.Empty,
                 "Name",
-                Timestamp.Create(5100, 500),
+                startTimestamp,
                 attributes,
                 events,
                 links,
                 null,
                 Status.Ok,
                 SpanKind.Client,
-                Timestamp.Create(6100, 500)
+                endTimestamp
             );
 
             var jaegerSpan = spanData.ToJaegerSpan();
 
             Assert.Equal("Name", jaegerSpan.OperationName);
             Assert.Equal(2, jaegerSpan.Logs.Count);
+
+            Assert.Equal(traceIdAsInt.High, jaegerSpan.TraceIdHigh);
+            Assert.Equal(traceIdAsInt.Low, jaegerSpan.TraceIdLow);
+            Assert.Equal(spanIdAsInt.Low, jaegerSpan.SpanId);
+            Assert.Equal(new Int128(parentSpanId).Low, jaegerSpan.ParentSpanId);
+
+            Assert.Equal(links.Links.Count(), jaegerSpan.References.Count);
+            var jaegerRef = jaegerSpan.References[0];
+            Assert.Equal(linkTraceIdAsInt.High, jaegerRef.TraceIdHigh);
+            Assert.Equal(linkTraceIdAsInt.Low, jaegerRef.TraceIdLow);
+            Assert.Equal(linkSpanIdAsInt.Low, jaegerRef.SpanId);
+
+            Assert.Equal(0x1, jaegerSpan.Flags);
+
+            Assert.Equal(startTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
+            Assert.Equal(endTimestamp.ToEpochMicroseconds() - startTimestamp.ToEpochMicroseconds(), jaegerSpan.Duration);
+
+            var tag = jaegerSpan.JaegerTags[0];
+            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal("stringKey", tag.Key);
+            Assert.Equal("value", tag.VStr);
+            tag = jaegerSpan.JaegerTags[1];
+            Assert.Equal(JaegerTagType.LONG, tag.VType);
+            Assert.Equal("longKey", tag.Key);
+            Assert.Equal(1, tag.VLong);
+            tag = jaegerSpan.JaegerTags[2];
+            Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
+            Assert.Equal("doubleKey", tag.Key);
+            Assert.Equal(1, tag.VDouble);
+            tag = jaegerSpan.JaegerTags[3];
+            Assert.Equal(JaegerTagType.BOOL, tag.VType);
+            Assert.Equal("boolKey", tag.Key);
+            Assert.Equal(true, tag.VBool);
+            
             var jaegerLog = jaegerSpan.Logs[0];
             Assert.Equal(events.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
             Assert.Equal(jaegerLog.Fields.Count, 2);
@@ -164,97 +196,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("description", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
 
-
-            // NOTE: In Java, the order is different (event, value, key) because the HashMap algorithm is different.
-            // thriftLog = jaegerSpan.Logs[1];
-            // Assert.Equal(3, thriftLog.Fields.Count);
-            // thriftTag = thriftLog.Fields[0];
-            // Assert.Equal("event", thriftTag.Key);
-            // Assert.Equal("baggage", thriftTag.VStr);
-            // thriftTag = thriftLog.Fields[1];
-            // Assert.Equal("key", thriftTag.Key);
-            // Assert.Equal("foo", thriftTag.VStr);
-            // thriftTag = thriftLog.Fields[2];
-            // Assert.Equal("value", thriftTag.Key);
-            // Assert.Equal("bar", thriftTag.VStr);
+            jaegerLog = jaegerSpan.Logs[1];
+            Assert.Equal(events.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
+            Assert.Equal(jaegerLog.Fields.Count, 2);
+            eventField = jaegerLog.Fields[0];
+            Assert.Equal("key", eventField.Key);
+            Assert.Equal("value", eventField.VStr);
+            eventField = jaegerLog.Fields[1];
+            Assert.Equal("description", eventField.Key);
+            Assert.Equal("Event2", eventField.VStr);
         }
 
-        // [Fact]
-        // public void TestConvertSpanOneReferenceChildOf()
-        // {
-        //     Span parent = (Span)_tracer.BuildSpan("foo").Start();
-
-        //     Span child = (Span)_tracer.BuildSpan("foo")
-        //         .AsChildOf(parent)
-        //         .Start();
-
-        //     ThriftSpan span = JaegerThriftSpanConverter.ConvertSpan(child);
-
-        //     Assert.Equal((long)child.Context.ParentId, span.ParentSpanId);
-        //     Assert.Empty(span.References);
-        // }
-
-        // [Fact]
-        // public void TestConvertSpanTwoReferencesChildOf()
-        // {
-        //     Span parent = (Span)_tracer.BuildSpan("foo").Start();
-        //     Span parent2 = (Span)_tracer.BuildSpan("foo").Start();
-
-        //     Span child = (Span)_tracer.BuildSpan("foo")
-        //         .AsChildOf(parent)
-        //         .AsChildOf(parent2)
-        //         .Start();
-
-        //     ThriftSpan span = JaegerThriftSpanConverter.ConvertSpan(child);
-
-        //     Assert.Equal(0, span.ParentSpanId);
-        //     Assert.Equal(2, span.References.Count);
-        //     Assert.Equal(BuildReference(parent.Context, References.ChildOf), span.References[0], _thriftReferenceComparer);
-        //     Assert.Equal(BuildReference(parent2.Context, References.ChildOf), span.References[1], _thriftReferenceComparer);
-        // }
-
-        // [Fact]
-        // public void TestConvertSpanMixedReferences()
-        // {
-        //     Span parent = (Span)_tracer.BuildSpan("foo").Start();
-        //     Span parent2 = (Span)_tracer.BuildSpan("foo").Start();
-
-        //     Span child = (Span)_tracer.BuildSpan("foo")
-        //         .AddReference(References.FollowsFrom, parent.Context)
-        //         .AsChildOf(parent2)
-        //         .Start();
-
-        //     ThriftSpan span = JaegerThriftSpanConverter.ConvertSpan(child);
-
-        //     Assert.Equal(0, span.ParentSpanId);
-        //     Assert.Equal(2, span.References.Count);
-        //     Assert.Equal(BuildReference(parent.Context, References.FollowsFrom), span.References[0], _thriftReferenceComparer);
-        //     Assert.Equal(BuildReference(parent2.Context, References.ChildOf), span.References[1], _thriftReferenceComparer);
-        // }
-
-        // private static ThriftReference BuildReference(SpanContext context, string referenceType)
-        // {
-        //     return JaegerThriftSpanConverter.BuildReferences(new List<Reference> { new Reference(context, referenceType) }.AsReadOnly())[0];
-        // }
-
-        // private class ThriftReferenceComparer : EqualityComparer<ThriftReference>
-        // {
-        //     public override bool Equals(ThriftReference x, ThriftReference y)
-        //     {
-        //         if (x == null && y == null) return true;
-        //         if (x == null || y == null) return false;
-
-        //         return x.RefType == y.RefType
-        //             && x.SpanId == y.SpanId
-        //             && x.TraceIdHigh == y.TraceIdHigh
-        //             && x.TraceIdLow == y.TraceIdLow;
-        //     }
-
-        //     public override int GetHashCode(ThriftReference obj)
-        //     {
-        //         return obj.GetHashCode();
-        //     }
-        // }
     }
-
 }
