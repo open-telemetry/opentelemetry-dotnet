@@ -19,15 +19,12 @@ namespace OpenTelemetry.Stats.Test
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Tags;
     using Xunit;
 
     internal static class StatsTestUtil
     {
-        static readonly Timestamp ZERO_TIMESTAMP = Timestamp.Create(0, 0);
-
         internal static IAggregationData CreateAggregationData(IAggregation aggregation, IMeasure measure, params double[] values)
         {
             var mutableAggregation = MutableViewData.CreateMutableAggregation(aggregation);

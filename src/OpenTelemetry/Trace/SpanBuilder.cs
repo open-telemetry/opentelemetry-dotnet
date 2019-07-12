@@ -38,7 +38,6 @@ namespace OpenTelemetry.Trace
         private ISampler sampler;
         private List<ILink> links;
         private bool recordEvents;
-        private Timer timestampConverter;
 
         internal SpanBuilder(string name, SpanBuilderOptions options)
         {
@@ -72,11 +71,6 @@ namespace OpenTelemetry.Trace
         {
             this.parentSpan = parentSpan ?? throw new ArgumentNullException(nameof(parentSpan));
             this.contextSource = ContextSource.ExplicitSpanParent;
-            if (parentSpan is Span parentSpanImpl)
-            {
-                this.timestampConverter = parentSpanImpl.TimestampConverter;
-            }
-
             this.parentSpanContext = null;
             this.parentActivity = null;
             return this;
@@ -261,7 +255,6 @@ namespace OpenTelemetry.Trace
                         this.kind,
                         activeTraceParams,
                         this.options.StartEndHandler,
-                        this.timestampConverter,
                         ownsActivity: this.contextSource != ContextSource.Activity);
             LinkSpans(span, this.links);
             return span;

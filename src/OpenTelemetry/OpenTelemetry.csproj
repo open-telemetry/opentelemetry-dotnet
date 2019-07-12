@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <Compile Include="..\OpenTelemetry.Abstractions\Context\Propagation\TracestateUtils.cs" Link="TracestateUtils.cs" />
+    <Compile Include="..\OpenTelemetry.Abstractions\Utils\PreciseTimestamp.cs" Link="PreciseTimestamp.cs" />
   </ItemGroup>
 
   <ItemGroup>

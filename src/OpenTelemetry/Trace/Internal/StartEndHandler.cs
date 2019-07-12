@@ -23,15 +23,13 @@ namespace OpenTelemetry.Trace.Internal
     internal sealed class StartEndHandler : IStartEndHandler
     {
         private readonly ISpanExporter spanExporter;
-        private readonly IRunningSpanStore runningSpanStore;
-        private readonly ISampledSpanStore sampledSpanStore;
         private readonly IEventQueue eventQueue;
 
         // true if any of (runningSpanStore OR sampledSpanStore) are different than null, which
         // means the spans with RECORD_EVENTS should be enqueued in the queue.
         private readonly bool enqueueEventForNonSampledSpans;
 
-        public StartEndHandler(ISpanExporter spanExporter, IRunningSpanStore runningSpanStore, ISampledSpanStore sampledSpanStore, IEventQueue eventQueue)
+        public StartEndHandler(ISpanExporter spanExporter, IEventQueue eventQueue)
         {
             this.spanExporter = spanExporter;
             this.runningSpanStore = runningSpanStore;
