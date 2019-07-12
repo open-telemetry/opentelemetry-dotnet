@@ -229,11 +229,9 @@ namespace OpenTelemetry.Trace
                 activityForSpan.SpanId,
                 activeTraceParams);
 
-            var spanOptions = SpanOptions.None;
             if (sampledIn || this.recordEvents)
             {
                 activityForSpan.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-                spanOptions = SpanOptions.RecordEvents;
             }
             else
             {
@@ -244,13 +242,12 @@ namespace OpenTelemetry.Trace
 
             if (this.parentSpanContext?.Tracestate != null && this.parentSpanContext.Tracestate != Tracestate.Empty)
             {
-                childTracestate = this.parentSpanContext.Tracestate.ToBuilder().Build();
+                childTracestate = this.parentSpanContext.Tracestate;
             }
 
             var span = Span.StartSpan(
                         activityForSpan,
                         childTracestate, // it is updated in CreateActivityForSpan, 
-                        spanOptions,
                         this.name,
                         this.kind,
                         activeTraceParams,

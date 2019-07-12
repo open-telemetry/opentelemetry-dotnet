@@ -37,12 +37,15 @@ namespace OpenTelemetry.Trace.Export.Test
         private readonly Activity notSampledActivity;
         private readonly ISpanExporter spanExporter = SpanExporter.Create(4, TimeSpan.FromSeconds(1));
         private readonly IStartEndHandler startEndHandler;
-        private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
         private readonly TestHandler serviceHandler = new TestHandler();
         private readonly IHandler mockServiceHandler = Mock.Of<IHandler>();
 
         public SpanExporterTest()
         {
+            // TODO
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+
             sampledActivity = new Activity("foo");
             sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
@@ -59,7 +62,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 Span.StartSpan(
                     sampledActivity,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     spanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -75,7 +77,6 @@ namespace OpenTelemetry.Trace.Export.Test
                 Span.StartSpan(
                     notSampledActivity,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     spanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -174,11 +175,10 @@ namespace OpenTelemetry.Trace.Export.Test
             // sampled span is not exported by creating and ending a sampled span after a non sampled span
             // and checking that the first exported span is the sampled span (the non sampled did not get
             // exported).
-            var exported = serviceHandler.WaitForExport(1);
+            var exported = serviceHandler.WaitForExport(1).ToArray();
             // Need to check this because otherwise the variable span1 is unused, other option is to not
             // have a span1 variable.
             Assert.Single(exported);
-            Assert.DoesNotContain(span1.ToSpanData(), exported);
             Assert.Contains(span2.ToSpanData(), exported);
         }
 
@@ -191,7 +191,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
             exporter.RegisterHandler("first", handler1.Object);
 
-            var span1 = CreateNotSampledEndedSpan(SpanName1).ToSpanData();
+            var span1 = CreateSampledEndedSpan(SpanName1).ToSpanData();
 
             await exporter.ExportAsync(span1, CancellationToken.None);
 

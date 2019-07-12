@@ -33,9 +33,7 @@ namespace OpenTelemetry.Trace.Test
     {
         private const string SpanName = "MySpanName";
         private const string EventDescription = "MyEvent";
-        
-        private readonly SpanOptions noRecordSpanOptions = SpanOptions.None;
-        private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
+
         private readonly IDictionary<string, object> attributes = new Dictionary<String, object>();
         private readonly List<KeyValuePair<string, object>> expectedAttributes;
         private readonly IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
@@ -58,12 +56,12 @@ namespace OpenTelemetry.Trace.Test
             activityLink.Stop();
 
             var activity = new Activity(SpanName).Start();
+            Assert.False(activity.Recorded);
             
             var span =
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    noRecordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -88,12 +86,12 @@ namespace OpenTelemetry.Trace.Test
             var tracestate = Tracestate.Builder.Set("k1", "v1").Build();
             var activity = new Activity(SpanName).Start();
             activity.TraceStateString = tracestate.ToString();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var span =
                 Span.StartSpan(
                     activity,
                     tracestate,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -118,7 +116,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     tracestate,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -138,13 +135,13 @@ namespace OpenTelemetry.Trace.Test
             activityLink.Stop();
 
             var activity = new Activity(SpanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var spanStartTime = PreciseTimestamp.GetUtcNow();
             var span =
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -184,13 +181,13 @@ namespace OpenTelemetry.Trace.Test
             var activity = new Activity(SpanName)
                 .SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom())
                 .Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var spanStartTime = PreciseTimestamp.GetUtcNow();
             var span =
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -257,12 +254,11 @@ namespace OpenTelemetry.Trace.Test
                 .Start();
 
             var spanStartTime = PreciseTimestamp.GetUtcNow();
-
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             var span =
                 (Span)Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -325,12 +321,12 @@ namespace OpenTelemetry.Trace.Test
         public void Status_ViaSetStatus()
         {
             var activity = new Activity(SpanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var span =
                 (Span)Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -350,12 +346,12 @@ namespace OpenTelemetry.Trace.Test
         public void status_ViaEndSpanOptions()
         {
             var activity = new Activity(SpanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var span =
                 (Span)Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -376,6 +372,7 @@ namespace OpenTelemetry.Trace.Test
         public void DroppingAttributes()
         {
             var activity = new Activity(SpanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var maxNumberOfAttributes = 8;
             var traceParams =
@@ -384,7 +381,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     traceParams,
@@ -430,6 +426,7 @@ namespace OpenTelemetry.Trace.Test
         public void DroppingAndAddingAttributes()
         {
             var activity = new Activity(SpanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var maxNumberOfAttributes = 8;
             var traceParams =
@@ -438,7 +435,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     traceParams,
@@ -502,6 +498,7 @@ namespace OpenTelemetry.Trace.Test
         public async Task DroppingEvents()
         {
             var activity = new Activity(SpanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var maxNumberOfEvents = 8;
             var traceParams =
@@ -510,7 +507,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     traceParams,
@@ -550,6 +546,7 @@ namespace OpenTelemetry.Trace.Test
             activityLink.Stop();
 
             var activity = new Activity(SpanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var maxNumberOfLinks = 8;
             var traceParams =
@@ -557,8 +554,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 Span.StartSpan(
                     activity,
-                    Tracestate.Empty, 
-                    recordSpanOptions,
+                    Tracestate.Empty,
                     SpanName,
                     SpanKind.Internal,
                     traceParams,
@@ -591,12 +587,12 @@ namespace OpenTelemetry.Trace.Test
         public void SampleToLocalSpanStore()
         {
             var activity1 = new Activity(SpanName).Start();
+            activity1.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var span =
                 (Span)Span.StartSpan(
                     activity1,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -607,11 +603,11 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(((Span)span).IsSampleToLocalSpanStore);
 
             var activity2 = new Activity(SpanName).Start();
+            activity2.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             var span2 =
                 Span.StartSpan(
                     activity2,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -630,12 +626,12 @@ namespace OpenTelemetry.Trace.Test
         public void SampleToLocalSpanStore_RunningSpan()
         {
             var activity = new Activity(SpanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var span =
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -648,12 +644,12 @@ namespace OpenTelemetry.Trace.Test
         public void BadArguments()
         {
             var activity = new Activity(SpanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var span =
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    recordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -677,11 +673,11 @@ namespace OpenTelemetry.Trace.Test
         public void SetSampleTo()
         {
             var activity = new Activity(SpanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var span = (Span)Span.StartSpan(
                 activity,
                 Tracestate.Empty,
-                recordSpanOptions,
                 SpanName,
                 SpanKind.Internal,
                 TraceParams.Default,
@@ -699,12 +695,15 @@ namespace OpenTelemetry.Trace.Test
         {
             var parentActivity = new Activity(SpanName).Start();
             var activity = new Activity(SpanName).Start();
+            if (recordEvents)
+            {
+                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            }
 
             var span =
                 Span.StartSpan(
                     activity,
-                    Tracestate.Empty, 
-                    recordEvents ? recordSpanOptions : noRecordSpanOptions,
+                    Tracestate.Empty,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -721,12 +720,15 @@ namespace OpenTelemetry.Trace.Test
         public void EndSpanDoesNotStopActivityWhenDoesNotOwnIt(bool recordEvents)
         {
             var activity = new Activity(SpanName).Start();
+            if (recordEvents)
+            {
+                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            }
 
             var span =
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    recordEvents ? recordSpanOptions : noRecordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
@@ -746,12 +748,15 @@ namespace OpenTelemetry.Trace.Test
         public void EndSpanStopActivity_NotCurrentActivity(bool recordEvents, bool ownsActivity)
         {
             var activity = new Activity(SpanName).Start();
+            if (recordEvents)
+            {
+                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            }
 
             var span =
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    recordEvents ? recordSpanOptions : noRecordSpanOptions,
                     SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,

@@ -39,12 +39,10 @@ namespace OpenTelemetry.Trace
         private Status status;
         private bool sampleToLocalSpanStore;
         private Lazy<SpanContext> spanContext;
-        private bool hasBeenEnded;
 
         private Span(
                 Activity activity,
                 Tracestate tracestate,
-                SpanOptions options,
                 string name,
                 SpanKind spanKind,
                 ITraceParams traceParams,
@@ -57,20 +55,18 @@ namespace OpenTelemetry.Trace
                 this.Activity.SpanId, 
                 this.Activity.ActivityTraceFlags, 
                 tracestate));
-            this.Options = options;
             this.Name = name;
             this.traceParams = traceParams ?? throw new ArgumentNullException(nameof(traceParams));
             this.startEndHandler = startEndHandler;
             this.sampleToLocalSpanStore = false;
             this.Kind = spanKind;
             this.OwnsActivity = stopActivity;
+            this.IsRecordingEvents = this.Activity.Recorded;
         }
 
         public Activity Activity { get; }
 
         public SpanContext Context => this.spanContext.Value;
-
-        public SpanOptions Options { get; }
 
         public string Name { get; private set; }
 
@@ -148,10 +144,10 @@ namespace OpenTelemetry.Trace
 
         public ActivitySpanId ParentSpanId => this.Activity.ParentSpanId;
 
-        public bool HasEnded => this.hasBeenEnded;
+        public bool HasEnded { get; private set; }
 
         /// <inheritdoc/>
-        public bool IsRecordingEvents => this.Options.HasFlag(SpanOptions.RecordEvents);
+        public bool IsRecordingEvents { get; }
 
         /// <summary>
         /// Gets or sets span kind.
@@ -365,7 +361,7 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.hasBeenEnded = true;
+                this.HasEnded = true;
             }
 
             this.startEndHandler.OnEnd(this);
@@ -469,7 +465,6 @@ namespace OpenTelemetry.Trace
         internal static ISpan StartSpan(
                         Activity activity,
                         Tracestate tracestate,
-                        SpanOptions options,
                         string name,
                         SpanKind spanKind,
                         ITraceParams traceParams,
@@ -479,7 +474,6 @@ namespace OpenTelemetry.Trace
             var span = new Span(
                activity,
                tracestate,
-               options,
                name,
                spanKind,
                traceParams,

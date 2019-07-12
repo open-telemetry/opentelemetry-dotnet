@@ -54,10 +54,14 @@ namespace OpenTelemetry.Trace.Test
         public void WithSpan_CloseDetaches(bool stopSpan, bool recordEvents)
         {
             var activity = new Activity("foo").Start();
+            if (recordEvents)
+            {
+                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            }
+
             var span = Span.StartSpan(
                 activity,
                 Tracestate.Empty,
-                recordEvents ? SpanOptions.RecordEvents : SpanOptions.None,
                 "foo",
                 SpanKind.Internal,
                 TraceParams.Default,
@@ -83,10 +87,14 @@ namespace OpenTelemetry.Trace.Test
         public void WithSpan_NotOwningActivity(bool stopSpan, bool recordEvents)
         {
             var activity = new Activity("foo").Start();
+            if (recordEvents)
+            {
+                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            }
+
             var span = Span.StartSpan(
                 activity,
                 Tracestate.Empty,
-                recordEvents ? SpanOptions.RecordEvents : SpanOptions.None,
                 "foo",
                 SpanKind.Internal,
                 TraceParams.Default,
@@ -112,10 +120,14 @@ namespace OpenTelemetry.Trace.Test
         public void WithSpan_NoopOnBrokenScope(bool stopSpan, bool recordEvents)
         {
             var parentActivity = new Activity("parent").Start();
+            if (recordEvents)
+            {
+                parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            }
+
             var parentSpan = Span.StartSpan(
                 parentActivity,
                 Tracestate.Empty,
-                recordEvents ? SpanOptions.RecordEvents : SpanOptions.None,
                 "parent",
                 SpanKind.Internal,
                 TraceParams.Default,
@@ -126,7 +138,6 @@ namespace OpenTelemetry.Trace.Test
             var childSpan = Span.StartSpan(
                 childActivity,
                 Tracestate.Empty,
-                recordEvents ? SpanOptions.RecordEvents : SpanOptions.None,
                 "child",
                 SpanKind.Internal,
                 TraceParams.Default,
@@ -152,10 +163,14 @@ namespace OpenTelemetry.Trace.Test
         public void WithSpan_RestoresParentScope(bool stopSpan, bool recordEvents)
         {
             var parentActivity = new Activity("parent").Start();
+            if (recordEvents)
+            {
+                parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            }
+
             var parentSpan = Span.StartSpan(
                 parentActivity,
                 Tracestate.Empty,
-                recordEvents ? SpanOptions.RecordEvents : SpanOptions.None,
                 "parent",
                 SpanKind.Internal,
                 TraceParams.Default,
@@ -167,7 +182,6 @@ namespace OpenTelemetry.Trace.Test
             var childSpan = Span.StartSpan(
                 childActivity,
                 Tracestate.Empty,
-                recordEvents ? SpanOptions.RecordEvents : SpanOptions.None,
                 "child",
                 SpanKind.Internal,
                 TraceParams.Default,
@@ -193,13 +207,12 @@ namespace OpenTelemetry.Trace.Test
             var span = Span.StartSpan(
                 activity,
                 Tracestate.Empty,
-                SpanOptions.RecordEvents,
                 "foo",
                 SpanKind.Internal,
                 TraceParams.Default,
                 startEndHandler);
 
-            using (CurrentSpanUtils.WithSpan(span, true))
+            using(CurrentSpanUtils.WithSpan(span, true))
             using(CurrentSpanUtils.WithSpan(span, true))
             {
                 Assert.Same(activity, Activity.Current);
@@ -217,7 +230,6 @@ namespace OpenTelemetry.Trace.Test
             var span = Span.StartSpan(
                 activity,
                 Tracestate.Empty,
-                SpanOptions.RecordEvents,
                 "foo",
                 SpanKind.Internal,
                 TraceParams.Default,
@@ -243,10 +255,14 @@ namespace OpenTelemetry.Trace.Test
         public void WithSpan_WrongActivity(bool stopSpan, bool recordEvents)
         {
             var activity = new Activity("foo").Start();
+            if (recordEvents)
+            {
+                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            }
+
             var span = Span.StartSpan(
                 activity,
                 Tracestate.Empty,
-                recordEvents ? SpanOptions.RecordEvents : SpanOptions.None,
                 "foo",
                 SpanKind.Internal,
                 TraceParams.Default,

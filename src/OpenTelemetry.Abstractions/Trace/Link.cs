@@ -80,7 +80,7 @@ namespace OpenTelemetry.Trace
                 + "traceId=" + this.Context.TraceId.ToHexString() + ", "
                 + "spanId=" + this.Context.SpanId.ToHexString() + ", "
                 + "tracestate=" + this.Context.Tracestate.ToString() + ", "
-                + "attributes=" + Collections.ToString(this.Attributes)
+                + "attributes=" + string.Join(", ", this.Attributes.Select(kvp => $"{kvp.Key}={kvp.Value}"))
                 + "}";
         }
 
