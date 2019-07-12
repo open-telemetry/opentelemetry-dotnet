@@ -37,42 +37,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         {
         }
 
-        public static List<object[]> DataProviderBuildTag() => new List<object[]>
-        {
-            new object[] { AttributeValue.StringAttributeValue("value"), JaegerTagType.STRING, "value" },
-            new object[] { AttributeValue.LongAttributeValue(1), JaegerTagType.LONG, (long) 1 },
-            new object[] { AttributeValue.DoubleAttributeValue(1), JaegerTagType.DOUBLE, (double) 1 },
-            new object[] { AttributeValue.BooleanAttributeValue(true), JaegerTagType.BOOL, true },
-        };
-
-        [Theory]
-        [MemberData(nameof(DataProviderBuildTag))]
-        public void TestBuildTag(IAttributeValue tagValue, JaegerTagType expectedTagType, object expectedValue)
-        {
-            var telemetryTag = new KeyValuePair<string, IAttributeValue>("key", tagValue);
-            var tag = telemetryTag.ToJaegerTag();
-
-            Assert.Equal(expectedTagType, tag.VType);
-            Assert.Equal("key", tag.Key);
-
-            switch (expectedTagType)
-            {
-                case JaegerTagType.BOOL:
-                    Assert.Equal(expectedValue, tag.VBool);
-                    break;
-                case JaegerTagType.LONG:
-                    Assert.Equal(expectedValue, tag.VLong);
-                    break;
-                case JaegerTagType.DOUBLE:
-                    Assert.Equal(expectedValue, tag.VDouble);
-                    break;
-                case JaegerTagType.STRING:
-                default:
-                    Assert.Equal(expectedValue, tag.VStr);
-                    break;
-            }
-        }
-
         [Fact]
         public void TestConvertSpan()
         {
