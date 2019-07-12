@@ -30,7 +30,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         public async void ProfilerSessionUsesTheSameDefault()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig());
+            var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
 
             using (var collector = new StackExchangeRedisCallsCollector(tracer, null, null))
             {

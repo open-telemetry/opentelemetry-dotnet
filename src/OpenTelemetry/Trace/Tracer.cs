@@ -38,26 +38,24 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Creates an instance of <see cref="ITracer"/>.
         /// </summary>
-        /// <param name="randomGenerator">Span id generator.</param>
         /// <param name="startEndHandler">Start/end event handler.</param>
         /// <param name="traceConfig">Trace configuration.</param>
-        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig)
-            : this(randomGenerator, startEndHandler, traceConfig, null, null, null)
+        public Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig)
+            : this(startEndHandler, traceConfig, null, null, null)
         {
         }
 
         /// <summary>
         /// Creates an instance of <see cref="ITracer"/>.
         /// </summary>
-        /// <param name="randomGenerator">Span id generator.</param>
         /// <param name="startEndHandler">Start/end event handler.</param>
         /// <param name="traceConfig">Trace configuration.</param>
         /// <param name="spanExporter">Exporter for span.</param>
         /// <param name="binaryFormat">Binary format context propagator.</param>
         /// <param name="textFormat">Text format context propagator.</param>
-        public Tracer(IRandomGenerator randomGenerator, IStartEndHandler startEndHandler, ITraceConfig traceConfig, SpanExporter spanExporter, IBinaryFormat binaryFormat, ITextFormat textFormat)
+        public Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig, SpanExporter spanExporter, IBinaryFormat binaryFormat, ITextFormat textFormat)
         {
-            this.spanBuilderOptions = new SpanBuilderOptions(randomGenerator, startEndHandler, traceConfig);
+            this.spanBuilderOptions = new SpanBuilderOptions(startEndHandler, traceConfig);
             this.spanExporter = spanExporter ?? (SpanExporter)SpanExporter.Create(ExporterBufferSize, ExporterScheduleDelay);
             this.BinaryFormat = binaryFormat ?? new BinaryFormat();
             this.TextFormat = textFormat ?? new TraceContextFormat();
