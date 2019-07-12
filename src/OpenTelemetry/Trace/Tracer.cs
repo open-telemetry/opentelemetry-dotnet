@@ -18,7 +18,6 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Threading;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Config;
@@ -30,7 +29,7 @@ namespace OpenTelemetry.Trace
         private const int ExporterBufferSize = 32;
 
         // Enforces that trace export exports data at least once every 5 seconds.
-        private static readonly Duration ExporterScheduleDelay = Duration.Create(5, 0);
+        private static readonly TimeSpan ExporterScheduleDelay = TimeSpan.FromSeconds(5);
 
         private readonly SpanBuilderOptions spanBuilderOptions;
         private readonly SpanExporter spanExporter;

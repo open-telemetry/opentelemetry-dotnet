@@ -23,7 +23,6 @@ namespace OpenTelemetry.Trace.Export.Test
     using System.Threading;
     using System.Threading.Tasks;
     using Moq;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Testing.Export;
     using OpenTelemetry.Trace.Config;
@@ -36,8 +35,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private const string SpanName2 = "MySpanName/2";
         private readonly Activity sampledActivity;
         private readonly Activity notSampledActivity;
-        private readonly ISpanExporter spanExporter = SpanExporter.Create(4, Duration.Create(1, 0));
-        private readonly IRunningSpanStore runningSpanStore = new InProcessRunningSpanStore();
+        private readonly ISpanExporter spanExporter = SpanExporter.Create(4, TimeSpan.FromSeconds(1));
         private readonly IStartEndHandler startEndHandler;
         private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
         private readonly TestHandler serviceHandler = new TestHandler();
@@ -49,7 +47,7 @@ namespace OpenTelemetry.Trace.Export.Test
             sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             notSampledActivity = new Activity("foo");
-            startEndHandler = new StartEndHandler(spanExporter, runningSpanStore, null, new SimpleEventQueue());
+            startEndHandler = new StartEndHandler(spanExporter, new SimpleEventQueue());
 
             spanExporter.RegisterHandler("test.service", serviceHandler);
         }
@@ -65,8 +63,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     spanName,
                     SpanKind.Internal,
                     TraceParams.Default,
-                    startEndHandler,
-                    null);
+                    startEndHandler);
             span.End();
             return span as Span;
         }
@@ -82,8 +79,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     spanName,
                     SpanKind.Internal,
                     TraceParams.Default,
-                    startEndHandler,
-                    null);
+                    startEndHandler);
             span.End();
             return span as Span;
         }
@@ -189,7 +185,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public async Task ExportAsyncCallsAllHandlers()
         {
-            var exporter = SpanExporter.Create(4, Duration.Create(1, 0));
+            var exporter = SpanExporter.Create(4, TimeSpan.FromSeconds(1));
 
             var handler1 = new Mock<IHandler>();
 
@@ -203,8 +199,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var args = (IEnumerable<SpanData>)handler1.Invocations.First().Arguments.First();
 
             handler1.Verify(c => c.ExportAsync(It.Is<IEnumerable<SpanData>>(
-                (x) => x.Where((s) => s == span1).Count() > 0 &&
-                       x.Count() == 1)));
+                (x) => x.Any(s => s == span1) && x.Count() == 1)));
         }
 
         public void Dispose()

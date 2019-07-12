@@ -49,8 +49,6 @@ namespace OpenTelemetry.Trace
             IStartEndHandler startEndHandler =
                 new StartEndHandler(
                     ExportComponent.SpanExporter,
-                    ((ExportComponent)ExportComponent).RunningSpanStore,
-                    ((ExportComponent)ExportComponent).SampledSpanStore,
                     eventQueue);
 
             tracer = new Tracer(startEndHandler, TraceConfig);

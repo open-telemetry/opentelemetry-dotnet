@@ -19,6 +19,7 @@ namespace OpenTelemetry.Stats.Test
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using OpenTelemetry.Abstractions.Utils;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
@@ -29,8 +30,6 @@ namespace OpenTelemetry.Stats.Test
         private static readonly TagKey Key = TagKey.Create("Key");
         private static readonly TagValue Value = TagValue.Create("Value");
         private static readonly TagValue Value2 = TagValue.Create("Value2");
-        private static readonly String MeasureName = "my measurement";
-        private static readonly String MeasureName2 = "my measurement 2";
         private static readonly String MeasureUnit = "us";
         private static readonly String MeasureDescription = "measure description";
         private static readonly IMeasureDouble MeasureDouble = CreateRandomMeasureDouble();
