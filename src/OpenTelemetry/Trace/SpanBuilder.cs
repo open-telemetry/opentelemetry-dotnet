@@ -113,7 +113,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public ISpanBuilder FromCurrentActivity()
+        public ISpanBuilder SetAutoInstrumented()
         {
             var currentActivity = Activity.Current;
 

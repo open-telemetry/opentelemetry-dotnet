@@ -63,12 +63,12 @@ namespace OpenTelemetry.Trace
         ISpanBuilder SetNoParent();
 
         /// <summary>
-        /// Set the <see cref="Activity.Current"/> to create span from. This span will represent the Activity,
-        /// not the child of it. Use it when library creates Activity on its own.
+        /// Instructs builder to use Activity created by library to create a span.
+        /// The span will represent this Activity and will not be a child of this Activity.
         /// Any parent that was set previously will be discarded.
         /// </summary>
         /// <returns>This span builder for chaining.</returns>
-        ISpanBuilder FromCurrentActivity();
+        ISpanBuilder SetAutoInstrumented();
 
         /// <summary>
         /// Set <see cref="SpanKind"/> on the span.

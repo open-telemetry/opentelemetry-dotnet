@@ -14,14 +14,13 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-
 namespace OpenTelemetry.Trace.Test
 {
     using System;
     using System.Diagnostics;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Linq;
     using Moq;
     using OpenTelemetry.Common;
     using OpenTelemetry.Trace.Config;
@@ -192,7 +191,7 @@ namespace OpenTelemetry.Trace.Test
 
             var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetParent(spanContext)
-                .FromCurrentActivity()
+                .SetAutoInstrumented()
                 .StartSpan();
 
             Assert.True(childSpan.Context.IsValid);
@@ -211,7 +210,7 @@ namespace OpenTelemetry.Trace.Test
             var activity = new Activity("foo").Start();
 
             var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
-                .FromCurrentActivity()
+                .SetAutoInstrumented()
                 .SetParent(spanContext)
                 .StartSpan();
 
@@ -384,7 +383,7 @@ namespace OpenTelemetry.Trace.Test
 
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetSpanKind(SpanKind.Internal)
-                .FromCurrentActivity()
+                .SetAutoInstrumented()
                 .StartSpan();
 
             Assert.True(span.Context.IsValid);
@@ -405,7 +404,7 @@ namespace OpenTelemetry.Trace.Test
 
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetSpanKind(SpanKind.Internal)
-                .FromCurrentActivity()
+                .SetAutoInstrumented()
                 .StartSpan();
 
             Assert.True(span.Context.IsValid);
@@ -877,13 +876,13 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((Activity)null));
 
             // no Activity.Current
-            Assert.Throws<ArgumentException>(() => spanBuilder.FromCurrentActivity());
+            Assert.Throws<ArgumentException>(() => spanBuilder.SetAutoInstrumented());
 
             // Activity.Current wrong format
             Activity.DefaultIdFormat = ActivityIdFormat.Hierarchical;
             Activity.ForceDefaultIdFormat = true;
             var a = new Activity("foo").Start(); // TODO SetIdFormat
-            Assert.Throws<ArgumentException>(() => spanBuilder.FromCurrentActivity());
+            Assert.Throws<ArgumentException>(() => spanBuilder.SetAutoInstrumented());
             a.Stop();
 
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetSampler(null));
