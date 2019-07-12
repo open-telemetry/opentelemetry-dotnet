@@ -104,13 +104,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
         public static JaegerSpanRef ToJaegerSpanRef(this ILink link)
         {
-            // var spanRefType = ConvertLinkType(link.Context.Type);
-
-            // if (spanRefType == null)
-            // {
-            //     return null;
-            // }
-
             var traceId = link?.Context?.TraceId?.Bytes == null ? Int128.Empty : new Int128(link.Context.TraceId.Bytes);
             var spanId = link?.Context?.SpanId?.Bytes == null ? Int128.Empty : new Int128(link.Context.SpanId.Bytes);
 
@@ -123,20 +116,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
             };
         }
 
-        // private static JaegerSpanRefType? ConvertLinkType(LinkType linkType)
-        // {
-        //     if (linkType == LinkType.ChildLinkedSpan)
-        //     {
-        //         return JaegerSpanRefType.CHILD_OF;
-        //     }
-             // if (linkType == LinkType.ParentLinkedSpan)
-        //     {
-        //         return JaegerSpanRefType.FOLLOWS_FROM;
-        //     }
-             // return null;
-        // }
-
-        private static long ToEpochMicroseconds(this Timestamp timestamp)
+        public static long ToEpochMicroseconds(this Timestamp timestamp)
         {
             long nanos = (timestamp.Seconds * NanosPerSecond) + timestamp.Nanos;
             long micros = nanos / 1000L;

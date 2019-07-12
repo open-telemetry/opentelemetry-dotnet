@@ -1,0 +1,46 @@
+{
+    "templates": [
+        {
+            "name": "Class",
+            "extension": "cs",
+            "file": "./class.cs-template",
+            "parameters": "./template-parameters.js"
+        },
+        {
+            "name": "Interface",
+            "extension": "cs",
+            "file": "./interface.cs-template",
+            "parameters": "./template-parameters.js"
+        },
+        {
+            "name": "Enum",
+            "extension": "cs",
+            "file": "./enum.cs-template",
+            "parameters": "./template-parameters.js"
+        },
+        {
+            "name": "Class",
+            "extension": "ts",
+            "file": "./class.ts-template",
+            "parameters": "./template-parameters.js"
+        },
+        {
+            "name": "Interface",
+            "extension": "ts",
+            "file": "./interface.ts-template",
+            "parameters": "./template-parameters.js"
+        },
+        {
+            "name": "Default",
+            "extension": "ts",
+            "file": "./default.ts-template",
+            "parameters": "./template-parameters.js"
+        },
+        {
+            "name": "Class",
+            "extension": "vb",
+            "file": "./class.vb-template",
+            "parameters": "./template-parameters.js"
+        }
+    ]
+}

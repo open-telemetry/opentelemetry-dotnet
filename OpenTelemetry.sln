@@ -75,6 +75,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{328E9300-9DA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift", "lib\Thrift\Thrift.csproj", "{2B0A9573-CC51-4BE2-86EA-8DEA3D7213FF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Jaeger.Tests", "test\OpenTelemetry.Exporter.Jaeger.Tests\OpenTelemetry.Exporter.Jaeger.Tests.csproj", "{83A4992F-68A2-4B05-B497-E42DE037D9FA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -161,12 +163,15 @@ Global
 		{2B0A9573-CC51-4BE2-86EA-8DEA3D7213FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2B0A9573-CC51-4BE2-86EA-8DEA3D7213FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2B0A9573-CC51-4BE2-86EA-8DEA3D7213FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83A4992F-68A2-4B05-B497-E42DE037D9FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83A4992F-68A2-4B05-B497-E42DE037D9FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83A4992F-68A2-4B05-B497-E42DE037D9FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83A4992F-68A2-4B05-B497-E42DE037D9FA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{7CB2F02E-03FA-4FFF-89A5-C51F107623FD} = {61188153-47FB-4567-AC9B-79B2435853EB}
 		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075} = {77C7929A-2EED-4AA6-8705-B5C443C8AA0F}
 		{6EC9DEC9-086F-4F29-BF3F-5FC7253829D5} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{2B0A9573-CC51-4BE2-86EA-8DEA3D7213FF} = {328E9300-9DA5-11E9-B531-E75873C46FCA}

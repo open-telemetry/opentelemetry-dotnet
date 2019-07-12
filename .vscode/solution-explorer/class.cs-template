@@ -1,0 +1,8 @@
+namespace {{namespace}}
+{
+    using System;
+
+    public class {{name}}
+    {
+    }
+}

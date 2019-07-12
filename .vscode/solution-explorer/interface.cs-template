@@ -1,0 +1,8 @@
+namespace {{namespace}}
+{
+    using System;
+
+    public interface {{name}}
+    {
+    }
+}
