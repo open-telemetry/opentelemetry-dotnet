@@ -31,14 +31,15 @@ namespace OpenTelemetry.Tags.Propagation.Test
         private static readonly TagValue V2 = TagValue.Create("v2");
         private static readonly TagValue V3 = TagValue.Create("v3");
 
-        private readonly TagsComponent tagsComponent = new TagsComponent();
-        private readonly ITagContextBinarySerializer serializer;
+        private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
+        private readonly ITagContextBinarySerializer serializer;
 
         public TagContextRoundtripTest()
         {
-            serializer = tagsComponent.TagPropagationComponent.BinarySerializer;
-            tagger = tagsComponent.Tagger;
+            state = new CurrentTaggingState();
+            tagger = new Tagger(state);
+            serializer = new TagContextBinarySerializer(state);
         }
 
         [Fact]
