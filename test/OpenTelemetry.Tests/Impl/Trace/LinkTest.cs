@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace.Test
 
     public class LinkTest
     {
-        private readonly IDictionary<string, IAttributeValue> attributesMap = new Dictionary<string, IAttributeValue>();
+        private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();
         private readonly SpanContext spanContext;
           
 

@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Test
             throw new NotImplementedException();
         }
 
-        public void SetAttribute(string key, IAttributeValue value)
+        public void SetAttribute(KeyValuePair<string, object> keyValuePair)
         {
         }
 
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace.Test
         {
         }
 
-        public void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
+        public void AddEvent(string name, IDictionary<string, object> attributes)
         {
         }
 

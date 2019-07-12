@@ -235,16 +235,11 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void SetAttribute(string key, IAttributeValue value)
+        public void SetAttribute(KeyValuePair<string, object> keyValuePair)
         {
-            if (key == null)
+            if (keyValuePair.Key == null || keyValuePair.Value == null)
             {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
+                throw new ArgumentNullException(nameof(keyValuePair));
             }
 
             if (!this.IsRecordingEvents)
@@ -260,7 +255,7 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedAttributes.PutAttribute(key, value);
+                this.InitializedAttributes.PutAttribute(keyValuePair.Key, keyValuePair.Value);
             }
         }
 
@@ -290,7 +285,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void AddEvent(string name, IDictionary<string, IAttributeValue> eventAttributes)
+        public void AddEvent(string name, IDictionary<string, object> eventAttributes)
         {
             if (name == null)
             {
@@ -409,7 +404,7 @@ namespace OpenTelemetry.Trace
                 throw new InvalidOperationException("Getting SpanData for a Span without RECORD_EVENTS option.");
             }
 
-            var attributesSpanData = this.attributes == null ? Attributes.Create(new Dictionary<string, IAttributeValue>(), 0)
+            var attributesSpanData = this.attributes == null ? Attributes.Create(new Dictionary<string, object>(), 0)
                         : Attributes.Create(this.attributes, this.attributes.NumberOfDroppedAttributes);
 
             var annotationsSpanData = CreateTimedEvents(this.InitializedEvents, this.TimestampConverter);
@@ -448,7 +443,7 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            this.SetAttribute(key, AttributeValue.StringAttributeValue(value));
+            this.SetAttribute(new KeyValuePair<string, object>(key, value));
         }
 
         /// <inheritdoc/>
@@ -464,7 +459,7 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            this.SetAttribute(key, AttributeValue.LongAttributeValue(value));
+            this.SetAttribute(new KeyValuePair<string, object>(key, value));
         }
 
         /// <inheritdoc/>
@@ -480,7 +475,7 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            this.SetAttribute(key, AttributeValue.DoubleAttributeValue(value));
+            this.SetAttribute(new KeyValuePair<string, object>(key, value));
         }
 
         /// <inheritdoc/>
@@ -496,7 +491,7 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            this.SetAttribute(key, AttributeValue.BooleanAttributeValue(value));
+            this.SetAttribute(new KeyValuePair<string, object>(key, value));
         }
 
         internal static ISpan StartSpan(

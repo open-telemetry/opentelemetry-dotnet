@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private readonly SpanContext spanContext;
         private readonly ActivitySpanId parentSpanId;
         private readonly Resource resource = Resource.Empty;
-        private readonly IDictionary<string, IAttributeValue> attributesMap = new Dictionary<string, IAttributeValue>();
+        private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();
         private readonly List<ITimedEvent<IEvent>> eventList = new List<ITimedEvent<IEvent>>();
         private readonly List<ILink> linksList = new List<ILink>();
 
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     resource,
                     SPAN_NAME,
                     startTimestamp,
-                    Attributes.Create(new Dictionary<string, IAttributeValue>(), 0),
+                    Attributes.Create(new Dictionary<string, object>(), 0),
                     TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>(), 0),
                     LinkList.Create(new List<ILink>(), 0),
                     0,
@@ -193,7 +193,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     resource,
                     SPAN_NAME,
                     startTimestamp,
-                    Attributes.Create(new Dictionary<string, IAttributeValue>(), 0),
+                    Attributes.Create(new Dictionary<string, object>(), 0),
                     TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>(), 0),
                     LinkList.Create(new List<ILink>(), 0),
                     0,

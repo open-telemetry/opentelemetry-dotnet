@@ -66,16 +66,11 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public void SetAttribute(string key, IAttributeValue value)
+        public void SetAttribute(KeyValuePair<string, object> keyValuePair)
         {
-            if (key == null)
+            if (keyValuePair.Key == null || keyValuePair.Value == null)
             {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
+                throw new ArgumentNullException(nameof(keyValuePair));
             }
         }
 
@@ -130,7 +125,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
+        public void AddEvent(string name, IDictionary<string, object> attributes)
         {
             if (name == null)
             {

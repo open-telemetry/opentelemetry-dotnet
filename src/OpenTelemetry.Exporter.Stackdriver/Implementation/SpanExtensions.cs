@@ -106,16 +106,30 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             return ret;
         }
 
-        public static Google.Cloud.Trace.V2.AttributeValue ToAttributeValue(this IAttributeValue av)
+        public static Google.Cloud.Trace.V2.AttributeValue ToAttributeValue(this object av)
         {
-            var ret = av.Match(
-                (s) => new Google.Cloud.Trace.V2.AttributeValue() { StringValue = new TruncatableString() { Value = s } },
-                (b) => new Google.Cloud.Trace.V2.AttributeValue() { BoolValue = b },
-                (l) => new Google.Cloud.Trace.V2.AttributeValue() { IntValue = l },
-                (d) => new Google.Cloud.Trace.V2.AttributeValue() { StringValue = new TruncatableString() { Value = d.ToString() } },
-                (obj) => new Google.Cloud.Trace.V2.AttributeValue() { StringValue = new TruncatableString() { Value = obj.ToString() } });
-
-            return ret;
+            switch (av)
+            {
+                case string s:
+                    return new Google.Cloud.Trace.V2.AttributeValue()
+                    {
+                        StringValue = new TruncatableString() { Value = s },
+                    };
+                case bool b:
+                    return new Google.Cloud.Trace.V2.AttributeValue() { BoolValue = b };
+                case long l:
+                    return new Google.Cloud.Trace.V2.AttributeValue() { IntValue = l };
+                case double d:
+                    return new Google.Cloud.Trace.V2.AttributeValue()
+                    {
+                        StringValue = new TruncatableString() { Value = d.ToString() },
+                    };
+                default:
+                    return new Google.Cloud.Trace.V2.AttributeValue()
+                    {
+                        StringValue = new TruncatableString() { Value = av.ToString() },
+                    };
+            }
         }
     }
 }

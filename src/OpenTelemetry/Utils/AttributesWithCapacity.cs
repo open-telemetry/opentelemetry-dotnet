@@ -22,7 +22,7 @@ namespace OpenTelemetry.Utils
     using System.Linq;
     using OpenTelemetry.Trace;
 
-    internal class AttributesWithCapacity : IDictionary<string, IAttributeValue>
+    internal class AttributesWithCapacity : IDictionary<string, object>
     {
         private readonly OrderedDictionary @delegate = new OrderedDictionary();
         private readonly int capacity;
@@ -49,11 +49,11 @@ namespace OpenTelemetry.Utils
             }
         }
 
-        public ICollection<IAttributeValue> Values
+        public ICollection<object> Values
         {
             get
             {
-                return (ICollection<IAttributeValue>)this.@delegate.Values;
+                return (ICollection<object>)this.@delegate.Values;
             }
         }
 
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Utils
             }
         }
 
-        public IAttributeValue this[string key]
+        public object this[string key]
         {
             get
             {
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Utils
             }
         }
 
-        public void PutAttribute(string key, IAttributeValue value)
+        public void PutAttribute(string key, object value)
         {
             this.totalRecordedAttributes += 1;
             this[key] = value;
@@ -98,7 +98,7 @@ namespace OpenTelemetry.Utils
 
         // Users must call this method instead of putAll to keep count of the total number of entries
         // inserted.
-        public void PutAttributes(IDictionary<string, IAttributeValue> attributes)
+        public void PutAttributes(IDictionary<string, object> attributes)
         {
             foreach (var kvp in attributes)
             {
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Utils
             }
         }
 
-        public void Add(string key, IAttributeValue value)
+        public void Add(string key, object value)
         {
             this.@delegate.Add(key, value);
         }
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Utils
             }
         }
 
-        public bool TryGetValue(string key, out IAttributeValue value)
+        public bool TryGetValue(string key, out object value)
         {
             value = null;
             if (this.ContainsKey(key))
@@ -141,7 +141,7 @@ namespace OpenTelemetry.Utils
             return false;
         }
 
-        public void Add(KeyValuePair<string, IAttributeValue> item)
+        public void Add(KeyValuePair<string, object> item)
         {
             this.@delegate.Add(item.Key, item.Value);
         }
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Utils
             this.@delegate.Clear();
         }
 
-        public bool Contains(KeyValuePair<string, IAttributeValue> item)
+        public bool Contains(KeyValuePair<string, object> item)
         {
             var result = this.TryGetValue(item.Key, out var value);
             if (result)
@@ -162,25 +162,25 @@ namespace OpenTelemetry.Utils
             return false;
         }
 
-        public void CopyTo(KeyValuePair<string, IAttributeValue>[] array, int arrayIndex)
+        public void CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
         {
             var entries = new DictionaryEntry[this.@delegate.Count];
             this.@delegate.CopyTo(entries, 0);
 
             for (var i = 0; i < entries.Length; i++)
             {
-                array[i + arrayIndex] = new KeyValuePair<string, IAttributeValue>((string)entries[i].Key, (IAttributeValue)entries[i].Value);
+                array[i + arrayIndex] = new KeyValuePair<string, object>((string)entries[i].Key, (object)entries[i].Value);
             }
         }
 
-        public bool Remove(KeyValuePair<string, IAttributeValue> item)
+        public bool Remove(KeyValuePair<string, object> item)
         {
             return this.Remove(item.Key);
         }
 
-        public IEnumerator<KeyValuePair<string, IAttributeValue>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
-            var array = new KeyValuePair<string, IAttributeValue>[this.@delegate.Count];
+            var array = new KeyValuePair<string, object>[this.@delegate.Count];
             this.CopyTo(array, 0);
             return array.ToList().GetEnumerator();
         }

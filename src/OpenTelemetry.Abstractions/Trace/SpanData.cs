@@ -48,7 +48,7 @@ namespace OpenTelemetry.Trace
             this.Resource = resource ?? throw new ArgumentNullException(nameof(resource));
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.StartTimestamp = startTimestamp ?? throw new ArgumentNullException(nameof(startTimestamp));
-            this.Attributes = attributes ?? Export.Attributes.Create(new Dictionary<string, IAttributeValue>(), 0);
+            this.Attributes = attributes ?? Export.Attributes.Create(new Dictionary<string, object>(), 0);
             this.Events = events ?? TimedEvents<IEvent>.Create(Enumerable.Empty<ITimedEvent<IEvent>>(), 0);
             this.Links = links ?? LinkList.Create(Enumerable.Empty<ILink>(), 0);
             this.ChildSpanCount = childSpanCount;

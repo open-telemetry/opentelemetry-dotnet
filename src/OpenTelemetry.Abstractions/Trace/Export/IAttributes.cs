@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace.Export
         /// <summary>
         /// Gets tha dictionaty of attributes by name.
         /// </summary>
-        IDictionary<string, IAttributeValue> AttributeMap { get; }
+        IDictionary<string, object> AttributeMap { get; }
 
         /// <summary>
         /// Gets the number of attributed dropped due to the limit.

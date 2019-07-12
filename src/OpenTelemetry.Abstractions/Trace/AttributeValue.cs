@@ -21,17 +21,35 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Attribute value.
     /// </summary>
-    public abstract class AttributeValue : IAttributeValue
+    public abstract class AttributeValue
     {
         internal AttributeValue()
         {
         }
 
-        /// <summary>
-        /// Creates string attribute value from value provided.
-        /// </summary>
-        /// <param name="stringValue">String value.</param>
-        /// <returns>Attribute value encapsulating the provided string value.</returns>
+        public enum Type
+        {
+            /// <summary>
+            /// A String AttributeValue
+            /// </summary>
+            String,
+
+            /// <summary>
+            /// A Boolean AttributeValue
+            /// </summary>
+            Boolean,
+
+            /// <summary>
+            /// A Long AttributeValue
+            /// </summary>
+            Long,
+
+            /// <summary>
+            /// A Double AttributeValue
+            /// </summary>
+            Double,
+        }
+
         public static IAttributeValue<string> StringAttributeValue(string stringValue)
         {
             if (stringValue == null)
@@ -72,7 +90,32 @@ namespace OpenTelemetry.Trace
             return new AttributeValue<double>(doubleValue);
         }
 
-        /// <inheritdoc/>
+        public new abstract Type GetType();
+
+        /// <summary>
+        /// Creates string attribute value from value provided.
+        /// </summary>
+        /// <returns>String value of the AttributeValue.</returns>
+        public string GetStringValue()
+        {
+            throw new InvalidOperationException($"This type can only return {this.GetType()} data");
+        }
+
+        public bool GetBooleanValue()
+        {
+            throw new InvalidOperationException($"This type can only return {this.GetType()} data");
+        }
+
+        public long GetLongValue()
+        {
+            throw new InvalidOperationException($"This type can only return {this.GetType()} data");
+        }
+
+        public double GetDoubleValue()
+        {
+            throw new InvalidOperationException($"This type can only return {this.GetType()} data");
+        }
+
         public abstract T Match<T>(
             Func<string, T> stringFunction,
             Func<bool, T> booleanFunction,

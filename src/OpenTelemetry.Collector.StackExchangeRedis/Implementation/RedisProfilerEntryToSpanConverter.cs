@@ -121,7 +121,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             // TODO: determine what to do with Resource in this context
             var resource = Resource.Empty;
 
-            var attributesMap = new Dictionary<string, IAttributeValue>()
+            var attributesMap = new Dictionary<string, object>()
             {
                 // TODO: pre-allocate constant attribute and reuse
                 { "db.type", AttributeValue.StringAttributeValue("redis") },
