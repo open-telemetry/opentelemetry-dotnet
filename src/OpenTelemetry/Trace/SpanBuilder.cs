@@ -113,27 +113,36 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public ISpanBuilder SetAutoInstrumented()
+        public ISpanBuilder SetCreateChild(bool createChild)
         {
-            var currentActivity = Activity.Current;
-
-            if (currentActivity == null)
+            if (!createChild)
             {
-                throw new ArgumentException("Current Activity cannot be null");
+                var currentActivity = Activity.Current;
+
+                if (currentActivity == null)
+                {
+                    throw new ArgumentException("Current Activity cannot be null");
+                }
+
+                if (currentActivity.IdFormat != ActivityIdFormat.W3C)
+                {
+                    throw new ArgumentException("Current Activity is not in W3C format");
+                }
+
+                if (currentActivity.StartTimeUtc == default || currentActivity.Duration != default)
+                {
+                    throw new ArgumentException(
+                        "Current Activity is not running: it has not been started or has been stopped");
+                }
+
+                this.fromActivity = currentActivity;
+                this.contextSource = ContextSource.Activity;
+            }
+            else
+            {
+                this.contextSource = ContextSource.CurrentActivityParent;
             }
 
-            if (currentActivity.IdFormat != ActivityIdFormat.W3C)
-            {
-                throw new ArgumentException("Current Activity is not in W3C format");
-            }
-
-            if (currentActivity.StartTimeUtc == default || currentActivity.Duration != default)
-            {
-                throw new ArgumentException("Current Activity is not running: it has not been started or has been stopped");
-            }
-
-            this.fromActivity = currentActivity;
-            this.contextSource = ContextSource.Activity;
             this.parentSpanContext = null;
             this.parentSpanContext = null;
             this.parentActivity = null;

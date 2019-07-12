@@ -34,13 +34,13 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((Activity)null));
 
             // no Activity.Current
-            Assert.Throws<ArgumentException>(() => spanBuilder.FromCurrentActivity());
+            Assert.Throws<ArgumentException>(() => spanBuilder.SetCreateChild(false));
 
             // Activity.Current wrong format
             Activity.DefaultIdFormat = ActivityIdFormat.Hierarchical;
             Activity.ForceDefaultIdFormat = true;
             var a = new Activity("foo").Start(); // TODO SetIdFormat
-            Assert.Throws<ArgumentException>(() => spanBuilder.FromCurrentActivity());
+            Assert.Throws<ArgumentException>(() => spanBuilder.SetCreateChild(false));
             a.Stop();
 
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetSampler(null));

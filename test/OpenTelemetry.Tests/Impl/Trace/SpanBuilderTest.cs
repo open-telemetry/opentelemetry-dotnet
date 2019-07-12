@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace.Test
             configMock.Setup((c) => c.ActiveTraceParams).Returns(alwaysSampleTraceParams);
 
             startEndHandler = Mock.Of<IStartEndHandler>();
-            tracer = new Tracer(startEndHandler, traceConfig, null);
+            tracer = new Tracer(startEndHandler, traceConfig);
         }
 
         [Fact]
@@ -191,7 +191,7 @@ namespace OpenTelemetry.Trace.Test
 
             var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetParent(spanContext)
-                .SetAutoInstrumented()
+                .SetCreateChild(false)
                 .StartSpan();
 
             Assert.True(childSpan.Context.IsValid);
@@ -210,7 +210,7 @@ namespace OpenTelemetry.Trace.Test
             var activity = new Activity("foo").Start();
 
             var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
-                .SetAutoInstrumented()
+                .SetCreateChild(false)
                 .SetParent(spanContext)
                 .StartSpan();
 
@@ -383,7 +383,7 @@ namespace OpenTelemetry.Trace.Test
 
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetSpanKind(SpanKind.Internal)
-                .SetAutoInstrumented()
+                .SetCreateChild(false)
                 .StartSpan();
 
             Assert.True(span.Context.IsValid);
@@ -404,7 +404,7 @@ namespace OpenTelemetry.Trace.Test
 
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetSpanKind(SpanKind.Internal)
-                .SetAutoInstrumented()
+                .SetCreateChild(false)
                 .StartSpan();
 
             Assert.True(span.Context.IsValid);
@@ -876,13 +876,13 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((Activity)null));
 
             // no Activity.Current
-            Assert.Throws<ArgumentException>(() => spanBuilder.SetAutoInstrumented());
+            Assert.Throws<ArgumentException>(() => spanBuilder.SetCreateChild(false));
 
             // Activity.Current wrong format
             Activity.DefaultIdFormat = ActivityIdFormat.Hierarchical;
             Activity.ForceDefaultIdFormat = true;
             var a = new Activity("foo").Start(); // TODO SetIdFormat
-            Assert.Throws<ArgumentException>(() => spanBuilder.SetAutoInstrumented());
+            Assert.Throws<ArgumentException>(() => spanBuilder.SetCreateChild(false));
             a.Stop();
 
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetSampler(null));

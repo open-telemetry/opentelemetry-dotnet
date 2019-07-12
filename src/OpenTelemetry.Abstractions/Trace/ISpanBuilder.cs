@@ -63,12 +63,15 @@ namespace OpenTelemetry.Trace
         ISpanBuilder SetNoParent();
 
         /// <summary>
-        /// Instructs builder to use Activity created by library to create a span.
-        /// The span will represent this Activity and will not be a child of this Activity.
+        /// Sets flag indicating that new span should become a child of implicit context (Activity.Current)
+        /// or continue run in this context and inherit it
+        /// Use this method with value 'false' in auto-collectors when library is instrumented with Activities.
         /// Any parent that was set previously will be discarded.
         /// </summary>
+        /// <param name="createChild">If true, a new span will become a child of the existing implicit context.
+        /// If false, new span will continue this context.</param>
         /// <returns>This span builder for chaining.</returns>
-        ISpanBuilder SetAutoInstrumented();
+        ISpanBuilder SetCreateChild(bool createChild);
 
         /// <summary>
         /// Set <see cref="SpanKind"/> on the span.
