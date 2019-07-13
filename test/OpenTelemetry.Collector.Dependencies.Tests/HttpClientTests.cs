@@ -198,17 +198,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             await t;
         }
 
-        private string AttributeToSimpleString(IAttributeValue value)
-        {
-            return value.Match<string>(
-                x => x.ToString(),
-                x => x ? "true" : "false",
-                x => x.ToString(),
-                x => x.ToString(),
-                x => x.ToString()
-            );
-        }
-
         private string NormaizeValues(string value, string host, int port)
         {
             return value.Replace("{host}", host).Replace("{port}", port.ToString());

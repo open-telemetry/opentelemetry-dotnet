@@ -23,6 +23,8 @@ namespace OpenTelemetry.Trace.Export
 
     public sealed class Attributes : IAttributes
     {
+        private static readonly Attributes Empty = new Attributes(new Dictionary<string, object>(), 0);
+
         internal Attributes(IDictionary<string, object> attributeMap, int droppedAttributesCount)
         {
             this.AttributeMap = attributeMap ?? throw new ArgumentNullException("Null attributeMap");
@@ -37,7 +39,7 @@ namespace OpenTelemetry.Trace.Export
         {
             if (attributeMap == null)
             {
-                throw new ArgumentNullException(nameof(attributeMap));
+                return Empty;
             }
 
             IDictionary<string, object> copy = new Dictionary<string, object>(attributeMap);

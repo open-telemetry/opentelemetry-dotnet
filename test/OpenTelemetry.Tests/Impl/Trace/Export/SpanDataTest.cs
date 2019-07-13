@@ -52,8 +52,8 @@ namespace OpenTelemetry.Trace.Export.Test
             spanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty);
             parentSpanId = ActivitySpanId.CreateRandom();
 
-            attributesMap.Add("MyAttributeKey1", AttributeValue.LongAttributeValue(10));
-            attributesMap.Add("MyAttributeKey2", AttributeValue.BooleanAttributeValue(true));
+            attributesMap.Add("MyAttributeKey1", 10L);
+            attributesMap.Add("MyAttributeKey2", true);
             attributes = Attributes.Create(attributesMap, 1);
 
             eventList.Add(TimedEvent<IEvent>.Create(eventTimestamp1, spanEvent));

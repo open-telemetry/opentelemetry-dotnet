@@ -20,7 +20,6 @@ namespace OpenTelemetry.Utils
     using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.Linq;
-    using OpenTelemetry.Trace;
 
     internal class AttributesWithCapacity : IDictionary<string, object>
     {
@@ -33,57 +32,21 @@ namespace OpenTelemetry.Utils
             this.capacity = capacity;
         }
 
-        public int NumberOfDroppedAttributes
-        {
-            get
-            {
-                return this.totalRecordedAttributes - this.Count;
-            }
-        }
+        public int NumberOfDroppedAttributes => this.totalRecordedAttributes - this.Count;
 
-        public ICollection<string> Keys
-        {
-            get
-            {
-                return (ICollection<string>)this.@delegate.Keys;
-            }
-        }
+        public ICollection<string> Keys => (ICollection<string>)this.@delegate.Keys;
 
-        public ICollection<object> Values
-        {
-            get
-            {
-                return (ICollection<object>)this.@delegate.Values;
-            }
-        }
+        public ICollection<object> Values => (ICollection<object>)this.@delegate.Values;
 
-        public int Count
-        {
-            get
-            {
-                return this.@delegate.Count;
-            }
-        }
+        public int Count => this.@delegate.Count;
 
-        public bool IsReadOnly
-        {
-            get
-            {
-                return this.@delegate.IsReadOnly;
-            }
-        }
+        public bool IsReadOnly => this.@delegate.IsReadOnly;
 
         public object this[string key]
         {
-            get
-            {
-                return (IAttributeValue)this.@delegate[key];
-            }
+            get => this.@delegate[key];
 
-            set
-            {
-                this.@delegate[key] = value;
-            }
+            set => this.@delegate[key] = value;
         }
 
         public void PutAttribute(string key, object value)
@@ -134,7 +97,7 @@ namespace OpenTelemetry.Utils
             value = null;
             if (this.ContainsKey(key))
             {
-                value = (IAttributeValue)this.@delegate[key];
+                value = this.@delegate[key];
                 return true;
             }
 

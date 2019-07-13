@@ -22,6 +22,8 @@ namespace OpenTelemetry.Trace.Export
 
     public sealed class LinkList : ILinks
     {
+        private static readonly LinkList Empty = new LinkList(new ILink[0], 0);
+
         internal LinkList(IEnumerable<ILink> links, int droppedLinksCount)
         {
             this.Links = links ?? throw new ArgumentNullException("Null links");
@@ -36,7 +38,7 @@ namespace OpenTelemetry.Trace.Export
         {
             if (links == null)
             {
-                throw new ArgumentNullException(nameof(links));
+                return Empty;
             }
 
             IEnumerable<ILink> copy = new List<ILink>(links);

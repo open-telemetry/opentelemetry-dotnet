@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace.Export
     public interface IAttributes
     {
         /// <summary>
-        /// Gets tha dictionaty of attributes by name.
+        /// Gets the dictionary of attributes by name.
         /// </summary>
         IDictionary<string, object> AttributeMap { get; }
 
