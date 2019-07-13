@@ -553,6 +553,8 @@ namespace OpenTelemetry.Trace
                 {
                     eventsList.Add(networkEvent.ToSpanDataTimedEvent(timestampConverter));
                 }
+
+                numberOfDroppedEvents = events.NumberOfDroppedEvents;
             }
 
             return TimedEvents<T>.Create(eventsList, numberOfDroppedEvents);
