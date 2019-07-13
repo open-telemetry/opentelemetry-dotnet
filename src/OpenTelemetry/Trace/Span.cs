@@ -421,10 +421,10 @@ namespace OpenTelemetry.Trace
                 throw new InvalidOperationException("Getting SpanData for a Span without RECORD_EVENTS option.");
             }
 
-            var attributesSpanData = Attributes.Create(this.attributes, this.attributes.NumberOfDroppedAttributes);
+            var attributesSpanData = Attributes.Create(this.attributes, this.attributes?.NumberOfDroppedAttributes ?? 0);
 
             var annotationsSpanData = CreateTimedEvents(this.InitializedEvents, this.TimestampConverter);
-            var linksSpanData = LinkList.Create(this.links.Events, this.links.NumberOfDroppedEvents);
+            var linksSpanData = LinkList.Create(this.links?.Events, this.links?.NumberOfDroppedEvents ?? 0);
 
             return SpanData.Create(
                 this.Context, // TODO avoid using context, use Activity instead
