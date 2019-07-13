@@ -62,7 +62,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan ?? BlankSpan.Instance;
+        public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
 
         /// <inheritdoc/>
         public IBinaryFormat BinaryFormat { get; }
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(span));
             }
 
-            return CurrentSpanUtils.WithSpan(span, false);
+            return CurrentSpanUtils.WithSpan(span, true);
         }
     }
 }

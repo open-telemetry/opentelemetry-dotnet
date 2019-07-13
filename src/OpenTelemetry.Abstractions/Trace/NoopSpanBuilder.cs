@@ -18,6 +18,7 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     /// <summary>
     /// No-op span builder.
@@ -56,11 +57,22 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpanBuilder SetParent(ISpan parent)
+        public ISpanBuilder SetParent(ISpan parentSpan)
         {
-            if (parent == null)
+            if (parentSpan == null)
             {
-                throw new ArgumentNullException(nameof(parent));
+                throw new ArgumentNullException(nameof(parentSpan));
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ISpanBuilder SetParent(Activity parentActivity)
+        {
+            if (parentActivity == null)
+            {
+                throw new ArgumentNullException(nameof(parentActivity));
             }
 
             return this;
@@ -84,6 +96,33 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
+        public ISpanBuilder SetCreateChild(bool createChild)
+        {
+            if (!createChild)
+            {
+                var currentActivity = Activity.Current;
+
+                if (currentActivity == null)
+                {
+                    throw new ArgumentException("Current Activity cannot be null");
+                }
+
+                if (currentActivity.IdFormat != ActivityIdFormat.W3C)
+                {
+                    throw new ArgumentException("Current Activity is not in W3C format");
+                }
+
+                if (currentActivity.StartTimeUtc == default || currentActivity.Duration != default)
+                {
+                    throw new ArgumentException(
+                        "Current Activity is not running: it has not been started or has been stopped");
+                }
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
         public ISpanBuilder SetSpanKind(SpanKind spanKind)
         {
             return this;
@@ -95,6 +134,17 @@ namespace OpenTelemetry.Trace
             if (spanContext == null)
             {
                 throw new ArgumentNullException(nameof(spanContext));
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ISpanBuilder AddLink(Activity activity)
+        {
+            if (activity == null)
+            {
+                throw new ArgumentNullException(nameof(activity));
             }
 
             return this;

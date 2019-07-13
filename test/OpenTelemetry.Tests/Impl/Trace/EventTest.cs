@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace.Test
 {
     using System;
+    using System.Linq;
     using System.Collections.Generic;
     using OpenTelemetry.Utils;
     using Xunit;
@@ -99,7 +100,7 @@ namespace OpenTelemetry.Trace.Test
                 "MyStringAttributeKey", "MyStringAttributeValue");
             @event = Event.Create("MyEventText2", attributes);
             Assert.Contains("MyEventText2", @event.ToString());
-            Assert.Contains(Collections.ToString(attributes), @event.ToString());
+            Assert.Contains(string.Join(",", attributes.Select(kvp => $"{kvp.Key}={kvp.Value}")), @event.ToString());
         }
     }
 }

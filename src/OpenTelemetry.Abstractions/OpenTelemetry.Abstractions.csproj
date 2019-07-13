@@ -4,6 +4,7 @@
     <TargetFrameworks Condition="$(OS) != 'Windows_NT'">netstandard2.0</TargetFrameworks>
     <Description>OpenTelemetry .NET API abstractions</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
+    <DefineConstants>$(DefineConstants);ABSTRACTIONS</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

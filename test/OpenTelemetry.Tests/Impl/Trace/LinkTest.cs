@@ -14,11 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System.Linq;
+
 namespace OpenTelemetry.Trace.Test
 {
     using System.Collections.Generic;
     using System.Diagnostics;
-    using OpenTelemetry.Trace.Internal;
     using OpenTelemetry.Utils;
     using Xunit;
 
@@ -30,6 +31,10 @@ namespace OpenTelemetry.Trace.Test
 
         public LinkTest()
         {
+            // TODO: remove with next DiagnosticSource preview, switch to Activity setidformat
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+
             spanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty); ;
             attributesMap.Add("MyAttributeKey0", AttributeValue<string>.Create("MyStringAttribute"));
             attributesMap.Add("MyAttributeKey1", AttributeValue<long>.Create(10));
@@ -72,37 +77,34 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void Link_EqualsAndHashCode()
-        {
-            // EqualsTester tester = new EqualsTester();
-            // tester
-            //    .addEqualityGroup(
-            //        Link.fromSpanContext(spanContext, Type.PARENT_LINKED_SPAN),
-            //        Link.fromSpanContext(spanContext, Type.PARENT_LINKED_SPAN))
-            //    .addEqualityGroup(
-            //        Link.fromSpanContext(spanContext, Type.CHILD_LINKED_SPAN),
-            //        Link.fromSpanContext(spanContext, Type.CHILD_LINKED_SPAN))
-            //    .addEqualityGroup(Link.fromSpanContext(SpanContext.INVALID, Type.CHILD_LINKED_SPAN))
-            //    .addEqualityGroup(Link.fromSpanContext(SpanContext.INVALID, Type.PARENT_LINKED_SPAN))
-            //    .addEqualityGroup(
-            //        Link.fromSpanContext(spanContext, Type.PARENT_LINKED_SPAN, attributesMap),
-            //        Link.fromSpanContext(spanContext, Type.PARENT_LINKED_SPAN, attributesMap));
-            // tester.testEquals();
-
-
-        }
-
-        [Fact]
         public void Link_ToString()
         {
             var link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Contains(spanContext.TraceId.ToString(), link.ToString());
             Assert.Contains(spanContext.SpanId.ToString(), link.ToString());
-            Assert.Contains(Collections.ToString(attributesMap), link.ToString());
+            Assert.Contains(string.Join(" ", attributesMap.Select(kvp => $"{kvp.Key}={kvp.Value}")), link.ToString());
             link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Contains(spanContext.TraceId.ToString(), link.ToString());
             Assert.Contains(spanContext.SpanId.ToString(), spanContext.SpanId.ToString());
-            Assert.Contains(Collections.ToString(attributesMap), link.ToString());
+            Assert.Contains(string.Join(" ", attributesMap.Select(kvp => $"{kvp.Key}={kvp.Value}")), link.ToString());
+        }
+
+        [Fact]
+        public void FromSpanContext_FromActivity()
+        {
+            var activity = new Activity("foo").Start();
+            activity.TraceStateString = "k1=v1, k2=v2";
+
+            var link = Link.FromActivity(activity);
+            Assert.Equal(activity.TraceId, link.Context.TraceId);
+            Assert.Equal(activity.SpanId, link.Context.SpanId);
+
+            var entries = link.Context.Tracestate.Entries.ToArray();
+            Assert.Equal(2, entries.Length);
+            Assert.Equal("k1", entries[0].Key);
+            Assert.Equal("v1", entries[0].Value);
+            Assert.Equal("k2", entries[1].Key);
+            Assert.Equal("v2", entries[1].Value);
         }
     }
 }

@@ -26,13 +26,10 @@ namespace OpenTelemetry.Trace.Export.Test
     using OpenTelemetry.Utils;
     using Xunit;
 
-    public class InProcessSampledSpanStoreTest
+    public class InProcessSampledSpanStoreTest : IDisposable
     {
-        private static readonly string REGISTERED_SPAN_NAME = "MySpanName/1";
-        private static readonly string NOT_REGISTERED_SPAN_NAME = "MySpanName/2";
-        private readonly SpanContext sampledSpanContext;
-
-        private readonly SpanContext notSampledSpanContext;
+        private const string RegisteredSpanName = "MySpanName/1";
+        private const string NotRegisteredSpanName = "MySpanName/2";
 
         private readonly ActivitySpanId parentSpanId;
         private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
@@ -50,20 +47,18 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             timestamp = Timestamp.FromDateTimeOffset(startTime);
             timestampConverter = Timer.StartNew(startTime, () => interval);
-            sampledSpanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, Tracestate.Empty);
-            notSampledSpanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty);
             parentSpanId = ActivitySpanId.CreateRandom();
             startEndHandler = new TestStartEndHandler(sampleStore);
-            sampleStore.RegisterSpanNamesForCollection(new List<string>() { REGISTERED_SPAN_NAME });
+            sampleStore.RegisterSpanNamesForCollection(new List<string>() { RegisteredSpanName });
         }
 
         [Fact]
         public void AddSpansWithRegisteredNamesInAllLatencyBuckets()
         {
-            AddSpanNameToAllLatencyBuckets(REGISTERED_SPAN_NAME);
+            AddSpanNameToAllLatencyBuckets(RegisteredSpanName);
             var perSpanNameSummary = sampleStore.Summary.PerSpanNameSummary;
             Assert.Equal(1, perSpanNameSummary.Count);
-            var latencyBucketsSummaries = perSpanNameSummary[REGISTERED_SPAN_NAME].NumbersOfLatencySampledSpans;
+            var latencyBucketsSummaries = perSpanNameSummary[RegisteredSpanName].NumbersOfLatencySampledSpans;
             Assert.Equal(LatencyBucketBoundaries.Values.Count, latencyBucketsSummaries.Count);
             foreach (var it in latencyBucketsSummaries)
             {
@@ -74,42 +69,42 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void AddSpansWithoutRegisteredNamesInAllLatencyBuckets()
         {
-            AddSpanNameToAllLatencyBuckets(NOT_REGISTERED_SPAN_NAME);
+            AddSpanNameToAllLatencyBuckets(NotRegisteredSpanName);
             var perSpanNameSummary = sampleStore.Summary.PerSpanNameSummary;
             Assert.Equal(1, perSpanNameSummary.Count);
-            Assert.False(perSpanNameSummary.ContainsKey(NOT_REGISTERED_SPAN_NAME));
+            Assert.False(perSpanNameSummary.ContainsKey(NotRegisteredSpanName));
         }
 
         [Fact]
         public void RegisterUnregisterAndListSpanNames()
         {
-            Assert.Contains(REGISTERED_SPAN_NAME, sampleStore.RegisteredSpanNamesForCollection);
+            Assert.Contains(RegisteredSpanName, sampleStore.RegisteredSpanNamesForCollection);
             Assert.Equal(1, sampleStore.RegisteredSpanNamesForCollection.Count);
 
-            sampleStore.RegisterSpanNamesForCollection(new List<string>() { NOT_REGISTERED_SPAN_NAME });
+            sampleStore.RegisterSpanNamesForCollection(new List<string>() { NotRegisteredSpanName });
 
-            Assert.Contains(REGISTERED_SPAN_NAME,  sampleStore.RegisteredSpanNamesForCollection);
-            Assert.Contains(NOT_REGISTERED_SPAN_NAME, sampleStore.RegisteredSpanNamesForCollection);
+            Assert.Contains(RegisteredSpanName,  sampleStore.RegisteredSpanNamesForCollection);
+            Assert.Contains(NotRegisteredSpanName, sampleStore.RegisteredSpanNamesForCollection);
             Assert.Equal(2, sampleStore.RegisteredSpanNamesForCollection.Count);
 
-            sampleStore.UnregisterSpanNamesForCollection(new List<string>() { NOT_REGISTERED_SPAN_NAME });
+            sampleStore.UnregisterSpanNamesForCollection(new List<string>() { NotRegisteredSpanName });
 
-            Assert.Contains(REGISTERED_SPAN_NAME, sampleStore.RegisteredSpanNamesForCollection);
+            Assert.Contains(RegisteredSpanName, sampleStore.RegisteredSpanNamesForCollection);
             Assert.Equal(1, sampleStore.RegisteredSpanNamesForCollection.Count);
         }
 
         [Fact]
         public void RegisterSpanNamesViaSpanBuilderOption()
         {
-            Assert.Contains(REGISTERED_SPAN_NAME, sampleStore.RegisteredSpanNamesForCollection);
+            Assert.Contains(RegisteredSpanName, sampleStore.RegisteredSpanNamesForCollection);
             Assert.Equal(1, sampleStore.RegisteredSpanNamesForCollection.Count);
 
-            var span = CreateSampledSpan(NOT_REGISTERED_SPAN_NAME);
+            var span = CreateSampledSpan(NotRegisteredSpanName);
             span.IsSampleToLocalSpanStore = true;
             span.End();
 
-            Assert.Contains(REGISTERED_SPAN_NAME, sampleStore.RegisteredSpanNamesForCollection);
-            Assert.Contains(NOT_REGISTERED_SPAN_NAME, sampleStore.RegisteredSpanNamesForCollection);
+            Assert.Contains(RegisteredSpanName, sampleStore.RegisteredSpanNamesForCollection);
+            Assert.Contains(NotRegisteredSpanName, sampleStore.RegisteredSpanNamesForCollection);
             Assert.Equal(2, sampleStore.RegisteredSpanNamesForCollection.Count);
 
         }
@@ -117,10 +112,10 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void AddSpansWithRegisteredNamesInAllErrorBuckets()
         {
-            AddSpanNameToAllErrorBuckets(REGISTERED_SPAN_NAME);
+            AddSpanNameToAllErrorBuckets(RegisteredSpanName);
             var perSpanNameSummary = sampleStore.Summary.PerSpanNameSummary;
             Assert.Equal(1, perSpanNameSummary.Count);
-            var errorBucketsSummaries = perSpanNameSummary[REGISTERED_SPAN_NAME].NumbersOfErrorSampledSpans;
+            var errorBucketsSummaries = perSpanNameSummary[RegisteredSpanName].NumbersOfErrorSampledSpans;
             var ccCount = Enum.GetValues(typeof(CanonicalCode)).Cast<CanonicalCode>().Count();
             Assert.Equal(ccCount - 1, errorBucketsSummaries.Count);
             foreach (var it in errorBucketsSummaries)
@@ -132,23 +127,23 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void AddSpansWithoutRegisteredNamesInAllErrorBuckets()
         {
-            AddSpanNameToAllErrorBuckets(NOT_REGISTERED_SPAN_NAME);
+            AddSpanNameToAllErrorBuckets(NotRegisteredSpanName);
             var perSpanNameSummary = sampleStore.Summary.PerSpanNameSummary;
             Assert.Equal(1, perSpanNameSummary.Count);
-            Assert.False(perSpanNameSummary.ContainsKey(NOT_REGISTERED_SPAN_NAME));
+            Assert.False(perSpanNameSummary.ContainsKey(NotRegisteredSpanName));
         }
 
         [Fact]
         public void GetErrorSampledSpans()
         {
-            var span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(10);
             span.Status = Status.Cancelled;
             span.End();
 
             var samples =
                 sampleStore.GetErrorSampledSpans(
-                    SampledSpanStoreErrorFilter.Create(REGISTERED_SPAN_NAME, CanonicalCode.Cancelled, 0));
+                    SampledSpanStoreErrorFilter.Create(RegisteredSpanName, CanonicalCode.Cancelled, 0));
             Assert.Single(samples);
             Assert.Contains(span.ToSpanData(), samples);
         }
@@ -156,21 +151,21 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetErrorSampledSpans_MaxSpansToReturn()
         {
-            var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span1 = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(10);
             span1.Status = Status.Cancelled;
             span1.End();
 
             // Advance time to allow other spans to be sampled.
             interval += TimeSpan.FromSeconds(5);
-            var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span2 = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(10);
             span2.Status = Status.Cancelled;
             span2.End();
 
             var samples =
                 sampleStore.GetErrorSampledSpans(
-                    SampledSpanStoreErrorFilter.Create(REGISTERED_SPAN_NAME, CanonicalCode.Cancelled, 1));
+                    SampledSpanStoreErrorFilter.Create(RegisteredSpanName, CanonicalCode.Cancelled, 1));
             Assert.Single(samples);
             // No order guaranteed so one of the spans should be in the list.
             Assert.True(samples.Contains(span1.ToSpanData()) || samples.Contains(span2.ToSpanData()));
@@ -179,19 +174,19 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetErrorSampledSpans_NullCode()
         {
-            var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span1 = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(10);
 
             span1.Status = Status.Cancelled;;
             span1.End();
 
-            var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span2 = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(10);
             span2.Status = Status.Unknown;
             span2.End();
 
             var samples =
-                sampleStore.GetErrorSampledSpans(SampledSpanStoreErrorFilter.Create(REGISTERED_SPAN_NAME, null, 0));
+                sampleStore.GetErrorSampledSpans(SampledSpanStoreErrorFilter.Create(RegisteredSpanName, null, 0));
             Assert.Equal(2, samples.Count());
             Assert.Contains(span1.ToSpanData(), samples);
             Assert.Contains(span2.ToSpanData(), samples);
@@ -200,17 +195,17 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetErrorSampledSpans_NullCode_MaxSpansToReturn()
         {
-            var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span1 = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(10);
             span1.Status = Status.Cancelled;
             span1.End();
-            var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span2 = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(10);
             span2.Status = Status.Unknown;
             span2.End();
 
             var samples =
-                sampleStore.GetErrorSampledSpans(SampledSpanStoreErrorFilter.Create(REGISTERED_SPAN_NAME, null, 1));
+                sampleStore.GetErrorSampledSpans(SampledSpanStoreErrorFilter.Create(RegisteredSpanName, null, 1));
             Assert.Single(samples);
             Assert.True(samples.Contains(span1.ToSpanData()) || samples.Contains(span2.ToSpanData()));
         }
@@ -218,13 +213,13 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetLatencySampledSpans()
         {
-            var span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(200); // 20 microseconds
             span.End();
             var samples =
                 sampleStore.GetLatencySampledSpans(
                     SampledSpanStoreLatencyFilter.Create(
-                        REGISTERED_SPAN_NAME,
+                        RegisteredSpanName,
                         TimeSpan.FromTicks(150),
                         TimeSpan.FromTicks(250),
                         0));
@@ -235,13 +230,13 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetLatencySampledSpans_ExclusiveUpperBound()
         {
-            var span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(200); // 20 microseconds
             span.End();
             var samples =
                 sampleStore.GetLatencySampledSpans(
                     SampledSpanStoreLatencyFilter.Create(
-                        REGISTERED_SPAN_NAME,
+                        RegisteredSpanName,
                         TimeSpan.FromTicks(150),
                         TimeSpan.FromTicks(200),
                         0));
@@ -251,13 +246,13 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetLatencySampledSpans_InclusiveLowerBound()
         {
-            var span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(200); // 20 microseconds
             span.End();
             var samples =
                 sampleStore.GetLatencySampledSpans(
                     SampledSpanStoreLatencyFilter.Create(
-                        REGISTERED_SPAN_NAME,
+                        RegisteredSpanName,
                         TimeSpan.FromTicks(150),
                         TimeSpan.FromTicks(250),
                         0));
@@ -268,18 +263,18 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetLatencySampledSpans_QueryBetweenMultipleBuckets()
         {
-            var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span1 = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(200); // 20 microseconds
             span1.End();
             // Advance time to allow other spans to be sampled.
             interval += TimeSpan.FromSeconds(5);
-            var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span2 = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(2000); // 200 microseconds
             span2.End();
             var samples =
                 sampleStore.GetLatencySampledSpans(
                     SampledSpanStoreLatencyFilter.Create(
-                        REGISTERED_SPAN_NAME,
+                        RegisteredSpanName,
                         TimeSpan.FromTicks(150),
                         TimeSpan.FromTicks(2500),
                         0));
@@ -291,18 +286,18 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void GetLatencySampledSpans_MaxSpansToReturn()
         {
-            var span1 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span1 = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(200); // 20 microseconds
             span1.End();
             // Advance time to allow other spans to be sampled.
             interval += TimeSpan.FromSeconds(5);
-            var span2 = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span2 = CreateSampledSpan(RegisteredSpanName) as Span;
             interval += TimeSpan.FromTicks(2000); // 200 microseconds
             span2.End();
             var samples =
                 sampleStore.GetLatencySampledSpans(
                     SampledSpanStoreLatencyFilter.Create(
-                        REGISTERED_SPAN_NAME,
+                        RegisteredSpanName,
                         TimeSpan.FromTicks(150),
                         TimeSpan.FromTicks(2500),
                         1));
@@ -313,23 +308,26 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void IgnoreNegativeSpanLatency()
         {
-            var span = CreateSampledSpan(REGISTERED_SPAN_NAME) as Span;
+            var span = CreateSampledSpan(RegisteredSpanName) as Span;
             interval -= TimeSpan.FromTicks(200); // 20 microseconds
             span.End();
             var samples =
                 sampleStore.GetLatencySampledSpans(
-                    SampledSpanStoreLatencyFilter.Create(REGISTERED_SPAN_NAME, TimeSpan.Zero, TimeSpan.MaxValue, 0));
+                    SampledSpanStoreLatencyFilter.Create(RegisteredSpanName, TimeSpan.Zero, TimeSpan.MaxValue, 0));
             Assert.Empty(samples);
         }
 
         private Span CreateSampledSpan(string spanName)
         {
+            var activity = new Activity(spanName).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+
             return (Span)Span.StartSpan(
-                sampledSpanContext,
+                activity,
+                Tracestate.Empty,
                 recordSpanOptions,
                 spanName,
                 SpanKind.Internal,
-                parentSpanId,
                 TraceParams.Default,
                 startEndHandler,
                 timestampConverter);
@@ -337,12 +335,15 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private Span CreateNotSampledSpan(string spanName)
         {
+            var activity = new Activity(spanName).Start();
+            activity.ActivityTraceFlags = ActivityTraceFlags.None;
+
             return (Span)Span.StartSpan(
-                notSampledSpanContext,
+                activity,
+                Tracestate.Empty,
                 recordSpanOptions,
                 spanName,
                 SpanKind.Internal,
-                parentSpanId,
                 TraceParams.Default,
                 startEndHandler,
                 timestampConverter);
@@ -374,6 +375,8 @@ namespace OpenTelemetry.Trace.Export.Test
                     notSampledSpan.Status = code.ToStatus();
                     sampledSpan.End();
                     notSampledSpan.End();
+                    sampledSpan.Activity.Stop();
+                    notSampledSpan.Activity.Stop();
                 }
             }
         }
@@ -396,6 +399,11 @@ namespace OpenTelemetry.Trace.Export.Test
             {
                 sampleStore.ConsiderForSampling(span);
             }
+        }
+
+        public void Dispose()
+        {
+            Activity.Current = null;
         }
     }
 }

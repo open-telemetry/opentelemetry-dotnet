@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Trace.Export.Test
 {
     using System.Diagnostics;
@@ -23,7 +25,7 @@ namespace OpenTelemetry.Trace.Export.Test
     using OpenTelemetry.Trace.Internal;
     using Xunit;
 
-    public class InProcessRunningSpanStoreTest
+    public class InProcessRunningSpanStoreTest : IDisposable
     {
         private const string SpanName1 = "MySpanName/1";
         private const string SpanName2 = "MySpanName/2";
@@ -39,17 +41,13 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private ISpan CreateSpan(string spanName)
         {
-            var spanContext =
-                SpanContext.Create(
-                    ActivityTraceId.CreateRandom(),
-                    ActivitySpanId.CreateRandom(),
-                    ActivityTraceFlags.None, Tracestate.Empty);
+            var activity = new Activity(spanName).Start();
             return Span.StartSpan(
-                spanContext,
+                activity,
+                Tracestate.Empty,
                 recordSpanOptions,
                 spanName,
                 SpanKind.Internal,
-                ActivitySpanId.CreateRandom(),
                 TraceParams.Default,
                 startEndHandler,
                 null);
@@ -123,6 +121,11 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Contains(span2.ToSpanData(), activeSpansExporter.GetRunningSpans(RunningSpanStoreFilter.Create(SpanName2, 0)));
             span1.End();
             span2.End();
+        }
+
+        public void Dispose()
+        {
+            Activity.Current = null;
         }
 
         // [Fact]
