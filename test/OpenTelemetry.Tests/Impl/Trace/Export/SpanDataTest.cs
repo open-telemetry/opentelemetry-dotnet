@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.ObjectModel;
+
 namespace OpenTelemetry.Trace.Export.Test
 {
     using System.Collections.Generic;
@@ -54,7 +56,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
             attributesMap.Add("MyAttributeKey1", 10L);
             attributesMap.Add("MyAttributeKey2", true);
-            attributes = Attributes.Create(attributesMap, 1);
+            attributes = Attributes.Create(new ReadOnlyDictionary<string, object>(attributesMap), 1);
 
             eventList.Add(TimedEvent<IEvent>.Create(eventTimestamp1, spanEvent));
             eventList.Add(TimedEvent<IEvent>.Create(eventTimestamp3, spanEvent));

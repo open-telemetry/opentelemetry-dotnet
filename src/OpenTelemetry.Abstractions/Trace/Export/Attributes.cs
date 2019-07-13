@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace.Export
     {
         private static readonly Attributes Empty = new Attributes(new Dictionary<string, object>(), 0);
 
-        internal Attributes(IEnumerable<KeyValuePair<string, object>> attributeMap, int droppedAttributesCount)
+        private Attributes(IEnumerable<KeyValuePair<string, object>> attributeMap, int droppedAttributesCount)
         {
             this.AttributeMap = attributeMap ?? throw new ArgumentNullException(nameof(attributeMap));
             this.DroppedAttributesCount = droppedAttributesCount;
@@ -34,15 +34,14 @@ namespace OpenTelemetry.Trace.Export
 
         public int DroppedAttributesCount { get; }
 
-        public static Attributes Create(IEnumerable<KeyValuePair<string, object>> attributeMap, int droppedAttributesCount)
+        public static Attributes Create(IReadOnlyCollection<KeyValuePair<string, object>> attributeMap, int droppedAttributesCount)
         {
             if (attributeMap == null)
             {
                 return Empty;
             }
 
-            var copy = new List<KeyValuePair<string, object>>(attributeMap);
-            return new Attributes(copy, droppedAttributesCount);
+            return new Attributes(attributeMap, droppedAttributesCount);
         }
 
         /// <inheritdoc/>
