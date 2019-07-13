@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public void TestConvertSpan()
+        public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan()
         {
             var startTimestamp = Timestamp.Create(100, 100);
             var endTimestamp = Timestamp.Create(200, 100);

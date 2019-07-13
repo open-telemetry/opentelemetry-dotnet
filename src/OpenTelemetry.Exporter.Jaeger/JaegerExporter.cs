@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 
         private const string ExporterName = "JaegerTraceExporter";
 
-        private readonly object lck = new object();
+        private readonly object @lock = new object();
         private readonly JaegerExporterOptions options;
         private readonly IExportComponent exportComponent;
 
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 
         public void Start()
         {
-            lock (this.lck)
+            lock (this.@lock)
             {
                 if (this.isInitialized)
                 {
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                 return;
             }
 
-            lock (this.lck)
+            lock (this.@lock)
             {
                 if (this.exportComponent != null)
                 {

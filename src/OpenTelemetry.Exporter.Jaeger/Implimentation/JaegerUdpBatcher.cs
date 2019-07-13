@@ -22,7 +22,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System.Threading.Tasks;
     using Thrift.Protocols;
 
-    public class JaegerUdpBatcher : IDisposable, IJaegerUdpBatcher
+    public class JaegerUdpBatcher : IJaegerUdpBatcher
     {
         private const int DefaultMaxPacketSize = 65000;
         private readonly int? maxPacketSize;
