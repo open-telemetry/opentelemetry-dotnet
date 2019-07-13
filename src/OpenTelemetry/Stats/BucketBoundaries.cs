@@ -61,7 +61,7 @@ namespace OpenTelemetry.Stats
         public override string ToString()
         {
             return "BucketBoundaries{"
-                + "boundaries=" + Collections.ToString(this.Boundaries)
+                + "boundaries=" + string.Join(", ", this.Boundaries)
                 + "}";
         }
 

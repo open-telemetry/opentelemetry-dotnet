@@ -248,11 +248,15 @@ namespace OpenTelemetry.Trace
             var span = Span.StartSpan(
                         activityForSpan,
                         childTracestate, // it is updated in CreateActivityForSpan, 
-                        this.name,
                         this.kind,
                         activeTraceParams,
                         this.options.StartEndHandler,
                         ownsActivity: this.contextSource != ContextSource.Activity);
+            if (activityForSpan.OperationName != this.name)
+            {
+                span.UpdateName(this.name);
+            }
+
             LinkSpans(span, this.links);
             return span;
         }

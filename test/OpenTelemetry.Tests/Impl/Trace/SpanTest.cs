@@ -62,7 +62,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler);
@@ -92,7 +91,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     tracestate,
-                    SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler);
@@ -116,7 +114,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     tracestate,
-                    SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler);
@@ -142,7 +139,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler);
@@ -188,7 +184,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler);
@@ -259,7 +254,6 @@ namespace OpenTelemetry.Trace.Test
                 (Span)Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler);
@@ -327,7 +321,6 @@ namespace OpenTelemetry.Trace.Test
                 (Span)Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler);
@@ -352,7 +345,6 @@ namespace OpenTelemetry.Trace.Test
                 (Span)Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler);
@@ -381,13 +373,12 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     traceParams,
                     startEndHandler);
             for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
             {
-                IDictionary<String, object> attributes = new Dictionary<String, object>();
+                IDictionary<string, object> attributes = new Dictionary<string, object>();
                 attributes.Add("MyStringAttributeKey" + i, i);
                 foreach (var attribute in attributes)
                 {
@@ -435,7 +426,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     traceParams,
                     startEndHandler);
@@ -507,7 +497,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     traceParams,
                     startEndHandler);
@@ -555,7 +544,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     traceParams,
                     startEndHandler);
@@ -584,63 +572,6 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void SampleToLocalSpanStore()
-        {
-            var activity1 = new Activity(SpanName).Start();
-            activity1.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-            var span =
-                (Span)Span.StartSpan(
-                    activity1,
-                    Tracestate.Empty,
-                    SpanName,
-                    SpanKind.Internal,
-                    TraceParams.Default,
-                    startEndHandler);
-            span.IsSampleToLocalSpanStore = true;
-            span.End();
-
-            Assert.True(((Span)span).IsSampleToLocalSpanStore);
-
-            var activity2 = new Activity(SpanName).Start();
-            activity2.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            var span2 =
-                Span.StartSpan(
-                    activity2,
-                    Tracestate.Empty,
-                    SpanName,
-                    SpanKind.Internal,
-                    TraceParams.Default,
-                    startEndHandler);
-            span2.End();
-
-            Assert.False(((Span)span2).IsSampleToLocalSpanStore);
-
-            var startEndMock = Mock.Get<IStartEndHandler>(startEndHandler);
-
-            startEndMock.Verify(s => s.OnEnd(span), Times.Exactly(1));
-            startEndMock.Verify(s => s.OnEnd(span2), Times.Exactly(1));
-        }
-
-        [Fact]
-        public void SampleToLocalSpanStore_RunningSpan()
-        {
-            var activity = new Activity(SpanName).Start();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-            var span =
-                Span.StartSpan(
-                    activity,
-                    Tracestate.Empty,
-                    SpanName,
-                    SpanKind.Internal,
-                    TraceParams.Default,
-                    startEndHandler);
-
-            Assert.Throws<InvalidOperationException>(() => ((Span)span).IsSampleToLocalSpanStore);
-        }
-
-        [Fact]
         public void BadArguments()
         {
             var activity = new Activity(SpanName).Start();
@@ -650,7 +581,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler);
@@ -669,25 +599,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentNullException>(() => span.AddLink(null));
         }
 
-        [Fact]
-        public void SetSampleTo()
-        {
-            var activity = new Activity(SpanName).Start();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-            var span = (Span)Span.StartSpan(
-                activity,
-                Tracestate.Empty,
-                SpanName,
-                SpanKind.Internal,
-                TraceParams.Default,
-                startEndHandler);
-
-            span.IsSampleToLocalSpanStore = true;
-            span.End();
-            Assert.True(span.IsSampleToLocalSpanStore);
-        }
-
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -704,7 +615,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler,
@@ -729,7 +639,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler,
@@ -757,7 +666,6 @@ namespace OpenTelemetry.Trace.Test
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
-                    SpanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler,

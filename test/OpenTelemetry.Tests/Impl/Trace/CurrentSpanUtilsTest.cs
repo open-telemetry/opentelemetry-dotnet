@@ -62,7 +62,6 @@ namespace OpenTelemetry.Trace.Test
             var span = Span.StartSpan(
                 activity,
                 Tracestate.Empty,
-                "foo",
                 SpanKind.Internal,
                 TraceParams.Default,
                 startEndHandler);
@@ -95,7 +94,6 @@ namespace OpenTelemetry.Trace.Test
             var span = Span.StartSpan(
                 activity,
                 Tracestate.Empty,
-                "foo",
                 SpanKind.Internal,
                 TraceParams.Default,
                 startEndHandler,
@@ -128,7 +126,6 @@ namespace OpenTelemetry.Trace.Test
             var parentSpan = Span.StartSpan(
                 parentActivity,
                 Tracestate.Empty,
-                "parent",
                 SpanKind.Internal,
                 TraceParams.Default,
                 startEndHandler);
@@ -138,7 +135,6 @@ namespace OpenTelemetry.Trace.Test
             var childSpan = Span.StartSpan(
                 childActivity,
                 Tracestate.Empty,
-                "child",
                 SpanKind.Internal,
                 TraceParams.Default,
                 startEndHandler);
@@ -171,7 +167,6 @@ namespace OpenTelemetry.Trace.Test
             var parentSpan = Span.StartSpan(
                 parentActivity,
                 Tracestate.Empty,
-                "parent",
                 SpanKind.Internal,
                 TraceParams.Default,
                 startEndHandler);
@@ -182,7 +177,6 @@ namespace OpenTelemetry.Trace.Test
             var childSpan = Span.StartSpan(
                 childActivity,
                 Tracestate.Empty,
-                "child",
                 SpanKind.Internal,
                 TraceParams.Default,
                 startEndHandler);
@@ -207,7 +201,6 @@ namespace OpenTelemetry.Trace.Test
             var span = Span.StartSpan(
                 activity,
                 Tracestate.Empty,
-                "foo",
                 SpanKind.Internal,
                 TraceParams.Default,
                 startEndHandler);
@@ -230,7 +223,6 @@ namespace OpenTelemetry.Trace.Test
             var span = Span.StartSpan(
                 activity,
                 Tracestate.Empty,
-                "foo",
                 SpanKind.Internal,
                 TraceParams.Default,
                 startEndHandler);
@@ -263,7 +255,6 @@ namespace OpenTelemetry.Trace.Test
             var span = Span.StartSpan(
                 activity,
                 Tracestate.Empty,
-                "foo",
                 SpanKind.Internal,
                 TraceParams.Default,
                 startEndHandler);

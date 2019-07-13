@@ -28,26 +28,24 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Span implementation.
     /// </summary>
-    public sealed class Span : ISpan, IElement<Span>
+    public sealed class Span : ISpan
     {
         private readonly ITraceParams traceParams;
         private readonly IStartEndHandler startEndHandler;
+        private readonly Lazy<SpanContext> spanContext;
         private readonly object @lock = new object();
         private AttributesWithCapacity attributes;
         private TraceEvents<EventWithTime<IEvent>> events;
         private TraceEvents<ILink> links;
         private Status status;
-        private bool sampleToLocalSpanStore;
-        private Lazy<SpanContext> spanContext;
 
         private Span(
                 Activity activity,
                 Tracestate tracestate,
-                string name,
                 SpanKind spanKind,
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
-                bool stopActivity)
+                bool ownsActivity)
         {
             this.Activity = activity;
             this.spanContext = new Lazy<SpanContext>(() => SpanContext.Create(
@@ -55,12 +53,11 @@ namespace OpenTelemetry.Trace
                 this.Activity.SpanId, 
                 this.Activity.ActivityTraceFlags, 
                 tracestate));
-            this.Name = name;
+            this.Name = this.Activity.OperationName;
             this.traceParams = traceParams ?? throw new ArgumentNullException(nameof(traceParams));
             this.startEndHandler = startEndHandler;
-            this.sampleToLocalSpanStore = false;
             this.Kind = spanKind;
-            this.OwnsActivity = stopActivity;
+            this.OwnsActivity = ownsActivity;
             this.IsRecordingEvents = this.Activity.Recorded;
         }
 
@@ -69,12 +66,6 @@ namespace OpenTelemetry.Trace
         public SpanContext Context => this.spanContext.Value;
 
         public string Name { get; private set; }
-
-        /// <inheritdoc/>
-        public Span Next { get; set; }
-        
-        /// <inheritdoc/>
-        public Span Previous { get; set; }
 
         /// <inheritdoc/>
         public Status Status
@@ -103,41 +94,6 @@ namespace OpenTelemetry.Trace
                     }
 
                     this.status = value ?? throw new ArgumentNullException(nameof(value));
-                }
-            }
-        }
-
-        public DateTimeOffset EndTime
-        {
-            get
-            {
-                lock (this.@lock)
-                {
-                    return this.HasEnded ? this.Activity.StartTimeUtc + this.Activity.Duration : default;
-                }
-            }
-        }
-
-        public bool IsSampleToLocalSpanStore
-        {
-            get
-            {
-                lock (this.@lock)
-                {
-                    if (!this.HasEnded)
-                    {
-                        throw new InvalidOperationException("Running span does not have the SampleToLocalSpanStore set.");
-                    }
-
-                    return this.sampleToLocalSpanStore;
-                }
-            }
-
-            set
-            {
-                lock (this.@lock)
-                {
-                    this.sampleToLocalSpanStore = value;
                 }
             }
         }
@@ -465,7 +421,6 @@ namespace OpenTelemetry.Trace
         internal static ISpan StartSpan(
                         Activity activity,
                         Tracestate tracestate,
-                        string name,
                         SpanKind spanKind,
                         ITraceParams traceParams,
                         IStartEndHandler startEndHandler,
@@ -474,7 +429,6 @@ namespace OpenTelemetry.Trace
             var span = new Span(
                activity,
                tracestate,
-               name,
                spanKind,
                traceParams,
                startEndHandler,

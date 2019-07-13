@@ -30,4 +30,8 @@
     </PackageReference>
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Impl\Trace\Internal\" />
+  </ItemGroup>
 </Project>

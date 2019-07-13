@@ -33,8 +33,6 @@ namespace OpenTelemetry.Trace.Export.Test
     {
         private const string SpanName1 = "MySpanName/1";
         private const string SpanName2 = "MySpanName/2";
-        private readonly Activity sampledActivity;
-        private readonly Activity notSampledActivity;
         private readonly ISpanExporter spanExporter = SpanExporter.Create(4, TimeSpan.FromSeconds(1));
         private readonly IStartEndHandler startEndHandler;
         private readonly TestHandler serviceHandler = new TestHandler();
@@ -46,23 +44,19 @@ namespace OpenTelemetry.Trace.Export.Test
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
 
-            sampledActivity = new Activity("foo");
-            sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-            notSampledActivity = new Activity("foo");
             startEndHandler = new StartEndHandler(spanExporter, new SimpleEventQueue());
-
             spanExporter.RegisterHandler("test.service", serviceHandler);
         }
 
         private Span CreateSampledEndedSpan(string spanName)
         {
+            var sampledActivity = new Activity(spanName);
+            sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             sampledActivity.Start();
             var span =
                 Span.StartSpan(
                     sampledActivity,
                     Tracestate.Empty,
-                    spanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler);
@@ -72,12 +66,12 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private Span CreateNotSampledEndedSpan(string spanName)
         {
+            var notSampledActivity = new Activity(spanName);
             notSampledActivity.Start();
             var span =
                 Span.StartSpan(
                     notSampledActivity,
                     Tracestate.Empty,
-                    spanName,
                     SpanKind.Internal,
                     TraceParams.Default,
                     startEndHandler);
