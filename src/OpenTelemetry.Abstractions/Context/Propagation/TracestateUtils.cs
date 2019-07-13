@@ -14,7 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+#if ABSTRACTIONS
+namespace OpenTelemetry.Abstractions.Context.Propagation
+#else
 namespace OpenTelemetry.Context.Propagation
+#endif
 {
     using System;
     using System.Collections.Generic;

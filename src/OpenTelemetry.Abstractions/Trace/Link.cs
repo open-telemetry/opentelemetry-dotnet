@@ -21,8 +21,8 @@ namespace OpenTelemetry.Trace
     using System.Collections.ObjectModel;
     using System.Diagnostics;
     using System.Linq;
+    using OpenTelemetry.Abstractions.Context.Propagation;
     using OpenTelemetry.Abstractions.Utils;
-    using OpenTelemetry.Context.Propagation;
 
     /// <inheritdoc/>
     public sealed class Link : ILink

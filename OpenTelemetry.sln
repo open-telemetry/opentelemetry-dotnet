@@ -69,8 +69,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{E359
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Exporters", "samples\Exporters\Exporters.csproj", "{6EC9DEC9-086F-4F29-BF3F-5FC7253829D5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Abstractions.Tests", "test\OpenTelemetry.Abstractions.Tests\OpenTelemetry.Abstractions.Tests.csproj", "{2A91DDDB-CE9E-4F4A-BCBB-CD2DFD400687}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -149,10 +147,6 @@ Global
 		{6EC9DEC9-086F-4F29-BF3F-5FC7253829D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6EC9DEC9-086F-4F29-BF3F-5FC7253829D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6EC9DEC9-086F-4F29-BF3F-5FC7253829D5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2A91DDDB-CE9E-4F4A-BCBB-CD2DFD400687}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2A91DDDB-CE9E-4F4A-BCBB-CD2DFD400687}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2A91DDDB-CE9E-4F4A-BCBB-CD2DFD400687}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2A91DDDB-CE9E-4F4A-BCBB-CD2DFD400687}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
