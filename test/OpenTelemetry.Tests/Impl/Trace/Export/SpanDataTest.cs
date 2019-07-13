@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private readonly List<ITimedEvent<IEvent>> eventList = new List<ITimedEvent<IEvent>>();
         private readonly List<ILink> linksList = new List<ILink>();
 
-        private readonly IAttributes attributes;
+        private readonly Attributes attributes;
         private readonly ITimedEvents<IEvent> events;
         private readonly LinkList links;
 

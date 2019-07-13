@@ -1,4 +1,4 @@
-﻿// <copyright file="IAttributes.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AttributesExtensions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Collector.StackExchangeRedis.Tests
 {
-    using System.Collections.Generic;
+    using System.Linq;
+    using OpenTelemetry.Trace.Export;
 
-    /// <summary>
-    /// Attributes collection.
-    /// </summary>
-    public interface IAttributes
+    internal static class AttributesExtensions
     {
-        /// <summary>
-        /// Gets the dictionary of attributes by name.
-        /// </summary>
-        IDictionary<string, object> AttributeMap { get; }
-
-        /// <summary>
-        /// Gets the number of attributed dropped due to the limit.
-        /// </summary>
-        int DroppedAttributesCount { get; }
+        public static object GetValue(this Attributes attributes, string key)
+        {
+            return attributes.AttributeMap.FirstOrDefault(kvp => kvp.Key == key).Value;
+        }
     }
 }

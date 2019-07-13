@@ -4,6 +4,11 @@
     <TargetFrameworks>net46;netcoreapp2.1</TargetFrameworks>
     <TargetFrameworks Condition="$(OS) != 'Windows_NT'">netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Impl\Trace\Internal\**" />
+    <EmbeddedResource Remove="Impl\Trace\Internal\**" />
+    <None Remove="Impl\Trace\Internal\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="xunit.runner.json">
