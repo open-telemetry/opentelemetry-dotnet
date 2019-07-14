@@ -36,10 +36,10 @@ namespace OpenTelemetry.Trace.Test
             Activity.ForceDefaultIdFormat = true;
 
             spanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty); ;
-            attributesMap.Add("MyAttributeKey0", AttributeValue<string>.Create("MyStringAttribute"));
-            attributesMap.Add("MyAttributeKey1", AttributeValue<long>.Create(10));
-            attributesMap.Add("MyAttributeKey2", AttributeValue<bool>.Create(true));
-            attributesMap.Add("MyAttributeKey3", AttributeValue<double>.Create(0.005));
+            attributesMap.Add("MyAttributeKey0", "MyStringAttribute");
+            attributesMap.Add("MyAttributeKey1", 10L);
+            attributesMap.Add("MyAttributeKey2", true);
+            attributesMap.Add("MyAttributeKey3", 0.005);
         }
 
         [Fact]

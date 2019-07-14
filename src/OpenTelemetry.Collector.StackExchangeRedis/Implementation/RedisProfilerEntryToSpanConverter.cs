@@ -124,22 +124,22 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var attributesMap = new Dictionary<string, object>()
             {
                 // TODO: pre-allocate constant attribute and reuse
-                { "db.type", AttributeValue.StringAttributeValue("redis") },
+                { "db.type", "redis" },
 
                 // Example: "redis.flags": None, DemandMaster
-                { "redis.flags", AttributeValue.StringAttributeValue(command.Flags.ToString()) },
+                { "redis.flags", command.Flags.ToString() },
             };
 
             if (command.Command != null)
             {
                 // Example: "db.statement": SET;
-                attributesMap.Add("db.statement", AttributeValue.StringAttributeValue(command.Command));
+                attributesMap.Add("db.statement", command.Command);
             }
 
             if (command.EndPoint != null)
             {
                 // Example: "db.instance": Unspecified/localhost:6379[0]
-                attributesMap.Add("db.instance", AttributeValue.StringAttributeValue(command.EndPoint.ToString() + "[" + command.Db + "]"));
+                attributesMap.Add("db.instance", command.EndPoint.ToString() + "[" + command.Db + "]");
             }
 
             var attributes = Attributes.Create(attributesMap, 0);

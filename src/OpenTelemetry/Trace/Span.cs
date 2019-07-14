@@ -421,11 +421,10 @@ namespace OpenTelemetry.Trace
                 throw new InvalidOperationException("Getting SpanData for a Span without RECORD_EVENTS option.");
             }
 
-            var attributesSpanData = this.attributes == null ? Attributes.Create(new Dictionary<string, object>(), 0)
-                        : Attributes.Create(this.attributes, this.attributes.NumberOfDroppedAttributes);
+            var attributesSpanData = Attributes.Create(this.attributes, this.attributes?.NumberOfDroppedAttributes ?? 0);
 
             var annotationsSpanData = CreateTimedEvents(this.InitializedEvents, this.TimestampConverter);
-            var linksSpanData = this.links == null ? LinkList.Create(new List<ILink>(), 0) : LinkList.Create(this.links.Events, this.links.NumberOfDroppedEvents);
+            var linksSpanData = LinkList.Create(this.links?.Events, this.links?.NumberOfDroppedEvents ?? 0);
 
             return SpanData.Create(
                 this.Context, // TODO avoid using context, use Activity instead
@@ -545,19 +544,20 @@ namespace OpenTelemetry.Trace
 
         private static ITimedEvents<T> CreateTimedEvents<T>(TraceEvents<EventWithTime<T>> events, Timer timestampConverter)
         {
-            if (events == null)
+            List<ITimedEvent<T>> eventsList = null;
+            int numberOfDroppedEvents = 0;
+            if (events != null)
             {
-                IEnumerable<ITimedEvent<T>> empty = Array.Empty<ITimedEvent<T>>();
-                return TimedEvents<T>.Create(empty, 0);
+                eventsList = new List<ITimedEvent<T>>(events.Events.Count);
+                foreach (var networkEvent in events.Events)
+                {
+                    eventsList.Add(networkEvent.ToSpanDataTimedEvent(timestampConverter));
+                }
+
+                numberOfDroppedEvents = events.NumberOfDroppedEvents;
             }
 
-            var eventsList = new List<ITimedEvent<T>>(events.Events.Count);
-            foreach (var networkEvent in events.Events)
-            {
-                eventsList.Add(networkEvent.ToSpanDataTimedEvent(timestampConverter));
-            }
-
-            return TimedEvents<T>.Create(eventsList, events.NumberOfDroppedEvents);
+            return TimedEvents<T>.Create(eventsList, numberOfDroppedEvents);
         }
     }
 }

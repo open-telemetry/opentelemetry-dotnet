@@ -47,14 +47,13 @@ namespace OpenTelemetry.Trace.Test
             timestamp = Timestamp.FromDateTimeOffset(startTime);
             timestampConverter = Timer.StartNew(startTime, () => interval);
 
-            attributes.Add(
-                "MyStringAttributeKey", AttributeValue.StringAttributeValue("MyStringAttributeValue"));
-            attributes.Add("MyLongAttributeKey", AttributeValue.LongAttributeValue(123L));
-            attributes.Add("MyBooleanAttributeKey", AttributeValue.BooleanAttributeValue(false));
-            expectedAttributes = new Dictionary<String, object>(attributes);
-            expectedAttributes.Add(
-                "MySingleStringAttributeKey",
-                "MySingleStringAttributeValue");
+            attributes.Add("MyStringAttributeKey", "MyStringAttributeValue");
+            attributes.Add("MyLongAttributeKey", 123L);
+            attributes.Add("MyBooleanAttributeKey", false);
+            expectedAttributes = new Dictionary<string, object>(attributes)
+            {
+                ["MySingleStringAttributeKey"] = "MySingleStringAttributeValue",
+            };
         }
 
         [Fact]

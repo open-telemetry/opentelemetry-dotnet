@@ -122,16 +122,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return micros;
         }
 
-        private string AttributeValueToString(IAttributeValue attributeValue)
-        {
-            return attributeValue.Match(
-                (arg) => { return arg; },
-                (arg) => { return arg.ToString(); },
-                (arg) => { return arg.ToString(); },
-                (arg) => { return arg.ToString(); },
-                (arg) => { return null; });
-        }
-
         private string EncodeTraceId(ActivityTraceId traceId)
         {
             var id = traceId.ToHexString();

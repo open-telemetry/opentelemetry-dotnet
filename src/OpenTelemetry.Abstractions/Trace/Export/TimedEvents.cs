@@ -22,6 +22,8 @@ namespace OpenTelemetry.Trace.Export
 
     public sealed class TimedEvents<T> : ITimedEvents<T>
     {
+        private static readonly TimedEvents<T> Empty = new TimedEvents<T>(new ITimedEvent<T>[0], 0);
+
         internal TimedEvents(IEnumerable<ITimedEvent<T>> events, int droppedEventsCount)
         {
             this.Events = events ?? throw new ArgumentNullException("Null events");
@@ -36,7 +38,7 @@ namespace OpenTelemetry.Trace.Export
         {
             if (events == null)
             {
-                throw new ArgumentNullException(nameof(events));
+                return Empty;
             }
 
             return new TimedEvents<T>(events, droppedEventsCount);
