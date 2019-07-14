@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace
             Resource resource,
             string name,
             Timestamp startTimestamp,
-            IAttributes attributes,
+            Attributes attributes,
             ITimedEvents<IEvent> events,
             ILinks links,
             int? childSpanCount,
@@ -78,9 +78,9 @@ namespace OpenTelemetry.Trace
         public string Name { get; }
 
         /// <summary>
-        /// Gets the collection of <see cref="IAttributes"/> objects.
+        /// Gets the collection of <see cref="Attributes"/> objects.
         /// </summary>
-        public IAttributes Attributes { get; }
+        public Attributes Attributes { get; }
 
         /// <summary>
         /// Gets the collection of <see cref="ITimedEvents{IEvent}"/> objects.
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Trace
         /// <param name="resource">The <see cref="Resource"/> this span was executed on.</param>
         /// <param name="name">The name of the <see cref="ISpan"/>.</param>
         /// <param name="startTimestamp">The start <see cref="Timestamp"/> of the <see cref="ISpan"/>.</param>
-        /// <param name="attributes">The <see cref="IAttributes"/> associated with the <see cref="ISpan"/>.</param>
+        /// <param name="attributes">The <see cref="Attributes"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="events">The <see cref="Events"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="links">The <see cref="ILinks"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="childSpanCount">The <see cref="ChildSpanCount"/> associated with the <see cref="ISpan"/>.</param>
@@ -139,7 +139,7 @@ namespace OpenTelemetry.Trace
                         Resource resource,
                         string name,
                         Timestamp startTimestamp,
-                        IAttributes attributes,
+                        Attributes attributes,
                         ITimedEvents<IEvent> events,
                         ILinks links,
                         int? childSpanCount,

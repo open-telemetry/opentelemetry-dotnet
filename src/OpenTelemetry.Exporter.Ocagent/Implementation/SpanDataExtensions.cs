@@ -78,7 +78,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                         },
                     SameProcessAsParentSpan = spanData.ParentSpanId != null,
                     ChildSpanCount = spanData.ChildSpanCount.HasValue ? (uint)spanData.ChildSpanCount.Value : 0,
-                    Attributes = FromIAttributes(spanData.Attributes),
+                    Attributes = FromAttributes(spanData.Attributes),
                     TimeEvents = FromITimeEvents(spanData.Events),
                     Links = new Span.Types.Links
                     {
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             return null;
         }
 
-        private static Span.Types.Attributes FromIAttributes(IAttributes source)
+        private static Span.Types.Attributes FromAttributes(Attributes source)
         {
             var attributes = new Span.Types.Attributes
             {

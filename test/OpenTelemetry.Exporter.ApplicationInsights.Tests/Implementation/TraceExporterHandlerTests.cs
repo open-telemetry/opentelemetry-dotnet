@@ -1863,7 +1863,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             out Resource resource,
             out string name,
             out Timestamp startTimestamp,
-            out IAttributes attributes,
+            out Attributes attributes,
             out ITimedEvents<IEvent> events,
             out ILinks links,
             out int? childSpanCount,

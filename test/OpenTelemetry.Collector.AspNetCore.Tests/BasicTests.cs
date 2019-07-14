@@ -85,7 +85,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             var spanData = ((Span)startEndHandler.Invocations[1].Arguments[0]).ToSpanData();
 
             Assert.Equal(SpanKind.Server, spanData.Kind);
-            Assert.Equal("/api/values", spanData.Attributes.AttributeMap["http.path"]);
+            Assert.Equal("/api/values", spanData.Attributes.GetValue("http.path"));
         }
 
         [Fact]
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
 
             Assert.Equal(SpanKind.Server, spanData.Kind);
             Assert.Equal("api/Values/{id}", spanData.Name);
-            Assert.Equal("/api/values/2", spanData.Attributes.AttributeMap["http.path"]);
+            Assert.Equal("/api/values/2", spanData.Attributes.GetValue("http.path"));
 
             Assert.Equal(expectedTraceId, spanData.Context.TraceId);
             Assert.Equal(expectedSpanId, spanData.ParentSpanId);

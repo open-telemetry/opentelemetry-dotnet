@@ -18,32 +18,30 @@ namespace OpenTelemetry.Trace.Export
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Linq;
 
-    public sealed class Attributes : IAttributes
+    public sealed class Attributes
     {
         private static readonly Attributes Empty = new Attributes(new Dictionary<string, object>(), 0);
 
-        internal Attributes(IDictionary<string, object> attributeMap, int droppedAttributesCount)
+        private Attributes(IEnumerable<KeyValuePair<string, object>> attributeMap, int droppedAttributesCount)
         {
-            this.AttributeMap = attributeMap ?? throw new ArgumentNullException("Null attributeMap");
+            this.AttributeMap = attributeMap ?? throw new ArgumentNullException(nameof(attributeMap));
             this.DroppedAttributesCount = droppedAttributesCount;
         }
 
-        public IDictionary<string, object> AttributeMap { get; }
+        public IEnumerable<KeyValuePair<string, object>> AttributeMap { get; }
 
         public int DroppedAttributesCount { get; }
 
-        public static Attributes Create(IDictionary<string, object> attributeMap, int droppedAttributesCount)
+        public static Attributes Create(IReadOnlyCollection<KeyValuePair<string, object>> attributeMap, int droppedAttributesCount)
         {
             if (attributeMap == null)
             {
                 return Empty;
             }
 
-            IDictionary<string, object> copy = new Dictionary<string, object>(attributeMap);
-            return new Attributes(new ReadOnlyDictionary<string, object>(copy), droppedAttributesCount);
+            return new Attributes(attributeMap, droppedAttributesCount);
         }
 
         /// <inheritdoc/>
@@ -55,7 +53,7 @@ namespace OpenTelemetry.Trace.Export
                 + "}";
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override bool Equals(object o)
         {
             if (o == this)
@@ -72,7 +70,7 @@ namespace OpenTelemetry.Trace.Export
             return false;
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             var h = 1;

@@ -16,141 +16,78 @@
 
 namespace OpenTelemetry.Utils
 {
-    using System.Collections;
     using System.Collections.Generic;
-    using System.Collections.Specialized;
-    using System.Linq;
 
-    internal class AttributesWithCapacity : IDictionary<string, object>
+    internal class AttributesWithCapacity
     {
-        private readonly OrderedDictionary @delegate = new OrderedDictionary();
         private readonly int capacity;
+
+        private KeyValueListNode attributesHead = null;
+        private KeyValueListNode attributesTail = null;
+
         private int totalRecordedAttributes;
+        private int count = 0;
 
         public AttributesWithCapacity(int capacity)
         {
             this.capacity = capacity;
         }
 
-        public int NumberOfDroppedAttributes => this.totalRecordedAttributes - this.Count;
-
-        public ICollection<string> Keys => (ICollection<string>)this.@delegate.Keys;
-
-        public ICollection<object> Values => (ICollection<object>)this.@delegate.Values;
-
-        public int Count => this.@delegate.Count;
-
-        public bool IsReadOnly => this.@delegate.IsReadOnly;
-
-        public object this[string key]
-        {
-            get => this.@delegate[key];
-
-            set => this.@delegate[key] = value;
-        }
+        public int NumberOfDroppedAttributes => this.totalRecordedAttributes - this.count;
 
         public void PutAttribute(string key, object value)
         {
             this.totalRecordedAttributes += 1;
-            this[key] = value;
-            if (this.Count > this.capacity)
+            if (this.capacity == 0)
             {
-                this.@delegate.RemoveAt(0);
+                return;
             }
-        }
 
-        // Users must call this method instead of putAll to keep count of the total number of entries
-        // inserted.
-        public void PutAttributes(IDictionary<string, object> attributes)
-        {
-            foreach (var kvp in attributes)
+            this.count++;
+            var next = new KeyValueListNode
             {
-                this.PutAttribute(kvp.Key, kvp.Value);
-            }
-        }
+                KeyValue = new KeyValuePair<string, object>(key, value),
+                Next = null,
+            }; 
 
-        public void Add(string key, object value)
-        {
-            this.@delegate.Add(key, value);
-        }
-
-        public bool ContainsKey(string key)
-        {
-            return this.@delegate.Contains(key);
-        }
-
-        public bool Remove(string key)
-        {
-            if (this.@delegate.Contains(key))
+            if (this.attributesHead == null)
             {
-                this.@delegate.Remove(key);
-                return true;
+                this.attributesHead = next;
+                this.attributesTail = next;
             }
             else
             {
-                return false;
+                this.attributesTail.Next = next;
+                this.attributesTail = next;
+                if (this.count > this.capacity)
+                {
+                    this.attributesHead = this.attributesHead.Next;
+                    this.count--;
+                }
             }
         }
 
-        public bool TryGetValue(string key, out object value)
+        public IReadOnlyCollection<KeyValuePair<string, object>> AsReadOnlyCollection()
         {
-            value = null;
-            if (this.ContainsKey(key))
+            var result = new List<KeyValuePair<string, object>>();
+            var next = this.attributesHead;
+
+            while (next != null)
             {
-                value = this.@delegate[key];
-                return true;
+                result.Add(new KeyValuePair<string, object>(next.KeyValue.Key, next.KeyValue.Value));
+                next = next.Next;
             }
 
-            return false;
+            return result;
         }
 
-        public void Add(KeyValuePair<string, object> item)
+        /// <summary>
+        /// Having our own key-value linked list allows us to be more efficient.  
+        /// </summary>
+        private class KeyValueListNode
         {
-            this.@delegate.Add(item.Key, item.Value);
-        }
-
-        public void Clear()
-        {
-            this.@delegate.Clear();
-        }
-
-        public bool Contains(KeyValuePair<string, object> item)
-        {
-            var result = this.TryGetValue(item.Key, out var value);
-            if (result)
-            {
-                return value.Equals(item.Value);
-            }
-
-            return false;
-        }
-
-        public void CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
-        {
-            var entries = new DictionaryEntry[this.@delegate.Count];
-            this.@delegate.CopyTo(entries, 0);
-
-            for (var i = 0; i < entries.Length; i++)
-            {
-                array[i + arrayIndex] = new KeyValuePair<string, object>((string)entries[i].Key, (object)entries[i].Value);
-            }
-        }
-
-        public bool Remove(KeyValuePair<string, object> item)
-        {
-            return this.Remove(item.Key);
-        }
-
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
-        {
-            var array = new KeyValuePair<string, object>[this.@delegate.Count];
-            this.CopyTo(array, 0);
-            return array.ToList().GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.@delegate.GetEnumerator();
+            public KeyValuePair<string, object> KeyValue;
+            public KeyValueListNode Next;
         }
     }
 }

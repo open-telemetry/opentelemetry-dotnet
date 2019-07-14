@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Tests;
+
 namespace OpenTelemetry.Trace.Test
 {
     using System;
@@ -39,7 +41,7 @@ namespace OpenTelemetry.Trace.Test
         private readonly SpanOptions noRecordSpanOptions = SpanOptions.None;
         private readonly SpanOptions recordSpanOptions = SpanOptions.RecordEvents;
         private readonly IDictionary<string, object> attributes = new Dictionary<String, object>();
-        private readonly IDictionary<string, object> expectedAttributes;
+        private readonly List<KeyValuePair<string, object>> expectedAttributes;
         private readonly IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
 
         public SpanTest()
@@ -50,9 +52,9 @@ namespace OpenTelemetry.Trace.Test
             attributes.Add("MyStringAttributeKey", "MyStringAttributeValue");
             attributes.Add("MyLongAttributeKey", 123L);
             attributes.Add("MyBooleanAttributeKey", false);
-            expectedAttributes = new Dictionary<string, object>(attributes)
+            expectedAttributes = new List<KeyValuePair<string, object>>(attributes)
             {
-                ["MySingleStringAttributeKey"] = "MySingleStringAttributeValue",
+                new KeyValuePair<string, object>("MySingleStringAttributeKey", "MySingleStringAttributeValue")
             };
         }
 
@@ -228,7 +230,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(SpanName, spanData.Name);
             Assert.Equal(activity.ParentSpanId, spanData.ParentSpanId);
             Assert.Equal(0, spanData.Attributes.DroppedAttributesCount);
-            Assert.Equal(expectedAttributes, spanData.Attributes.AttributeMap);
+            spanData.Attributes.AssertAreSame(expectedAttributes);
             Assert.Equal(0, spanData.Events.DroppedEventsCount);
             Assert.Equal(2, spanData.Events.Events.Count());
             Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100))),
@@ -297,7 +299,8 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(SpanName, spanData.Name);
             Assert.Equal(activity.ParentSpanId, spanData.ParentSpanId);
             Assert.Equal(0, spanData.Attributes.DroppedAttributesCount);
-            Assert.Equal(expectedAttributes, spanData.Attributes.AttributeMap);
+
+            spanData.Attributes.AssertAreSame(expectedAttributes);
             Assert.Equal(0, spanData.Events.DroppedEventsCount);
             Assert.Equal(2, spanData.Events.Events.Count());
             Assert.Equal(timestamp.AddDuration(Duration.Create(TimeSpan.FromMilliseconds(100))),
@@ -402,27 +405,27 @@ namespace OpenTelemetry.Trace.Test
 
             var spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfAttributes, spanData.Attributes.DroppedAttributesCount);
-            Assert.Equal(maxNumberOfAttributes, spanData.Attributes.AttributeMap.Count);
+            Assert.Equal(maxNumberOfAttributes, spanData.Attributes.AttributeMap.Count());
             for (var i = 0; i < maxNumberOfAttributes; i++)
             {
                 Assert.Equal(
                     i + maxNumberOfAttributes,
                     spanData
                         .Attributes
-                        .AttributeMap["MyStringAttributeKey" + (i + maxNumberOfAttributes)]);
+                        .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes)));
             }
 
             span.End();
             spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfAttributes, spanData.Attributes.DroppedAttributesCount);
-            Assert.Equal(maxNumberOfAttributes, spanData.Attributes.AttributeMap.Count);
+            Assert.Equal(maxNumberOfAttributes, spanData.Attributes.AttributeMap.Count());
             for (var i = 0; i < maxNumberOfAttributes; i++)
             {
                 Assert.Equal(
                     i + maxNumberOfAttributes,
                     spanData
                         .Attributes
-                        .AttributeMap["MyStringAttributeKey" + (i + maxNumberOfAttributes)]);
+                        .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes)));
             }
         }
 
@@ -457,14 +460,14 @@ namespace OpenTelemetry.Trace.Test
 
             var spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfAttributes, spanData.Attributes.DroppedAttributesCount);
-            Assert.Equal(maxNumberOfAttributes, spanData.Attributes.AttributeMap.Count);
+            Assert.Equal(maxNumberOfAttributes, spanData.Attributes.AttributeMap.Count());
             for (var i = 0; i < maxNumberOfAttributes; i++)
             {
                 Assert.Equal(
                     i + maxNumberOfAttributes,
                     spanData
                         .Attributes
-                        .AttributeMap["MyStringAttributeKey" + (i + maxNumberOfAttributes)]);
+                        .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes)));
             }
 
             for (var i = 0; i < maxNumberOfAttributes / 2; i++)
@@ -480,7 +483,7 @@ namespace OpenTelemetry.Trace.Test
 
             spanData = ((Span)span).ToSpanData();
             Assert.Equal(maxNumberOfAttributes * 3 / 2, spanData.Attributes.DroppedAttributesCount);
-            Assert.Equal(maxNumberOfAttributes, spanData.Attributes.AttributeMap.Count);
+            Assert.Equal(maxNumberOfAttributes, spanData.Attributes.AttributeMap.Count());
             // Test that we still have in the attributes map the latest maxNumberOfAttributes / 2 entries.
             for (var i = 0; i < maxNumberOfAttributes / 2; i++)
             {
@@ -488,14 +491,14 @@ namespace OpenTelemetry.Trace.Test
                     i + maxNumberOfAttributes * 3 / 2,
                     spanData
                         .Attributes
-                        .AttributeMap["MyStringAttributeKey" + (i + maxNumberOfAttributes * 3 / 2)]);
+                        .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes * 3 / 2)));
             }
 
             // Test that we have the newest re-added initial entries.
             for (var i = 0; i < maxNumberOfAttributes / 2; i++)
             {
                 Assert.Equal(i,
-                    spanData.Attributes.AttributeMap["MyStringAttributeKey" + i]);
+                    spanData.Attributes.GetValue("MyStringAttributeKey" + i));
             }
         }
 
