@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace.Export
 
     public sealed class LinkList : ILinks
     {
-        private static readonly LinkList Empty = new LinkList(Array.Empty<ILink>(), 0);
+        private static readonly LinkList Empty = new LinkList(Enumerable.Empty<ILink>(), 0);
 
         internal LinkList(IEnumerable<ILink> links, int droppedLinksCount)
         {

@@ -148,7 +148,7 @@ namespace OpenTelemetry.Trace
         {
             if (events == null)
             {
-                events = TimedEvents<IEvent>.Create(Array.Empty<ITimedEvent<IEvent>>(), 0);
+                events = TimedEvents<IEvent>.Create(Enumerable.Empty<ITimedEvent<IEvent>>(), 0);
             }
 
             return new SpanData(
