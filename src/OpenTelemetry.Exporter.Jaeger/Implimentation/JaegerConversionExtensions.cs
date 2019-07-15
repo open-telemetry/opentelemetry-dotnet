@@ -76,31 +76,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
         public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
         {
-            var valType = attribute.Value.GetType();
-
-            if (valType == typeof(string))
+            switch (attribute.Value)
             {
-                return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.STRING, VStr = (string)attribute.Value };
-            }
-            else if (attribute.Value.GetType() == typeof(long))
-            {
-                return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.LONG, VLong = (long)attribute.Value };
-            }
-            else if (attribute.Value.GetType() == typeof(int))
-            {
-                return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.LONG, VLong = Convert.ToInt64(attribute.Value) };
-            }
-            else if (attribute.Value.GetType() == typeof(double))
-            {
-                return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.DOUBLE, VDouble = (double)attribute.Value };
-            }
-            else if (attribute.Value.GetType() == typeof(float))
-            {
-                return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.DOUBLE, VDouble = Convert.ToDouble(attribute.Value) };
-            }
-            else if (attribute.Value.GetType() == typeof(bool))
-            {
-                return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.BOOL, VBool = (bool)attribute.Value };
+                case string s:
+                    return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.STRING, VStr = s };
+                case int i:
+                    return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.LONG, VLong = Convert.ToInt64(i) };
+                case long l:
+                    return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.LONG, VLong = l };
+                case float f:
+                    return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.DOUBLE, VDouble = Convert.ToDouble(f) };
+                case double d:
+                    return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.DOUBLE, VDouble = d };
+                case bool b:
+                    return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.BOOL, VBool = b };
             }
 
             return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.STRING, VStr = attribute.Value.ToString() };
