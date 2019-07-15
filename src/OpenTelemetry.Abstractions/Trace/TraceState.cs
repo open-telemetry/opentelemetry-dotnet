@@ -19,6 +19,7 @@ namespace OpenTelemetry.Trace
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text;
 
     /// <summary>
     /// Tracestate entries allowing different vendors to participate in a trace.
@@ -87,6 +88,35 @@ namespace OpenTelemetry.Trace
         public TracestateBuilder ToBuilder()
         {
             return new TracestateBuilder(this);
+        }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            if (this.Entries.Any())
+            {
+                var sb = new StringBuilder();
+
+                var isFirst = true;
+
+                foreach (var entry in this.Entries)
+                {
+                    if (isFirst)
+                    {
+                        isFirst = false;
+                    }
+                    else
+                    {
+                        sb.Append(",");
+                    }
+
+                    sb.Append(entry.Key).Append("=").Append(entry.Value);
+                }
+
+                return sb.ToString();
+            }
+
+            return string.Empty;
         }
 
         private static bool ValidateKey(string key)
@@ -189,7 +219,6 @@ namespace OpenTelemetry.Trace
         private static Tracestate Create(ICollection<Entry> entries)
         {
             // TODO: discard last entries instead of throwing
-
             if (entries.Count > MaxKeyValuePairsCount)
             {
                 throw new ArgumentException("Too many entries.", nameof(entries));
@@ -273,8 +302,12 @@ namespace OpenTelemetry.Trace
             /// <returns>Tracestate builder for chained calls.</returns>
             public TracestateBuilder Set(string key, string value)
             {
-                // Initially create the Entry to validate input.
+                if (this.entries != null && this.entries.Count > MaxKeyValuePairsCount)
+                {
+                    throw new ArgumentException("Too many entries.");
+                }
 
+                // Initially create the Entry to validate input.
                 var entry = Entry.Create(key, value);
 
                 if (this.entries == null)

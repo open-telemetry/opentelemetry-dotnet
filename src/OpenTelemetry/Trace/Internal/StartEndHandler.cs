@@ -16,101 +16,50 @@
 
 namespace OpenTelemetry.Trace.Internal
 {
-    using System.Diagnostics;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Export;
 
     internal sealed class StartEndHandler : IStartEndHandler
     {
         private readonly ISpanExporter spanExporter;
-        private readonly IRunningSpanStore runningSpanStore;
-        private readonly ISampledSpanStore sampledSpanStore;
         private readonly IEventQueue eventQueue;
 
-        // true if any of (runningSpanStore OR sampledSpanStore) are different than null, which
-        // means the spans with RECORD_EVENTS should be enqueued in the queue.
-        private readonly bool enqueueEventForNonSampledSpans;
-
-        public StartEndHandler(ISpanExporter spanExporter, IRunningSpanStore runningSpanStore, ISampledSpanStore sampledSpanStore, IEventQueue eventQueue)
+        public StartEndHandler(ISpanExporter spanExporter, IEventQueue eventQueue)
         {
             this.spanExporter = spanExporter;
-            this.runningSpanStore = runningSpanStore;
-            this.sampledSpanStore = sampledSpanStore;
-            this.enqueueEventForNonSampledSpans = runningSpanStore != null || sampledSpanStore != null;
             this.eventQueue = eventQueue;
         }
 
         public void OnEnd(ISpan span)
         {
-            if ((span.IsRecordingEvents && this.enqueueEventForNonSampledSpans)
-                || (span.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
+            if (span.IsRecordingEvents)
             {
-                this.eventQueue.Enqueue(new SpanEndEvent(span, this.spanExporter, this.runningSpanStore, this.sampledSpanStore));
+                this.eventQueue.Enqueue(new SpanEndEvent(span, this.spanExporter));
             }
         }
 
         public void OnStart(ISpan span)
         {
-            if (span.IsRecordingEvents && this.enqueueEventForNonSampledSpans)
-            {
-                this.eventQueue.Enqueue(new SpanStartEvent(span, this.runningSpanStore));
-            }
-        }
-
-        private sealed class SpanStartEvent : IEventQueueEntry
-        {
-            private readonly ISpan span;
-            private readonly IRunningSpanStore activeSpansExporter;
-
-            public SpanStartEvent(ISpan span, IRunningSpanStore activeSpansExporter)
-            {
-                this.span = span;
-                this.activeSpansExporter = activeSpansExporter;
-            }
-
-            public void Process()
-            {
-                if (this.activeSpansExporter != null)
-                {
-                    this.activeSpansExporter.OnStart(this.span);
-                }
-            }
         }
 
         private sealed class SpanEndEvent : IEventQueueEntry
         {
             private readonly ISpan span;
-            private readonly IRunningSpanStore runningSpanStore;
             private readonly ISpanExporter spanExporter;
-            private readonly ISampledSpanStore sampledSpanStore;
 
             public SpanEndEvent(
                     ISpan span,
-                    ISpanExporter spanExporter,
-                    IRunningSpanStore runningSpanStore,
-                    ISampledSpanStore sampledSpanStore)
+                    ISpanExporter spanExporter)
             {
                 this.span = span;
-                this.runningSpanStore = runningSpanStore;
                 this.spanExporter = spanExporter;
-                this.sampledSpanStore = sampledSpanStore;
             }
 
             public void Process()
             {
-                if ((this.span.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
+                if (this.span.IsRecordingEvents)
                 {
                     this.spanExporter.AddSpan(this.span);
-                }
-
-                if (this.runningSpanStore != null)
-                {
-                    this.runningSpanStore.OnEnd(this.span);
-                }
-
-                if (this.sampledSpanStore != null)
-                {
-                    this.sampledSpanStore.ConsiderForSampling(this.span);
                 }
             }
         }

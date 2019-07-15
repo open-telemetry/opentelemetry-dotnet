@@ -36,14 +36,14 @@ namespace OpenTelemetry.Stats.Test
         public void TestPutDouble()
         {
             var metrics = MeasureMapBuilder.Builder().Put(M1, 44.4).Build();
-            AssertContains(metrics, MeasurementDouble.Create(M1, 44.4) );
+            AssertCollectionsAreSame(metrics, MeasurementDouble.Create(M1, 44.4) );
         }
 
         [Fact]
         public void TestPutLong()
         {
             var metrics = MeasureMapBuilder.Builder().Put(M3, 9999L).Put(M4, 8888L).Build();
-            AssertContains(metrics, MeasurementLong.Create(M3, 9999L), MeasurementLong.Create(M4, 8888L));
+            AssertCollectionsAreSame(metrics, MeasurementLong.Create(M3, 9999L), MeasurementLong.Create(M4, 8888L));
         }
 
         [Fact]
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Stats.Test
                     .Put(M3, 9999L)
                     .Put(M4, 8888L)
                     .Build();
-            AssertContains(
+            AssertCollectionsAreSame(
                 metrics,
                 MeasurementDouble.Create(M1, 44.4), MeasurementDouble.Create(M2, 66.6),
                 MeasurementLong.Create(M3, 9999L),  MeasurementLong.Create(M4, 8888L));
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Stats.Test
         public void TestBuilderEmpty()
         {
             var metrics = MeasureMapBuilder.Builder().Build();
-            AssertContains(metrics);
+            AssertCollectionsAreSame(metrics);
         }
 
         [Fact]
@@ -79,24 +79,24 @@ namespace OpenTelemetry.Stats.Test
                 expected.Add(MeasurementDouble.Create(MakeSimpleMeasureDouble("m" + i), i * 11.1));
                 builder.Put(MakeSimpleMeasureDouble("m" + i), i * 11.1);
                 var expArray = expected.ToArray();
-                AssertContains(builder.Build(), expArray);
+                AssertCollectionsAreSame(builder.Build(), expArray);
             }
         }
 
         [Fact]
         public void TestDuplicateMeasureDoubles()
         {
-            AssertContains(
+            AssertCollectionsAreSame(
                 MeasureMapBuilder.Builder().Put(M1, 1.0).Put(M1, 2.0).Build(),
                 MeasurementDouble.Create(M1, 2.0));
-            AssertContains(
+            AssertCollectionsAreSame(
                 MeasureMapBuilder.Builder().Put(M1, 1.0).Put(M1, 2.0).Put(M1, 3.0).Build(),
                 MeasurementDouble.Create(M1, 3.0));
-            AssertContains(
+            AssertCollectionsAreSame(
                 MeasureMapBuilder.Builder().Put(M1, 1.0).Put(M2, 2.0).Put(M1, 3.0).Build(),
                 MeasurementDouble.Create(M1, 3.0),
                 MeasurementDouble.Create(M2, 2.0));
-            AssertContains(
+            AssertCollectionsAreSame(
                 MeasureMapBuilder.Builder().Put(M1, 1.0).Put(M1, 2.0).Put(M2, 2.0).Build(),
                 MeasurementDouble.Create(M1, 2.0),
                 MeasurementDouble.Create(M2, 2.0));
@@ -105,17 +105,17 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestDuplicateMeasureLongs()
         {
-            AssertContains(
+            AssertCollectionsAreSame(
                 MeasureMapBuilder.Builder().Put(M3, 100L).Put(M3, 100L).Build(),
                 MeasurementLong.Create(M3, 100L));
-            AssertContains(
+            AssertCollectionsAreSame(
                 MeasureMapBuilder.Builder().Put(M3, 100L).Put(M3, 200L).Put(M3, 300L).Build(),
                 MeasurementLong.Create(M3, 300L));
-            AssertContains(
+            AssertCollectionsAreSame(
                 MeasureMapBuilder.Builder().Put(M3, 100L).Put(M4, 200L).Put(M3, 300L).Build(),
                 MeasurementLong.Create(M3, 300L),
                 MeasurementLong.Create(M4, 200L));
-            AssertContains(
+            AssertCollectionsAreSame(
                 MeasureMapBuilder.Builder().Put(M3, 100L).Put(M3, 200L).Put(M4, 200L).Build(),
                 MeasurementLong.Create(M3, 200L),
                 MeasurementLong.Create(M4, 200L));
@@ -124,11 +124,11 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestDuplicateMeasures()
         {
-            AssertContains(
+            AssertCollectionsAreSame(
                 MeasureMapBuilder.Builder().Put(M3, 100L).Put(M1, 1.0).Put(M3, 300L).Build(),
                 MeasurementLong.Create(M3, 300L),
                 MeasurementDouble.Create(M1, 1.0));
-            AssertContains(
+            AssertCollectionsAreSame(
                 MeasureMapBuilder.Builder().Put(M2, 2.0).Put(M3, 100L).Put(M2, 3.0).Build(),
                 MeasurementDouble.Create(M2, 3.0),
                 MeasurementLong.Create(M3, 100L));
@@ -144,10 +144,16 @@ namespace OpenTelemetry.Stats.Test
             return MeasureLong.Create(measure, measure + " description", "1");
         }
 
-        private static void AssertContains(IEnumerable<IMeasurement> metrics, params IMeasurement[] measurements)
+        private static void AssertCollectionsAreSame(IEnumerable<IMeasurement> metrics, params IMeasurement[] measurements)
         {
-            var expected = measurements.ToList();
-            Assert.True(Collections.AreEquivalent(metrics, expected));
+            var metricsList = metrics.ToList();
+            var measurementsList = measurements.ToList();
+            Assert.Equal(metricsList.Count, measurementsList.Count);
+
+            foreach (var measurement in measurements)
+            {
+                Assert.Contains(measurement, metricsList);
+            }
         }
     }
 }

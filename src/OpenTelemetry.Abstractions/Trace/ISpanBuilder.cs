@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     /// <summary>
     /// Span builder.
@@ -39,6 +40,14 @@ namespace OpenTelemetry.Trace
         ISpanBuilder SetParent(ISpan parent);
 
         /// <summary>
+        /// Sets the <see cref="Activity"/> to use as a parent for the new span.
+        /// Any parent that was set previously will be discarded.
+        /// </summary>
+        /// <param name="parent"><see cref="Activity"/> to set as parent.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder SetParent(Activity parent);
+
+        /// <summary>
         /// Sets the remote <see cref="SpanContext"/> to use as a parent for the new span.
         /// Any parent that was set previously will be discarded.
         /// </summary>
@@ -54,6 +63,17 @@ namespace OpenTelemetry.Trace
         ISpanBuilder SetNoParent();
 
         /// <summary>
+        /// Sets flag indicating that new span should become a child of implicit context (Activity.Current)
+        /// or continue run in this context and inherit it
+        /// Use this method with value 'false' in auto-collectors when library is instrumented with Activities.
+        /// Any parent that was set previously will be discarded.
+        /// </summary>
+        /// <param name="createChild">If true, a new span will become a child of the existing implicit context.
+        /// If false, new span will continue this context.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder SetCreateChild(bool createChild);
+
+        /// <summary>
         /// Set <see cref="SpanKind"/> on the span.
         /// </summary>
         /// <param name="spanKind"><see cref="SpanKind"/> to set.</param>
@@ -63,9 +83,16 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Set the <see cref="Link"/> on the span.
         /// </summary>
-        /// <param name="spanContext"><see cref="Link"/> context to set on span.</param>
+        /// <param name="spanContext"><see cref="SpanContext"/> context to set on span.</param>
         /// <returns>This span builder for chaining.</returns>
         ISpanBuilder AddLink(SpanContext spanContext);
+
+        /// <summary>
+        /// Set the <see cref="Link"/> on the span.
+        /// </summary>
+        /// <param name="activity"><see cref="Activity"/> context to set on span.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder AddLink(Activity activity);
 
         /// <summary>
         /// Set the <see cref="Link"/> on the span.

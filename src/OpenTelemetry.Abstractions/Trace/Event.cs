@@ -20,7 +20,6 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Linq;
-    using OpenTelemetry.Abstractions.Utils;
 
     /// <inheritdoc/>
     public sealed class Event : IEvent
@@ -102,7 +101,7 @@ namespace OpenTelemetry.Trace
         {
             return "Annotation{"
                 + "description=" + this.Name + ", "
-                + "attributes=" + Collections.ToString(this.Attributes)
+                + "attributes=" + string.Join(", ", this.Attributes.Select(kvp => $"{kvp.Key}={kvp.Value}"))
                 + "}";
         }
     }

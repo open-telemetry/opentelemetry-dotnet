@@ -134,9 +134,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
                     if (t.Timestamp != null)
                     {
-                        var logTimestamp = DateTimeOffset.FromUnixTimeSeconds(t.Timestamp.Seconds);
-                        logTimestamp = logTimestamp.Add(TimeSpan.FromTicks(t.Timestamp.Nanos / 100));
-                        log.Timestamp = logTimestamp;
+                        log.Timestamp = t.Timestamp;
                     }
 
                     foreach (var attr in t.Event.Attributes)
@@ -255,8 +253,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             }
 
             // 1 tick is 100 ns
-            timestamp = DateTimeOffset.FromUnixTimeSeconds(span.StartTimestamp.Seconds);
-            timestamp = timestamp.Add(TimeSpan.FromTicks(span.StartTimestamp.Nanos / 100));
+            timestamp = new DateTimeOffset(span.StartTimestamp);
 
             name = span.Name;
 
@@ -283,9 +280,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             }
 
             tracestate = span.Context.Tracestate;
-
-            var durationTs = span.EndTimestamp.SubtractTimestamp(span.StartTimestamp);
-            duration = TimeSpan.FromTicks((durationTs.Seconds * TimeSpan.TicksPerSecond) + (durationTs.Nanos / 100));
+            duration = span.EndTimestamp - span.StartTimestamp;
         }
 
         private void OverwriteSpanKindFromAttribute(string spanKindAttr, ref SpanKind resultKind)

@@ -19,7 +19,6 @@ using OpenTelemetry.Resources;
 namespace OpenTelemetry.Tests.Impl.Trace
 {
     using System;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
     using Xunit;
@@ -59,7 +58,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.RecordSpanData(null));
 
             // does not throw
-            NoopTracer.Instance.RecordSpanData(SpanData.Create(SpanContext.Blank, default, Resource.Empty, "foo", Timestamp.Zero, null, null, null, null, Status.Ok, SpanKind.Internal, Timestamp.Zero));
+            NoopTracer.Instance.RecordSpanData(SpanData.Create(SpanContext.Blank, default, Resource.Empty, "foo", default, null, null, null, null, Status.Ok, SpanKind.Internal, default));
         }
     }
 }

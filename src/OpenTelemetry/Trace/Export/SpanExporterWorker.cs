@@ -1,4 +1,4 @@
-// <copyright file="SpanExporterWorker.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanExporterWorker.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ namespace OpenTelemetry.Trace.Export
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Implementation;
 
     internal class SpanExporterWorker : IDisposable
@@ -32,7 +31,7 @@ namespace OpenTelemetry.Trace.Export
         private readonly TimeSpan scheduleDelay;
         private bool shutdown = false;
 
-        public SpanExporterWorker(int bufferSize, Duration scheduleDelay)
+        public SpanExporterWorker(int bufferSize, TimeSpan scheduleDelay)
         {
             this.bufferSize = bufferSize;
             this.scheduleDelay = TimeSpan.FromSeconds(scheduleDelay.Seconds);

@@ -27,17 +27,5 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             Assert.Equal(SpanExporter.NoopSpanExporter, exportComponent.SpanExporter);
         }
-
-        [Fact]
-        public void ImplementationOfActiveSpans()
-        {
-            Assert.Equal(RunningSpanStoreBase.NoopRunningSpanStore, exportComponent.RunningSpanStore);
-        }
-
-        [Fact]
-        public void ImplementationOfSampledSpanStore()
-        {
-            Assert.Equal(SampledSpanStoreBase.NewNoopSampledSpanStore.GetType(), exportComponent.SampledSpanStore.GetType());
-        }
     }
 }

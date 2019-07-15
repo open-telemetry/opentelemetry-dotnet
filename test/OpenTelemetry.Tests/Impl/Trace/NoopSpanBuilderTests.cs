@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Tests.Impl.Trace
 {
+    using System;
+    using System.Diagnostics;
     using OpenTelemetry.Trace;
     using Xunit;
 
@@ -31,7 +31,20 @@ namespace OpenTelemetry.Tests.Impl.Trace
             var spanBuilder = new NoopSpanBuilder("foo");
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((ISpan)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((SpanContext)null));
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((Activity)null));
+
+            // no Activity.Current
+            Assert.Throws<ArgumentException>(() => spanBuilder.SetCreateChild(false));
+
+            // Activity.Current wrong format
+            Activity.DefaultIdFormat = ActivityIdFormat.Hierarchical;
+            Activity.ForceDefaultIdFormat = true;
+            var a = new Activity("foo").Start(); // TODO SetIdFormat
+            Assert.Throws<ArgumentException>(() => spanBuilder.SetCreateChild(false));
+            a.Stop();
+
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetSampler(null));
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((Activity)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((ILink)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((SpanContext)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink(null, null));

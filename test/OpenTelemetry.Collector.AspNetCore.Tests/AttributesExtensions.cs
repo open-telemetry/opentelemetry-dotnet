@@ -1,4 +1,4 @@
-﻿// <copyright file="IElement.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AttributesExtensions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Utils
+namespace OpenTelemetry.Collector.AspNetCore.Tests
 {
-    /// <summary>
-    /// Element of double linked list.
-    /// </summary>
-    /// <typeparam name="T">Type of a stored value.</typeparam>
-    public interface IElement<T>
-        where T : IElement<T>
-    {
-        /// <summary>
-        /// Gets or sets next element.
-        /// </summary>
-        T Next { get; set; }
+    using System.Linq;
+    using OpenTelemetry.Trace.Export;
 
-        /// <summary>
-        /// Gets or sets previous element.
-        /// </summary>
-        T Previous { get; set; }
+    internal static class AttributesExtensions
+    {
+        public static object GetValue(this Attributes attributes, string key)
+        {
+            return attributes.AttributeMap.FirstOrDefault(kvp => kvp.Key == key).Value;
+        }
     }
 }
