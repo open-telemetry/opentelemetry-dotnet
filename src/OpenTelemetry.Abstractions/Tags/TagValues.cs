@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Tags
 {
     using System.Collections.Generic;
-    using OpenTelemetry.Abstractions.Utils;
 
     /// <summary>
     /// Collection of tags.
@@ -47,9 +46,7 @@ namespace OpenTelemetry.Tags
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "TagValues{"
-                + "values=" + Collections.ToString(this.Values)
-                + "}";
+            return "TagValues{values=" + string.Join(", ", this.Values) + "}";
         }
 
         /// <inheritdoc/>

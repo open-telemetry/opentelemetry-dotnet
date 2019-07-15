@@ -18,7 +18,6 @@ namespace OpenTelemetry.Stats.Test
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
@@ -26,18 +25,18 @@ namespace OpenTelemetry.Stats.Test
 
     public class ViewTest
     {
-        private static readonly IViewName NAME = ViewName.Create("test-view-name");
-        private static readonly String DESCRIPTION = "test-view-name description";
-        private static readonly IMeasure MEASURE =
+        private static readonly IViewName Name = ViewName.Create("test-view-name");
+        private static readonly string Description = "test-view-name description";
+        private static readonly IMeasure Measure =
             MeasureDouble.Create("measure", "measure description", "1");
 
-        private static readonly TagKey FOO = TagKey.Create("foo");
-        private static readonly TagKey BAR = TagKey.Create("bar");
-        private static readonly List<TagKey> keys = new List<TagKey>() { FOO, BAR };
-        private static readonly IMean MEAN = Mean.Create();
-        private static readonly Duration MINUTE = Duration.Create(60, 0);
-        private static readonly Duration TWO_MINUTES = Duration.Create(120, 0);
-        private static readonly Duration NEG_TEN_SECONDS = Duration.Create(-10, 0);
+        private static readonly TagKey Foo = TagKey.Create("foo");
+        private static readonly TagKey Bar = TagKey.Create("bar");
+        private static readonly List<TagKey> keys = new List<TagKey>() { Foo, Bar };
+        private static readonly IMean Mean = Aggregations.Mean.Create();
+        private static readonly TimeSpan Minute = TimeSpan.FromMinutes(1);
+        private static readonly TimeSpan TwoMinutes = TimeSpan.FromMinutes(2);
+        private static readonly TimeSpan NegTenSeconds = TimeSpan.FromSeconds(-10);
 
         [Fact]
         public void TestConstants()
@@ -48,25 +47,24 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestDistributionView()
         {
-            var view = View.Create(NAME, DESCRIPTION, MEASURE, MEAN, keys);
-            Assert.Equal(NAME, view.Name);
-            Assert.Equal(DESCRIPTION, view.Description);
-            Assert.Equal(MEASURE.Name, view.Measure.Name);
-            Assert.Equal(MEAN, view.Aggregation);
+            var view = View.Create(Name, Description, Measure, Mean, keys);
+            Assert.Equal(Name, view.Name);
+            Assert.Equal(Description, view.Description);
+            Assert.Equal(Measure.Name, view.Measure.Name);
+            Assert.Equal(Mean, view.Aggregation);
             Assert.Equal(2, view.Columns.Count);
-            Assert.Equal(FOO, view.Columns[0]);
-            Assert.Equal(BAR, view.Columns[1]);
-
+            Assert.Equal(Foo, view.Columns[0]);
+            Assert.Equal(Bar, view.Columns[1]);
         }
 
         [Fact]
         public void testViewEquals()
         {
 
-            var view1 = View.Create(NAME, DESCRIPTION, MEASURE, MEAN, keys);
-            var view2 = View.Create(NAME, DESCRIPTION, MEASURE, MEAN, keys);
+            var view1 = View.Create(Name, Description, Measure, Mean, keys);
+            var view2 = View.Create(Name, Description, Measure, Mean, keys);
             Assert.Equal(view1, view2);
-            var view3 = View.Create(NAME, DESCRIPTION + 2, MEASURE, MEAN, keys);
+            var view3 = View.Create(Name, Description + 2, Measure, Mean, keys);
             Assert.NotEqual(view1, view3);
             Assert.NotEqual(view2, view3);
 
@@ -76,17 +74,17 @@ namespace OpenTelemetry.Stats.Test
         public void PreventDuplicateColumns()
         {
             Assert.Throws<ArgumentException>(() => View.Create(
-                NAME,
-                DESCRIPTION,
-                MEASURE,
-                MEAN,
+                Name,
+                Description,
+                Measure,
+                Mean,
                 new List<TagKey>() { TagKey.Create("duplicate"), TagKey.Create("duplicate") }));
         }
 
         [Fact]
         public void PreventNullViewName()
         {
-            Assert.Throws<ArgumentNullException>(() => View.Create(null, DESCRIPTION, MEASURE, MEAN, keys));
+            Assert.Throws<ArgumentNullException>(() => View.Create(null, Description, Measure, Mean, keys));
         }
 
         [Fact]

@@ -17,12 +17,16 @@
 namespace OpenTelemetry.Context.Propagation
 {
     using System;
+    using System.Diagnostics;
     using OpenTelemetry.Trace;
 
     public class BinaryFormat : IBinaryFormat
     {
         private const byte VersionId = 0;
         private const int VersionIdOffset = 0;
+        private const int TraceIdSize = 16;
+        private const int SpanIdSize = 8;
+        private const int TraceOptionsSize = 1;
 
         // The version_id/field_id size in bytes.
         private const byte IdSize = 1;
@@ -30,12 +34,12 @@ namespace OpenTelemetry.Context.Propagation
         private const int TraceIdFieldIdOffset = VersionIdOffset + IdSize;
         private const int TraceIdOffset = TraceIdFieldIdOffset + IdSize;
         private const byte SpanIdFieldId = 1;
-        private const int SpaneIdFieldIdOffset = TraceIdOffset + TraceId.Size;
+        private const int SpaneIdFieldIdOffset = TraceIdOffset + TraceIdSize;
         private const int SpanIdOffset = SpaneIdFieldIdOffset + IdSize;
         private const byte TraceOptionsFieldId = 2;
-        private const int TraceOptionFieldIdOffset = SpanIdOffset + SpanId.Size;
+        private const int TraceOptionFieldIdOffset = SpanIdOffset + SpanIdSize;
         private const int TraceOptionOffset = TraceOptionFieldIdOffset + IdSize;
-        private const int FormatLength = (4 * IdSize) + TraceId.Size + SpanId.Size + TraceOptions.Size;
+        private const int FormatLength = (4 * IdSize) + TraceIdSize + SpanIdSize + TraceOptionsSize;
 
         public SpanContext FromByteArray(byte[] bytes)
         {
@@ -49,28 +53,29 @@ namespace OpenTelemetry.Context.Propagation
                 throw new SpanContextParseException("Unsupported version.");
             }
 
-            var traceId = TraceId.Invalid;
-            var spanId = SpanId.Invalid;
-            var traceOptions = TraceOptions.Default;
+            ActivityTraceId traceId = default;
+            ActivitySpanId spanId = default;
+            var traceOptions = ActivityTraceFlags.None;
 
+            var traceparentBytes = new ReadOnlySpan<byte>(bytes);
             var pos = 1;
             try
             {
                 if (bytes.Length > pos && bytes[pos] == TraceIdFieldId)
                 {
-                    traceId = TraceId.FromBytes(bytes, pos + IdSize);
-                    pos += IdSize + TraceId.Size;
+                    traceId = ActivityTraceId.CreateFromBytes(traceparentBytes.Slice(pos + IdSize, 16));
+                    pos += IdSize + TraceIdSize;
                 }
 
                 if (bytes.Length > pos && bytes[pos] == SpanIdFieldId)
                 {
-                    spanId = SpanId.FromBytes(bytes, pos + IdSize);
-                    pos += IdSize + SpanId.Size;
+                    spanId = ActivitySpanId.CreateFromBytes(traceparentBytes.Slice(pos + IdSize, 8));
+                    pos += IdSize + SpanIdSize;
                 }
 
                 if (bytes.Length > pos && bytes[pos] == TraceOptionsFieldId)
                 {
-                    traceOptions = TraceOptions.FromBytes(bytes, pos + IdSize);
+                    traceOptions = (ActivityTraceFlags)traceparentBytes[pos + IdSize];
                 }
 
                 return SpanContext.Create(traceId, spanId, traceOptions, Tracestate.Empty);
@@ -88,15 +93,16 @@ namespace OpenTelemetry.Context.Propagation
                 throw new ArgumentNullException(nameof(spanContext));
             }
 
-            var bytes = new byte[FormatLength];
-            bytes[VersionIdOffset] = VersionId;
-            bytes[TraceIdFieldIdOffset] = TraceIdFieldId;
-            spanContext.TraceId.CopyBytesTo(bytes, TraceIdOffset);
-            bytes[SpaneIdFieldIdOffset] = SpanIdFieldId;
-            spanContext.SpanId.CopyBytesTo(bytes, SpanIdOffset);
-            bytes[TraceOptionFieldIdOffset] = TraceOptionsFieldId;
-            spanContext.TraceOptions.CopyBytesTo(bytes, TraceOptionOffset);
-            return bytes;
+            Span<byte> spanBytes = stackalloc byte[FormatLength];
+            spanBytes[VersionIdOffset] = VersionId;
+            spanBytes[TraceIdFieldIdOffset] = TraceIdFieldId;
+            spanBytes[SpaneIdFieldIdOffset] = SpanIdFieldId;
+            spanBytes[TraceOptionFieldIdOffset] = TraceOptionsFieldId;
+            spanBytes[TraceOptionOffset] = (byte)spanContext.TraceOptions;
+            spanContext.TraceId.CopyTo(spanBytes.Slice(TraceIdOffset));
+            spanContext.SpanId.CopyTo(spanBytes.Slice(SpanIdOffset));
+
+            return spanBytes.ToArray();
         }
     }
 }

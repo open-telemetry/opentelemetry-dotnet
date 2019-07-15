@@ -1,4 +1,4 @@
-﻿// <copyright file="ISampledSpanStoreSummary.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AttributesExtensions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Collector.AspNetCore.Tests
 {
-    using System.Collections.Generic;
+    using System.Linq;
+    using OpenTelemetry.Trace.Export;
 
-    /// <summary>
-    /// Summary of sampled spans store.
-    /// </summary>
-    public interface ISampledSpanStoreSummary
+    internal static class AttributesExtensions
     {
-        /// <summary>
-        /// Gets the collection of summaries by span name.
-        /// </summary>
-        IDictionary<string, ISampledPerSpanNameSummary> PerSpanNameSummary { get; }
+        public static object GetValue(this Attributes attributes, string key)
+        {
+            return attributes.AttributeMap.FirstOrDefault(kvp => kvp.Key == key).Value;
+        }
     }
 }

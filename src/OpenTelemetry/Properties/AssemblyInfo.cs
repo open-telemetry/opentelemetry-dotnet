@@ -16,8 +16,6 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly: System.CLSCompliant(true)]
-
 [assembly: InternalsVisibleTo("OpenTelemetry.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Collector.Dependencies.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Collector.AspNetCore.Tests" + AssemblyInfo.PublicKey)]

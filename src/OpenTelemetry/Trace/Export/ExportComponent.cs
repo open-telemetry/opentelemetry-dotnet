@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Trace.Export
 {
-    using OpenTelemetry.Common;
+    using System;
     using OpenTelemetry.Internal;
 
     /// <inheritdoc/>
@@ -25,19 +25,11 @@ namespace OpenTelemetry.Trace.Export
         private const int ExporterBufferSize = 32;
 
         // Enforces that trace export exports data at least once every 5 seconds.
-        private static readonly Duration ExporterScheduleDelay = Duration.Create(5, 0);
+        private static readonly TimeSpan ExporterScheduleDelay = TimeSpan.FromSeconds(5);
 
         private ExportComponent(bool supportInProcessStores, IEventQueue eventQueue)
         {
             this.SpanExporter = Export.SpanExporter.Create(ExporterBufferSize, ExporterScheduleDelay);
-            this.RunningSpanStore =
-                supportInProcessStores
-                    ? new InProcessRunningSpanStore()
-                    : Export.RunningSpanStoreBase.NoopRunningSpanStore;
-            this.SampledSpanStore =
-                supportInProcessStores
-                    ? new InProcessSampledSpanStore(eventQueue)
-                    : Export.SampledSpanStoreBase.NoopSampledSpanStore;
         }
 
         /// <summary>
@@ -47,16 +39,6 @@ namespace OpenTelemetry.Trace.Export
 
         /// <inheritdoc/>
         public ISpanExporter SpanExporter { get; }
-
-        /// <summary>
-        /// Gets the running span store.
-        /// </summary>
-        public IRunningSpanStore RunningSpanStore { get; }
-
-        /// <summary>
-        /// Gets the sampled span store.
-        /// </summary>
-        public ISampledSpanStore SampledSpanStore { get; }
 
         /// <summary>
         /// Constructs a new <see cref="ExportComponent"/> with noop span stores.

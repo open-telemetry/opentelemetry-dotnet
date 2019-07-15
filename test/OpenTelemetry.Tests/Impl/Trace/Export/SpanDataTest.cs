@@ -14,12 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.ObjectModel;
+
 namespace OpenTelemetry.Trace.Export.Test
 {
+    using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
+    using System.Diagnostics;
+    using OpenTelemetry.Abstractions.Utils;
     using OpenTelemetry.Resources;
-    using OpenTelemetry.Trace.Internal;
     using Xunit;
 
     public class SpanDataTest
@@ -28,33 +31,32 @@ namespace OpenTelemetry.Trace.Export.Test
         private const string EVENT_TEXT = "MyEventText";
         private const SpanKind SPAN_KIND = SpanKind.Client;
         private const int CHILD_SPAN_COUNT = 13;
-        private static readonly Timestamp startTimestamp = Timestamp.Create(123, 456);
-        private static readonly Timestamp eventTimestamp1 = Timestamp.Create(123, 457);
-        private static readonly Timestamp eventTimestamp2 = Timestamp.Create(123, 458);
-        private static readonly Timestamp eventTimestamp3 = Timestamp.Create(123, 459);
-        private static readonly Timestamp endTimestamp = Timestamp.Create(123, 460);
+        private static readonly DateTime startTimestamp = PreciseTimestamp.GetUtcNow().AddSeconds(-1);
+        private static readonly DateTime eventTimestamp1 = startTimestamp.AddMilliseconds(1);
+        private static readonly DateTime eventTimestamp2 = startTimestamp.AddMilliseconds(2);
+        private static readonly DateTime eventTimestamp3 = startTimestamp.AddMilliseconds(3);
+        private static readonly DateTime endTimestamp = startTimestamp.AddMilliseconds(4);
         private static readonly IEvent spanEvent = Event.Create(EVENT_TEXT);
         private static readonly Status status = Status.DeadlineExceeded.WithDescription("TooSlow");
-        private readonly IRandomGenerator random = new RandomGenerator(1234);
         private readonly SpanContext spanContext;
-        private readonly SpanId parentSpanId;
+        private readonly ActivitySpanId parentSpanId;
         private readonly Resource resource = Resource.Empty;
-        private readonly IDictionary<string, IAttributeValue> attributesMap = new Dictionary<string, IAttributeValue>();
+        private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();
         private readonly List<ITimedEvent<IEvent>> eventList = new List<ITimedEvent<IEvent>>();
         private readonly List<ILink> linksList = new List<ILink>();
 
-        private readonly IAttributes attributes;
+        private readonly Attributes attributes;
         private readonly ITimedEvents<IEvent> events;
         private readonly LinkList links;
 
         public SpanDataTest()
         {
-            spanContext = SpanContext.Create(TraceId.GenerateRandomId(random), SpanId.GenerateRandomId(random), TraceOptions.Default, Tracestate.Empty);
-            parentSpanId = SpanId.GenerateRandomId(random);
+            spanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty);
+            parentSpanId = ActivitySpanId.CreateRandom();
 
-            attributesMap.Add("MyAttributeKey1", AttributeValue.LongAttributeValue(10));
-            attributesMap.Add("MyAttributeKey2", AttributeValue.BooleanAttributeValue(true));
-            attributes = Attributes.Create(attributesMap, 1);
+            attributesMap.Add("MyAttributeKey1", 10L);
+            attributesMap.Add("MyAttributeKey2", true);
+            attributes = Attributes.Create(new ReadOnlyDictionary<string, object>(attributesMap), 1);
 
             eventList.Add(TimedEvent<IEvent>.Create(eventTimestamp1, spanEvent));
             eventList.Add(TimedEvent<IEvent>.Create(eventTimestamp3, spanEvent));
@@ -100,7 +102,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var spanData =
                 SpanData.Create(
                     spanContext,
-                    null,
+                    default,
                     resource,
                     SPAN_NAME,
                     startTimestamp,
@@ -110,9 +112,9 @@ namespace OpenTelemetry.Trace.Export.Test
                     null,
                     null,
                     SPAN_KIND,
-                    null);
+                    default);
             Assert.Equal(spanContext, spanData.Context);
-            Assert.Null(spanData.ParentSpanId);
+            Assert.True(spanData.ParentSpanId == default);
             Assert.Equal(resource, spanData.Resource);
             Assert.Equal(SPAN_NAME, spanData.Name);
             Assert.Equal(startTimestamp, spanData.StartTimestamp);
@@ -121,7 +123,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Equal(links, spanData.Links);
             Assert.Null(spanData.ChildSpanCount);
             Assert.Null(spanData.Status);
-            Assert.Null(spanData.EndTimestamp);
+            Assert.Equal(default, spanData.EndTimestamp);
         }
 
         [Fact]
@@ -134,7 +136,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     resource,
                     SPAN_NAME,
                     startTimestamp,
-                    Attributes.Create(new Dictionary<string, IAttributeValue>(), 0),
+                    Attributes.Create(new Dictionary<string, object>(), 0),
                     TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>(), 0),
                     LinkList.Create(new List<ILink>(), 0),
                     0,
@@ -193,7 +195,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     resource,
                     SPAN_NAME,
                     startTimestamp,
-                    Attributes.Create(new Dictionary<string, IAttributeValue>(), 0),
+                    Attributes.Create(new Dictionary<string, object>(), 0),
                     TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>(), 0),
                     LinkList.Create(new List<ILink>(), 0),
                     0,

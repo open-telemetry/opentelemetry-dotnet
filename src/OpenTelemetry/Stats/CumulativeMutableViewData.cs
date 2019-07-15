@@ -17,12 +17,13 @@
 namespace OpenTelemetry.Stats
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using OpenTelemetry.Tags;
 
     internal class CumulativeMutableViewData : MutableViewData
     {
-        private readonly IDictionary<TagValues, MutableAggregation> tagValueAggregationMap = new Dictionary<TagValues, MutableAggregation>();
+        private readonly IDictionary<TagValues, MutableAggregation> tagValueAggregationMap = new ConcurrentDictionary<TagValues, MutableAggregation>();
         private DateTimeOffset start;
 
         internal CumulativeMutableViewData(IView view, DateTimeOffset start)

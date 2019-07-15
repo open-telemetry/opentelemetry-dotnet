@@ -62,11 +62,11 @@ namespace OpenTelemetry.Stats
         public override string ToString()
         {
             return "ViewData{"
-                + "view=" + this.View + ", "
-                + "aggregationMap=" + Collections.ToString(this.AggregationMap) + ", "
-                + "start=" + this.Start + ", "
-                + "end=" + this.End
-                + "}";
+                   + "view=" + this.View + ", "
+                   + "aggregationMap=" + string.Join(", ", this.AggregationMap.Select(kvp => $"{kvp.Key} = {kvp.Value}")) + ", "
+                   + "start=" + this.Start + ", "
+                   + "end=" + this.End
+                   + "}";
         }
 
         /// <inheritdoc/>

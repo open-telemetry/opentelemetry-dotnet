@@ -1,4 +1,4 @@
-﻿// <copyright file="TraceComponentTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AttributesExtensions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,27 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Test
+namespace OpenTelemetry.Collector.StackExchangeRedis.Tests
 {
-    using OpenTelemetry.Internal;
+    using System.Linq;
     using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Internal;
-    using Xunit;
 
-    public class TraceComponentTest
+    internal static class AttributesExtensions
     {
-        private readonly TraceComponent traceComponent = new TraceComponent(new RandomGenerator(), new SimpleEventQueue());
-
-        [Fact]
-        public void ImplementationOfTracer()
+        public static object GetValue(this Attributes attributes, string key)
         {
-            Assert.IsType<Tracer>(traceComponent.Tracer);
-        }
-
-        [Fact]
-        public void ImplementationOfTraceExporter()
-        {
-            Assert.IsType<ExportComponent>(traceComponent.ExportComponent);
+            return attributes.AttributeMap.FirstOrDefault(kvp => kvp.Key == key).Value;
         }
     }
 }

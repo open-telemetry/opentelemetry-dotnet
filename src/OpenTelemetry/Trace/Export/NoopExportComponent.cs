@@ -21,15 +21,5 @@ namespace OpenTelemetry.Trace.Export
     {
         /// <inheritdoc/>
         public ISpanExporter SpanExporter => Export.SpanExporter.NoopSpanExporter;
-
-        /// <summary>
-        /// Gets the running span store.
-        /// </summary>
-        public IRunningSpanStore RunningSpanStore => Export.RunningSpanStoreBase.NoopRunningSpanStore;
-
-        /// <summary>
-        /// Gets the sampled span store.
-        /// </summary>
-        public ISampledSpanStore SampledSpanStore { get; } = Export.SampledSpanStoreBase.NewNoopSampledSpanStore;
     }
 }

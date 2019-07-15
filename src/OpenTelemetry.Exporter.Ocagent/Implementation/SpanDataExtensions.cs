@@ -1,4 +1,4 @@
-﻿// <copyright file="SpanDataExtentions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanDataExtensions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,12 +27,27 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
-    internal static class SpanDataExtentions
+    internal static class SpanDataExtensions
     {
         internal static Span ToProtoSpan(this SpanData spanData)
         {
             try
             {
+                // protobuf doesn't understand Span<T> yet: https://github.com/protocolbuffers/protobuf/issues/3431
+                Span<byte> traceIdBytes = stackalloc byte[16];
+                Span<byte> spanIdBytes = stackalloc byte[8];
+
+                spanData.Context.TraceId.CopyTo(traceIdBytes);
+                spanData.Context.SpanId.CopyTo(spanIdBytes);
+
+                var parentSpanIdString = ByteString.Empty;
+                if (spanData.ParentSpanId != default)
+                {
+                    Span<byte> parentSpanIdBytes = stackalloc byte[8];
+                    spanData.ParentSpanId.CopyTo(parentSpanIdBytes);
+                    parentSpanIdString = ByteString.CopyFrom(parentSpanIdBytes.ToArray());
+                }
+
                 return new Span
                 {
                     Name = new TruncatableString { Value = spanData.Name },
@@ -40,21 +55,12 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                     // TODO: Utilize new Span.Types.SpanKind below when updated protos are incorporated, also confirm default for SpanKind.Internal
                     Kind = spanData.Kind == SpanKind.Client || spanData.Kind == SpanKind.Producer ? Span.Types.SpanKind.Client : Span.Types.SpanKind.Server,
 
-                    TraceId = ByteString.CopyFrom(spanData.Context.TraceId.Bytes),
-                    SpanId = ByteString.CopyFrom(spanData.Context.SpanId.Bytes),
-                    ParentSpanId =
-                        ByteString.CopyFrom(spanData.ParentSpanId?.Bytes ?? new byte[0]),
+                    TraceId = ByteString.CopyFrom(traceIdBytes.ToArray()),
+                    SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
+                    ParentSpanId = parentSpanIdString,
 
-                    StartTime = new Timestamp
-                    {
-                        Nanos = spanData.StartTimestamp.Nanos,
-                        Seconds = spanData.StartTimestamp.Seconds,
-                    },
-                    EndTime = new Timestamp
-                    {
-                        Nanos = spanData.EndTimestamp.Nanos,
-                        Seconds = spanData.EndTimestamp.Seconds,
-                    },
+                    StartTime = spanData.StartTimestamp.ToTimestamp(),
+                    EndTime = spanData.EndTimestamp.ToTimestamp(),
                     Status = spanData.Status == null
                         ? null
                         : new OpenTelemetry.Proto.Trace.V1.Status
@@ -62,9 +68,9 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                             Code = (int)spanData.Status.CanonicalCode,
                             Message = spanData.Status.Description ?? string.Empty,
                         },
-                    SameProcessAsParentSpan = spanData.ParentSpanId != null,
+                    SameProcessAsParentSpan = spanData.ParentSpanId != default,
                     ChildSpanCount = spanData.ChildSpanCount.HasValue ? (uint)spanData.ChildSpanCount.Value : 0,
-                    Attributes = FromIAttributes(spanData.Attributes),
+                    Attributes = FromAttributes(spanData.Attributes),
                     TimeEvents = FromITimeEvents(spanData.Events),
                     Links = new Span.Types.Links
                     {
@@ -85,7 +91,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             return null;
         }
 
-        private static Span.Types.Attributes FromIAttributes(IAttributes source)
+        private static Span.Types.Attributes FromAttributes(Attributes source)
         {
             var attributes = new Span.Types.Attributes
             {
@@ -94,14 +100,29 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
             attributes.AttributeMap.Add(source.AttributeMap.ToDictionary(
                 kvp => kvp.Key,
-                kvp => kvp.Value.Match(
-                    s => new OpenTelemetry.Proto.Trace.V1.AttributeValue { StringValue = new TruncatableString() { Value = s } },
-                    b => new OpenTelemetry.Proto.Trace.V1.AttributeValue { BoolValue = b },
-                    l => new OpenTelemetry.Proto.Trace.V1.AttributeValue { IntValue = l },
-                    d => new OpenTelemetry.Proto.Trace.V1.AttributeValue { DoubleValue = d },
-                    o => new OpenTelemetry.Proto.Trace.V1.AttributeValue { StringValue = new TruncatableString() { Value = o?.ToString() } })));
+                kvp => FromAttribute(kvp.Value)));
 
             return attributes;
+        }
+
+        private static OpenTelemetry.Proto.Trace.V1.AttributeValue FromAttribute(object value)
+        {
+            switch (value)
+            {
+                case string s:
+                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue { StringValue = new TruncatableString() { Value = s } };
+                case bool b:
+                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue { BoolValue = b };
+                case long l:
+                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue { IntValue = l };
+                case double d:
+                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue { DoubleValue = d };
+                default:
+                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue
+                    {
+                        StringValue = new TruncatableString() { Value = value?.ToString() },
+                    };
+            }
         }
 
         private static Span.Types.TimeEvents FromITimeEvents(ITimedEvents<IEvent> events)
@@ -119,11 +140,18 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
         private static Span.Types.Link FromILink(ILink source)
         {
+            // protobuf doesn't understand Span<T> yet: https://github.com/protocolbuffers/protobuf/issues/3431
+            Span<byte> traceIdBytes = stackalloc byte[16];
+            Span<byte> spanIdBytes = stackalloc byte[8];
+
+            source.Context.TraceId.CopyTo(traceIdBytes);
+            source.Context.SpanId.CopyTo(spanIdBytes);
+
             var result = new Span.Types.Link
             {
                 Attributes = FromIAttributeMap(source.Attributes),
-                TraceId = ByteString.CopyFrom(source.Context.TraceId.Bytes),
-                SpanId = ByteString.CopyFrom(source.Context.SpanId.Bytes),
+                TraceId = ByteString.CopyFrom(traceIdBytes.ToArray()),
+                SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
             };
 
             return result;
@@ -133,11 +161,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
         {
             return new Span.Types.TimeEvent
             {
-                Time = new Timestamp
-                {
-                    Nanos = source.Timestamp.Nanos,
-                    Seconds = source.Timestamp.Seconds,
-                },
+                Time = source.Timestamp.ToTimestamp(),
                 Annotation = new Span.Types.TimeEvent.Types.Annotation
                 {
                     Description = new TruncatableString { Value = source.Event.Name },
@@ -146,18 +170,13 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             };
         }
 
-        private static Span.Types.Attributes FromIAttributeMap(IDictionary<string, IAttributeValue> source)
+        private static Span.Types.Attributes FromIAttributeMap(IDictionary<string, object> source)
         {
             var attributes = new Span.Types.Attributes();
 
             attributes.AttributeMap.Add(source.ToDictionary(
                 kvp => kvp.Key,
-                kvp => kvp.Value.Match(
-                    s => new OpenTelemetry.Proto.Trace.V1.AttributeValue { StringValue = new TruncatableString() { Value = s } },
-                    b => new OpenTelemetry.Proto.Trace.V1.AttributeValue { BoolValue = b },
-                    l => new OpenTelemetry.Proto.Trace.V1.AttributeValue { IntValue = l },
-                    d => new OpenTelemetry.Proto.Trace.V1.AttributeValue { DoubleValue = d },
-                    o => new OpenTelemetry.Proto.Trace.V1.AttributeValue { StringValue = new TruncatableString() { Value = o?.ToString() } })));
+                kvp => FromAttribute(kvp.Value)));
 
             return attributes;
         }

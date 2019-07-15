@@ -30,47 +30,6 @@ namespace OpenTelemetry.Stats.Test
 
         private readonly ITagContext tagContext = new TestTagContext();
 
-
-        [Fact]
-        public void NoopStatsComponent()
-        {
-            Assert.Same(NoopStats.NoopStatsRecorder, NoopStats.NewNoopStatsComponent().StatsRecorder);
-            Assert.Equal(NoopStats.NewNoopViewManager().GetType(), NoopStats.NewNoopStatsComponent().ViewManager.GetType());
-        }
-
-        [Fact]
-        public void NoopStatsComponent_GetState()
-        {
-            Assert.Equal(StatsCollectionState.DISABLED, NoopStats.NewNoopStatsComponent().State);
-        }
-
-        // [Fact]
-        // public void NoopStatsComponent_SetState_IgnoresInput()
-        // {
-        //    IStatsComponent noopStatsComponent = NoopStats.NewNoopStatsComponent();
-        //    noopStatsComponent.State = StatsCollectionState.ENABLED;
-        //    assertThat(noopStatsComponent.getState()).isEqualTo(StatsCollectionState.DISABLED);
-        // }
-
-        // [Fact]
-        // public void NoopStatsComponent_SetState_DisallowsNull()
-        // {
-        //    StatsComponent noopStatsComponent = NoopStats.newNoopStatsComponent();
-        //    thrown.expect(NullPointerException);
-        //    noopStatsComponent.setState(null);
-        // }
-
-        // [Fact]
-        // public void NoopStatsComponent_DisallowsSetStateAfterGetState()
-        // {
-        //    StatsComponent noopStatsComponent = NoopStats.newNoopStatsComponent();
-        //    noopStatsComponent.setState(StatsCollectionState.DISABLED);
-        //    noopStatsComponent.getState();
-        //    thrown.expect(IllegalStateException);
-        //    thrown.expectMessage("State was already read, cannot set state.");
-        //    noopStatsComponent.setState(StatsCollectionState.ENABLED);
-        // }
-
         // The NoopStatsRecorder should do nothing, so this test just checks that record doesn't throw an
         // exception.
         [Fact]

@@ -55,7 +55,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         public async Task SuccesfulTemplateControllerCallGeneratesASpan()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
+            var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
 
             // Arrange
             using (var client = this.factory
@@ -96,8 +96,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             var spanData = ((Span)startEndHandler.Invocations[0].Arguments[0]).ToSpanData();
 
             Assert.Equal(SpanKind.Server, spanData.Kind);
-            Assert.Equal(AttributeValue.StringAttributeValue("/api/values"), spanData.Attributes.AttributeMap["http.path"]);
-            Assert.Equal(AttributeValue.LongAttributeValue(503), spanData.Attributes.AttributeMap["http.status_code"]);
+            Assert.Equal("/api/values", spanData.Attributes.GetValue("http.path"));
+            Assert.Equal(503L, spanData.Attributes.GetValue("http.status_code"));
         }
     }
 }

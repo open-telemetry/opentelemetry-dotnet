@@ -16,7 +16,9 @@
 
 namespace OpenTelemetry.Impl.Trace.Propagation
 {
+    using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Context.Propagation;
@@ -24,6 +26,17 @@ namespace OpenTelemetry.Impl.Trace.Propagation
 
     public class TraceContextTest
     {
+        private static readonly string[] empty = new string[0];
+        private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> getter = (headers, name) =>
+        {
+            if (headers.TryGetValue(name, out var value))
+            {
+                return new [] { value };
+            }
+
+            return empty;
+        };
+
         [Fact]
         public void TraceContextFormatCanParseExampleFromSpec()
         {
@@ -37,11 +50,11 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             };
 
             var f = new TraceContextFormat();
-            var ctx = f.Extract(headers, (h, n) => new string[] {h[n]});
+            var ctx = f.Extract(headers, getter);
 
-            Assert.Equal(TraceId.FromLowerBase16("0af7651916cd43dd8448eb211c80319c"), ctx.TraceId);
-            Assert.Equal(SpanId.FromLowerBase16("b9c7c989f97918e1"), ctx.SpanId);
-            Assert.True(ctx.TraceOptions.IsSampled);
+            Assert.Equal(ActivityTraceId.CreateFromString("0af7651916cd43dd8448eb211c80319c".AsSpan()), ctx.TraceId);
+            Assert.Equal(ActivitySpanId.CreateFromString("b9c7c989f97918e1".AsSpan()), ctx.SpanId);
+            Assert.True((ctx.TraceOptions & ActivityTraceFlags.Recorded) != 0);
 
             Assert.Equal(2, ctx.Tracestate.Entries.Count());
 
@@ -57,12 +70,28 @@ namespace OpenTelemetry.Impl.Trace.Propagation
         }
 
         [Fact]
+        public void TraceContextFormatNotSampled()
+        {
+            var headers = new Dictionary<string, string>()
+            {
+                {"traceparent", "00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-00"},
+            };
+
+            var f = new TraceContextFormat();
+            var ctx = f.Extract(headers, getter);
+
+            Assert.Equal(ActivityTraceId.CreateFromString("0af7651916cd43dd8448eb211c80319c".AsSpan()), ctx.TraceId);
+            Assert.Equal(ActivitySpanId.CreateFromString("b9c7c989f97918e1".AsSpan()), ctx.SpanId);
+            Assert.True((ctx.TraceOptions & ActivityTraceFlags.Recorded) == 0);
+        }
+
+        [Fact]
         public void TraceContextFormat_IsBlankIfNoHeader()
         {
             var headers = new Dictionary<string, string>();
 
             var f = new TraceContextFormat();
-            var ctx = f.Extract(headers, (h, n) => new string[] { h[n] });
+            var ctx = f.Extract(headers, getter);
 
             Assert.Same(SpanContext.Blank, ctx);
         }
@@ -72,13 +101,52 @@ namespace OpenTelemetry.Impl.Trace.Propagation
         {
             var headers = new Dictionary<string, string>
             {
-                {"traceparent", "00-xyz7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01"}
+                { "traceparent", "00-xyz7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01" },
             };
 
             var f = new TraceContextFormat();
-            var ctx = f.Extract(headers, (h, n) => new string[] { h[n] });
+            var ctx = f.Extract(headers, getter);
 
             Assert.Same(SpanContext.Blank, ctx);
+        }
+
+        [Fact]
+        public void TraceContextFormat_TracestateToStringEmpty()
+        {
+            var headers = new Dictionary<string, string>
+            {
+                {"traceparent", "00-abc7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01"},
+            };
+
+            var f = new TraceContextFormat();
+            var ctx = f.Extract(headers, getter);
+
+            Assert.Empty(ctx.Tracestate.Entries);
+            Assert.Equal(string.Empty, ctx.Tracestate.ToString());
+        }
+
+        [Fact]
+        public void TraceContextFormat_TracestateToString()
+        {
+            var headers = new Dictionary<string, string>
+            {
+                {"traceparent", "00-abc7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01"},
+                {"tracestate", "k1=v1,k2=v2,k3=v3" },
+            };
+
+            var f = new TraceContextFormat();
+            var ctx = f.Extract(headers, getter);
+
+            var entries = ctx.Tracestate.Entries.ToArray();
+            Assert.Equal(3, entries.Length);
+            Assert.Equal("k1", entries[0].Key);
+            Assert.Equal("v1", entries[0].Value);
+            Assert.Equal("k2", entries[1].Key);
+            Assert.Equal("v2", entries[1].Value);
+            Assert.Equal("k3", entries[2].Key);
+            Assert.Equal("v3", entries[2].Value);
+
+            Assert.Equal("k1=v1,k2=v2,k3=v3", ctx.Tracestate.ToString());
         }
     }
 }

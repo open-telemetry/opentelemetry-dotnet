@@ -24,40 +24,23 @@ namespace OpenTelemetry.Tags
 
         private static Tags tags;
 
-        private readonly ITagsComponent tagsComponent = new TagsComponent();
-
-        internal Tags(bool enabled)
-        {
-            if (enabled)
-            {
-                this.tagsComponent = new TagsComponent();
-            }
-            else
-            {
-                this.tagsComponent = NoopTags.NewNoopTagsComponent();
-            }
-        }
+        private readonly CurrentTaggingState state;
+        private readonly ITagger tagger;
+        private readonly ITagContextBinarySerializer tagContextBinarySerializer;
 
         internal Tags()
-            : this(false)
         {
+            this.state = new CurrentTaggingState();
+            this.tagger = new Tagger(this.state);
+            this.tagContextBinarySerializer = new TagContextBinarySerializer(this.state);
         }
 
         public static ITagger Tagger
         {
             get
             {
-                Initialize(true);
-                return tags.tagsComponent.Tagger;
-            }
-        }
-
-        public static ITagPropagationComponent TagPropagationComponent
-        {
-            get
-            {
-                Initialize(false);
-                return tags.tagsComponent.TagPropagationComponent;
+                Initialize();
+                return tags.tagger;
             }
         }
 
@@ -65,18 +48,27 @@ namespace OpenTelemetry.Tags
         {
             get
             {
-                Initialize(false);
-                return tags.tagsComponent.State;
+                Initialize();
+                return tags.state.Value;
             }
         }
 
-        internal static void Initialize(bool enabled)
+        public static ITagContextBinarySerializer BinarySerializer
+        {
+            get
+            {
+                Initialize();
+                return tags.tagContextBinarySerializer;
+            }
+        }
+
+        internal static void Initialize()
         {
             if (tags == null)
             {
                 lock (Lock)
                 {
-                    tags = tags ?? new Tags(enabled);
+                    tags = tags ?? new Tags();
                 }
             }
         }

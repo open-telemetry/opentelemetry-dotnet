@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.5.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="2.0.0" />
   </ItemGroup>

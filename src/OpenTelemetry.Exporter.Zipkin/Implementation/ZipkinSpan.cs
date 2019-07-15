@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
     internal class ZipkinSpan
     {
         [JsonProperty("traceId")]
-        public string TraceId { get; set; }
+        public string ActivityTraceId { get; set; }
 
         [JsonProperty("parentId")]
         public string ParentId { get; set; }
@@ -72,9 +72,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         {
             private readonly ZipkinSpan result = new ZipkinSpan();
 
-            internal Builder TraceId(string val)
+            internal Builder ActivityTraceId(string val)
             {
-                this.result.TraceId = val;
+                this.result.ActivityTraceId = val;
                 return this;
             }
 
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             internal ZipkinSpan Build()
             {
-                if (this.result.TraceId == null)
+                if (this.result.ActivityTraceId == null)
                 {
                     throw new ArgumentException("Trace ID should not be null");
                 }

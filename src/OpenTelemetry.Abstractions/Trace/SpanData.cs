@@ -18,8 +18,8 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Export;
 
@@ -30,24 +30,24 @@ namespace OpenTelemetry.Trace
     {
         internal SpanData(
             SpanContext context,
-            SpanId parentSpanId,
+            ActivitySpanId parentSpanId,
             Resource resource,
             string name,
-            Timestamp startTimestamp,
-            IAttributes attributes,
+            DateTime startTimestamp,
+            Attributes attributes,
             ITimedEvents<IEvent> events,
             ILinks links,
             int? childSpanCount,
             Status status,
             SpanKind kind,
-            Timestamp endTimestamp)
+            DateTime endTimestamp)
         {
             this.Context = context ?? throw new ArgumentNullException(nameof(context));
             this.ParentSpanId = parentSpanId;
             this.Resource = resource ?? throw new ArgumentNullException(nameof(resource));
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
-            this.StartTimestamp = startTimestamp ?? throw new ArgumentNullException(nameof(startTimestamp));
-            this.Attributes = attributes ?? Export.Attributes.Create(new Dictionary<string, IAttributeValue>(), 0);
+            this.StartTimestamp = startTimestamp;
+            this.Attributes = attributes ?? Export.Attributes.Create(new Dictionary<string, object>(), 0);
             this.Events = events ?? TimedEvents<IEvent>.Create(Enumerable.Empty<ITimedEvent<IEvent>>(), 0);
             this.Links = links ?? LinkList.Create(Enumerable.Empty<ILink>(), 0);
             this.ChildSpanCount = childSpanCount;
@@ -62,9 +62,9 @@ namespace OpenTelemetry.Trace
         public SpanContext Context { get; }
 
         /// <summary>
-        /// Gets the parent <see cref="SpanId"/>.
+        /// Gets the parent <see cref="ActivitySpanId"/>.
         /// </summary>
-        public SpanId ParentSpanId { get; }
+        public ActivitySpanId ParentSpanId { get; }
 
         /// <summary>
         /// Gets the <see cref="Resource"/> this span was executed on.
@@ -77,9 +77,9 @@ namespace OpenTelemetry.Trace
         public string Name { get; }
 
         /// <summary>
-        /// Gets the collection of <see cref="IAttributes"/> objects.
+        /// Gets the collection of <see cref="Attributes"/> objects.
         /// </summary>
-        public IAttributes Attributes { get; }
+        public Attributes Attributes { get; }
 
         /// <summary>
         /// Gets the collection of <see cref="ITimedEvents{IEvent}"/> objects.
@@ -107,44 +107,44 @@ namespace OpenTelemetry.Trace
         public SpanKind Kind { get; }
 
         /// <summary>
-        /// Gets the start <see cref="Timestamp"/>.
+        /// Gets the start <see cref="DateTime"/>.
         /// </summary>
-        public Timestamp StartTimestamp { get; }
+        public DateTime StartTimestamp { get; }
 
         /// <summary>
-        /// Gets the end <see cref="Timestamp"/>.
+        /// Gets the end <see cref="DateTime"/>.
         /// </summary>
-        public Timestamp EndTimestamp { get; }
+        public DateTime EndTimestamp { get; }
 
         /// <summary>
         /// Returns a new immutable <see cref="SpanData"/>.
         /// </summary>
         /// <param name="context">The <see cref="SpanContext"/> of the <see cref="ISpan"/>.</param>
-        /// <param name="parentSpanId">The parent <see cref="SpanId"/> of the <see cref="ISpan"/>. <c>null</c> if the <see cref="ISpan"/> is a root.</param>
+        /// <param name="parentSpanId">The parent <see cref="ActivitySpanId"/> of the <see cref="ISpan"/>. <c>null</c> if the <see cref="ISpan"/> is a root.</param>
         /// <param name="resource">The <see cref="Resource"/> this span was executed on.</param>
         /// <param name="name">The name of the <see cref="ISpan"/>.</param>
-        /// <param name="startTimestamp">The start <see cref="Timestamp"/> of the <see cref="ISpan"/>.</param>
-        /// <param name="attributes">The <see cref="IAttributes"/> associated with the <see cref="ISpan"/>.</param>
+        /// <param name="startTimestamp">The start <see cref="DateTime"/> of the <see cref="ISpan"/>.</param>
+        /// <param name="attributes">The <see cref="Attributes"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="events">The <see cref="Events"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="links">The <see cref="ILinks"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="childSpanCount">The <see cref="ChildSpanCount"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="status">The <see cref="Status"/> of the <see cref="ISpan"/>.</param>
         /// <param name="kind">The <see cref="SpanKind"/> of the <see cref="ISpan"/>.</param>
-        /// <param name="endTimestamp">The end <see cref="Timestamp"/> of the <see cref="ISpan"/>.</param>
+        /// <param name="endTimestamp">The end <see cref="DateTime"/> of the <see cref="ISpan"/>.</param>
         /// <returns>A new immutable <see cref="SpanData"/>.</returns>
         public static SpanData Create(
                         SpanContext context,
-                        SpanId parentSpanId,
+                        ActivitySpanId parentSpanId,
                         Resource resource,
                         string name,
-                        Timestamp startTimestamp,
-                        IAttributes attributes,
+                        DateTime startTimestamp,
+                        Attributes attributes,
                         ITimedEvents<IEvent> events,
                         ILinks links,
                         int? childSpanCount,
                         Status status,
                         SpanKind kind,
-                        Timestamp endTimestamp)
+                        DateTime endTimestamp)
         {
             if (events == null)
             {

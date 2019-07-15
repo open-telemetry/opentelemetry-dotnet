@@ -22,7 +22,7 @@ namespace OpenTelemetry.Tags.Test
 
     public class TaggerTest
     {
-        private readonly TagsComponent tagsComponent = new TagsComponent();
+        private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
 
         private static readonly TagKey K1 = TagKey.Create("k1");
@@ -39,7 +39,8 @@ namespace OpenTelemetry.Tags.Test
 
         public TaggerTest()
         {
-            tagger = tagsComponent.Tagger;
+            state = new CurrentTaggingState();
+            tagger = new Tagger(state);
         }
 
         [Fact]

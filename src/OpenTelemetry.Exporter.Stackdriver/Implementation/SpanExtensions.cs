@@ -18,7 +18,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
     using System.Linq;
     using Google.Cloud.Trace.V2;
-    using OpenTelemetry.Exporter.Stackdriver.Utils;
+    using Google.Protobuf.WellKnownTypes;
     using OpenTelemetry.Trace;
 
     internal static class SpanExtensions
@@ -32,12 +32,12 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// <returns><see cref="ISpan"/>.</returns>
         public static Google.Cloud.Trace.V2.Span ToSpan(this SpanData spanData, string projectId)
         {
-            var spanId = spanData.Context.SpanId.ToLowerBase16();
+            var spanId = spanData.Context.SpanId.ToHexString();
 
             // Base span settings
             var span = new Google.Cloud.Trace.V2.Span
             {
-                SpanName = new SpanName(projectId, spanData.Context.TraceId.ToLowerBase16(), spanId),
+                SpanName = new SpanName(projectId, spanData.Context.TraceId.ToHexString(), spanId),
                 SpanId = spanId,
                 DisplayName = new TruncatableString { Value = spanData.Name },
                 StartTime = spanData.StartTimestamp.ToTimestamp(),
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             };
             if (spanData.ParentSpanId != null)
             {
-                var parentSpanId = spanData.ParentSpanId.ToLowerBase16();
+                var parentSpanId = spanData.ParentSpanId.ToHexString();
                 if (!string.IsNullOrEmpty(parentSpanId))
                 {
                     span.ParentSpanId = parentSpanId;
@@ -85,8 +85,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         public static Google.Cloud.Trace.V2.Span.Types.Link ToLink(this ILink link)
         {
             var ret = new Google.Cloud.Trace.V2.Span.Types.Link();
-            ret.SpanId = link.Context.SpanId.ToLowerBase16();
-            ret.TraceId = link.Context.TraceId.ToLowerBase16();
+            ret.SpanId = link.Context.SpanId.ToHexString();
+            ret.TraceId = link.Context.TraceId.ToHexString();
 
             if (link.Attributes != null)
             {
@@ -106,16 +106,30 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             return ret;
         }
 
-        public static Google.Cloud.Trace.V2.AttributeValue ToAttributeValue(this IAttributeValue av)
+        public static Google.Cloud.Trace.V2.AttributeValue ToAttributeValue(this object av)
         {
-            var ret = av.Match(
-                (s) => new Google.Cloud.Trace.V2.AttributeValue() { StringValue = new TruncatableString() { Value = s } },
-                (b) => new Google.Cloud.Trace.V2.AttributeValue() { BoolValue = b },
-                (l) => new Google.Cloud.Trace.V2.AttributeValue() { IntValue = l },
-                (d) => new Google.Cloud.Trace.V2.AttributeValue() { StringValue = new TruncatableString() { Value = d.ToString() } },
-                (obj) => new Google.Cloud.Trace.V2.AttributeValue() { StringValue = new TruncatableString() { Value = obj.ToString() } });
-
-            return ret;
+            switch (av)
+            {
+                case string s:
+                    return new Google.Cloud.Trace.V2.AttributeValue()
+                    {
+                        StringValue = new TruncatableString() { Value = s },
+                    };
+                case bool b:
+                    return new Google.Cloud.Trace.V2.AttributeValue() { BoolValue = b };
+                case long l:
+                    return new Google.Cloud.Trace.V2.AttributeValue() { IntValue = l };
+                case double d:
+                    return new Google.Cloud.Trace.V2.AttributeValue()
+                    {
+                        StringValue = new TruncatableString() { Value = d.ToString() },
+                    };
+                default:
+                    return new Google.Cloud.Trace.V2.AttributeValue()
+                    {
+                        StringValue = new TruncatableString() { Value = av.ToString() },
+                    };
+            }
         }
     }
 }

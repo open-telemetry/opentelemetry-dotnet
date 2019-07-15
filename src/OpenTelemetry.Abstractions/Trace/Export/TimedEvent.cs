@@ -16,23 +16,26 @@
 
 namespace OpenTelemetry.Trace.Export
 {
-    using OpenTelemetry.Common;
+    using System;
+    using OpenTelemetry.Abstractions.Utils;
 
     public sealed class TimedEvent<T> : ITimedEvent<T>
     {
-        internal TimedEvent(Timestamp timestamp, T @event)
+        internal TimedEvent(DateTime timestamp, T @event)
         {
             this.Timestamp = timestamp;
             this.Event = @event;
         }
 
-        public Timestamp Timestamp { get; }
+        public DateTime Timestamp { get; }
 
         public T Event { get; }
 
-        public static ITimedEvent<T> Create(Timestamp timestamp, T @event)
+        public static ITimedEvent<T> Create(DateTime timestamp, T @event)
         {
-            return new TimedEvent<T>(timestamp, @event);
+            return timestamp == default
+                ? new TimedEvent<T>(PreciseTimestamp.GetUtcNow(), @event)
+                : new TimedEvent<T>(timestamp, @event);
         }
 
         /// <inheritdoc/>
