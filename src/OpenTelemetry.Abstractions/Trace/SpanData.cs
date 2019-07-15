@@ -20,7 +20,6 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Export;
 
@@ -34,20 +33,20 @@ namespace OpenTelemetry.Trace
             ActivitySpanId parentSpanId,
             Resource resource,
             string name,
-            Timestamp startTimestamp,
+            DateTime startTimestamp,
             Attributes attributes,
             ITimedEvents<IEvent> events,
             ILinks links,
             int? childSpanCount,
             Status status,
             SpanKind kind,
-            Timestamp endTimestamp)
+            DateTime endTimestamp)
         {
             this.Context = context ?? throw new ArgumentNullException(nameof(context));
             this.ParentSpanId = parentSpanId;
             this.Resource = resource ?? throw new ArgumentNullException(nameof(resource));
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
-            this.StartTimestamp = startTimestamp ?? throw new ArgumentNullException(nameof(startTimestamp));
+            this.StartTimestamp = startTimestamp;
             this.Attributes = attributes ?? Export.Attributes.Create(new Dictionary<string, object>(), 0);
             this.Events = events ?? TimedEvents<IEvent>.Create(Enumerable.Empty<ITimedEvent<IEvent>>(), 0);
             this.Links = links ?? LinkList.Create(Enumerable.Empty<ILink>(), 0);
@@ -108,14 +107,14 @@ namespace OpenTelemetry.Trace
         public SpanKind Kind { get; }
 
         /// <summary>
-        /// Gets the start <see cref="Timestamp"/>.
+        /// Gets the start <see cref="DateTime"/>.
         /// </summary>
-        public Timestamp StartTimestamp { get; }
+        public DateTime StartTimestamp { get; }
 
         /// <summary>
-        /// Gets the end <see cref="Timestamp"/>.
+        /// Gets the end <see cref="DateTime"/>.
         /// </summary>
-        public Timestamp EndTimestamp { get; }
+        public DateTime EndTimestamp { get; }
 
         /// <summary>
         /// Returns a new immutable <see cref="SpanData"/>.
@@ -124,28 +123,28 @@ namespace OpenTelemetry.Trace
         /// <param name="parentSpanId">The parent <see cref="ActivitySpanId"/> of the <see cref="ISpan"/>. <c>null</c> if the <see cref="ISpan"/> is a root.</param>
         /// <param name="resource">The <see cref="Resource"/> this span was executed on.</param>
         /// <param name="name">The name of the <see cref="ISpan"/>.</param>
-        /// <param name="startTimestamp">The start <see cref="Timestamp"/> of the <see cref="ISpan"/>.</param>
+        /// <param name="startTimestamp">The start <see cref="DateTime"/> of the <see cref="ISpan"/>.</param>
         /// <param name="attributes">The <see cref="Attributes"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="events">The <see cref="Events"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="links">The <see cref="ILinks"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="childSpanCount">The <see cref="ChildSpanCount"/> associated with the <see cref="ISpan"/>.</param>
         /// <param name="status">The <see cref="Status"/> of the <see cref="ISpan"/>.</param>
         /// <param name="kind">The <see cref="SpanKind"/> of the <see cref="ISpan"/>.</param>
-        /// <param name="endTimestamp">The end <see cref="Timestamp"/> of the <see cref="ISpan"/>.</param>
+        /// <param name="endTimestamp">The end <see cref="DateTime"/> of the <see cref="ISpan"/>.</param>
         /// <returns>A new immutable <see cref="SpanData"/>.</returns>
         public static SpanData Create(
                         SpanContext context,
                         ActivitySpanId parentSpanId,
                         Resource resource,
                         string name,
-                        Timestamp startTimestamp,
+                        DateTime startTimestamp,
                         Attributes attributes,
                         ITimedEvents<IEvent> events,
                         ILinks links,
                         int? childSpanCount,
                         Status status,
                         SpanKind kind,
-                        Timestamp endTimestamp)
+                        DateTime endTimestamp)
         {
             if (events == null)
             {

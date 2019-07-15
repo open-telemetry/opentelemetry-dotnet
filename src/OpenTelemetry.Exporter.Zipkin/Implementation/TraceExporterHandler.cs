@@ -25,7 +25,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
     using System.Text;
     using System.Threading.Tasks;
     using Newtonsoft.Json;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
@@ -115,11 +114,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return spanBuilder.Build();
         }
 
-        private long ToEpochMicroseconds(Timestamp timestamp)
+        private long ToEpochMicroseconds(DateTime timestamp)
         {
-            var nanos = (timestamp.Seconds * NanosPerSecond) + timestamp.Nanos;
-            var micros = nanos / 1000L;
-            return micros;
+            return new DateTimeOffset(timestamp).ToUnixTimeMilliseconds() * 1000;
         }
 
         private string EncodeTraceId(ActivityTraceId traceId)

@@ -38,7 +38,6 @@ namespace OpenTelemetry.Trace
         private ISampler sampler;
         private List<ILink> links;
         private bool recordEvents;
-        private Timer timestampConverter;
 
         internal SpanBuilder(string name, SpanBuilderOptions options)
         {
@@ -72,11 +71,6 @@ namespace OpenTelemetry.Trace
         {
             this.parentSpan = parentSpan ?? throw new ArgumentNullException(nameof(parentSpan));
             this.contextSource = ContextSource.ExplicitSpanParent;
-            if (parentSpan is Span parentSpanImpl)
-            {
-                this.timestampConverter = parentSpanImpl.TimestampConverter;
-            }
-
             this.parentSpanContext = null;
             this.parentActivity = null;
             return this;
@@ -235,11 +229,9 @@ namespace OpenTelemetry.Trace
                 activityForSpan.SpanId,
                 activeTraceParams);
 
-            var spanOptions = SpanOptions.None;
             if (sampledIn || this.recordEvents)
             {
                 activityForSpan.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-                spanOptions = SpanOptions.RecordEvents;
             }
             else
             {
@@ -250,19 +242,21 @@ namespace OpenTelemetry.Trace
 
             if (this.parentSpanContext?.Tracestate != null && this.parentSpanContext.Tracestate != Tracestate.Empty)
             {
-                childTracestate = this.parentSpanContext.Tracestate.ToBuilder().Build();
+                childTracestate = this.parentSpanContext.Tracestate;
             }
 
             var span = Span.StartSpan(
                         activityForSpan,
                         childTracestate, // it is updated in CreateActivityForSpan, 
-                        spanOptions,
-                        this.name,
                         this.kind,
                         activeTraceParams,
                         this.options.StartEndHandler,
-                        this.timestampConverter,
                         ownsActivity: this.contextSource != ContextSource.Activity);
+            if (activityForSpan.OperationName != this.name)
+            {
+                span.UpdateName(this.name);
+            }
+
             LinkSpans(span, this.links);
             return span;
         }

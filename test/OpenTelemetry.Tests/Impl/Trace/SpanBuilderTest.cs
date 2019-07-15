@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace.Test
     using System.Globalization;
     using System.Linq;
     using Moq;
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Abstractions.Utils;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;
     using OpenTelemetry.Trace.Sampler;
@@ -68,9 +68,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True((span.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
             var spanData = ((Span)span).ToSpanData();
             Assert.True(spanData.ParentSpanId == default);
-            Assert.InRange(spanData.StartTimestamp,
-                Timestamp.FromDateTimeOffset(DateTimeOffset.Now).AddDuration(Duration.Create(-1, 0)),
-                Timestamp.FromDateTimeOffset(DateTimeOffset.Now).AddDuration(Duration.Create(1, 0)));
+            Assert.InRange(spanData.StartTimestamp, PreciseTimestamp.GetUtcNow().AddSeconds(-1), PreciseTimestamp.GetUtcNow().AddSeconds(1));
             Assert.Equal(SpanName, spanData.Name);
 
             var activity = ((Span)span).Activity;
@@ -268,7 +266,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(childSpan.Context.IsValid);
             Assert.Equal(rootSpan.Context.TraceId, childSpan.Context.TraceId);
             Assert.Equal(rootSpan.Context.SpanId, ((Span)childSpan).ToSpanData().ParentSpanId);
-            Assert.Equal(((Span)rootSpan).TimestampConverter, ((Span)childSpan).TimestampConverter);
         }
 
         [Fact]

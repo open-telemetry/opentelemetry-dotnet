@@ -36,6 +36,7 @@ namespace OpenTelemetry.Trace.Test
             Activity.ForceDefaultIdFormat = true;
 
             spanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty); ;
+
             attributesMap.Add("MyAttributeKey0", "MyStringAttribute");
             attributesMap.Add("MyAttributeKey1", 10L);
             attributesMap.Add("MyAttributeKey2", true);
@@ -82,11 +83,11 @@ namespace OpenTelemetry.Trace.Test
             var link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Contains(spanContext.TraceId.ToString(), link.ToString());
             Assert.Contains(spanContext.SpanId.ToString(), link.ToString());
-            Assert.Contains(string.Join(" ", attributesMap.Select(kvp => $"{kvp.Key}={kvp.Value}")), link.ToString());
+            Assert.Contains(string.Join(", ", attributesMap.Select(kvp => $"{kvp.Key}={kvp.Value}")), link.ToString());
             link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Contains(spanContext.TraceId.ToString(), link.ToString());
             Assert.Contains(spanContext.SpanId.ToString(), spanContext.SpanId.ToString());
-            Assert.Contains(string.Join(" ", attributesMap.Select(kvp => $"{kvp.Key}={kvp.Value}")), link.ToString());
+            Assert.Contains(string.Join(", ", attributesMap.Select(kvp => $"{kvp.Key}={kvp.Value}")), link.ToString());
         }
 
         [Fact]

@@ -59,16 +59,8 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                     SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
                     ParentSpanId = parentSpanIdString,
 
-                    StartTime = new Timestamp
-                    {
-                        Nanos = spanData.StartTimestamp.Nanos,
-                        Seconds = spanData.StartTimestamp.Seconds,
-                    },
-                    EndTime = new Timestamp
-                    {
-                        Nanos = spanData.EndTimestamp.Nanos,
-                        Seconds = spanData.EndTimestamp.Seconds,
-                    },
+                    StartTime = spanData.StartTimestamp.ToTimestamp(),
+                    EndTime = spanData.EndTimestamp.ToTimestamp(),
                     Status = spanData.Status == null
                         ? null
                         : new OpenTelemetry.Proto.Trace.V1.Status
@@ -76,7 +68,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                             Code = (int)spanData.Status.CanonicalCode,
                             Message = spanData.Status.Description ?? string.Empty,
                         },
-                    SameProcessAsParentSpan = spanData.ParentSpanId != null,
+                    SameProcessAsParentSpan = spanData.ParentSpanId != default,
                     ChildSpanCount = spanData.ChildSpanCount.HasValue ? (uint)spanData.ChildSpanCount.Value : 0,
                     Attributes = FromAttributes(spanData.Attributes),
                     TimeEvents = FromITimeEvents(spanData.Events),
@@ -169,11 +161,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
         {
             return new Span.Types.TimeEvent
             {
-                Time = new Timestamp
-                {
-                    Nanos = source.Timestamp.Nanos,
-                    Seconds = source.Timestamp.Seconds,
-                },
+                Time = source.Timestamp.ToTimestamp(),
                 Annotation = new Span.Types.TimeEvent.Types.Annotation
                 {
                     Description = new TruncatableString { Value = source.Event.Name },

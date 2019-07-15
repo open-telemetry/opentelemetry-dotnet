@@ -19,7 +19,6 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
@@ -100,19 +99,21 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             // command.ElapsedTime;             // 00:00:32.4988020
 
             // TODO: make timestamp with the better precision
-            var startTimestamp = Timestamp.FromMillis(new DateTimeOffset(command.CommandCreated).ToUnixTimeMilliseconds());
+            var startTimestamp = command.CommandCreated;
 
-            var timestamp = new DateTimeOffset(command.CommandCreated).Add(command.CreationToEnqueued);
+            var enqueued = command.CommandCreated.Add(command.CreationToEnqueued);
+            var send = enqueued.Add(command.EnqueuedToSending);
+            var response = send.Add(command.SentToResponse);
             var events = TimedEvents<IEvent>.Create(
                 new List<ITimedEvent<IEvent>>()
                 {
-                    TimedEvent<IEvent>.Create(Timestamp.FromMillis(timestamp.ToUnixTimeMilliseconds()), Event.Create("Enqueued")),
-                    TimedEvent<IEvent>.Create(Timestamp.FromMillis((timestamp = timestamp.Add(command.EnqueuedToSending)).ToUnixTimeMilliseconds()), Event.Create("Sent")),
-                    TimedEvent<IEvent>.Create(Timestamp.FromMillis(timestamp.Add(command.SentToResponse).ToUnixTimeMilliseconds()), Event.Create("ResponseRecieved")),
+                    TimedEvent<IEvent>.Create(enqueued, Event.Create("Enqueued")),
+                    TimedEvent<IEvent>.Create(send, Event.Create("Sent")),
+                    TimedEvent<IEvent>.Create(response, Event.Create("ResponseRecieved")),
                 },
                 droppedEventsCount: 0);
 
-            var endTimestamp = Timestamp.FromMillis(new DateTimeOffset(command.CommandCreated.Add(command.ElapsedTime)).ToUnixTimeMilliseconds());
+            var endTimestamp = command.CommandCreated.Add(command.ElapsedTime);
 
             // TODO: deal with the re-transmission
             // command.RetransmissionOf;

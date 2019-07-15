@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Trace.Export
 {
-    using OpenTelemetry.Common;
+    using System;
 
     /// <summary>
     /// Timed event.
@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace.Export
         /// <summary>
         /// Gets the timestamp associated with this timed event.
         /// </summary>
-        Timestamp Timestamp { get; }
+        DateTime Timestamp { get; }
 
         /// <summary>
         /// Gets the typed event content.

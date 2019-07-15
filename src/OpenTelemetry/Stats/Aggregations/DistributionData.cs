@@ -90,7 +90,7 @@ namespace OpenTelemetry.Stats.Aggregations
                 + "min=" + this.Min + ", "
                 + "max=" + this.Max + ", "
                 + "sumOfSquaredDeviations=" + this.SumOfSquaredDeviations + ", "
-                + "bucketCounts=" + Collections.ToString(this.BucketCounts)
+                + "bucketCounts=" + string.Join(", ", this.BucketCounts)
                 + "}";
         }
 

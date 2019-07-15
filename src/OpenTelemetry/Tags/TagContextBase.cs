@@ -63,7 +63,15 @@ namespace OpenTelemetry.Tags
                 tags2 = otherTags.ToList();
             }
 
-            return Collections.AreEquivalent(tags1, tags2);
+            if (tags1.Count != tags2.Count)
+            {
+                return false;
+            }
+
+            // TODO: this sounds scary, we should rework it along with Tags API
+            var c1Dist = tags1.Distinct().ToArray();
+            var c2Dist = tags2.Distinct().ToArray();
+            return c1Dist.Count() == c2Dist.Count() && c1Dist.Intersect(c2Dist).Count() == c1Dist.Count();
         }
 
         /// <inheritdoc/>

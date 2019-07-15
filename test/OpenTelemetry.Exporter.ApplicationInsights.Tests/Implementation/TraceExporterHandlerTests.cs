@@ -19,7 +19,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
     using Microsoft.ApplicationInsights.Channel;
     using Microsoft.ApplicationInsights.DataContracts;
     using Microsoft.ApplicationInsights.Extensibility;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Exporter.ApplicationInsights.Implementation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
@@ -42,13 +41,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         private readonly byte[] testSpanIdBytes = { 0xd7, 0xdd, 0xeb, 0x4a, 0xa9, 0xa5, 0xe7, 0x8b };
         private readonly byte[] testParentSpanIdBytes = { 0x9b, 0xa7, 0x9c, 0x9f, 0xbd, 0x2f, 0xb4, 0x95 };
 
-        private DateTimeOffset nowDateTimeOffset;
-
-        private Timestamp NowTimestamp => Timestamp.FromDateTimeOffset(nowDateTimeOffset);
+        private DateTime now;
 
         public OpenTelemetryTelemetryConverterTests()
         {
-            nowDateTimeOffset = DateTimeOffset.Now.Subtract(TimeSpan.FromSeconds(1));
+            now = DateTime.UtcNow.AddSeconds(-1);
         }
 
         private ConcurrentQueue<ITelemetry> ConvertSpan(SpanData data)
@@ -84,7 +81,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             var request = sentItems.OfType<RequestTelemetry>().Single();
             Assert.Equal("spanName", request.Name);
-            Assert.Equal(nowDateTimeOffset.Subtract(TimeSpan.FromSeconds(1)), request.Timestamp);
+            Assert.Equal(now.AddSeconds(-1), request.Timestamp);
             Assert.Equal(1, request.Duration.TotalSeconds);
 
             Assert.Equal(TestTraceId, request.Context.Operation.Id);
@@ -266,7 +263,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             var dependency = sentItems.OfType<DependencyTelemetry>().Single();
             Assert.Equal("spanName", dependency.Name);
-            Assert.Equal(nowDateTimeOffset.Subtract(TimeSpan.FromSeconds(1)), dependency.Timestamp);
+            Assert.Equal(now.AddSeconds(-1), dependency.Timestamp);
             Assert.Equal(1, dependency.Duration.TotalSeconds);
 
             Assert.Equal(TestTraceId, dependency.Context.Operation.Id);
@@ -300,7 +297,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             var dependency = sentItems.OfType<DependencyTelemetry>().Single();
             Assert.Equal("spanName", dependency.Name);
-            Assert.Equal(nowDateTimeOffset.Subtract(TimeSpan.FromSeconds(1)), dependency.Timestamp);
+            Assert.Equal(now.AddSeconds(-1), dependency.Timestamp);
             Assert.Equal(1, dependency.Duration.TotalSeconds);
 
             Assert.Equal(TestTraceId, dependency.Context.Operation.Id);
@@ -1463,8 +1460,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             events = TimedEvents<IEvent>.Create(
                 new List<ITimedEvent<IEvent>>()
                 {
-                    TimedEvent<IEvent>.Create(NowTimestamp, Event.Create("test message1")),
-                    TimedEvent<IEvent>.Create(null, Event.Create("test message2", new Dictionary<string, object>()
+                    TimedEvent<IEvent>.Create(now, Event.Create("test message1")),
+                    TimedEvent<IEvent>.Create(default, Event.Create("test message2", new Dictionary<string, object>()
                         {
                             { "custom.stringAttribute", "string" },
                             { "custom.longAttribute", long.MaxValue },
@@ -1493,8 +1490,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("test message1", trace1.Message);
             Assert.Equal("test message2", trace2.Message);
 
-            Assert.Equal(nowDateTimeOffset, trace1.Timestamp);
-            Assert.NotEqual(nowDateTimeOffset, trace2.Timestamp);
+            Assert.Equal(now, trace1.Timestamp);
+            Assert.NotEqual(now, trace2.Timestamp);
             Assert.True(Math.Abs((DateTime.UtcNow - trace2.Timestamp).TotalSeconds) < 1);
 
             Assert.False(trace1.Properties.Any());
@@ -1581,15 +1578,15 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksDependenciesWithEvents()
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
-            nowDateTimeOffset = nowDateTimeOffset.Subtract(TimeSpan.FromSeconds(1));
+            now = now.Subtract(TimeSpan.FromSeconds(1));
             name = "spanName";
             kind = SpanKind.Client;
 
             events = TimedEvents<IEvent>.Create(
                 new List<ITimedEvent<IEvent>>()
                 {
-                    TimedEvent<IEvent>.Create(NowTimestamp, Event.Create("test message1")),
-                    TimedEvent<IEvent>.Create(null, Event.Create("test message2", new Dictionary<string, object>()
+                    TimedEvent<IEvent>.Create(now, Event.Create("test message1")),
+                    TimedEvent<IEvent>.Create(default, Event.Create("test message2", new Dictionary<string, object>()
                         {
                             { "custom.stringAttribute", "string" },
                             { "custom.longAttribute", long.MaxValue },
@@ -1618,8 +1615,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("test message1", trace1.Message);
             Assert.Equal("test message2", trace2.Message);
 
-            Assert.Equal(nowDateTimeOffset, trace1.Timestamp);
-            Assert.NotEqual(nowDateTimeOffset, trace2.Timestamp);
+            Assert.Equal(now, trace1.Timestamp);
+            Assert.NotEqual(now, trace2.Timestamp);
             Assert.True(Math.Abs((DateTime.UtcNow - trace2.Timestamp).TotalSeconds) < 1);
 
             Assert.False(trace1.Properties.Any());
@@ -1862,27 +1859,27 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             out ActivitySpanId parentSpanId,
             out Resource resource,
             out string name,
-            out Timestamp startTimestamp,
+            out DateTime startTimestamp,
             out Attributes attributes,
             out ITimedEvents<IEvent> events,
             out ILinks links,
             out int? childSpanCount,
             out Status status,
             out SpanKind kind,
-            out Timestamp endTimestamp)
+            out DateTime endTimestamp)
         {
             context = SpanContext.Create(ActivityTraceId.CreateFromBytes(this.testTraceIdBytes), ActivitySpanId.CreateFromBytes(this.testSpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty);
             parentSpanId = default;
             resource = Resource.Empty;
             name = "spanName";
-            startTimestamp = NowTimestamp.AddDuration(Duration.Create(TimeSpan.FromSeconds(-1)));
+            startTimestamp = now.AddSeconds(-1);
             attributes = null;
             events = null;
             links = null;
             childSpanCount = null;
             status = null;
             kind = SpanKind.Server;
-            endTimestamp = NowTimestamp;
+            endTimestamp = now;
         }
     }
 };

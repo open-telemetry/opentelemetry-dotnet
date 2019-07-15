@@ -25,7 +25,6 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
     using Xunit;
     using System;
     using System.Diagnostics;
-    using OpenTelemetry.Common;
     using System.Collections.Generic;
 
     public class RedisProfilerEntryToSpanConverterTests
@@ -51,7 +50,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var now = DateTimeOffset.Now;
             profiledCommand.Setup(m => m.CommandCreated).Returns(now.DateTime);
             var result = RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "SET", default, profiledCommand.Object);
-            Assert.Equal(Timestamp.FromMillis(now.ToUnixTimeMilliseconds()), result.StartTimestamp);
+            Assert.Equal(now, result.StartTimestamp);
         }
 
         [Fact]

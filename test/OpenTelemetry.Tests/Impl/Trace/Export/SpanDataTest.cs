@@ -18,11 +18,11 @@ using System.Collections.ObjectModel;
 
 namespace OpenTelemetry.Trace.Export.Test
 {
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using OpenTelemetry.Common;
+    using OpenTelemetry.Abstractions.Utils;
     using OpenTelemetry.Resources;
-    using OpenTelemetry.Trace.Internal;
     using Xunit;
 
     public class SpanDataTest
@@ -31,11 +31,11 @@ namespace OpenTelemetry.Trace.Export.Test
         private const string EVENT_TEXT = "MyEventText";
         private const SpanKind SPAN_KIND = SpanKind.Client;
         private const int CHILD_SPAN_COUNT = 13;
-        private static readonly Timestamp startTimestamp = Timestamp.Create(123, 456);
-        private static readonly Timestamp eventTimestamp1 = Timestamp.Create(123, 457);
-        private static readonly Timestamp eventTimestamp2 = Timestamp.Create(123, 458);
-        private static readonly Timestamp eventTimestamp3 = Timestamp.Create(123, 459);
-        private static readonly Timestamp endTimestamp = Timestamp.Create(123, 460);
+        private static readonly DateTime startTimestamp = PreciseTimestamp.GetUtcNow().AddSeconds(-1);
+        private static readonly DateTime eventTimestamp1 = startTimestamp.AddMilliseconds(1);
+        private static readonly DateTime eventTimestamp2 = startTimestamp.AddMilliseconds(2);
+        private static readonly DateTime eventTimestamp3 = startTimestamp.AddMilliseconds(3);
+        private static readonly DateTime endTimestamp = startTimestamp.AddMilliseconds(4);
         private static readonly IEvent spanEvent = Event.Create(EVENT_TEXT);
         private static readonly Status status = Status.DeadlineExceeded.WithDescription("TooSlow");
         private readonly SpanContext spanContext;
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     null,
                     null,
                     SPAN_KIND,
-                    null);
+                    default);
             Assert.Equal(spanContext, spanData.Context);
             Assert.True(spanData.ParentSpanId == default);
             Assert.Equal(resource, spanData.Resource);
@@ -123,7 +123,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Equal(links, spanData.Links);
             Assert.Null(spanData.ChildSpanCount);
             Assert.Null(spanData.Status);
-            Assert.Null(spanData.EndTimestamp);
+            Assert.Equal(default, spanData.EndTimestamp);
         }
 
         [Fact]

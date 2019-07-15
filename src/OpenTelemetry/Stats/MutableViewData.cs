@@ -18,15 +18,12 @@ namespace OpenTelemetry.Stats
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Tags;
 
     internal abstract class MutableViewData
     {
         internal static readonly TagValue UnknownTagValue = null;
-
-        internal static readonly Timestamp ZeroTimestamp = Timestamp.Create(0, 0);
 
         private const long MillisPerSecond = 1000L;
         private const long NanosPerMilli = 1000 * 1000;
@@ -110,12 +107,6 @@ namespace OpenTelemetry.Stats
             }
 
             return tagValues.AsReadOnly();
-        }
-
-        // Returns the milliseconds representation of a Duration.
-        internal static long ToMillis(Duration duration)
-        {
-            return (duration.Seconds * MillisPerSecond) + (duration.Nanos / NanosPerMilli);
         }
 
         internal static MutableAggregation CreateMutableAggregation(IAggregation aggregation)
