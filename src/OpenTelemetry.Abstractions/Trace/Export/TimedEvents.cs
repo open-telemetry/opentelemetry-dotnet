@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace.Export
 
     public sealed class TimedEvents<T> : ITimedEvents<T>
     {
-        private static readonly TimedEvents<T> Empty = new TimedEvents<T>(new ITimedEvent<T>[0], 0);
+        public static readonly ITimedEvents<T> Empty = new TimedEvents<T>(new ITimedEvent<T>[0], 0);
 
         internal TimedEvents(IEnumerable<ITimedEvent<T>> events, int droppedEventsCount)
         {
@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Export
 
         public int DroppedEventsCount { get; }
 
-        public static ITimedEvents<T> Create(IEnumerable<ITimedEvent<T>> events, int droppedEventsCount)
+        public static ITimedEvents<T> Create(IReadOnlyCollection<ITimedEvent<T>> events, int droppedEventsCount)
         {
             if (events == null)
             {
