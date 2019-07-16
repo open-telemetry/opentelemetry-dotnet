@@ -16,10 +16,9 @@
 
 namespace OpenTelemetry.Trace.Export
 {
-    using System.Collections.Generic;
+    using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using OpenTelemetry.Common;
 
     public sealed class SpanExporter : SpanExporterBase
     {
@@ -54,9 +53,7 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override Task ExportAsync(SpanData export, CancellationToken token)
         {
-            this.worker.ExportAsync(export, token);
-
-            return Task.CompletedTask;
+            return this.worker.ExportAsync(export, token);
         }
 
         public override void RegisterHandler(string name, IHandler handler)
@@ -74,7 +71,7 @@ namespace OpenTelemetry.Trace.Export
             this.worker.Dispose();
         }
 
-        internal static ISpanExporter Create(int bufferSize, Duration scheduleDelay)
+        internal static ISpanExporter Create(int bufferSize, TimeSpan scheduleDelay)
         {
             var worker = new SpanExporterWorker(bufferSize, scheduleDelay);
             return new SpanExporter(worker);

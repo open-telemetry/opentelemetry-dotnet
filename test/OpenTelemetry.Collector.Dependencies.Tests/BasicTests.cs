@@ -17,13 +17,13 @@
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     using Moq;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Sampler;
     using System;
+    using System.Diagnostics;
     using System.Net.Http;
     using System.Threading.Tasks;
     using Xunit;
@@ -46,8 +46,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             var url = $"http://{host}:{port}/";
 
-            var expectedTraceId = TraceId.Invalid;
-            var expectedSpanId = SpanId.Invalid;
+            ActivityTraceId expectedTraceId = default;
+            ActivitySpanId expectedSpanId = default;
 
             using (serverLifeTime)
             {
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                         expectedSpanId = sc.SpanId;
                     });
 
-                var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
+                var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
 
                 using (var dc = new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
                 {

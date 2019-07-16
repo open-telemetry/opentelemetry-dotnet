@@ -18,7 +18,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
+    using System.Diagnostics;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
@@ -46,12 +46,12 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             }
         }
 
-        internal static bool ShouldSample(SpanContext parentContext, string name, ISampler sampler, out SpanContext context, out SpanId parentSpanId)
+        internal static bool ShouldSample(SpanContext parentContext, string name, ISampler sampler, out SpanContext context, out ActivitySpanId parentSpanId)
         {
-            var traceId = TraceId.Invalid;
+            ActivityTraceId traceId = default;
             var tracestate = Tracestate.Empty;
-            parentSpanId = SpanId.Invalid;
-            var parentOptions = TraceOptions.Default;
+            parentSpanId = default;
+            var parentOptions = ActivityTraceFlags.None;
 
             if (parentContext.IsValid)
             {
@@ -61,19 +61,21 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             }
             else
             {
-                traceId = TraceId.FromBytes(Guid.NewGuid().ToByteArray());
+                traceId = ActivityTraceId.CreateRandom();
             }
 
-            var result = parentOptions.IsSampled;
-            var spanId = SpanId.FromBytes(Guid.NewGuid().ToByteArray(), 8);
-            var traceOptions = TraceOptions.Default;
+            var result = (parentOptions & ActivityTraceFlags.Recorded) != 0;
+            var spanId = ActivitySpanId.CreateRandom();
+            var traceOptions = ActivityTraceFlags.None;
 
             if (sampler != null)
             {
-                var builder = TraceOptions.Builder(parentContext.TraceOptions);
+                traceOptions = parentContext.TraceOptions;
                 result = sampler.ShouldSample(parentContext, traceId, spanId, name, null);
-                builder = builder.SetIsSampled(result);
-                traceOptions = builder.Build();
+                if (result)
+                {
+                    traceOptions |= ActivityTraceFlags.Recorded;
+                }
             }
 
             context = SpanContext.Create(traceId, spanId, traceOptions, parentContext.Tracestate);
@@ -81,7 +83,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             return result;
         }
 
-        internal static SpanData ProfiledCommandToSpanData(SpanContext context, string name, SpanId parentSpanId, IProfiledCommand command)
+        internal static SpanData ProfiledCommandToSpanData(SpanContext context, string name, ActivitySpanId parentSpanId, IProfiledCommand command)
         {
             // use https://github.com/opentracing/specification/blob/master/semantic_conventions.md for now
 
@@ -97,19 +99,21 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             // command.ElapsedTime;             // 00:00:32.4988020
 
             // TODO: make timestamp with the better precision
-            var startTimestamp = Timestamp.FromMillis(new DateTimeOffset(command.CommandCreated).ToUnixTimeMilliseconds());
+            var startTimestamp = command.CommandCreated;
 
-            var timestamp = new DateTimeOffset(command.CommandCreated).Add(command.CreationToEnqueued);
+            var enqueued = command.CommandCreated.Add(command.CreationToEnqueued);
+            var send = enqueued.Add(command.EnqueuedToSending);
+            var response = send.Add(command.SentToResponse);
             var events = TimedEvents<IEvent>.Create(
                 new List<ITimedEvent<IEvent>>()
                 {
-                    TimedEvent<IEvent>.Create(Timestamp.FromMillis(timestamp.ToUnixTimeMilliseconds()), Event.Create("Enqueued")),
-                    TimedEvent<IEvent>.Create(Timestamp.FromMillis((timestamp = timestamp.Add(command.EnqueuedToSending)).ToUnixTimeMilliseconds()), Event.Create("Sent")),
-                    TimedEvent<IEvent>.Create(Timestamp.FromMillis(timestamp.Add(command.SentToResponse).ToUnixTimeMilliseconds()), Event.Create("ResponseRecieved")),
+                    TimedEvent<IEvent>.Create(enqueued, Event.Create("Enqueued")),
+                    TimedEvent<IEvent>.Create(send, Event.Create("Sent")),
+                    TimedEvent<IEvent>.Create(response, Event.Create("ResponseReceived")),
                 },
                 droppedEventsCount: 0);
 
-            var endTimestamp = Timestamp.FromMillis(new DateTimeOffset(command.CommandCreated.Add(command.ElapsedTime)).ToUnixTimeMilliseconds());
+            var endTimestamp = command.CommandCreated.Add(command.ElapsedTime);
 
             // TODO: deal with the re-transmission
             // command.RetransmissionOf;
@@ -118,25 +122,25 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             // TODO: determine what to do with Resource in this context
             var resource = Resource.Empty;
 
-            var attributesMap = new Dictionary<string, IAttributeValue>()
+            var attributesMap = new Dictionary<string, object>()
             {
                 // TODO: pre-allocate constant attribute and reuse
-                { "db.type", AttributeValue.StringAttributeValue("redis") },
+                { "db.type", "redis" },
 
                 // Example: "redis.flags": None, DemandMaster
-                { "redis.flags", AttributeValue.StringAttributeValue(command.Flags.ToString()) },
+                { "redis.flags", command.Flags.ToString() },
             };
 
             if (command.Command != null)
             {
                 // Example: "db.statement": SET;
-                attributesMap.Add("db.statement", AttributeValue.StringAttributeValue(command.Command));
+                attributesMap.Add("db.statement", command.Command);
             }
 
             if (command.EndPoint != null)
             {
                 // Example: "db.instance": Unspecified/localhost:6379[0]
-                attributesMap.Add("db.instance", AttributeValue.StringAttributeValue(command.EndPoint.ToString() + "[" + command.Db + "]"));
+                attributesMap.Add("db.instance", command.EndPoint.ToString() + "[" + command.Db + "]");
             }
 
             var attributes = Attributes.Create(attributesMap, 0);

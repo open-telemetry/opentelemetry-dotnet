@@ -24,14 +24,15 @@ namespace OpenTelemetry.Tags.Propagation.Test
 
     public class TagContextDeserializationTest
     {
-        private readonly TagsComponent tagsComponent = new TagsComponent();
-        private readonly ITagContextBinarySerializer serializer;
+        private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
+        private readonly ITagContextBinarySerializer serializer;
 
         public TagContextDeserializationTest()
         {
-            serializer = tagsComponent.TagPropagationComponent.BinarySerializer;
-            tagger = tagsComponent.Tagger;
+            state = new CurrentTaggingState();
+            tagger = new Tagger(state);
+            serializer = new TagContextBinarySerializer(state);
         }
 
         [Fact]

@@ -29,19 +29,5 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             Assert.IsType<SpanExporter>(exportComponentWithInProcess.SpanExporter);
         }
-
-        [Fact]
-        public void ImplementationOfActiveSpans()
-        {
-            Assert.IsType<InProcessRunningSpanStore>(exportComponentWithInProcess.RunningSpanStore);
-            Assert.IsType<NoopRunningSpanStore>(exportComponentWithoutInProcess.RunningSpanStore);
-        }
-
-        [Fact]
-        public void ImplementationOfSampledSpanStore()
-        {
-            Assert.IsType<InProcessSampledSpanStore>(exportComponentWithInProcess.SampledSpanStore);
-            Assert.IsType<NoopSampledSpanStore>(exportComponentWithoutInProcess.SampledSpanStore);
-        }
     }
 }

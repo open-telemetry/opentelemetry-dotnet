@@ -28,14 +28,14 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
     {
         public static readonly string ContentType = "text/plain; version = 0.0.4";
 
-        private static char[] firstCharacterNameCharset = new char[]
+        private static readonly char[] FirstCharacterNameCharset = new char[]
         {
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
             '_', ':',
         };
 
-        private static char[] nameCharset = new char[]
+        private static readonly char[] NameCharset = new char[]
         {
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -43,14 +43,14 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             '_', ':',
         };
 
-        private static char[] firstCharacterLabelCharset = new char[]
+        private static readonly char[] FirstCharacterLabelCharset = new char[]
         {
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
             '_',
         };
 
-        private static char[] labelCharset = new char[]
+        private static readonly char[] LabelCharset = new char[]
         {
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -211,7 +211,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             if (!string.IsNullOrEmpty(name))
             {
                 var firstChar = name[0];
-                if (firstCharacterNameCharset.Contains(firstChar))
+                if (FirstCharacterNameCharset.Contains(firstChar))
                 {
                     sb.Append(firstChar);
                 }
@@ -219,7 +219,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 {
                     firstChar = firstChar.ToString().ToLowerInvariant()[0];
 
-                    if (firstCharacterNameCharset.Contains(firstChar))
+                    if (FirstCharacterNameCharset.Contains(firstChar))
                     {
                         sb.Append(firstChar);
                     }
@@ -235,7 +235,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             {
                 var c = name[i];
 
-                if (nameCharset.Contains(c))
+                if (NameCharset.Contains(c))
                 {
                     sb.Append(c);
                 }
@@ -266,7 +266,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             if (!string.IsNullOrEmpty(name))
             {
                 var firstChar = name[0];
-                if (firstCharacterLabelCharset.Contains(firstChar))
+                if (FirstCharacterLabelCharset.Contains(firstChar))
                 {
                     sb.Append(firstChar);
                 }
@@ -274,7 +274,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 {
                     firstChar = firstChar.ToString().ToLowerInvariant()[0];
 
-                    if (firstCharacterLabelCharset.Contains(firstChar))
+                    if (FirstCharacterLabelCharset.Contains(firstChar))
                     {
                         sb.Append(firstChar);
                     }
@@ -290,7 +290,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             {
                 var c = name[i];
 
-                if (labelCharset.Contains(c))
+                if (LabelCharset.Contains(c))
                 {
                     sb.Append(c);
                 }

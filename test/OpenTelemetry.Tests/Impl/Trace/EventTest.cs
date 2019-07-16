@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace.Test
 {
     using System;
+    using System.Linq;
     using System.Collections.Generic;
     using OpenTelemetry.Utils;
     using Xunit;
@@ -40,7 +41,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromDescriptionAndAttributes_NullDescription()
         {
-            Assert.Throws<ArgumentNullException>(() => Event.Create(null, new Dictionary<string, IAttributeValue>()));
+            Assert.Throws<ArgumentNullException>(() => Event.Create(null, new Dictionary<string, object>()));
         }
 
         [Fact]
@@ -52,9 +53,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromDescriptionAndAttributes()
         {
-            var attributes = new Dictionary<string, IAttributeValue>();
+            var attributes = new Dictionary<string, object>();
             attributes.Add(
-                "MyStringAttributeKey", AttributeValue<string>.Create("MyStringAttributeValue"));
+                "MyStringAttributeKey", "MyStringAttributeValue");
             var @event = Event.Create("MyEventText", attributes);
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(attributes, @event.Attributes);
@@ -65,7 +66,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var @event =
                 Event.Create(
-                    "MyEventText", new Dictionary<string, IAttributeValue>());
+                    "MyEventText", new Dictionary<string, object>());
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(0, @event.Attributes.Count);
         }
@@ -94,12 +95,12 @@ namespace OpenTelemetry.Trace.Test
         {
             var @event = Event.Create("MyEventText");
             Assert.Contains("MyEventText", @event.ToString());
-            var attributes = new Dictionary<string, IAttributeValue>();
+            var attributes = new Dictionary<string, object>();
             attributes.Add(
-                "MyStringAttributeKey", AttributeValue<string>.Create("MyStringAttributeValue"));
+                "MyStringAttributeKey", "MyStringAttributeValue");
             @event = Event.Create("MyEventText2", attributes);
             Assert.Contains("MyEventText2", @event.ToString());
-            Assert.Contains(Collections.ToString(attributes), @event.ToString());
+            Assert.Contains(string.Join(",", attributes.Select(kvp => $"{kvp.Key}={kvp.Value}")), @event.ToString());
         }
     }
 }

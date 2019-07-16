@@ -19,15 +19,17 @@ namespace OpenTelemetry.Trace
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Diagnostics;
     using System.Linq;
+    using OpenTelemetry.Abstractions.Context.Propagation;
     using OpenTelemetry.Abstractions.Utils;
 
     /// <inheritdoc/>
     public sealed class Link : ILink
     {
-        private static readonly IDictionary<string, IAttributeValue> EmptyAttributes = new Dictionary<string, IAttributeValue>();
+        private static readonly IDictionary<string, object> EmptyAttributes = new Dictionary<string, object>();
 
-        private Link(SpanContext context, IDictionary<string, IAttributeValue> attributes)
+        private Link(SpanContext context, IDictionary<string, object> attributes)
         {
             this.Context = context ?? throw new ArgumentNullException(nameof(context));
             this.Attributes = attributes ?? throw new ArgumentNullException(nameof(attributes));
@@ -37,29 +39,48 @@ namespace OpenTelemetry.Trace
         public SpanContext Context { get; }
 
         /// <inheritdoc/>
-        public IDictionary<string, IAttributeValue> Attributes { get; }
+        public IDictionary<string, object> Attributes { get; }
+
+        /// <summary>
+        /// Creates a <see cref="ILink"/> from Activity.
+        /// </summary>
+        /// <param name="activity">Activity to create link from.</param>
+        /// <returns>New <see cref="ILink"/> instance.</returns>
+        public static ILink FromActivity(Activity activity)
+        {
+            var tracestate = Tracestate.Empty;
+            var tracestateBuilder = Tracestate.Builder;
+            if (TracestateUtils.TryExtractTracestate(activity.TraceStateString, tracestateBuilder))
+            {
+                tracestate = tracestateBuilder.Build();
+            }
+
+            return new Link(
+                SpanContext.Create(activity.TraceId, activity.SpanId, activity.ActivityTraceFlags, tracestate),
+                EmptyAttributes);
+        }
 
         public static ILink FromSpanContext(SpanContext context)
         {
             return new Link(context, EmptyAttributes);
         }
 
-        public static ILink FromSpanContext(SpanContext context, IDictionary<string, IAttributeValue> attributes)
+        public static ILink FromSpanContext(SpanContext context, IDictionary<string, object> attributes)
         {
-            IDictionary<string, IAttributeValue> copy = new Dictionary<string, IAttributeValue>(attributes);
+            IDictionary<string, object> copy = new Dictionary<string, object>(attributes);
             return new Link(
                 context,
-                new ReadOnlyDictionary<string, IAttributeValue>(copy));
+                new ReadOnlyDictionary<string, object>(copy));
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
             return "Link{"
-                + "traceId=" + this.Context.TraceId + ", "
-                + "spanId=" + this.Context.SpanId + ", "
+                + "traceId=" + this.Context.TraceId.ToHexString() + ", "
+                + "spanId=" + this.Context.SpanId.ToHexString() + ", "
                 + "tracestate=" + this.Context.Tracestate.ToString() + ", "
-                + "attributes=" + Collections.ToString(this.Attributes)
+                + "attributes=" + string.Join(", ", this.Attributes.Select(kvp => $"{kvp.Key}={kvp.Value}"))
                 + "}";
         }
 

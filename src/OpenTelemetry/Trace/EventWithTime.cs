@@ -17,24 +17,23 @@
 namespace OpenTelemetry.Trace
 {
     using System;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Export;
 
     internal class EventWithTime<T>
     {
-        private readonly DateTimeOffset nanoTime;
+        private readonly DateTime nanoTime;
         private readonly T @event;
 
-        public EventWithTime(DateTimeOffset nanoTime, T @event)
+        public EventWithTime(DateTime nanoTime, T @event)
         {
             this.nanoTime = nanoTime;
             this.@event = @event;
         }
 
-        internal ITimedEvent<T> ToSpanDataTimedEvent(Timer timestampConverter)
+        internal ITimedEvent<T> ToSpanDataTimedEvent()
         {
-            return TimedEvent<T>.Create(Timestamp.FromDateTimeOffset(this.nanoTime), this.@event);
+            return TimedEvent<T>.Create(this.nanoTime, this.@event);
         }
     }
 }

@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Collector.StackExchangeRedis
 {
     using Moq;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;
@@ -31,9 +30,9 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         public async void ProfilerSessionUsesTheSameDefault()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
+            var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
 
-            using (var collector = new StackExchangeRedisCallsCollector(null, tracer, null, null))
+            using (var collector = new StackExchangeRedisCallsCollector(tracer, null, null))
             {
                 var profilerFactory = collector.GetProfilerSessionsFactory();
                 var first = profilerFactory();

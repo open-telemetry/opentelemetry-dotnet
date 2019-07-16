@@ -16,7 +16,6 @@
 
 namespace OpenTelemetry.Trace.Export
 {
-    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
 

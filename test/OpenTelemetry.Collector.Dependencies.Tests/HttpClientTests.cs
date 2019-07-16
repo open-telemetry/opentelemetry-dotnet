@@ -18,11 +18,9 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     using Moq;
     using Newtonsoft.Json;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Sampler;
     using System;
     using System.Collections.Generic;
@@ -101,7 +99,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 out var port);
 
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
+            var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
             tc.url = NormaizeValues(tc.url, host, port);
 
             using (serverLifeTime)
@@ -166,7 +164,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             Assert.Equal(tc.spanStatus, d[spanData.Status.CanonicalCode]);
 
-            var normilizedAttributes = spanData.Attributes.AttributeMap.ToDictionary(x => x.Key, x => AttributeToSimpleString(x.Value));
+            var normilizedAttributes = spanData.Attributes.AttributeMap.ToDictionary(x => x.Key, x => x.Value.ToString());
             tc.spanAttributes = tc.spanAttributes.ToDictionary(x => x.Key, x => NormaizeValues(x.Value, host, port));
 
             Assert.Equal(tc.spanAttributes.ToHashSet(), normilizedAttributes.ToHashSet());
@@ -198,17 +196,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             var t = (Task)this.GetType().InvokeMember(nameof(HttpOutCallsAreCollectedSuccesfullyAsync), BindingFlags.InvokeMethod, null, this, getArgumentsFromTestCaseObject(input).First());
             await t;
-        }
-
-        private string AttributeToSimpleString(IAttributeValue value)
-        {
-            return value.Match<string>(
-                x => x.ToString(),
-                x => x ? "true" : "false",
-                x => x.ToString(),
-                x => x.ToString(),
-                x => x.ToString()
-            );
         }
 
         private string NormaizeValues(string value, string host, int port)

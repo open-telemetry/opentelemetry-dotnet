@@ -18,13 +18,13 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Net;
     using System.Net.Http;
     using System.Net.Sockets;
     using System.Text;
     using System.Threading.Tasks;
     using Newtonsoft.Json;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             var spanBuilder =
                 ZipkinSpan.NewBuilder()
-                    .TraceId(this.EncodeTraceId(context.TraceId))
+                    .ActivityTraceId(this.EncodeTraceId(context.TraceId))
                     .Id(this.EncodeSpanId(context.SpanId))
                     .Kind(this.ToSpanKind(spanData))
                     .Name(spanData.Name)
@@ -84,14 +84,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                     .Duration(endTimestamp - startTimestamp)
                     .LocalEndpoint(localEndpoint);
 
-            if (spanData.ParentSpanId != null && spanData.ParentSpanId.IsValid)
+            if (spanData.ParentSpanId != default)
             {
                 spanBuilder.ParentId(this.EncodeSpanId(spanData.ParentSpanId));
             }
 
             foreach (var label in spanData.Attributes.AttributeMap)
             {
-                spanBuilder.PutTag(label.Key, this.AttributeValueToString(label.Value));
+                spanBuilder.PutTag(label.Key, (string)label.Value);
             }
 
             var status = spanData.Status;
@@ -114,26 +114,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return spanBuilder.Build();
         }
 
-        private long ToEpochMicroseconds(Timestamp timestamp)
+        private long ToEpochMicroseconds(DateTime timestamp)
         {
-            var nanos = (timestamp.Seconds * NanosPerSecond) + timestamp.Nanos;
-            var micros = nanos / 1000L;
-            return micros;
+            return new DateTimeOffset(timestamp).ToUnixTimeMilliseconds() * 1000;
         }
 
-        private string AttributeValueToString(IAttributeValue attributeValue)
+        private string EncodeTraceId(ActivityTraceId traceId)
         {
-            return attributeValue.Match(
-                (arg) => { return arg; },
-                (arg) => { return arg.ToString(); },
-                (arg) => { return arg.ToString(); },
-                (arg) => { return arg.ToString(); },
-                (arg) => { return null; });
-        }
-
-        private string EncodeTraceId(TraceId traceId)
-        {
-            var id = traceId.ToLowerBase16();
+            var id = traceId.ToHexString();
 
             if (id.Length > 16 && this.options.UseShortTraceIds)
             {
@@ -143,9 +131,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return id;
         }
 
-        private string EncodeSpanId(SpanId spanId)
+        private string EncodeSpanId(ActivitySpanId spanId)
         {
-            return spanId.ToLowerBase16();
+            return spanId.ToHexString();
         }
 
         private ZipkinSpanKind ToSpanKind(SpanData spanData)

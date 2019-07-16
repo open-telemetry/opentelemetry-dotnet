@@ -19,13 +19,10 @@ namespace OpenTelemetry.Stats
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Tags;
 
     internal sealed class NoopViewManager : ViewManagerBase
     {
-        private static readonly Timestamp ZeroTimestamp = Timestamp.Create(0, 0);
-
         private readonly IDictionary<IViewName, IView> registeredViews = new Dictionary<IViewName, IView>();
 
         // Cached set of exported views. It must be set to null whenever a view is registered or

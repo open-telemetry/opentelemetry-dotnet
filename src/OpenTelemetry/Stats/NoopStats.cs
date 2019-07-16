@@ -38,11 +38,6 @@ namespace OpenTelemetry.Stats
             }
         }
 
-        internal static IStatsComponent NewNoopStatsComponent()
-        {
-            return new NoopStatsComponent();
-        }
-
         internal static IViewManager NewNoopViewManager()
         {
             return new NoopViewManager();

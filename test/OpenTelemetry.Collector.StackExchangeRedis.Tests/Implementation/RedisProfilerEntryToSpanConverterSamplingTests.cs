@@ -16,11 +16,10 @@
 
 namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 {
+    using System.Diagnostics;
     using Moq;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
-    using StackExchange.Redis.Profiling;
     using System.Collections.Generic;
     using Xunit;
 
@@ -32,20 +31,20 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var m = new Mock<ISampler>();
             m.Setup(x => x.ShouldSample(
                 It.IsAny<SpanContext>(), 
-                It.IsAny<TraceId>(), 
-                It.IsAny<SpanId>(), 
+                It.IsAny<ActivityTraceId>(), 
+                It.IsAny<ActivitySpanId>(), 
                 It.IsAny<string>(), 
-                It.IsAny<IEnumerable<ISpan>>())).Returns(true);
+                It.IsAny<IEnumerable<ILink>>())).Returns(true);
 
             Assert.True(RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Blank, "SET", m.Object, out var context, out var parentId));
 
             m = new Mock<ISampler>();
             m.Setup(x => x.ShouldSample(
                 It.IsAny<SpanContext>(), 
-                It.IsAny<TraceId>(), 
-                It.IsAny<SpanId>(), 
+                It.IsAny<ActivityTraceId>(), 
+                It.IsAny<ActivitySpanId>(), 
                 It.IsAny<string>(), 
-                It.IsAny<IEnumerable<ISpan>>())).Returns(false);
+                It.IsAny<IEnumerable<ILink>>())).Returns(false);
 
             Assert.False(RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Blank, "SET", m.Object, out context, out parentId));
         }
@@ -60,17 +59,16 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
         public void ShouldSamplePassesArgumentsToSamplerAndReturnsInContext()
         {
             var m = new Mock<ISampler>();
-            var r = new RandomGenerator();
-            var traceId = TraceId.GenerateRandomId(r);
-            var parentContext = SpanContext.Create(traceId, SpanId.GenerateRandomId(r), TraceOptions.Sampled, Tracestate.Builder.Set("a", "b").Build());
+            var traceId = ActivityTraceId.CreateRandom();
+            var parentContext = SpanContext.Create(traceId, ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, Tracestate.Builder.Set("a", "b").Build());
             RedisProfilerEntryToSpanConverter.ShouldSample(parentContext, "SET", m.Object, out var context, out var parentId);
 
             m.Verify(x => x.ShouldSample(
                 It.Is<SpanContext>(y => y == parentContext),
-                It.Is<TraceId>(y => y == traceId && y == context.TraceId),
-                It.Is<SpanId>(y => y.IsValid && y == context.SpanId),
+                It.Is<ActivityTraceId>(y => y == traceId && y == context.TraceId),
+                It.Is<ActivitySpanId>(y => y != default && y == context.SpanId),
                 It.Is<string>(y => y == "SET"),
-                It.Is<IEnumerable<ISpan>>(y => y == null)));
+                It.Is<IEnumerable<ILink>>(y => y == null)));
         }
 
         [Fact]
@@ -79,21 +77,21 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var m = new Mock<ISampler>();
             m.Setup(x => x.ShouldSample(
                 It.IsAny<SpanContext>(), 
-                It.IsAny<TraceId>(), 
-                It.IsAny<SpanId>(), 
+                It.IsAny<ActivityTraceId>(), 
+                It.IsAny<ActivitySpanId>(), 
                 It.IsAny<string>(), 
-                It.IsAny<IEnumerable<ISpan>>())).Returns((SpanContext parentContext, TraceId traceId, SpanId spanId, string name, IEnumerable<ISpan> parentLinks) => parentContext.TraceOptions.IsSampled);
+                It.IsAny<IEnumerable<ILink>>())).Returns((SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ISpan> parentLinks) => (parentContext.TraceOptions & ActivityTraceFlags.Recorded) != 0);
 
             RedisProfilerEntryToSpanConverter.ShouldSample(SpanContext.Blank, "SET", m.Object, out var context, out var parentId);
 
             m.Verify(x => x.ShouldSample(
                 It.Is<SpanContext>(y => y == SpanContext.Blank),
-                It.Is<TraceId>(y => y.IsValid && y == context.TraceId),
-                It.Is<SpanId>(y => y.IsValid && y == context.SpanId),
+                It.Is<ActivityTraceId>(y => y != default && y == context.TraceId),
+                It.Is<ActivitySpanId>(y => y != default && y == context.SpanId),
                 It.Is<string>(y => y == "SET"),
-                It.Is<IEnumerable<ISpan>>(y => y == null)));
+                It.Is<IEnumerable<ILink>>(y => y == null)));
 
-            Assert.Equal(TraceOptions.Default, context.TraceOptions);
+            Assert.Equal(ActivityTraceFlags.None, context.TraceOptions);
         }
     }
 }

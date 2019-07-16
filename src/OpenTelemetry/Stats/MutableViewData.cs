@@ -18,15 +18,12 @@ namespace OpenTelemetry.Stats
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Tags;
 
     internal abstract class MutableViewData
     {
         internal static readonly TagValue UnknownTagValue = null;
-
-        internal static readonly Timestamp ZeroTimestamp = Timestamp.Create(0, 0);
 
         private const long MillisPerSecond = 1000L;
         private const long NanosPerMilli = 1000 * 1000;
@@ -112,12 +109,6 @@ namespace OpenTelemetry.Stats
             return tagValues.AsReadOnly();
         }
 
-        // Returns the milliseconds representation of a Duration.
-        internal static long ToMillis(Duration duration)
-        {
-            return (duration.Seconds * MillisPerSecond) + (duration.Nanos / NanosPerMilli);
-        }
-
         internal static MutableAggregation CreateMutableAggregation(IAggregation aggregation)
         {
             return aggregation.Match(
@@ -192,24 +183,43 @@ namespace OpenTelemetry.Stats
             return new CumulativeMutableViewData(view, start);
         }
 
-        /** Record double stats with the given tags. */
+        /// <summary>
+        /// Record double stats with the given tags.
+        /// </summary>
+        /// <param name="context">The <see cref="ITagContext"/>.</param>
+        /// <param name="value">The value.</param>
+        /// <param name="timestamp">The time of recording.</param>
         internal abstract void Record(ITagContext context, double value, DateTimeOffset timestamp);
 
-        /** Record long stats with the given tags. */
-        internal void Record(ITagContext tags, long value, DateTimeOffset timestamp)
+        /// <summary>
+        /// Record long stats with the given tags.
+        /// </summary>
+        /// <param name="tagContext">The <see cref="ITagContext"/>.</param>
+        /// <param name="value">The value.</param>
+        /// <param name="timestamp">The time of recording.</param>
+        internal void Record(ITagContext tagContext, long value, DateTimeOffset timestamp)
         {
             // TODO(songya): shall we check for precision loss here?
-            this.Record(tags, (double)value, timestamp);
+            this.Record(tagContext, (double)value, timestamp);
         }
 
-        /** Convert this {@link MutableViewData} to {@link ViewData}. */
+        /// <summary>
+        /// Convert this <see cref="MutableViewData"/> to <see cref="ViewData"/>.
+        /// </summary>
+        /// <param name="now">The current time.</param>
+        /// <param name="state">The stats' collection state.</param>
         internal abstract IViewData ToViewData(DateTimeOffset now, StatsCollectionState state);
 
-        // Clear recorded stats.
+        /// <summary>
+        /// Clear recorded stats.
+        /// </summary>
         internal abstract void ClearStats();
 
-        // Resume stats collection, and reset Start Timestamp (for CumulativeMutableViewData), or refresh
-        // bucket list (for InternalMutableViewData).
+        /// <summary>
+        /// Resume stats collection, and reset Start Timestamp (for CumulativeMutableViewData), or refresh
+        /// bucket list (for InternalMutableViewData).
+        /// </summary>
+        /// <param name="now">The current time.</param>
         internal abstract void ResumeStatsCollection(DateTimeOffset now);
     }
 }

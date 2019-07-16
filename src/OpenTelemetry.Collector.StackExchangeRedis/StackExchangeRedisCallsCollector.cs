@@ -44,11 +44,10 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         /// <summary>
         /// Initializes a new instance of the <see cref="StackExchangeRedisCallsCollector"/> class.
         /// </summary>
-        /// <param name="options">Configuration options for dependencies collector.</param>
         /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="sampler">Sampler to use to sample dependnecy calls.</param>
         /// <param name="exportComponent">TEMPORARY: handler to send data to.</param>
-        public StackExchangeRedisCallsCollector(StackExchangeRedisCallsCollectorOptions options, ITracer tracer, ISampler sampler, IExportComponent exportComponent)
+        public StackExchangeRedisCallsCollector(ITracer tracer, ISampler sampler, IExportComponent exportComponent)
         {
             this.tracer = tracer;
             this.exporter = exportComponent;
@@ -87,8 +86,8 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
                 }
 
                 // TODO: As a performance optimization the check for sampling may be implemented here
-                // The problem with this approach would be that SpanId cannot be generated here
-                // So if sampler uses SpanId in algorithm - results would be inconsistent
+                // The problem with this approach would be that ActivitySpanId cannot be generated here
+                // So if sampler uses ActivitySpanId in algorithm - results would be inconsistent
                 var session = this.cache.GetOrAdd(span, (s) => new ProfilingSession(s));
                 return session;
             };

@@ -18,7 +18,6 @@ namespace OpenTelemetry.Stats.Test
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
@@ -41,7 +40,6 @@ namespace OpenTelemetry.Stats.Test
         public void TestConstants()
         {
             Assert.Null(MutableViewData.UnknownTagValue);
-            Assert.Equal(Timestamp.Create(0, 0), MutableViewData.ZeroTimestamp);
         }
 
         [Fact]
@@ -111,17 +109,6 @@ namespace OpenTelemetry.Stats.Test
             };
             Assert.Equal(expected, aggregates);
 
-        }
-
-        [Fact]
-        public void TestDurationToMillis()
-        {
-            Assert.Equal(0, MutableViewData.ToMillis(Duration.Create(0, 0)));
-            Assert.Equal(987, MutableViewData.ToMillis(Duration.Create(0, 987000000)));
-            Assert.Equal(3456, MutableViewData.ToMillis(Duration.Create(3, 456000000)));
-            Assert.Equal(-1, MutableViewData.ToMillis(Duration.Create(0, -1000000)));
-            Assert.Equal(-1000, MutableViewData.ToMillis(Duration.Create(-1, 0)));
-            Assert.Equal(-3456, MutableViewData.ToMillis(Duration.Create(-3, -456000000)));
         }
     }
 }

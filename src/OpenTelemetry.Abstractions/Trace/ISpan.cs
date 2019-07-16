@@ -20,7 +20,7 @@ namespace OpenTelemetry.Trace
 
     /// <summary>
     /// <para>Span represents the execution of the certain span of code or span of time between two events which is part of
-    /// a distributed trace and has result of execution, context of executuion and other properties.</para>
+    /// a distributed trace and has result of execution, context of execution and other properties.</para>
     ///
     /// <para>This class is mostly write only. Span should not be used to exchange information. Only to add properties
     /// to it for monitoring purposes. It will be converted to SpanData that is readable.</para>
@@ -49,21 +49,14 @@ namespace OpenTelemetry.Trace
         bool HasEnded { get; }
 
         /// <summary>
-        /// Updates the <see cref="Span"/> name.
+        /// Updates the <see cref="ISpan"/> name.
         ///
         /// If used, this will override the name provided via <see cref="ISpanBuilder"/>.
-        /// Upon this update, any sampling behavior based on <see cref="Span"/> name will depend on the
+        /// Upon this update, any sampling behavior based on <see cref="ISpan"/> name will depend on the
         /// implementation.
         /// </summary>
         /// <param name="name">Name of the span.</param>
         void UpdateName(string name);
-
-        /// <summary>
-        /// Puts a new attribute to the span.
-        /// </summary>
-        /// <param name="key">Key of the attribute.</param>
-        /// <param name="value">Attribute value.</param>
-        void SetAttribute(string key, IAttributeValue value);
 
         /// <summary>
         /// Puts a new attribute to the span.
@@ -93,6 +86,8 @@ namespace OpenTelemetry.Trace
         /// <param name="value">Attribute value.</param>
         void SetAttribute(string key, bool value);
 
+        void SetAttribute(KeyValuePair<string, object> keyValuePair);
+
         /// <summary>
         /// Adds a single <see cref="IEvent"/> to the <see cref="ISpan"/>.
         /// </summary>
@@ -103,8 +98,8 @@ namespace OpenTelemetry.Trace
         /// Adds a single <see cref="IEvent"/> with the <see cref="IDictionary{String, IAttributeValue}"/> attributes to the <see cref="ISpan"/>.
         /// </summary>
         /// <param name="name">Event name.</param>
-        /// <param name="attributes"><see cref="IDictionary{String, IAttributeValue}"/> of attributes name/value pairs associted with the <see cref="IEvent"/>.</param>
-        void AddEvent(string name, IDictionary<string, IAttributeValue> attributes);
+        /// <param name="attributes"><see cref="IDictionary{String, IAttributeValue}"/> of attributes name/value pairs associated with the <see cref="IEvent"/>.</param>
+        void AddEvent(string name, IDictionary<string, object> attributes);
 
         /// <summary>
         /// Adds an <see cref="IEvent"/> object to the <see cref="ISpan"/>.
