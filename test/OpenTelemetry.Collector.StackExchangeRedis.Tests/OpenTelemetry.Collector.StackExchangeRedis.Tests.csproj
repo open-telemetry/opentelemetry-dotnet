@@ -2,7 +2,6 @@
   <PropertyGroup>
     <Description>Unit test project for ApplicationInsights Exporter for OpenTelemetry</Description>
     <TargetFrameworks>net461;netcoreapp2.1</TargetFrameworks>
-    <TargetFrameworks Condition="$(OS) != 'Windows_NT'">netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
