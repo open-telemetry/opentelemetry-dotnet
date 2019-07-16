@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter.Ocagent
     {
         private const string TraceExporterName = "OcagentTraceExporter";
 
-        private readonly IExportComponent exportComponent;
+        private readonly ISpanExporter exporter;
 
         private readonly object lck = new object();
 
@@ -41,17 +41,17 @@ namespace OpenTelemetry.Exporter.Ocagent
         /// Initializes a new instance of the <see cref="OcagentExporter"/> class.
         /// This exporter allows to send Open Census data to OpenTelemetry service or LocalForwarder.
         /// </summary>
-        /// <param name="exportComponent">Exporter to get traces from.</param>
+        /// <param name="exporter">Exporter to get traces from.</param>
         /// <param name="agentEndpoint">Agent endpoint in the host:port format.</param>
         /// <param name="hostName">Name of the host.</param>
         /// <param name="serviceName">Name of the application.</param>
         public OcagentExporter(
-            IExportComponent exportComponent,
+            ISpanExporter exporter,
             string agentEndpoint,
             string hostName,
             string serviceName)
         {
-            this.exportComponent = exportComponent;
+            this.exporter = exporter;
             this.agentEndpoint = agentEndpoint;
             this.hostName = hostName;
             this.serviceName = serviceName;
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Exporter.Ocagent
                     this.serviceName,
                     ChannelCredentials.Insecure);
 
-                this.exportComponent.SpanExporter.RegisterHandler(TraceExporterName, this.handler);
+                this.exporter.RegisterHandler(TraceExporterName, this.handler);
             }
         }
 
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Exporter.Ocagent
                     return;
                 }
 
-                this.exportComponent.SpanExporter.UnregisterHandler(TraceExporterName);
+                this.exporter.UnregisterHandler(TraceExporterName);
                 this.handler.Dispose();
                 this.handler = null;
             }

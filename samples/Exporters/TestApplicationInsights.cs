@@ -53,11 +53,11 @@ namespace Samples
         internal static object Run()
         {
             SimpleEventQueue eventQueue = new SimpleEventQueue();
-            ExportComponent exportComponent = ExportComponent.CreateWithInProcessStores(eventQueue);
+            ISpanExporter exporter = OpenTelemetry.Trace.Export.SpanExporter.Create();
 
             TelemetryConfiguration.Active.InstrumentationKey = "instrumentation-key";
-            var exporter = new ApplicationInsightsExporter(exportComponent, Stats.ViewManager, TelemetryConfiguration.Active);
-            exporter.Start();
+            var appInsightsExporter = new ApplicationInsightsExporter(exporter, Stats.ViewManager, TelemetryConfiguration.Active);
+            appInsightsExporter.Start();
 
             var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
@@ -88,7 +88,7 @@ namespace Samples
             Console.WriteLine("Done... wait for events to arrive to backend!");
             Console.ReadLine();
 
-            exportComponent.SpanExporter.Dispose();
+            exporter.Dispose();
 
             return null;
         }

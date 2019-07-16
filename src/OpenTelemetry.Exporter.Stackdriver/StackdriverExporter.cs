@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
     {
         private const string ExporterName = "StackdriverTraceExporter";
 
-        private readonly IExportComponent exportComponent;
+        private readonly ISpanExporter exporter;
         private readonly IViewManager viewManager;
         private readonly string projectId;
         private readonly string jsonPath;
@@ -42,12 +42,12 @@ namespace OpenTelemetry.Exporter.Stackdriver
         /// Initializes a new instance of the <see cref="StackdriverExporter"/> class.
         /// </summary>
         /// <param name="projectId">Google Cloud ProjectId that is used to send data to Stackdriver.</param>
-        /// <param name="exportComponent">Exporter to get traces from.</param>
+        /// <param name="exporter">Exporter to get traces from.</param>
         /// <param name="viewManager">View manager to get the stats from.</param>
         public StackdriverExporter(
             string projectId,
-            IExportComponent exportComponent,
-            IViewManager viewManager) : this(projectId, null, exportComponent, viewManager)
+            ISpanExporter exporter,
+            IViewManager viewManager) : this(projectId, null, exporter, viewManager)
         {
         }
 
@@ -56,19 +56,19 @@ namespace OpenTelemetry.Exporter.Stackdriver
         /// </summary>
         /// <param name="projectId">Google Cloud ProjectId that is used to send data to Stackdriver.</param>
         /// <param name="jsonPath">File path to the json file containing the service credential used to authenticate against Stackdriver APIs.</param>
-        /// <param name="exportComponent">Exporter to get traces from.</param>
+        /// <param name="exporter">Exporter to get traces from.</param>
         /// <param name="viewManager">View manager to get the stats from.</param>
         public StackdriverExporter(
             string projectId,
             string jsonPath,
-            IExportComponent exportComponent,
+            ISpanExporter exporter,
             IViewManager viewManager)
         {
             GaxPreconditions.CheckNotNullOrEmpty(projectId, "projectId");
 
             this.projectId = projectId;
             this.jsonPath = jsonPath;
-            this.exportComponent = exportComponent;
+            this.exporter = exporter;
             this.viewManager = viewManager;
         }
 
@@ -85,10 +85,10 @@ namespace OpenTelemetry.Exporter.Stackdriver
                 }
 
                 // Register trace exporter
-                if (this.exportComponent != null)
+                if (this.exporter != null)
                 {
                     var traceExporter = new StackdriverTraceExporter(this.projectId);
-                    this.exportComponent.SpanExporter.RegisterHandler(ExporterName, traceExporter);
+                    this.exporter.RegisterHandler(ExporterName, traceExporter);
                 }
 
                 // Register stats(metrics) exporter
@@ -125,9 +125,9 @@ namespace OpenTelemetry.Exporter.Stackdriver
                 }
 
                 // Stop tracing exporter
-                if (this.exportComponent != null)
+                if (this.exporter != null)
                 {
-                    this.exportComponent.SpanExporter.UnregisterHandler(ExporterName);
+                    this.exporter.UnregisterHandler(ExporterName);
                 }
 
                 // Stop metrics exporter

@@ -39,7 +39,7 @@ namespace Samples
                         Endpoint = new Uri("https://zipkin.azurewebsites.net/api/v2/spans"),
                         ServiceName = typeof(Program).Assembly.GetName().Name,
                     },
-                    Tracing.ExportComponent);
+                    Tracing.SpanExporter);
                 exporter.Start();
 
                 using (Tracer.WithSpan(Tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartSpan()))

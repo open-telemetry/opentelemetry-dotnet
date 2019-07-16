@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
         private readonly ZipkinTraceExporterOptions options;
 
-        private readonly IExportComponent exportComponent;
+        private readonly ISpanExporter exporter;
 
         private readonly object lck = new object();
 
@@ -42,16 +42,16 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// This exporter sends Open Census traces to Zipkin.
         /// </summary>
         /// <param name="options">Zipkin exporter configuration options.</param>
-        /// <param name="exportComponent">Exporter to get traces from.</param>
+        /// <param name="exporter">Exporter to get traces from.</param>
         /// <param name="client">Http client to use to upload telemetry.
         /// For local development with invalid certificates use code like this:
         /// new HttpClient(new HttpClientHandler() { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator }).
         /// </param>
-        public ZipkinTraceExporter(ZipkinTraceExporterOptions options, IExportComponent exportComponent, HttpClient client = null)
+        public ZipkinTraceExporter(ZipkinTraceExporterOptions options, ISpanExporter exporter, HttpClient client = null)
         {
             this.options = options;
 
-            this.exportComponent = exportComponent;
+            this.exporter = exporter;
 
             this.httpClient = client;
         }
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 this.handler = new TraceExporterHandler(this.options, this.httpClient);
 
-                this.exportComponent.SpanExporter.RegisterHandler(ExporterName, this.handler);
+                this.exporter.RegisterHandler(ExporterName, this.handler);
             }
         }
 
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Exporter.Zipkin
                     return;
                 }
 
-                this.exportComponent.SpanExporter.UnregisterHandler(ExporterName);
+                this.exporter.UnregisterHandler(ExporterName);
 
                 this.handler = null;
             }

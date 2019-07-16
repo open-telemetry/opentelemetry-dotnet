@@ -51,7 +51,7 @@ namespace Samples
         {
             var exporter = new StackdriverExporter(
                 projectId,
-                Tracing.ExportComponent,
+                Tracing.SpanExporter,
                 Stats.ViewManager);
             exporter.Start();
 
