@@ -20,7 +20,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
@@ -121,11 +120,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
             };
         }
 
-        public static long ToEpochMicroseconds(this Timestamp timestamp)
+        public static long ToEpochMicroseconds(this DateTime timestamp)
         {
-            long nanos = (timestamp.Seconds * NanosPerSecond) + timestamp.Nanos;
-            long micros = nanos / 1000L;
-            return micros;
+            return timestamp.Ticks / (TimeSpan.TicksPerMillisecond / 1000L);
         }
     }
 }

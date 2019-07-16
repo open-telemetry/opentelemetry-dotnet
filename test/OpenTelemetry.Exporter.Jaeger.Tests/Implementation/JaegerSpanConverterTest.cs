@@ -20,7 +20,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Exporter.Jaeger.Implimentation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
@@ -40,9 +39,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan()
         {
-            var startTimestamp = Timestamp.Create(100, 100);
-            var endTimestamp = Timestamp.Create(200, 100);
-            var eventTimestamp = Timestamp.Create(100, 100);
+            var startTimestamp = DateTime.Now;
+            var endTimestamp = startTimestamp.AddSeconds(60);
+            var eventTimestamp = DateTime.Now;
 
             var traceId = ActivityTraceId.CreateRandom();
             var traceIdAsInt = new Int128(traceId);
