@@ -57,14 +57,15 @@ namespace OpenTelemetry.Stats.Measures
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "MeasureLong{"
-                + "name=" + this.Name + ", "
-                + "description=" + this.Description + ", "
-                + "unit=" + this.Unit
+            return nameof(MeasureLong)
+                + "{"
+                + nameof(this.Name) + "=" + this.Name + ", "
+                + nameof(this.Description) + "=" + this.Description + ", "
+                + nameof(this.Unit) + "=" + this.Unit
                 + "}";
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override bool Equals(object o)
         {
             if (o == this)

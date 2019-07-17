@@ -42,8 +42,9 @@ namespace OpenTelemetry.Stats.Aggregations
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "LastValueDataDouble{"
-                + "lastValue=" + this.LastValue
+            return nameof(LastValueDataDouble)
+                + "{"
+                + nameof(this.LastValue) + "=" + this.LastValue
                 + "}";
         }
 

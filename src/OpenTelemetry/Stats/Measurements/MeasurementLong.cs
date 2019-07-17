@@ -46,9 +46,10 @@ namespace OpenTelemetry.Stats.Measurements
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "MeasurementLong{"
-                + "measure=" + this.Measure + ", "
-                + "value=" + this.Value
+            return nameof(MeasurementLong)
+                + "{"
+                + nameof(this.Measure) + "=" + this.Measure + ", "
+                + nameof(this.Value) + "=" + this.Value
                 + "}";
         }
 

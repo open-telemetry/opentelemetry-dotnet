@@ -86,12 +86,13 @@ namespace OpenTelemetry.Trace.Config
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "TraceParams{"
-                + "sampler=" + this.Sampler + ", "
-                + "maxNumberOfAttributes=" + this.MaxNumberOfAttributes + ", "
-                + "maxNumberOfAnnotations=" + this.MaxNumberOfEvents + ", "
-                + "maxNumberOfMessageEvents=" + this.MaxNumberOfMessageEvents + ", "
-                + "maxNumberOfLinks=" + this.MaxNumberOfLinks
+            return nameof(TraceParams)
+                + "{"
+                + nameof(this.Sampler) + "=" + this.Sampler + ", "
+                + nameof(this.MaxNumberOfAttributes) + "=" + this.MaxNumberOfAttributes + ", "
+                + nameof(this.MaxNumberOfEvents) + "=" + this.MaxNumberOfEvents + ", "
+                + nameof(this.MaxNumberOfMessageEvents) + "=" + this.MaxNumberOfMessageEvents + ", "
+                + nameof(this.MaxNumberOfLinks) + "=" + this.MaxNumberOfLinks
                 + "}";
         }
 

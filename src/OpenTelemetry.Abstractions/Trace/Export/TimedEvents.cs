@@ -47,7 +47,8 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "TimedEvents{"
+            return "TimedEvents"
+                + "{"
                 + "events=" + this.Events + ", "
                 + "droppedEventsCount=" + this.DroppedEventsCount
                 + "}";

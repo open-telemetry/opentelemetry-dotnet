@@ -49,9 +49,10 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Links{"
-                + "links=" + this.Links + ", "
-                + "droppedLinksCount=" + this.DroppedLinksCount
+            return nameof(LinkList)
+                + "{"
+                + nameof(this.Links) + "=" + this.Links + ", "
+                + nameof(this.DroppedLinksCount) + "=" + this.DroppedLinksCount
                 + "}";
         }
 

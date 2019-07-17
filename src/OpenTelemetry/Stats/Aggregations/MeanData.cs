@@ -60,15 +60,16 @@ namespace OpenTelemetry.Stats.Aggregations
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "MeanData{"
-                + "mean=" + this.Mean + ", "
-                + "min=" + this.Min + ", "
-                + "max=" + this.Max + ", "
-                + "count=" + this.Count
+            return nameof(MeanData)
+                + "{"
+                + nameof(this.Mean) + "=" + this.Mean + ", "
+                + nameof(this.Min) + "=" + this.Min + ", "
+                + nameof(this.Max) + "=" + this.Max + ", "
+                + nameof(this.Count) + "=" + this.Count
                 + "}";
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override bool Equals(object o)
         {
             if (o == this)
