@@ -47,9 +47,9 @@ namespace OpenTelemetry.Trace
             this.Resource = resource ?? throw new ArgumentNullException(nameof(resource));
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.StartTimestamp = startTimestamp;
-            this.Attributes = attributes ?? Export.Attributes.Create(new Dictionary<string, object>(), 0);
-            this.Events = events ?? TimedEvents<IEvent>.Create(Enumerable.Empty<ITimedEvent<IEvent>>(), 0);
-            this.Links = links ?? LinkList.Create(Enumerable.Empty<ILink>(), 0);
+            this.Attributes = attributes ?? Attributes.Empty;
+            this.Events = events ?? TimedEvents<IEvent>.Empty;
+            this.Links = links ?? LinkList.Empty;
             this.ChildSpanCount = childSpanCount;
             this.Status = status;
             this.Kind = kind;
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Trace
         {
             if (events == null)
             {
-                events = TimedEvents<IEvent>.Create(Enumerable.Empty<ITimedEvent<IEvent>>(), 0);
+                events = TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>(), 0);
             }
 
             return new SpanData(
