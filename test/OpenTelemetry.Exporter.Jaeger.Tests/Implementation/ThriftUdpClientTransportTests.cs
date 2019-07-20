@@ -64,7 +64,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var host = "host, yo";
             var port = 4528;
 
-            var transport = new JaegerThriftClientTransport(host, port);
+            var transport = new JaegerThriftClientTransport(host, port, this.testingMemoryStream, this.mockClient.Object);
             var newBuffer = new byte[8];
 
             await Assert.ThrowsAsync<NotImplementedException>(async () => await transport.ReadAsync(newBuffer, 0, 7, CancellationToken.None));
