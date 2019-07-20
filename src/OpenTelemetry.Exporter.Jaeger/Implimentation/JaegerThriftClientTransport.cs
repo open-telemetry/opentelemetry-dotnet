@@ -25,18 +25,23 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
     public class JaegerThriftClientTransport : TClientTransport
     {
-        private readonly UdpClient udpClient;
+        private readonly IJaegerUdpClient udpClient;
         private readonly MemoryStream byteStream;
         private bool isDisposed = false;
 
         public JaegerThriftClientTransport(string host, int port)
+            : this(host, port, new MemoryStream(), new JaegerUdpClient())
         {
-            this.byteStream = new MemoryStream();
-            this.udpClient = new UdpClient();
+        }
+
+        public JaegerThriftClientTransport(string host, int port, MemoryStream stream, IJaegerUdpClient client)
+        {
+            this.byteStream = stream;
+            this.udpClient = client;
             this.udpClient.Connect(host, port);
         }
 
-        public override bool IsOpen => this.udpClient.Client.Connected;
+        public override bool IsOpen => this.udpClient.Connected;
 
         public override void Close()
         {
@@ -91,7 +96,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
         public override string ToString()
         {
-            return $"{nameof(JaegerThriftClientTransport)}(Client={this.udpClient.Client.RemoteEndPoint})";
+            return $"{nameof(JaegerThriftClientTransport)}(Client={this.udpClient.RemoteEndPoint})";
         }
 
         protected override void Dispose(bool disposing)
