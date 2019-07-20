@@ -91,7 +91,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         {
             var sb = new StringBuilder("Batch(");
             sb.Append(", Process: ");
-            sb.Append(this.Process == null ? "<null>" : this.Process.ToString());
+            sb.Append(this.Process?.ToString() ?? "<null>");
             sb.Append(", Spans: ");
             sb.Append(this.Spans);
             sb.Append(")");
