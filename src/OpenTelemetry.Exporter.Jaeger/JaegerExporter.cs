@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter.Jaeger
         private readonly JaegerExporterOptions options;
         private readonly IExportComponent exportComponent;
 
-        private bool isInitialized = false;
+        private volatile bool isInitialized = false;
         private JaegerTraceExporterHandler handler;
         private bool disposedValue = false; // To detect redundant dispose calls
 
@@ -103,7 +103,7 @@ namespace OpenTelemetry.Exporter.Jaeger
         {
             if (string.IsNullOrWhiteSpace(options.ServiceName))
             {
-                throw new ArgumentNullException("ServiceName", "Service Name is required.");
+                throw new ArgumentException("ServiceName", "Service Name is required.");
             }
         }
 

@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
             {
                 var struc = new TStruct("emitBatch_args");
                 await oprot.WriteStructBeginAsync(struc, cancellationToken);
-                if (this.Batch != null)
+                if (this.Batch is Batch batch)
                 {
                     var field = new TField
                     {
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                     };
 
                     await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                    await this.Batch.WriteAsync(oprot, cancellationToken);
+                    await batch.WriteAsync(oprot, cancellationToken);
                     await oprot.WriteFieldEndAsync(cancellationToken);
                 }
 
@@ -65,10 +65,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         {
             var sb = new StringBuilder("emitBatch_args(");
 
-            if (this.Batch != null)
+            if (this.Batch is Batch batch)
             {
                 sb.Append("Batch: ");
-                sb.Append(this.Batch?.ToString() ?? "<null>");
+                sb.Append(batch?.ToString() ?? "<null>");
             }
 
             sb.Append(")");

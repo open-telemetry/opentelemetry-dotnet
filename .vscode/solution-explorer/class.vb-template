@@ -1,9 +1,0 @@
-Imports System
-
-Namespace {{namespace}}
-
-    Public Class {{name}}
-    
-    End Class
-
-End Namespace

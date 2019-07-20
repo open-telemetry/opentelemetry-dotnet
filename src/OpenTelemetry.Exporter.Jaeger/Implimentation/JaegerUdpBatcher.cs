@@ -89,20 +89,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
         public async Task<int> FlushAsync(CancellationToken cancellationToken)
         {
-            if (this.currentBatch.Count == 0)
+            int n = this.currentBatch.Count;
+
+            if (n == 0)
             {
                 return 0;
             }
 
-            int n = this.currentBatch.Count;
-
             try
             {
                 await this.SendAsync(this.process, this.currentBatch, cancellationToken).ConfigureAwait(false);
-            }
-            catch (JaegerExporterException ex)
-            {
-                throw new JaegerExporterException("Failed to flush spans.", ex);
             }
             finally
             {
@@ -113,10 +109,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
             return n;
         }
 
-        public virtual Task<int> CloseAsync(CancellationToken cancellationToken)
-        {
-            return this.FlushAsync(cancellationToken);
-        }
+        public virtual Task<int> CloseAsync(CancellationToken cancellationToken) => this.FlushAsync(cancellationToken);
 
         public void Dispose()
         {

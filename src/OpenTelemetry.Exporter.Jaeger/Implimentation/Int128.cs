@@ -21,7 +21,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
     public struct Int128
     {
-        public static Int128 Empty = new Int128 { };
+        public static Int128 Empty = default;
 
         private const int SpanIdBytes = 8;
         private const int TraceIdBytes = 16;

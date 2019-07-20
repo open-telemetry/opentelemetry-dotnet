@@ -34,12 +34,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
         public override bool IsOpen => true;
 
-        public override async Task OpenAsync(CancellationToken cancellationToken)
+        public override Task OpenAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                return Task.FromCanceled(cancellationToken);
             }
+
+            return Task.CompletedTask;
         }
 
         public override void Close()
@@ -47,42 +49,29 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
             // do nothing
         }
 
-        public override async Task<int> ReadAsync(
+        public override Task<int> ReadAsync(
             byte[] buffer,
             int offset,
             int length,
-            CancellationToken cancellationToken)
-        {
-            return await this.byteStream.ReadAsync(buffer, offset, length, cancellationToken);
-        }
+            CancellationToken cancellationToken) => this.byteStream.ReadAsync(buffer, offset, length, cancellationToken);
 
-        public override async Task WriteAsync(byte[] buffer, CancellationToken cancellationToken)
-        {
-            await this.byteStream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
-        }
+        public override Task WriteAsync(byte[] buffer, CancellationToken cancellationToken) => this.byteStream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
 
-        public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-        {
-            await this.byteStream.WriteAsync(buffer, offset, length, cancellationToken);
-        }
+        public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken) => this.byteStream.WriteAsync(buffer, offset, length, cancellationToken);
 
-        public override async Task FlushAsync(CancellationToken cancellationToken)
+        public override Task FlushAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                await Task.FromCanceled(cancellationToken);
+                return Task.FromCanceled(cancellationToken);
             }
+
+            return Task.CompletedTask;
         }
 
-        public byte[] GetBuffer()
-        {
-            return this.byteStream.ToArray();
-        }
+        public byte[] GetBuffer() => this.byteStream.ToArray();
 
-        public void Reset()
-        {
-            this.byteStream.SetLength(0);
-        }
+        public void Reset() => this.byteStream.SetLength(0);
 
         // IDisposable
         protected override void Dispose(bool disposing)
