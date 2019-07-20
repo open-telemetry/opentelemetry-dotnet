@@ -47,11 +47,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
                 var buff = memoryTransport.GetBuffer();
 
-                for (var i = 0; i < buff.Length; i++)
-                {
-                    Assert.Equal(validJaegerThriftPayload[i], buff[i]);
-                }
-                
                 Assert.Equal(validJaegerThriftPayload, buff);
             }
         }
