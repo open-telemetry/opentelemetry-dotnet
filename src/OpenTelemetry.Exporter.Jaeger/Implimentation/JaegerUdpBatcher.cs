@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
             this.protocolFactory = new TCompactProtocol.Factory();
             this.clientTransport = new JaegerThriftClientTransport(options.AgentHost, options.AgentPort.Value);
             this.thriftClient = new JaegerThriftClient(this.protocolFactory.GetProtocol(this.clientTransport));
-            this.process = new Process(options.ServiceName);
+            this.process = new Process(options.ServiceName, options.ProcessTags);
             this.processByteSize = this.GetSize(this.process);
             this.batchByteSize = this.processByteSize;
         }

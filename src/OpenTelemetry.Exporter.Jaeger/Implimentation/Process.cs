@@ -18,6 +18,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -30,10 +31,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         {
         }
 
-        public Process(string serviceName)
+        public Process(string serviceName, IDictionary<string, object> processTags)
             : this()
         {
             this.ServiceName = serviceName;
+
+            if (processTags != null)
+            {
+                this.Tags = new List<JaegerTag>();
+                this.Tags.AddRange(processTags.Select(pt => pt.ToJaegerTag()));
+            }
         }
 
         public string ServiceName { get; set; }

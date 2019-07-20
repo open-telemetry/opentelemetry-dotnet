@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Exporter.Jaeger
 {
     using System;
+    using System.Collections.Generic;
 
     public class JaegerExporterOptions
     {
@@ -27,5 +28,7 @@ namespace OpenTelemetry.Exporter.Jaeger
         public int? AgentPort { get; set; }
 
         public int? MaxPacketSize { get; set; }
+
+        public Dictionary<string, object> ProcessTags { get; set; }
     }
 }
