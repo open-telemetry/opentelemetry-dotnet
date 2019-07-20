@@ -22,7 +22,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System.Threading.Tasks;
     using Thrift.Transports;
 
-    internal class InMemoryTransport : TClientTransport
+    public class InMemoryTransport : TClientTransport
     {
         private readonly MemoryStream byteStream;
         private bool isDisposed;

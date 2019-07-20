@@ -89,7 +89,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public async Task FlushAsync_ShouldReturnWhenNothingIsInTheStream()
+        public void FlushAsync_ShouldReturnWhenNothingIsInTheStream()
         {
             var host = "host, yo";
             var port = 4528;
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public async Task FlushAsync_ShouldSendStreamBytes()
+        public void FlushAsync_ShouldSendStreamBytes()
         {
             var host = "host, yo";
             var port = 4528;
