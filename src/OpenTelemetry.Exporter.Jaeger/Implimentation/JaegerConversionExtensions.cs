@@ -31,25 +31,25 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
         public static JaegerSpan ToJaegerSpan(this SpanData span)
         {
-            var jaegerTags = new List<JaegerTag>();
+            IEnumerable<JaegerTag> jaegerTags = null;
 
-            if (span?.Attributes?.AttributeMap != null)
+            if (span?.Attributes?.AttributeMap is IEnumerable<KeyValuePair<string, object>> attributeMap)
             {
-                jaegerTags.AddRange(span.Attributes.AttributeMap.Select(a => a.ToJaegerTag()));
+                jaegerTags = attributeMap.Select(a => a.ToJaegerTag()).AsEnumerable();
             }
 
-            var jaegerLogs = new List<JaegerLog>();
+            IEnumerable<JaegerLog> jaegerLogs = null;
 
             if (span?.Events?.Events != null)
             {
-                jaegerLogs.AddRange(span.Events.Events.Select(e => e.ToJaegerLog()));
+                jaegerLogs = span.Events.Events.Select(e => e.ToJaegerLog()).AsEnumerable();
             }
 
-            var refs = new List<JaegerSpanRef>();
+            IEnumerable<JaegerSpanRef> refs = null;
 
             if (span?.Links?.Links != null)
             {
-                refs.AddRange(span.Links.Links.Select(l => l.ToJaegerSpanRef()).Where(l => l != null));
+                refs = span.Links.Links.Select(l => l.ToJaegerSpanRef()).Where(l => l != null).AsEnumerable();
             }
 
             var parentSpanId = new Int128(span.ParentSpanId);
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                 SpanId = spanId.Low,
                 ParentSpanId = parentSpanId.Low,
                 OperationName = span.Name,
-                References = refs.Count == 0 ? null : refs,
+                References = refs,
                 Flags = (span.Context.TraceOptions & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
                 StartTime = ToEpochMicroseconds(span.StartTimestamp),
                 Duration = ToEpochMicroseconds(span.EndTimestamp) - ToEpochMicroseconds(span.StartTimestamp),

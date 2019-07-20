@@ -116,15 +116,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var jaegerSpan = spanData.ToJaegerSpan();
 
             Assert.Equal("Name", jaegerSpan.OperationName);
-            Assert.Equal(2, jaegerSpan.Logs.Count);
+            Assert.Equal(2, jaegerSpan.Logs.Count());
 
             Assert.Equal(traceIdAsInt.High, jaegerSpan.TraceIdHigh);
             Assert.Equal(traceIdAsInt.Low, jaegerSpan.TraceIdLow);
             Assert.Equal(spanIdAsInt.Low, jaegerSpan.SpanId);
             Assert.Equal(new Int128(parentSpanId).Low, jaegerSpan.ParentSpanId);
 
-            Assert.Equal(links.Links.Count(), jaegerSpan.References.Count);
-            var jaegerRef = jaegerSpan.References[0];
+            Assert.Equal(links.Links.Count(), jaegerSpan.References.Count());
+            var references = jaegerSpan.References.ToArray();
+            var jaegerRef = references[0];
             Assert.Equal(linkTraceIdAsInt.High, jaegerRef.TraceIdHigh);
             Assert.Equal(linkTraceIdAsInt.Low, jaegerRef.TraceIdLow);
             Assert.Equal(linkSpanIdAsInt.Low, jaegerRef.SpanId);
@@ -134,48 +135,52 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(startTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
             Assert.Equal(endTimestamp.ToEpochMicroseconds() - startTimestamp.ToEpochMicroseconds(), jaegerSpan.Duration);
 
-            var tag = jaegerSpan.JaegerTags[0];
+            var tags = jaegerSpan.JaegerTags.ToArray();
+            var tag = tags[0];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
             Assert.Equal("stringKey", tag.Key);
             Assert.Equal("value", tag.VStr);
-            tag = jaegerSpan.JaegerTags[1];
+            tag = tags[1];
             Assert.Equal(JaegerTagType.LONG, tag.VType);
             Assert.Equal("longKey", tag.Key);
             Assert.Equal(1, tag.VLong);
-            tag = jaegerSpan.JaegerTags[2];
+            tag = tags[2];
             Assert.Equal(JaegerTagType.LONG, tag.VType);
             Assert.Equal("longKey2", tag.Key);
             Assert.Equal(1, tag.VLong);
-            tag = jaegerSpan.JaegerTags[3];
+            tag = tags[3];
             Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
             Assert.Equal("doubleKey", tag.Key);
             Assert.Equal(1, tag.VDouble);
-            tag = jaegerSpan.JaegerTags[4];
+            tag = tags[4];
             Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
             Assert.Equal("doubleKey2", tag.Key);
             Assert.Equal(1, tag.VDouble);
-            tag = jaegerSpan.JaegerTags[5];
+            tag = tags[5];
             Assert.Equal(JaegerTagType.BOOL, tag.VType);
             Assert.Equal("boolKey", tag.Key);
             Assert.Equal(true, tag.VBool);
             
-            var jaegerLog = jaegerSpan.Logs[0];
+            var logs = jaegerSpan.Logs.ToArray();
+            var jaegerLog = logs[0];
             Assert.Equal(events.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(jaegerLog.Fields.Count, 2);
-            var eventField = jaegerLog.Fields[0];
+            Assert.Equal(jaegerLog.Fields.Count(), 2);
+            var eventFields = jaegerLog.Fields.ToArray();
+            var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
-            eventField = jaegerLog.Fields[1];
+            eventField = eventFields[1];
             Assert.Equal("description", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
 
-            jaegerLog = jaegerSpan.Logs[1];
+            jaegerLog = logs [1];
             Assert.Equal(events.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(jaegerLog.Fields.Count, 2);
-            eventField = jaegerLog.Fields[0];
+            Assert.Equal(jaegerLog.Fields.Count(), 2);
+            eventFields = jaegerLog.Fields.ToArray();
+            eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
-            eventField = jaegerLog.Fields[1];
+            eventField = eventFields[1];
             Assert.Equal("description", eventField.Key);
             Assert.Equal("Event2", eventField.VStr);
         }

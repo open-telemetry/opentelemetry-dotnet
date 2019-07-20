@@ -18,6 +18,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -53,7 +54,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
         public string OperationName { get; set; }
 
-        public List<JaegerSpanRef> References { get; set; }
+        public IEnumerable<JaegerSpanRef> References { get; set; }
 
         public int Flags { get; set; }
 
@@ -61,9 +62,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
         public long Duration { get; set; }
 
-        public List<JaegerTag> JaegerTags { get; set; }
+        public IEnumerable<JaegerTag> JaegerTags { get; set; }
 
-        public List<JaegerLog> Logs { get; set; }
+        public IEnumerable<JaegerLog> Logs { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -116,16 +117,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                 await oprot.WriteStringAsync(this.OperationName, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
 
-                if (this.References != null)
+                if (this.References is IEnumerable<JaegerSpanRef> references)
                 {
                     field.Name = "references";
                     field.Type = TType.List;
                     field.ID = 6;
                     await oprot.WriteFieldBeginAsync(field, cancellationToken);
                     {
-                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.References.Count), cancellationToken);
+                        await oprot.WriteListBeginAsync(new TList(TType.Struct, references.Count()), cancellationToken);
 
-                        foreach (JaegerSpanRef sr in this.References)
+                        foreach (JaegerSpanRef sr in references)
                         {
                             await sr.WriteAsync(oprot, cancellationToken);
                         }
@@ -160,7 +161,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                 await oprot.WriteI64Async(this.Duration, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
 
-                if (this.JaegerTags != null)
+                if (this.JaegerTags is IEnumerable<JaegerTag> jaegerTags)
                 {
                     field.Name = "JaegerTags";
                     field.Type = TType.List;
@@ -168,9 +169,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
                     await oprot.WriteFieldBeginAsync(field, cancellationToken);
                     {
-                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.JaegerTags.Count), cancellationToken);
+                        await oprot.WriteListBeginAsync(new TList(TType.Struct, jaegerTags.Count()), cancellationToken);
 
-                        foreach (JaegerTag jt in this.JaegerTags)
+                        foreach (JaegerTag jt in jaegerTags)
                         {
                             await jt.WriteAsync(oprot, cancellationToken);
                         }
@@ -181,16 +182,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
                     await oprot.WriteFieldEndAsync(cancellationToken);
                 }
 
-                if (this.Logs != null)
+                if (this.Logs is IEnumerable<JaegerLog> logs)
                 {
                     field.Name = "logs";
                     field.Type = TType.List;
                     field.ID = 11;
                     await oprot.WriteFieldBeginAsync(field, cancellationToken);
                     {
-                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Logs.Count), cancellationToken);
+                        await oprot.WriteListBeginAsync(new TList(TType.Struct, logs.Count()), cancellationToken);
 
-                        foreach (JaegerLog jl in this.Logs)
+                        foreach (JaegerLog jl in logs)
                         {
                             await jl.WriteAsync(oprot, cancellationToken);
                         }
@@ -223,10 +224,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
             sb.Append(this.ParentSpanId);
             sb.Append(", OperationName: ");
             sb.Append(this.OperationName);
-            if (this.References != null)
+            if (this.References is IEnumerable<JaegerSpanRef> jaegerSpanRef)
             {
                 sb.Append(", References: ");
-                sb.Append(this.References);
+                sb.Append(jaegerSpanRef);
             }
 
             sb.Append(", Flags: ");
@@ -235,16 +236,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
             sb.Append(this.StartTime);
             sb.Append(", Duration: ");
             sb.Append(this.Duration);
-            if (this.JaegerTags != null)
+            if (this.JaegerTags is IEnumerable<JaegerTag> tags)
             {
                 sb.Append(", JaegerTags: ");
-                sb.Append(this.JaegerTags);
+                sb.Append(tags);
             }
 
-            if (this.Logs != null)
+            if (this.Logs is IEnumerable<JaegerLog> logs)
             {
                 sb.Append(", Logs: ");
-                sb.Append(this.Logs);
+                sb.Append(logs);
             }
 
             sb.Append(")");

@@ -17,7 +17,9 @@
 namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -31,16 +33,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         {
         }
 
-        public Batch(Process process, List<JaegerSpan> spans)
+        public Batch(Process process, IEnumerable<JaegerSpan> spans)
             : this()
         {
             this.Process = process;
-            this.Spans = spans;
+            this.Spans = spans ?? Enumerable.Empty<JaegerSpan>();
         }
 
         public Process Process { get; set; }
 
-        public List<JaegerSpan> Spans { get; set; }
+        public IEnumerable<JaegerSpan> Spans { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -68,7 +70,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
                 {
-                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Spans.Count), cancellationToken);
+                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Spans.Count()), cancellationToken);
                     foreach (JaegerSpan s in this.Spans)
                     {
                         await s.WriteAsync(oprot, cancellationToken);

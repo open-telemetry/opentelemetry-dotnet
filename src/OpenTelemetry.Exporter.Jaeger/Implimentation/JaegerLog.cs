@@ -18,6 +18,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -30,16 +31,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
         {
         }
 
-        public JaegerLog(long timestamp, List<JaegerTag> fields)
+        public JaegerLog(long timestamp, IEnumerable<JaegerTag> fields)
             : this()
         {
             this.Timestamp = timestamp;
-            this.Fields = fields;
+            this.Fields = fields ?? Enumerable.Empty<JaegerTag>();
         }
 
         public long Timestamp { get; set; }
 
-        public List<JaegerTag> Fields { get; set; }
+        public IEnumerable<JaegerTag> Fields { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -66,7 +67,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
                 {
-                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Fields.Count), cancellationToken);
+                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Fields.Count()), cancellationToken);
 
                     foreach (JaegerTag jt in this.Fields)
                     {
