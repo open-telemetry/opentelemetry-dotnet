@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
     public static class JaegerConversionExtensions
     {
-         private const int DaysPerYear = 365;
+        private const int DaysPerYear = 365;
 
         // Number of days in 4 years
         private const int DaysPer4Years = (DaysPerYear * 4) + 1;       // 1461

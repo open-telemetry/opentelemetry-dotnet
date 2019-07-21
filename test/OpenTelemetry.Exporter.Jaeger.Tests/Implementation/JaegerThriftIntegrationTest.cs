@@ -1,4 +1,4 @@
-// <copyright file="JaegerThriftIntegrationTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerThriftIntegrationTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,9 +58,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var endTimestamp = startTimestamp.AddSeconds(60);
             var eventTimestamp = new DateTime(2019, 1, 1);
 
-            var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2");
+            var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
             var traceIdAsInt = new Int128(traceId);
-            var spanId = ActivitySpanId.CreateFromString("6a69db47429ea340");
+            var spanId = ActivitySpanId.CreateFromString("6a69db47429ea340".AsSpan());
             var spanIdAsInt = new Int128(spanId);
             var parentSpanId = ActivitySpanId.CreateFromBytes(new byte []{ 12, 23, 34, 45, 56, 67, 78, 89 });
             var attributes = Attributes.Create(new Dictionary<string, object>{
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 ),
             }, 0);
 
-            var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41");
+            var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
             var link = Link.FromSpanContext(SpanContext.Create(
                     traceId,
