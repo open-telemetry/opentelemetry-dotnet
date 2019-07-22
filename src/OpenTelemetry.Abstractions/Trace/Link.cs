@@ -76,11 +76,12 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Link{"
-                + "traceId=" + this.Context.TraceId.ToHexString() + ", "
-                + "spanId=" + this.Context.SpanId.ToHexString() + ", "
-                + "tracestate=" + this.Context.Tracestate.ToString() + ", "
-                + "attributes=" + string.Join(", ", this.Attributes.Select(kvp => $"{kvp.Key}={kvp.Value}"))
+            return nameof(Link)
+                + "{"
+                + nameof(this.Context) + "=" + this.Context.TraceId.ToHexString() + ", "
+                + nameof(this.Context) + "=" + this.Context.SpanId.ToHexString() + ", "
+                + nameof(this.Context) + "=" + this.Context.Tracestate.ToString() + ", "
+                + nameof(this.Attributes) + "=" + string.Join(", ", this.Attributes.Select(kvp => (kvp.Key + "=" + kvp.Value)))
                 + "}";
         }
 

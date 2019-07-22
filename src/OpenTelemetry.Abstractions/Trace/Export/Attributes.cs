@@ -47,9 +47,10 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Attributes{"
-                + "attributeMap=" + this.AttributeMap + ", "
-                + "droppedAttributesCount=" + this.DroppedAttributesCount
+            return nameof(Attributes)
+                + "{"
+                + nameof(this.AttributeMap) + "=" + this.AttributeMap + ", "
+                + nameof(this.DroppedAttributesCount) + "=" + this.DroppedAttributesCount
                 + "}";
         }
 

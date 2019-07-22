@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets the list of entris in tracestate.
+        /// Gets the list of entries in tracestate.
         /// </summary>
         public IEnumerable<Entry> Entries { get => this.entries; }
 
@@ -97,23 +97,12 @@ namespace OpenTelemetry.Trace
             {
                 var sb = new StringBuilder();
 
-                var isFirst = true;
-
                 foreach (var entry in this.Entries)
                 {
-                    if (isFirst)
-                    {
-                        isFirst = false;
-                    }
-                    else
-                    {
-                        sb.Append(",");
-                    }
-
-                    sb.Append(entry.Key).Append("=").Append(entry.Value);
+                    sb.Append(entry.Key + "=" + entry.Value + ",");
                 }
 
-                return sb.ToString();
+                return sb.Remove(sb.Length - 1, 1).ToString();
             }
 
             return string.Empty;

@@ -57,8 +57,9 @@ namespace OpenTelemetry.Tags
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "TagValue{"
-                + "asString=" + this.AsString
+            return nameof(TagValue)
+                + "{"
+                + nameof(this.AsString) + "=" + this.AsString
                 + "}";
         }
 
