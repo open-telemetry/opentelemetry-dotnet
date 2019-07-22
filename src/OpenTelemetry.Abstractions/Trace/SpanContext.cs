@@ -108,11 +108,12 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "SpanContext{"
-                   + "traceId=" + this.TraceId + ", "
-                   + "spanId=" + this.SpanId + ", "
-                   + "traceOptions=" + this.TraceOptions
-                   + "}";
+            return nameof(SpanContext)
+                + "{"
+                + nameof(this.TraceId) + "=" + this.TraceId + ", "
+                + nameof(this.SpanId) + "=" + this.SpanId + ", "
+                + nameof(this.TraceOptions) + "=" + this.TraceOptions
+                + "}";
         }
 
         private bool IsTraceIdValid(ActivityTraceId traceId)
