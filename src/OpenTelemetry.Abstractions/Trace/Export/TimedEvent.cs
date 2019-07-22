@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace.Export
             return false;
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             var h = 1;

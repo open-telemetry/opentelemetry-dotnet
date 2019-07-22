@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace.Export
 
     public sealed class Attributes
     {
-        private static readonly Attributes Empty = new Attributes(new Dictionary<string, object>(), 0);
+        public static readonly Attributes Empty = new Attributes(new Dictionary<string, object>(), 0);
 
         private Attributes(IEnumerable<KeyValuePair<string, object>> attributeMap, int droppedAttributesCount)
         {
