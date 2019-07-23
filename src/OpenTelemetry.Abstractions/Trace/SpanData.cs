@@ -169,18 +169,19 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "SpanData{"
-                + "context=" + this.Context + ", "
-                + "parentSpanId=" + this.ParentSpanId + ", "
-                + "resource=" + this.Resource + ", "
-                + "name=" + this.Name + ", "
-                + "startTimestamp=" + this.StartTimestamp + ", "
-                + "attributes=" + this.Attributes + ", "
-                + "events=" + this.Events + ", "
-                + "links=" + this.Links + ", "
-                + "childSpanCount=" + this.ChildSpanCount + ", "
-                + "status=" + this.Status + ", "
-                + "endTimestamp=" + this.EndTimestamp
+            return nameof(SpanData)
+                + "{"
+                + nameof(this.Context) + "=" + this.Context + ", "
+                + nameof(this.ParentSpanId) + "=" + this.ParentSpanId + ", "
+                + nameof(this.Resource) + "=" + this.Resource + ", "
+                + nameof(this.Name) + "=" + this.Name + ", "
+                + nameof(this.StartTimestamp) + "=" + this.StartTimestamp + ", "
+                + nameof(this.Attributes) + "=" + this.Attributes + ", "
+                + nameof(this.Events) + "=" + this.Events + ", "
+                + nameof(this.Links) + "=" + this.Links + ", "
+                + nameof(this.ChildSpanCount) + "=" + this.ChildSpanCount + ", "
+                + nameof(this.Status) + "=" + this.Status + ", "
+                + nameof(this.EndTimestamp) + "=" + this.EndTimestamp
                 + "}";
         }
 

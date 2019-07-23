@@ -213,10 +213,11 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Status{"
-                    + "canonicalCode=" + this.CanonicalCode + ", "
-                    + "description=" + this.Description
-                    + "}";
+            return nameof(Status)
+                + "{"
+                + nameof(this.CanonicalCode) + "=" + this.CanonicalCode + ", "
+                + nameof(this.Description) + "=" + this.Description
+                + "}";
         }
     }
 }

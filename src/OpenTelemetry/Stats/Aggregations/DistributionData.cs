@@ -84,13 +84,14 @@ namespace OpenTelemetry.Stats.Aggregations
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "DistributionData{"
-                + "mean=" + this.Mean + ", "
-                + "count=" + this.Count + ", "
-                + "min=" + this.Min + ", "
-                + "max=" + this.Max + ", "
-                + "sumOfSquaredDeviations=" + this.SumOfSquaredDeviations + ", "
-                + "bucketCounts=" + string.Join(", ", this.BucketCounts)
+            return nameof(DistributionData)
+                + "{"
+                + nameof(this.Mean) + "=" + this.Mean + ", "
+                + nameof(this.Count) + "=" + this.Count + ", "
+                + nameof(this.Min) + "=" + this.Min + ", "
+                + nameof(this.Max) + "=" + this.Max + ", "
+                + nameof(this.SumOfSquaredDeviations) + "=" + this.SumOfSquaredDeviations + ", "
+                + nameof(this.BucketCounts) + "=" + string.Join(", ", this.BucketCounts)
                 + "}";
         }
 

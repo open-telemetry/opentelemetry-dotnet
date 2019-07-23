@@ -102,9 +102,10 @@ namespace OpenTelemetry.Trace.Sampler
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "ProbabilitySampler{"
-                + "probability=" + this.Probability + ", "
-                + "idUpperBound=" + this.IdUpperBound
+            return nameof(ProbabilitySampler)
+                + "{"
+                + nameof(this.Probability) + "=" + this.Probability + ", "
+                + nameof(this.IdUpperBound) + "=" + this.IdUpperBound
                 + "}";
         }
 

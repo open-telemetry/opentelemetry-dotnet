@@ -61,16 +61,17 @@ namespace OpenTelemetry.Stats
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "View{"
-                + "name=" + this.Name + ", "
-                + "description=" + this.Description + ", "
-                + "measure=" + this.Measure + ", "
-                + "aggregation=" + this.Aggregation + ", "
-                + "columns=" + this.Columns + ", "
+            return nameof(View)
+                + "{"
+                + nameof(this.Name) + "=" + this.Name + ", "
+                + nameof(this.Description) + "=" + this.Description + ", "
+                + nameof(this.Measure) + "=" + this.Measure + ", "
+                + nameof(this.Aggregation) + "=" + this.Aggregation + ", "
+                + nameof(this.Columns) + "=" + this.Columns + ", "
                 + "}";
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override bool Equals(object o)
         {
             if (o == this)
