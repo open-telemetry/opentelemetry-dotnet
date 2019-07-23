@@ -11,17 +11,17 @@
         public static async Task Main(string[] args)
         {
             var builder = tracer.SpanBuilder("Main (span1)");
-            using (var scope = builder.StartScopedSpan())
+            using (tracer.WithSpan(builder.StartSpan()))
             {
                 await Task.Delay(100);
-                Foo();
+                await Foo();
             }
         }
 
         private static async Task Foo()
         {
             var builder = tracer.SpanBuilder("Foo (span2)");
-            using (var scope = builder.StartScopedSpan())
+            using (tracer.WithSpan(builder.StartSpan()))
             {
                 tracer.CurrentSpan.SetAttribute("myattribute", "mvalue");
                 await Task.Delay(100);

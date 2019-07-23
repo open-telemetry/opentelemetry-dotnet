@@ -17,10 +17,10 @@
             Logger.Log($"Tracer.RecordSpanData({span})");
         }
 
-        public ISpanBuilder SpanBuilder(string spanName, SpanKind spanKind = SpanKind.Internal)
+        public ISpanBuilder SpanBuilder(string spanName)
         {
-            Logger.Log($"Tracer.SpanBuilder({spanName}, {spanKind})");
-            return new LoggingSpanBuilder(spanName, spanKind);
+            Logger.Log($"Tracer.SpanBuilder({spanName})");
+            return new LoggingSpanBuilder(spanName, SpanKind.Internal);
         }
 
         public ISpanBuilder SpanBuilderWithParent(string spanName, SpanKind spanKind = SpanKind.Internal, ISpan parent = null)

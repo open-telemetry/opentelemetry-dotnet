@@ -15,7 +15,6 @@
             private readonly ISpan origContext;
             private readonly ISpan span;
             private readonly bool endSpan;
-            private readonly int depth;
 
             public LoggingScope(ISpan span, bool endSpan = true)
             {

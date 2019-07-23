@@ -1,6 +1,7 @@
 ﻿namespace LoggingTracer
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Context;
     using OpenTelemetry.Trace;
@@ -33,6 +34,60 @@
             this.remoteParentSpanContext = remoteParentSpanContext;
         }
 
+        public ISpanBuilder AddLink(SpanContext spanContext)
+        {
+            Logger.Log($"SpanBuilder.AddLink({spanContext})");
+            return this;
+        }
+
+        public ISpanBuilder AddLink(Activity activity)
+        {
+            Logger.Log($"SpanBuilder.AddLink({activity})");
+            return this;
+        }
+
+        public ISpanBuilder AddLink(ILink link)
+        {
+            Logger.Log($"SpanBuilder.AddLink({link})");
+            return this;
+        }
+
+        public ISpanBuilder AddLink(SpanContext context, IDictionary<string, object> attributes)
+        {
+            Logger.Log($"SpanBuilder.AddLink({context}, {attributes.Count})");
+            return this;
+        }
+
+        public ISpanBuilder SetCreateChild(bool createChild)
+        {
+            Logger.Log($"SpanBuilder.SetCreateChild({createChild})");
+            return this;
+        }
+
+        public ISpanBuilder SetNoParent()
+        {
+            Logger.Log($"SpanBuilder.SetNoParent()");
+            return this;
+        }
+
+        public ISpanBuilder SetParent(ISpan parent)
+        {
+            Logger.Log($"SpanBuilder.SetParent({parent})");
+            return this;
+        }
+
+        public ISpanBuilder SetParent(Activity parent)
+        {
+            Logger.Log($"SpanBuilder.SetParent({parent})");
+            return this;
+        }
+
+        public ISpanBuilder SetParent(SpanContext remoteParent)
+        {
+            Logger.Log($"SpanBuilder.SetParent({remoteParent})");
+            return this;
+        }
+
         public ISpanBuilder SetParentLinks(IEnumerable<ISpan> parentLinks)
         {
             Logger.Log($"SpanBuilder.SetParentLinks(parentLinks: {parentLinks.Count()})");
@@ -48,6 +103,12 @@
         public ISpanBuilder SetSampler(ISampler sampler)
         {
             Logger.Log($"SpanBuilder.SetSampler({sampler})");
+            return this;
+        }
+
+        public ISpanBuilder SetSpanKind(SpanKind spanKind)
+        {
+            Logger.Log($"SpanBuilder.SetSpanKind({spanKind})");
             return this;
         }
 

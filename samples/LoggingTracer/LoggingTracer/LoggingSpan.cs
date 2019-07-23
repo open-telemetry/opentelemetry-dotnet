@@ -29,7 +29,7 @@
             Logger.Log($"Span.AddEvent({name})");
         }
 
-        public void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
+        public void AddEvent(string name, IDictionary<string, object> attributes)
         {
             Logger.Log($"Span.AddEvent({name}, attributes: {attributes.Count})");
         }
@@ -49,7 +49,7 @@
             Logger.Log($"Span.End, Name: {this.Name}");
         }
 
-        public void SetAttribute(string key, IAttributeValue value)
+        public void SetAttribute(string key, object value)
         {
             Logger.Log($"Span.SetAttribute({key}, {value})");
         }
@@ -74,13 +74,10 @@
             Logger.Log($"Span.SetAttribute({key}, {value})");
         }
 
-        public void SetAttributes(IDictionary<string, IAttributeValue> attributes)
+        public void SetAttribute(KeyValuePair<string, object> keyValuePair)
         {
-            Logger.Log($"Span.SetAttributes(attributes: {attributes.Count})");
-            foreach (var attribute in attributes)
-            {
-                this.SetAttribute(attribute.Key, attribute.Value);
-            }
+            Logger.Log($"Span.SetAttributes(attributes: {keyValuePair})");
+             this.SetAttribute(keyValuePair.Key, keyValuePair.Value);
         }
 
         public void UpdateName(string name)
