@@ -1,4 +1,4 @@
-// <copyright file="JaegerLog.cs" company="OpenTelemetry Authors">
+// <copyright file="Batch.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Jaeger.Implimentation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
@@ -24,54 +25,55 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
     using System.Threading.Tasks;
     using Thrift.Protocols;
     using Thrift.Protocols.Entities;
+    using Thrift.Protocols.Utilities;
 
-    public class JaegerLog : TAbstractBase
+    public class Batch : TAbstractBase
     {
-        public JaegerLog()
+        public Batch()
         {
         }
 
-        public JaegerLog(long timestamp, IEnumerable<JaegerTag> fields)
+        public Batch(Process process, IEnumerable<JaegerSpan> spans)
             : this()
         {
-            this.Timestamp = timestamp;
-            this.Fields = fields ?? Enumerable.Empty<JaegerTag>();
+            this.Process = process;
+            this.Spans = spans ?? Enumerable.Empty<JaegerSpan>();
         }
 
-        public long Timestamp { get; set; }
+        public Process Process { get; set; }
 
-        public IEnumerable<JaegerTag> Fields { get; set; }
+        public IEnumerable<JaegerSpan> Spans { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
             try
             {
-                var struc = new TStruct("Log");
+                var struc = new TStruct("Batch");
+
                 await oprot.WriteStructBeginAsync(struc, cancellationToken);
 
                 var field = new TField
                 {
-                    Name = "timestamp",
-                    Type = TType.I64,
+                    Name = "process",
+                    Type = TType.Struct,
                     ID = 1,
                 };
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await oprot.WriteI64Async(this.Timestamp, cancellationToken);
+                await this.Process.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
 
-                field.Name = "fields";
+                field.Name = "spans";
                 field.Type = TType.List;
                 field.ID = 2;
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
                 {
-                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Fields.Count()), cancellationToken);
-
-                    foreach (JaegerTag jt in this.Fields)
+                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Spans.Count()), cancellationToken);
+                    foreach (JaegerSpan s in this.Spans)
                     {
-                        await jt.WriteAsync(oprot, cancellationToken);
+                        await s.WriteAsync(oprot, cancellationToken);
                     }
 
                     await oprot.WriteListEndAsync(cancellationToken);
@@ -89,11 +91,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implimentation
 
         public override string ToString()
         {
-            var sb = new StringBuilder("Log(");
-            sb.Append(", Timestamp: ");
-            sb.Append(this.Timestamp);
-            sb.Append(", Fields: ");
-            sb.Append(this.Fields);
+            var sb = new StringBuilder("Batch(");
+            sb.Append(", Process: ");
+            sb.Append(this.Process?.ToString() ?? "<null>");
+            sb.Append(", Spans: ");
+            sb.Append(this.Spans);
             sb.Append(")");
             return sb.ToString();
         }

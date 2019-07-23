@@ -1,4 +1,4 @@
-// <copyright file="JaegerExporterException.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerSpanRefType.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,15 +14,23 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Jaeger.Implimentation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     using System;
 
-    public class JaegerExporterException : Exception
+    /// <summary>
+    /// Represents the different types of Jaeger Spans.
+    /// </summary>
+    public enum JaegerSpanRefType
     {
-        public JaegerExporterException(string message, Exception originalException)
-            : base(message, originalException)
-        {
-        }
+        /// <summary>
+        /// A child span
+        /// </summary>
+        CHILD_OF = 0,
+
+        /// <summary>
+        /// A sibling span
+        /// </summary>
+        FOLLOWS_FROM = 1,
     }
 }

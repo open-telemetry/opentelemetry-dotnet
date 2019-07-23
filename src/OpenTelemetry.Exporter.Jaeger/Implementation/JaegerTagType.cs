@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerSpanRefType.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerTagType.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,38 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Jaeger.Implimentation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     using System;
 
     /// <summary>
-    /// Represents the different types of Jaeger Spans.
+    /// Indicates the data type of a Jaeger tag.
     /// </summary>
-    public enum JaegerSpanRefType
+    public enum JaegerTagType
     {
         /// <summary>
-        /// A child span
+        /// Tag contains a string
         /// </summary>
-        CHILD_OF = 0,
+        STRING = 0,
 
         /// <summary>
-        /// A sibling span
+        /// Tag contains a double
         /// </summary>
-        FOLLOWS_FROM = 1,
+        DOUBLE = 1,
+
+        /// <summary>
+        /// Tag contains a boolean
+        /// </summary>
+        BOOL = 2,
+
+        /// <summary>
+        /// Tag contains a long
+        /// </summary>
+        LONG = 3,
+
+        /// <summary>
+        /// Tag contains binary data
+        /// </summary>
+        BINARY = 4,
     }
 }

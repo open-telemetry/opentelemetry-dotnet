@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Exporter.Jaeger
 {
     using System;
-    using OpenTelemetry.Exporter.Jaeger.Implimentation;
+    using OpenTelemetry.Exporter.Jaeger.Implementation;
     using OpenTelemetry.Trace.Export;
 
     public class JaegerExporter : IDisposable

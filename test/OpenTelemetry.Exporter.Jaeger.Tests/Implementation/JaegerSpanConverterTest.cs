@@ -20,7 +20,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using OpenTelemetry.Exporter.Jaeger.Implimentation;
+    using OpenTelemetry.Exporter.Jaeger.Implementation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;

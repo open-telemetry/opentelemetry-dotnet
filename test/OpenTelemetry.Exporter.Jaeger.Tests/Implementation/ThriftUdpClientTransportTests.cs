@@ -21,7 +21,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
     using System.Threading;
     using System.Threading.Tasks;
     using Moq;
-    using OpenTelemetry.Exporter.Jaeger.Implimentation;
+    using OpenTelemetry.Exporter.Jaeger.Implementation;
     using Thrift.Transports;
     using Xunit;
 

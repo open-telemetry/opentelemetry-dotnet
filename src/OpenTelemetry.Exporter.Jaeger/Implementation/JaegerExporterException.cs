@@ -1,4 +1,4 @@
-﻿// <copyright file="IJaegerUdpClient.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerExporterException.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Jaeger.Implimentation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     using System;
-    using System.Net;
-    using System.Threading.Tasks;
 
-    public interface IJaegerUdpClient : IDisposable
+    public class JaegerExporterException : Exception
     {
-        bool Connected { get; }
-
-        EndPoint RemoteEndPoint { get; }
-
-        void Connect(string host, int port);
-
-        void Close();
-
-        Task<int> SendAsync(byte[] datagram, int bytes);
+        public JaegerExporterException(string message, Exception originalException)
+            : base(message, originalException)
+        {
+        }
     }
 }
