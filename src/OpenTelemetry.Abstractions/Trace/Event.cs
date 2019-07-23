@@ -99,9 +99,10 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Annotation{"
-                + "description=" + this.Name + ", "
-                + "attributes=" + string.Join(", ", this.Attributes.Select(kvp => $"{kvp.Key}={kvp.Value}"))
+            return nameof(Event)
+                + "{"
+                + nameof(this.Name) + "=" + this.Name + ", "
+                + nameof(this.Attributes) + "=" + string.Join(", ", this.Attributes.Select(kvp => (kvp.Key + "=" + kvp.Value)))
                 + "}";
         }
     }
