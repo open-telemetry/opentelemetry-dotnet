@@ -30,19 +30,19 @@ namespace OpenTelemetry.Exporter.Jaeger
 
         private readonly object @lock = new object();
         private readonly JaegerExporterOptions options;
-        private readonly IExportComponent exportComponent;
+        private readonly ISpanExporter spanExporter;
 
         private volatile bool isInitialized = false;
         private JaegerTraceExporterHandler handler;
         private bool disposedValue = false; // To detect redundant dispose calls
 
-        public JaegerExporter(JaegerExporterOptions options, IExportComponent exportComponent)
+        public JaegerExporter(JaegerExporterOptions options, ISpanExporter spanExporter)
         {
             this.ValidateOptions(options);
             this.InitializeOptions(options);
 
             this.options = options;
-            this.exportComponent = exportComponent;
+            this.spanExporter = spanExporter;
         }
 
         public void Start()
@@ -54,10 +54,10 @@ namespace OpenTelemetry.Exporter.Jaeger
                     return;
                 }
 
-                if (this.exportComponent != null)
+                if (this.spanExporter != null)
                 {
                     this.handler = new JaegerTraceExporterHandler(this.options);
-                    this.exportComponent.SpanExporter.RegisterHandler(ExporterName, this.handler);
+                    this.spanExporter.RegisterHandler(ExporterName, this.handler);
                 }
             }
         }
@@ -71,9 +71,9 @@ namespace OpenTelemetry.Exporter.Jaeger
 
             lock (this.@lock)
             {
-                if (this.exportComponent != null)
+                if (this.spanExporter != null)
                 {
-                    this.exportComponent.SpanExporter.UnregisterHandler(ExporterName);
+                    this.spanExporter.UnregisterHandler(ExporterName);
                 }
             }
 
