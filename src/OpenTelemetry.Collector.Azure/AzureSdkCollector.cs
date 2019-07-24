@@ -91,7 +91,22 @@ namespace OpenTelemetry.Collectors.Azure
 
         private void OnStartActivity(Activity current, object valueValue)
         {
-            var span = this.tracer.SpanBuilder(current.OperationName)
+            var operationName = current.OperationName;
+            foreach (var keyValuePair in current.Tags)
+            {
+                if (keyValuePair.Key == "http.url")
+                {
+                    var indexOfQuery = keyValuePair.Value.IndexOf('?');
+                    if (indexOfQuery == -1)
+                    {
+                        indexOfQuery = keyValuePair.Value.Length;
+                    }
+
+                    operationName = keyValuePair.Value.Substring(0, indexOfQuery);
+                }
+            }
+
+            var span = this.tracer.SpanBuilder(operationName)
                 .SetSampler(this.sampler)
                 .StartSpan();
 
