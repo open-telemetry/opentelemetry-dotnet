@@ -91,7 +91,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             foreach (var label in spanData.Attributes.AttributeMap)
             {
-                spanBuilder.PutTag(label.Key, (string)label.Value);
+                spanBuilder.PutTag(label.Key, label.Value.ToString());
             }
 
             var status = spanData.Status;
