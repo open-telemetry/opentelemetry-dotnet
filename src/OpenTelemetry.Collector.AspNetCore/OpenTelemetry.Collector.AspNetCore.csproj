@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <TargetFrameworks Condition="$(OS) != 'Windows_NT'">netstandard2.0</TargetFrameworks>
     <Description>OpenTelemetry collector for ASP.NET Core requests</Description>
     <PackageTags>$(PackageTags);distributed-tracing;AspNetCore</PackageTags>
   </PropertyGroup>

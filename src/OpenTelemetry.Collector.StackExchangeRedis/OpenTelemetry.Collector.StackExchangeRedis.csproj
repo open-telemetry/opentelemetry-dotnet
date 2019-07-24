@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
-    <TargetFrameworks Condition="$(OS) != 'Windows_NT'">netstandard2.0</TargetFrameworks>
     <Description>OpenTelemetry collector for Redis calls made by StackExchange.Redis library.</Description>
     <PackageTags>$(PackageTags);distributed-tracing;Redis;StackExchange.Redis</PackageTags>
   </PropertyGroup>
