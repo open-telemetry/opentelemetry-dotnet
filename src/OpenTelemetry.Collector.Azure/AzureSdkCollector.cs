@@ -96,13 +96,7 @@ namespace OpenTelemetry.Collectors.Azure
             {
                 if (keyValuePair.Key == "http.url")
                 {
-                    var indexOfQuery = keyValuePair.Value.IndexOf('?');
-                    if (indexOfQuery == -1)
-                    {
-                        indexOfQuery = keyValuePair.Value.Length;
-                    }
-
-                    operationName = keyValuePair.Value.Substring(0, indexOfQuery);
+                    operationName = keyValuePair.Value;
                 }
             }
 
