@@ -51,8 +51,9 @@ namespace OpenTelemetry.Stats.Aggregations
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Distribution{"
-                + "bucketBoundaries=" + this.BucketBoundaries
+            return nameof(Distribution) 
+                + "{"
+                + nameof(this.BucketBoundaries) + "=" + this.BucketBoundaries
                 + "}";
         }
 

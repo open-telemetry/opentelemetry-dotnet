@@ -22,11 +22,11 @@ namespace OpenTelemetry.Trace.Export
 
     public sealed class TimedEvents<T> : ITimedEvents<T>
     {
-        private static readonly TimedEvents<T> Empty = new TimedEvents<T>(new ITimedEvent<T>[0], 0);
+        public static readonly ITimedEvents<T> Empty = new TimedEvents<T>(Enumerable.Empty<ITimedEvent<T>>(), 0);
 
         internal TimedEvents(IEnumerable<ITimedEvent<T>> events, int droppedEventsCount)
         {
-            this.Events = events ?? throw new ArgumentNullException("Null events");
+            this.Events = events ?? throw new ArgumentNullException(nameof(events), "Null events");
             this.DroppedEventsCount = droppedEventsCount;
         }
 
@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Export
 
         public int DroppedEventsCount { get; }
 
-        public static ITimedEvents<T> Create(IEnumerable<ITimedEvent<T>> events, int droppedEventsCount)
+        public static ITimedEvents<T> Create(IReadOnlyCollection<ITimedEvent<T>> events, int droppedEventsCount)
         {
             if (events == null)
             {
@@ -47,7 +47,8 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "TimedEvents{"
+            return "TimedEvents"
+                + "{"
                 + "events=" + this.Events + ", "
                 + "droppedEventsCount=" + this.DroppedEventsCount
                 + "}";

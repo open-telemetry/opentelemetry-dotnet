@@ -1,4 +1,4 @@
-﻿// <copyright file="EventWithTime.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerSpanRefType.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,26 +14,23 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     using System;
-    using OpenTelemetry.Internal;
-    using OpenTelemetry.Trace.Export;
 
-    internal class EventWithTime<T>
+    /// <summary>
+    /// Represents the different types of Jaeger Spans.
+    /// </summary>
+    public enum JaegerSpanRefType
     {
-        private readonly DateTime nanoTime;
-        private readonly T @event;
+        /// <summary>
+        /// A child span
+        /// </summary>
+        CHILD_OF = 0,
 
-        public EventWithTime(DateTime nanoTime, T @event)
-        {
-            this.nanoTime = nanoTime;
-            this.@event = @event;
-        }
-
-        internal ITimedEvent<T> ToSpanDataTimedEvent()
-        {
-            return TimedEvent<T>.Create(this.nanoTime, this.@event);
-        }
+        /// <summary>
+        /// A sibling span
+        /// </summary>
+        FOLLOWS_FROM = 1,
     }
 }

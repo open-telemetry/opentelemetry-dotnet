@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace.Sampler.Internal
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "NeverSampleSampler";
+            return nameof(NeverSampleSampler);
         }
     }
 }

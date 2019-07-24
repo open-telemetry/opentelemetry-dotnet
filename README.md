@@ -161,6 +161,42 @@ Outgoing http calls to Redis made usign StackExchange.Redis library can be autom
 
 ## OpenTelemetry QuickStart: exporting data
 
+### Using the Jaeger exporter
+
+The Jaeger exporter communicates to a Jaeger Agent through the compact thrift protocol on
+the Compact Thrift API port. You can configure the Jaeger exporter by following the directions below:
+
+1. [Get Jaeger][jaeger-get-started].
+2. Configure the `JaegerExporter`
+    - `ServiceName`: The name of your application or service.
+    - `AgengHost`: Usually `localhost` since an agent should 
+    usually be running on the same machine as your application or service.
+    - `AgentPort`: The compact thrift protocol port of the Jaeger Agent (default `6831`)
+    - `MaxPacketSize`: The maximum size of each UDP packet that gets sent to the agent. (default `65000`)
+3. See the [sample][jaeger-sample] for an example of how to use the exporter.
+
+``` csharp
+var exporter = new JaegerExporter(
+    new JaegerExporterOptions
+    {
+        ServiceName = "tracing-to-jaeger-service",
+        AgentHost = host,
+        AgentPort = port,
+    },
+    Tracing.ExportComponent);
+
+exporter.Start();
+
+var span = tracer
+            .SpanBuilder("incoming request")
+            .SetSampler(Samplers.AlwaysSample)
+            .StartSpan();
+
+Thread.Sleep(TimeSpan.FromSeconds(1));
+span.End();
+```
+
+
 ### Using Zipkin exporter
 
 Configure Zipkin exporter to see traces in Zipkin UI.
@@ -316,6 +352,7 @@ deprecate it for 18 months before removing it, if possible.
 [up-for-grabs-issues]: https://github.com/open-telemetry/OpenTelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3Aup-for-grabs
 [good-first-issues]: https://github.com/open-telemetry/OpenTelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [zipkin-get-started]: https://zipkin.io/pages/quickstart.html
+[jaeger-get-started]: https://www.jaegertracing.io/docs/1.13/getting-started/
 [ai-get-started]: https://docs.microsoft.com/azure/application-insights
 [stackdriver-trace-setup]: https://cloud.google.com/trace/docs/setup/
 [stackdriver-monitoring-setup]: https://cloud.google.com/monitoring/api/enable-api
@@ -326,6 +363,7 @@ deprecate it for 18 months before removing it, if possible.
 [ai-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestApplicationInsights.cs
 [stackdriver-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestStackdriver.cs
 [zipkin-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestZipkin.cs
+[jaeger-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestJaeger.cs
 [prometheus-get-started]: https://prometheus.io/docs/introduction/first_steps/
 [prometheus-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestPrometheus.cs
 

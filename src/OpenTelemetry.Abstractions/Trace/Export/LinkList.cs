@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace.Export
 
     public sealed class LinkList : ILinks
     {
-        private static readonly LinkList Empty = new LinkList(new ILink[0], 0);
+        public static readonly LinkList Empty = new LinkList(Enumerable.Empty<ILink>(), 0);
 
         internal LinkList(IEnumerable<ILink> links, int droppedLinksCount)
         {
@@ -34,24 +34,23 @@ namespace OpenTelemetry.Trace.Export
 
         public IEnumerable<ILink> Links { get; }
 
-        public static LinkList Create(IEnumerable<ILink> links, int droppedLinksCount)
+        public static LinkList Create(IReadOnlyCollection<ILink> links, int droppedLinksCount)
         {
             if (links == null)
             {
                 return Empty;
             }
 
-            IEnumerable<ILink> copy = new List<ILink>(links);
-
-            return new LinkList(copy, droppedLinksCount);
+            return new LinkList(links, droppedLinksCount);
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Links{"
-                + "links=" + this.Links + ", "
-                + "droppedLinksCount=" + this.DroppedLinksCount
+            return nameof(LinkList)
+                + "{"
+                + nameof(this.Links) + "=" + this.Links + ", "
+                + nameof(this.DroppedLinksCount) + "=" + this.DroppedLinksCount
                 + "}";
         }
 

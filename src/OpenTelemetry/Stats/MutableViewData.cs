@@ -53,7 +53,7 @@ namespace OpenTelemetry.Stats
 
         private static Func<MutableDistribution, IAggregationData> CreateDistributionData { get; } = (s) =>
         {
-            var boxedBucketCounts = new List<long>();
+            var boxedBucketCounts = new List<long>(s.BucketCounts.Length);
             foreach (var bucketCount in s.BucketCounts)
             {
                 boxedBucketCounts.Add(bucketCount);

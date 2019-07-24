@@ -35,8 +35,9 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions>(args)
                 .MapResult(
+                    (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri),
                     (ApplicationInsightsOptions options) => TestApplicationInsights.Run(),
                     (PrometheusOptions options) => TestPrometheus.Run(),
@@ -55,6 +56,16 @@ namespace Samples
     {
         [Option('p', "projectId", HelpText = "Please specify the projectId of your GCP project", Required = true)]
         public string ProjectId { get; set; }
+    }
+
+    [Verb("jaeger", HelpText = "Specify the options required to test Jaeger exporter")]
+    internal class JaegerOptions
+    {
+        [Option('h', "host", HelpText = "Please specify the host of the Jaeger Agent", Required = true)]
+        public string Host { get; set; }
+
+        [Option('p', "port", HelpText = "Please specify the port of the Jaeger Agent", Required = true)]
+        public int Port { get; set; }
     }
 
     [Verb("zipkin", HelpText = "Specify the options required to test Zipkin exporter")]

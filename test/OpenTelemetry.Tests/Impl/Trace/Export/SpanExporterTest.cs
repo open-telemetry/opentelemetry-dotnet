@@ -33,6 +33,7 @@ namespace OpenTelemetry.Trace.Export.Test
     {
         private const string SpanName1 = "MySpanName/1";
         private const string SpanName2 = "MySpanName/2";
+
         private readonly ISpanExporter spanExporter = SpanExporter.Create(4, TimeSpan.FromSeconds(1));
         private readonly IStartEndHandler startEndHandler;
         private readonly TestHandler serviceHandler = new TestHandler();

@@ -51,8 +51,9 @@ namespace OpenTelemetry.Stats
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Name{"
-                + "asString=" + this.AsString
+            return nameof(ViewName)
+                + "{"
+                + nameof(this.AsString) + "=" + this.AsString
                 + "}";
         }
 

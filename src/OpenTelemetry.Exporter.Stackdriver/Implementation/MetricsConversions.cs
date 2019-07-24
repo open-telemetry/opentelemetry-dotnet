@@ -248,8 +248,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 timeSeries.Metric = GetMetric(view, labels, metricDescriptor, domain);
 
                 var point = ExtractPointInInterval(viewData.Start, viewData.End, view.Aggregation, points);
-                var timeSeriesPoints = new List<Point> { point };
-                timeSeries.Points.AddRange(timeSeriesPoints);
+                timeSeries.Points.Add(point);
 
                 timeSeriesList.Add(timeSeries);
             }
