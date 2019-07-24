@@ -52,10 +52,15 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void ToSpanData_NoRecordEvents()
         {
-            var activityLink = new Activity(SpanName).Start();
+            var activityLink = new Activity(SpanName)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
             activityLink.Stop();
 
-            var activity = new Activity(SpanName).Start();
+            var activity = new Activity(SpanName)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+
             Assert.False(activity.Recorded);
             
             var span =
@@ -128,7 +133,10 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void NoEventsRecordedAfterEnd()
         {
-            var activityLink = new Activity(SpanName).Start();
+            var activityLink = new Activity(SpanName)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+
             activityLink.Stop();
 
             var activity = new Activity(SpanName).Start();
@@ -171,7 +179,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public async Task ToSpanData_ActiveSpan()
         {
-            var activityLink = new Activity(SpanName);
+            var activityLink = new Activity(SpanName)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
             activityLink.Stop();
 
             var activity = new Activity(SpanName)
@@ -241,7 +251,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public async Task GoSpanData_EndedSpan()
         {
-            var activityLink = new Activity(SpanName).Start();
+            var activityLink = new Activity(SpanName)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
             activityLink.Stop();
 
             var activity = new Activity(SpanName)
@@ -531,7 +543,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DroppingLinks()
         {
-            var activityLink = new Activity(SpanName).Start();
+            var activityLink = new Activity(SpanName)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
             activityLink.Stop();
 
             var activity = new Activity(SpanName).Start();

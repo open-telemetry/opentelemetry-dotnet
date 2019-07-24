@@ -28,7 +28,6 @@ namespace OpenTelemetry.Trace.Test
 
         public CurrentSpanUtilsTest()
         {
-            // TODO: remove with next DiagnosticSource preview, switch to Activity setidformat
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
         }

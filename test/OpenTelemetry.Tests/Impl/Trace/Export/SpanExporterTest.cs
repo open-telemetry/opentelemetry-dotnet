@@ -41,10 +41,6 @@ namespace OpenTelemetry.Trace.Export.Test
 
         public SpanExporterTest()
         {
-            // TODO
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
-
             startEndHandler = new StartEndHandler(spanExporter, new SimpleEventQueue());
             spanExporter.RegisterHandler("test.service", serviceHandler);
         }
@@ -53,6 +49,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var sampledActivity = new Activity(spanName);
             sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            sampledActivity.SetIdFormat(ActivityIdFormat.W3C);
             sampledActivity.Start();
             var span =
                 Span.StartSpan(
@@ -68,6 +65,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private Span CreateNotSampledEndedSpan(string spanName)
         {
             var notSampledActivity = new Activity(spanName);
+            notSampledActivity.SetIdFormat(ActivityIdFormat.W3C);
             notSampledActivity.Start();
             var span =
                 Span.StartSpan(

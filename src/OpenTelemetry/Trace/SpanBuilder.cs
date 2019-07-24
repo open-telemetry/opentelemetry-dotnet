@@ -20,7 +20,6 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using System.Diagnostics;
     using OpenTelemetry.Context.Propagation;
-    using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
 
     /// <inheritdoc/>
@@ -41,10 +40,6 @@ namespace OpenTelemetry.Trace
 
         internal SpanBuilder(string name, SpanBuilderOptions options)
         {
-            // TODO: remove with next DiagnosticSource preview, switch to Activity setidformat
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
-
             this.name = name ?? throw new ArgumentNullException(nameof(name));
             this.options = options ?? throw new ArgumentNullException(nameof(options));
         }
@@ -343,8 +338,10 @@ namespace OpenTelemetry.Trace
                 case ContextSource.CurrentActivityParent:
                 {
                     // Activity will figure out its parent
-                    spanActivity = new Activity(this.name).Start();
-                    
+                    spanActivity = new Activity(this.name)
+                        .SetIdFormat(ActivityIdFormat.W3C)
+                        .Start();
+
                     // chances are, Activity.Current has span attached
                     if (CurrentSpanUtils.CurrentSpan is Span currentSpan)
                     {
@@ -372,8 +369,10 @@ namespace OpenTelemetry.Trace
 
                 case ContextSource.NoParent:
                 {
-                    // TODO fix after next DiagnosticSource preview comes out - this is a hack to force activity to become orphan
-                    spanActivity = new Activity(this.name).SetParentId(" ").Start();
+                    spanActivity = new Activity(this.name)
+                        .SetIdFormat(ActivityIdFormat.W3C)
+                        .SetParentId(" ")
+                        .Start();
                     this.parentSpanContext = null;
                     break;
                 }
@@ -396,6 +395,7 @@ namespace OpenTelemetry.Trace
                             this.parentSpanContext.TraceOptions);
                     }
 
+                    spanActivity.SetIdFormat(ActivityIdFormat.W3C);
                     spanActivity.TraceStateString = this.parentSpanContext.Tracestate.ToString();
                     spanActivity.Start();
 
@@ -412,6 +412,7 @@ namespace OpenTelemetry.Trace
                             this.parentSpan.Context.TraceOptions);
                     }
 
+                    spanActivity.SetIdFormat(ActivityIdFormat.W3C);
                     spanActivity.TraceStateString = this.parentSpan.Context.Tracestate.ToString();
                     spanActivity.Start();
 
