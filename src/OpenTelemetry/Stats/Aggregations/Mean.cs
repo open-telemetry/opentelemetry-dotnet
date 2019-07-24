@@ -41,8 +41,7 @@ namespace OpenTelemetry.Stats.Aggregations
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Mean{"
-                + "}";
+            return nameof(Mean) + "{}";
         }
 
     /// <inheritdoc/>
