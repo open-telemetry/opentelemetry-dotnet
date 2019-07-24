@@ -46,7 +46,10 @@ namespace OpenTelemetry.Tags
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "TagValues{values=" + string.Join(", ", this.Values) + "}";
+            return nameof(TagValues)
+                + "{"
+                + nameof(this.Values) + "=" + string.Join(", ", this.Values)
+                + "}";
         }
 
         /// <inheritdoc/>

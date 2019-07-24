@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace.Export
 
     public sealed class Attributes
     {
-        private static readonly Attributes Empty = new Attributes(new Dictionary<string, object>(), 0);
+        public static readonly Attributes Empty = new Attributes(new Dictionary<string, object>(), 0);
 
         private Attributes(IEnumerable<KeyValuePair<string, object>> attributeMap, int droppedAttributesCount)
         {
@@ -47,9 +47,10 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Attributes{"
-                + "attributeMap=" + this.AttributeMap + ", "
-                + "droppedAttributesCount=" + this.DroppedAttributesCount
+            return nameof(Attributes)
+                + "{"
+                + nameof(this.AttributeMap) + "=" + this.AttributeMap + ", "
+                + nameof(this.DroppedAttributesCount) + "=" + this.DroppedAttributesCount
                 + "}";
         }
 

@@ -41,13 +41,14 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "TimedEvent{"
-                + "timestamp=" + this.Timestamp + ", "
-                + "event=" + this.Event
+            return "TimedEvent"
+                + "{"
+                + nameof(this.Timestamp) + "=" + this.Timestamp + ", "
+                + nameof(this.Event) + "=" + this.Event
                 + "}";
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override bool Equals(object o)
         {
             if (o == this)
@@ -64,7 +65,7 @@ namespace OpenTelemetry.Trace.Export
             return false;
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             var h = 1;

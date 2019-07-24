@@ -109,7 +109,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
                 {
                     TimedEvent<IEvent>.Create(enqueued, Event.Create("Enqueued")),
                     TimedEvent<IEvent>.Create(send, Event.Create("Sent")),
-                    TimedEvent<IEvent>.Create(response, Event.Create("ResponseRecieved")),
+                    TimedEvent<IEvent>.Create(response, Event.Create("ResponseReceived")),
                 },
                 droppedEventsCount: 0);
 

@@ -19,10 +19,10 @@ namespace OpenTelemetry.Trace
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using OpenTelemetry.Internal;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
+    using OpenTelemetry.Trace.Internal;
     using OpenTelemetry.Utils;
 
     /// <summary>
@@ -34,9 +34,9 @@ namespace OpenTelemetry.Trace
         private readonly IStartEndHandler startEndHandler;
         private readonly Lazy<SpanContext> spanContext;
         private readonly object @lock = new object();
-        private AttributesWithCapacity attributes;
-        private TraceEvents<EventWithTime<IEvent>> events;
-        private TraceEvents<ILink> links;
+        private EvictingQueue<KeyValuePair<string, object>> attributes;
+        private EvictingQueue<ITimedEvent<IEvent>> events;
+        private EvictingQueue<ILink> links;
         private Status status;
 
         private Span(
@@ -112,40 +112,40 @@ namespace OpenTelemetry.Trace
 
         internal bool OwnsActivity { get; }
 
-        private AttributesWithCapacity InitializedAttributes
+        private EvictingQueue<KeyValuePair<string, object>> InitializedAttributes
         {
             get
             {
                 if (this.attributes == null)
                 {
-                    this.attributes = new AttributesWithCapacity(this.traceParams.MaxNumberOfAttributes);
+                    this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.traceParams.MaxNumberOfAttributes);
                 }
 
                 return this.attributes;
             }
         }
 
-        private TraceEvents<EventWithTime<IEvent>> InitializedEvents
+        private EvictingQueue<ITimedEvent<IEvent>> InitializedEvents
         {
             get
             {
                 if (this.events == null)
                 {
                     this.events =
-                        new TraceEvents<EventWithTime<IEvent>>(this.traceParams.MaxNumberOfEvents);
+                        new EvictingQueue<ITimedEvent<IEvent>>(this.traceParams.MaxNumberOfEvents);
                 }
 
                 return this.events;
             }
         }
 
-        private TraceEvents<ILink> InitializedLinks
+        private EvictingQueue<ILink> InitializedLinks
         {
             get
             {
                 if (this.links == null)
                 {
-                    this.links = new TraceEvents<ILink>(this.traceParams.MaxNumberOfLinks);
+                    this.links = new EvictingQueue<ILink>(this.traceParams.MaxNumberOfLinks);
                 }
 
                 return this.links;
@@ -181,7 +181,7 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedAttributes.PutAttribute(keyValuePair.Key, keyValuePair.Value);
+                this.InitializedAttributes.AddEvent(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
             }
         }
 
@@ -206,7 +206,7 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(PreciseTimestamp.GetUtcNow(), Event.Create(name)));
+                this.InitializedEvents.AddEvent(TimedEvent<IEvent>.Create(PreciseTimestamp.GetUtcNow(), Event.Create(name)));
             }
         }
 
@@ -236,7 +236,7 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(PreciseTimestamp.GetUtcNow(), Event.Create(name, eventAttributes)));
+                this.InitializedEvents.AddEvent(TimedEvent<IEvent>.Create(PreciseTimestamp.GetUtcNow(), Event.Create(name, eventAttributes)));
             }
         }
 
@@ -261,7 +261,7 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(PreciseTimestamp.GetUtcNow(), addEvent));
+                this.InitializedEvents.AddEvent(TimedEvent<IEvent>.Create(PreciseTimestamp.GetUtcNow(), addEvent));
             }
         }
 
@@ -330,9 +330,9 @@ namespace OpenTelemetry.Trace
                 throw new InvalidOperationException("Getting SpanData for a Span without RECORD_EVENTS option.");
             }
 
-            var attributesSpanData = Attributes.Create(this.attributes?.AsReadOnlyCollection(), this.attributes?.NumberOfDroppedAttributes ?? 0);
-            var annotationsSpanData = CreateTimedEvents(this.InitializedEvents);
-            var linksSpanData = LinkList.Create(this.links?.Events, this.links?.NumberOfDroppedEvents ?? 0);
+            var attributesSpanData = Attributes.Create(this.attributes?.ToReadOnlyCollection(), this.attributes?.DroppedItems ?? 0);
+            var eventsSpanData = TimedEvents<IEvent>.Create(this.events?.ToReadOnlyCollection(), this.events?.DroppedItems ?? 0);
+            var linksSpanData = LinkList.Create(this.links?.ToReadOnlyCollection(), this.links?.DroppedItems ?? 0);
 
             return SpanData.Create(
                 this.Context, // TODO avoid using context, use Activity instead
@@ -341,7 +341,7 @@ namespace OpenTelemetry.Trace
                 this.Name,
                 this.Activity.StartTimeUtc,
                 attributesSpanData,
-                annotationsSpanData,
+                eventsSpanData,
                 linksSpanData,
                 null, // Not supported yet.
                 this.HasEnded ? this.StatusWithDefault : null,
@@ -442,24 +442,6 @@ namespace OpenTelemetry.Trace
             }
 
             return span;
-        }
-
-        private static ITimedEvents<T> CreateTimedEvents<T>(TraceEvents<EventWithTime<T>> events)
-        {
-            List<ITimedEvent<T>> eventsList = null;
-            int numberOfDroppedEvents = 0;
-            if (events != null)
-            {
-                eventsList = new List<ITimedEvent<T>>(events.Events.Count);
-                foreach (var networkEvent in events.Events)
-                {
-                    eventsList.Add(networkEvent.ToSpanDataTimedEvent());
-                }
-
-                numberOfDroppedEvents = events.NumberOfDroppedEvents;
-            }
-
-            return TimedEvents<T>.Create(eventsList, numberOfDroppedEvents);
         }
     }
 }
