@@ -10,6 +10,7 @@ the release.
     1. Modified the content of PrometheusExporterOptions from `Uri()` to `string`.
     2. `HttpListener()` can support "+" as: hostname which listens on all ports.
     3. Modified samples/TestPrometheus.cs to safely use the new implementation.
+    4. Jaeger exporter implemented
 
 - Copy from
   [OpenCensus](http://github.com/census-instrumentation/opencensus-csharp) at
