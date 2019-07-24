@@ -52,7 +52,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         public ZipkinEndpoint RemoteEndpoint { get; set; }
 
         [JsonProperty("annotations")]
-        public List<ZipkinAnnotation> Annotations { get; set; }
+        public IList<ZipkinAnnotation> Annotations { get; set; }
 
         [JsonProperty("tags")]
         public Dictionary<string, string> Tags { get; set; }

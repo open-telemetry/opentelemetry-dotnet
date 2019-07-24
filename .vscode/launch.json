@@ -19,6 +19,20 @@
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
+            "name": "Jaeger Exporter Tests (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/test/OpenTelemetry.Exporter.Jaeger.Tests/bin/Debug/netcoreapp2.2/OpenTelemetry.Exporter.Jaeger.Tests.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/test/OpenTelemetry.Exporter.Jaeger.Tests",
+            // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach",
