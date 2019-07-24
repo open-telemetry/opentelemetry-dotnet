@@ -80,6 +80,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoggingTracer.Demo.ConsoleA
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoggingTracer.Demo.AspNetCore", "samples\LoggingTracer\LoggingTracer.Demo.AspNetCore\LoggingTracer.Demo.AspNetCore.csproj", "{1EB74FCE-55C5-476A-8BB0-C46B77FE1070}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Jaeger", "src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj", "{8D47E3CF-9AE3-42FE-9084-FEB72D9AD769}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Jaeger.Tests", "test\OpenTelemetry.Exporter.Jaeger.Tests\OpenTelemetry.Exporter.Jaeger.Tests.csproj", "{21E69213-72D5-453F-BD00-75EF36AC4965}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -170,12 +174,19 @@ Global
 		{1EB74FCE-55C5-476A-8BB0-C46B77FE1070}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1EB74FCE-55C5-476A-8BB0-C46B77FE1070}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1EB74FCE-55C5-476A-8BB0-C46B77FE1070}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D47E3CF-9AE3-42FE-9084-FEB72D9AD769}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D47E3CF-9AE3-42FE-9084-FEB72D9AD769}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D47E3CF-9AE3-42FE-9084-FEB72D9AD769}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D47E3CF-9AE3-42FE-9084-FEB72D9AD769}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21E69213-72D5-453F-BD00-75EF36AC4965}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21E69213-72D5-453F-BD00-75EF36AC4965}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21E69213-72D5-453F-BD00-75EF36AC4965}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21E69213-72D5-453F-BD00-75EF36AC4965}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{7CB2F02E-03FA-4FFF-89A5-C51F107623FD} = {61188153-47FB-4567-AC9B-79B2435853EB}
 		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075} = {77C7929A-2EED-4AA6-8705-B5C443C8AA0F}
 		{6EC9DEC9-086F-4F29-BF3F-5FC7253829D5} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{D9C14CDA-5182-4DEA-8606-98FF1A388BD3} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}

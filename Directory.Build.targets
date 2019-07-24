@@ -1,6 +1,6 @@
 <Project>
   <ItemGroup>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" Condition="'$(SkipAnalysis)'!='true'">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
   </ItemGroup>

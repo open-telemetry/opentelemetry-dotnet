@@ -1,0 +1,180 @@
+// <copyright file="JaegerTag.cs" company="OpenTelemetry Authors">
+// Copyright 2018, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
+namespace OpenTelemetry.Exporter.Jaeger.Implementation
+{
+    using System;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Thrift.Protocols;
+    using Thrift.Protocols.Entities;
+
+    public class JaegerTag : TAbstractBase
+    {
+        public JaegerTag()
+        {
+        }
+
+        public JaegerTag(string key, JaegerTagType vType)
+            : this()
+        {
+            this.Key = key;
+            this.VType = vType;
+        }
+
+        public string Key { get; set; }
+
+        public JaegerTagType VType { get; set; }
+
+        public string VStr { get; set; }
+
+        public double? VDouble { get; set; }
+
+        public bool? VBool { get; set; }
+
+        public long? VLong { get; set; }
+
+        public byte[] VBinary { get; set; }
+
+        public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+        {
+            oprot.IncrementRecursionDepth();
+            try
+            {
+                var struc = new TStruct("Tag");
+                await oprot.WriteStructBeginAsync(struc, cancellationToken);
+
+                var field = new TField
+                {
+                    Name = "key",
+                    Type = TType.String,
+                    ID = 1,
+                };
+
+                await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                await oprot.WriteStringAsync(this.Key, cancellationToken);
+                await oprot.WriteFieldEndAsync(cancellationToken);
+
+                field.Name = "vType";
+                field.Type = TType.I32;
+                field.ID = 2;
+
+                await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                await oprot.WriteI32Async((int)this.VType, cancellationToken);
+                await oprot.WriteFieldEndAsync(cancellationToken);
+
+                if (this.VStr != null)
+                {
+                    field.Name = "vStr";
+                    field.Type = TType.String;
+                    field.ID = 3;
+                    await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                    await oprot.WriteStringAsync(this.VStr, cancellationToken);
+                    await oprot.WriteFieldEndAsync(cancellationToken);
+                }
+
+                if (this.VDouble.HasValue)
+                {
+                    field.Name = "vDouble";
+                    field.Type = TType.Double;
+                    field.ID = 4;
+                    await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                    await oprot.WriteDoubleAsync(this.VDouble.Value, cancellationToken);
+                    await oprot.WriteFieldEndAsync(cancellationToken);
+                }
+
+                if (this.VBool.HasValue)
+                {
+                    field.Name = "vBool";
+                    field.Type = TType.Bool;
+                    field.ID = 5;
+                    await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                    await oprot.WriteBoolAsync(this.VBool.Value, cancellationToken);
+                    await oprot.WriteFieldEndAsync(cancellationToken);
+                }
+
+                if (this.VLong.HasValue)
+                {
+                    field.Name = "vLong";
+                    field.Type = TType.I64;
+                    field.ID = 6;
+                    await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                    await oprot.WriteI64Async(this.VLong.Value, cancellationToken);
+                    await oprot.WriteFieldEndAsync(cancellationToken);
+                }
+
+                if (this.VBinary != null)
+                {
+                    field.Name = "vBinary";
+                    field.Type = TType.String;
+                    field.ID = 7;
+                    await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                    await oprot.WriteBinaryAsync(this.VBinary, cancellationToken);
+                    await oprot.WriteFieldEndAsync(cancellationToken);
+                }
+
+                await oprot.WriteFieldStopAsync(cancellationToken);
+                await oprot.WriteStructEndAsync(cancellationToken);
+            }
+            finally
+            {
+                oprot.DecrementRecursionDepth();
+            }
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder("Tag(");
+            sb.Append(", Key: ");
+            sb.Append(this.Key);
+            sb.Append(", VType: ");
+            sb.Append(this.VType);
+            if (this.VStr != null)
+            {
+                sb.Append(", VStr: ");
+                sb.Append(this.VStr);
+            }
+
+            if (this.VDouble.HasValue)
+            {
+                sb.Append(", VDouble: ");
+                sb.Append(this.VDouble);
+            }
+
+            if (this.VBool.HasValue)
+            {
+                sb.Append(", VBool: ");
+                sb.Append(this.VBool);
+            }
+
+            if (this.VLong.HasValue)
+            {
+                sb.Append(", VLong: ");
+                sb.Append(this.VLong);
+            }
+
+            if (this.VBinary != null)
+            {
+                sb.Append(", VBinary: ");
+                sb.Append(this.VBinary);
+            }
+
+            sb.Append(")");
+            return sb.ToString();
+        }
+    }
+}
