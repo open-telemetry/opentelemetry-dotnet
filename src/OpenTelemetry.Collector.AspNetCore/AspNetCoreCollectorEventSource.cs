@@ -38,16 +38,22 @@ namespace OpenTelemetry.Collector.AspNetCore
             }
         }
 
-        [Event(1, Message = "Context is NULL in end callback. Span will not be recorded.", Level = EventLevel.Warning)]
-        public void NullContext()
+        [Event(1, Message = "Http Context is NULL in '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
+        public void NullHttpContext(string eventName)
         {
-            this.WriteEvent(1);
+            this.WriteEvent(1, eventName);
         }
 
         [Event(2, Message = "Error getting custom sampler, the default sampler will be used. Exception : {0}", Level = EventLevel.Warning)]
         public void ExceptionInCustomSampler(string ex)
         {
             this.WriteEvent(2, ex);
+        }
+
+        [Event(3, Message = "Current Span is null or blank in '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
+        public void NullOrBlankSpan(string callbackName)
+        {
+            this.WriteEvent(3, callbackName);
         }
 
         /// <summary>

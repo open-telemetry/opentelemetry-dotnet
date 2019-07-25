@@ -57,7 +57,7 @@ namespace OpenTelemetry.Collector.AspNetCore
                         AspNetCoreCollectorEventSource.Log.ExceptionInCustomSampler(e);
                     }
 
-                    return s == null ? sampler : s;
+                    return s ?? sampler;
                 });
             this.diagnosticSourceSubscriber.Subscribe();
         }

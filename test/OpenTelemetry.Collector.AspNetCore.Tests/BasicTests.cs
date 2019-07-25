@@ -23,7 +23,6 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using Microsoft.Extensions.DependencyInjection;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Internal;
     using Moq;
     using Microsoft.AspNetCore.TestHost;
     using System;
@@ -41,11 +40,10 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         public BasicTests(WebApplicationFactory<Startup> factory)
         {
             this.factory = factory;
-            
         }
 
         [Fact]
-        public async Task SuccesfulTemplateControllerCallGeneratesASpan()
+        public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
             var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
@@ -89,7 +87,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task SuccesfulTemplateControllerCallUsesParentContext()
+        public async Task SuccessfulTemplateControllerCallUsesParentContext()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
 

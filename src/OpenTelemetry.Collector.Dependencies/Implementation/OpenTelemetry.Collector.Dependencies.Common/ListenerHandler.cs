@@ -42,9 +42,9 @@ namespace OpenTelemetry.Collector.Dependencies.Common
         {
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null)
+            if (span == null || span == BlankSpan.Instance)
             {
-                // TODO: Notify that span got lost
+                DependenciesCollectorEventSource.Log.NullOrBlankSpan("ListenerHandler.OnStopActivity");
                 return;
             }
 

@@ -14,13 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System.Linq;
+
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     using Moq;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Sampler;
     using System;
     using System.Diagnostics;
@@ -28,14 +28,13 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
     using System.Threading.Tasks;
     using Xunit;
 
-    public partial class HttpClientTests
+    public partial class HttpClientTests : IDisposable
     {
-        [Fact]
-        public async Task HttpDepenenciesCollectorInjectsHeadersAsync()
+        private readonly IDisposable serverLifeTime;
+        private readonly string url;
+        public HttpClientTests()
         {
-            var startEndHandler = new Mock<IStartEndHandler>();
-
-            var serverLifeTime = TestServer.RunServer(
+            this.serverLifeTime = TestServer.RunServer(
                 (ctx) =>
                 {
                     ctx.Response.StatusCode = 200;
@@ -44,45 +43,76 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 out var host,
                 out var port);
 
-            var url = $"http://{host}:{port}/";
+            this.url = $"http://{host}:{port}/";
+        }
 
-            ActivityTraceId expectedTraceId = default;
-            ActivitySpanId expectedSpanId = default;
+        [Fact]
+        public async Task HttpDependenciesCollectorInjectsHeadersAsync()
+        {
+            var startEndHandler = new Mock<IStartEndHandler>();
+            var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, null);
 
-            using (serverLifeTime)
+            var request = new HttpRequestMessage
             {
-                var tf = new Mock<ITextFormat>();
-                tf
-                    .Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<SpanContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                    .Callback((SpanContext sc, HttpRequestMessage obj, Action<HttpRequestMessage, string, string> setter) =>
-                    {
-                        expectedTraceId = sc.TraceId;
-                        expectedSpanId = sc.SpanId;
-                    });
+                RequestUri = new Uri(url),
+                Method = new HttpMethod("GET"),
+            };
 
-                var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
+            var parent = new Activity("parent")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+            parent.TraceStateString = "k1=v1,k2=v2";
 
-                using (var dc = new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
-                {
-
-                    using (var c = new HttpClient())
-                    {
-                        var request = new HttpRequestMessage
-                        {
-                            RequestUri = new Uri(url),
-                            Method = new HttpMethod("GET"),
-                        };
-
-                        await c.SendAsync(request);
-                    }
-                }
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
+            using (var c = new HttpClient())
+            {
+                await c.SendAsync(request);
             }
 
             Assert.Equal(2, startEndHandler.Invocations.Count); // begin and end was called
             var spanData = ((Span)startEndHandler.Invocations[1].Arguments[0]).ToSpanData();
 
-            Assert.Equal(expectedTraceId, spanData.Context.TraceId);
-            Assert.Equal(expectedSpanId, spanData.Context.SpanId);
+            Assert.Equal(parent.TraceId, spanData.Context.TraceId);
+            Assert.Equal(parent.SpanId, spanData.ParentSpanId);
+            Assert.NotEqual(parent.SpanId, spanData.Context.SpanId);
+            Assert.NotEqual(default, spanData.Context.SpanId);
+
+            Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
+            Assert.True(request.Headers.TryGetValues("tracestate", out var tracestates));
+            Assert.Single(traceparents);
+            Assert.Single(tracestates);
+
+            Assert.Equal($"00-{spanData.Context.TraceId}-{spanData.Context.SpanId}-01", traceparents.Single());
+            Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+        }
+
+        [Fact]
+        public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
+        {
+            var startEndHandler = new Mock<IStartEndHandler>();
+            var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, null);
+
+            var request = new HttpRequestMessage
+            {
+                RequestUri = new Uri(url),
+                Method = new HttpMethod("GET"),
+            };
+
+            request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
+
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
+            using (var c = new HttpClient())
+            {
+                await c.SendAsync(request);
+            }
+
+            Assert.Equal(0, startEndHandler.Invocations.Count); 
+        }
+
+        public void Dispose()
+        {
+            serverLifeTime?.Dispose();
+            Activity.Current = null;
         }
     }
 }
