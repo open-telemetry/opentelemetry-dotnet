@@ -34,8 +34,8 @@ namespace OpenTelemetry.Context.Propagation
         private const int TraceIdFieldIdOffset = VersionIdOffset + IdSize;
         private const int TraceIdOffset = TraceIdFieldIdOffset + IdSize;
         private const byte SpanIdFieldId = 1;
-        private const int SpaneIdFieldIdOffset = TraceIdOffset + TraceIdSize;
-        private const int SpanIdOffset = SpaneIdFieldIdOffset + IdSize;
+        private const int SpanIdFieldIdOffset = TraceIdOffset + TraceIdSize;
+        private const int SpanIdOffset = SpanIdFieldIdOffset + IdSize;
         private const byte TraceOptionsFieldId = 2;
         private const int TraceOptionFieldIdOffset = SpanIdOffset + SpanIdSize;
         private const int TraceOptionOffset = TraceOptionFieldIdOffset + IdSize;
@@ -96,11 +96,11 @@ namespace OpenTelemetry.Context.Propagation
             Span<byte> spanBytes = stackalloc byte[FormatLength];
             spanBytes[VersionIdOffset] = VersionId;
             spanBytes[TraceIdFieldIdOffset] = TraceIdFieldId;
-            spanBytes[SpaneIdFieldIdOffset] = SpanIdFieldId;
+            spanBytes[SpanIdFieldIdOffset] = SpanIdFieldId;
             spanBytes[TraceOptionFieldIdOffset] = TraceOptionsFieldId;
             spanBytes[TraceOptionOffset] = (byte)spanContext.TraceOptions;
-            spanContext.TraceId.CopyTo(spanBytes.Slice(TraceIdOffset));
-            spanContext.SpanId.CopyTo(spanBytes.Slice(SpanIdOffset));
+            spanContext.TraceId.CopyTo(spanBytes.Slice(TraceIdOffset, TraceIdSize));
+            spanContext.SpanId.CopyTo(spanBytes.Slice(SpanIdOffset, SpanIdSize));
 
             return spanBytes.ToArray();
         }

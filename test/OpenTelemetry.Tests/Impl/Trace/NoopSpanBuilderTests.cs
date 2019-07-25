@@ -37,9 +37,9 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Throws<ArgumentException>(() => spanBuilder.SetCreateChild(false));
 
             // Activity.Current wrong format
-            Activity.DefaultIdFormat = ActivityIdFormat.Hierarchical;
-            Activity.ForceDefaultIdFormat = true;
-            var a = new Activity("foo").Start(); // TODO SetIdFormat
+            var a = new Activity("foo")
+                .SetIdFormat(ActivityIdFormat.Hierarchical)
+                .Start(); 
             Assert.Throws<ArgumentException>(() => spanBuilder.SetCreateChild(false));
             a.Stop();
 

@@ -14,16 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-using System.Linq;
-
 namespace OpenTelemetry.Trace.Test
 {
+    using System;
+    using System.Linq;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using OpenTelemetry.Utils;
     using Xunit;
 
-    public class LinkTest
+    public class LinkTest : IDisposable
     {
         private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();
         private readonly SpanContext spanContext;
@@ -31,10 +30,6 @@ namespace OpenTelemetry.Trace.Test
 
         public LinkTest()
         {
-            // TODO: remove with next DiagnosticSource preview, switch to Activity setidformat
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
-
             spanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty); ;
 
             attributesMap.Add("MyAttributeKey0", "MyStringAttribute");
@@ -93,7 +88,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromSpanContext_FromActivity()
         {
-            var activity = new Activity("foo").Start();
+            var activity = new Activity("foo")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
             activity.TraceStateString = "k1=v1, k2=v2";
 
             var link = Link.FromActivity(activity);
@@ -106,6 +103,26 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal("v1", entries[0].Value);
             Assert.Equal("k2", entries[1].Key);
             Assert.Equal("v2", entries[1].Value);
+        }
+
+        [Fact]
+        public void FromSpanContext_FromNullActivity()
+        {
+            Assert.Throws<ArgumentNullException>( () => Link.FromActivity(null));
+        }
+
+        [Fact]
+        public void FromSpanContext_FromHierarchicalActivity()
+        {
+            var activity = new Activity("foo")
+                .SetIdFormat(ActivityIdFormat.Hierarchical)
+                .Start();
+            Assert.Throws<ArgumentException>(() => Link.FromActivity(activity));
+        }
+
+        public void Dispose()
+        {
+            Activity.Current = null;
         }
     }
 }

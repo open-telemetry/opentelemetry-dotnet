@@ -19,7 +19,6 @@ namespace OpenTelemetry.Trace.Test
     using System;
     using System.Diagnostics;
     using System.Collections.Generic;
-    using System.Globalization;
     using System.Linq;
     using Moq;
     using OpenTelemetry.Abstractions.Utils;
@@ -42,10 +41,6 @@ namespace OpenTelemetry.Trace.Test
         private readonly ITracer tracer;
         public SpanBuilderTest()
         {
-            // TODO: remove with next DiagnosticSource preview, switch to Activity setidformat
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
-
             // MockitoAnnotations.initMocks(this);
             spanBuilderOptions =
                 new SpanBuilderOptions(startEndHandler, traceConfig);
@@ -165,7 +160,9 @@ namespace OpenTelemetry.Trace.Test
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.None, Tracestate.Empty);
-            var activity = new Activity("foo").Start();
+            var activity = new Activity("foo")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
 
             var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetParent(spanContext)
@@ -185,7 +182,9 @@ namespace OpenTelemetry.Trace.Test
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.None, Tracestate.Empty);
-            var activity = new Activity("foo").Start();
+            var activity = new Activity("foo")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
 
             var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetParent(spanContext)
@@ -205,7 +204,9 @@ namespace OpenTelemetry.Trace.Test
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.None, Tracestate.Empty);
-            var activity = new Activity("foo").Start();
+            var activity = new Activity("foo")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
 
             var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetCreateChild(false)
@@ -271,7 +272,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanInScopeOfCurrentActivity()
         {
-            var parentActivity = new Activity(SpanName).Start();
+            var parentActivity = new Activity(SpanName)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
             parentActivity.TraceStateString = "k1=v1,k2=v2";
 
             var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
@@ -292,7 +295,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanInScopeOfCurrentActivityRecorded()
         {
-            var parentActivity = new Activity(SpanName).Start();
+            var parentActivity = new Activity(SpanName)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
             parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
@@ -332,7 +337,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFromExplicitActivity()
         {
-            var parentActivity = new Activity(SpanName).Start();
+            var parentActivity = new Activity(SpanName)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
             parentActivity.TraceStateString = "k1=v1,k2=v2";
             parentActivity.Stop();
 
@@ -357,7 +364,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFromExplicitRecordedActivity()
         {
-            var parentActivity = new Activity(SpanName).Start();
+            var parentActivity = new Activity(SpanName)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
             parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             parentActivity.Stop();
 
@@ -375,7 +384,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFromCurrentActivity()
         {
-            var activity = new Activity(SpanName).Start();
+            var activity = new Activity(SpanName)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
             activity.TraceStateString = "k1=v1,k2=v2";
 
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
@@ -396,7 +407,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFromCurrentRecordedActivity()
         {
-            var activity = new Activity(SpanName).Start();
+            var activity = new Activity(SpanName)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
@@ -586,7 +599,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_WithLinkFromActivity()
         {
-            var activityLink = new Activity("foo").Start();
+            var activityLink = new Activity("foo")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
             activityLink.Stop();
 
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
@@ -599,6 +614,8 @@ namespace OpenTelemetry.Trace.Test
 
             Assert.Single(links);
 
+            Assert.NotEqual(default, activityLink.TraceId);
+            Assert.NotEqual(default, activityLink.SpanId);
             Assert.Equal(activityLink.TraceId, links[0].Context.TraceId);
             Assert.Equal(activityLink.SpanId, links[0].Context.SpanId);
             Assert.Equal(activityLink.ActivityTraceFlags, links[0].Context.TraceOptions);
@@ -869,9 +886,9 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentException>(() => spanBuilder.SetCreateChild(false));
 
             // Activity.Current wrong format
-            Activity.DefaultIdFormat = ActivityIdFormat.Hierarchical;
-            Activity.ForceDefaultIdFormat = true;
-            var a = new Activity("foo").Start(); // TODO SetIdFormat
+            var a = new Activity("foo")
+                .SetIdFormat(ActivityIdFormat.Hierarchical)
+                .Start(); 
             Assert.Throws<ArgumentException>(() => spanBuilder.SetCreateChild(false));
             a.Stop();
 

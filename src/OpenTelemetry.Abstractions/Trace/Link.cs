@@ -48,6 +48,16 @@ namespace OpenTelemetry.Trace
         /// <returns>New <see cref="ILink"/> instance.</returns>
         public static ILink FromActivity(Activity activity)
         {
+            if (activity == null)
+            {
+                throw new ArgumentNullException(nameof(activity));
+            }
+
+            if (activity.IdFormat != ActivityIdFormat.W3C)
+            {
+                throw new ArgumentException("Current Activity is not in W3C format");
+            }
+
             var tracestate = Tracestate.Empty;
             var tracestateBuilder = Tracestate.Builder;
             if (TracestateUtils.TryExtractTracestate(activity.TraceStateString, tracestateBuilder))

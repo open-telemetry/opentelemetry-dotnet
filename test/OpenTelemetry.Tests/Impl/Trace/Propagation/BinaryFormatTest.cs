@@ -46,8 +46,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void Propagate_SpanContextTracingEnabled()
         {
-            TestSpanContextConversion(
-            SpanContext.Create(TraceId, SpanId, ActivityTraceFlags.Recorded, Tracestate.Empty));
+            TestSpanContextConversion(SpanContext.Create(TraceId, SpanId, ActivityTraceFlags.Recorded, Tracestate.Empty));
         }
 
         [Fact]
