@@ -36,19 +36,11 @@ namespace OpenTelemetry.Trace
 
             TraceConfig = new Config.TraceConfig();
 
-            // TODO(bdrutu): Add a config/argument for supportInProcessStores.
-            if (eventQueue is SimpleEventQueue)
-            {
-                ExportComponent = Export.ExportComponent.CreateWithoutInProcessStores(eventQueue);
-            }
-            else
-            {
-                ExportComponent = Export.ExportComponent.CreateWithInProcessStores(eventQueue);
-            }
+            SpanExporter = Export.SpanExporter.Create();
 
             IStartEndHandler startEndHandler =
                 new StartEndHandler(
-                    ExportComponent.SpanExporter,
+                    SpanExporter,
                     eventQueue);
 
             tracer = new Tracer(startEndHandler, TraceConfig);
@@ -62,7 +54,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the exporter to use to upload spans.
         /// </summary>
-        public static IExportComponent ExportComponent { get; private set; }
+        public static ISpanExporter SpanExporter { get; private set; }
 
         /// <summary>
         /// Gets the trace config.
