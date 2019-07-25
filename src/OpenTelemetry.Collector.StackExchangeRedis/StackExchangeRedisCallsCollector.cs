@@ -32,7 +32,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
     public class StackExchangeRedisCallsCollector : IDisposable
     {
         private readonly ITracer tracer;
-        private readonly IExportComponent exporter;
+        private readonly ISpanExporter exporter;
         private readonly ISampler sampler;
 
         private readonly CancellationTokenSource cancellationTokenSource;
@@ -46,11 +46,11 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="sampler">Sampler to use to sample dependnecy calls.</param>
-        /// <param name="exportComponent">TEMPORARY: handler to send data to.</param>
-        public StackExchangeRedisCallsCollector(ITracer tracer, ISampler sampler, IExportComponent exportComponent)
+        /// <param name="exporter">TEMPORARY: handler to send data to.</param>
+        public StackExchangeRedisCallsCollector(ITracer tracer, ISampler sampler, ISpanExporter exporter)
         {
             this.tracer = tracer;
-            this.exporter = exportComponent;
+            this.exporter = exporter;
             this.sampler = sampler;
 
             this.cancellationTokenSource = new CancellationTokenSource();
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
 
                 foreach (var s in spans)
                 {
-                    this.exporter.SpanExporter.ExportAsync(s, CancellationToken.None).Wait();
+                    this.exporter.ExportAsync(s, CancellationToken.None).Wait();
                 }
 
                 Thread.Sleep(TimeSpan.FromSeconds(1));

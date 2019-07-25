@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
 
         private readonly IViewManager viewManager;
 
-        private readonly IExportComponent exportComponent;
+        private readonly ISpanExporter exporter;
 
         private readonly object lck = new object();
 
@@ -49,12 +49,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
         /// Initializes a new instance of the <see cref="ApplicationInsightsExporter"/> class.
         /// This exporter allows to send Open Census data to Azure Application Insights.
         /// </summary>
-        /// <param name="exportComponent">Exporter to get traces and metrics from.</param>
+        /// <param name="exporter">Exporter to get traces and metrics from.</param>
         /// <param name="viewManager">View manager to get stats from.</param>
         /// <param name="telemetryConfiguration">Telemetry configuration to use to report telemetry.</param>
-        public ApplicationInsightsExporter(IExportComponent exportComponent, IViewManager viewManager, TelemetryConfiguration telemetryConfiguration)
+        public ApplicationInsightsExporter(ISpanExporter exporter, IViewManager viewManager, TelemetryConfiguration telemetryConfiguration)
         {
-            this.exportComponent = exportComponent;
+            this.exporter = exporter;
             this.viewManager = viewManager;
             this.telemetryConfiguration = telemetryConfiguration;
         }
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
 
                 this.handler = new TraceExporterHandler(this.telemetryConfiguration);
 
-                this.exportComponent.SpanExporter.RegisterHandler(TraceExporterName, this.handler);
+                this.exporter.RegisterHandler(TraceExporterName, this.handler);
 
                 this.tokenSource = new CancellationTokenSource();
 
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                     return;
                 }
 
-                this.exportComponent.SpanExporter.UnregisterHandler(TraceExporterName);
+                this.exporter.UnregisterHandler(TraceExporterName);
                 this.tokenSource.Cancel();
                 this.workerThread.Wait();
                 this.tokenSource = null;

@@ -36,7 +36,7 @@ namespace Samples
                     AgentHost = host,
                     AgentPort = port,
                 },
-                Tracing.ExportComponent);
+                Tracing.SpanExporter);
                 
             exporter.Start();
 
@@ -64,7 +64,7 @@ namespace Samples
             }
 
             // 5. Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
-            Tracing.ExportComponent.SpanExporter.Dispose();
+            Tracing.SpanExporter.Dispose();
 
             return null;
         }

@@ -36,7 +36,7 @@ namespace Samples
                     Endpoint = new Uri(zipkinUri),
                     ServiceName = "tracing-to-zipkin-service",
                 },
-                Tracing.ExportComponent);
+                Tracing.SpanExporter);
             exporter.Start();
 
             // 2. Configure 100% sample rate for the purposes of the demo
@@ -51,7 +51,7 @@ namespace Samples
             // but if not - you can use it as follows:
             var tracer = Tracing.Tracer;
 
-            var collector = new StackExchangeRedisCallsCollector(tracer, null, Tracing.ExportComponent);
+            var collector = new StackExchangeRedisCallsCollector(tracer, null, Tracing.SpanExporter);
 
             // connect to the server
             var connection = ConnectionMultiplexer.Connect("localhost:6379");
@@ -71,7 +71,7 @@ namespace Samples
             }
 
             // 5. Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
-            Tracing.ExportComponent.SpanExporter.Dispose();
+            Tracing.SpanExporter.Dispose();
 
             return null;
         }

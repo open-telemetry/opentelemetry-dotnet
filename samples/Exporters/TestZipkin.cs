@@ -34,7 +34,7 @@ namespace Samples
                     Endpoint = new Uri(zipkinUri),
                     ServiceName = "tracing-to-zipkin-service",
                 },
-                Tracing.ExportComponent);
+                Tracing.SpanExporter);
             exporter.Start();
 
             // 2. Configure 100% sample rate for the purposes of the demo
@@ -60,7 +60,7 @@ namespace Samples
             }
 
             // 5. Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
-            Tracing.ExportComponent.SpanExporter.Dispose();
+            Tracing.SpanExporter.Dispose();
 
             return null;
         }
