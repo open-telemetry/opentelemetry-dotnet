@@ -22,12 +22,10 @@ namespace OpenTelemetry.Collector.Dependencies.Common
 
     internal class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>, IDisposable
     {
-        private readonly string sourceName;
         private readonly ListenerHandler handler;
 
-        public DiagnosticSourceListener(string sourceName, ListenerHandler handler)
+        public DiagnosticSourceListener(ListenerHandler handler)
         {
-            this.sourceName = sourceName;
             this.handler = handler;
         }
 
@@ -45,7 +43,7 @@ namespace OpenTelemetry.Collector.Dependencies.Common
         {
             if (Activity.Current == null)
             {
-                Debug.WriteLine("Activity is null " + value.Key);
+                DependenciesCollectorEventSource.Log.NullActivity(value.Key);
                 return;
             }
 
@@ -68,10 +66,9 @@ namespace OpenTelemetry.Collector.Dependencies.Common
                     this.handler.OnCustom(value.Key, Activity.Current, value.Value);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Debug.WriteLine(e);
-                // TODO: make sure to output the handler name as part of error message
+                DependenciesCollectorEventSource.Log.UnknownErrorProcessingEvent(this.handler?.SourceName, value.Key, ex);
             }
         }
 

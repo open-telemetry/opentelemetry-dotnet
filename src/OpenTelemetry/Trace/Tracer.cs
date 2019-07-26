@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     using System;
+    using System.Diagnostics;
     using System.Threading;
     using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
@@ -33,6 +34,12 @@ namespace OpenTelemetry.Trace
 
         private readonly SpanBuilderOptions spanBuilderOptions;
         private readonly SpanExporter spanExporter;
+
+        static Tracer()
+        {
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+        }
 
         /// <summary>
         /// Creates an instance of <see cref="ITracer"/>.

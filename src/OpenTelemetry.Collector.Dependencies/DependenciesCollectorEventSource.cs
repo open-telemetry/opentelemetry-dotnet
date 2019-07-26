@@ -38,16 +38,28 @@ namespace OpenTelemetry.Collector.Dependencies
             }
         }
 
-        [Event(1, Message = "Context is NULL in end callback. Span will not be recorded.", Level = EventLevel.Warning)]
-        public void NullContext()
+        [Event(1, Message = "Span is NULL or blank in the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
+        public void NullOrBlankSpan(string eventName)
         {
-            this.WriteEvent(1);
+            this.WriteEvent(1, eventName);
         }
 
         [Event(2, Message = "Error getting custom sampler, the default sampler will be used. Exception : {0}", Level = EventLevel.Warning)]
         public void ExceptionInCustomSampler(string ex)
         {
             this.WriteEvent(2, ex);
+        }
+
+        [Event(3, Message = "Current Activity is NULL the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
+        public void NullActivity(string eventName)
+        {
+            this.WriteEvent(3, eventName);
+        }
+
+        [Event(4, Message = "Unknown error processing event '{0}' from handler '{1}', Exception: {2}", Level = EventLevel.Error)]
+        public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
+        {
+            this.WriteEvent(4, handlerName, eventName, ToInvariantString(ex));
         }
 
         /// <summary>

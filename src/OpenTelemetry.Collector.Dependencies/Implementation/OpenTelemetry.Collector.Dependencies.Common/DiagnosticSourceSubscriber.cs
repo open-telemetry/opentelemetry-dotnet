@@ -57,7 +57,7 @@ namespace OpenTelemetry.Collector.Dependencies.Common
                 {
                     this.subscriptions.GetOrAdd(value.Name, name =>
                     {
-                        var dl = new DiagnosticSourceListener(value.Name, this.handlers[value.Name](this.tracer, this.sampler));
+                        var dl = new DiagnosticSourceListener(this.handlers[value.Name](this.tracer, this.sampler));
                         dl.Subscription = value.Subscribe(dl);
                         return dl;
                     });

@@ -87,7 +87,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
         [Theory]
         [MemberData(nameof(TestData))]
-        public async Task HttpOutCallsAreCollectedSuccesfullyAsync(HttpOutTestCase tc)
+        public async Task HttpOutCallsAreCollectedSuccessfullyAsync(HttpOutTestCase tc)
         {
             var serverLifeTime = TestServer.RunServer(
                 (ctx) =>
@@ -194,7 +194,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 ]
 ")));
 
-            var t = (Task)this.GetType().InvokeMember(nameof(HttpOutCallsAreCollectedSuccesfullyAsync), BindingFlags.InvokeMethod, null, this, getArgumentsFromTestCaseObject(input).First());
+            var t = (Task)this.GetType().InvokeMember(nameof(HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, getArgumentsFromTestCaseObject(input).First());
             await t;
         }
 
