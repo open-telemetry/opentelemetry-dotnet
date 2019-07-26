@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Collectors.Azure
+namespace OpenTelemetry.Collector.Dependencies
 {
     using System;
     using System.Collections.Concurrent;
@@ -62,19 +62,26 @@ namespace OpenTelemetry.Collectors.Azure
 
         public void OnNext(KeyValuePair<string, object> value)
         {
-            if (value.Key.EndsWith("Start"))
+            try
             {
-                this.OnStartActivity(Activity.Current, value.Value);
+                if (value.Key.EndsWith("Start"))
+                {
+                    this.OnStartActivity(Activity.Current, value.Value);
+                }
+                else if (value.Key.EndsWith("Stop"))
+                {
+                    // Current.Parent is used because OT wraps additional Activity over
+                    this.OnStopActivity(Activity.Current, value.Value);
+                }
+                else if (value.Key.EndsWith("Exception"))
+                {
+                    // Current.Parent is used because OT wraps additional Activity over
+                    this.OnException(Activity.Current, value.Value);
+                }
             }
-            else if (value.Key.EndsWith("Stop"))
+            catch (Exception)
             {
-                // Current.Parent is used because OT wraps additional Activity over
-                this.OnStopActivity(Activity.Current.Parent, value.Value);
-            }
-            else if (value.Key.EndsWith("Exception"))
-            {
-                // Current.Parent is used because OT wraps additional Activity over
-                this.OnException(Activity.Current.Parent, value.Value);
+                // TODO: Log
             }
         }
 
@@ -101,6 +108,8 @@ namespace OpenTelemetry.Collectors.Azure
             }
 
             var span = this.tracer.SpanBuilder(operationName)
+                .SetCreateChild(false)
+                .SetSpanKind(SpanKind.Client)
                 .SetSampler(this.sampler)
                 .StartSpan();
 
