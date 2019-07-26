@@ -127,14 +127,8 @@ namespace OpenTelemetry.Collector.Dependencies
         private void OnException(Activity current, object valueValue)
         {
             var span = this.tracer.CurrentSpan;
-            foreach (var keyValuePair in current.Tags)
-            {
-                span.SetAttribute(keyValuePair.Key, keyValuePair.Value);
-            }
 
-            span.Status = Status.Unknown;
-
-            this.tracer.CurrentSpan.End();
+            span.Status = Status.Unknown.WithDescription(valueValue?.ToString());
         }
     }
 }
