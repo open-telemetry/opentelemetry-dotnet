@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Collector.Dependencies
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Diagnostics;
     using OpenTelemetry.Context;
@@ -25,8 +24,6 @@ namespace OpenTelemetry.Collector.Dependencies
 
     public class AzureSdkCollector : IDisposable, IObserver<DiagnosticListener>, IObserver<KeyValuePair<string, object>>
     {
-        private readonly ConcurrentDictionary<Activity, IScope> scopes = new ConcurrentDictionary<Activity, IScope>(new ActivityReferenceEqualityComparer());
-
         private readonly ITracer tracer;
 
         private readonly ISampler sampler;
@@ -113,7 +110,7 @@ namespace OpenTelemetry.Collector.Dependencies
                 .SetSampler(this.sampler)
                 .StartSpan();
 
-            this.scopes.TryAdd(current, this.tracer.WithSpan(span));
+            this.tracer.WithSpan(span);
         }
 
         private void OnStopActivity(Activity current, object valueValue)
@@ -124,9 +121,7 @@ namespace OpenTelemetry.Collector.Dependencies
                 span.SetAttribute(keyValuePair.Key, keyValuePair.Value);
             }
 
-            this.scopes.TryRemove(current, out var scope);
-
-            scope?.Dispose();
+            this.tracer.CurrentSpan.End();
         }
 
         private void OnException(Activity current, object valueValue)
@@ -139,21 +134,7 @@ namespace OpenTelemetry.Collector.Dependencies
 
             span.Status = Status.Unknown;
 
-            this.scopes.TryRemove(current, out var scope);
-            scope?.Dispose();
-        }
-
-        public class ActivityReferenceEqualityComparer : EqualityComparer<Activity>
-        {
-            public override bool Equals(Activity x, Activity y)
-            {
-                return ReferenceEquals(x, y);
-            }
-
-            public override int GetHashCode(Activity obj)
-            {
-                return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
-            }
+            this.tracer.CurrentSpan.End();
         }
     }
 }
