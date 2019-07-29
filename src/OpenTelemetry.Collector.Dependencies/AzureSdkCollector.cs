@@ -110,6 +110,8 @@ namespace OpenTelemetry.Collector.Dependencies
                 .SetSampler(this.sampler)
                 .StartSpan();
 
+            span.Status = Status.Ok;
+
             this.tracer.WithSpan(span);
         }
 
