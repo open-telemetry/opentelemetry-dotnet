@@ -39,7 +39,7 @@ namespace OpenTelemetry.Collector.Dependencies
         public DependenciesCollector(DependenciesCollectorOptions options, ITracer tracer, ISampler sampler)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-                new Dictionary<string, Func<ITracer, Func<HttpRequestMessage, ISampler>, ListenerHandler>>()
+                new Dictionary<string, Func<ITracer, Func<object, ISampler>, ListenerHandler>>()
                 { { "HttpHandlerDiagnosticListener", (t, s) => new HttpHandlerDiagnosticListener(t, s) } },
                 tracer,
                 x =>

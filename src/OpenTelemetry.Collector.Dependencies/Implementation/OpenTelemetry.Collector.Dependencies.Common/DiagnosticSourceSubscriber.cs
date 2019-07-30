@@ -26,14 +26,14 @@ namespace OpenTelemetry.Collector.Dependencies.Common
 
     internal class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
     {
-        private readonly Dictionary<string, Func<ITracer, Func<HttpRequestMessage, ISampler>, ListenerHandler>> handlers;
+        private readonly Dictionary<string, Func<ITracer, Func<object, ISampler>, ListenerHandler>> handlers;
         private readonly ITracer tracer;
-        private readonly Func<HttpRequestMessage, ISampler> sampler;
+        private readonly Func<object, ISampler> sampler;
         private ConcurrentDictionary<string, DiagnosticSourceListener> subscriptions;
         private bool disposing;
         private IDisposable subscription;
 
-        public DiagnosticSourceSubscriber(Dictionary<string, Func<ITracer, Func<HttpRequestMessage, ISampler>, ListenerHandler>> handlers, ITracer tracer, Func<HttpRequestMessage, ISampler> sampler)
+        public DiagnosticSourceSubscriber(Dictionary<string, Func<ITracer, Func<object, ISampler>, ListenerHandler>> handlers, ITracer tracer, Func<object, ISampler> sampler)
         {
             this.subscriptions = new ConcurrentDictionary<string, DiagnosticSourceListener>();
             this.handlers = handlers;
