@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Collector.Dependencies
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using OpenTelemetry.Collector.Dependencies.Common;
     using OpenTelemetry.Trace;
@@ -28,24 +27,11 @@ namespace OpenTelemetry.Collector.Dependencies
 
         private readonly ISampler sampler;
 
-        private List<IDisposable> subscriptions = new List<IDisposable>();
-
         public AzureSdkDiagnosticListener(string sourceName, ITracer tracer, ISampler sampler)
             : base(sourceName, tracer, null)
         {
             this.tracer = tracer;
             this.sampler = sampler;
-        }
-
-        public void Dispose()
-        {
-            lock (this.subscriptions)
-            {
-                foreach (var subscription in this.subscriptions)
-                {
-                    subscription.Dispose();
-                }
-            }
         }
 
         public void OnCompleted()
