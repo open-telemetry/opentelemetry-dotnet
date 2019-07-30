@@ -59,10 +59,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 bool shouldExport = true;
                 foreach (var label in data.Attributes.AttributeMap)
                 {
-                    if (label.Key == "http.url" && label.Value?.ToString() == this.serviceEndpoint)
+                    if (label.Key == "http.url")
                     {
-                        // do not track calls to Zipkin
-                        shouldExport = false;
+                        if (label.Value is string urlStr && urlStr == this.serviceEndpoint)
+                        {
+                            // do not track calls to Zipkin
+                            shouldExport = false;
+                        }
+
                         break;
                     }
                 }
@@ -107,7 +111,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             foreach (var label in spanData.Attributes.AttributeMap)
             {
-                spanBuilder.PutTag(label.Key, (string)label.Value);
+                spanBuilder.PutTag(label.Key, label.Value.ToString());
             }
 
             var status = spanData.Status;
