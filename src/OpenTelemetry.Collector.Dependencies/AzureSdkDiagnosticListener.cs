@@ -44,21 +44,25 @@ namespace OpenTelemetry.Collector.Dependencies
 
         public override void OnStartActivity(Activity current, object valueValue)
         {
+            bool isHttp = false;
             var operationName = current.OperationName;
             foreach (var keyValuePair in current.Tags)
             {
                 if (keyValuePair.Key == "http.url")
                 {
+                    isHttp = true;
                     operationName = keyValuePair.Value;
                     break;
                 }
             }
 
-            var span = this.tracer.SpanBuilder(operationName)
+            var spanBuilder = this.tracer.SpanBuilder(operationName)
                 .SetCreateChild(false)
-                .SetSpanKind(SpanKind.Client)
-                .SetSampler(this.sampler)
-                .StartSpan();
+                .SetSampler(this.sampler);
+
+            spanBuilder.SetSpanKind(isHttp ? SpanKind.Client : SpanKind.Internal);
+
+            var span = spanBuilder.StartSpan();
 
             span.Status = Status.Ok;
 
