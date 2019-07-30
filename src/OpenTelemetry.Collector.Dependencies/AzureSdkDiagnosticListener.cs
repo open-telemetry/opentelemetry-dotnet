@@ -1,4 +1,4 @@
-﻿// <copyright file="AzureSdkCollector.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AzureSdkDiagnosticListener.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,10 +19,10 @@ namespace OpenTelemetry.Collector.Dependencies
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using OpenTelemetry.Context;
+    using OpenTelemetry.Collector.Dependencies.Common;
     using OpenTelemetry.Trace;
 
-    public class AzureSdkCollector : IDisposable, IObserver<DiagnosticListener>, IObserver<KeyValuePair<string, object>>
+    internal class AzureSdkDiagnosticListener : ListenerHandler
     {
         private readonly ITracer tracer;
 
@@ -30,12 +30,11 @@ namespace OpenTelemetry.Collector.Dependencies
 
         private List<IDisposable> subscriptions = new List<IDisposable>();
 
-        public AzureSdkCollector(ITracer tracer, ISampler sampler)
+        public AzureSdkDiagnosticListener(string sourceName, ITracer tracer, ISampler sampler)
+            : base(sourceName, tracer, null)
         {
             this.tracer = tracer;
             this.sampler = sampler;
-
-            this.subscriptions.Add(DiagnosticListener.AllListeners.Subscribe(this));
         }
 
         public void Dispose()
@@ -57,43 +56,7 @@ namespace OpenTelemetry.Collector.Dependencies
         {
         }
 
-        public void OnNext(KeyValuePair<string, object> value)
-        {
-            try
-            {
-                if (value.Key.EndsWith("Start"))
-                {
-                    this.OnStartActivity(Activity.Current, value.Value);
-                }
-                else if (value.Key.EndsWith("Stop"))
-                {
-                    // Current.Parent is used because OT wraps additional Activity over
-                    this.OnStopActivity(Activity.Current, value.Value);
-                }
-                else if (value.Key.EndsWith("Exception"))
-                {
-                    // Current.Parent is used because OT wraps additional Activity over
-                    this.OnException(Activity.Current, value.Value);
-                }
-            }
-            catch (Exception)
-            {
-                // TODO: Log
-            }
-        }
-
-        public void OnNext(DiagnosticListener value)
-        {
-            if (value.Name.StartsWith("Azure"))
-            {
-                lock (this.subscriptions)
-                {
-                    this.subscriptions.Add(value.Subscribe(this));
-                }
-            }
-        }
-
-        private void OnStartActivity(Activity current, object valueValue)
+        public override void OnStartActivity(Activity current, object valueValue)
         {
             var operationName = current.OperationName;
             foreach (var keyValuePair in current.Tags)
@@ -101,6 +64,7 @@ namespace OpenTelemetry.Collector.Dependencies
                 if (keyValuePair.Key == "http.url")
                 {
                     operationName = keyValuePair.Value;
+                    break;
                 }
             }
 
@@ -115,7 +79,7 @@ namespace OpenTelemetry.Collector.Dependencies
             this.tracer.WithSpan(span);
         }
 
-        private void OnStopActivity(Activity current, object valueValue)
+        public override void OnStopActivity(Activity current, object valueValue)
         {
             var span = this.tracer.CurrentSpan;
             foreach (var keyValuePair in current.Tags)
@@ -126,7 +90,7 @@ namespace OpenTelemetry.Collector.Dependencies
             this.tracer.CurrentSpan.End();
         }
 
-        private void OnException(Activity current, object valueValue)
+        public override void OnException(Activity current, object valueValue)
         {
             var span = this.tracer.CurrentSpan;
 
