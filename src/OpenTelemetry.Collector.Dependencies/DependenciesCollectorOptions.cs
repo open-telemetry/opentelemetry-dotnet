@@ -16,11 +16,6 @@
 
 namespace OpenTelemetry.Collector.Dependencies
 {
-    using System;
-    using System.Net.Http;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Sampler;
-
     /// <summary>
     /// Options for dependencies collector.
     /// </summary>
@@ -29,16 +24,8 @@ namespace OpenTelemetry.Collector.Dependencies
         /// <summary>
         /// Initializes a new instance of the <see cref="DependenciesCollectorOptions"/> class.
         /// </summary>
-        /// <param name="sampler">Custom sampling function, if any.</param>
-        public DependenciesCollectorOptions(ISampler sampler = null)
+        public DependenciesCollectorOptions()
         {
-            this.CustomSampler = sampler;
         }
-
-        /// <summary>
-        /// Gets a hook to exclude calls based on domain
-        /// or other per-request criterion.
-        /// </summary>
-        public ISampler CustomSampler { get; private set; }
     }
 }

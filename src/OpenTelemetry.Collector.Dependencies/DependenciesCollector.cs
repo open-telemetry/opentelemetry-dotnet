@@ -44,7 +44,7 @@ namespace OpenTelemetry.Collector.Dependencies
                     ["HttpHandlerDiagnosticListener"] = (t, s) => new HttpHandlerDiagnosticListener(t, s),
                 },
                 tracer,
-                options.CustomSampler ?? sampler);
+                sampler);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
