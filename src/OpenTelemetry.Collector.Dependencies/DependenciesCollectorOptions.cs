@@ -26,32 +26,19 @@ namespace OpenTelemetry.Collector.Dependencies
     /// </summary>
     public class DependenciesCollectorOptions
     {
-        private static readonly Func<object, ISampler> DefaultSampler = (state) =>
-        {
-            // TODO we need list of known urls NOT to instrument see https://github.com/open-telemetry/opentelemetry-dotnet/issues/166
-            if (state is HttpRequestMessage request &&
-                request.RequestUri != null &&
-                request.RequestUri.ToString().Contains("zipkin.azurewebsites.net"))
-            {
-                return Samplers.NeverSample;
-            }
-
-            return null;
-        };
-
         /// <summary>
         /// Initializes a new instance of the <see cref="DependenciesCollectorOptions"/> class.
         /// </summary>
         /// <param name="sampler">Custom sampling function, if any.</param>
-        public DependenciesCollectorOptions(Func<object, ISampler> sampler = null)
+        public DependenciesCollectorOptions(ISampler sampler = null)
         {
-            this.CustomSampler = sampler ?? DefaultSampler;
+            this.CustomSampler = sampler;
         }
 
         /// <summary>
         /// Gets a hook to exclude calls based on domain
         /// or other per-request criterion.
         /// </summary>
-        public Func<object, ISampler> CustomSampler { get; private set; }
+        public ISampler CustomSampler { get; private set; }
     }
 }

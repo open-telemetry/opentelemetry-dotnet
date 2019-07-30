@@ -25,13 +25,13 @@ namespace OpenTelemetry.Collector.Dependencies.Common
     {
         protected readonly ITracer Tracer;
 
-        protected readonly Func<object, ISampler> SamplerFactory;
+        protected readonly ISampler Sampler;
 
-        public ListenerHandler(string sourceName, ITracer tracer, Func<object, ISampler> samplerFactory)
+        public ListenerHandler(string sourceName, ITracer tracer, ISampler sampler)
         {
             this.SourceName = sourceName;
             this.Tracer = tracer;
-            this.SamplerFactory = samplerFactory;
+            this.Sampler = sampler;
         }
 
         public string SourceName { get; }

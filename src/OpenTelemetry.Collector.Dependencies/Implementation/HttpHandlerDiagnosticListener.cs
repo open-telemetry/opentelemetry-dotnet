@@ -35,8 +35,8 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         private readonly PropertyFetcher stopRequestStatusFetcher = new PropertyFetcher("RequestTaskStatus");
         private readonly bool httpClientSupportsW3C = false;
 
-        public HttpHandlerDiagnosticListener(ITracer tracer, Func<object, ISampler> samplerFactory)
-            : base("HttpHandlerDiagnosticListener", tracer, samplerFactory)
+        public HttpHandlerDiagnosticListener(ITracer tracer, ISampler sampler)
+            : base("HttpHandlerDiagnosticListener", tracer, sampler)
         {
             var framework = Assembly
                 .GetEntryAssembly()?
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
             var span = this.Tracer.SpanBuilder(request.RequestUri.AbsolutePath)
                 .SetSpanKind(SpanKind.Client)
-                .SetSampler(this.SamplerFactory(request))
+                .SetSampler(this.Sampler)
                 .SetCreateChild(false)
                 .StartSpan();
 

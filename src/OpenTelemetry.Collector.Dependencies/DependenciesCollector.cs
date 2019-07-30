@@ -35,28 +35,16 @@ namespace OpenTelemetry.Collector.Dependencies
         /// </summary>
         /// <param name="options">Configuration options for dependencies collector.</param>
         /// <param name="tracer">Tracer to record traced with.</param>
-        /// <param name="sampler">Sampler to use to sample dependnecy calls.</param>
+        /// <param name="sampler">Sampler to use to sample dependency calls.</param>
         public DependenciesCollector(DependenciesCollectorOptions options, ITracer tracer, ISampler sampler)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-                new Dictionary<string, Func<ITracer, Func<object, ISampler>, ListenerHandler>>()
-                { { "HttpHandlerDiagnosticListener", (t, s) => new HttpHandlerDiagnosticListener(t, s) } },
-                tracer,
-                x =>
+                new Dictionary<string, Func<ITracer, ISampler, ListenerHandler>>
                 {
-                    ISampler s = null;
-                    try
-                    {
-                        s = options.CustomSampler(x);
-                    }
-                    catch (Exception e)
-                    {
-                        s = null;
-                        DependenciesCollectorEventSource.Log.ExceptionInCustomSampler(e);
-                    }
-
-                    return s ?? sampler;
-                    });
+                    ["HttpHandlerDiagnosticListener"] = (t, s) => new HttpHandlerDiagnosticListener(t, s),
+                },
+                tracer,
+                options.CustomSampler ?? sampler);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
