@@ -40,12 +40,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         private readonly ZipkinTraceExporterOptions options;
         private readonly ZipkinEndpoint localEndpoint;
         private readonly HttpClient httpClient;
+        private readonly string serviceEndpoint;
 
         public TraceExporterHandler(ZipkinTraceExporterOptions options, HttpClient client)
         {
             this.options = options;
             this.localEndpoint = this.GetLocalZipkinEndpoint();
             this.httpClient = client ?? new HttpClient();
+            this.serviceEndpoint = options.Endpoint?.ToString();
         }
 
         public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
@@ -54,8 +56,26 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             foreach (var data in spanDataList)
             {
-                var zipkinSpan = this.GenerateSpan(data, this.localEndpoint);
-                zipkinSpans.Add(zipkinSpan);
+                bool shouldExport = true;
+                foreach (var label in data.Attributes.AttributeMap)
+                {
+                    if (label.Key == "http.url")
+                    {
+                        if (label.Value is string urlStr && urlStr == this.serviceEndpoint)
+                        {
+                            // do not track calls to Zipkin
+                            shouldExport = false;
+                        }
+
+                        break;
+                    }
+                }
+
+                if (shouldExport)
+                {
+                    var zipkinSpan = this.GenerateSpan(data, this.localEndpoint);
+                    zipkinSpans.Add(zipkinSpan);
+                }
             }
 
             try
@@ -91,7 +111,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             foreach (var label in spanData.Attributes.AttributeMap)
             {
-                spanBuilder.PutTag(label.Key, (string)label.Value);
+                spanBuilder.PutTag(label.Key, label.Value.ToString());
             }
 
             var status = spanData.Status;
