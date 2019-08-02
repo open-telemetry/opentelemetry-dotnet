@@ -40,7 +40,11 @@ namespace OpenTelemetry.Collector.Dependencies
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
                 new Dictionary<string, Func<ITracer, Func<HttpRequestMessage, ISampler>, ListenerHandler>>()
-                { { "HttpHandlerDiagnosticListener", (t, s) => new HttpHandlerDiagnosticListener(t, s) } },
+                {
+                    { "HttpHandlerDiagnosticListener", (t, s) => new HttpHandlerDiagnosticListener(t, s) },
+                    { "Azure.Clients", (t, s) => new AzureSdkDiagnosticListener("Azure.Clients", t, sampler) },
+                    { "Azure.Pipeline", (t, s) => new AzureSdkDiagnosticListener("Azure.Pipeline", t, sampler) },
+                },
                 tracer,
                 x =>
                 {
