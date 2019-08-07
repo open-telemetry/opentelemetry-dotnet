@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
     using OpenTelemetry.Trace.Export;
 
     /// <summary>
-    /// Exporter of Open Census traces and metrics to Azure Application Insights.
+    /// Exporter of OpenTelemetry spans and metrics to Azure Application Insights.
     /// </summary>
     public class ApplicationInsightsExporter
     {
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ApplicationInsightsExporter"/> class.
-        /// This exporter allows to send Open Census data to Azure Application Insights.
+        /// This exporter allows to send OpenTelemetry data to Azure Application Insights.
         /// </summary>
         /// <param name="exporter">Exporter to get traces and metrics from.</param>
         /// <param name="viewManager">View manager to get stats from.</param>
