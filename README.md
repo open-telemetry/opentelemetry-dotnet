@@ -23,6 +23,11 @@ We encourage contributions. Use tags [up-for-grabs][up-for-grabs-issues] and
 
 ## Packages
 
+### Nightly builds:
+Myget feeds:
+- NuGet V3 feed: https://www.myget.org/F/opentelemetry/api/v3/index.json  
+- NuGet V2 feed: https://www.myget.org/F/opentelemetry/api/v2 
+
 ### API and implementation
 
 | Package                 | MyGet (CI)       | NuGet (releases) |
