@@ -66,8 +66,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                         Thread.Sleep(this.cancellationInterval);
                         sleepInterval = sleepInterval.Subtract(this.cancellationInterval);
                     }
-
-                    Thread.Sleep(sleepInterval);
                 }
             }
             catch (Exception ex)
