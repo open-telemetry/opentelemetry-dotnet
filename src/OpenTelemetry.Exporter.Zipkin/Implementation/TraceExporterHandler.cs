@@ -78,6 +78,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 }
             }
 
+            if (zipkinSpans.Count == 0)
+            {
+                return;
+            }
+
             try
             {
                 await this.SendSpansAsync(zipkinSpans);
