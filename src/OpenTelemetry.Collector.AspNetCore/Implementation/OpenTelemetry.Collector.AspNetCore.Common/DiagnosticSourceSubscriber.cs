@@ -30,15 +30,15 @@ namespace OpenTelemetry.Collector.AspNetCore.Common
         private readonly ITracer tracer;
         private readonly Func<HttpRequest, ISampler> sampler;
         private ConcurrentDictionary<string, DiagnosticSourceListener> subscriptions;
-        private bool disposing;
+        private long disposed;
         private IDisposable subscription;
 
         public DiagnosticSourceSubscriber(Dictionary<string, Func<ITracer, Func<HttpRequest, ISampler>, ListenerHandler>> handlers, ITracer tracer, Func<HttpRequest, ISampler> sampler)
         {
             this.subscriptions = new ConcurrentDictionary<string, DiagnosticSourceListener>();
-            this.handlers = handlers;
-            this.tracer = tracer;
-            this.sampler = sampler;
+            this.handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
+            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
         }
 
         public void Subscribe()
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Common
 
         public void OnNext(DiagnosticListener value)
         {
-            if (!Volatile.Read(ref this.disposing) && this.subscriptions != null)
+            if ((Interlocked.Read(ref this.disposed) == 0) && this.subscriptions != null)
             {
                 if (this.handlers.ContainsKey(value.Name))
                 {
@@ -75,7 +75,10 @@ namespace OpenTelemetry.Collector.AspNetCore.Common
 
         public void Dispose()
         {
-            Volatile.Write(ref this.disposing, true);
+            if (Interlocked.CompareExchange(ref this.disposed, 1, 0) == 1)
+            {
+                return;
+            }
 
             var subsCopy = this.subscriptions;
             this.subscriptions = null;
