@@ -36,6 +36,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         private const string TestTraceId = "d79bdda7eb9c4a9fa9bda52fe7b48b95";
         private const string TestSpanId = "d7ddeb4aa9a5e78b";
         private const string TestParentSpanId = "9ba79c9fbd2fb495";
+        private const string TestChannelEndpoint = "https://applicationinsights.com";
 
         private readonly byte[] testTraceIdBytes = { 0xd7, 0x9b, 0xdd, 0xa7, 0xeb, 0x9c, 0x4a, 0x9f, 0xa9, 0xbd, 0xa5, 0x2f, 0xe7, 0xb4, 0x8b, 0x95 };
         private readonly byte[] testSpanIdBytes = { 0xd7, 0xdd, 0xeb, 0x4a, 0xa9, 0xa5, 0xe7, 0x8b };
@@ -55,6 +56,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             ITelemetryChannel channel = new StubTelemetryChannel
             {
                 OnSend = t => sentItems.Enqueue(t),
+                EndpointAddress = TestChannelEndpoint,
             };
 
             configuration.TelemetryChannel = channel;
@@ -276,6 +278,62 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             // Assert.Equal("lf_unspecified-oc:0.0.0", dependency.Context.GetInternalContext().SdkVersion);
 
             Assert.True(string.IsNullOrEmpty(dependency.Type));
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_TracksInternalSpanAsDependency()
+        {
+            // ARRANGE
+            this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+
+            kind = SpanKind.Internal;
+
+            var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+
+            // ACT
+            var sentItems = this.ConvertSpan(span);
+
+            // ASSERT
+            Assert.Single(sentItems);
+            Assert.True(sentItems.Single() is DependencyTelemetry);
+
+            var dependency = sentItems.OfType<DependencyTelemetry>().Single();
+            Assert.Equal("spanName", dependency.Name);
+            Assert.Equal("InProc", dependency.Type);
+            Assert.Equal(now.AddSeconds(-1), dependency.Timestamp);
+            Assert.Equal(1, dependency.Duration.TotalSeconds);
+
+            Assert.Equal(TestTraceId, dependency.Context.Operation.Id);
+            Assert.Null(dependency.Context.Operation.ParentId);
+            Assert.Equal($"|{TestTraceId}.{TestSpanId}.", dependency.Id);
+
+            Assert.True(string.IsNullOrEmpty(dependency.ResultCode));
+            Assert.False(dependency.Success.HasValue);
+
+            // Assert.Equal("lf_unspecified-oc:0.0.0", dependency.Context.GetInternalContext().SdkVersion);
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_DoesNotTrackCallToAppInsights()
+        {
+            // ARRANGE
+            this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+
+            kind = SpanKind.Client;
+            attributes = Attributes.Create(new Dictionary<string, object>
+            {
+                { "http.url", TestChannelEndpoint },
+                { "http.method", "POST" },
+                { "http.status_code", 200 },
+            }, 0);
+
+            var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+
+            // ACT
+            var sentItems = this.ConvertSpan(span);
+
+            // ASSERT
+            Assert.Empty(sentItems);
         }
 
         [Fact]
@@ -518,20 +576,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         }
 
         [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnServerSpanKindAttribute()
-        {
-            this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
-            kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, object>() { { "span.kind", "server" } }, 0);
-
-            var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
-
-            var sentItems = this.ConvertSpan(span);
-
-            Assert.True(sentItems.Single() is RequestTelemetry);
-        }
-
-        [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnClientSpanKindAttribute()
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
@@ -563,22 +607,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnConsumerSpanKindAttribute()
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
-            kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, object>() { { "span.kind", "consumer" } }, 0);
-
-            var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
-
-            var sentItems = this.ConvertSpan(span);
-
-            Assert.True(sentItems.Single() is RequestTelemetry);
-        }
-
-        [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnOtherSpanKindAttribute()
-        {
-            this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
-            kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, object>() { { "span.kind", "other" } }, 0);
+            kind = SpanKind.Consumer;
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
