@@ -21,7 +21,7 @@ namespace OpenTelemetry.Exporter.Zipkin
     using OpenTelemetry.Trace.Export;
 
     /// <summary>
-    /// Exporter of Open Census traces to Zipkin.
+    /// Exporter of OpenTelemetry spans to Zipkin.
     /// </summary>
     public class ZipkinTraceExporter
     {
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZipkinTraceExporter"/> class.
-        /// This exporter sends Open Census traces to Zipkin.
+        /// This exporter sends OpenTelemetry spans to Zipkin.
         /// </summary>
         /// <param name="options">Zipkin exporter configuration options.</param>
         /// <param name="exporter">Exporter to get traces from.</param>
