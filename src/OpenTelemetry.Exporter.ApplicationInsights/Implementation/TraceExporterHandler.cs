@@ -30,23 +30,44 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
     internal class TraceExporterHandler : IHandler
     {
         private readonly TelemetryClient telemetryClient;
+        private readonly string serviceEndpoint;
 
         public TraceExporterHandler(TelemetryConfiguration telemetryConfiguration)
         {
             this.telemetryClient = new TelemetryClient(telemetryConfiguration);
+            this.serviceEndpoint = telemetryConfiguration.TelemetryChannel.EndpointAddress;
         }
 
         public Task ExportAsync(IEnumerable<SpanData> spanDataList)
         {
             foreach (var span in spanDataList)
             {
+                bool shouldExport = true;
+                string httpUrlAttr = null;
+
+                foreach (var attr in span.Attributes.AttributeMap)
+                {
+                    if (attr.Key == "http.url")
+                    {
+                        httpUrlAttr = attr.Value.ToString();
+                        if (httpUrlAttr == this.serviceEndpoint)
+                        {
+                            shouldExport = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (!shouldExport)
+                {
+                    continue;
+                }
+
                 this.ExtractGenericProperties(
                     span,
-                    out var resultKind,
-                    out var timestamp,
                     out var name,
                     out var resultCode,
-                    out var props,
+                    out var statusDescription,
                     out var traceId,
                     out var spanId,
                     out var parentId,
@@ -54,30 +75,42 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     out var success,
                     out var duration);
 
+                // BUILDING resulting telemetry
+                OperationTelemetry result;
+                if (span.Kind == SpanKind.Client || span.Kind == SpanKind.Internal || span.Kind == SpanKind.Producer)
+                {
+                    var resultD = new DependencyTelemetry();
+                    if (span.Kind == SpanKind.Internal)
+                    {
+                        resultD.Type = "InProc";
+                    }
+
+                    result = resultD;
+                }
+                else
+                {
+                    result = new RequestTelemetry();
+                }
+
                 string data = null;
                 string target = null;
                 string type = null;
                 string userAgent = null;
 
-                string spanKindAttr = null;
                 string errorAttr = null;
                 string httpStatusCodeAttr = null;
                 string httpMethodAttr = null;
                 string httpPathAttr = null;
                 string httpHostAttr = null;
-                string httpUrlAttr = null;
+
                 string httpUserAgentAttr = null;
                 string httpRouteAttr = null;
                 string httpPortAttr = null;
 
                 foreach (var attr in span.Attributes.AttributeMap)
                 {
-                    var key = attr.Key;
                     switch (attr.Key)
                     {
-                        case "span.kind":
-                            spanKindAttr = attr.Value.ToString();
-                            break;
                         case "error":
                             errorAttr = attr.Value.ToString();
                             break;
@@ -89,9 +122,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                             break;
                         case "http.host":
                             httpHostAttr = attr.Value.ToString();
-                            break;
-                        case "http.url":
-                            httpUrlAttr = attr.Value.ToString();
                             break;
                         case "http.status_code":
                             httpStatusCodeAttr = attr.Value.ToString();
@@ -108,21 +138,59 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                         default:
                             var value = attr.Value.ToString();
 
-                            AddPropertyWithAdjustedName(props, attr.Key, value);
+                            AddPropertyWithAdjustedName(result.Properties, attr.Key, value);
 
                             break;
                     }
                 }
 
+                this.OverwriteFieldsForHttpSpans(
+                    httpMethodAttr,
+                    httpUrlAttr,
+                    httpHostAttr,
+                    httpPathAttr,
+                    httpStatusCodeAttr,
+                    httpUserAgentAttr,
+                    httpRouteAttr,
+                    httpPortAttr,
+                    ref name,
+                    ref resultCode,
+                    ref data,
+                    ref target,
+                    ref type,
+                    ref userAgent);
+
+                if (result is DependencyTelemetry dependency)
+                {
+                    dependency.Data = data;
+                    dependency.Target = target;
+                    dependency.Data = data;
+                    dependency.ResultCode = resultCode;
+
+                    if (string.IsNullOrEmpty(dependency.Type))
+                    {
+                        dependency.Type = type;
+                    }
+                }
+                else if (result is RequestTelemetry request)
+                {
+                    if (Uri.TryCreate(data, UriKind.RelativeOrAbsolute, out var url))
+                    {
+                        request.Url = url;
+                    }
+
+                    request.ResponseCode = resultCode;
+                }
+
                 var linkId = 0;
                 foreach (var link in span.Links.Links)
                 {
-                    AddPropertyWithAdjustedName(props, "link" + linkId + "_traceId", link.Context.TraceId.ToHexString());
-                    AddPropertyWithAdjustedName(props, "link" + linkId + "_spanId", link.Context.SpanId.ToHexString());
+                    AddPropertyWithAdjustedName(result.Properties, "link" + linkId + "_traceId", link.Context.TraceId.ToHexString());
+                    AddPropertyWithAdjustedName(result.Properties, "link" + linkId + "_spanId", link.Context.SpanId.ToHexString());
 
                     foreach (var attr in link.Attributes)
                     {
-                        AddPropertyWithAdjustedName(props, "link" + linkId + "_" + attr.Key, attr.Value.ToString());
+                        AddPropertyWithAdjustedName(result.Properties, "link" + linkId + "_" + attr.Key, attr.Value.ToString());
                     }
 
                     ++linkId;
@@ -150,65 +218,25 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     this.telemetryClient.Track(log);
                 }
 
-                this.OverwriteSpanKindFromAttribute(spanKindAttr, ref resultKind);
                 this.OverwriteErrorAttribute(errorAttr, ref success);
-                this.OverwriteFieldsForHttpSpans(
-                    httpMethodAttr,
-                    httpUrlAttr,
-                    httpHostAttr,
-                    httpPathAttr,
-                    httpStatusCodeAttr,
-                    httpUserAgentAttr,
-                    httpRouteAttr,
-                    httpPortAttr,
-                    ref name,
-                    ref resultCode,
-                    ref data,
-                    ref target,
-                    ref type,
-                    ref userAgent);
-
-                // BUILDING resulting telemetry
-                OperationTelemetry result;
-                if (resultKind == SpanKind.Client || resultKind == SpanKind.Producer)
-                {
-                    var resultD = new DependencyTelemetry
-                    {
-                        ResultCode = resultCode,
-                        Data = data,
-                        Target = target,
-                        Type = type,
-                    };
-
-                    result = resultD;
-                }
-                else
-                {
-                    var resultR = new RequestTelemetry();
-                    resultR.ResponseCode = resultCode;
-                    Uri.TryCreate(data, UriKind.RelativeOrAbsolute, out var url);
-                    resultR.Url = url;
-                    result = resultR;
-                }
 
                 result.Success = success;
+                if (statusDescription != null)
+                {
+                    AddPropertyWithAdjustedName(result.Properties, "statusDescription", statusDescription);
+                }
 
-                result.Timestamp = timestamp;
+                result.Timestamp = span.StartTimestamp;
                 result.Name = name;
                 result.Context.Operation.Id = traceId;
                 result.Context.User.UserAgent = userAgent;
-
-                foreach (var prop in props)
-                {
-                    AddPropertyWithAdjustedName(result.Properties, prop.Key, prop.Value);
-                }
 
                 if (parentId != null)
                 {
                     result.Context.Operation.ParentId = string.Concat("|", traceId, ".", parentId, ".");
                 }
 
-                // TODO: I don't understant why this concatanation is required
+                // TODO: this concatenation is required for Application Insights backward compatibility reasons
                 result.Id = string.Concat("|", traceId, ".", spanId, ".");
 
                 foreach (var ts in tracestate.Entries)
@@ -220,7 +248,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
                 // TODO: deal with those:
                 // span.ChildSpanCount
-                // span.Context.IsValid;
                 // span.Context.TraceOptions;
 
                 this.telemetryClient.Track(result);
@@ -242,22 +269,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             props.Add(n, value);
         }
 
-        private void ExtractGenericProperties(SpanData span, out SpanKind resultKind, out DateTimeOffset timestamp, out string name, out string resultCode, out IDictionary<string, string> props, out string traceId, out string spanId, out string parentId, out Tracestate tracestate, out bool? success, out TimeSpan duration)
+        private void ExtractGenericProperties(SpanData span,  out string name, out string resultCode, out string statusDescription, out string traceId, out string spanId, out string parentId, out Tracestate tracestate, out bool? success, out TimeSpan duration)
         {
-            resultKind = span.Kind;
-
-            // TODO: Should this be a part of generic logic?
-            if (resultKind == SpanKind.Internal)
-            {
-                resultKind = SpanKind.Client;
-            }
-
-            // 1 tick is 100 ns
-            timestamp = new DateTimeOffset(span.StartTimestamp);
-
             name = span.Name;
 
-            props = new Dictionary<string, string>();
+            statusDescription = null;
 
             traceId = span.Context.TraceId.ToHexString();
             spanId = span.Context.SpanId.ToHexString();
@@ -275,40 +291,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                 success = span.Status.IsOk;
                 if (!string.IsNullOrEmpty(span.Status.Description))
                 {
-                    props["statusDescription"] = span.Status.Description;
+                    statusDescription = span.Status.Description;
                 }
             }
 
             tracestate = span.Context.Tracestate;
             duration = span.EndTimestamp - span.StartTimestamp;
-        }
-
-        private void OverwriteSpanKindFromAttribute(string spanKindAttr, ref SpanKind resultKind)
-        {
-            // override span kind with attribute named span.kind
-            if (spanKindAttr != null)
-            {
-                var kind = spanKindAttr;
-
-                switch (kind.ToLower(CultureInfo.InvariantCulture))
-                {
-                    case "server":
-                        resultKind = SpanKind.Server;
-                        break;
-                    case "client":
-                        resultKind = SpanKind.Client;
-                        break;
-                    case "producer":
-                        resultKind = SpanKind.Producer;
-                        break;
-                    case "consumer":
-                        resultKind = SpanKind.Consumer;
-                        break;
-                    default:
-                        resultKind = SpanKind.Internal;
-                        break;
-                }
-            }
         }
 
         private void OverwriteErrorAttribute(string errorAttr, ref bool? success)
@@ -347,7 +335,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             {
                 var urlString = httpUrlAttr;
                 Uri.TryCreate(urlString, UriKind.RelativeOrAbsolute, out url);
-           }
+            }
 
             string httpMethod = null;
             string httpPath = null;
