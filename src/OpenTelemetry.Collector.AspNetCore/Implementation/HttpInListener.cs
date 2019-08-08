@@ -22,10 +22,9 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
     using System.Text;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Http.Features;
-    using OpenTelemetry.Collector.AspNetCore.Common;
     using OpenTelemetry.Trace;
 
-    internal class HttpInListener : ListenerHandler
+    internal class HttpInListener : ListenerHandler<HttpRequest>
     {
         private static readonly string UnknownHostName = "UNKNOWN-HOST";
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
@@ -43,11 +42,12 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
+            const string EventNameSuffix = ".OnStartActivity";
             var context = this.startContextFetcher.Fetch(payload) as HttpContext;
 
             if (context == null)
             {
-                // Debug.WriteLine("context is null");
+                CollectorEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
                 return;
             }
 
@@ -95,11 +95,12 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
+            const string EventNameSuffix = ".OnStopActivity";
             var span = this.Tracer.CurrentSpan;
 
             if (span == null || span == BlankSpan.Instance)
             {
-                AspNetCoreCollectorEventSource.Log.NullOrBlankSpan("HttpInListener.OnStopActivity");
+                CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpInListener) + EventNameSuffix);
                 return;
             }
 
@@ -111,7 +112,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
             if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
             {
-                AspNetCoreCollectorEventSource.Log.NullHttpContext("HttpInListener.OnStopActivity");
+                CollectorEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
                 return;
             }
 
@@ -129,7 +130,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
                 if (span == null)
                 {
-                    AspNetCoreCollectorEventSource.Log.NullOrBlankSpan(name);
+                    CollectorEventSource.Log.NullOrBlankSpan(name);
                     return;
                 }
 

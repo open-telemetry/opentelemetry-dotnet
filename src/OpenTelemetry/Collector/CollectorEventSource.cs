@@ -1,4 +1,4 @@
-﻿// <copyright file="DependenciesCollectorEventSource.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CollectorEventSource.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Collector.Dependencies
+namespace OpenTelemetry.Collector
 {
     using System;
     using System.Diagnostics.Tracing;
@@ -22,12 +22,12 @@ namespace OpenTelemetry.Collector.Dependencies
     using System.Threading;
 
     /// <summary>
-    /// EventSource listing ETW events emitted from the project.
+    /// EventSource events emitted from the project.
     /// </summary>
-    [EventSource(Name = "OpenTelemetry.Collector.Dependencies")]
-    internal class DependenciesCollectorEventSource : EventSource
+    [EventSource(Name = "OpenTelemetry-Collector")]
+    public class CollectorEventSource : EventSource
     {
-        internal static DependenciesCollectorEventSource Log = new DependenciesCollectorEventSource();
+        public static CollectorEventSource Log = new CollectorEventSource();
 
         [NonEvent]
         public void ExceptionInCustomSampler(Exception ex)
@@ -68,9 +68,15 @@ namespace OpenTelemetry.Collector.Dependencies
         }
 
         [Event(4, Message = "Unknown error processing event '{0}' from handler '{1}', Exception: {2}", Level = EventLevel.Error)]
-        internal void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
+        public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
         {
             this.WriteEvent(4, handlerName, eventName, ex);
+        }
+
+        [Event(5, Message = "Payload is NULL in '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
+        public void NullPayload(string eventName)
+        {
+            this.WriteEvent(5, eventName);
         }
 
         /// <summary>

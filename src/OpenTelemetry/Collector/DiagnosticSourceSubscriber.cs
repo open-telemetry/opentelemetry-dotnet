@@ -14,28 +14,27 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Collector.AspNetCore.Common
+namespace OpenTelemetry.Collector
 {
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading;
-    using Microsoft.AspNetCore.Http;
     using OpenTelemetry.Trace;
 
-    internal class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
+    public class DiagnosticSourceSubscriber<TInput> : IDisposable, IObserver<DiagnosticListener>
     {
-        private readonly Dictionary<string, Func<ITracer, Func<HttpRequest, ISampler>, ListenerHandler>> handlers;
+        private readonly Dictionary<string, Func<ITracer, Func<TInput, ISampler>, ListenerHandler<TInput>>> handlers;
         private readonly ITracer tracer;
-        private readonly Func<HttpRequest, ISampler> sampler;
-        private ConcurrentDictionary<string, DiagnosticSourceListener> subscriptions;
+        private readonly Func<TInput, ISampler> sampler;
+        private ConcurrentDictionary<string, DiagnosticSourceListener<TInput>> subscriptions;
         private long disposed;
         private IDisposable subscription;
 
-        public DiagnosticSourceSubscriber(Dictionary<string, Func<ITracer, Func<HttpRequest, ISampler>, ListenerHandler>> handlers, ITracer tracer, Func<HttpRequest, ISampler> sampler)
+        public DiagnosticSourceSubscriber(Dictionary<string, Func<ITracer, Func<TInput, ISampler>, ListenerHandler<TInput>>> handlers, ITracer tracer, Func<TInput, ISampler> sampler)
         {
-            this.subscriptions = new ConcurrentDictionary<string, DiagnosticSourceListener>();
+            this.subscriptions = new ConcurrentDictionary<string, DiagnosticSourceListener<TInput>>();
             this.handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
@@ -57,7 +56,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Common
                 {
                     this.subscriptions.GetOrAdd(value.Name, name =>
                     {
-                        var dl = new DiagnosticSourceListener(value.Name, this.handlers[value.Name](this.tracer, this.sampler));
+                        var dl = new DiagnosticSourceListener<TInput>(this.handlers[value.Name](this.tracer, this.sampler));
                         dl.Subscription = value.Subscribe(dl);
                         return dl;
                     });
