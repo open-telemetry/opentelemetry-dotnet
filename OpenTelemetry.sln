@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.705
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29123.89
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry", "src\OpenTelemetry\OpenTelemetry.csproj", "{AE3E3DF5-4083-4C6E-A840-8271B0ACDE7E}"
 EndProject
@@ -87,6 +87,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Thrift", "lib\Thrift\Thrift.csproj", "{ED179037-DDB3-4780-A24F-F56278623EBB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{9D2D6933-C28C-4541-9A25-FDAE0DA5A5D4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Shims.OpenTracing", "src\OpenTelemetry.Shims.OpenTracing\OpenTelemetry.Shims.OpenTracing.csproj", "{AAC408FE-40EF-4479-97D9-697F2C1A0B28}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Shims.OpenTracing.Tests", "test\OpenTelemetry.Shims.OpenTracing.Tests\OpenTelemetry.Shims.OpenTracing.Tests.csproj", "{49A7853F-5B6F-4B65-A781-7D29A1C92164}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -190,6 +194,14 @@ Global
 		{ED179037-DDB3-4780-A24F-F56278623EBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED179037-DDB3-4780-A24F-F56278623EBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED179037-DDB3-4780-A24F-F56278623EBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AAC408FE-40EF-4479-97D9-697F2C1A0B28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAC408FE-40EF-4479-97D9-697F2C1A0B28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAC408FE-40EF-4479-97D9-697F2C1A0B28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAC408FE-40EF-4479-97D9-697F2C1A0B28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49A7853F-5B6F-4B65-A781-7D29A1C92164}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49A7853F-5B6F-4B65-A781-7D29A1C92164}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49A7853F-5B6F-4B65-A781-7D29A1C92164}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49A7853F-5B6F-4B65-A781-7D29A1C92164}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
