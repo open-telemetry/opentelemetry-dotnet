@@ -32,7 +32,7 @@ namespace OpenTelemetry.Collector.Dependencies
         [NonEvent]
         public void ExceptionInCustomSampler(Exception ex)
         {
-            if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.ExceptionInCustomSampler(ToInvariantString(ex));
             }
@@ -56,10 +56,21 @@ namespace OpenTelemetry.Collector.Dependencies
             this.WriteEvent(3, eventName);
         }
 
-        [Event(4, Message = "Unknown error processing event '{0}' from handler '{1}', Exception: {2}", Level = EventLevel.Error)]
+        [NonEvent]
         public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
         {
-            this.WriteEvent(4, handlerName, eventName, ToInvariantString(ex));
+            if (!this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                return;
+            }
+
+            this.UnknownErrorProcessingEvent(handlerName, eventName, ToInvariantString(ex));
+        }
+
+        [Event(4, Message = "Unknown error processing event '{0}' from handler '{1}', Exception: {2}", Level = EventLevel.Error)]
+        internal void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
+        {
+            this.WriteEvent(4, handlerName, eventName, ex);
         }
 
         /// <summary>
