@@ -2,7 +2,6 @@
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry</Description>
     <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
-    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net46</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Impl\Trace\Internal\**" />

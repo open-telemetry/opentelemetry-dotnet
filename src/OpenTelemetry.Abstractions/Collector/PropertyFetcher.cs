@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Collector.AspNetCore.Common
+namespace OpenTelemetry.Collector
 {
     using System;
     using System.Reflection;
 
-    internal class PropertyFetcher
+    public class PropertyFetcher
     {
         private readonly string propertyName;
         private PropertyFetch innerFetcher;
