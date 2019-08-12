@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Exporter.LightStep;
-
 namespace Samples
 {
     using System;
@@ -57,7 +55,7 @@ namespace Samples
 #pragma warning disable SA1402 // File may only contain a single type
     internal class LightStepOptions
     {
-        [Option('t',"accessToken", HelpText = "Please specify the access token for your LightStep project", Required = true)]
+        [Option('t', "accessToken", HelpText = "Please specify the access token for your LightStep project", Required = true)]
         public string AccessToken { get; set; }
     }
     
