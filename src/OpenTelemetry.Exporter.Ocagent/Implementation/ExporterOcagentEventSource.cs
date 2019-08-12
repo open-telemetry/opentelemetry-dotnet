@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
         /// </summary>
         private static string ToInvariantString(Exception exception)
         {
-            CultureInfo originalUICulture = Thread.CurrentThread.CurrentUICulture;
+            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
 
             try
             {

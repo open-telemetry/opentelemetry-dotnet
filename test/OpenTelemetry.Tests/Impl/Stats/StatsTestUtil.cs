@@ -19,19 +19,16 @@ namespace OpenTelemetry.Stats.Test
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Tags;
     using Xunit;
 
     internal static class StatsTestUtil
     {
-        static readonly Timestamp ZERO_TIMESTAMP = Timestamp.Create(0, 0);
-
         internal static IAggregationData CreateAggregationData(IAggregation aggregation, IMeasure measure, params double[] values)
         {
-            MutableAggregation mutableAggregation = MutableViewData.CreateMutableAggregation(aggregation);
-            foreach (double value in values)
+            var mutableAggregation = MutableViewData.CreateMutableAggregation(aggregation);
+            foreach (var value in values)
             {
                 mutableAggregation.Add(value);
             }
@@ -52,12 +49,23 @@ namespace OpenTelemetry.Stats.Test
             double tolerance)
         {
             Assert.Equal(expected.Count, actual.Count);
-            Assert.Equal(expected.Keys, actual.Keys);
 
-            foreach (var tagValues in actual.Keys)
+            // Check actual/expected tags match indpendent of order
+            foreach (var tagValue in actual.Keys)
             {
-                var act = actual[tagValues];
-                var exp = expected[tagValues];
+                Assert.True(expected.Keys.Contains(tagValue));
+            }
+
+            foreach (var tagValue in actual.Keys)
+            {
+                Assert.True(expected.Keys.Contains(tagValue));
+            }
+
+            // Confirm data for tagsValues matches
+            foreach (var tagValue in actual.Keys)
+            {
+                var act = actual[tagValue];
+                var exp = expected[tagValue];
                 AssertAggregationDataEquals(exp, act, tolerance);
             }
         }

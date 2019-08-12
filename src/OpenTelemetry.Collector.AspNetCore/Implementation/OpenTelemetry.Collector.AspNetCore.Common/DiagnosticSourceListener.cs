@@ -68,7 +68,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Common
                     this.handler.OnCustom(value.Key, Activity.Current, value.Value);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // Debug.WriteLine(e);
                 // TODO: make sure to output the handler name as part of error message

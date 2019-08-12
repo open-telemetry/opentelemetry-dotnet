@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Tags.Test
 {
     using System;
@@ -21,7 +23,6 @@ namespace OpenTelemetry.Tags.Test
     using System.Collections.Generic;
     using System.Linq;
     using OpenTelemetry.Internal;
-    using OpenTelemetry.Tags.Propagation;
     using Xunit;
 
     public class NoopTagsTest
@@ -30,20 +31,11 @@ namespace OpenTelemetry.Tags.Test
         private static readonly TagValue VALUE = TagValue.Create("value");
 
         private static readonly ITagContext TAG_CONTEXT = new TestTagContext();
-   
-
-
-        [Fact]
-        public void NoopTagsComponent()
-        {
-            Assert.Same(NoopTags.NoopTagger, NoopTags.NewNoopTagsComponent().Tagger);
-            Assert.Equal(NoopTags.NoopTagPropagationComponent, NoopTags.NewNoopTagsComponent().TagPropagationComponent);
-        }
 
         [Fact]
         public void NoopTagger()
         {
-            ITagger noopTagger = NoopTags.NoopTagger;
+            var noopTagger = NoopTags.NoopTagger;
             Assert.Same(NoopTags.NoopTagContext, noopTagger.Empty);
             Assert.Same(NoopTags.NoopTagContext, noopTagger.CurrentTagContext);
             Assert.Same(NoopTags.NoopTagContextBuilder, noopTagger.EmptyBuilder);
@@ -55,14 +47,14 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void NoopTagger_ToBuilder_DisallowsNull()
         {
-            ITagger noopTagger = NoopTags.NoopTagger;
+            var noopTagger = NoopTags.NoopTagger;
             Assert.Throws<ArgumentNullException>(() => noopTagger.ToBuilder(null));
         }
 
         [Fact]
         public void NoopTagger_WithTagContext_DisallowsNull()
         {
-            ITagger noopTagger = NoopTags.NoopTagger;
+            var noopTagger = NoopTags.NoopTagger;
             Assert.Throws<ArgumentNullException>(() => noopTagger.WithTagContext(null));
         }
 
@@ -78,21 +70,21 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void NoopTagContextBuilder_Put_DisallowsNullKey()
         {
-            ITagContextBuilder noopBuilder = NoopTags.NoopTagContextBuilder;
+            var noopBuilder = NoopTags.NoopTagContextBuilder;
             Assert.Throws<ArgumentNullException>(() => noopBuilder.Put(null, VALUE));
         }
 
         [Fact]
         public void NoopTagContextBuilder_Put_DisallowsNullValue()
         {
-            ITagContextBuilder noopBuilder = NoopTags.NoopTagContextBuilder;
+            var noopBuilder = NoopTags.NoopTagContextBuilder;
             Assert.Throws<ArgumentNullException>(() => noopBuilder.Put(KEY, null));
         }
 
         [Fact]
         public void NoopTagContextBuilder_Remove_DisallowsNullKey()
         {
-            ITagContextBuilder noopBuilder = NoopTags.NoopTagContextBuilder;
+            var noopBuilder = NoopTags.NoopTagContextBuilder;
             Assert.Throws<ArgumentNullException>(() => noopBuilder.Remove(null));
         }
 
@@ -100,12 +92,6 @@ namespace OpenTelemetry.Tags.Test
         public void NoopTagContext()
         {
             Assert.Empty(NoopTags.NoopTagContext.ToList());
-        }
-
-        [Fact]
-        public void NoopTagPropagationComponent()
-        {
-            Assert.Same(NoopTags.NoopTagContextBinarySerializer, NoopTags.NoopTagPropagationComponent.BinarySerializer);
         }
 
         [Fact]
@@ -118,14 +104,14 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void NoopTagContextBinarySerializer_ToByteArray_DisallowsNull()
         {
-            ITagContextBinarySerializer noopSerializer = NoopTags.NoopTagContextBinarySerializer;
+            var noopSerializer = NoopTags.NoopTagContextBinarySerializer;
             Assert.Throws<ArgumentNullException>(() => noopSerializer.ToByteArray(null));
         }
 
         [Fact]
         public void NoopTagContextBinarySerializer_FromByteArray_DisallowsNull()
         {
-            ITagContextBinarySerializer noopSerializer = NoopTags.NoopTagContextBinarySerializer;
+            var noopSerializer = NoopTags.NoopTagContextBinarySerializer;
             Assert.Throws<ArgumentNullException>(() => noopSerializer.FromByteArray(null));
         }
 

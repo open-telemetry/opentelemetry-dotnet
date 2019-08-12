@@ -171,7 +171,7 @@ namespace OpenTelemetry.Trace
         {
             span.PutHttpStatusCodeAttribute(statusCode);
 
-            Status newStatus = Status.Ok;
+            var newStatus = Status.Ok;
 
             if ((int)statusCode < 200)
             {

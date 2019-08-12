@@ -21,16 +21,20 @@ namespace OpenTelemetry.Internal
 
     public static class VarInt
     {
-        /** Maximum encoded size of 32-bit positive integers (in bytes) */
+        /// <summary>
+        /// Maximum encoded size of 32-bit positive integers (in bytes).
+        /// </summary>
         public const int MaxVarintSize = 5;
 
-        /** maximum encoded size of 64-bit longs, and negative 32-bit ints (in bytes) */
+        /// <summary>
+        /// maximum encoded size of 64-bit longs, and negative 32-bit ints (in bytes).
+        /// </summary>
         public const int MaxVarlongSize = 10;
 
         public static int VarIntSize(int i)
         {
-            int result = 0;
-            uint ui = (uint)i;
+            var result = 0;
+            var ui = (uint)i;
             do
             {
                 result++;
@@ -42,8 +46,8 @@ namespace OpenTelemetry.Internal
 
         public static int GetVarInt(byte[] src, int offset, int[] dst)
         {
-            int result = 0;
-            int shift = 0;
+            var result = 0;
+            var shift = 0;
             int b;
             do
             {
@@ -63,88 +67,37 @@ namespace OpenTelemetry.Internal
             return offset;
         }
 
+        /// <summary>
+        /// Writes an into into an array at a specific offset.
+        /// </summary>
+        /// <param name="v">The value to write.</param>
+        /// <param name="sink">The array to write to.</param>
+        /// <param name="offset">The offset at which to place the value.</param>
+        /// <returns>The offset.</returns>
         public static int PutVarInt(int v, byte[] sink, int offset)
         {
-            uint uv = (uint)v;
+            var uv = (uint)v;
             do
             {
                 // Encode next 7 bits + terminator bit
-                uint bits = uv & 0x7F;
+                var bits = uv & 0x7F;
                 uv >>= 7;
-                byte b = (byte)(bits + ((uv != 0) ? 0x80 : 0));
+                var b = (byte)(bits + ((uv != 0) ? 0x80 : 0));
                 sink[offset++] = b;
             }
             while (uv != 0);
             return offset;
         }
 
-        // public static int getVarInt(ByteBuffer src)
-        // {
-        //    int tmp;
-        //    if ((tmp = src.get()) >= 0)
-        //    {
-        //        return tmp;
-        //    }
-        //    int result = tmp & 0x7f;
-        //    if ((tmp = src.get()) >= 0)
-        //    {
-        //        result |= tmp << 7;
-        //    }
-        //    else
-        //    {
-        //        result |= (tmp & 0x7f) << 7;
-        //        if ((tmp = src.get()) >= 0)
-        //        {
-        //            result |= tmp << 14;
-        //        }
-        //        else
-        //        {
-        //            result |= (tmp & 0x7f) << 14;
-        //            if ((tmp = src.get()) >= 0)
-        //            {
-        //                result |= tmp << 21;
-        //            }
-        //            else
-        //            {
-        //                result |= (tmp & 0x7f) << 21;
-        //                result |= (tmp = src.get()) << 28;
-        //                while (tmp < 0)
-        //                {
-        //                    // We get into this loop only in the case of overflow.
-        //                    // By doing this, we can call getVarInt() instead of
-        //                    // getVarLong() when we only need an int.
-        //                    tmp = src.get();
-        //                }
-        //            }
-        //        }
-        //    }
-        //    return result;
-        // }
-
-        // public static void putVarInt(int v, ByteBuffer sink)
-        // {
-        //    while (true)
-        //    {
-        //        int bits = v & 0x7f;
-        //        v >>>= 7;
-        //        if (v == 0)
-        //        {
-        //            sink.put((byte)bits);
-        //            return;
-        //        }
-        //        sink.put((byte)(bits | 0x80));
-        //    }
-        // }
-
-        /**
-         * Reads a varint from the given InputStream and returns the decoded value as an int.
-         *
-         * @param inputStream the InputStream to read from
-         */
+        /// <summary>
+        /// Gets an integer from a stream.
+        /// </summary>
+        /// <param name="inputStream">The stream to read from.</param>
+        /// <returns>The int.</returns>
         public static int GetVarInt(Stream inputStream)
         {
-            int result = 0;
-            int shift = 0;
+            var result = 0;
+            var shift = 0;
             int b;
             do
             {
@@ -163,115 +116,16 @@ namespace OpenTelemetry.Internal
             return result;
         }
 
+        /// <summary>
+        /// Writes an integer to a stream.
+        /// </summary>
+        /// <param name="v">The value.</param>
+        /// <param name="outputStream">The stream to write to.</param>
         public static void PutVarInt(int v, Stream outputStream)
         {
-            byte[] bytes = new byte[VarIntSize(v)];
+            var bytes = new byte[VarIntSize(v)];
             PutVarInt(v, bytes, 0);
             outputStream.Write(bytes, 0, bytes.Length);
         }
-
-        public static int VarLongSize(long v)
-        {
-            int result = 0;
-            ulong uv = (ulong)v;
-            do
-            {
-                result++;
-                uv >>= 7;
-            }
-            while (uv != 0);
-            return result;
-        }
-
-        // public static long GetVarLong(ByteBuffer src)
-        // {
-        //    long tmp;
-        //    if ((tmp = src.get()) >= 0)
-        //    {
-        //        return tmp;
-        //    }
-        //    long result = tmp & 0x7f;
-        //    if ((tmp = src.get()) >= 0)
-        //    {
-        //        result |= tmp << 7;
-        //    }
-        //    else
-        //    {
-        //        result |= (tmp & 0x7f) << 7;
-        //        if ((tmp = src.get()) >= 0)
-        //        {
-        //            result |= tmp << 14;
-        //        }
-        //        else
-        //        {
-        //            result |= (tmp & 0x7f) << 14;
-        //            if ((tmp = src.get()) >= 0)
-        //            {
-        //                result |= tmp << 21;
-        //            }
-        //            else
-        //            {
-        //                result |= (tmp & 0x7f) << 21;
-        //                if ((tmp = src.get()) >= 0)
-        //                {
-        //                    result |= tmp << 28;
-        //                }
-        //                else
-        //                {
-        //                    result |= (tmp & 0x7f) << 28;
-        //                    if ((tmp = src.get()) >= 0)
-        //                    {
-        //                        result |= tmp << 35;
-        //                    }
-        //                    else
-        //                    {
-        //                        result |= (tmp & 0x7f) << 35;
-        //                        if ((tmp = src.get()) >= 0)
-        //                        {
-        //                            result |= tmp << 42;
-        //                        }
-        //                        else
-        //                        {
-        //                            result |= (tmp & 0x7f) << 42;
-        //                            if ((tmp = src.get()) >= 0)
-        //                            {
-        //                                result |= tmp << 49;
-        //                            }
-        //                            else
-        //                            {
-        //                                result |= (tmp & 0x7f) << 49;
-        //                                if ((tmp = src.get()) >= 0)
-        //                                {
-        //                                    result |= tmp << 56;
-        //                                }
-        //                                else
-        //                                {
-        //                                    result |= (tmp & 0x7f) << 56;
-        //                                    result |= ((long)src.get()) << 63;
-        //                                }
-        //                            }
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //        }
-        //    }
-        //    return result;
-        // }
-
-        // public static void PutVarLong(long v, ByteBuffer sink)
-        // {
-        //    while (true)
-        //    {
-        //        int bits = ((int)v) & 0x7f;
-        //        v >>>= 7;
-        //        if (v == 0)
-        //        {
-        //            sink.put((byte)bits);
-        //            return;
-        //        }
-        //        sink.put((byte)(bits | 0x80));
-        //    }
-        // }
     }
 }

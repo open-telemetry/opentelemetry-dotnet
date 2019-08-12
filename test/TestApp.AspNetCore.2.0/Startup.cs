@@ -22,11 +22,10 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Collector.AspNetCore;
 using OpenTelemetry.Collector.Dependencies;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Sampler;
 using System.Net.Http;
 using OpenTelemetry.Exporter.Ocagent;
-using OpenTelemetry.Trace.Export;
 
 namespace TestApp.AspNetCore._2._0
 {
@@ -51,11 +50,11 @@ namespace TestApp.AspNetCore._2._0
             services.AddSingleton<RequestsCollector>();
             services.AddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
             services.AddSingleton<DependenciesCollector>();
-            services.AddSingleton<IExportComponent>(Tracing.ExportComponent);
+            services.AddSingleton<ISpanExporter>(Tracing.SpanExporter);
             services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new CallbackMiddleware.CallbackMiddlewareImpl());
             services.AddSingleton<OcagentExporter>((p) =>
             {
-                var exportComponent = p.GetService<IExportComponent>();
+                var exportComponent = p.GetService<ISpanExporter>();
                 return new OcagentExporter(
                     exportComponent,
                     "localhost:55678",

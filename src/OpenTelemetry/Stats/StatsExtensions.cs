@@ -44,7 +44,7 @@ namespace OpenTelemetry.Stats
 
         public static IDictionary<TagValues, IAggregationData> WithTags(this IDictionary<TagValues, IAggregationData> aggMap, IEnumerable<TagValue> values)
         {
-            Dictionary<TagValues, IAggregationData> results = new Dictionary<TagValues, IAggregationData>();
+            var results = new Dictionary<TagValues, IAggregationData>();
 
             foreach (var kvp in aggMap)
             {
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Stats
         public static IAggregationData Sum(this IDictionary<TagValues, IAggregationData> aggMap, IView view)
         {
             var sum = MutableViewData.CreateMutableAggregation(view.Aggregation);
-            foreach (IAggregationData agData in aggMap.Values)
+            foreach (var agData in aggMap.Values)
             {
                 Sum(sum, agData);
             }
@@ -159,7 +159,7 @@ namespace OpenTelemetry.Stats
                         // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm.
                         if (dist.Count + arg.Count > 0)
                         {
-                            double delta = arg.Mean - dist.Mean;
+                            var delta = arg.Mean - dist.Mean;
                             dist.SumOfSquaredDeviations =
                                 dist.SumOfSquaredDeviations
                                     + arg.SumOfSquaredDeviations
@@ -183,8 +183,8 @@ namespace OpenTelemetry.Stats
                             dist.Max = arg.Max;
                         }
 
-                        IReadOnlyList<long> bucketCounts = arg.BucketCounts;
-                        for (int i = 0; i < bucketCounts.Count; i++)
+                        var bucketCounts = arg.BucketCounts;
+                        for (var i = 0; i < bucketCounts.Count; i++)
                         {
                             dist.BucketCounts[i] += bucketCounts[i];
                         }

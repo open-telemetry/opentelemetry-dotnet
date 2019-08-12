@@ -16,18 +16,30 @@
 
 namespace OpenTelemetry.Trace
 {
-    using System.Threading;
+    using System.Diagnostics;
+    using System.Runtime.CompilerServices;
     using OpenTelemetry.Context;
 
     internal static class CurrentSpanUtils
     {
-        private static AsyncLocal<ISpan> asyncLocalContext = new AsyncLocal<ISpan>();
+        private static readonly ConditionalWeakTable<Activity, ISpan> ActivitySpanTable = new ConditionalWeakTable<Activity, ISpan>();
 
         public static ISpan CurrentSpan
         {
             get
             {
-                return asyncLocalContext.Value;
+                var currentActivity = Activity.Current;
+                if (currentActivity == null)
+                {
+                    return BlankSpan.Instance;
+                }
+
+                if (ActivitySpanTable.TryGetValue(currentActivity, out var currentSpan))
+                {
+                    return currentSpan;
+                }
+
+                return BlankSpan.Instance;
             }
         }
 
@@ -36,9 +48,30 @@ namespace OpenTelemetry.Trace
             return new ScopeInSpan(span, endSpan);
         }
 
+        private static void SetSpan(Span span)
+        {
+            if (span.Activity == null)
+            {
+                // log error
+                return;
+            }
+
+            if (ActivitySpanTable.TryGetValue(span.Activity, out _))
+            {
+                // log warning
+                return;
+            }
+
+            ActivitySpanTable.Add(span.Activity, span);
+        }
+
+        private static void DetachSpanFromActivity(Activity activity)
+        {
+            ActivitySpanTable.Remove(activity);
+        }
+
         private sealed class ScopeInSpan : IScope
         {
-            private readonly ISpan origContext;
             private readonly ISpan span;
             private readonly bool endSpan;
 
@@ -46,23 +79,41 @@ namespace OpenTelemetry.Trace
             {
                 this.span = span;
                 this.endSpan = endSpan;
-                this.origContext = asyncLocalContext.Value;
-                asyncLocalContext.Value = span;
+
+                if (span is Span spanImpl)
+                {
+                    if (spanImpl.OwnsActivity)
+                    {
+                        Activity.Current = spanImpl.Activity;
+                    }
+
+                    SetSpan(spanImpl);
+                }
             }
 
             public void Dispose()
             {
-                var current = asyncLocalContext.Value;
-                asyncLocalContext.Value = this.origContext;
-
-                if (current != this.origContext)
+                bool safeToStopActivity = false;
+                var current = (Span)this.span;
+                if (current != null && current.Activity == Activity.Current)
                 {
-                    // Log
+                    if (!current.OwnsActivity)
+                    {
+                        DetachSpanFromActivity(current.Activity);
+                    }
+                    else
+                    {
+                        safeToStopActivity = true;
+                    }
                 }
 
                 if (this.endSpan)
                 {
                     this.span.End();
+                }
+                else if (safeToStopActivity)
+                {
+                    current.Activity.Stop();
                 }
             }
         }

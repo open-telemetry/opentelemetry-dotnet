@@ -44,7 +44,7 @@ namespace OpenTelemetry.Stats
             }
 
             var result = fraction * mutable.Count;
-            long rounded = (long)Math.Round(result);
+            var rounded = (long)Math.Round(result);
             this.Count += rounded;
         }
 

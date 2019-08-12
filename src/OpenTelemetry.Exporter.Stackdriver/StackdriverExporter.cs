@@ -1,5 +1,4 @@
-﻿
-// <copyright file="StackdriverExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="StackdriverExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,132 +24,132 @@ namespace OpenTelemetry.Exporter.Stackdriver
     using OpenTelemetry.Trace.Export;
 
     /// <summary>
-    /// Implementation of the exporter to Stackdriver
+    /// Implementation of the exporter to Stackdriver.
     /// </summary>
     public class StackdriverExporter
     {
         private const string ExporterName = "StackdriverTraceExporter";
 
-        private readonly IExportComponent exportComponent;
+        private readonly ISpanExporter exporter;
         private readonly IViewManager viewManager;
         private readonly string projectId;
         private readonly string jsonPath;
+        private readonly object locker = new object();
         private StackdriverStatsExporter statsExporter;
-        private object locker = new object();
         private bool isInitialized = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StackdriverExporter"/> class.
         /// </summary>
-        /// <param name="projectId">Google Cloud ProjectId that is used to send data to Stackdriver</param>
-        /// <param name="exportComponent">Exporter to get traces from</param>
-        /// <param name="viewManager">View manager to get the stats from</param>
+        /// <param name="projectId">Google Cloud ProjectId that is used to send data to Stackdriver.</param>
+        /// <param name="exporter">Exporter to get traces from.</param>
+        /// <param name="viewManager">View manager to get the stats from.</param>
         public StackdriverExporter(
             string projectId,
-            IExportComponent exportComponent,
-            IViewManager viewManager) : this(projectId, null, exportComponent, viewManager)
+            ISpanExporter exporter,
+            IViewManager viewManager) : this(projectId, null, exporter, viewManager)
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StackdriverExporter"/> class.
         /// </summary>
-        /// <param name="projectId">Google Cloud ProjectId that is used to send data to Stackdriver</param>
-        /// <param name="jsonPath">File path to the json file containing the service credential used to authenticate against Stackdriver APIs</param>
-        /// <param name="exportComponent">Exporter to get traces from</param>
-        /// <param name="viewManager">View manager to get the stats from</param>
+        /// <param name="projectId">Google Cloud ProjectId that is used to send data to Stackdriver.</param>
+        /// <param name="jsonPath">File path to the json file containing the service credential used to authenticate against Stackdriver APIs.</param>
+        /// <param name="exporter">Exporter to get traces from.</param>
+        /// <param name="viewManager">View manager to get the stats from.</param>
         public StackdriverExporter(
             string projectId,
             string jsonPath,
-            IExportComponent exportComponent,
+            ISpanExporter exporter,
             IViewManager viewManager)
         {
             GaxPreconditions.CheckNotNullOrEmpty(projectId, "projectId");
 
             this.projectId = projectId;
             this.jsonPath = jsonPath;
-            this.exportComponent = exportComponent;
+            this.exporter = exporter;
             this.viewManager = viewManager;
         }
 
         /// <summary>
-        /// Starts the exporter
+        /// Starts the exporter.
         /// </summary>
         public void Start()
         {
-            lock (locker)
+            lock (this.locker)
             {
-                if (isInitialized)
+                if (this.isInitialized)
                 {
                     return;
                 }
 
                 // Register trace exporter
-                if (exportComponent != null)
+                if (this.exporter != null)
                 {
-                    var traceExporter = new StackdriverTraceExporter(projectId);
-                    exportComponent.SpanExporter.RegisterHandler(ExporterName, traceExporter);
+                    var traceExporter = new StackdriverTraceExporter(this.projectId);
+                    this.exporter.RegisterHandler(ExporterName, traceExporter);
                 }
 
                 // Register stats(metrics) exporter
-                if (viewManager != null)
+                if (this.viewManager != null)
                 {
-                    GoogleCredential credential = GetGoogleCredential();
+                    var credential = this.GetGoogleCredential();
 
-                    StackdriverStatsConfiguration statsConfig = StackdriverStatsConfiguration.Default;
+                    var statsConfig = StackdriverStatsConfiguration.Default;
                     statsConfig.GoogleCredential = credential;
-                    if (statsConfig.ProjectId != projectId)
+                    if (statsConfig.ProjectId != this.projectId)
                     {
-                        statsConfig.ProjectId = projectId;
-                        statsConfig.MonitoredResource = GoogleCloudResourceUtils.GetDefaultResource(projectId);
+                        statsConfig.ProjectId = this.projectId;
+                        statsConfig.MonitoredResource = GoogleCloudResourceUtils.GetDefaultResource(this.projectId);
                     }
 
-                    statsExporter = new StackdriverStatsExporter(viewManager, statsConfig);
-                    statsExporter.Start();
+                    this.statsExporter = new StackdriverStatsExporter(this.viewManager, statsConfig);
+                    this.statsExporter.Start();
                 }
 
-                isInitialized = true;
+                this.isInitialized = true;
             }
         }
 
         /// <summary>
-        /// Stops the exporter
+        /// Stops the exporter.
         /// </summary>
         public void Stop()
         {
-            lock (locker)
+            lock (this.locker)
             {
-                if (!isInitialized)
+                if (!this.isInitialized)
                 {
                     return;
                 }
 
                 // Stop tracing exporter
-                if (exportComponent != null)
+                if (this.exporter != null)
                 {
-                    exportComponent.SpanExporter.UnregisterHandler(ExporterName);
+                    this.exporter.UnregisterHandler(ExporterName);
                 }
 
                 // Stop metrics exporter
-                if (statsExporter != null)
+                if (this.statsExporter != null)
                 {
-                    statsExporter.Stop();
+                    this.statsExporter.Stop();
                 }
 
-                isInitialized = false;
+                this.isInitialized = false;
             }
         }
 
         private GoogleCredential GetGoogleCredential()
         {
             GoogleCredential credential;
-            if (string.IsNullOrEmpty(jsonPath))
+            if (string.IsNullOrEmpty(this.jsonPath))
             {
                 credential = GoogleCredential.GetApplicationDefault();
             }
             else
             {
-                credential = GoogleCredential.FromFile(jsonPath)
+                credential = GoogleCredential.FromFile(this.jsonPath)
                  .CreateScoped(MetricServiceClient.DefaultScopes);
             }
 

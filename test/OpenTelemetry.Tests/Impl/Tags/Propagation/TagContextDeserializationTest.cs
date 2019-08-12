@@ -24,14 +24,15 @@ namespace OpenTelemetry.Tags.Propagation.Test
 
     public class TagContextDeserializationTest
     {
-        private readonly TagsComponent tagsComponent = new TagsComponent();
-        private readonly ITagContextBinarySerializer serializer;
+        private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
+        private readonly ITagContextBinarySerializer serializer;
 
         public TagContextDeserializationTest()
         {
-            serializer = tagsComponent.TagPropagationComponent.BinarySerializer;
-            tagger = tagsComponent.Tagger;
+            state = new CurrentTaggingState();
+            tagger = new Tagger(state);
+            serializer = new TagContextBinarySerializer(state);
         }
 
         [Fact]
@@ -46,8 +47,8 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void TestDeserializeNoTags()
         {
-            ITagContext expected = tagger.Empty;
-            ITagContext actual = serializer.FromByteArray(new byte[] { SerializationUtils.VersionId }); // One byte that represents Version ID.
+            var expected = tagger.Empty;
+            var actual = serializer.FromByteArray(new byte[] { SerializationUtils.VersionId }); // One byte that represents Version ID.
             Assert.Equal(expected, actual);
         }
 
@@ -60,9 +61,9 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void TestDeserializeTooLargeByteArrayThrowException()
         {
-            MemoryStream output = new MemoryStream();
+            var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
-            for (int i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8 - 1; i++) {
+            for (var i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8 - 1; i++) {
                 // Each tag will be with format {key : "0123", value : "0123"}, so the length of it is 8.
                 String str;
                 if (i < 10)
@@ -87,7 +88,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
             // more than limit.
             EncodeTagToOutPut("last", "last1", output);
 
-            byte[] bytes = output.ToArray();
+            var bytes = output.ToArray();
 
             Assert.Throws<TagContextDeserializationException>(() => serializer.FromByteArray(bytes));
         }
@@ -97,9 +98,9 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void TestDeserializeTooLargeByteArrayThrowException_WithDuplicateTagKeys()
         {
-            MemoryStream output = new MemoryStream();
+            var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
-            for (int i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8 - 1; i++) {
+            for (var i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8 - 1; i++) {
                 // Each tag will be with format {key : "key_", value : "0123"}, so the length of it is 8.
                 String str;
                 if (i < 10)
@@ -124,7 +125,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
             // more than limit.
             EncodeTagToOutPut("key_", "last1", output);
 
-            byte[] bytes = output.ToArray();
+            var bytes = output.ToArray();
 
             Assert.Throws<TagContextDeserializationException>(() => serializer.FromByteArray(bytes));
         }
@@ -132,12 +133,12 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void TestDeserializeInvalidTagKey()
         {
-            MemoryStream output = new MemoryStream();
+            var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
 
             // Encode an invalid tag key and a valid tag value:
             EncodeTagToOutPut("\u0002key", "value", output);
-            byte[] bytes = output.ToArray();
+            var bytes = output.ToArray();
 
 
             Assert.Throws<TagContextDeserializationException>(() => serializer.FromByteArray(bytes));
@@ -146,12 +147,12 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void TestDeserializeInvalidTagValue()
         {
-            MemoryStream output = new MemoryStream();
+            var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
 
             // Encode a valid tag key and an invalid tag value:
             EncodeTagToOutPut("my key", "val\u0003", output);
-            byte[] bytes = output.ToArray();
+            var bytes = output.ToArray();
 
 
             Assert.Throws<TagContextDeserializationException>(() => serializer.FromByteArray(bytes));
@@ -160,21 +161,21 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void TestDeserializeOneTag()
         {
-            MemoryStream output = new MemoryStream();
+            var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
             EncodeTagToOutPut("Key", "Value", output);
-            ITagContext expected = tagger.EmptyBuilder.Put(TagKey.Create("Key"), TagValue.Create("Value")).Build();
+            var expected = tagger.EmptyBuilder.Put(TagKey.Create("Key"), TagValue.Create("Value")).Build();
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
 
         [Fact]
         public void TestDeserializeMultipleTags()
         {
-            MemoryStream output = new MemoryStream();
+            var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key2", "Value2", output);
-            ITagContext expected =
+            var expected =
                     tagger
                     .EmptyBuilder
                     .Put(TagKey.Create("Key1"), TagValue.Create("Value1"))
@@ -186,11 +187,11 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void TestDeserializeDuplicateKeys()
         {
-            MemoryStream output = new MemoryStream();
+            var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key1", "Value2", output);
-            ITagContext expected =
+            var expected =
                 tagger.EmptyBuilder.Put(TagKey.Create("Key1"), TagValue.Create("Value2")).Build();
 
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
@@ -199,14 +200,14 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void TestDeserializeNonConsecutiveDuplicateKeys()
         {
-            MemoryStream output = new MemoryStream();
+            var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key2", "Value2", output);
             EncodeTagToOutPut("Key3", "Value3", output);
             EncodeTagToOutPut("Key1", "Value4", output);
             EncodeTagToOutPut("Key2", "Value5", output);
-            ITagContext expected =
+            var expected =
                 tagger
                     .EmptyBuilder
                     .Put(TagKey.Create("Key1"), TagValue.Create("Value4"))
@@ -219,11 +220,11 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void TestDeserializeDuplicateTags()
         {
-            MemoryStream output = new MemoryStream();
+            var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key1", "Value1", output);
-            ITagContext expected =
+            var expected =
                 tagger.EmptyBuilder.Put(TagKey.Create("Key1"), TagValue.Create("Value1")).Build();
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
@@ -231,14 +232,14 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void TestDeserializeNonConsecutiveDuplicateTags()
         {
-            MemoryStream output = new MemoryStream();
+            var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key2", "Value2", output);
             EncodeTagToOutPut("Key3", "Value3", output);
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key2", "Value2", output);
-            ITagContext expected =
+            var expected =
                 tagger
                     .EmptyBuilder
                     .Put(TagKey.Create("Key1"), TagValue.Create("Value1"))
@@ -251,7 +252,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void StopParsingAtUnknownField()
         {
-            MemoryStream output = new MemoryStream();
+            var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key2", "Value2", output);
@@ -263,7 +264,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
             EncodeTagToOutPut("Key3", "Value3", output);
 
             // key 3 should not be included
-            ITagContext expected =
+            var expected =
                 tagger
                     .EmptyBuilder
                     .Put(TagKey.Create("Key1"), TagValue.Create("Value1"))
@@ -275,7 +276,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
         [Fact]
         public void StopParsingAtUnknownTagAtStart()
         {
-            MemoryStream output = new MemoryStream();
+            var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
 
             // Write unknown field ID 1.
@@ -321,11 +322,11 @@ namespace OpenTelemetry.Tags.Propagation.Test
 
         private static void EncodeString(String input, MemoryStream output)
         {
-            int length = input.Length;
-            byte[] bytes = new byte[VarInt.VarIntSize(length)];
+            var length = input.Length;
+            var bytes = new byte[VarInt.VarIntSize(length)];
             VarInt.PutVarInt(length, bytes, 0);
             output.Write(bytes, 0, bytes.Length);
-            byte[] inPutBytes = Encoding.UTF8.GetBytes(input);
+            var inPutBytes = Encoding.UTF8.GetBytes(input);
             output.Write(inPutBytes, 0, inPutBytes.Length);
         }
     }

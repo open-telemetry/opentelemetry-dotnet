@@ -18,6 +18,7 @@ namespace OpenTelemetry.Stats
 {
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
+    using OpenTelemetry.Tags.Unsafe;
 
     internal sealed class MeasureMap : MeasureMapBase
     {
@@ -44,7 +45,7 @@ namespace OpenTelemetry.Stats
         public override void Record()
         {
             // Use the context key directly, to avoid depending on the tags implementation.
-            this.Record(CurrentTagContextUtils.CurrentTagContext);
+            this.Record(AsyncLocalContext.CurrentTagContext);
         }
 
         public override void Record(ITagContext tags)

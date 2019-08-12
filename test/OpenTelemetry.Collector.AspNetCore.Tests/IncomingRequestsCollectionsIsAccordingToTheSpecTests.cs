@@ -24,7 +24,6 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Common;
     using Moq;
     using Microsoft.AspNetCore.TestHost;
     using System;
@@ -56,7 +55,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         public async Task SuccesfulTemplateControllerCallGeneratesASpan()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
+            var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
 
             // Arrange
             using (var client = this.factory
@@ -74,12 +73,12 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     // Act
                     var response = await client.GetAsync("/api/values");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // ignore errors
                 }
 
-                for (int i = 0; i < 10; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     if (startEndHandler.Invocations.Count == 2)
                     {
@@ -97,8 +96,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             var spanData = ((Span)startEndHandler.Invocations[0].Arguments[0]).ToSpanData();
 
             Assert.Equal(SpanKind.Server, spanData.Kind);
-            Assert.Equal(AttributeValue.StringAttributeValue("/api/values"), spanData.Attributes.AttributeMap["http.path"]);
-            Assert.Equal(AttributeValue.LongAttributeValue(503), spanData.Attributes.AttributeMap["http.status_code"]);
+            Assert.Equal("/api/values", spanData.Attributes.GetValue("http.path"));
+            Assert.Equal(503L, spanData.Attributes.GetValue("http.status_code"));
         }
     }
 }

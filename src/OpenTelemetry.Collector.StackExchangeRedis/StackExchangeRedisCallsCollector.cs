@@ -32,7 +32,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
     public class StackExchangeRedisCallsCollector : IDisposable
     {
         private readonly ITracer tracer;
-        private readonly IExportComponent exporter;
+        private readonly ISpanExporter exporter;
         private readonly ISampler sampler;
 
         private readonly CancellationTokenSource cancellationTokenSource;
@@ -44,14 +44,13 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         /// <summary>
         /// Initializes a new instance of the <see cref="StackExchangeRedisCallsCollector"/> class.
         /// </summary>
-        /// <param name="options">Configuration options for dependencies collector.</param>
         /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="sampler">Sampler to use to sample dependnecy calls.</param>
-        /// <param name="exportComponent">TEMPORARY: handler to send data to.</param>
-        public StackExchangeRedisCallsCollector(StackExchangeRedisCallsCollectorOptions options, ITracer tracer, ISampler sampler, IExportComponent exportComponent)
+        /// <param name="exporter">TEMPORARY: handler to send data to.</param>
+        public StackExchangeRedisCallsCollector(ITracer tracer, ISampler sampler, ISpanExporter exporter)
         {
             this.tracer = tracer;
-            this.exporter = exportComponent;
+            this.exporter = exporter;
             this.sampler = sampler;
 
             this.cancellationTokenSource = new CancellationTokenSource();
@@ -87,8 +86,8 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
                 }
 
                 // TODO: As a performance optimization the check for sampling may be implemented here
-                // The problem with this approach would be that SpanId cannot be generated here
-                // So if sampler uses SpanId in algorithm - results would be inconsistent
+                // The problem with this approach would be that ActivitySpanId cannot be generated here
+                // So if sampler uses ActivitySpanId in algorithm - results would be inconsistent
                 var session = this.cache.GetOrAdd(span, (s) => new ProfilingSession(s));
                 return session;
             };
@@ -126,7 +125,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
 
                 foreach (var s in spans)
                 {
-                    this.exporter.SpanExporter.ExportAsync(s, CancellationToken.None).Wait();
+                    this.exporter.ExportAsync(s, CancellationToken.None).Wait();
                 }
 
                 Thread.Sleep(TimeSpan.FromSeconds(1));

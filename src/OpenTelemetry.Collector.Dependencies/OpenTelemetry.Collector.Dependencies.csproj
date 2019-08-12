@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <TargetFrameworks Condition="$(OS) != 'Windows_NT'">netstandard2.0</TargetFrameworks>
     <Description>OpenTelemetry collector for calls to dependencies</Description>
     <PackageTags>$(PackageTags);distributed-tracing;HttpClient</PackageTags>
   </PropertyGroup>
@@ -12,7 +11,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.5.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net46'">

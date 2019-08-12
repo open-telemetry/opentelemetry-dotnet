@@ -51,8 +51,9 @@ namespace OpenTelemetry.Stats.Aggregations
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "SumDataDouble{"
-                + "sum=" + this.Sum
+            return nameof(SumDataDouble)
+                + "{"
+                + nameof(this.Sum) + "=" + this.Sum
                 + "}";
         }
 

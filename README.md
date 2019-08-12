@@ -23,6 +23,11 @@ We encourage contributions. Use tags [up-for-grabs][up-for-grabs-issues] and
 
 ## Packages
 
+### Nightly builds:
+Myget feeds:
+- NuGet V3 feed: https://www.myget.org/F/opentelemetry/api/v3/index.json  
+- NuGet V2 feed: https://www.myget.org/F/opentelemetry/api/v2 
+
 ### API and implementation
 
 | Package                 | MyGet (CI)       | NuGet (releases) |
@@ -49,7 +54,7 @@ We encourage contributions. Use tags [up-for-grabs][up-for-grabs-issues] and
 
 ## OpenTelemetry QuickStart: collecting data
 
-You can use Open Census API to instrument code and report data. Or use one of
+You can use OpenTelemetry API to instrument code and report data. Or use one of
 automatic data collection modules.
 
 ### Using ASP.NET Core incoming requests collector
@@ -161,6 +166,42 @@ Outgoing http calls to Redis made usign StackExchange.Redis library can be autom
 
 ## OpenTelemetry QuickStart: exporting data
 
+### Using the Jaeger exporter
+
+The Jaeger exporter communicates to a Jaeger Agent through the compact thrift protocol on
+the Compact Thrift API port. You can configure the Jaeger exporter by following the directions below:
+
+1. [Get Jaeger][jaeger-get-started].
+2. Configure the `JaegerExporter`
+    - `ServiceName`: The name of your application or service.
+    - `AgengHost`: Usually `localhost` since an agent should 
+    usually be running on the same machine as your application or service.
+    - `AgentPort`: The compact thrift protocol port of the Jaeger Agent (default `6831`)
+    - `MaxPacketSize`: The maximum size of each UDP packet that gets sent to the agent. (default `65000`)
+3. See the [sample][jaeger-sample] for an example of how to use the exporter.
+
+``` csharp
+var exporter = new JaegerExporter(
+    new JaegerExporterOptions
+    {
+        ServiceName = "tracing-to-jaeger-service",
+        AgentHost = host,
+        AgentPort = port,
+    },
+    Tracing.ExportComponent);
+
+exporter.Start();
+
+var span = tracer
+            .SpanBuilder("incoming request")
+            .SetSampler(Samplers.AlwaysSample)
+            .StartSpan();
+
+Thread.Sleep(TimeSpan.FromSeconds(1));
+span.End();
+```
+
+
 ### Using Zipkin exporter
 
 Configure Zipkin exporter to see traces in Zipkin UI.
@@ -199,7 +240,7 @@ Configure Prometheus exporter to have stats collected by Prometheus.
 var exporter = new PrometheusExporter(
     new PrometheusExporterOptions()
     {
-        Url = new Uri("http://localhost:9184/metrics/")
+        Url = "http://+:9184/metrics/"
     },
     Stats.ViewManager);
 
@@ -316,6 +357,7 @@ deprecate it for 18 months before removing it, if possible.
 [up-for-grabs-issues]: https://github.com/open-telemetry/OpenTelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3Aup-for-grabs
 [good-first-issues]: https://github.com/open-telemetry/OpenTelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [zipkin-get-started]: https://zipkin.io/pages/quickstart.html
+[jaeger-get-started]: https://www.jaegertracing.io/docs/1.13/getting-started/
 [ai-get-started]: https://docs.microsoft.com/azure/application-insights
 [stackdriver-trace-setup]: https://cloud.google.com/trace/docs/setup/
 [stackdriver-monitoring-setup]: https://cloud.google.com/monitoring/api/enable-api
@@ -323,8 +365,10 @@ deprecate it for 18 months before removing it, if possible.
 [GKE]: https://codelabs.developers.google.com/codelabs/cloud-kubernetes-aspnetcore/index.html?index=..%2F..index#0
 [gcp-auth]: https://cloud.google.com/docs/authentication/getting-started
 [semver]: http://semver.org/
-[ai-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestApplicationInsights.cs
-[stackdriver-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestStackdriver.cs
-[zipkin-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestZipkin.cs
+[ai-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestApplicationInsights.cs
+[stackdriver-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestStackdriver.cs
+[zipkin-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestZipkin.cs
+[jaeger-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestJaeger.cs
 [prometheus-get-started]: https://prometheus.io/docs/introduction/first_steps/
-[prometheus-sample]: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/src/Samples/TestPrometheus.cs
+[prometheus-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestPrometheus.cs
+

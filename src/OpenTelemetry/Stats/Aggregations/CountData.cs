@@ -50,8 +50,9 @@ namespace OpenTelemetry.Stats.Aggregations
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "CountData{"
-                + "count=" + this.Count
+            return nameof(CountData)
+                + "{"
+                + nameof(this.Count) + "=" + this.Count
                 + "}";
         }
 

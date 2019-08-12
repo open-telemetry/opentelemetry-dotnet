@@ -61,11 +61,12 @@ namespace OpenTelemetry.Stats
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "ViewData{"
-                + "view=" + this.View + ", "
-                + "aggregationMap=" + Collections.ToString(this.AggregationMap) + ", "
-                + "start=" + this.Start + ", "
-                + "end=" + this.End
+            return nameof(ViewData)
+                + "{"
+                + nameof(this.View) + "=" + this.View + ", "
+                + nameof(this.AggregationMap) + "=" + string.Join(", ", this.AggregationMap.Select(kvp => (kvp.Key + " = " + kvp.Value))) + ", "
+                + nameof(this.Start) + "=" + this.Start + ", "
+                + nameof(this.End) + "=" + this.End
                 + "}";
         }
 
@@ -91,7 +92,7 @@ namespace OpenTelemetry.Stats
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int h = 1;
+            var h = 1;
             h *= 1000003;
             h ^= this.View.GetHashCode();
             h *= 1000003;
