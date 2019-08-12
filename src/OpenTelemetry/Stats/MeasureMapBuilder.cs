@@ -46,9 +46,9 @@ namespace OpenTelemetry.Stats
             // Note: this makes adding measurements quadratic but is fastest for the sizes of
             // MeasureMapInternals that we should see. We may want to go to a strategy of sort/eliminate
             // for larger MeasureMapInternals.
-            for (int i = this.measurements.Count - 1; i >= 0; i--)
+            for (var i = this.measurements.Count - 1; i >= 0; i--)
             {
-                for (int j = i - 1; j >= 0; j--)
+                for (var j = i - 1; j >= 0; j--)
                 {
                     if (this.measurements[i].Measure == this.measurements[j].Measure)
                     {

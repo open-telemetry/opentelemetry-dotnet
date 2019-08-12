@@ -57,14 +57,15 @@ namespace OpenTelemetry.Stats.Measures
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "MeasureDouble{"
-                + "name=" + this.Name + ", "
-                + "description=" + this.Description + ", "
-                + "unit=" + this.Unit
+            return nameof(MeasureDouble)
+                + "{"
+                + nameof(this.Name) + "=" + this.Name + ", "
+                + nameof(this.Description) + "=" + this.Description + ", "
+                + nameof(this.Unit) + "=" + this.Unit
                 + "}";
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override bool Equals(object o)
         {
             if (o == this)
@@ -85,7 +86,7 @@ namespace OpenTelemetry.Stats.Measures
     /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int h = 1;
+            var h = 1;
             h *= 1000003;
             h ^= this.Name.GetHashCode();
             h *= 1000003;

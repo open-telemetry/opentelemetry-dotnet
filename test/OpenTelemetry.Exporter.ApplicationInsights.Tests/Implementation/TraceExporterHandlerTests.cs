@@ -19,7 +19,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
     using Microsoft.ApplicationInsights.Channel;
     using Microsoft.ApplicationInsights.DataContracts;
     using Microsoft.ApplicationInsights.Extensibility;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Exporter.ApplicationInsights.Implementation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
@@ -27,6 +26,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Threading;
     using Xunit;
@@ -36,24 +36,17 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         private const string TestTraceId = "d79bdda7eb9c4a9fa9bda52fe7b48b95";
         private const string TestSpanId = "d7ddeb4aa9a5e78b";
         private const string TestParentSpanId = "9ba79c9fbd2fb495";
+        private const string TestChannelEndpoint = "https://applicationinsights.com";
 
         private readonly byte[] testTraceIdBytes = { 0xd7, 0x9b, 0xdd, 0xa7, 0xeb, 0x9c, 0x4a, 0x9f, 0xa9, 0xbd, 0xa5, 0x2f, 0xe7, 0xb4, 0x8b, 0x95 };
         private readonly byte[] testSpanIdBytes = { 0xd7, 0xdd, 0xeb, 0x4a, 0xa9, 0xa5, 0xe7, 0x8b };
         private readonly byte[] testParentSpanIdBytes = { 0x9b, 0xa7, 0x9c, 0x9f, 0xbd, 0x2f, 0xb4, 0x95 };
 
-        private DateTimeOffset nowDateTimeOffset;
-
-        private Timestamp NowTimestamp
-        {
-            get
-            {
-                return Timestamp.FromDateTimeOffset(nowDateTimeOffset);
-            }
-        }
+        private DateTime now;
 
         public OpenTelemetryTelemetryConverterTests()
         {
-            nowDateTimeOffset = DateTimeOffset.Now.Subtract(TimeSpan.FromSeconds(1));
+            now = DateTime.UtcNow.AddSeconds(-1);
         }
 
         private ConcurrentQueue<ITelemetry> ConvertSpan(SpanData data)
@@ -63,11 +56,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             ITelemetryChannel channel = new StubTelemetryChannel
             {
                 OnSend = t => sentItems.Enqueue(t),
+                EndpointAddress = TestChannelEndpoint,
             };
 
             configuration.TelemetryChannel = channel;
 
-            TraceExporterHandler exporter = new TraceExporterHandler(configuration);
+            var exporter = new TraceExporterHandler(configuration);
             exporter.ExportAsync(new List<SpanData> { data }).Wait();
 
             return sentItems;
@@ -89,7 +83,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             var request = sentItems.OfType<RequestTelemetry>().Single();
             Assert.Equal("spanName", request.Name);
-            Assert.Equal(nowDateTimeOffset.Subtract(TimeSpan.FromSeconds(1)), request.Timestamp);
+            Assert.Equal(now.AddSeconds(-1), request.Timestamp);
             Assert.Equal(1, request.Duration.TotalSeconds);
 
             Assert.Equal(TestTraceId, request.Context.Operation.Id);
@@ -142,7 +136,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             // ARRANGE
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
-            parentSpanId = SpanId.FromBytes(this.testParentSpanIdBytes);
+            parentSpanId = ActivitySpanId.CreateFromBytes(this.testParentSpanIdBytes);
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -159,7 +153,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             // ARRANGE
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
-            parentSpanId = SpanId.Invalid;
+            parentSpanId = default;
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -241,7 +235,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
 
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "error", AttributeValue.BooleanAttributeValue(true) } }, 0);
+            attributes = Attributes.Create(new Dictionary<string, object>() { { "error", true } }, 0);
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -271,7 +265,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             var dependency = sentItems.OfType<DependencyTelemetry>().Single();
             Assert.Equal("spanName", dependency.Name);
-            Assert.Equal(nowDateTimeOffset.Subtract(TimeSpan.FromSeconds(1)), dependency.Timestamp);
+            Assert.Equal(now.AddSeconds(-1), dependency.Timestamp);
             Assert.Equal(1, dependency.Duration.TotalSeconds);
 
             Assert.Equal(TestTraceId, dependency.Context.Operation.Id);
@@ -284,6 +278,62 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             // Assert.Equal("lf_unspecified-oc:0.0.0", dependency.Context.GetInternalContext().SdkVersion);
 
             Assert.True(string.IsNullOrEmpty(dependency.Type));
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_TracksInternalSpanAsDependency()
+        {
+            // ARRANGE
+            this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+
+            kind = SpanKind.Internal;
+
+            var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+
+            // ACT
+            var sentItems = this.ConvertSpan(span);
+
+            // ASSERT
+            Assert.Single(sentItems);
+            Assert.True(sentItems.Single() is DependencyTelemetry);
+
+            var dependency = sentItems.OfType<DependencyTelemetry>().Single();
+            Assert.Equal("spanName", dependency.Name);
+            Assert.Equal("InProc", dependency.Type);
+            Assert.Equal(now.AddSeconds(-1), dependency.Timestamp);
+            Assert.Equal(1, dependency.Duration.TotalSeconds);
+
+            Assert.Equal(TestTraceId, dependency.Context.Operation.Id);
+            Assert.Null(dependency.Context.Operation.ParentId);
+            Assert.Equal($"|{TestTraceId}.{TestSpanId}.", dependency.Id);
+
+            Assert.True(string.IsNullOrEmpty(dependency.ResultCode));
+            Assert.False(dependency.Success.HasValue);
+
+            // Assert.Equal("lf_unspecified-oc:0.0.0", dependency.Context.GetInternalContext().SdkVersion);
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_DoesNotTrackCallToAppInsights()
+        {
+            // ARRANGE
+            this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
+
+            kind = SpanKind.Client;
+            attributes = Attributes.Create(new Dictionary<string, object>
+            {
+                { "http.url", TestChannelEndpoint },
+                { "http.method", "POST" },
+                { "http.status_code", 200 },
+            }, 0);
+
+            var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
+
+            // ACT
+            var sentItems = this.ConvertSpan(span);
+
+            // ASSERT
+            Assert.Empty(sentItems);
         }
 
         [Fact]
@@ -305,7 +355,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             var dependency = sentItems.OfType<DependencyTelemetry>().Single();
             Assert.Equal("spanName", dependency.Name);
-            Assert.Equal(nowDateTimeOffset.Subtract(TimeSpan.FromSeconds(1)), dependency.Timestamp);
+            Assert.Equal(now.AddSeconds(-1), dependency.Timestamp);
             Assert.Equal(1, dependency.Duration.TotalSeconds);
 
             Assert.Equal(TestTraceId, dependency.Context.Operation.Id);
@@ -433,7 +483,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             // ARRANGE
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
-            parentSpanId = SpanId.FromBytes(this.testParentSpanIdBytes);
+            parentSpanId = ActivitySpanId.CreateFromBytes(this.testParentSpanIdBytes);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             // ACT
@@ -515,7 +565,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "error", AttributeValue.BooleanAttributeValue(true) } }, 0);
+            attributes = Attributes.Create(new Dictionary<string, object>() { { "error", true } }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
@@ -526,25 +576,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         }
 
         [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnServerSpanKindAttribute()
-        {
-            this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
-            kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("server") } }, 0);
-
-            var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
-
-            var sentItems = this.ConvertSpan(span);
-
-            Assert.True(sentItems.Single() is RequestTelemetry);
-        }
-
-        [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnClientSpanKindAttribute()
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("client") } }, 0);
+            attributes = Attributes.Create(new Dictionary<string, object>() { { "span.kind", "client" } }, 0);
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -558,7 +594,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("producer") } }, 0);
+            attributes = Attributes.Create(new Dictionary<string, object>() { { "span.kind", "producer" } }, 0);
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -571,22 +607,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnConsumerSpanKindAttribute()
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
-            kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("consumer") } }, 0);
-
-            var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
-
-            var sentItems = this.ConvertSpan(span);
-
-            Assert.True(sentItems.Single() is RequestTelemetry);
-        }
-
-        [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnOtherSpanKindAttribute()
-        {
-            this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
-            kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("other") } }, 0);
+            kind = SpanKind.Consumer;
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -599,7 +620,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksRequestBasedOnSpanKindProperty()
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
-            parentSpanId = SpanId.FromBytes(this.testParentSpanIdBytes);
+            parentSpanId = ActivitySpanId.CreateFromBytes(this.testParentSpanIdBytes);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
@@ -612,7 +633,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Client;
-            parentSpanId = SpanId.FromBytes(this.testParentSpanIdBytes);
+            parentSpanId = ActivitySpanId.CreateFromBytes(this.testParentSpanIdBytes);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
@@ -625,7 +646,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             kind = SpanKind.Internal;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>() { { "span.kind", AttributeValue.StringAttributeValue("client") } }, 0);
+            attributes = Attributes.Create(new Dictionary<string, object>() { { "span.kind", "client" } }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
             var sentItems = this.ConvertSpan(span);
@@ -703,11 +724,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.url", AttributeValue.StringAttributeValue(url.ToString()) },
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.status_code", AttributeValue.LongAttributeValue(409) },
+                    { "http.url", url.ToString() },
+                    { "http.method", "POST" },
+                    { "http.status_code", 409 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -725,11 +746,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.url", AttributeValue.StringAttributeValue(url.LocalPath) },
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.status_code", AttributeValue.LongAttributeValue(409) },
+                    { "http.url", url.LocalPath },
+                    { "http.method", "POST" },
+                    { "http.status_code", 409 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -747,12 +768,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.url", AttributeValue.StringAttributeValue(url.ToString()) },
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.route", AttributeValue.StringAttributeValue("route") },
-                    { "http.status_code", AttributeValue.LongAttributeValue(503) },
+                    { "http.url", url.ToString() },
+                    { "http.method", "POST" },
+                    { "http.route", "route" },
+                    { "http.status_code", 503 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -770,10 +791,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.url", AttributeValue.StringAttributeValue(url.ToString()) },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.url", url.ToString() },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -791,14 +812,14 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.url", AttributeValue.StringAttributeValue(url.ToString()) },
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.path", AttributeValue.StringAttributeValue("another path") },
-                    { "http.host", AttributeValue.StringAttributeValue("another host") },
-                    { "http.port", AttributeValue.LongAttributeValue(8080) },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.url", url.ToString() },
+                    { "http.method", "POST" },
+                    { "http.path", "another path" },
+                    { "http.host", "another host" },
+                    { "http.port", 8080 },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -817,9 +838,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.status_code", AttributeValue.LongAttributeValue(201) },
+                    { "http.status_code", 201 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -838,13 +859,13 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.path", AttributeValue.StringAttributeValue("path") },
-                    { "http.host", AttributeValue.StringAttributeValue("host") },
-                    { "http.port", AttributeValue.LongAttributeValue(123) },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.method", "POST" },
+                    { "http.path", "path" },
+                    { "http.host", "host" },
+                    { "http.port", 123 },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -861,13 +882,13 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.path", AttributeValue.StringAttributeValue("path") },
-                    { "http.host", AttributeValue.StringAttributeValue("") },
-                    { "http.port", AttributeValue.LongAttributeValue(123) },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.method", "POST" },
+                    { "http.path", "path" },
+                    { "http.host", "" },
+                    { "http.port", 123 },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -885,12 +906,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.path", AttributeValue.StringAttributeValue("/path") },
-                    { "http.host", AttributeValue.StringAttributeValue("host") },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.method", "POST" },
+                    { "http.path", "/path" },
+                    { "http.host", "host" },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -907,11 +928,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.host", AttributeValue.StringAttributeValue("host") },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.method", "POST" },
+                    { "http.host", "host" },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -929,10 +950,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             var url = new Uri("https://host:123/path?query");
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.method", "POST" },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -952,9 +973,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var url = new Uri("https://host:123/path?query");
             kind = SpanKind.Client;
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.status_code", AttributeValue.LongAttributeValue(201) },
+                    { "http.status_code", 201 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -974,10 +995,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var url = new Uri("https://host/path");
             var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36";
             name = "HttpIn";
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.url", AttributeValue.StringAttributeValue(url.ToString()) },
-                    { "http.user_agent", AttributeValue.StringAttributeValue(userAgent) },
+                    { "http.url", url.ToString() },
+                    { "http.user_agent", userAgent },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -994,11 +1015,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var url = new Uri("https://host:123/path?query");
             name = "HttpOut";
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.url", AttributeValue.StringAttributeValue(url.ToString()) },
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.url", url.ToString() },
+                    { "http.method", "POST" },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -1019,11 +1040,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var url = new Uri("https://host:123/path?query");
             name = "HttpOut";
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.url", AttributeValue.StringAttributeValue(url.LocalPath) },
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.url", url.LocalPath },
+                    { "http.method", "POST" },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -1044,14 +1065,14 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var url = new Uri("https://host:123/path?query");
             name = "HttpOut";
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.url", AttributeValue.StringAttributeValue(url.ToString()) },
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.path", AttributeValue.StringAttributeValue("another path") },
-                    { "http.host", AttributeValue.StringAttributeValue("another host") },
-                    { "http.port", AttributeValue.LongAttributeValue(8080) },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.url", url.ToString() },
+                    { "http.method", "POST" },
+                    { "http.path", "another path" },
+                    { "http.host", "another host" },
+                    { "http.port", 8080 },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -1071,13 +1092,13 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "HttpOut";
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.path", AttributeValue.StringAttributeValue("/path") },
-                    { "http.host", AttributeValue.StringAttributeValue("host") },
-                    { "http.port", AttributeValue.LongAttributeValue(123) },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.method", "POST" },
+                    { "http.path", "/path" },
+                    { "http.host", "host" },
+                    { "http.port", 123 },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -1097,12 +1118,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events,  out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "HttpOut";
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.host", AttributeValue.StringAttributeValue("host") },
-                    { "http.port", AttributeValue.LongAttributeValue(123) },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.method", "POST" },
+                    { "http.host", "host" },
+                    { "http.port", 123 },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -1122,12 +1143,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
             name = "HttpOut";
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.path", AttributeValue.StringAttributeValue("/path") },
-                    { "http.host", AttributeValue.StringAttributeValue("") },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.method", "POST" },
+                    { "http.path", "/path" },
+                    { "http.host", "" },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -1148,11 +1169,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var url = new Uri("https://host:123/path?query");
             name = "HttpOut";
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.host", AttributeValue.StringAttributeValue("host") },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.method", "POST" },
+                    { "http.host", "host" },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -1173,10 +1194,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var url = new Uri("https://host:123/path?query");
             name = "HttpOut";
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.method", AttributeValue.StringAttributeValue("POST") },
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.method", "POST" },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -1198,9 +1219,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var url = new Uri("https://host:123/path?query");
             name = "HttpOut";
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "http.status_code", AttributeValue.LongAttributeValue(200) },
+                    { "http.status_code", 200 },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -1221,11 +1242,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var url = new Uri("https://host:123/path?query");
             name = "spanName";
             kind = SpanKind.Client;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "custom.stringAttribute", AttributeValue.StringAttributeValue("string") },
-                    { "custom.longAttribute", AttributeValue.LongAttributeValue(long.MaxValue) },
-                    { "custom.boolAttribute", AttributeValue.BooleanAttributeValue(true) },
+                    { "custom.stringAttribute", "string" },
+                    { "custom.longAttribute", long.MaxValue },
+                    { "custom.boolAttribute", true },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -1251,11 +1272,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var url = new Uri("https://host:123/path?query");
             name = "spanName";
             kind = SpanKind.Server;
-            attributes = Attributes.Create(new Dictionary<string, IAttributeValue>()
+            attributes = Attributes.Create(new Dictionary<string, object>()
                 {
-                    { "custom.stringAttribute", AttributeValue.StringAttributeValue("string") },
-                    { "custom.longAttribute", AttributeValue.LongAttributeValue(long.MaxValue) },
-                    { "custom.boolAttribute", AttributeValue.BooleanAttributeValue(true) },
+                    { "custom.stringAttribute", "string" },
+                    { "custom.longAttribute", long.MaxValue },
+                    { "custom.boolAttribute", true },
                 }, 0);
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
 
@@ -1293,11 +1314,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 new List<ILink>()
                 {
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link0TraceIdBytes), SpanId.FromBytes(link0SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link0TraceIdBytes), ActivitySpanId.CreateFromBytes(link0SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link1TraceIdBytes), SpanId.FromBytes(link1SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link1TraceIdBytes), ActivitySpanId.CreateFromBytes(link1SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link2TraceIdBytes), SpanId.FromBytes(link2SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link2TraceIdBytes), ActivitySpanId.CreateFromBytes(link2SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
                 }, 0);
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
@@ -1336,15 +1357,15 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 {
                     Link.FromSpanContext(
                         SpanContext.Create(
-                            TraceId.FromBytes(GenerateRandomId(16).Item2),
-                            SpanId.FromBytes(GenerateRandomId(8).Item2),
-                            TraceOptions.Default,
+                            ActivityTraceId.CreateFromBytes(GenerateRandomId(16).Item2),
+                            ActivitySpanId.CreateFromBytes(GenerateRandomId(8).Item2),
+                            ActivityTraceFlags.None,
                             Tracestate.Empty),
-                        new Dictionary<string, IAttributeValue>()
+                        new Dictionary<string, object>()
                         {
-                            { "some.str.attribute", AttributeValue.StringAttributeValue("foo") },
-                            { "some.int.attribute", AttributeValue.LongAttributeValue(1) },
-                            { "some.bool.attribute", AttributeValue.BooleanAttributeValue(true) },
+                            { "some.str.attribute", "foo" },
+                            { "some.int.attribute", 1 },
+                            { "some.bool.attribute", true },
                         }),
                 },
                 droppedLinksCount: 0);
@@ -1384,11 +1405,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             links = LinkList.Create(new List<ILink>()
             {
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link0TraceIdBytes), SpanId.FromBytes(link0SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link0TraceIdBytes), ActivitySpanId.CreateFromBytes(link0SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link1TraceIdBytes), SpanId.FromBytes(link1SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link1TraceIdBytes), ActivitySpanId.CreateFromBytes(link1SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(TraceId.FromBytes(link2TraceIdBytes), SpanId.FromBytes(link2SpanIdBytes), TraceOptions.Default, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link2TraceIdBytes), ActivitySpanId.CreateFromBytes(link2SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
             }, 0);
 
             var span = SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
@@ -1427,15 +1448,15 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 {
                     Link.FromSpanContext(
                         SpanContext.Create(
-                            TraceId.FromBytes(GenerateRandomId(16).Item2),
-                            SpanId.FromBytes(GenerateRandomId(8).Item2),
-                            TraceOptions.Default,
+                            ActivityTraceId.CreateFromBytes(GenerateRandomId(16).Item2),
+                            ActivitySpanId.CreateFromBytes(GenerateRandomId(8).Item2),
+                            ActivityTraceFlags.None,
                             Tracestate.Empty),
-                        new Dictionary<string, IAttributeValue>()
+                        new Dictionary<string, object>()
                         {
-                            { "some.str.attribute", AttributeValue.StringAttributeValue("foo") },
-                            { "some.int.attribute", AttributeValue.LongAttributeValue(1) },
-                            { "some.bool.attribute", AttributeValue.BooleanAttributeValue(true) },
+                            { "some.str.attribute", "foo" },
+                            { "some.int.attribute", 1 },
+                            { "some.bool.attribute", true },
                         }),
                 },
                 droppedLinksCount: 0);
@@ -1468,12 +1489,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             events = TimedEvents<IEvent>.Create(
                 new List<ITimedEvent<IEvent>>()
                 {
-                    TimedEvent<IEvent>.Create(NowTimestamp, Event.Create("test message1")),
-                    TimedEvent<IEvent>.Create(null, Event.Create("test message2", new Dictionary<string, IAttributeValue>()
+                    TimedEvent<IEvent>.Create(now, Event.Create("test message1")),
+                    TimedEvent<IEvent>.Create(default, Event.Create("test message2", new Dictionary<string, object>()
                         {
-                            { "custom.stringAttribute", AttributeValue.StringAttributeValue("string") },
-                            { "custom.longAttribute", AttributeValue.LongAttributeValue(long.MaxValue) },
-                            { "custom.boolAttribute", AttributeValue.BooleanAttributeValue(true) },
+                            { "custom.stringAttribute", "string" },
+                            { "custom.longAttribute", long.MaxValue },
+                            { "custom.boolAttribute", true },
                         })),
                 },
                 droppedEventsCount: 0);
@@ -1498,8 +1519,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("test message1", trace1.Message);
             Assert.Equal("test message2", trace2.Message);
 
-            Assert.Equal(nowDateTimeOffset, trace1.Timestamp);
-            Assert.NotEqual(nowDateTimeOffset, trace2.Timestamp);
+            Assert.Equal(now, trace1.Timestamp);
+            Assert.NotEqual(now, trace2.Timestamp);
             Assert.True(Math.Abs((DateTime.UtcNow - trace2.Timestamp).TotalSeconds) < 1);
 
             Assert.False(trace1.Properties.Any());
@@ -1586,19 +1607,19 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksDependenciesWithEvents()
         {
             this.GetDefaults(out var context, out var parentSpanId, out var resource, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var childSpanCount, out var status, out var kind, out var endTimestamp);
-            nowDateTimeOffset = nowDateTimeOffset.Subtract(TimeSpan.FromSeconds(1));
+            now = now.Subtract(TimeSpan.FromSeconds(1));
             name = "spanName";
             kind = SpanKind.Client;
 
             events = TimedEvents<IEvent>.Create(
                 new List<ITimedEvent<IEvent>>()
                 {
-                    TimedEvent<IEvent>.Create(NowTimestamp, Event.Create("test message1")),
-                    TimedEvent<IEvent>.Create(null, Event.Create("test message2", new Dictionary<string, IAttributeValue>()
+                    TimedEvent<IEvent>.Create(now, Event.Create("test message1")),
+                    TimedEvent<IEvent>.Create(default, Event.Create("test message2", new Dictionary<string, object>()
                         {
-                            { "custom.stringAttribute", AttributeValue.StringAttributeValue("string") },
-                            { "custom.longAttribute", AttributeValue.LongAttributeValue(long.MaxValue) },
-                            { "custom.boolAttribute", AttributeValue.BooleanAttributeValue(true) },
+                            { "custom.stringAttribute", "string" },
+                            { "custom.longAttribute", long.MaxValue },
+                            { "custom.boolAttribute", true },
                         })),
                 },
                 droppedEventsCount: 0);
@@ -1623,8 +1644,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("test message1", trace1.Message);
             Assert.Equal("test message2", trace2.Message);
 
-            Assert.Equal(nowDateTimeOffset, trace1.Timestamp);
-            Assert.NotEqual(nowDateTimeOffset, trace2.Timestamp);
+            Assert.Equal(now, trace1.Timestamp);
+            Assert.NotEqual(now, trace2.Timestamp);
             Assert.True(Math.Abs((DateTime.UtcNow - trace2.Timestamp).TotalSeconds) < 1);
 
             Assert.False(trace1.Properties.Any());
@@ -1864,30 +1885,30 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
         private void GetDefaults(
             out SpanContext context,
-            out SpanId parentSpanId,
+            out ActivitySpanId parentSpanId,
             out Resource resource,
             out string name,
-            out Timestamp startTimestamp,
-            out IAttributes attributes,
+            out DateTime startTimestamp,
+            out Attributes attributes,
             out ITimedEvents<IEvent> events,
             out ILinks links,
             out int? childSpanCount,
             out Status status,
             out SpanKind kind,
-            out Timestamp endTimestamp)
+            out DateTime endTimestamp)
         {
-            context = SpanContext.Create(TraceId.FromBytes(this.testTraceIdBytes), SpanId.FromBytes(this.testSpanIdBytes), TraceOptions.Default, Tracestate.Empty);
-            parentSpanId = SpanId.Invalid;
+            context = SpanContext.Create(ActivityTraceId.CreateFromBytes(this.testTraceIdBytes), ActivitySpanId.CreateFromBytes(this.testSpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty);
+            parentSpanId = default;
             resource = Resource.Empty;
             name = "spanName";
-            startTimestamp = NowTimestamp.AddDuration(Duration.Create(TimeSpan.FromSeconds(-1)));
+            startTimestamp = now.AddSeconds(-1);
             attributes = null;
             events = null;
             links = null;
             childSpanCount = null;
             status = null;
             kind = SpanKind.Server;
-            endTimestamp = NowTimestamp;
+            endTimestamp = now;
         }
     }
 };

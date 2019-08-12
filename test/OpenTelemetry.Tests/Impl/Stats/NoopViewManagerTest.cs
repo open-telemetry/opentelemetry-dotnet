@@ -18,7 +18,6 @@ namespace OpenTelemetry.Stats.Test
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
@@ -26,13 +25,13 @@ namespace OpenTelemetry.Stats.Test
 
     public class NoopViewManagerTest
     {
-        private static readonly IMeasureDouble MEASURE = MeasureDouble.Create("my measure", "description", "s");
-        private static readonly TagKey KEY = TagKey.Create("KEY");
-        private static readonly IViewName VIEW_NAME = ViewName.Create("my view");
-        private static readonly String VIEW_DESCRIPTION = "view description";
-        private static readonly ISum AGGREGATION = Sum.Create();
+        private static readonly IMeasureDouble Measure = MeasureDouble.Create("my measure", "description", "s");
+        private static readonly TagKey Key = TagKey.Create("KEY");
+        private static readonly IViewName ViewName = OpenTelemetry.Stats.ViewName.Create("my view");
+        private static readonly String ViewDescription = "view description";
+        private static readonly ISum Aggregation = Sum.Create();
         // private static readonly Cumulative CUMULATIVE = Cumulative.create();
-        private static readonly Duration TEN_SECONDS = Duration.Create(10, 0);
+        private static readonly TimeSpan TenSeconds = TimeSpan.FromSeconds(10);
         // private static readonly Interval INTERVAL = Interval.create(TEN_SECONDS);
 
         // @Rule public readonly ExpectedException thrown = ExpectedException.none();
@@ -40,13 +39,13 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void NoopViewManager_RegisterView_DisallowRegisteringDifferentViewWithSameName()
         {
-            IView view1 =
+            var view1 =
                 View.Create(
-                    VIEW_NAME, "description 1", MEASURE, AGGREGATION, new List<TagKey> { KEY });
-            IView view2 =
+                    ViewName, "description 1", Measure, Aggregation, new List<TagKey> { Key });
+            var view2 =
                 View.Create(
-                    VIEW_NAME, "description 2", MEASURE, AGGREGATION, new List<TagKey> { KEY });
-            IViewManager viewManager = NoopStats.NewNoopViewManager();
+                    ViewName, "description 2", Measure, Aggregation, new List<TagKey> { Key });
+            var viewManager = NoopStats.NewNoopViewManager();
             viewManager.RegisterView(view1);
 
             try
@@ -55,17 +54,17 @@ namespace OpenTelemetry.Stats.Test
             }
             finally
             {
-                Assert.Equal(view1, viewManager.GetView(VIEW_NAME).View);
+                Assert.Equal(view1, viewManager.GetView(ViewName).View);
             }
         }
 
         [Fact]
         public void NoopViewManager_RegisterView_AllowRegisteringSameViewTwice()
         {
-            IView view =
+            var view =
                 View.Create(
-                    VIEW_NAME, VIEW_DESCRIPTION, MEASURE, AGGREGATION, new List<TagKey> { KEY });
-            IViewManager viewManager = NoopStats.NewNoopViewManager();
+                    ViewName, ViewDescription, Measure, Aggregation, new List<TagKey> { Key });
+            var viewManager = NoopStats.NewNoopViewManager();
             viewManager.RegisterView(view);
             viewManager.RegisterView(view);
         }
@@ -73,27 +72,27 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void NoopViewManager_RegisterView_DisallowNull()
         {
-            IViewManager viewManager = NoopStats.NewNoopViewManager();
+            var viewManager = NoopStats.NewNoopViewManager();
             Assert.Throws<ArgumentNullException>(() => viewManager.RegisterView(null));
         }
 
         [Fact]
         public void NoopViewManager_GetView_GettingNonExistentViewReturnsNull()
         {
-            IViewManager viewManager = NoopStats.NewNoopViewManager();
-            Assert.Null(viewManager.GetView(VIEW_NAME));
+            var viewManager = NoopStats.NewNoopViewManager();
+            Assert.Null(viewManager.GetView(ViewName));
         }
 
         [Fact]
         public void NoopViewManager_GetView_Cumulative()
         {
-            IView view =
+            var view =
                 View.Create(
-                    VIEW_NAME, VIEW_DESCRIPTION, MEASURE, AGGREGATION, new List<TagKey> { KEY });
-            IViewManager viewManager = NoopStats.NewNoopViewManager();
+                    ViewName, ViewDescription, Measure, Aggregation, new List<TagKey> { Key });
+            var viewManager = NoopStats.NewNoopViewManager();
             viewManager.RegisterView(view);
 
-            IViewData viewData = viewManager.GetView(VIEW_NAME);
+            var viewData = viewManager.GetView(ViewName);
             Assert.Equal(view, viewData.View);
             Assert.Empty(viewData.AggregationMap);
             Assert.Equal(DateTimeOffset.MinValue, viewData.Start);
@@ -104,13 +103,13 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void noopViewManager_GetView_Interval()
         {
-            IView view =
+            var view =
                 View.Create(
-                    VIEW_NAME, VIEW_DESCRIPTION, MEASURE, AGGREGATION, new List<TagKey> { KEY });
-            IViewManager viewManager = NoopStats.NewNoopViewManager();
+                    ViewName, ViewDescription, Measure, Aggregation, new List<TagKey> { Key });
+            var viewManager = NoopStats.NewNoopViewManager();
             viewManager.RegisterView(view);
 
-            IViewData viewData = viewManager.GetView(VIEW_NAME);
+            var viewData = viewManager.GetView(ViewName);
             Assert.Equal(view, viewData.View);
             Assert.Empty(viewData.AggregationMap);
             Assert.Equal(DateTimeOffset.MinValue, viewData.Start);
@@ -121,29 +120,29 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void NoopViewManager_GetView_DisallowNull()
         {
-            IViewManager viewManager = NoopStats.NewNoopViewManager();
+            var viewManager = NoopStats.NewNoopViewManager();
             Assert.Throws<ArgumentNullException>(() => viewManager.GetView(null));
         }
 
         [Fact]
         public void GetAllExportedViews()
         {
-            IViewManager viewManager = NoopStats.NewNoopViewManager();
+            var viewManager = NoopStats.NewNoopViewManager();
             Assert.Empty(viewManager.AllExportedViews);
-            IView cumulativeView1 =
+            var cumulativeView1 =
                 View.Create(
-                    ViewName.Create("View 1"),
-                    VIEW_DESCRIPTION,
-                    MEASURE,
-                    AGGREGATION,
-                    new List<TagKey> { KEY });
-            IView cumulativeView2 =
+                    OpenTelemetry.Stats.ViewName.Create("View 1"),
+                    ViewDescription,
+                    Measure,
+                    Aggregation,
+                    new List<TagKey> { Key });
+            var cumulativeView2 =
                 View.Create(
-                    ViewName.Create("View 2"),
-                    VIEW_DESCRIPTION,
-                    MEASURE,
-                    AGGREGATION,
-                    new List<TagKey> { KEY });
+                    OpenTelemetry.Stats.ViewName.Create("View 2"),
+                    ViewDescription,
+                    Measure,
+                    Aggregation,
+                    new List<TagKey> { Key });
 
 
             viewManager.RegisterView(cumulativeView1);
@@ -158,16 +157,16 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void GetAllExportedViews_ResultIsUnmodifiable()
         {
-            IViewManager viewManager = NoopStats.NewNoopViewManager();
-            IView view1 =
+            var viewManager = NoopStats.NewNoopViewManager();
+            var view1 =
                 View.Create(
-                    ViewName.Create("View 1"), VIEW_DESCRIPTION, MEASURE, AGGREGATION, new List<TagKey> { KEY });
+                    OpenTelemetry.Stats.ViewName.Create("View 1"), ViewDescription, Measure, Aggregation, new List<TagKey> { Key });
             viewManager.RegisterView(view1);
-            ISet<IView> exported = viewManager.AllExportedViews;
+            var exported = viewManager.AllExportedViews;
 
-            IView view2 =
+            var view2 =
                 View.Create(
-                    ViewName.Create("View 2"), VIEW_DESCRIPTION, MEASURE, AGGREGATION, new List<TagKey> { KEY });
+                    OpenTelemetry.Stats.ViewName.Create("View 2"), ViewDescription, Measure, Aggregation, new List<TagKey> { Key });
             Assert.Throws<NotSupportedException>(() => exported.Add(view2));
         }
     }

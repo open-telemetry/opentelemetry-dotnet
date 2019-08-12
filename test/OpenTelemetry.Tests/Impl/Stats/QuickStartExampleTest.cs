@@ -26,7 +26,7 @@ namespace OpenTelemetry.Stats.Test
 
     public class QuickStartExampleTest
     {
-        ITestOutputHelper output;
+        readonly ITestOutputHelper output;
 
         public QuickStartExampleTest(ITestOutputHelper output)
         {
@@ -36,11 +36,11 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void Main()
         {
-            var statsComponent = new StatsComponent();
-            var viewManager = statsComponent.ViewManager;
-            var statsRecorder = statsComponent.StatsRecorder;
-            var tagsComponent = new TagsComponent();
-            var tagger = tagsComponent.Tagger;
+            var viewManager = Stats.ViewManager;
+            var statsRecorder = Stats.StatsRecorder;
+
+            var state = new CurrentTaggingState();
+            var tagger = new Tagger(state);
 
             TagKey FRONTEND_KEY = TagKey.Create("my.org/keys/frontend");
             TagKey FRONTEND_OS_KEY = TagKey.Create("my.org/keys/frontend/os");
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Stats.Test
 
             IMeasureLong VIDEO_SIZE = MeasureLong.Create("my.org/measure/video_size", "size of processed videos", "MBy");
 
-            IViewName VIDEO_SIZE_BY_FRONTEND_VIEW_NAME = ViewName.Create("my.org/views/video_size_byfrontend");
+            IViewName VIDEO_SIZE_BY_FRONTEND_VIEW_NAME = ViewName.Create("my.org/views/video_size_byfrontend/main1");
             IView VIDEO_SIZE_BY_FRONTEND_VIEW = View.Create(
                                         VIDEO_SIZE_BY_FRONTEND_VIEW_NAME,
                                         "processed video size over time",
@@ -130,11 +130,11 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void Main2()
         {
-            var statsComponent = new StatsComponent();
-            var viewManager = statsComponent.ViewManager;
-            var statsRecorder = statsComponent.StatsRecorder;
-            var tagsComponent = new TagsComponent();
-            var tagger = tagsComponent.Tagger;
+            var viewManager = Stats.ViewManager;
+            var statsRecorder = Stats.StatsRecorder;
+
+            var state = new CurrentTaggingState();
+            var tagger = new Tagger(state);
 
             TagKey FRONTEND_KEY = TagKey.Create("my.org/keys/frontend");
             TagKey FRONTEND_OS_KEY = TagKey.Create("my.org/keys/frontend/os");
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Stats.Test
 
             IMeasureLong VIDEO_SIZE = MeasureLong.Create("my.org/measure/video_size", "size of processed videos", "MBy");
 
-            IViewName VIDEO_SIZE_VIEW_NAME = ViewName.Create("my.org/views/video_size_byfrontend");
+            IViewName VIDEO_SIZE_VIEW_NAME = ViewName.Create("my.org/views/video_size_byfrontend/main2");
             IView VIDEO_SIZE_VIEW = View.Create(
                                         VIDEO_SIZE_VIEW_NAME,
                                         "processed video size over time",
@@ -150,9 +150,7 @@ namespace OpenTelemetry.Stats.Test
                                         Distribution.Create(BucketBoundaries.Create(new List<double>() { 0.0, 256.0, 65536.0 })),
                                         new List<TagKey>() { FRONTEND_KEY, FRONTEND_OS_KEY, FRONTEND_OS_VERSION_KEY });
 
-
             viewManager.RegisterView(VIDEO_SIZE_VIEW);
-    
 
             ITagContext context1 = tagger
                 .EmptyBuilder

@@ -7,7 +7,7 @@ Reporting bugs is an important contribution. Please make sure to include:
 - expected and actual behavior.
 - dotnet version that application is compiled on and running with (it may be
   different - for instance target framework was set to .NET 4.6 for
-  compilation, but application is running on .NET 4.7.3).
+  compilation, but application is running on .NET 4.7.2).
 - exception call stack and other artifacts.
 - if possible - repro application and steps to reproduce.
 
@@ -41,6 +41,12 @@ git merge upstream/master
 Remember to always work in a branch of your local copy, as you might otherwise have to contend with conflicts in master.
 
 Please also see [GitHub workflow](https://github.com/open-telemetry/community/blob/master/CONTRIBUTING.md#github-workflow) section of general project contributing guide.
+
+### Prerequisites
+
+* Git client and command line tools. You may use Visual Studio to clone the repo, but we use [SourceLink](https://github.com/dotnet/sourcelink) to build and it needs git.
+* Visual Studio 2017+ or VS Code
+* .NET Framework 4.6+ and .NET Core 2.1+
 
 ### Build
 

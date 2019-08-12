@@ -17,10 +17,8 @@
 namespace OpenTelemetry.Collector.Dependencies
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics.Tracing;
     using System.Globalization;
-    using System.Text;
     using System.Threading;
 
     /// <summary>
@@ -34,16 +32,16 @@ namespace OpenTelemetry.Collector.Dependencies
         [NonEvent]
         public void ExceptionInCustomSampler(Exception ex)
         {
-            if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.ExceptionInCustomSampler(ToInvariantString(ex));
             }
         }
 
-        [Event(1, Message = "Context is NULL in end callback. Span will not be recorded.", Level = EventLevel.Warning)]
-        public void NullContext()
+        [Event(1, Message = "Span is NULL or blank in the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
+        public void NullOrBlankSpan(string eventName)
         {
-            this.WriteEvent(1);
+            this.WriteEvent(1, eventName);
         }
 
         [Event(2, Message = "Error getting custom sampler, the default sampler will be used. Exception : {0}", Level = EventLevel.Warning)]
@@ -52,13 +50,36 @@ namespace OpenTelemetry.Collector.Dependencies
             this.WriteEvent(2, ex);
         }
 
+        [Event(3, Message = "Current Activity is NULL the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
+        public void NullActivity(string eventName)
+        {
+            this.WriteEvent(3, eventName);
+        }
+
+        [NonEvent]
+        public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
+        {
+            if (!this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                return;
+            }
+
+            this.UnknownErrorProcessingEvent(handlerName, eventName, ToInvariantString(ex));
+        }
+
+        [Event(4, Message = "Unknown error processing event '{0}' from handler '{1}', Exception: {2}", Level = EventLevel.Error)]
+        internal void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
+        {
+            this.WriteEvent(4, handlerName, eventName, ex);
+        }
+
         /// <summary>
         /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
         /// appropriate for diagnostics tracing.
         /// </summary>
         private static string ToInvariantString(Exception exception)
         {
-            CultureInfo originalUICulture = Thread.CurrentThread.CurrentUICulture;
+            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
 
             try
             {

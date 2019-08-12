@@ -16,35 +16,39 @@
 
 namespace OpenTelemetry.Trace.Export
 {
-    using OpenTelemetry.Common;
+    using System;
+    using OpenTelemetry.Abstractions.Utils;
 
     public sealed class TimedEvent<T> : ITimedEvent<T>
     {
-        internal TimedEvent(Timestamp timestamp, T @event)
+        internal TimedEvent(DateTime timestamp, T @event)
         {
             this.Timestamp = timestamp;
             this.Event = @event;
         }
 
-        public Timestamp Timestamp { get; }
+        public DateTime Timestamp { get; }
 
         public T Event { get; }
 
-        public static ITimedEvent<T> Create(Timestamp timestamp, T @event)
+        public static ITimedEvent<T> Create(DateTime timestamp, T @event)
         {
-            return new TimedEvent<T>(timestamp, @event);
+            return timestamp == default
+                ? new TimedEvent<T>(PreciseTimestamp.GetUtcNow(), @event)
+                : new TimedEvent<T>(timestamp, @event);
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "TimedEvent{"
-                + "timestamp=" + this.Timestamp + ", "
-                + "event=" + this.Event
+            return "TimedEvent"
+                + "{"
+                + nameof(this.Timestamp) + "=" + this.Timestamp + ", "
+                + nameof(this.Event) + "=" + this.Event
                 + "}";
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override bool Equals(object o)
         {
             if (o == this)
@@ -61,10 +65,10 @@ namespace OpenTelemetry.Trace.Export
             return false;
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int h = 1;
+            var h = 1;
             h *= 1000003;
             h ^= this.Timestamp.GetHashCode();
             h *= 1000003;

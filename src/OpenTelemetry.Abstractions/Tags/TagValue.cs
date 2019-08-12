@@ -57,8 +57,9 @@ namespace OpenTelemetry.Tags
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "TagValue{"
-                + "asString=" + this.AsString
+            return nameof(TagValue)
+                + "{"
+                + nameof(this.AsString) + "=" + this.AsString
                 + "}";
         }
 
@@ -81,7 +82,7 @@ namespace OpenTelemetry.Tags
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int h = 1;
+            var h = 1;
             h *= 1000003;
             h ^= this.AsString.GetHashCode();
             return h;

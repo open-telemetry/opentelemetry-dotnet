@@ -50,7 +50,7 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Returns a new <see cref="Resource"/>.
         /// </summary>
-        /// <param name="labels">An <see cref="IDictionary{string, string}"/> of labels that describe the resource.</param>
+        /// <param name="labels">An <see cref="IDictionary{String, String}"/> of labels that describe the resource.</param>
         /// <returns><see cref="Resource"/>.</returns>
         public static Resource Create(IDictionary<string, string> labels)
         {
@@ -58,10 +58,10 @@ namespace OpenTelemetry.Resources
         }
 
         /// <summary>
-        /// Returns a new, merged <see cref="Resource"/> by merging the current <see cref="Resource"/> with the
+        /// Returns a new, merged <see cref="Resource"/> by merging the current <see cref="Resource"/> with the.
         /// <code>other</code> <see cref="Resource"/>. In case of a collision the current <see cref="Resource"/> takes precedence.
         /// </summary>
-        /// <param name="other">The <see cref="Resource"/> that will be merged with <code>this</code>.</param>
+        /// <param name="other">The <see cref="Resource"/> that will be merged with. <code>this</code>.</param>
         /// <returns><see cref="Resource"/>.</returns>
         public Resource Merge(Resource other)
         {
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Resources
                 return this;
             }
 
-            foreach (KeyValuePair<string, string> label in other.Labels)
+            foreach (var label in other.Labels)
             {
                 if (this.labelCollection.ContainsKey(label.Key) == false)
                 {
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Resources
                 throw new ArgumentNullException(nameof(labels));
             }
 
-            foreach (KeyValuePair<string, string> label in labels)
+            foreach (var label in labels)
             {
                 if (!IsValidAndNotEmpty(label.Key))
                 {

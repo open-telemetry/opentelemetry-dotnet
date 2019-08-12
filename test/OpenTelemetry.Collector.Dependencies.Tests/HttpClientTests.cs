@@ -18,11 +18,9 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     using Moq;
     using Newtonsoft.Json;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Sampler;
     using System;
     using System.Collections.Generic;
@@ -58,7 +56,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
         private static IEnumerable<object[]> readTestCases()
         {
-            Assembly assembly = Assembly.GetExecutingAssembly();
+            var assembly = Assembly.GetExecutingAssembly();
             var serializer = new JsonSerializer();
             var input = serializer.Deserialize<HttpOutTestCase[]>(new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream("OpenTelemetry.Collector.Dependencies.Tests.http-out-test-cases.json"))));
 
@@ -67,7 +65,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
         private static IEnumerable<object[]> getArgumentsFromTestCaseObject(IEnumerable<HttpOutTestCase> input)
         {
-            List<object[]> result = new List<object[]>();
+            var result = new List<object[]>();
 
             foreach (var testCase in input)
             {
@@ -89,7 +87,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
         [Theory]
         [MemberData(nameof(TestData))]
-        public async Task HttpOutCallsAreCollectedSuccesfullyAsync(HttpOutTestCase tc)
+        public async Task HttpOutCallsAreCollectedSuccessfullyAsync(HttpOutTestCase tc)
         {
             var serverLifeTime = TestServer.RunServer(
                 (ctx) =>
@@ -97,11 +95,11 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     ctx.Response.StatusCode = tc.responseCode == 0 ? 200 : tc.responseCode;
                     ctx.Response.OutputStream.Close();
                 },
-                out string host, 
-                out int port);
+                out var host, 
+                out var port);
 
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
+            var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
             tc.url = NormaizeValues(tc.url, host, port);
 
             using (serverLifeTime)
@@ -166,7 +164,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             Assert.Equal(tc.spanStatus, d[spanData.Status.CanonicalCode]);
 
-            var normilizedAttributes = spanData.Attributes.AttributeMap.ToDictionary(x => x.Key, x => AttributeToSimpleString(x.Value));
+            var normilizedAttributes = spanData.Attributes.AttributeMap.ToDictionary(x => x.Key, x => x.Value.ToString());
             tc.spanAttributes = tc.spanAttributes.ToDictionary(x => x.Key, x => NormaizeValues(x.Value, host, port));
 
             Assert.Equal(tc.spanAttributes.ToHashSet(), normilizedAttributes.ToHashSet());
@@ -196,19 +194,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 ]
 ")));
 
-            var t = (Task)this.GetType().InvokeMember(nameof(HttpOutCallsAreCollectedSuccesfullyAsync), BindingFlags.InvokeMethod, null, this, getArgumentsFromTestCaseObject(input).First());
+            var t = (Task)this.GetType().InvokeMember(nameof(HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, getArgumentsFromTestCaseObject(input).First());
             await t;
-        }
-
-        private string AttributeToSimpleString(IAttributeValue value)
-        {
-            return value.Match<string>(
-                x => x.ToString(),
-                x => x ? "true" : "false",
-                x => x.ToString(),
-                x => x.ToString(),
-                x => x.ToString()
-            );
         }
 
         private string NormaizeValues(string value, string host, int port)

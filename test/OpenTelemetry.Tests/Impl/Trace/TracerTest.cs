@@ -14,8 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace.Sampler;
+
 namespace OpenTelemetry.Trace.Test
 {
+    using System;
     using Moq;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;
@@ -23,31 +26,71 @@ namespace OpenTelemetry.Trace.Test
 
     public class TracerTest
     {
-        private const string SPAN_NAME = "MySpanName";
-        private IStartEndHandler startEndHandler;
-        private ITraceConfig traceConfig;
-        private Tracer tracer;
+        private const string SpanName = "MySpanName";
+        private readonly IStartEndHandler startEndHandler;
+        private readonly ITraceConfig traceConfig;
+        private readonly Tracer tracer;
 
 
         public TracerTest()
         {
             startEndHandler = Mock.Of<IStartEndHandler>();
             traceConfig = Mock.Of<ITraceConfig>();
-            tracer = new Tracer(new RandomGenerator(), startEndHandler, traceConfig, null);
+            tracer = new Tracer(startEndHandler, traceConfig);
         }
 
         [Fact]
         public void CreateSpanBuilder()
         {
-            ISpanBuilder spanBuilder = tracer.SpanBuilderWithParent(SPAN_NAME, parent: BlankSpan.Instance);
+            var spanBuilder = tracer.SpanBuilder(SpanName);
             Assert.IsType<SpanBuilder>(spanBuilder);
         }
 
         [Fact]
-        public void CreateSpanBuilderWithRemoteParet()
+        public void CreateSpanBuilderWithNullName()
         {
-            ISpanBuilder spanBuilder = tracer.SpanBuilderWithParentContext(SPAN_NAME, parentContext: SpanContext.Blank);
-            Assert.IsType<SpanBuilder>(spanBuilder);
+            Assert.Throws<ArgumentNullException>(() => tracer.SpanBuilder(null));
         }
+
+        [Fact]
+        public void GetCurrentSpanBlank()
+        {
+            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+        }
+
+        [Fact]
+        public void GetCurrentSpan()
+        {
+            var traceParams = Mock.Of<ITraceParams>();
+            Mock.Get(traceParams).Setup(p => p.Sampler).Returns(Samplers.AlwaysSample);
+            Mock.Get(traceConfig).Setup(c => c.ActiveTraceParams).Returns(traceParams);
+
+            var span = tracer.SpanBuilder("foo").StartSpan();
+            using (tracer.WithSpan(span))
+            {
+                Assert.Same(span, tracer.CurrentSpan);
+            }
+            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+        }
+
+        [Fact]
+        public void WithSpanNull()
+        {
+            Assert.Throws<ArgumentNullException>(() => tracer.WithSpan(null));
+        }
+
+        [Fact]
+        public void GetTextFormat()
+        {
+            Assert.NotNull(tracer.TextFormat);
+        }
+
+        [Fact]
+        public void GetBinaryFormat()
+        {
+            Assert.NotNull(tracer.BinaryFormat);
+        }
+
+        // TODO test for sampler
     }
 }

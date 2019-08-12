@@ -16,31 +16,32 @@
 
 namespace OpenTelemetry.Trace.Test
 {
+    using System;
+    using System.Linq;
     using System.Collections.Generic;
-    using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Utils;
+    using System.Diagnostics;
     using Xunit;
 
-    public class LinkTest
+    public class LinkTest : IDisposable
     {
-        private readonly IDictionary<string, IAttributeValue> attributesMap = new Dictionary<string, IAttributeValue>();
-        private readonly IRandomGenerator random = new RandomGenerator(1234);
+        private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();
         private readonly SpanContext spanContext;
           
 
         public LinkTest()
         {
-            spanContext = SpanContext.Create(TraceId.GenerateRandomId(random), SpanId.GenerateRandomId(random), TraceOptions.Default, Tracestate.Empty); ;
-            attributesMap.Add("MyAttributeKey0", AttributeValue<string>.Create("MyStringAttribute"));
-            attributesMap.Add("MyAttributeKey1", AttributeValue<long>.Create(10));
-            attributesMap.Add("MyAttributeKey2", AttributeValue<bool>.Create(true));
-            attributesMap.Add("MyAttributeKey3", AttributeValue<double>.Create(0.005));
+            spanContext = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty); ;
+
+            attributesMap.Add("MyAttributeKey0", "MyStringAttribute");
+            attributesMap.Add("MyAttributeKey1", 10L);
+            attributesMap.Add("MyAttributeKey2", true);
+            attributesMap.Add("MyAttributeKey3", 0.005);
         }
 
         [Fact]
         public void FromSpanContext_ChildLink()
         {
-            ILink link = Link.FromSpanContext(spanContext);
+            var link = Link.FromSpanContext(spanContext);
             Assert.Equal(spanContext.TraceId, link.Context.TraceId);
             Assert.Equal(spanContext.SpanId, link.Context.SpanId);
         }
@@ -48,7 +49,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromSpanContext_ChildLink_WithAttributes()
         {
-            ILink link = Link.FromSpanContext(spanContext, attributesMap);
+            var link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Equal(spanContext.TraceId, link.Context.TraceId);
             Assert.Equal(spanContext.SpanId, link.Context.SpanId);
             Assert.Equal(attributesMap, link.Attributes);
@@ -57,7 +58,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromSpanContext_ParentLink()
         {
-            ILink link = Link.FromSpanContext(spanContext);
+            var link = Link.FromSpanContext(spanContext);
             Assert.Equal(spanContext.TraceId, link.Context.TraceId);
             Assert.Equal(spanContext.SpanId, link.Context.SpanId);
         }
@@ -65,44 +66,63 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromSpanContext_ParentLink_WithAttributes()
         {
-            ILink link = Link.FromSpanContext(spanContext, attributesMap);
+            var link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Equal(spanContext.TraceId, link.Context.TraceId);
             Assert.Equal(spanContext.SpanId, link.Context.SpanId);
             Assert.Equal(attributesMap, link.Attributes);
         }
 
         [Fact]
-        public void Link_EqualsAndHashCode()
-        {
-            // EqualsTester tester = new EqualsTester();
-            // tester
-            //    .addEqualityGroup(
-            //        Link.fromSpanContext(spanContext, Type.PARENT_LINKED_SPAN),
-            //        Link.fromSpanContext(spanContext, Type.PARENT_LINKED_SPAN))
-            //    .addEqualityGroup(
-            //        Link.fromSpanContext(spanContext, Type.CHILD_LINKED_SPAN),
-            //        Link.fromSpanContext(spanContext, Type.CHILD_LINKED_SPAN))
-            //    .addEqualityGroup(Link.fromSpanContext(SpanContext.INVALID, Type.CHILD_LINKED_SPAN))
-            //    .addEqualityGroup(Link.fromSpanContext(SpanContext.INVALID, Type.PARENT_LINKED_SPAN))
-            //    .addEqualityGroup(
-            //        Link.fromSpanContext(spanContext, Type.PARENT_LINKED_SPAN, attributesMap),
-            //        Link.fromSpanContext(spanContext, Type.PARENT_LINKED_SPAN, attributesMap));
-            // tester.testEquals();
-
-
-        }
-
-        [Fact]
         public void Link_ToString()
         {
-            ILink link = Link.FromSpanContext(spanContext, attributesMap);
+            var link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Contains(spanContext.TraceId.ToString(), link.ToString());
             Assert.Contains(spanContext.SpanId.ToString(), link.ToString());
-            Assert.Contains(Collections.ToString(attributesMap), link.ToString());
+            Assert.Contains(string.Join(", ", attributesMap.Select(kvp => $"{kvp.Key}={kvp.Value}")), link.ToString());
             link = Link.FromSpanContext(spanContext, attributesMap);
             Assert.Contains(spanContext.TraceId.ToString(), link.ToString());
             Assert.Contains(spanContext.SpanId.ToString(), spanContext.SpanId.ToString());
-            Assert.Contains(Collections.ToString(attributesMap), link.ToString());
+            Assert.Contains(string.Join(", ", attributesMap.Select(kvp => $"{kvp.Key}={kvp.Value}")), link.ToString());
+        }
+
+        [Fact]
+        public void FromSpanContext_FromActivity()
+        {
+            var activity = new Activity("foo")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+            activity.TraceStateString = "k1=v1, k2=v2";
+
+            var link = Link.FromActivity(activity);
+            Assert.Equal(activity.TraceId, link.Context.TraceId);
+            Assert.Equal(activity.SpanId, link.Context.SpanId);
+
+            var entries = link.Context.Tracestate.Entries.ToArray();
+            Assert.Equal(2, entries.Length);
+            Assert.Equal("k1", entries[0].Key);
+            Assert.Equal("v1", entries[0].Value);
+            Assert.Equal("k2", entries[1].Key);
+            Assert.Equal("v2", entries[1].Value);
+        }
+
+        [Fact]
+        public void FromSpanContext_FromNullActivity()
+        {
+            Assert.Throws<ArgumentNullException>( () => Link.FromActivity(null));
+        }
+
+        [Fact]
+        public void FromSpanContext_FromHierarchicalActivity()
+        {
+            var activity = new Activity("foo")
+                .SetIdFormat(ActivityIdFormat.Hierarchical)
+                .Start();
+            Assert.Throws<ArgumentException>(() => Link.FromActivity(activity));
+        }
+
+        public void Dispose()
+        {
+            Activity.Current = null;
         }
     }
 }

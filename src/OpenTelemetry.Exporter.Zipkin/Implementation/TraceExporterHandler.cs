@@ -18,13 +18,13 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Net;
     using System.Net.Http;
     using System.Net.Sockets;
     using System.Text;
     using System.Threading.Tasks;
     using Newtonsoft.Json;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
@@ -34,42 +34,74 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         private const long NanosPerMillisecond = 1000 * 1000;
         private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
 
-        private static readonly string StatusCode = "census.status_code";
-        private static readonly string StatusDescription = "census.status_description";
+        private static readonly string StatusCode = "ot.status_code";
+        private static readonly string StatusDescription = "ot.status_description";
 
         private readonly ZipkinTraceExporterOptions options;
         private readonly ZipkinEndpoint localEndpoint;
         private readonly HttpClient httpClient;
+        private readonly string serviceEndpoint;
 
         public TraceExporterHandler(ZipkinTraceExporterOptions options, HttpClient client)
         {
             this.options = options;
             this.localEndpoint = this.GetLocalZipkinEndpoint();
             this.httpClient = client ?? new HttpClient();
+            this.serviceEndpoint = options.Endpoint?.ToString();
         }
 
         public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
         {
-            List<ZipkinSpan> zipkinSpans = new List<ZipkinSpan>();
+            var zipkinSpans = new List<ZipkinSpan>();
 
             foreach (var data in spanDataList)
             {
-                var zipkinSpan = this.GenerateSpan(data, this.localEndpoint);
-                zipkinSpans.Add(zipkinSpan);
+                bool shouldExport = true;
+                foreach (var label in data.Attributes.AttributeMap)
+                {
+                    if (label.Key == "http.url")
+                    {
+                        if (label.Value is string urlStr && urlStr == this.serviceEndpoint)
+                        {
+                            // do not track calls to Zipkin
+                            shouldExport = false;
+                        }
+
+                        break;
+                    }
+                }
+
+                if (shouldExport)
+                {
+                    var zipkinSpan = this.GenerateSpan(data, this.localEndpoint);
+                    zipkinSpans.Add(zipkinSpan);
+                }
             }
 
-            await this.SendSpansAsync(zipkinSpans);
+            if (zipkinSpans.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                await this.SendSpansAsync(zipkinSpans);
+            }
+            catch (Exception)
+            {
+                // Ignored
+            }
         }
 
         internal ZipkinSpan GenerateSpan(SpanData spanData, ZipkinEndpoint localEndpoint)
         {
-            SpanContext context = spanData.Context;
-            long startTimestamp = this.ToEpochMicroseconds(spanData.StartTimestamp);
-            long endTimestamp = this.ToEpochMicroseconds(spanData.EndTimestamp);
+            var context = spanData.Context;
+            var startTimestamp = this.ToEpochMicroseconds(spanData.StartTimestamp);
+            var endTimestamp = this.ToEpochMicroseconds(spanData.EndTimestamp);
 
-            ZipkinSpan.Builder spanBuilder =
+            var spanBuilder =
                 ZipkinSpan.NewBuilder()
-                    .TraceId(this.EncodeTraceId(context.TraceId))
+                    .ActivityTraceId(this.EncodeTraceId(context.TraceId))
                     .Id(this.EncodeSpanId(context.SpanId))
                     .Kind(this.ToSpanKind(spanData))
                     .Name(spanData.Name)
@@ -77,17 +109,17 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                     .Duration(endTimestamp - startTimestamp)
                     .LocalEndpoint(localEndpoint);
 
-            if (spanData.ParentSpanId != null && spanData.ParentSpanId.IsValid)
+            if (spanData.ParentSpanId != default)
             {
                 spanBuilder.ParentId(this.EncodeSpanId(spanData.ParentSpanId));
             }
 
             foreach (var label in spanData.Attributes.AttributeMap)
             {
-                spanBuilder.PutTag(label.Key, this.AttributeValueToString(label.Value));
+                spanBuilder.PutTag(label.Key, label.Value.ToString());
             }
 
-            Status status = spanData.Status;
+            var status = spanData.Status;
 
             if (status != null)
             {
@@ -107,26 +139,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return spanBuilder.Build();
         }
 
-        private long ToEpochMicroseconds(Timestamp timestamp)
+        private long ToEpochMicroseconds(DateTime timestamp)
         {
-            long nanos = (timestamp.Seconds * NanosPerSecond) + timestamp.Nanos;
-            long micros = nanos / 1000L;
-            return micros;
+            return new DateTimeOffset(timestamp).ToUnixTimeMilliseconds() * 1000;
         }
 
-        private string AttributeValueToString(IAttributeValue attributeValue)
+        private string EncodeTraceId(ActivityTraceId traceId)
         {
-            return attributeValue.Match(
-                (arg) => { return arg; },
-                (arg) => { return arg.ToString(); },
-                (arg) => { return arg.ToString(); },
-                (arg) => { return arg.ToString(); },
-                (arg) => { return null; });
-        }
-
-        private string EncodeTraceId(TraceId traceId)
-        {
-            var id = traceId.ToLowerBase16();
+            var id = traceId.ToHexString();
 
             if (id.Length > 16 && this.options.UseShortTraceIds)
             {
@@ -136,9 +156,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return id;
         }
 
-        private string EncodeSpanId(SpanId spanId)
+        private string EncodeSpanId(ActivitySpanId spanId)
         {
-            return spanId.ToLowerBase16();
+            return spanId.ToHexString();
         }
 
         private ZipkinSpanKind ToSpanKind(SpanData spanData)
@@ -155,37 +175,23 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return ZipkinSpanKind.CLIENT;
         }
 
-        private async Task SendSpansAsync(IEnumerable<ZipkinSpan> spans)
+        private Task SendSpansAsync(IEnumerable<ZipkinSpan> spans)
         {
-            try
-            {
-                var requestUri = this.options.Endpoint;
-                var request = this.GetHttpRequestMessage(HttpMethod.Post, requestUri);
-                request.Content = this.GetRequestContent(spans);
-                await this.DoPost(this.httpClient, request);
-            }
-            catch (Exception)
-            {
-            }
+            var requestUri = this.options.Endpoint;
+            var request = this.GetHttpRequestMessage(HttpMethod.Post, requestUri);
+            request.Content = this.GetRequestContent(spans);
+            return this.DoPost(this.httpClient, request);
         }
 
         private async Task DoPost(HttpClient client, HttpRequestMessage request)
         {
-            try
+            using (var response = await client.SendAsync(request))
             {
-                using (HttpResponseMessage response = await client.SendAsync(request))
+                if (response.StatusCode != HttpStatusCode.OK &&
+                    response.StatusCode != HttpStatusCode.Accepted)
                 {
-                    if (response.StatusCode != HttpStatusCode.OK &&
-                        response.StatusCode != HttpStatusCode.Accepted)
-                    {
-                        var statusCode = (int)response.StatusCode;
-                    }
-
-                    return;
+                    var statusCode = (int)response.StatusCode;
                 }
-            }
-            catch (Exception)
-            {
             }
         }
 
@@ -198,17 +204,17 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private HttpContent GetRequestContent(IEnumerable<ZipkinSpan> toSerialize)
         {
+            var content = string.Empty;
             try
             {
-                string json = JsonConvert.SerializeObject(toSerialize);
-
-                return new StringContent(json, Encoding.UTF8, "application/json");
+                content = JsonConvert.SerializeObject(toSerialize);
             }
             catch (Exception)
             {
+                // Ignored
             }
 
-            return new StringContent(string.Empty, Encoding.UTF8, "application/json");
+            return new StringContent(content, Encoding.UTF8, "application/json");
         }
 
         private ZipkinEndpoint GetLocalZipkinEndpoint()
@@ -218,7 +224,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 ServiceName = this.options.ServiceName,
             };
 
-            string hostName = this.ResolveHostName();
+            var hostName = this.ResolveHostName();
 
             if (!string.IsNullOrEmpty(hostName))
             {

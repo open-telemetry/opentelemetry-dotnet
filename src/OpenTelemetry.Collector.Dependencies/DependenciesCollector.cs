@@ -21,7 +21,6 @@ namespace OpenTelemetry.Collector.Dependencies
     using System.Net.Http;
     using OpenTelemetry.Collector.Dependencies.Common;
     using OpenTelemetry.Collector.Dependencies.Implementation;
-    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
 
     /// <summary>
@@ -41,7 +40,11 @@ namespace OpenTelemetry.Collector.Dependencies
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
                 new Dictionary<string, Func<ITracer, Func<HttpRequestMessage, ISampler>, ListenerHandler>>()
-                { { "HttpHandlerDiagnosticListener", (t, s) => new HttpHandlerDiagnosticListener(t, s) } },
+                {
+                    { "HttpHandlerDiagnosticListener", (t, s) => new HttpHandlerDiagnosticListener(t, s) },
+                    { "Azure.Clients", (t, s) => new AzureSdkDiagnosticListener("Azure.Clients", t, sampler) },
+                    { "Azure.Pipeline", (t, s) => new AzureSdkDiagnosticListener("Azure.Pipeline", t, sampler) },
+                },
                 tracer,
                 x =>
                 {
@@ -56,7 +59,7 @@ namespace OpenTelemetry.Collector.Dependencies
                         DependenciesCollectorEventSource.Log.ExceptionInCustomSampler(e);
                     }
 
-                    return s == null ? sampler : s;
+                    return s ?? sampler;
                     });
             this.diagnosticSourceSubscriber.Subscribe();
         }

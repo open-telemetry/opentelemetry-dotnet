@@ -197,14 +197,14 @@ namespace OpenTelemetry.Trace
                 return false;
             }
 
-            Status that = (Status)obj;
+            var that = (Status)obj;
             return this.CanonicalCode == that.CanonicalCode && this.Description == that.Description;
         }
 
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int result = 1;
+            var result = 1;
             result = (31 * result) + this.CanonicalCode.GetHashCode();
             result = (31 * result) + this.Description.GetHashCode();
             return result;
@@ -213,10 +213,11 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Status{"
-                    + "canonicalCode=" + this.CanonicalCode + ", "
-                    + "description=" + this.Description
-                    + "}";
+            return nameof(Status)
+                + "{"
+                + nameof(this.CanonicalCode) + "=" + this.CanonicalCode + ", "
+                + nameof(this.Description) + "=" + this.Description
+                + "}";
         }
     }
 }

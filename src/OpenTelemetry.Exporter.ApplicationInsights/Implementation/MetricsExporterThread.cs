@@ -49,7 +49,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
         {
             try
             {
-                Stopwatch sw = new Stopwatch();
+                var sw = new Stopwatch();
 
                 while (!this.token.IsCancellationRequested)
                 {
@@ -66,8 +66,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                         Thread.Sleep(this.cancellationInterval);
                         sleepInterval = sleepInterval.Subtract(this.cancellationInterval);
                     }
-
-                    Thread.Sleep(sleepInterval);
                 }
             }
             catch (Exception ex)
@@ -89,7 +87,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                         Name = data.View.Name.AsString,
                     };
 
-                    for (int i = 0; i < value.Key.Values.Count; i++)
+                    for (var i = 0; i < value.Key.Values.Count; i++)
                     {
                         var name = data.View.Columns[i].Name;
                         var val = value.Key.Values[i].AsString;

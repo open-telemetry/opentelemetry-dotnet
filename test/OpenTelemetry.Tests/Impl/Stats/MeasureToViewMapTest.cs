@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Stats.Test
 {
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
@@ -42,9 +41,9 @@ namespace OpenTelemetry.Stats.Test
         [Fact]
         public void TestRegisterAndGetView()
         {
-            MeasureToViewMap measureToViewMap = new MeasureToViewMap();
+            var measureToViewMap = new MeasureToViewMap();
             measureToViewMap.RegisterView(VIEW);
-            IViewData viewData = measureToViewMap.GetView(VIEW_NAME, StatsCollectionState.ENABLED);
+            var viewData = measureToViewMap.GetView(VIEW_NAME, StatsCollectionState.ENABLED);
             Assert.Equal(VIEW, viewData.View);
             Assert.Empty(viewData.AggregationMap);
         }

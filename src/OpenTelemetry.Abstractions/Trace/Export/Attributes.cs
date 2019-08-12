@@ -18,42 +18,43 @@ namespace OpenTelemetry.Trace.Export
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Linq;
 
-    public sealed class Attributes : IAttributes
+    public sealed class Attributes
     {
-        internal Attributes(IDictionary<string, IAttributeValue> attributeMap, int droppedAttributesCount)
+        public static readonly Attributes Empty = new Attributes(new Dictionary<string, object>(), 0);
+
+        private Attributes(IEnumerable<KeyValuePair<string, object>> attributeMap, int droppedAttributesCount)
         {
-            this.AttributeMap = attributeMap ?? throw new ArgumentNullException("Null attributeMap");
+            this.AttributeMap = attributeMap ?? throw new ArgumentNullException(nameof(attributeMap));
             this.DroppedAttributesCount = droppedAttributesCount;
         }
 
-        public IDictionary<string, IAttributeValue> AttributeMap { get; }
+        public IEnumerable<KeyValuePair<string, object>> AttributeMap { get; }
 
         public int DroppedAttributesCount { get; }
 
-        public static Attributes Create(IDictionary<string, IAttributeValue> attributeMap, int droppedAttributesCount)
+        public static Attributes Create(IReadOnlyCollection<KeyValuePair<string, object>> attributeMap, int droppedAttributesCount)
         {
             if (attributeMap == null)
             {
-                throw new ArgumentNullException(nameof(attributeMap));
+                return Empty;
             }
 
-            IDictionary<string, IAttributeValue> copy = new Dictionary<string, IAttributeValue>(attributeMap);
-            return new Attributes(new ReadOnlyDictionary<string, IAttributeValue>(copy), droppedAttributesCount);
+            return new Attributes(attributeMap, droppedAttributesCount);
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Attributes{"
-                + "attributeMap=" + this.AttributeMap + ", "
-                + "droppedAttributesCount=" + this.DroppedAttributesCount
+            return nameof(Attributes)
+                + "{"
+                + nameof(this.AttributeMap) + "=" + this.AttributeMap + ", "
+                + nameof(this.DroppedAttributesCount) + "=" + this.DroppedAttributesCount
                 + "}";
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override bool Equals(object o)
         {
             if (o == this)
@@ -70,10 +71,10 @@ namespace OpenTelemetry.Trace.Export
             return false;
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int h = 1;
+            var h = 1;
             h *= 1000003;
             h ^= this.AttributeMap.GetHashCode();
             h *= 1000003;

@@ -17,10 +17,8 @@
 namespace OpenTelemetry.Collector.AspNetCore
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics.Tracing;
     using System.Globalization;
-    using System.Text;
     using System.Threading;
 
     /// <summary>
@@ -40,10 +38,10 @@ namespace OpenTelemetry.Collector.AspNetCore
             }
         }
 
-        [Event(1, Message = "Context is NULL in end callback. Span will not be recorded.", Level = EventLevel.Warning)]
-        public void NullContext()
+        [Event(1, Message = "Http Context is NULL in '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
+        public void NullHttpContext(string eventName)
         {
-            this.WriteEvent(1);
+            this.WriteEvent(1, eventName);
         }
 
         [Event(2, Message = "Error getting custom sampler, the default sampler will be used. Exception : {0}", Level = EventLevel.Warning)]
@@ -52,13 +50,19 @@ namespace OpenTelemetry.Collector.AspNetCore
             this.WriteEvent(2, ex);
         }
 
+        [Event(3, Message = "Current Span is null or blank in '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
+        public void NullOrBlankSpan(string callbackName)
+        {
+            this.WriteEvent(3, callbackName);
+        }
+
         /// <summary>
         /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
         /// appropriate for diagnostics tracing.
         /// </summary>
         private static string ToInvariantString(Exception exception)
         {
-            CultureInfo originalUICulture = Thread.CurrentThread.CurrentUICulture;
+            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
 
             try
             {

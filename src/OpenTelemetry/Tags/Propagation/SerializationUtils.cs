@@ -36,10 +36,10 @@ namespace OpenTelemetry.Tags.Propagation
         {
             // Use a ByteArrayDataOutput to avoid needing to handle IOExceptions.
             // ByteArrayDataOutput byteArrayDataOutput = ByteStreams.newDataOutput();
-            MemoryStream byteArrayDataOutput = new MemoryStream();
+            var byteArrayDataOutput = new MemoryStream();
 
             byteArrayDataOutput.WriteByte(VersionId);
-            int totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
+            var totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
             foreach (var tag in tags)
             {
                 totalChars += tag.Key.Name.Length;
@@ -75,8 +75,8 @@ namespace OpenTelemetry.Tags.Propagation
                     throw new TagContextDeserializationException("Input byte[] can not be empty.");
                 }
 
-                MemoryStream buffer = new MemoryStream(bytes);
-                int versionId = buffer.ReadByte();
+                var buffer = new MemoryStream(bytes);
+                var versionId = buffer.ReadByte();
                 if (versionId > VersionId || versionId < 0)
                 {
                     throw new TagContextDeserializationException(
@@ -94,15 +94,15 @@ namespace OpenTelemetry.Tags.Propagation
         internal static IDictionary<TagKey, TagValue> ParseTags(MemoryStream buffer)
         {
             IDictionary<TagKey, TagValue> tags = new Dictionary<TagKey, TagValue>();
-            long limit = buffer.Length;
-            int totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
+            var limit = buffer.Length;
+            var totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
             while (buffer.Position < limit)
             {
-                int type = buffer.ReadByte();
+                var type = buffer.ReadByte();
                 if (type == TagFieldId)
                 {
-                    TagKey key = CreateTagKey(DecodeString(buffer));
-                    TagValue val = CreateTagValue(key, DecodeString(buffer));
+                    var key = CreateTagKey(DecodeString(buffer));
+                    var val = CreateTagValue(key, DecodeString(buffer));
                     totalChars += key.Name.Length;
                     totalChars += val.AsString.Length;
                     tags[key] = val;
@@ -170,16 +170,16 @@ else
 
         private static void PutVarInt(int input, MemoryStream byteArrayDataOutput)
         {
-            byte[] output = new byte[VarInt.VarIntSize(input)];
+            var output = new byte[VarInt.VarIntSize(input)];
             VarInt.PutVarInt(input, output, 0);
             byteArrayDataOutput.Write(output, 0, output.Length);
         }
 
         private static string DecodeString(MemoryStream buffer)
         {
-            int length = VarInt.GetVarInt(buffer);
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < length; i++)
+            var length = VarInt.GetVarInt(buffer);
+            var builder = new StringBuilder();
+            for (var i = 0; i < length; i++)
             {
                 builder.Append((char)buffer.ReadByte());
             }

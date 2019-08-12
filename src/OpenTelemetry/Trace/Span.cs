@@ -18,72 +18,57 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Common;
-    using OpenTelemetry.Internal;
+    using System.Diagnostics;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
+    using OpenTelemetry.Trace.Internal;
     using OpenTelemetry.Utils;
 
-    /// <inheritdoc/>
-    public sealed class Span : SpanBase
+    /// <summary>
+    /// Span implementation.
+    /// </summary>
+    public sealed class Span : ISpan
     {
-        private readonly SpanId parentSpanId;
         private readonly ITraceParams traceParams;
         private readonly IStartEndHandler startEndHandler;
-        private readonly DateTimeOffset startTime;
+        private readonly Lazy<SpanContext> spanContext;
         private readonly object @lock = new object();
-        private AttributesWithCapacity attributes;
-        private TraceEvents<EventWithTime<IEvent>> events;
-        private TraceEvents<ILink> links;
+        private EvictingQueue<KeyValuePair<string, object>> attributes;
+        private EvictingQueue<ITimedEvent<IEvent>> events;
+        private EvictingQueue<ILink> links;
         private Status status;
-        private DateTimeOffset endTime;
-        private bool hasBeenEnded;
-        private bool sampleToLocalSpanStore;
 
         private Span(
-                SpanContext context,
-                SpanOptions options,
-                string name,
+                Activity activity,
+                Tracestate tracestate,
                 SpanKind spanKind,
-                SpanId parentSpanId,
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
-                Timer timestampConverter)
-            : base(context, options)
+                bool ownsActivity)
         {
-            this.parentSpanId = parentSpanId;
-            this.Name = name;
+            this.Activity = activity;
+            this.spanContext = new Lazy<SpanContext>(() => SpanContext.Create(
+                this.Activity.TraceId, 
+                this.Activity.SpanId, 
+                this.Activity.ActivityTraceFlags, 
+                tracestate));
+            this.Name = this.Activity.OperationName;
             this.traceParams = traceParams ?? throw new ArgumentNullException(nameof(traceParams));
             this.startEndHandler = startEndHandler;
-            this.hasBeenEnded = false;
-            this.sampleToLocalSpanStore = false;
             this.Kind = spanKind;
-            if (this.IsRecordingEvents)
-            {
-                if (timestampConverter == null)
-                {
-                    this.TimestampConverter = Timer.StartNew();
-                    this.startTime = this.TimestampConverter.StartTime;
-                }
-                else
-                {
-                    this.TimestampConverter = timestampConverter;
-                    this.startTime = this.TimestampConverter.Now;
-                }
-            }
-            else
-            {
-                this.startTime = DateTimeOffset.MinValue;
-                this.TimestampConverter = timestampConverter;
-            }
+            this.OwnsActivity = ownsActivity;
+            this.IsRecordingEvents = this.Activity.Recorded;
         }
 
-        /// <inheritdoc/>
-        public override string Name { get; protected set; }
+        public Activity Activity { get; }
+
+        public SpanContext Context => this.spanContext.Value;
+
+        public string Name { get; private set; }
 
         /// <inheritdoc/>
-        public override Status Status
+        public Status Status
         {
             get
             {
@@ -102,125 +87,87 @@ namespace OpenTelemetry.Trace
 
                 lock (this.@lock)
                 {
-                    if (this.hasBeenEnded)
+                    if (this.HasEnded)
                     {
                         // logger.log(Level.FINE, "Calling setStatus() on an ended Span.");
                         return;
                     }
 
-                    this.status = value;
+                    this.status = value ?? throw new ArgumentNullException(nameof(value));
                 }
             }
         }
 
-        /// <inheritdoc/>
-        public override DateTimeOffset EndTime
-        {
-            get
-            {
-                lock (this.@lock)
-                {
-                    return this.hasBeenEnded ? this.endTime : this.TimestampConverter.Now;
-                }
-            }
-        }
+        public ActivitySpanId ParentSpanId => this.Activity.ParentSpanId;
+
+        public bool HasEnded { get; private set; }
 
         /// <inheritdoc/>
-        public override TimeSpan Latency
-        {
-            get
-            {
-                lock (this.@lock)
-                {
-                    return this.hasBeenEnded ? this.endTime - this.startTime : this.TimestampConverter.Now - this.startTime;
-                }
-            }
-        }
-
-        /// <inheritdoc/>
-        public override bool IsSampleToLocalSpanStore
-        {
-            get
-            {
-                lock (this.@lock)
-                {
-                    if (!this.hasBeenEnded)
-                    {
-                        throw new InvalidOperationException("Running span does not have the SampleToLocalSpanStore set.");
-                    }
-
-                    return this.sampleToLocalSpanStore;
-                }
-            }
-        }
-
-        /// <inheritdoc/>
-        public override SpanId ParentSpanId => this.parentSpanId;
-
-        /// <inheritdoc/>
-        public override bool HasEnded => this.hasBeenEnded;
-
-        /// <inheritdoc/>
-        public override bool IsRecordingEvents
-        {
-            get
-            {
-                return this.Options.HasFlag(SpanOptions.RecordEvents);
-            }
-        }
+        public bool IsRecordingEvents { get; }
 
         /// <summary>
         /// Gets or sets span kind.
         /// </summary>
         internal SpanKind? Kind { get; set; }
 
-        internal Timer TimestampConverter { get; private set; }
+        internal bool OwnsActivity { get; }
 
-        private AttributesWithCapacity InitializedAttributes
+        private EvictingQueue<KeyValuePair<string, object>> InitializedAttributes
         {
             get
             {
                 if (this.attributes == null)
                 {
-                    this.attributes = new AttributesWithCapacity(this.traceParams.MaxNumberOfAttributes);
+                    this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.traceParams.MaxNumberOfAttributes);
                 }
 
                 return this.attributes;
             }
         }
 
-        private TraceEvents<EventWithTime<IEvent>> InitializedEvents
+        private EvictingQueue<ITimedEvent<IEvent>> InitializedEvents
         {
             get
             {
                 if (this.events == null)
                 {
                     this.events =
-                        new TraceEvents<EventWithTime<IEvent>>(this.traceParams.MaxNumberOfEvents);
+                        new EvictingQueue<ITimedEvent<IEvent>>(this.traceParams.MaxNumberOfEvents);
                 }
 
                 return this.events;
             }
         }
 
-        private TraceEvents<ILink> InitializedLinks
+        private EvictingQueue<ILink> InitializedLinks
         {
             get
             {
                 if (this.links == null)
                 {
-                    this.links = new TraceEvents<ILink>(this.traceParams.MaxNumberOfLinks);
+                    this.links = new EvictingQueue<ILink>(this.traceParams.MaxNumberOfLinks);
                 }
 
                 return this.links;
             }
         }
 
-        private Status StatusWithDefault => this.status ?? Trace.Status.Ok;
+        private Status StatusWithDefault => this.status ?? Status.Ok;
+
+        /// <inheritdoc />
+        public void UpdateName(string name)
+        {
+            this.Name = name ?? throw new ArgumentNullException(nameof(name));
+        }
 
         /// <inheritdoc/>
-        public override void SetAttribute(string key, IAttributeValue value)
+        public void SetAttribute(KeyValuePair<string, object> keyValuePair)
         {
+            if (keyValuePair.Key == null || keyValuePair.Value == null)
+            {
+                throw new ArgumentNullException(nameof(keyValuePair));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -228,19 +175,24 @@ namespace OpenTelemetry.Trace
 
             lock (this.@lock)
             {
-                if (this.hasBeenEnded)
+                if (this.HasEnded)
                 {
                     // logger.log(Level.FINE, "Calling putAttributes() on an ended Span.");
                     return;
                 }
 
-                this.InitializedAttributes.PutAttribute(key, value);
+                this.InitializedAttributes.AddEvent(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
             }
         }
 
         /// <inheritdoc/>
-        public override void AddEvent(string name, IDictionary<string, IAttributeValue> attributes)
+        public void AddEvent(string name)
         {
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -248,19 +200,29 @@ namespace OpenTelemetry.Trace
 
             lock (this.@lock)
             {
-                if (this.hasBeenEnded)
+                if (this.HasEnded)
                 {
                     // logger.log(Level.FINE, "Calling AddEvent() on an ended Span.");
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.TimestampConverter.Now, Event.Create(name, attributes)));
+                this.InitializedEvents.AddEvent(TimedEvent<IEvent>.Create(PreciseTimestamp.GetUtcNow(), Event.Create(name)));
             }
         }
 
         /// <inheritdoc/>
-        public override void AddEvent(IEvent addEvent)
+        public void AddEvent(string name, IDictionary<string, object> eventAttributes)
         {
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
+            if (eventAttributes == null)
+            {
+                throw new ArgumentNullException(nameof(eventAttributes));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -268,24 +230,24 @@ namespace OpenTelemetry.Trace
 
             lock (this.@lock)
             {
-                if (this.hasBeenEnded)
+                if (this.HasEnded)
                 {
                     // logger.log(Level.FINE, "Calling AddEvent() on an ended Span.");
                     return;
                 }
 
-                if (addEvent == null)
-                {
-                    throw new ArgumentNullException(nameof(addEvent));
-                }
-
-                this.InitializedEvents.AddEvent(new EventWithTime<IEvent>(this.TimestampConverter.Now, addEvent));
+                this.InitializedEvents.AddEvent(TimedEvent<IEvent>.Create(PreciseTimestamp.GetUtcNow(), Event.Create(name, eventAttributes)));
             }
         }
 
         /// <inheritdoc/>
-        public override void AddLink(ILink link)
+        public void AddEvent(IEvent addEvent)
         {
+            if (addEvent == null)
+            {
+                throw new ArgumentNullException(nameof(addEvent));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -293,7 +255,32 @@ namespace OpenTelemetry.Trace
 
             lock (this.@lock)
             {
-                if (this.hasBeenEnded)
+                if (this.HasEnded)
+                {
+                    // logger.log(Level.FINE, "Calling AddEvent() on an ended Span.");
+                    return;
+                }
+
+                this.InitializedEvents.AddEvent(TimedEvent<IEvent>.Create(PreciseTimestamp.GetUtcNow(), addEvent));
+            }
+        }
+
+        /// <inheritdoc/>
+        public void AddLink(ILink link)
+        {
+            if (link == null)
+            {
+                throw new ArgumentNullException(nameof(link));
+            }
+
+            if (!this.IsRecordingEvents)
+            {
+                return;
+            }
+
+            lock (this.@lock)
+            {
+                if (this.HasEnded)
                 {
                     // logger.log(Level.FINE, "Calling addLink() on an ended Span.");
                     return;
@@ -309,8 +296,14 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void End(EndSpanOptions options)
+        public void End()
         {
+            if (this.OwnsActivity && this.Activity == Activity.Current)
+            {
+                // TODO log if current is not span activity
+                this.Activity.Stop();
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
@@ -318,117 +311,128 @@ namespace OpenTelemetry.Trace
 
             lock (this.@lock)
             {
-                if (this.hasBeenEnded)
+                if (this.HasEnded)
                 {
                     // logger.log(Level.FINE, "Calling end() on an ended Span.");
                     return;
                 }
 
-                if (options.Status != null)
-                {
-                    this.status = options.Status;
-                }
-
-                this.sampleToLocalSpanStore = options.SampleToLocalSpanStore;
-                this.endTime = this.TimestampConverter.Now;
-                this.hasBeenEnded = true;
+                this.HasEnded = true;
             }
 
             this.startEndHandler.OnEnd(this);
         }
 
-        /// <inheritdoc/>
-        public override SpanData ToSpanData()
+        public SpanData ToSpanData()
         {
             if (!this.IsRecordingEvents)
             {
                 throw new InvalidOperationException("Getting SpanData for a Span without RECORD_EVENTS option.");
             }
 
-            Attributes attributesSpanData = this.attributes == null ? Attributes.Create(new Dictionary<string, IAttributeValue>(), 0)
-                        : Attributes.Create(this.attributes, this.attributes.NumberOfDroppedAttributes);
-
-            ITimedEvents<IEvent> annotationsSpanData = CreateTimedEvents(this.InitializedEvents, this.TimestampConverter);
-            LinkList linksSpanData = this.links == null ? LinkList.Create(new List<ILink>(), 0) : LinkList.Create(this.links.Events, this.links.NumberOfDroppedEvents);
+            var attributesSpanData = Attributes.Create(this.attributes?.ToReadOnlyCollection(), this.attributes?.DroppedItems ?? 0);
+            var eventsSpanData = TimedEvents<IEvent>.Create(this.events?.ToReadOnlyCollection(), this.events?.DroppedItems ?? 0);
+            var linksSpanData = LinkList.Create(this.links?.ToReadOnlyCollection(), this.links?.DroppedItems ?? 0);
 
             return SpanData.Create(
-                this.Context,
-                this.parentSpanId,
+                this.Context, // TODO avoid using context, use Activity instead
+                this.ParentSpanId,
                 Resource.Empty, // TODO: determine what to do with Resource in this context
                 this.Name,
-                Timestamp.FromDateTimeOffset(this.startTime),
+                this.Activity.StartTimeUtc,
                 attributesSpanData,
-                annotationsSpanData,
+                eventsSpanData,
                 linksSpanData,
                 null, // Not supported yet.
-                this.hasBeenEnded ? this.StatusWithDefault : null,
+                this.HasEnded ? this.StatusWithDefault : null,
                 this.Kind ?? SpanKind.Internal,
-                this.hasBeenEnded ? Timestamp.FromDateTimeOffset(this.endTime) : null);
+                this.HasEnded ? (this.Activity.StartTimeUtc + this.Activity.Duration) : default);
         }
 
         /// <inheritdoc/>
-        public override void SetAttribute(string key, string value)
+        public void SetAttribute(string key, string value)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
             }
 
-            this.SetAttribute(key, AttributeValue.StringAttributeValue(value));
+            this.SetAttribute(new KeyValuePair<string, object>(key, value));
         }
 
         /// <inheritdoc/>
-        public override void SetAttribute(string key, long value)
+        public void SetAttribute(string key, long value)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
             }
 
-            this.SetAttribute(key, AttributeValue.LongAttributeValue(value));
+            this.SetAttribute(new KeyValuePair<string, object>(key, value));
         }
 
         /// <inheritdoc/>
-        public override void SetAttribute(string key, double value)
+        public void SetAttribute(string key, double value)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
             }
 
-            this.SetAttribute(key, AttributeValue.DoubleAttributeValue(value));
+            this.SetAttribute(new KeyValuePair<string, object>(key, value));
         }
 
         /// <inheritdoc/>
-        public override void SetAttribute(string key, bool value)
+        public void SetAttribute(string key, bool value)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             if (!this.IsRecordingEvents)
             {
                 return;
             }
 
-            this.SetAttribute(key, AttributeValue.BooleanAttributeValue(value));
+            this.SetAttribute(new KeyValuePair<string, object>(key, value));
         }
 
         internal static ISpan StartSpan(
-                        SpanContext context,
-                        SpanOptions options,
-                        string name,
+                        Activity activity,
+                        Tracestate tracestate,
                         SpanKind spanKind,
-                        SpanId parentSpanId,
                         ITraceParams traceParams,
                         IStartEndHandler startEndHandler,
-                        Timer timestampConverter)
+                        bool ownsActivity = true)
         {
             var span = new Span(
-               context,
-               options,
-               name,
+               activity,
+               tracestate,
                spanKind,
-               parentSpanId,
                traceParams,
                startEndHandler,
-               timestampConverter);
+               ownsActivity);
 
             // Call onStart here instead of calling in the constructor to make sure the span is completely
             // initialized.
@@ -438,23 +442,6 @@ namespace OpenTelemetry.Trace
             }
 
             return span;
-        }
-
-        private static ITimedEvents<T> CreateTimedEvents<T>(TraceEvents<EventWithTime<T>> events, Timer timestampConverter)
-        {
-            if (events == null)
-            {
-                IEnumerable<ITimedEvent<T>> empty = Array.Empty<ITimedEvent<T>>();
-                return TimedEvents<T>.Create(empty, 0);
-            }
-
-            var eventsList = new List<ITimedEvent<T>>(events.Events.Count);
-            foreach (EventWithTime<T> networkEvent in events.Events)
-            {
-                eventsList.Add(networkEvent.ToSpanDataTimedEvent(timestampConverter));
-            }
-
-            return TimedEvents<T>.Create(eventsList, events.NumberOfDroppedEvents);
         }
     }
 }

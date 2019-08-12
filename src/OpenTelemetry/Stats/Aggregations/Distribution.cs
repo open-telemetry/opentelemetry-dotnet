@@ -51,8 +51,9 @@ namespace OpenTelemetry.Stats.Aggregations
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Distribution{"
-                + "bucketBoundaries=" + this.BucketBoundaries
+            return nameof(Distribution) 
+                + "{"
+                + nameof(this.BucketBoundaries) + "=" + this.BucketBoundaries
                 + "}";
         }
 
@@ -75,7 +76,7 @@ namespace OpenTelemetry.Stats.Aggregations
     /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int h = 1;
+            var h = 1;
             h *= 1000003;
             h ^= this.BucketBoundaries.GetHashCode();
             return h;

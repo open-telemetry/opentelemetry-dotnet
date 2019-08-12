@@ -22,9 +22,11 @@ namespace OpenTelemetry.Trace.Export
 
     public sealed class TimedEvents<T> : ITimedEvents<T>
     {
+        public static readonly ITimedEvents<T> Empty = new TimedEvents<T>(Enumerable.Empty<ITimedEvent<T>>(), 0);
+
         internal TimedEvents(IEnumerable<ITimedEvent<T>> events, int droppedEventsCount)
         {
-            this.Events = events ?? throw new ArgumentNullException("Null events");
+            this.Events = events ?? throw new ArgumentNullException(nameof(events), "Null events");
             this.DroppedEventsCount = droppedEventsCount;
         }
 
@@ -32,11 +34,11 @@ namespace OpenTelemetry.Trace.Export
 
         public int DroppedEventsCount { get; }
 
-        public static ITimedEvents<T> Create(IEnumerable<ITimedEvent<T>> events, int droppedEventsCount)
+        public static ITimedEvents<T> Create(IReadOnlyCollection<ITimedEvent<T>> events, int droppedEventsCount)
         {
             if (events == null)
             {
-                throw new ArgumentNullException(nameof(events));
+                return Empty;
             }
 
             return new TimedEvents<T>(events, droppedEventsCount);
@@ -45,7 +47,8 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "TimedEvents{"
+            return "TimedEvents"
+                + "{"
                 + "events=" + this.Events + ", "
                 + "droppedEventsCount=" + this.DroppedEventsCount
                 + "}";
@@ -71,7 +74,7 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int h = 1;
+            var h = 1;
             h *= 1000003;
             h ^= this.Events.GetHashCode();
             h *= 1000003;

@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Tags.Test
 {
     using System.Collections.Generic;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Tags.Unsafe;
     using Xunit;
 
@@ -30,7 +29,7 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void TestGetCurrentTagContext_DefaultContext()
         {
-            ITagContext tags = CurrentTagContextUtils.CurrentTagContext;
+            var tags = CurrentTagContextUtils.CurrentTagContext;
             Assert.NotNull(tags);
             Assert.Empty(TagsTestUtil.TagContextToList(tags));
         }
@@ -42,7 +41,7 @@ namespace OpenTelemetry.Tags.Test
             AsyncLocalContext.CurrentTagContext = null;
             try
             {
-                ITagContext tags = CurrentTagContextUtils.CurrentTagContext;
+                var tags = CurrentTagContextUtils.CurrentTagContext;
                 Assert.NotNull(tags);
                 Assert.Empty(TagsTestUtil.TagContextToList(tags));
             }
@@ -57,7 +56,7 @@ namespace OpenTelemetry.Tags.Test
         {
             Assert.Empty(TagsTestUtil.TagContextToList(CurrentTagContextUtils.CurrentTagContext));
 
-            IScope scopedTags = CurrentTagContextUtils.WithTagContext(tagContext);
+            var scopedTags = CurrentTagContextUtils.WithTagContext(tagContext);
             try
             {
                 Assert.Same(tagContext, CurrentTagContextUtils.CurrentTagContext);

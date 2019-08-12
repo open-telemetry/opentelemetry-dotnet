@@ -23,15 +23,13 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using Microsoft.Extensions.DependencyInjection;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Common;
     using Moq;
     using Microsoft.AspNetCore.TestHost;
     using System;
     using OpenTelemetry.Context.Propagation;
     using Microsoft.AspNetCore.Http;
     using System.Collections.Generic;
-    using System.Text;
+    using System.Diagnostics;
 
     // See https://github.com/aspnet/Docs/tree/master/aspnetcore/test/integration-tests/samples/2.x/IntegrationTestsSample
     public class BasicTests
@@ -42,14 +40,13 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         public BasicTests(WebApplicationFactory<Startup> factory)
         {
             this.factory = factory;
-            
         }
 
         [Fact]
-        public async Task SuccesfulTemplateControllerCallGeneratesASpan()
+        public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null);
+            var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
 
             void ConfigureTestServices(IServiceCollection services) =>
                 services.AddSingleton<ITracer>(tracer);
@@ -67,7 +64,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                for (int i = 0; i < 10; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     if (startEndHandler.Invocations.Count == 2)
                     {
@@ -86,26 +83,26 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             var spanData = ((Span)startEndHandler.Invocations[1].Arguments[0]).ToSpanData();
 
             Assert.Equal(SpanKind.Server, spanData.Kind);
-            Assert.Equal(AttributeValue.StringAttributeValue("/api/values"), spanData.Attributes.AttributeMap["http.path"]);
+            Assert.Equal("/api/values", spanData.Attributes.GetValue("http.path"));
         }
 
         [Fact]
-        public async Task SuccesfulTemplateControllerCallUsesParentContext()
+        public async Task SuccessfulTemplateControllerCallUsesParentContext()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
 
-            var expectedTraceId = TraceId.GenerateRandomId(new RandomGenerator());
-            var expectedSpanId = SpanId.GenerateRandomId(new RandomGenerator());
+            var expectedTraceId = ActivityTraceId.CreateRandom();
+            var expectedSpanId = ActivitySpanId.CreateRandom();
 
             var tf = new Mock<ITextFormat>();
             tf.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(SpanContext.Create(
                 expectedTraceId,
                 expectedSpanId,
-                TraceOptions.Default,
+                ActivityTraceFlags.None,
                 Tracestate.Empty
                 ));
 
-            var tracer = new Tracer(new RandomGenerator(), startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
+            var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
 
             // Arrange
             using (var client = this.factory
@@ -125,7 +122,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                for (int i = 0; i < 10; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     if (startEndHandler.Invocations.Count == 2)
                     {
@@ -144,7 +141,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
 
             Assert.Equal(SpanKind.Server, spanData.Kind);
             Assert.Equal("api/Values/{id}", spanData.Name);
-            Assert.Equal(AttributeValue.StringAttributeValue("/api/values/2"), spanData.Attributes.AttributeMap["http.path"]);
+            Assert.Equal("/api/values/2", spanData.Attributes.GetValue("http.path"));
 
             Assert.Equal(expectedTraceId, spanData.Context.TraceId);
             Assert.Equal(expectedSpanId, spanData.ParentSpanId);

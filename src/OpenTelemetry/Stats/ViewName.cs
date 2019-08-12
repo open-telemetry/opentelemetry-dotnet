@@ -51,8 +51,9 @@ namespace OpenTelemetry.Stats
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Name{"
-                + "asString=" + this.AsString
+            return nameof(ViewName)
+                + "{"
+                + nameof(this.AsString) + "=" + this.AsString
                 + "}";
         }
 
@@ -75,7 +76,7 @@ namespace OpenTelemetry.Stats
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int h = 1;
+            var h = 1;
             h *= 1000003;
             h ^= this.AsString.GetHashCode();
             return h;

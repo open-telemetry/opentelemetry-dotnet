@@ -29,10 +29,10 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void TestTagEquals()
         {
-            Tag tag1 = Tag.Create(TagKey.Create("Key"), TagValue.Create("foo"));
-            Tag tag2 = Tag.Create(TagKey.Create("Key"), TagValue.Create("foo"));
-            Tag tag3 = Tag.Create(TagKey.Create("Key"), TagValue.Create("bar"));
-            Tag tag4 = Tag.Create(TagKey.Create("Key2"), TagValue.Create("foo"));
+            var tag1 = Tag.Create(TagKey.Create("Key"), TagValue.Create("foo"));
+            var tag2 = Tag.Create(TagKey.Create("Key"), TagValue.Create("foo"));
+            var tag3 = Tag.Create(TagKey.Create("Key"), TagValue.Create("bar"));
+            var tag4 = Tag.Create(TagKey.Create("Key2"), TagValue.Create("foo"));
             Assert.Equal(tag1, tag2);
             Assert.NotEqual(tag1, tag3);
             Assert.NotEqual(tag1, tag4);

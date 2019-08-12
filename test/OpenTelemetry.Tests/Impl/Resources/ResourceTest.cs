@@ -26,7 +26,7 @@ namespace OpenTelemetry.Impl.Resources
     {
         private const string keyName = "key";
         private const string valueName = "value";
-        private static Random random = new Random();
+        private static readonly Random random = new Random();
 
         [Fact]
         public static void CreateResource_NullLabelCollection()
@@ -251,7 +251,7 @@ namespace OpenTelemetry.Impl.Resources
 
         private static void AddLabels(Dictionary<string, string> labels, int labelCount, int startIndex = 0)
         {
-            for (int i = startIndex; i < labelCount + startIndex; ++i)
+            for (var i = startIndex; i < labelCount + startIndex; ++i)
             {
                 labels.Add($"{keyName}{i}", $"{valueName}{i}");
             }

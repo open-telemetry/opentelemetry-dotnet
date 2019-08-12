@@ -37,14 +37,14 @@ namespace OpenTelemetry.Stats
                 throw new ArgumentNullException(nameof(bucketBoundaries));
             }
 
-            List<double> bucketBoundariesCopy = new List<double>(bucketBoundaries);
+            var bucketBoundariesCopy = new List<double>(bucketBoundaries);
 
             if (bucketBoundariesCopy.Count > 1)
             {
-                double lower = bucketBoundariesCopy[0];
-                for (int i = 1; i < bucketBoundariesCopy.Count; i++)
+                var lower = bucketBoundariesCopy[0];
+                for (var i = 1; i < bucketBoundariesCopy.Count; i++)
                 {
-                    double next = bucketBoundariesCopy[i];
+                    var next = bucketBoundariesCopy[i];
                     if (!(lower < next))
                     {
                         throw new ArgumentOutOfRangeException("Bucket boundaries not sorted.");
@@ -60,8 +60,9 @@ namespace OpenTelemetry.Stats
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "BucketBoundaries{"
-                + "boundaries=" + Collections.ToString(this.Boundaries)
+            return nameof(BucketBoundaries)
+                + "{"
+                + nameof(this.Boundaries) + "=" + string.Join(", ", this.Boundaries)
                 + "}";
         }
 
@@ -84,7 +85,7 @@ namespace OpenTelemetry.Stats
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            int h = 1;
+            var h = 1;
             h *= 1000003;
             h ^= this.Boundaries.GetHashCode();
             return h;
