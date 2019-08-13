@@ -34,18 +34,18 @@ namespace OpenTelemetry.Collector.Dependencies
         /// Initializes a new instance of the <see cref="DependenciesCollector"/> class.
         /// </summary>
         /// <param name="options">Configuration options for dependencies collector.</param>
-        /// <param name="tracer">Tracer to record traced with.</param>
-        /// <param name="sampler">Sampler to use to sample dependnecy calls.</param>
-        public DependenciesCollector(DependenciesCollectorOptions options, ITracer tracer, ISampler sampler)
+        /// <param name="tracerFactory">TracerFactory for creating named Tracers.</param>
+        /// <param name="sampler">Sampler to use to sample dependency calls.</param>
+        public DependenciesCollector(DependenciesCollectorOptions options, ITracerFactory tracerFactory, ISampler sampler)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-                new Dictionary<string, Func<ITracer, Func<HttpRequestMessage, ISampler>, ListenerHandler>>()
+                new Dictionary<string, Func<ITracerFactory, Func<HttpRequestMessage, ISampler>, ListenerHandler>>()
                 {
-                    { "HttpHandlerDiagnosticListener", (t, s) => new HttpHandlerDiagnosticListener(t, s) },
-                    { "Azure.Clients", (t, s) => new AzureSdkDiagnosticListener("Azure.Clients", t, sampler) },
-                    { "Azure.Pipeline", (t, s) => new AzureSdkDiagnosticListener("Azure.Pipeline", t, sampler) },
+                    { "HttpHandlerDiagnosticListener", (tf, s) => new HttpHandlerDiagnosticListener(tf, s) },
+                    { "Azure.Clients", (tf, s) => new AzureSdkDiagnosticListener("Azure.Clients", tf, sampler) },
+                    { "Azure.Pipeline", (tf, s) => new AzureSdkDiagnosticListener("Azure.Pipeline", tf, sampler) },
                 },
-                tracer,
+                tracerFactory,
                 x =>
                 {
                     ISampler s = null;

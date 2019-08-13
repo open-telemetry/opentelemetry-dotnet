@@ -26,18 +26,18 @@ namespace OpenTelemetry.Collector.Dependencies.Common
 
     internal class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
     {
-        private readonly Dictionary<string, Func<ITracer, Func<HttpRequestMessage, ISampler>, ListenerHandler>> handlers;
-        private readonly ITracer tracer;
+        private readonly Dictionary<string, Func<ITracerFactory, Func<HttpRequestMessage, ISampler>, ListenerHandler>> handlers;
+        private readonly ITracerFactory tracerFactory;
         private readonly Func<HttpRequestMessage, ISampler> sampler;
         private ConcurrentDictionary<string, DiagnosticSourceListener> subscriptions;
         private long disposed;
         private IDisposable subscription;
 
-        public DiagnosticSourceSubscriber(Dictionary<string, Func<ITracer, Func<HttpRequestMessage, ISampler>, ListenerHandler>> handlers, ITracer tracer, Func<HttpRequestMessage, ISampler> sampler)
+        public DiagnosticSourceSubscriber(Dictionary<string, Func<ITracerFactory, Func<HttpRequestMessage, ISampler>, ListenerHandler>> handlers, ITracerFactory tracerFactory, Func<HttpRequestMessage, ISampler> sampler)
         {
             this.subscriptions = new ConcurrentDictionary<string, DiagnosticSourceListener>();
             this.handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
-            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            this.tracerFactory = tracerFactory ?? throw new ArgumentNullException(nameof(tracerFactory));
             this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
         }
 
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Collector.Dependencies.Common
                 {
                     this.subscriptions.GetOrAdd(value.Name, name =>
                     {
-                        var dl = new DiagnosticSourceListener(this.handlers[value.Name](this.tracer, this.sampler));
+                        var dl = new DiagnosticSourceListener(this.handlers[value.Name](this.tracerFactory, this.sampler));
                         dl.Subscription = value.Subscribe(dl);
                         return dl;
                     });
