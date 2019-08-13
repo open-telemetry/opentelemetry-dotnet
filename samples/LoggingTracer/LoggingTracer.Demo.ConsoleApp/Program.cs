@@ -6,7 +6,7 @@
 
     public class Program
     {
-        private static ITracer tracer = new LoggingTracer();
+        private static ITracer tracer = new LoggingTracer("console");
 
         public static async Task Main(string[] args)
         {

@@ -29,7 +29,7 @@ namespace Samples
         {
             Console.WriteLine("Hello World!");
 
-            var tracer = Tracing.Tracer;
+            var tracer = Tracing.TracerFactory.Create("test");
 
             using (new DependenciesCollector(new DependenciesCollectorOptions(), null, Samplers.AlwaysSample))
             {

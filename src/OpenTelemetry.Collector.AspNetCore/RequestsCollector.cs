@@ -43,7 +43,7 @@ namespace OpenTelemetry.Collector.AspNetCore
                 {
                     { "Microsoft.AspNetCore", (t, s) => new HttpInListener(t, s) },
                 },
-                tracerFactory.Create("Microsoft.AspNetCore"),
+                tracerFactory.Create("OpenTelemetry.Collector.AspNetCore"),
                 x =>
                 {
                     ISampler s = null;

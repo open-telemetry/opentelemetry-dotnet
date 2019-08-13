@@ -14,7 +14,7 @@
             // - or return Tracer from a map for the the given name.
             // - or return (new) Tracer based on a condition (e..g config) otherwise NopTracer, ... 
             // - ...
-            return new LoggingTracer();
+            return new LoggingTracer(name);
         }
     }
 }

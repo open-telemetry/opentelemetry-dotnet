@@ -51,10 +51,10 @@ namespace OpenTelemetry.Trace
         /// </summary>
         public static ITracerFactory TracerFactory => tracerFactory;
         
-        /// <summary>   
+/*        /// <summary>   
         /// Gets the tracer to record spans.
         /// </summary>
-        public static ITracer Tracer => tracer; // TODO: We could probably get rid of this property in favor of TracerFactory.
+        public static ITracer Tracer => tracer; // TODO: We could probably get rid of this property in favor of TracerFactory.*/
 
         /// <summary>
         /// Gets the exporter to use to upload spans.
