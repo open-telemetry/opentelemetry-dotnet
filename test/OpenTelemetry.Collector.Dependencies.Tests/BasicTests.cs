@@ -51,6 +51,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         {
             var startEndHandler = new Mock<IStartEndHandler>();
             var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, null);
+            var tracerFactory = new Mock<ITracerFactory>();
+            tracerFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(tracer);
 
             var request = new HttpRequestMessage
             {
@@ -63,7 +65,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
 
-            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory.Object, Samplers.AlwaysSample))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);
@@ -91,6 +93,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         {
             var startEndHandler = new Mock<IStartEndHandler>();
             var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, null);
+            var tracerFactory = new Mock<ITracerFactory>();
+            tracerFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(tracer);
 
             var request = new HttpRequestMessage
             {
@@ -100,7 +104,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory.Object, Samplers.AlwaysSample))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);

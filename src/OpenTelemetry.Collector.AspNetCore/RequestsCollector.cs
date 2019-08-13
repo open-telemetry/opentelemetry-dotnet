@@ -34,16 +34,16 @@ namespace OpenTelemetry.Collector.AspNetCore
         /// Initializes a new instance of the <see cref="RequestsCollector"/> class.
         /// </summary>
         /// <param name="options">Configuration options for dependencies collector.</param>
-        /// <param name="tracer">Tracer to record traced with.</param>
+        /// <param name="tracerFactory">Factory for creating named Tracers.</param>
         /// <param name="sampler">Sampler to use to sample dependency calls.</param>
-        public RequestsCollector(RequestsCollectorOptions options, ITracer tracer, ISampler sampler)
+        public RequestsCollector(RequestsCollectorOptions options, ITracerFactory tracerFactory, ISampler sampler)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
                 new Dictionary<string, Func<ITracer, Func<HttpRequest, ISampler>, ListenerHandler>>()
                 {
                     { "Microsoft.AspNetCore", (t, s) => new HttpInListener(t, s) },
                 },
-                tracer,
+                tracerFactory.Create("OpenTelemetry.Collector.AspNetCore"),
                 x =>
                 {
                     ISampler s = null;

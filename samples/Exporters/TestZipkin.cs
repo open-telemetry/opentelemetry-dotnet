@@ -45,9 +45,9 @@ namespace Samples
                 .Build();
             traceConfig.UpdateActiveTraceParams(newConfig);
 
-            // 3. Tracer is global singleton. You can register it via dependency injection if it exists
+            // 3. TracerFactory is global singleton. You can register it via dependency injection if it exists
             // but if not - you can use it as follows:
-            var tracer = Tracing.Tracer;
+            var tracer = Tracing.TracerFactory.Create("test");
 
             // 4. Create a scoped span. It will end automatically when using statement ends
             using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))
@@ -67,8 +67,8 @@ namespace Samples
 
         private static void DoWork(int i)
         {
-            // 6. Get the global singleton Tracer object
-            var tracer = Tracing.Tracer;
+            // 6. Get the global singleton TracerFactory object and create a Tracer.
+            var tracer = Tracing.TracerFactory.Create("test");
 
             // 7. Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be
