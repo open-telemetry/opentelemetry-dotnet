@@ -6,7 +6,8 @@
     <PackageIconUrl>https://opentelemetry.io/img/logos/opentelemetry-icon-color.png</PackageIconUrl>
     <PackageProjectUrl>https://OpenTelemetry.io</PackageProjectUrl>
     <PackageTags>Tracing;OpenTelemetry;Management;Monitoring;Jaeger;distributed-tracing</PackageTags>
-    <IsPackable>false</IsPackable>
+    <AssemblyName>OpenTelemetry.Thrift.VendoredThrift</AssemblyName>
+    <PackageId>OpenTelemetry.Thrift.VendoredThrift</PackageId>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
