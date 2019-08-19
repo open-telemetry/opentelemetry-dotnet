@@ -3,7 +3,7 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <Description>OpenTelemetry collector for ASP.NET Core requests</Description>
     <PackageTags>$(PackageTags);distributed-tracing;AspNetCore</PackageTags>
-  </PropertyGroup> 
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
