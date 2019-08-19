@@ -6,8 +6,7 @@ Community Channel: [![Gitter chat][main-gitter-image]][main-gitter-url]
 
 We hold regular meetings. See details at [community page](https://github.com/open-telemetry/community#net-sdk).
 
-[![Build
-Status](https://dev.azure.com/opentelemetry/pipelines/_apis/build/status/open-telemetry.opentelemetry-dotnet?branchName=master)](https://dev.azure.com/opentelemetry/pipelines/_build/latest?definitionId=1&branchName=master)
+[![Build Status](https://dev.azure.com/opentelemetry/pipelines/_apis/build/status/open-telemetry.opentelemetry-dotnet-myget-update?branchName=master)](https://dev.azure.com/opentelemetry/pipelines/_build/latest?definitionId=2&branchName=master)
 
 OpenTelemetry is a toolkit for collecting application performance and behavior
 data.
