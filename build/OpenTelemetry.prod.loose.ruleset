@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<RuleSet Name="OpenTelemetry SDK Rules" Description="Open Census SDK ruleset for product code." ToolsVersion="15.0">
+<RuleSet Name="OpenTelemetry SDK Rules" Description="Open Telemetry SDK ruleset for product code." ToolsVersion="15.0">
   <Localization ResourceAssembly="Microsoft.VisualStudio.CodeAnalysis.RuleSets.Strings.dll" ResourceBaseName="Microsoft.VisualStudio.CodeAnalysis.RuleSets.Strings.Localized">
     <Name Resource="OpenTelemetrySDKRules_Name" />
     <Description Resource="OpenTelemetrySDKRules_Description" />
