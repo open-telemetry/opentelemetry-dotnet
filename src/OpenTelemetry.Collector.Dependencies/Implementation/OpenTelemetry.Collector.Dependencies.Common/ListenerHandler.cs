@@ -30,7 +30,7 @@ namespace OpenTelemetry.Collector.Dependencies.Common
         public ListenerHandler(string sourceName, ITracerFactory tracerFactory, Func<HttpRequestMessage, ISampler> samplerFactory)
         {
             this.SourceName = sourceName;
-            this.Tracer = tracerFactory.Create(nameof(OpenTelemetry.Collector.Dependencies) + "." + sourceName);
+            this.Tracer = tracerFactory.Create(sourceName);
             this.SamplerFactory = samplerFactory;
         }
 

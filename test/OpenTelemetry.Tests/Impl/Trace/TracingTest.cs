@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Test
         //      {
         //          @Override
         //        public Class<?> loadClass(String name)
-        //          {r
+        //          {
         //              throw toThrow;
         //          }
         //      });
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact(Skip = "need to fix the way tracer being instantiated")]
         public void DefaultTracer()
         {
-            Assert.Same(NoopTracer.Instance, Tracing.TracerFactory.Create("test"));
+            Assert.Same(NoopTracer.Instance, Tracing.Tracer);
         }
 
         [Fact(Skip = "need to fix the way tracer being instantiated")]

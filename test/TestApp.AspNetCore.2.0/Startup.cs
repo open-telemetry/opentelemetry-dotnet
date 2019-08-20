@@ -44,7 +44,7 @@ namespace TestApp.AspNetCore._2._0
             services.AddMvc();
             services.AddSingleton<HttpClient>();
 
-            services.AddSingleton<ITracerFactory>(Tracing.TracerFactory);
+            services.AddSingleton<ITracer>(Tracing.Tracer);
             services.AddSingleton<ISampler>(Samplers.AlwaysSample);
             services.AddSingleton<RequestsCollectorOptions>(new RequestsCollectorOptions());
             services.AddSingleton<RequestsCollector>();
