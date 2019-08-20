@@ -121,7 +121,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             var status = spanData.Status;
 
-            if (status != null)
+            if (status.IsValid)
             {
                 spanBuilder.PutTag(StatusCode, status.CanonicalCode.ToString());
 

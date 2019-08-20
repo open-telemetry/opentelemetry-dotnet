@@ -61,7 +61,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
                     StartTime = spanData.StartTimestamp.ToTimestamp(),
                     EndTime = spanData.EndTimestamp.ToTimestamp(),
-                    Status = spanData.Status == null
+                    Status = !spanData.Status.IsValid
                         ? null
                         : new OpenTelemetry.Proto.Trace.V1.Status
                         {
