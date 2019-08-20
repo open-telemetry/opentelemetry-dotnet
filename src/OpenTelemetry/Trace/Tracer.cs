@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="startEndHandler">Start/end event handler.</param>
         /// <param name="traceConfig">Trace configuration.</param>
-        internal Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig)
+        public Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig)
             : this(startEndHandler, traceConfig, null, null, null)
         {
         }
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace
         /// <param name="spanExporter">Exporter for span.</param>
         /// <param name="binaryFormat">Binary format context propagator.</param>
         /// <param name="textFormat">Text format context propagator.</param>
-        internal Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig, SpanExporter spanExporter, IBinaryFormat binaryFormat, ITextFormat textFormat)
+        public Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig, SpanExporter spanExporter, IBinaryFormat binaryFormat, ITextFormat textFormat)
         {
             this.spanBuilderOptions = new SpanBuilderOptions(startEndHandler, traceConfig);
             this.spanExporter = spanExporter ?? (SpanExporter)SpanExporter.Create(ExporterBufferSize, ExporterScheduleDelay);

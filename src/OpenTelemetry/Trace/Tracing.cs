@@ -27,12 +27,13 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Tracing
     {
-        private static TracerFactory tracerFactory;
+        private static Tracing tracingValue = new Tracing();
         private static Tracer tracer;
 
         internal Tracing()
         {
             IEventQueue eventQueue = new SimpleEventQueue();
+
             TraceConfig = new Config.TraceConfig();
 
             SpanExporter = Export.SpanExporter.Create();
@@ -43,18 +44,12 @@ namespace OpenTelemetry.Trace
                     eventQueue);
 
             tracer = new Tracer(startEndHandler, TraceConfig);
-            tracerFactory = new TracerFactory(tracer);
         }
 
         /// <summary>   
-        /// Gets the factory for creating named Tracers.
-        /// </summary>
-        public static ITracerFactory TracerFactory => tracerFactory;
-        
-        /// <summary>   
         /// Gets the tracer to record spans.
         /// </summary>
-        public static ITracer Tracer => tracer; // TODO: We could probably get rid of this property in favor of TracerFactory.
+        public static ITracer Tracer => (ITracer)tracer;
 
         /// <summary>
         /// Gets the exporter to use to upload spans.

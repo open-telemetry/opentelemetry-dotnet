@@ -100,13 +100,11 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             var startEndHandler = new Mock<IStartEndHandler>();
             var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
-            var tracerFactory = new Mock<ITracerFactory>();
-            tracerFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(tracer);
             tc.url = NormaizeValues(tc.url, host, port);
 
             using (serverLifeTime)
             {
-                using (var dc = new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory.Object, Samplers.AlwaysSample))
+                using (var dc = new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
                 {
 
                     try

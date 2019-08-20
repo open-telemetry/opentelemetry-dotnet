@@ -10,7 +10,7 @@
     static class LoggingTracerExtensions {
         internal static void AddLoggingTracer(this IServiceCollection services)
         {
-            services.AddSingleton<ITracerFactory>(new global::LoggingTracer.LoggingTracerFactory());
+            services.AddSingleton<ITracer>(new global::LoggingTracer.LoggingTracer());
 
             services.AddSingleton<ISampler>(Samplers.AlwaysSample);
             services.AddSingleton<RequestsCollectorOptions>(new RequestsCollectorOptions());
