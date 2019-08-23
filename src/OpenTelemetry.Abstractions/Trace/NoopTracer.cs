@@ -35,7 +35,9 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan CurrentSpan => BlankSpan.Instance;
+        public ISpan CurrentSpan => this.CurrentScope.Span;
+
+        public IScope CurrentScope => NoopScope.Instance;
 
         /// <inheritdoc/>
         public IBinaryFormat BinaryFormat => new BinaryFormat();
@@ -44,10 +46,10 @@ namespace OpenTelemetry.Trace
         public ITextFormat TextFormat => new TraceContextFormat();
 
         /// <inheritdoc/>
-        public IScope WithSpan(ISpan span)
-        {
-            return NoopScope.Instance;
-        }
+        public IScope WithSpan(ISpan span) => this.WithSpan(span, true);
+
+                /// <inheritdoc/>
+        public IScope WithSpan(ISpan span, bool endOnDispose) => NoopScope.Instance;
 
         /// <inheritdoc/>
         public ISpanBuilder SpanBuilder(string spanName)

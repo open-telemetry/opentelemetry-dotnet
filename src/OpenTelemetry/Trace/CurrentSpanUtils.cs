@@ -18,28 +18,31 @@ namespace OpenTelemetry.Trace
 {
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
+    using System.Threading;
     using OpenTelemetry.Context;
 
     internal static class CurrentSpanUtils
     {
-        private static readonly ConditionalWeakTable<Activity, ISpan> ActivitySpanTable = new ConditionalWeakTable<Activity, ISpan>();
+        private static readonly ConditionalWeakTable<Activity, ScopeInSpan> ActivitySpanTable = new ConditionalWeakTable<Activity, ScopeInSpan>();
 
-        public static ISpan CurrentSpan
+        public static ISpan CurrentSpan => CurrentScope.Span;
+
+        public static IScope CurrentScope
         {
             get
             {
                 var currentActivity = Activity.Current;
                 if (currentActivity == null)
                 {
-                    return BlankSpan.Instance;
+                    return NoopScope.Instance;
                 }
 
-                if (ActivitySpanTable.TryGetValue(currentActivity, out var currentSpan))
+                if (ActivitySpanTable.TryGetValue(currentActivity, out var currentScope))
                 {
-                    return currentSpan;
+                    return currentScope;
                 }
 
-                return BlankSpan.Instance;
+                return NoopScope.Instance;
             }
         }
 
@@ -48,21 +51,21 @@ namespace OpenTelemetry.Trace
             return new ScopeInSpan(span, endSpan);
         }
 
-        private static void SetSpan(Span span)
+        private static void SetSpan(ScopeInSpan scope)
         {
-            if (span.Activity == null)
+            if (scope.ActualSpan.Activity == null)
             {
                 // log error
                 return;
             }
 
-            if (ActivitySpanTable.TryGetValue(span.Activity, out _))
+            if (ActivitySpanTable.TryGetValue(scope.ActualSpan.Activity, out _))
             {
                 // log warning
                 return;
             }
 
-            ActivitySpanTable.Add(span.Activity, span);
+            ActivitySpanTable.Add(scope.ActualSpan.Activity, scope);
         }
 
         private static void DetachSpanFromActivity(Activity activity)
@@ -72,30 +75,46 @@ namespace OpenTelemetry.Trace
 
         private sealed class ScopeInSpan : IScope
         {
-            private readonly ISpan span;
             private readonly bool endSpan;
+
+            private long disposed;
 
             public ScopeInSpan(ISpan span, bool endSpan)
             {
-                this.span = span;
                 this.endSpan = endSpan;
 
                 if (span is Span spanImpl)
                 {
+                    this.ActualSpan = spanImpl;
                     if (spanImpl.OwnsActivity)
                     {
                         Activity.Current = spanImpl.Activity;
                     }
 
-                    SetSpan(spanImpl);
+                    SetSpan(this);
                 }
             }
 
+            public ISpan Span => this.ActualSpan;
+
+            public Span ActualSpan { get; }
+
             public void Dispose()
             {
+                if (Interlocked.CompareExchange(ref this.disposed, 1, 0) == 1)
+                {
+                    return;
+                }
+
+                var current = this.ActualSpan;
+                if (current == null)
+                {
+                    return;
+                }
+
                 bool safeToStopActivity = false;
-                var current = (Span)this.span;
-                if (current != null && current.Activity == Activity.Current)
+
+                if (current.Activity == Activity.Current)
                 {
                     if (!current.OwnsActivity)
                     {
@@ -109,7 +128,7 @@ namespace OpenTelemetry.Trace
 
                 if (this.endSpan)
                 {
-                    this.span.End();
+                    current.End();
                 }
                 else if (safeToStopActivity)
                 {

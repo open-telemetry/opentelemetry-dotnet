@@ -6,23 +6,24 @@
 
     public static class CurrentSpanUtils
     {
-        private static AsyncLocal<ISpan> asyncLocalContext = new AsyncLocal<ISpan>();
+        private static AsyncLocal<LoggingScope> asyncLocalContext = new AsyncLocal<LoggingScope>();
 
-        public static ISpan CurrentSpan => asyncLocalContext.Value;
+        public static IScope CurrentScope => asyncLocalContext.Value;
 
         public class LoggingScope : IScope
         {
-            private readonly ISpan origContext;
-            private readonly ISpan span;
+            private readonly LoggingScope origContext;
             private readonly bool endSpan;
 
             public LoggingScope(ISpan span, bool endSpan = true)
             {
-                this.span = span;
+                this.Span = span;
                 this.endSpan = endSpan;
                 this.origContext = CurrentSpanUtils.asyncLocalContext.Value;
-                CurrentSpanUtils.asyncLocalContext.Value = span;
+                CurrentSpanUtils.asyncLocalContext.Value = this;
             }
+
+            public ISpan Span { get; }
 
             public void Dispose()
             {
@@ -37,7 +38,7 @@
 
                 if (this.endSpan)
                 {
-                    this.span.End();
+                    this.Span.End();
                 }
             }
         }

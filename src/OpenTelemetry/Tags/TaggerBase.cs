@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Tags
 {
-    using OpenTelemetry.Context;
+    using System;
 
     public abstract class TaggerBase : ITagger
     {
@@ -30,6 +30,6 @@ namespace OpenTelemetry.Tags
 
         public abstract ITagContextBuilder ToBuilder(ITagContext tags);
 
-        public abstract IScope WithTagContext(ITagContext tags);
+        public abstract IDisposable WithTagContext(ITagContext tags);
     }
 }

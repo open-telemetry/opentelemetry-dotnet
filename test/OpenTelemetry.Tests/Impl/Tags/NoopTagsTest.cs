@@ -41,7 +41,7 @@ namespace OpenTelemetry.Tags.Test
             Assert.Same(NoopTags.NoopTagContextBuilder, noopTagger.EmptyBuilder);
             Assert.Same(NoopTags.NoopTagContextBuilder, noopTagger.ToBuilder(TAG_CONTEXT));
             Assert.Same(NoopTags.NoopTagContextBuilder, noopTagger.CurrentBuilder);
-            Assert.Same(NoopScope.Instance, noopTagger.WithTagContext(TAG_CONTEXT));
+            Assert.Same(NoopDisposable.Instance, noopTagger.WithTagContext(TAG_CONTEXT));
         }
 
         [Fact]
@@ -63,8 +63,8 @@ namespace OpenTelemetry.Tags.Test
         {
             Assert.Same(NoopTags.NoopTagContext, NoopTags.NoopTagContextBuilder.Build());
             Assert.Same(NoopTags.NoopTagContext, NoopTags.NoopTagContextBuilder.Put(KEY, VALUE).Build());
-            Assert.Same(NoopScope.Instance, NoopTags.NoopTagContextBuilder.BuildScoped());
-            Assert.Same(NoopScope.Instance, NoopTags.NoopTagContextBuilder.Put(KEY, VALUE).BuildScoped());
+            Assert.Same(NoopDisposable.Instance, NoopTags.NoopTagContextBuilder.BuildScoped());
+            Assert.Same(NoopDisposable.Instance, NoopTags.NoopTagContextBuilder.Put(KEY, VALUE).BuildScoped());
         }
 
         [Fact]

@@ -66,14 +66,14 @@ namespace OpenTelemetry.Tags
             return NoopTags.NoopTagContextBuilder;
         }
 
-        public override IScope WithTagContext(ITagContext tags)
+        public override IDisposable WithTagContext(ITagContext tags)
         {
             if (tags == null)
             {
                 throw new ArgumentNullException(nameof(tags));
             }
 
-            return NoopScope.Instance;
+            return NoopDisposable.Instance;
         }
     }
 }

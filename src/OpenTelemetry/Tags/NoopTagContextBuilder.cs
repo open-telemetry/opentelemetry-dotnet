@@ -58,9 +58,9 @@ namespace OpenTelemetry.Tags
             return NoopTagContext.Instance;
         }
 
-        public override IScope BuildScoped()
+        public override IDisposable BuildScoped()
         {
-            return NoopScope.Instance;
+            return NoopDisposable.Instance;
         }
     }
 }

@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Tags
 {
-    using OpenTelemetry.Context;
+    using System;
 
     /// <summary>
     /// Tags API configuraiton.
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Tags
         /// </summary>
         /// <param name="tags">Tags to set as current.</param>
         /// <returns>Scope object. Dispose to dissassociate tags context from the current context.</returns>
-        IScope WithTagContext(ITagContext tags);
+        IDisposable WithTagContext(ITagContext tags);
 
         /// <summary>
         /// Gets the builder from the tags context.

@@ -30,6 +30,11 @@ namespace OpenTelemetry.Trace
         ISpan CurrentSpan { get; }
 
         /// <summary>
+        /// Gets the current scope from the context.
+        /// </summary>
+        IScope CurrentScope { get; }
+
+        /// <summary>
         /// Gets the <see cref="IBinaryFormat"/> for this implementation.
         /// </summary>
         IBinaryFormat BinaryFormat { get; }
@@ -40,11 +45,19 @@ namespace OpenTelemetry.Trace
         ITextFormat TextFormat { get; }
 
         /// <summary>
-        /// Associates the span with the current context.
+        /// Associates the span with the current context. Shorthand for WithSpan(span, true).
         /// </summary>
         /// <param name="span">Span to associate with the current context.</param>
         /// <returns>Scope object to control span to current context association.</returns>
         IScope WithSpan(ISpan span);
+
+        /// <summary>
+        /// Associates the span with the current context.
+        /// </summary>
+        /// <param name="span">Span to associate with the current context.</param>
+        /// <param name="endOnDispose">If true, the span will end when the returned scope is disposed.</param>
+        /// <returns>Scope object to control span to current context association.</returns>
+        IScope WithSpan(ISpan span, bool endOnDispose);
 
         /// <summary>
         /// Gets the span builder for the span with the given name.

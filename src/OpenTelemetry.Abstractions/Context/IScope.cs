@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Context
 {
     using System;
+    using OpenTelemetry.Trace;
 
     /// <summary>
     /// Scope marker. Used as a syntactic sugar in methods like StartScopedSpan so it can be
@@ -24,5 +25,6 @@ namespace OpenTelemetry.Context
     /// </summary>
     public interface IScope : IDisposable
     {
+        ISpan Span { get; }
     }
 }

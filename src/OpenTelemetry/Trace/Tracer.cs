@@ -68,7 +68,9 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
+        public ISpan CurrentSpan => this.CurrentScope.Span;
+
+        public IScope CurrentScope => CurrentSpanUtils.CurrentScope;
 
         /// <inheritdoc/>
         public IBinaryFormat BinaryFormat { get; }
@@ -88,14 +90,18 @@ namespace OpenTelemetry.Trace
             return new SpanBuilder(spanName, this.spanBuilderOptions);
         }
 
-        public IScope WithSpan(ISpan span)
+        /// <inheritdoc/>
+        public IScope WithSpan(ISpan span) => this.WithSpan(span, true);
+
+        /// <inheritdoc/>
+        public IScope WithSpan(ISpan span, bool finishOnDispose)
         {
             if (span == null)
             {
                 throw new ArgumentNullException(nameof(span));
             }
 
-            return CurrentSpanUtils.WithSpan(span, true);
+            return CurrentSpanUtils.WithSpan(span, finishOnDispose);
         }
     }
 }

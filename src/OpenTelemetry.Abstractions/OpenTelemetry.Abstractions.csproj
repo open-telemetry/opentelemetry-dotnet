@@ -9,8 +9,4 @@
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.6.0-preview7.19362.9" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Trace\Internal\" />
-  </ItemGroup>
 </Project>

@@ -6,7 +6,9 @@
 
     public class LoggingTracer : ITracer
     {
-        public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
+        public ISpan CurrentSpan => this.CurrentScope.Span;
+
+        public IScope CurrentScope => CurrentSpanUtils.CurrentScope;
 
         public IBinaryFormat BinaryFormat => new LoggingBinaryFormat();
 
@@ -32,7 +34,9 @@
             return new LoggingSpanBuilder(spanName, spanKind, remoteParentSpanContext);
         }
 
-        public IScope WithSpan(ISpan span)
+        public IScope WithSpan(ISpan span) => this.WithSpan(span, true);
+
+        public IScope WithSpan(ISpan span, bool endOnDispose)
         {
             Logger.Log("Tracer.WithSpan");
             return new CurrentSpanUtils.LoggingScope(span);

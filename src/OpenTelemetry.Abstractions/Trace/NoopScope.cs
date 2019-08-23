@@ -32,6 +32,8 @@ namespace OpenTelemetry.Trace
         {
         }
 
+        public ISpan Span => BlankSpan.Instance;
+
         /// <inheritdoc />
         public void Dispose()
         {

@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Tags
 {
+    using System;
     using OpenTelemetry.Context;
     using OpenTelemetry.Tags.Unsafe;
 
@@ -26,12 +27,12 @@ namespace OpenTelemetry.Tags
             get { return AsyncLocalContext.CurrentTagContext; }
         }
 
-        internal static IScope WithTagContext(ITagContext tags)
+        internal static IDisposable WithTagContext(ITagContext tags)
         {
             return new WithTagContextScope(tags);
         }
 
-        private sealed class WithTagContextScope : IScope
+        private sealed class WithTagContextScope : IDisposable
         {
             private readonly ITagContext origContext;
 
