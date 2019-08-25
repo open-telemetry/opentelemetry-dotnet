@@ -54,7 +54,7 @@ namespace OpenTelemetry.Internal
                 if (shift >= 32)
                 {
                     // Out of range
-                    throw new ArgumentOutOfRangeException("varint too long");
+                    throw new ArgumentOutOfRangeException(nameof(src), "varint too long.");
                 }
 
                 // Get 7 bits from next byte
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Internal
                 if (shift >= 32)
                 {
                     // Out of range
-                    throw new ArgumentOutOfRangeException("varint too long");
+                    throw new ArgumentOutOfRangeException(nameof(inputStream), "varint too long.");
                 }
 
                 // Get 7 bits from next byte
