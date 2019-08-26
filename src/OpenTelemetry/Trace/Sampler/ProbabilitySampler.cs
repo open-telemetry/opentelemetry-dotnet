@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace.Sampler
         {
             if (probability < 0.0 || probability > 1.0)
             {
-                throw new ArgumentOutOfRangeException("probability must be in range [0.0, 1.0]");
+                throw new ArgumentOutOfRangeException(nameof(probability), "probability must be in range [0.0, 1.0]");
             }
 
             long idUpperBound;

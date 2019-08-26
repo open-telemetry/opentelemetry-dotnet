@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Internal
         {
             if (maxNumEvents < 0)
             {
-                throw new ArgumentOutOfRangeException($"{nameof(maxNumEvents)} must be >= 0");
+                throw new ArgumentOutOfRangeException(nameof(maxNumEvents), $"{nameof(maxNumEvents)} must be >= 0.");
             }
 
             this.maxNumEvents = maxNumEvents;

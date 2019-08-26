@@ -213,7 +213,7 @@ namespace OpenTelemetry.Context.Propagation
                 return (byte)(c - 'A' + 10);
             }
 
-            throw new ArgumentOutOfRangeException("Invalid character: " + c);
+            throw new ArgumentOutOfRangeException(nameof(c), $"Invalid character: {c}.");
         }
 
         private bool TryExtractTracestate(string[] tracestateCollection, out Tracestate tracestateResult)
