@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace.Test
             attributes.Add("MyBooleanAttributeKey", false);
             expectedAttributes = new List<KeyValuePair<string, object>>(attributes)
                 {
-                    new KeyValuePair<string, object>("MySingleStringAttributeKey", "MySingleStringAttributeValue")
+                    new KeyValuePair<string, object>("MySingleStringAttributeKey", "MySingleStringAttributeValue"),
                 };
         }
 

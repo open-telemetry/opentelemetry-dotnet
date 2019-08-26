@@ -35,7 +35,7 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri),
@@ -44,12 +44,21 @@ namespace Samples
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (StackdriverOptions options) => TestStackdriver.Run(options.ProjectId),
+                    (LightStepOptions options) => TestLightstep.Run(options.AccessToken),
                     errs => 1);
 
             Console.ReadLine();
         }
     }
 
+    [Verb("lightstep", HelpText = "Specify the LightStep access token", Hidden = false)]
+#pragma warning disable SA1402 // File may only contain a single type
+    internal class LightStepOptions
+    {
+        [Option('t', "accessToken", HelpText = "Please specify the access token for your LightStep project", Required = true)]
+        public string AccessToken { get; set; }
+    }
+    
     [Verb("stackdriver", HelpText = "Specify the options required to test Stackdriver exporter", Hidden = false)]
 #pragma warning disable SA1402 // File may only contain a single type
     internal class StackdriverOptions
