@@ -55,6 +55,8 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
             foreach (var evt in data.Events.Events)
             {
                 var fields = new List<Tag>();
+
+                // TODO: Make this actually pass attributes in correctly
                 fields.Add(new Tag { Key = evt.Event.Name, StringValue = evt.Event.Attributes.ToString() });
                 span.Logs.Add(new Log { Timestamp = evt.Timestamp, Fields = fields });
             }
