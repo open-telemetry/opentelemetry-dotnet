@@ -128,7 +128,7 @@ namespace OpenTelemetry.Trace.Config
 
             if (!string.IsNullOrEmpty(missing))
             {
-                throw new ArgumentOutOfRangeException("Missing required properties:" + missing);
+                throw new ArgumentOutOfRangeException(nameof(missing), $"Missing required properties: {missing}.");
             }
 
             return new TraceParams(
