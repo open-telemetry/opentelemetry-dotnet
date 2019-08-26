@@ -7,16 +7,17 @@
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Sampler;
 
-    static class LoggingTracerExtensions {
+    internal static class LoggingTracerExtensions
+    {
         internal static void AddLoggingTracer(this IServiceCollection services)
         {
-            services.AddSingleton<ITracer>(new global::LoggingTracer.LoggingTracer());
+            services.AddSingleton<ITracer, LoggingTracer>();
 
-            services.AddSingleton<ISampler>(Samplers.AlwaysSample);
-            services.AddSingleton<RequestsCollectorOptions>(new RequestsCollectorOptions());
+            services.AddSingleton(Samplers.AlwaysSample);
+            services.AddSingleton<RequestsCollectorOptions>();
             services.AddSingleton<RequestsCollector>();
 
-            services.AddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
+            services.AddSingleton<DependenciesCollectorOptions>();
             services.AddSingleton<DependenciesCollector>();
         }
 
