@@ -11,7 +11,7 @@
 
         public SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
-            Logger.Log($"LoggingTextFormat.Extract(...)");
+            Logger.Log("LoggingTextFormat.Extract(...)");
             return SpanContext.Blank;
         }
 

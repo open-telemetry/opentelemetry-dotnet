@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Description>Unit test project for Stackdriver Exporter for OpenTelemetry</Description>
+    <Description>Unit test project for Jaeger Exporter for OpenTelemetry</Description>
     <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net46</TargetFrameworks>
     <IsPackable>false</IsPackable>
@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
+    <ProjectReference Include="..\..\lib\Thrift\Thrift.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
   </ItemGroup>
 

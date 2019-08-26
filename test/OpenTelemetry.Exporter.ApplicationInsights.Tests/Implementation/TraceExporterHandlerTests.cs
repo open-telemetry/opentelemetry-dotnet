@@ -1906,7 +1906,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             events = null;
             links = null;
             childSpanCount = null;
-            status = null;
+            status = new Status();
             kind = SpanKind.Server;
             endTimestamp = now;
         }

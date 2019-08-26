@@ -22,7 +22,7 @@ namespace OpenTelemetry.Exporter.Ocagent
     using OpenTelemetry.Trace.Export;
 
     /// <summary>
-    /// Exporter of Open Census traces to the Ocagent or LocalForwarder.
+    /// Exporter of Open Telemetry traces to the Ocagent or LocalForwarder.
     /// </summary>
     public class OcagentExporter
     {
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Exporter.Ocagent
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OcagentExporter"/> class.
-        /// This exporter allows to send Open Census data to OpenTelemetry service or LocalForwarder.
+        /// This exporter allows to send Open Telemetry data to OpenTelemetry service or LocalForwarder.
         /// </summary>
         /// <param name="exporter">Exporter to get traces from.</param>
         /// <param name="agentEndpoint">Agent endpoint in the host:port format.</param>

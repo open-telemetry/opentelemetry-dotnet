@@ -93,7 +93,7 @@ namespace OpenTelemetry.Trace
                         return;
                     }
 
-                    this.status = value ?? throw new ArgumentNullException(nameof(value));
+                    this.status = value.IsValid ? value : throw new ArgumentException(nameof(value));
                 }
             }
         }
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        private Status StatusWithDefault => this.status ?? Status.Ok;
+        private Status StatusWithDefault => this.status.IsValid ? this.status : Status.Ok;
 
         /// <inheritdoc />
         public void UpdateName(string name)
@@ -344,7 +344,7 @@ namespace OpenTelemetry.Trace
                 eventsSpanData,
                 linksSpanData,
                 null, // Not supported yet.
-                this.HasEnded ? this.StatusWithDefault : null,
+                this.HasEnded ? this.StatusWithDefault : new Status(),
                 this.Kind ?? SpanKind.Internal,
                 this.HasEnded ? (this.Activity.StartTimeUtc + this.Activity.Duration) : default);
         }
