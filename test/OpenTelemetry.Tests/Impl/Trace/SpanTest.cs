@@ -241,7 +241,7 @@ namespace OpenTelemetry.Trace.Test
 
             AssertApproxSameTimestamp(spanStartTime, spanData.StartTimestamp);
 
-            Assert.Null(spanData.Status);
+            Assert.False(spanData.Status.IsValid);
             Assert.Equal(default, spanData.EndTimestamp);
 
             var startEndMock = Mock.Get<IStartEndHandler>(startEndHandler);
@@ -599,7 +599,7 @@ namespace OpenTelemetry.Trace.Test
                     TraceParams.Default,
                     startEndHandler);
 
-            Assert.Throws<ArgumentNullException>(() => span.Status = null);
+            Assert.Throws<ArgumentException>(() => span.Status = new Status());
             Assert.Throws<ArgumentNullException>(() => span.UpdateName(null));
             Assert.Throws<ArgumentNullException>(() => span.SetAttribute(null, string.Empty));
             Assert.Throws<ArgumentNullException>(() => span.SetAttribute(string.Empty, null));

@@ -285,7 +285,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
             resultCode = null;
             success = null;
-            if (span.Status != null)
+            if (span.Status.IsValid)
             {
                 resultCode = ((int)span.Status.CanonicalCode).ToString();
                 success = span.Status.IsOk;
