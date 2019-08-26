@@ -46,9 +46,9 @@ namespace OpenTelemetry.Trace
 
             set
             {
-                if (value == null)
+                if (!value.IsValid)
                 {
-                    throw new ArgumentNullException(nameof(value));
+                    throw new ArgumentException(nameof(value));
                 }
             }
         }

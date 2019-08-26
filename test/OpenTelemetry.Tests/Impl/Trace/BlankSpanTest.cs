@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void BadArguments()
         {
-            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.Status = null);
+            Assert.Throws<ArgumentException>(() => BlankSpan.Instance.Status = new Status());
             Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.UpdateName(null));
             Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, string.Empty));
             Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(string.Empty, null));
