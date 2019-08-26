@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
                         "evt1",
                         new Dictionary<string, object>
                         {
-                            {"key", "value"}
+                            {"key", "value"},
                         }
                         )
                     ),
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
                         "evt2",
                         new Dictionary<string, object>
                         {
-                            {"key", "value"}
+                            {"key", "value"},
                         }
                         )
                     ),
