@@ -21,7 +21,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
     using System.Collections.Generic;
     using Newtonsoft.Json;
 
-    internal class LightStepSpan
+    public class LightStepSpan
     {
         [JsonProperty("operationName")]
         public string OperationName { get; set; }
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
         public IList<Reference> References { get; set; } = new List<Reference>();
     }
 
-    internal class SpanContext
+    public class SpanContext
     {
         [JsonProperty("traceId", NullValueHandling = NullValueHandling.Ignore)]
         public ulong TraceId { get; set; }
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
         public ulong SpanId { get; set; }
     }
 
-    internal class Tag
+    public class Tag
     {
         [JsonProperty("key")]
         public string Key { get; set; }
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
         public string StringValue { get; set; }
     }
 
-    internal class Log
+    public class Log
     {
         [JsonProperty("timestamp")]
         public DateTime Timestamp { get; set; }
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
         public IList<Tag> Fields { get; set; } = new List<Tag>();
     }
 
-    internal class Reference
+    public class Reference
     {
         [JsonProperty("relationship")]
         public string Relationship { get; set; }

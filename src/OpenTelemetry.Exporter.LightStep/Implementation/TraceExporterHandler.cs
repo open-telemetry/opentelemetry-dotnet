@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
 
             foreach (var data in spanDataList)
             {
-                lsReport.Spans.Add(this.GenerateSpan(data));
+                lsReport.Spans.Add(data.ToLightStepSpan());
             }
 
             try
@@ -67,48 +67,6 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
             {
                 // ignore
             }
-        }
-
-        private LightStepSpan GenerateSpan(SpanData data)
-        {
-            var duration = data.EndTimestamp - data.StartTimestamp;
-            var span = new LightStepSpan();
-
-            if (data.ParentSpanId != default)
-            {
-                var sc = new SpanContext { SpanId = Convert.ToUInt64(data.ParentSpanId.ToHexString(), 16) };
-                span.References.Add(new Reference
-                {
-                    Relationship = "CHILD_OF", SpanContext = sc,
-                });
-            }
-
-            span.OperationName = data.Name;
-            var sid = Convert.ToUInt64(data.Context.SpanId.ToHexString(), 16);
-
-            var longTraceId = data.Context.TraceId.ToHexString()
-                .Substring(data.Context.TraceId.ToHexString().Length - 16, 16);
-            var tid = Convert.ToUInt64(longTraceId, 16);
-            span.SpanContext = new SpanContext
-            {
-                SpanId = sid, TraceId = tid,
-            };
-            span.StartTimestamp = data.StartTimestamp;
-            span.DurationMicros = Convert.ToUInt64(Math.Abs(duration.Ticks) / 10);
-
-            foreach (var attr in data.Attributes.AttributeMap)
-            {
-                span.Tags.Add(new Tag { Key = attr.Key, StringValue = attr.Value.ToString() });
-            }
-
-            foreach (var evt in data.Events.Events)
-            {
-                var fields = new List<Tag>();
-                fields.Add(new Tag { Key = evt.Event.Name, StringValue = evt.Event.Attributes.ToString() });
-                span.Logs.Add(new Log { Timestamp = evt.Timestamp, Fields = fields });
-            }
-
-            return span;
         }
 
         private Task SendSpansAsync(LightStepReport report)
@@ -122,7 +80,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
 
         private async Task PostSpans(HttpClient client, HttpRequestMessage request)
         {
-            using (var res = await client.SendAsync(request))
+            using (var res = await client.SendAsync(request).ConfigureAwait(false))
             {
                 if (res.StatusCode != HttpStatusCode.OK && res.StatusCode != HttpStatusCode.Accepted)
                 {

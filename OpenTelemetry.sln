@@ -90,6 +90,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{9D2D6933-C28
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.LightStep", "src\OpenTelemetry.Exporter.LightStep\OpenTelemetry.Exporter.LightStep.csproj", "{A984FB2A-D2EB-4619-A601-B6155EAAD707}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.LightStep.Tests", "test\OpenTelemetry.Exporter.LightStep.Tests\OpenTelemetry.Exporter.LightStep.Tests.csproj", "{BAB482C1-5D4D-42C6-ABFA-DC134B667C02}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -196,6 +198,10 @@ Global
 		{A984FB2A-D2EB-4619-A601-B6155EAAD707}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A984FB2A-D2EB-4619-A601-B6155EAAD707}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A984FB2A-D2EB-4619-A601-B6155EAAD707}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BAB482C1-5D4D-42C6-ABFA-DC134B667C02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BAB482C1-5D4D-42C6-ABFA-DC134B667C02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BAB482C1-5D4D-42C6-ABFA-DC134B667C02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BAB482C1-5D4D-42C6-ABFA-DC134B667C02}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
