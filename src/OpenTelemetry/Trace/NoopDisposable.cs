@@ -21,7 +21,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// An implmentation of IDisposable that does nothing.
     /// </summary>
-    public class NoopDisposable : IDisposable
+    internal class NoopDisposable : IDisposable
     {
         /// <summary>
         /// Prevents a default instance of the <see cref="NoopDisposable"/> class from being created.
