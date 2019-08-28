@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Collector.Dependencies.Implementation
 {
     using System;
+    using System.Linq;
     using System.Reflection;
 
     internal class PropertyFetcher
@@ -34,7 +35,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             if (this.innerFetcher == null)
             {
                 var type = obj.GetType().GetTypeInfo();
-                var property = type.GetDeclaredProperty(this.propertyName);
+                var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, this.propertyName, StringComparison.InvariantCultureIgnoreCase));
                 if (property == null)
                 {
                     property = type.GetProperty(this.propertyName);
