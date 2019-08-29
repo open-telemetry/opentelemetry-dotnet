@@ -14,21 +14,19 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Collector.AspNetCore.Common
+namespace OpenTelemetry.Collector
 {
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
 
-    internal class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>, IDisposable
+    internal class DiagnosticSourceListener<TInput> : IObserver<KeyValuePair<string, object>>, IDisposable
     {
-        private readonly string sourceName;
-        private readonly ListenerHandler handler;
+        private readonly ListenerHandler<TInput> handler;
 
-        public DiagnosticSourceListener(string sourceName, ListenerHandler handler)
+        public DiagnosticSourceListener(ListenerHandler<TInput> handler)
         {
-            this.sourceName = sourceName;
-            this.handler = handler;
+            this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
         }
 
         public IDisposable Subscription { get; set; }
@@ -45,7 +43,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Common
         {
             if (Activity.Current == null)
             {
-                Debug.WriteLine("Activity is null " + value.Key);
+                CollectorEventSource.Log.NullActivity(value.Key);
                 return;
             }
 
@@ -68,10 +66,9 @@ namespace OpenTelemetry.Collector.AspNetCore.Common
                     this.handler.OnCustom(value.Key, Activity.Current, value.Value);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Debug.WriteLine(e);
-                // TODO: make sure to output the handler name as part of error message
+                CollectorEventSource.Log.UnknownErrorProcessingEvent(this.handler?.SourceName, value.Key, ex);
             }
         }
 

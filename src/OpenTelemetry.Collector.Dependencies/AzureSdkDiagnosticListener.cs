@@ -18,10 +18,10 @@ namespace OpenTelemetry.Collector.Dependencies
 {
     using System;
     using System.Diagnostics;
-    using OpenTelemetry.Collector.Dependencies.Common;
+    using System.Net.Http;
     using OpenTelemetry.Trace;
 
-    internal class AzureSdkDiagnosticListener : ListenerHandler
+    internal class AzureSdkDiagnosticListener : ListenerHandler<HttpRequestMessage>
     {
         private readonly ITracer tracer;
 
