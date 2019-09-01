@@ -61,7 +61,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                     (r, name) => r.Headers[name]);
             }
 
-            // see the spec https://github.com/open-telemetry/OpenTelemetry-specs/blob/master/trace/HTTP.md
+            // see the spec https://github.com/open-telemetry/opentelemetry-specification/raw/master/work_in_progress/opencensus/HTTP.md
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
             var spanBuilder = this.Tracer.SpanBuilder(path)
