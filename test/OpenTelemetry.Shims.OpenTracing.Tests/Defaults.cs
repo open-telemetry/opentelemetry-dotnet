@@ -1,0 +1,58 @@
+﻿// <copyright file="SpanContextShimTests.cs" company="OpenTelemetry Authors">
+// Copyright 2018, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
+namespace OpenTelemetry.Shims.OpenTracing.Tests
+{
+    using System.Diagnostics;
+    using Moq;
+    using OpenTelemetry.Trace;
+
+    /// <summary>
+    /// A set of static helper methods for creating some default test setup objects.
+    /// </summary>
+    internal static class Defaults
+    {
+        public static SpanContext GetOpenTelemetrySpanContext()
+        {
+            return SpanContext.Create(
+                ActivityTraceId.CreateRandom(),
+                ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.None,
+                Tracestate.Empty);
+        }
+
+        /// <summary>
+        /// Creates an instance of SpanMock from this test project. This is a basic implementation used to verify calls to add events, links, and attributes.
+        /// </summary>
+        /// <returns>an instance of Span</returns>
+        public static SpanMock GetOpenTelemetrySpanMock()
+        {
+            return new SpanMock(GetOpenTelemetrySpanContext());
+        }
+
+        /// <summary>
+        /// Gets a mock implementation of OpenTelemtry ISpan suitable for certain kinds of unit tests.
+        /// </summary>
+        /// <returns>a mock of the OpenTelemetry ISpan.</returns>
+        public static Mock<ISpan> GetOpenTelemetryMockSpan()
+        {
+            var spanContext = GetOpenTelemetrySpanContext();
+            var mock = new Mock<ISpan>();
+            mock.Setup(o => o.Context).Returns(spanContext);
+            return mock;
+        }
+    }
+}
