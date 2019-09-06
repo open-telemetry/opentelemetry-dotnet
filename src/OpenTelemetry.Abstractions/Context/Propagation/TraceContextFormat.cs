@@ -54,7 +54,7 @@ namespace OpenTelemetry.Context.Propagation
                     return SpanContext.Blank;
                 }
 
-                var traceparent = traceparentCollection.First();
+                var traceparent = traceparentCollection?.First();
                 var traceparentParsed = this.TryExtractTraceparent(traceparent, out var traceId, out var spanId, out var traceoptions);
 
                 if (!traceparentParsed)
