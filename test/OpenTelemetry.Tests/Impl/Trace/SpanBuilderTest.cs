@@ -599,14 +599,12 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_WithLinkFromActivity()
         {
-            var activityLink = new Activity("foo")
-                .SetIdFormat(ActivityIdFormat.W3C)
-                .Start();
-            activityLink.Stop();
+            var contextLink = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.None, Tracestate.Empty);
 
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetSpanKind(SpanKind.Internal)
-                .AddLink(activityLink)
+                .AddLink(contextLink)
                 .StartSpan();
 
             var spanData = ((Span)span).ToSpanData();
@@ -614,11 +612,11 @@ namespace OpenTelemetry.Trace.Test
 
             Assert.Single(links);
 
-            Assert.NotEqual(default, activityLink.TraceId);
-            Assert.NotEqual(default, activityLink.SpanId);
-            Assert.Equal(activityLink.TraceId, links[0].Context.TraceId);
-            Assert.Equal(activityLink.SpanId, links[0].Context.SpanId);
-            Assert.Equal(activityLink.ActivityTraceFlags, links[0].Context.TraceOptions);
+            Assert.NotEqual(default, contextLink.TraceId);
+            Assert.NotEqual(default, contextLink.SpanId);
+            Assert.Equal(contextLink.TraceId, links[0].Context.TraceId);
+            Assert.Equal(contextLink.SpanId, links[0].Context.SpanId);
+            Assert.Equal(contextLink.TraceOptions, links[0].Context.TraceOptions);
             Assert.Empty(links[0].Context.Tracestate.Entries);
             Assert.Equal(0, links[0].Attributes.Count);
         }
@@ -893,7 +891,6 @@ namespace OpenTelemetry.Trace.Test
             a.Stop();
 
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetSampler(null));
-            Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((Activity)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((ILink)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((SpanContext)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink(null, null));
