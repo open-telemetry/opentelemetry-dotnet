@@ -75,7 +75,7 @@ namespace OpenTelemetry.Collector.Dependencies
 
             foreach (var link in links)
             {
-                spanBuilder.AddLink(Link.FromActivity(link));
+                spanBuilder.AddLink(Link.FromSpanContext(SpanContext.Create(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags, Tracestate.Empty)));
             }
 
             spanBuilder.SetSpanKind(spanKind);
