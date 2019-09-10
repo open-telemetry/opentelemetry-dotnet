@@ -63,16 +63,16 @@ namespace OpenTelemetry.Collector.Dependencies
                 .SetCreateChild(false)
                 .SetSampler(this.sampler);
 
-            spanBuilder.SetSpanKind(isHttp ? SpanKind.Client : SpanKind.Internal);
-
-            var span = spanBuilder.StartSpan();
-
             var links = LinksPropertyFetcher.Fetch(valueValue) as IEnumerable<Activity> ?? Array.Empty<Activity>();
 
             foreach (var link in links)
             {
-                span.AddLink(Link.FromActivity(link));
+                spanBuilder.AddLink(Link.FromActivity(link));
             }
+
+            spanBuilder.SetSpanKind(isHttp ? SpanKind.Client : SpanKind.Internal);
+
+            var span = spanBuilder.StartSpan();
 
             span.Status = Status.Ok;
 
