@@ -47,15 +47,23 @@ namespace OpenTelemetry.Collector.Dependencies
 
         public override void OnStartActivity(Activity current, object valueValue)
         {
-            bool isHttp = false;
             var operationName = current.OperationName;
+            SpanKind spanKind = SpanKind.Internal;
+
             foreach (var keyValuePair in current.Tags)
             {
                 if (keyValuePair.Key == "http.url")
                 {
-                    isHttp = true;
                     operationName = keyValuePair.Value;
                     break;
+                }
+
+                if (keyValuePair.Key == "kind")
+                {
+                    if (Enum.TryParse(keyValuePair.Value, true, out SpanKind parsedSpanKind))
+                    {
+                        spanKind = parsedSpanKind;
+                    }
                 }
             }
 
@@ -70,7 +78,7 @@ namespace OpenTelemetry.Collector.Dependencies
                 spanBuilder.AddLink(Link.FromActivity(link));
             }
 
-            spanBuilder.SetSpanKind(isHttp ? SpanKind.Client : SpanKind.Internal);
+            spanBuilder.SetSpanKind(spanKind);
 
             var span = spanBuilder.StartSpan();
 
