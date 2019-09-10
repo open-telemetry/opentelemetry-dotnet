@@ -25,7 +25,7 @@ namespace OpenTelemetry.Collector.Dependencies
 
     internal class AzureSdkDiagnosticListener : ListenerHandler<HttpRequestMessage>
     {
-        private static readonly PropertyFetcher linksPropertyFetcher = new PropertyFetcher("Links");
+        private static readonly PropertyFetcher LinksPropertyFetcher = new PropertyFetcher("Links");
         private readonly ITracer tracer;
 
         private readonly ISampler sampler;
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Collector.Dependencies
 
             var span = spanBuilder.StartSpan();
 
-            var links = this.linksPropertyFetcher.Fetch(valueValue) as IEnumerable<Activity> ?? Array.Empty<Activity>();
+            var links = LinksPropertyFetcher.Fetch(valueValue) as IEnumerable<Activity> ?? Array.Empty<Activity>();
 
             foreach (var link in links)
             {
