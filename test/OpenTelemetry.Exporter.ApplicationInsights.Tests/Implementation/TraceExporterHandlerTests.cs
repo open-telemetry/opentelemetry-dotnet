@@ -19,6 +19,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
     using Microsoft.ApplicationInsights.Channel;
     using Microsoft.ApplicationInsights.DataContracts;
     using Microsoft.ApplicationInsights.Extensibility;
+    using Newtonsoft.Json;
     using OpenTelemetry.Exporter.ApplicationInsights.Implementation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
@@ -41,6 +42,14 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         private readonly byte[] testTraceIdBytes = { 0xd7, 0x9b, 0xdd, 0xa7, 0xeb, 0x9c, 0x4a, 0x9f, 0xa9, 0xbd, 0xa5, 0x2f, 0xe7, 0xb4, 0x8b, 0x95 };
         private readonly byte[] testSpanIdBytes = { 0xd7, 0xdd, 0xeb, 0x4a, 0xa9, 0xa5, 0xe7, 0x8b };
         private readonly byte[] testParentSpanIdBytes = { 0x9b, 0xa7, 0x9c, 0x9f, 0xbd, 0x2f, 0xb4, 0x95 };
+
+        private readonly JsonSerializerSettings jsonSettingThrowOnError = new JsonSerializerSettings
+        {
+            MissingMemberHandling = MissingMemberHandling.Error,
+            ReferenceLoopHandling = ReferenceLoopHandling.Error,
+            NullValueHandling = NullValueHandling.Include,
+            DefaultValueHandling = DefaultValueHandling.Include,
+        };
 
         private DateTime now;
 
@@ -1316,7 +1325,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     Link.FromSpanContext(
                         SpanContext.Create(ActivityTraceId.CreateFromBytes(link0TraceIdBytes), ActivitySpanId.CreateFromBytes(link0SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
                     Link.FromSpanContext(
-                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link1TraceIdBytes), ActivitySpanId.CreateFromBytes(link1SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
+                        SpanContext.Create(ActivityTraceId.CreateFromBytes(link1TraceIdBytes), ActivitySpanId.CreateFromBytes(link1SpanIdBytes), ActivityTraceFlags.Recorded, Tracestate.Empty)),
                     Link.FromSpanContext(
                         SpanContext.Create(ActivityTraceId.CreateFromBytes(link2TraceIdBytes), ActivitySpanId.CreateFromBytes(link2SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)),
                 }, 0);
@@ -1326,23 +1335,22 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var sentItems = this.ConvertSpan(span);
 
             var dependency = sentItems.OfType<DependencyTelemetry>().Single();
-            Assert.Equal(6, dependency.Properties.Count);
+            Assert.Single(dependency.Properties);
+            Assert.True(dependency.Properties.TryGetValue("links", out var linksStr));
 
-            Assert.True(dependency.Properties.ContainsKey("link0_traceId"));
-            Assert.True(dependency.Properties.ContainsKey("link1_traceId"));
-            Assert.True(dependency.Properties.ContainsKey("link2_traceId"));
+            // does not throw
+            var actualLinks = JsonConvert.DeserializeObject<ApplicationInsightsLink[]>(linksStr, jsonSettingThrowOnError);
 
-            Assert.Equal(link0TraceId, dependency.Properties["link0_traceId"]);
-            Assert.Equal(link1TraceId, dependency.Properties["link1_traceId"]);
-            Assert.Equal(link2TraceId, dependency.Properties["link2_traceId"]);
+            Assert.NotNull(actualLinks);
+            Assert.Equal(3, actualLinks.Length);
 
-            Assert.True(dependency.Properties.ContainsKey("link0_spanId"));
-            Assert.True(dependency.Properties.ContainsKey("link1_spanId"));
-            Assert.True(dependency.Properties.ContainsKey("link2_spanId"));
+            Assert.Equal(link0TraceId, actualLinks[0].operation_Id);
+            Assert.Equal(link1TraceId, actualLinks[1].operation_Id);
+            Assert.Equal(link2TraceId, actualLinks[2].operation_Id);
 
-            Assert.Equal(link0SpanId, dependency.Properties["link0_spanId"]);
-            Assert.Equal(link1SpanId, dependency.Properties["link1_spanId"]);
-            Assert.Equal(link2SpanId, dependency.Properties["link2_spanId"]);
+            Assert.Equal($"|{link0TraceId}.{link0SpanId}.", actualLinks[0].id);
+            Assert.Equal($"|{link1TraceId}.{link1SpanId}.", actualLinks[1].id);
+            Assert.Equal($"|{link2TraceId}.{link2SpanId}.", actualLinks[2].id);
         }
 
         [Fact]
@@ -1375,16 +1383,16 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var sentItems = this.ConvertSpan(span);
 
             var dependency = sentItems.OfType<DependencyTelemetry>().Single();
-            Assert.Equal(5, dependency.Properties.Count);
 
-            Assert.True(dependency.Properties.ContainsKey("link0_some.str.attribute"));
-            Assert.Equal("foo", dependency.Properties["link0_some.str.attribute"]);
+            // attributes are ignored
+            Assert.Single(dependency.Properties);
+            Assert.True(dependency.Properties.TryGetValue("links", out var linksStr));
 
-            Assert.True(dependency.Properties.ContainsKey("link0_some.int.attribute"));
-            Assert.Equal("1", dependency.Properties["link0_some.int.attribute"]);
+            // does not throw
+            var actualLinks = JsonConvert.DeserializeObject<ApplicationInsightsLink[]>(linksStr, jsonSettingThrowOnError);
 
-            Assert.True(dependency.Properties.ContainsKey("link0_some.bool.attribute"));
-            Assert.Equal(bool.TrueString, dependency.Properties["link0_some.bool.attribute"]);
+            Assert.NotNull(actualLinks);
+            Assert.Single(actualLinks);
         }
 
         [Fact]
@@ -1417,23 +1425,22 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var sentItems = this.ConvertSpan(span);
 
             var request = sentItems.OfType<RequestTelemetry>().Single();
-            Assert.Equal(6, request.Properties.Count);
+            Assert.Single(request.Properties);
+            Assert.True(request.Properties.TryGetValue("links", out var linksStr));
 
-            Assert.True(request.Properties.ContainsKey("link0_traceId"));
-            Assert.True(request.Properties.ContainsKey("link1_traceId"));
-            Assert.True(request.Properties.ContainsKey("link2_traceId"));
+            // does not throw
+            var actualLinks = JsonConvert.DeserializeObject<ApplicationInsightsLink[]>(linksStr, jsonSettingThrowOnError);
 
-            Assert.Equal(link0TraceId, request.Properties["link0_traceId"]);
-            Assert.Equal(link1TraceId, request.Properties["link1_traceId"]);
-            Assert.Equal(link2TraceId, request.Properties["link2_traceId"]);
+            Assert.NotNull(actualLinks);
+            Assert.Equal(3, actualLinks.Length);
 
-            Assert.True(request.Properties.ContainsKey("link0_spanId"));
-            Assert.True(request.Properties.ContainsKey("link1_spanId"));
-            Assert.True(request.Properties.ContainsKey("link2_spanId"));
+            Assert.Equal(link0TraceId, actualLinks[0].operation_Id);
+            Assert.Equal(link1TraceId, actualLinks[1].operation_Id);
+            Assert.Equal(link2TraceId, actualLinks[2].operation_Id);
 
-            Assert.Equal(link0SpanId, request.Properties["link0_spanId"]);
-            Assert.Equal(link1SpanId, request.Properties["link1_spanId"]);
-            Assert.Equal(link2SpanId, request.Properties["link2_spanId"]);
+            Assert.Equal($"|{link0TraceId}.{link0SpanId}.", actualLinks[0].id);
+            Assert.Equal($"|{link1TraceId}.{link1SpanId}.", actualLinks[1].id);
+            Assert.Equal($"|{link2TraceId}.{link2SpanId}.", actualLinks[2].id);
         }
 
         [Fact]
@@ -1466,16 +1473,15 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var sentItems = this.ConvertSpan(span);
 
             var request = sentItems.OfType<RequestTelemetry>().Single();
-            Assert.Equal(5, request.Properties.Count);
+            // attributes are ignored
+            Assert.Single(request.Properties);
+            Assert.True(request.Properties.TryGetValue("links", out var linksStr));
 
-            Assert.True(request.Properties.ContainsKey("link0_some.str.attribute"));
-            Assert.Equal("foo", request.Properties["link0_some.str.attribute"]);
+            // does not throw
+            var actualLinks = JsonConvert.DeserializeObject<ApplicationInsightsLink[]>(linksStr, jsonSettingThrowOnError);
 
-            Assert.True(request.Properties.ContainsKey("link0_some.int.attribute"));
-            Assert.Equal("1", request.Properties["link0_some.int.attribute"]);
-
-            Assert.True(request.Properties.ContainsKey("link0_some.bool.attribute"));
-            Assert.Equal(bool.TrueString, request.Properties["link0_some.bool.attribute"]);
+            Assert.NotNull(actualLinks);
+            Assert.Single(actualLinks);
         }
 
         [Fact]
@@ -1909,6 +1915,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             status = new Status();
             kind = SpanKind.Server;
             endTimestamp = now;
+        }
+
+        private class ApplicationInsightsLink
+        {
+            public string operation_Id { get; set; }
+            public string id { get; set; }
         }
     }
 };
