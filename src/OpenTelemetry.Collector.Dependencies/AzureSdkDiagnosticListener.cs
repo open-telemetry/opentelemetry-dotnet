@@ -25,7 +25,7 @@ namespace OpenTelemetry.Collector.Dependencies
 
     internal class AzureSdkDiagnosticListener : ListenerHandler<HttpRequestMessage>
     {
-        private readonly PropertyFetcher linksPropertyFetcher = new PropertyFetcher("Links");
+        private static readonly PropertyFetcher linksPropertyFetcher = new PropertyFetcher("Links");
         private readonly ITracer tracer;
 
         private readonly ISampler sampler;
