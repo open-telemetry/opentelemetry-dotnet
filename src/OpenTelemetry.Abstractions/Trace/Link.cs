@@ -41,35 +41,6 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public IDictionary<string, object> Attributes { get; }
 
-        /// <summary>
-        /// Creates a <see cref="ILink"/> from Activity.
-        /// </summary>
-        /// <param name="activity">Activity to create link from.</param>
-        /// <returns>New <see cref="ILink"/> instance.</returns>
-        public static ILink FromActivity(Activity activity)
-        {
-            if (activity == null)
-            {
-                throw new ArgumentNullException(nameof(activity));
-            }
-
-            if (activity.IdFormat != ActivityIdFormat.W3C)
-            {
-                throw new ArgumentException("Current Activity is not in W3C format");
-            }
-
-            var tracestate = Tracestate.Empty;
-            var tracestateBuilder = Tracestate.Builder;
-            if (TracestateUtils.TryExtractTracestate(activity.TraceStateString, tracestateBuilder))
-            {
-                tracestate = tracestateBuilder.Build();
-            }
-
-            return new Link(
-                SpanContext.Create(activity.TraceId, activity.SpanId, activity.ActivityTraceFlags, tracestate),
-                EmptyAttributes);
-        }
-
         public static ILink FromSpanContext(SpanContext context)
         {
             return new Link(context, EmptyAttributes);
