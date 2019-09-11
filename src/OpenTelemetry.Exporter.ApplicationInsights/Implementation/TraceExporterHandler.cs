@@ -19,6 +19,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Linq;
+    using System.Text;
     using System.Threading.Tasks;
     using Microsoft.ApplicationInsights;
     using Microsoft.ApplicationInsights.DataContracts;
@@ -182,18 +184,42 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     request.ResponseCode = resultCode;
                 }
 
-                var linkId = 0;
-                foreach (var link in span.Links.Links)
+                if (span.Links.Links.Count() != 0)
                 {
-                    AddPropertyWithAdjustedName(result.Properties, "link" + linkId + "_traceId", link.Context.TraceId.ToHexString());
-                    AddPropertyWithAdjustedName(result.Properties, "link" + linkId + "_spanId", link.Context.SpanId.ToHexString());
-
-                    foreach (var attr in link.Attributes)
+                    var linksJson = new StringBuilder();
+                    linksJson.Append('[');
+                    foreach (var link in span.Links.Links)
                     {
-                        AddPropertyWithAdjustedName(result.Properties, "link" + linkId + "_" + attr.Key, attr.Value.ToString());
+                        var linkTraceId = link.Context.TraceId.ToHexString();
+
+                        // avoiding json serializers for now because of extra dependency.
+                        // System.Text.Json is starting at 4.6.1 while exporter is 4.6
+                        // also serialization is trivial and looks like `links` property with json blob
+                        // [{"operation_Id":"5eca8b153632494ba00f619d6877b134","id":"|5eca8b153632494ba00f619d6877b134.d4c1279b6e7b7c47."},
+                        //  {"operation_Id":"ff28988d0776b44f9ca93352da126047","id":"|ff28988d0776b44f9ca93352da126047.bf4fa4855d161141."}]
+                        linksJson
+                            .Append('{')
+                            .Append("\"operation_Id\":")
+                            .Append('\"')
+                            .Append(linkTraceId)
+                            .Append('\"')
+                            .Append(',');
+                        linksJson
+                            .Append("\"id\":")
+                            .Append('\"')
+                            .Append('|')
+                            .Append(linkTraceId)
+                            .Append('.')
+                            .Append(link.Context.SpanId.ToHexString())
+                            .Append('.')
+                            .Append('\"');
+
+                        // we explicitly ignore sampling flag, tracestate and attributes at this point.
+                        linksJson.Append("},");
                     }
 
-                    ++linkId;
+                    linksJson.Append("]");
+                    result.Properties["links"] = linksJson.ToString();
                 }
 
                 foreach (var t in span.Events.Events)
