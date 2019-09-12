@@ -21,7 +21,7 @@ namespace OpenTelemetry.Collector.AspNetCore
     using OpenTelemetry.Trace;
 
     /// <summary>
-    /// Options for dependencies collector.
+    /// Options for requests collector.
     /// </summary>
     public class RequestsCollectorOptions
     {
