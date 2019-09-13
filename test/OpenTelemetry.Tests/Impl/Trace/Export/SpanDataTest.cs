@@ -110,7 +110,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     events,
                     links,
                     null,
-                    null,
+                    new Status(), 
                     SPAN_KIND,
                     default);
             Assert.Equal(spanContext, spanData.Context);
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Equal(events, spanData.Events);
             Assert.Equal(links, spanData.Links);
             Assert.Null(spanData.ChildSpanCount);
-            Assert.Null(spanData.Status);
+            Assert.False(spanData.Status.IsValid);
             Assert.Equal(default, spanData.EndTimestamp);
         }
 

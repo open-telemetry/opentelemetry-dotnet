@@ -47,7 +47,7 @@ namespace OpenTelemetry.Stats
                     var next = bucketBoundariesCopy[i];
                     if (!(lower < next))
                     {
-                        throw new ArgumentOutOfRangeException("Bucket boundaries not sorted.");
+                        throw new ArgumentOutOfRangeException(nameof(bucketBoundaries), "Bucket boundaries not sorted.");
                     }
 
                     lower = next;

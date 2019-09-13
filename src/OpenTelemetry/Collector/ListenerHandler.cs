@@ -14,20 +14,19 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Collector.AspNetCore.Common
+namespace OpenTelemetry.Collector
 {
     using System;
     using System.Diagnostics;
-    using Microsoft.AspNetCore.Http;
     using OpenTelemetry.Trace;
 
-    internal abstract class ListenerHandler
+    public abstract class ListenerHandler<TInput>
     {
         protected readonly ITracer Tracer;
 
-        protected readonly Func<HttpRequest, ISampler> SamplerFactory;
+        protected readonly Func<TInput, ISampler> SamplerFactory;
 
-        public ListenerHandler(string sourceName, ITracer tracer, Func<HttpRequest, ISampler> samplerFactory)
+        public ListenerHandler(string sourceName, ITracer tracer, Func<TInput, ISampler> samplerFactory)
         {
             this.SourceName = sourceName;
             this.Tracer = tracer;
@@ -42,9 +41,9 @@ namespace OpenTelemetry.Collector.AspNetCore.Common
         {
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null)
+            if (span == null || span == BlankSpan.Instance)
             {
-                // TODO: Notify that span got lost
+                CollectorEventSource.Log.NullOrBlankSpan("ListenerHandler.OnStopActivity");
                 return;
             }
 

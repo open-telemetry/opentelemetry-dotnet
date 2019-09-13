@@ -22,13 +22,15 @@
             this.span = new LoggingSpan(spanName, spanKind);
         }
 
-        public LoggingSpanBuilder(string spanName, SpanKind spanKind, ISpan parent) : this(spanName, spanKind)
+        public LoggingSpanBuilder(string spanName, SpanKind spanKind, ISpan parent)
+            : this(spanName, spanKind)
         {
             Logger.Log($"SpanBuilder.ctor({spanName}, {spanKind}, {parent})");
             this.parent = parent;
         }
 
-        public LoggingSpanBuilder(string spanName, SpanKind spanKind, SpanContext remoteParentSpanContext) : this(spanName, spanKind)
+        public LoggingSpanBuilder(string spanName, SpanKind spanKind, SpanContext remoteParentSpanContext)
+            : this(spanName, spanKind)
         {
             Logger.Log($"SpanBuilder.ctor({spanName}, {spanKind}, {remoteParentSpanContext})");
             this.remoteParentSpanContext = remoteParentSpanContext;
@@ -66,7 +68,7 @@
 
         public ISpanBuilder SetNoParent()
         {
-            Logger.Log($"SpanBuilder.SetNoParent()");
+            Logger.Log("SpanBuilder.SetNoParent()");
             return this;
         }
 
@@ -114,19 +116,19 @@
 
         public IScope StartScopedSpan()
         {
-            Logger.Log($"SpanBuilder.StartScopedSpan()");
+            Logger.Log("SpanBuilder.StartScopedSpan()");
             return new CurrentSpanUtils.LoggingScope(this.span);
         }
 
         public IScope StartScopedSpan(out ISpan currentSpan)
         {
-            Logger.Log($"SpanBuilder.StartScopedSpan()");
+            Logger.Log("SpanBuilder.StartScopedSpan()");
             return new CurrentSpanUtils.LoggingScope(currentSpan = this.span);
         }
 
         public ISpan StartSpan()
         {
-            Logger.Log($"SpanBuilder.StartSpan()");
+            Logger.Log("SpanBuilder.StartSpan()");
             return this.span;
         }
     }

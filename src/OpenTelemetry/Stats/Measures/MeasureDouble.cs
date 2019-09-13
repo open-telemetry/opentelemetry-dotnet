@@ -40,10 +40,8 @@ namespace OpenTelemetry.Stats.Measures
         {
             if (!(StringUtil.IsPrintableString(name) && name.Length <= NameMaxLength))
             {
-                throw new ArgumentOutOfRangeException(
-                    "Name should be a ASCII string with a length no greater than "
-                    + NameMaxLength
-                    + " characters.");
+                throw new ArgumentOutOfRangeException(nameof(name),
+                    $"Name should be a ASCII string with a length no greater than {NameMaxLength} characters.");
             }
 
             return new MeasureDouble(name, description, unit);

@@ -191,17 +191,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpanBuilder AddLink(Activity activity)
-        {
-            if (activity == null)
-            {
-                throw new ArgumentNullException(nameof(activity));
-            }
-
-            return this.AddLink(Link.FromActivity(activity));
-        }
-
-        /// <inheritdoc/>
         public ISpanBuilder SetRecordEvents(bool recordEvents)
         {
             this.recordEvents = recordEvents;

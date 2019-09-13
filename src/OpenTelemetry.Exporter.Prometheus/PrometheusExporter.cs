@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     using OpenTelemetry.Stats;
 
     /// <summary>
-    /// Exporter of Open Census traces and metrics to Azure Application Insights.
+    /// Exporter of Open Telemetry traces and metrics to Azure Application Insights.
     /// </summary>
     public class PrometheusExporter
     {

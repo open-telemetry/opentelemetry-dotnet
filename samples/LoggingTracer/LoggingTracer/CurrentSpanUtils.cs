@@ -26,13 +26,13 @@
 
             public void Dispose()
             {
-                Logger.Log($"Scope.Dispose");
+                Logger.Log("Scope.Dispose");
                 var current = asyncLocalContext.Value;
                 asyncLocalContext.Value = this.origContext;
 
                 if (current != this.origContext)
                 {
-                    Logger.Log($"Scope.Dispose: current != this.origContext");
+                    Logger.Log("Scope.Dispose: current != this.origContext");
                 }
 
                 if (this.endSpan)

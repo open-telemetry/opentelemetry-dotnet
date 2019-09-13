@@ -53,7 +53,7 @@ namespace OpenTelemetry.Stats.Aggregations
             {
                 if (!(min <= max))
                 {
-                    throw new ArgumentOutOfRangeException("max should be greater or equal to min.");
+                    throw new ArgumentOutOfRangeException(nameof(max), "max should be greater or equal to min.");
                 }
             }
 
