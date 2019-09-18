@@ -15,10 +15,9 @@
     <GenerateDocumentationFile Condition="$(OS) == 'Windows_NT'">true</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$(OS) == 'Windows_NT'">
+  <PropertyGroup>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)/debug.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
     <DefineConstants>$(DefineConstants);SIGNED</DefineConstants>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
