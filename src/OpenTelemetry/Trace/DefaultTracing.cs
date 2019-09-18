@@ -1,4 +1,4 @@
-﻿// <copyright file="Tracing.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DefaultTracing.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,33 +22,14 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Trace.Internal;
 
     /// <summary>
-    /// Class that manages a global instance of the <see cref="Tracer"/>.
+    /// Class that defines the default global instances of the <see cref="Tracing"/> APIs.
     /// </summary>
-    public sealed class Tracing
+    public static class DefaultTracing
     {
-        private static Tracing tracingValue = new Tracing();
-        private static Tracer tracer;
-
-        internal Tracing()
-        {
-            IEventQueue eventQueue = new SimpleEventQueue();
-
-            TraceConfig = TraceConfig.Default;
-
-            SpanExporter = Export.SpanExporter.Create();
-
-            IStartEndHandler startEndHandler =
-                new StartEndHandler(
-                    SpanExporter,
-                    eventQueue);
-
-            tracer = new Tracer(startEndHandler, TraceConfig);
-        }
-
         /// <summary>   
         /// Gets the tracer to record spans.
         /// </summary>
-        public static ITracer Tracer => (ITracer)tracer;
+        public static ITracer Tracer { get; private set; }
 
         /// <summary>
         /// Gets the exporter to use to upload spans.
@@ -56,8 +37,20 @@ namespace OpenTelemetry.Trace
         public static ISpanExporter SpanExporter { get; private set; }
 
         /// <summary>
-        /// Gets the trace config.
+        /// Initializes the default tracing implementation.
         /// </summary>
-        public static TraceConfig TraceConfig { get; private set; }
+        public static void Init()
+        {
+            IEventQueue eventQueue = new SimpleEventQueue();
+
+            Tracing.SpanExporter = Trace.Export.SpanExporter.Create();
+
+            IStartEndHandler startEndHandler =
+                new StartEndHandler(
+                    Trace.Export.SpanExporter.Create(),
+                    eventQueue);
+
+            Tracing.Tracer = new Tracer(startEndHandler, TraceConfig.Default);
+        }
     }
 }

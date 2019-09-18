@@ -40,6 +40,7 @@ namespace Samples
 
             // 2. Tracer is global singleton. You can register it via dependency injection if it exists
             // but if not - you can use it as follows:
+            DefaultTracing.Init(); // Set default tracing API first.
             var tracer = Tracing.Tracer;
 
             var collector = new StackExchangeRedisCallsCollector(tracer);
