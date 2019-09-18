@@ -39,10 +39,8 @@ namespace OpenTelemetry.Stats
 
             if (!(StringUtil.IsPrintableString(name) && name.Length <= NameMaxLength))
             {
-                throw new ArgumentOutOfRangeException(
-                    "Name should be a ASCII string with a length no greater than "
-                    + NameMaxLength
-                    + " characters.");
+                throw new ArgumentOutOfRangeException(nameof(name),
+                    $"Name should be a ASCII string with a length no greater than {NameMaxLength} characters.");
             }
 
             return new ViewName(name);

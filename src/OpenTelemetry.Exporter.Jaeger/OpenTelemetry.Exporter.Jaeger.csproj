@@ -10,6 +10,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
-    <ProjectReference Include="..\..\lib\Thrift\Thrift.csproj" />
+    <ProjectReference Include="..\..\lib\Thrift\Thrift.csproj" PrivateAssets="All" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);GetMyPackageFiles</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <Target Name="GetMyPackageFiles">
+    <ItemGroup>
+      <BuildOutputInPackage Include="$(OutputPath)Thrift.dll" />
+    </ItemGroup>
+  </Target>
 </Project>

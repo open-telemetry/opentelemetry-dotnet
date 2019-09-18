@@ -6,8 +6,7 @@ Community Channel: [![Gitter chat][main-gitter-image]][main-gitter-url]
 
 We hold regular meetings. See details at [community page](https://github.com/open-telemetry/community#net-sdk).
 
-[![Build
-Status](https://dev.azure.com/opentelemetry/pipelines/_apis/build/status/open-telemetry.opentelemetry-dotnet?branchName=master)](https://dev.azure.com/opentelemetry/pipelines/_build/latest?definitionId=1&branchName=master)
+[![Build Status](https://dev.azure.com/opentelemetry/pipelines/_apis/build/status/open-telemetry.opentelemetry-dotnet-myget-update?branchName=master)](https://dev.azure.com/opentelemetry/pipelines/_build/latest?definitionId=2&branchName=master)
 
 OpenTelemetry is a toolkit for collecting application performance and behavior
 data.
@@ -133,12 +132,12 @@ Outgoing http calls to Redis made usign StackExchange.Redis library can be autom
 1. Install package to your project:
    [OpenTelemetry.Collector.StackExchangeRedis][OpenTelemetry-collect-stackexchange-redis-nuget-url]
 
-2. Make sure `ITracer`, `ISampler`, and `IExportComponent` registered in DI.
+2. Make sure `ITracer`, `ISampler`, and `ISpanExporter` registered in DI.
 
     ``` csharp
     services.AddSingleton<ITracer>(Tracing.Tracer);
     services.AddSingleton<ISampler>(Samplers.AlwaysSample);
-    services.AddSingleton<IExportComponent>(Tracing.ExportComponent);
+    services.AddSingleton<ISpanExporter>(Tracing.SpanExporter);
     ```
 
 3. Configure data collection singletons in ConfigureServices method:
@@ -188,7 +187,7 @@ var exporter = new JaegerExporter(
         AgentHost = host,
         AgentPort = port,
     },
-    Tracing.ExportComponent);
+    Tracing.SpanExporter);
 
 exporter.Start();
 
@@ -216,7 +215,7 @@ var exporter = new ZipkinTraceExporter(
     Endpoint = new Uri("https://<zipkin-server:9411>/api/v2/spans"),
     ServiceName = typeof(Program).Assembly.GetName().Name,
   },
-  Tracing.ExportComponent);
+  Tracing.SpanExporter);
 exporter.Start();
 
 var span = tracer
@@ -273,7 +272,7 @@ There is also a constructor for specifying path to the service account credentia
 ``` csharp
     var exporter = new StackdriverExporter(
         "YOUR-GOOGLE-PROJECT-ID",
-        Tracing.ExportComponent,
+        Tracing.SpanExporter,
         Stats.ViewManager);
     exporter.Start();
 ```
@@ -290,7 +289,7 @@ There is also a constructor for specifying path to the service account credentia
 ``` csharp
 var config = new TelemetryConfiguration("iKey")
 var exporter = new ApplicationInsightsExporter(
-    Tracing.ExportComponent,
+    Tracing.SpanExporter,
     Stats.ViewManager,
     config); // either global or local config can be used
 exporter.Start();

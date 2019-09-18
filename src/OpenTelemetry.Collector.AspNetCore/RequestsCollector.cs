@@ -19,16 +19,15 @@ namespace OpenTelemetry.Collector.AspNetCore
     using System;
     using System.Collections.Generic;
     using Microsoft.AspNetCore.Http;
-    using OpenTelemetry.Collector.AspNetCore.Common;
     using OpenTelemetry.Collector.AspNetCore.Implementation;
     using OpenTelemetry.Trace;
 
     /// <summary>
-    /// Dependencies collector.
+    /// Requests collector.
     /// </summary>
     public class RequestsCollector : IDisposable
     {
-        private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
+        private readonly DiagnosticSourceSubscriber<HttpRequest> diagnosticSourceSubscriber;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RequestsCollector"/> class.
@@ -38,8 +37,8 @@ namespace OpenTelemetry.Collector.AspNetCore
         /// <param name="sampler">Sampler to use to sample dependency calls.</param>
         public RequestsCollector(RequestsCollectorOptions options, ITracer tracer, ISampler sampler)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-                new Dictionary<string, Func<ITracer, Func<HttpRequest, ISampler>, ListenerHandler>>()
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber<HttpRequest>(
+                new Dictionary<string, Func<ITracer, Func<HttpRequest, ISampler>, ListenerHandler<HttpRequest>>>()
                 {
                     { "Microsoft.AspNetCore", (t, s) => new HttpInListener(t, s) },
                 },
@@ -54,7 +53,7 @@ namespace OpenTelemetry.Collector.AspNetCore
                     catch (Exception e)
                     {
                         s = null;
-                        AspNetCoreCollectorEventSource.Log.ExceptionInCustomSampler(e);
+                        CollectorEventSource.Log.ExceptionInCustomSampler(e);
                     }
 
                     return s ?? sampler;
@@ -64,7 +63,7 @@ namespace OpenTelemetry.Collector.AspNetCore
 
         public void Dispose()
         {
-            this.diagnosticSourceSubscriber.Dispose();
+            this.diagnosticSourceSubscriber?.Dispose();
         }
     }
 }

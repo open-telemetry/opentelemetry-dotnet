@@ -204,7 +204,7 @@ namespace OpenTelemetry.Trace
                      && this.Events.Equals(that.Events)
                      && this.Links.Equals(that.Links)
                      && ((this.ChildSpanCount == null) ? (that.ChildSpanCount == null) : this.ChildSpanCount.Equals(that.ChildSpanCount))
-                     && ((this.Status == null) ? (that.Status == null) : this.Status.Equals(that.Status))
+                     && this.Status.Equals(that.Status)
                      && ((this.EndTimestamp == null) ? (that.EndTimestamp == null) : this.EndTimestamp.Equals(that.EndTimestamp));
             }
 
@@ -235,7 +235,7 @@ namespace OpenTelemetry.Trace
             h *= 1000003;
             h ^= (this.ChildSpanCount == null) ? 0 : this.ChildSpanCount.GetHashCode();
             h *= 1000003;
-            h ^= (this.Status == null) ? 0 : this.Status.GetHashCode();
+            h ^= this.Status.GetHashCode();
             h *= 1000003;
             h ^= (this.EndTimestamp == null) ? 0 : this.EndTimestamp.GetHashCode();
             return h;

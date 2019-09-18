@@ -19,7 +19,6 @@ namespace OpenTelemetry.Collector.Dependencies
     using System;
     using System.Collections.Generic;
     using System.Net.Http;
-    using OpenTelemetry.Collector.Dependencies.Common;
     using OpenTelemetry.Collector.Dependencies.Implementation;
     using OpenTelemetry.Trace;
 
@@ -28,7 +27,7 @@ namespace OpenTelemetry.Collector.Dependencies
     /// </summary>
     public class DependenciesCollector : IDisposable
     {
-        private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
+        private readonly DiagnosticSourceSubscriber<HttpRequestMessage> diagnosticSourceSubscriber;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DependenciesCollector"/> class.
@@ -38,8 +37,8 @@ namespace OpenTelemetry.Collector.Dependencies
         /// <param name="sampler">Sampler to use to sample dependnecy calls.</param>
         public DependenciesCollector(DependenciesCollectorOptions options, ITracer tracer, ISampler sampler)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-                new Dictionary<string, Func<ITracer, Func<HttpRequestMessage, ISampler>, ListenerHandler>>()
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber<HttpRequestMessage>(
+                new Dictionary<string, Func<ITracer, Func<HttpRequestMessage, ISampler>, ListenerHandler<HttpRequestMessage>>>()
                 {
                     { "HttpHandlerDiagnosticListener", (t, s) => new HttpHandlerDiagnosticListener(t, s) },
                     { "Azure.Clients", (t, s) => new AzureSdkDiagnosticListener("Azure.Clients", t, sampler) },
@@ -56,7 +55,7 @@ namespace OpenTelemetry.Collector.Dependencies
                     catch (Exception e)
                     {
                         s = null;
-                        DependenciesCollectorEventSource.Log.ExceptionInCustomSampler(e);
+                        CollectorEventSource.Log.ExceptionInCustomSampler(e);
                     }
 
                     return s ?? sampler;
@@ -66,7 +65,7 @@ namespace OpenTelemetry.Collector.Dependencies
 
         public void Dispose()
         {
-            this.diagnosticSourceSubscriber.Dispose();
+            this.diagnosticSourceSubscriber?.Dispose();
         }
     }
 }

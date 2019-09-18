@@ -45,17 +45,15 @@ namespace OpenTelemetry.Trace.Test
             attributes.Add("MyBooleanAttributeKey", false);
             expectedAttributes = new List<KeyValuePair<string, object>>(attributes)
                 {
-                    new KeyValuePair<string, object>("MySingleStringAttributeKey", "MySingleStringAttributeValue")
+                    new KeyValuePair<string, object>("MySingleStringAttributeKey", "MySingleStringAttributeValue"),
                 };
         }
 
         [Fact]
         public void ToSpanData_NoRecordEvents()
         {
-            var activityLink = new Activity(SpanName)
-                .SetIdFormat(ActivityIdFormat.W3C)
-                .Start();
-            activityLink.Stop();
+            var link = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.None, Tracestate.Empty);
 
             var activity = new Activity(SpanName)
                 .SetIdFormat(ActivityIdFormat.W3C)
@@ -78,7 +76,7 @@ namespace OpenTelemetry.Trace.Test
 
             span.AddEvent(Event.Create(EventDescription));
             span.AddEvent(EventDescription, attributes);
-            span.AddLink(Link.FromActivity(activityLink));
+            span.AddLink(Link.FromSpanContext(link));
             span.End();
             // exception.expect(IllegalStateException);
             Assert.Throws<InvalidOperationException>(() => ((Span)span).ToSpanData());
@@ -133,11 +131,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void NoEventsRecordedAfterEnd()
         {
-            var activityLink = new Activity(SpanName)
-                .SetIdFormat(ActivityIdFormat.W3C)
-                .Start();
-
-            activityLink.Stop();
+            var link = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.None, Tracestate.Empty);
 
             var activity = new Activity(SpanName).Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -165,7 +160,7 @@ namespace OpenTelemetry.Trace.Test
 
             span.AddEvent(Event.Create(EventDescription));
             span.AddEvent(EventDescription, attributes);
-            span.AddLink(Link.FromActivity(activityLink));
+            span.AddLink(Link.FromSpanContext(link));
             var spanData = ((Span)span).ToSpanData();
 
             AssertApproxSameTimestamp(spanData.StartTimestamp, spanStartTime);
@@ -179,10 +174,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public async Task ToSpanData_ActiveSpan()
         {
-            var activityLink = new Activity(SpanName)
-                .SetIdFormat(ActivityIdFormat.W3C)
-                .Start();
-            activityLink.Stop();
+            var contextLink = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.None, Tracestate.Empty);
 
             var activity = new Activity(SpanName)
                 .SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom())
@@ -213,7 +206,7 @@ namespace OpenTelemetry.Trace.Test
             var secondEventTime = PreciseTimestamp.GetUtcNow();
             span.AddEvent(EventDescription, attributes);
 
-            var link = Link.FromActivity(activityLink);
+            var link = Link.FromSpanContext(contextLink);
             span.AddLink(link);
             var spanData = ((Span)span).ToSpanData();
             Assert.Equal(activity.TraceId, spanData.Context.TraceId);
@@ -241,7 +234,7 @@ namespace OpenTelemetry.Trace.Test
 
             AssertApproxSameTimestamp(spanStartTime, spanData.StartTimestamp);
 
-            Assert.Null(spanData.Status);
+            Assert.False(spanData.Status.IsValid);
             Assert.Equal(default, spanData.EndTimestamp);
 
             var startEndMock = Mock.Get<IStartEndHandler>(startEndHandler);
@@ -251,10 +244,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public async Task GoSpanData_EndedSpan()
         {
-            var activityLink = new Activity(SpanName)
-                .SetIdFormat(ActivityIdFormat.W3C)
-                .Start();
-            activityLink.Stop();
+            var contextLink = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.None, Tracestate.Empty);
 
             var activity = new Activity(SpanName)
                 .SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom())
@@ -286,7 +277,7 @@ namespace OpenTelemetry.Trace.Test
             var secondEventTime = PreciseTimestamp.GetUtcNow();
             span.AddEvent(EventDescription, attributes);
 
-            var link = Link.FromActivity(activityLink);
+            var link = Link.FromSpanContext(contextLink);
             span.AddLink(link);
             span.Status = Status.Cancelled;
 
@@ -543,10 +534,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DroppingLinks()
         {
-            var activityLink = new Activity(SpanName)
-                .SetIdFormat(ActivityIdFormat.W3C)
-                .Start();
-            activityLink.Stop();
+            var contextLink = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.None, Tracestate.Empty);
 
             var activity = new Activity(SpanName).Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -561,7 +550,7 @@ namespace OpenTelemetry.Trace.Test
                     SpanKind.Internal,
                     traceParams,
                     startEndHandler);
-            var link = Link.FromActivity(activityLink);
+            var link = Link.FromSpanContext(contextLink);
             for (var i = 0; i < 2 * maxNumberOfLinks; i++)
             {
                 span.AddLink(link);
@@ -599,7 +588,7 @@ namespace OpenTelemetry.Trace.Test
                     TraceParams.Default,
                     startEndHandler);
 
-            Assert.Throws<ArgumentNullException>(() => span.Status = null);
+            Assert.Throws<ArgumentException>(() => span.Status = new Status());
             Assert.Throws<ArgumentNullException>(() => span.UpdateName(null));
             Assert.Throws<ArgumentNullException>(() => span.SetAttribute(null, string.Empty));
             Assert.Throws<ArgumentNullException>(() => span.SetAttribute(string.Empty, null));
@@ -699,7 +688,7 @@ namespace OpenTelemetry.Trace.Test
         private void AssertApproxSameTimestamp(DateTime one, DateTime two)
         {
             var timeShift = Math.Abs((one - two).TotalMilliseconds);
-            Assert.InRange(timeShift, double.Epsilon, 10);
+            Assert.InRange(timeShift, double.Epsilon, 20);
         }
     }
 }
