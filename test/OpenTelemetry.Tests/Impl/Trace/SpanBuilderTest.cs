@@ -239,7 +239,7 @@ namespace OpenTelemetry.Trace.Test
             var timestamp = DateTime.UtcNow.AddSeconds(-100);
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetSpanKind(SpanKind.Internal)
-                .SetSampler(Samplers.NeverSample)
+                .SetSampler(Samplers.AlwaysSample)
                 .SetStartTimestamp(timestamp)
                 .StartSpan();
 
@@ -253,7 +253,7 @@ namespace OpenTelemetry.Trace.Test
             var timestamp = PreciseTimestamp.GetUtcNow();
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
                 .SetSpanKind(SpanKind.Internal)
-                .SetSampler(Samplers.NeverSample)
+                .SetSampler(Samplers.AlwaysSample)
                 .StartSpan();
 
             var spanData = ((Span)span).ToSpanData();

@@ -51,7 +51,7 @@ namespace Samples
             // but if not - you can use it as follows:
             var tracer = Tracing.Tracer;
 
-            var collector = new StackExchangeRedisCallsCollector(tracer, null, Tracing.SpanExporter);
+            var collector = new StackExchangeRedisCallsCollector(tracer);
 
             // connect to the server
             var connection = ConnectionMultiplexer.Connect("localhost:6379");
