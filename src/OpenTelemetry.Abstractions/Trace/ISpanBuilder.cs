@@ -113,7 +113,8 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Set start UTC timestamp value.
         /// </summary>
-        /// <param name="startTimestamp">Start timestamp in UTC. When not set, precise current UTC time is used.</param>
+        /// <param name="startTimestamp">Start timestamp in UTC.
+        /// If this method was not called, during <see cref="StartSpan"/> current precise time will be used.</param>
         /// <returns>This span builder for chaining.</returns>
         ISpanBuilder SetStartTimestamp(DateTime startTimestamp);
 
