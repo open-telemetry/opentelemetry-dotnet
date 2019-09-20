@@ -20,7 +20,7 @@ namespace OpenTelemetry.Trace.Sampler
 
     public class AlwaysOffDecision : IDecision
     {
-        public static readonly AlwaysOnDecision Instance = new AlwaysOnDecision();
+        public static readonly AlwaysOffDecision Instance = new AlwaysOffDecision();
 
         private static readonly IReadOnlyDictionary<string, object> EmptyDictionary = new Dictionary<string, object>();
 
