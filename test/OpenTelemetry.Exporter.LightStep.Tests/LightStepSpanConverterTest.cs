@@ -1,4 +1,4 @@
-// <copyright file="LightStepSpanConverterTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="LightStepSpanConverterTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,28 +48,24 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
             {
                 {"stringKey", "foo"}, {"longKey", 1L}, {"doubleKey", 1D}, {"boolKey", true},
             }, 0);
-            var evts = TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>
+            var evts = TimedEvents<IEvent>.Create(new List<IEvent>
             {
-                TimedEvent<IEvent>.Create(
-                    evtTs,
-                    Event.Create(
+                Event.Create(
                         "evt1",
+                        evtTs,
                         new Dictionary<string, object>
                         {
                             {"key", "value"},
                         }
-                        )
-                    ),
-                TimedEvent<IEvent>.Create(
+                ),
+                Event.Create(
+                    "evt2",
                     evtTs,
-                    Event.Create(
-                        "evt2",
-                        new Dictionary<string, object>
-                        {
-                            {"key", "value"},
-                        }
-                        )
-                    ),
+                    new Dictionary<string, object>
+                    {
+                        {"key", "value"},
+                    }
+                ),
             }, 0);
             var linkedSpanId = ActivitySpanId.CreateRandom();
             var link = Link.FromSpanContext(SpanContext.Create(

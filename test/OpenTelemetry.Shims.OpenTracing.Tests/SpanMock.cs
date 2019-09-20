@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System;
+
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
     using System.Collections.Generic;
@@ -116,9 +119,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             {
                 this.Name = name;
                 this.Attributes = attributes;
+                this.Timestamp = default;
             }
 
             public string Name { get; }
+
+            public DateTime Timestamp { get; }
 
             public IDictionary<string, object> Attributes { get; }
         }

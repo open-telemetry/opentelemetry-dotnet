@@ -1,4 +1,4 @@
-// <copyright file="JaegerConversionExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerConversionExtensions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -108,10 +108,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.STRING, VStr = attribute.Value.ToString() };
         }
 
-        public static JaegerLog ToJaegerLog(this ITimedEvent<IEvent> timedEvent)
+        public static JaegerLog ToJaegerLog(this IEvent timedEvent)
         {
-            var tags = timedEvent.Event.Attributes.Select(a => a.ToJaegerTag()).ToList();
-            tags.Add(new JaegerTag { Key = "description", VType = JaegerTagType.STRING, VStr = timedEvent.Event.Name });
+            var tags = timedEvent.Attributes.Select(a => a.ToJaegerTag()).ToList();
+            tags.Add(new JaegerTag { Key = "description", VType = JaegerTagType.STRING, VStr = timedEvent.Name });
 
             return new JaegerLog
             {

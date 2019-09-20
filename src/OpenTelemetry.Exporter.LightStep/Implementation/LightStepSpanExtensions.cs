@@ -1,4 +1,4 @@
-// <copyright file="LightStepSpanExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="LightStepSpanExtensions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
                 var fields = new List<Tag>();
 
                 // TODO: Make this actually pass attributes in correctly
-                fields.Add(new Tag { Key = evt.Event.Name, StringValue = evt.Event.Attributes.ToString() });
+                fields.Add(new Tag { Key = evt.Name, StringValue = evt.Attributes.ToString() });
                 span.Logs.Add(new Log { Timestamp = evt.Timestamp, Fields = fields });
             }
 

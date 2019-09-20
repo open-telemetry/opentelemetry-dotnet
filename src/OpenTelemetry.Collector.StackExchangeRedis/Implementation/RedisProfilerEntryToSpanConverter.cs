@@ -105,11 +105,11 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var send = enqueued.Add(command.EnqueuedToSending);
             var response = send.Add(command.SentToResponse);
             var events = TimedEvents<IEvent>.Create(
-                new List<ITimedEvent<IEvent>>()
+                new List<IEvent>()
                 {
-                    TimedEvent<IEvent>.Create(enqueued, Event.Create("Enqueued")),
-                    TimedEvent<IEvent>.Create(send, Event.Create("Sent")),
-                    TimedEvent<IEvent>.Create(response, Event.Create("ResponseReceived")),
+                    Event.Create("Enqueued", enqueued),
+                    Event.Create("Sent", send),
+                    Event.Create("ResponseReceived", response),
                 },
                 droppedEventsCount: 0);
 

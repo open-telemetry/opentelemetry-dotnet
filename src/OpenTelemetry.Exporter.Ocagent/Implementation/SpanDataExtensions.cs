@@ -157,15 +157,15 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             return result;
         }
 
-        private static Span.Types.TimeEvent FromITimeEvent(ITimedEvent<IEvent> source)
+        private static Span.Types.TimeEvent FromITimeEvent(IEvent source)
         {
             return new Span.Types.TimeEvent
             {
                 Time = source.Timestamp.ToTimestamp(),
                 Annotation = new Span.Types.TimeEvent.Types.Annotation
                 {
-                    Description = new TruncatableString { Value = source.Event.Name },
-                    Attributes = FromIAttributeMap(source.Event.Attributes),
+                    Description = new TruncatableString { Value = source.Name },
+                    Attributes = FromIAttributeMap(source.Attributes),
                 },
             };
         }

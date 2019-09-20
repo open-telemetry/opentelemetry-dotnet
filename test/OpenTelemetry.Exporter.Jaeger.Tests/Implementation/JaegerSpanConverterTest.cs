@@ -1,4 +1,4 @@
-// <copyright file="JaegerSpanConverterTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerSpanConverterTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,27 +56,23 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 { "doubleKey2", 1F},
                 { "boolKey", true},
             }, 0);
-            var events = TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>
+            var events = TimedEvents<IEvent>.Create(new List<IEvent>
             {
-                TimedEvent<IEvent>.Create(
+                Event.Create(
+                    "Event1",
                     eventTimestamp,
-                    Event.Create(
-                        "Event1",
-                        new Dictionary<string, object>
-                        {
-                            { "key", "value" },
-                        }
-                    )
+                    new Dictionary<string, object>
+                    {
+                        { "key", "value" },
+                    }
                 ),
-                TimedEvent<IEvent>.Create(
+                Event.Create(
+                    "Event2",
                     eventTimestamp,
-                    Event.Create(
-                        "Event2",
-                        new Dictionary<string, object>
-                        {
-                            { "key", "value" },
-                        }
-                    )
+                    new Dictionary<string, object>
+                    {
+                        { "key", "value" },
+                    }
                 ),
             }, 0);
 
@@ -197,27 +193,23 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var spanId = ActivitySpanId.CreateRandom();
             var spanIdAsInt = new Int128(spanId);
             var parentSpanId = ActivitySpanId.CreateRandom();
-            var events = TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>
+            var events = TimedEvents<IEvent>.Create(new List<IEvent>
             {
-                TimedEvent<IEvent>.Create(
+                Event.Create(
+                    "Event1",
                     eventTimestamp,
-                    Event.Create(
-                        "Event1",
-                        new Dictionary<string, object>
-                        {
-                            { "key", "value" },
-                        }
-                    )
+                    new Dictionary<string, object>
+                    {
+                        { "key", "value" },
+                    }
                 ),
-                TimedEvent<IEvent>.Create(
+                Event.Create(
+                    "Event2",
                     eventTimestamp,
-                    Event.Create(
-                        "Event2",
-                        new Dictionary<string, object>
-                        {
-                            { "key", "value" },
-                        }
-                    )
+                    new Dictionary<string, object>
+                    {
+                        { "key", "value" },
+                    }
                 ),
             }, 0);
 
@@ -425,27 +417,23 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 { "doubleKey2", 1F},
                 { "boolKey", true},
             }, 0);
-            var events = TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>
+            var events = TimedEvents<IEvent>.Create(new List<IEvent>
             {
-                TimedEvent<IEvent>.Create(
+                Event.Create(
+                    "Event1",
                     eventTimestamp,
-                    Event.Create(
-                        "Event1",
-                        new Dictionary<string, object>
-                        {
-                            { "key", "value" },
-                        }
-                    )
+                    new Dictionary<string, object>
+                    {
+                        { "key", "value" },
+                    }
                 ),
-                TimedEvent<IEvent>.Create(
+                Event.Create(
+                    "Event2",
                     eventTimestamp,
-                    Event.Create(
-                        "Event2",
-                        new Dictionary<string, object>
-                        {
-                            { "key", "value" },
-                        }
-                    )
+                    new Dictionary<string, object>
+                    {
+                        { "key", "value" },
+                    }
                 ),
             }, 0);
 

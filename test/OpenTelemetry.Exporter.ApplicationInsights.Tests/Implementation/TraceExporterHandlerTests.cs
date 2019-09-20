@@ -1493,15 +1493,15 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             kind = SpanKind.Server;
 
             events = TimedEvents<IEvent>.Create(
-                new List<ITimedEvent<IEvent>>()
+                new List<IEvent>()
                 {
-                    TimedEvent<IEvent>.Create(now, Event.Create("test message1")),
-                    TimedEvent<IEvent>.Create(default, Event.Create("test message2", new Dictionary<string, object>()
+                    Event.Create("test message1", now),
+                    Event.Create("test message2", default, new Dictionary<string, object>()
                         {
                             { "custom.stringAttribute", "string" },
                             { "custom.longAttribute", long.MaxValue },
                             { "custom.boolAttribute", true },
-                        })),
+                        }),
                 },
                 droppedEventsCount: 0);
 
@@ -1618,15 +1618,15 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             kind = SpanKind.Client;
 
             events = TimedEvents<IEvent>.Create(
-                new List<ITimedEvent<IEvent>>()
+                new List<IEvent>()
                 {
-                    TimedEvent<IEvent>.Create(now, Event.Create("test message1")),
-                    TimedEvent<IEvent>.Create(default, Event.Create("test message2", new Dictionary<string, object>()
+                    Event.Create("test message1", now),
+                    Event.Create("test message2", default, new Dictionary<string, object>()
                         {
                             { "custom.stringAttribute", "string" },
                             { "custom.longAttribute", long.MaxValue },
                             { "custom.boolAttribute", true },
-                        })),
+                        }),
                 },
                 droppedEventsCount: 0);
 

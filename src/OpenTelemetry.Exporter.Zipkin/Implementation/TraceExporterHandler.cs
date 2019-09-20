@@ -133,7 +133,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             foreach (var annotation in spanData.Events.Events)
             {
-                spanBuilder.AddAnnotation(this.ToEpochMicroseconds(annotation.Timestamp), annotation.Event.Name);
+                spanBuilder.AddAnnotation(this.ToEpochMicroseconds(annotation.Timestamp), annotation.Name);
             }
 
             return spanBuilder.Build();
