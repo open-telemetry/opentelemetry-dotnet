@@ -29,9 +29,9 @@ namespace OpenTelemetry.Trace.Sampler.Internal
         public string Description => this.ToString();
 
         /// <inheritdoc />
-        public bool ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ILink> links)
+        public IDecision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ILink> links)
         {
-            return false;
+            return AlwaysOffDecision.Instance;
         }
 
         /// <inheritdoc/>
