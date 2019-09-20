@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace.Export
     public interface ITimedEvents<T>
     {
         /// <summary>
-        /// Gets the collection of <see cref="ITimedEvents{T}"/>.
+        /// Gets the collection of <see cref="T"/>.
         /// </summary>
         IEnumerable<T> Events { get; }
 
