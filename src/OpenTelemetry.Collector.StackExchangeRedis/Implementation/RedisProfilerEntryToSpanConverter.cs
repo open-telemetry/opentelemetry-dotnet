@@ -16,143 +16,81 @@
 
 namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 {
-    using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
-    using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
     using StackExchange.Redis.Profiling;
 
     internal static class RedisProfilerEntryToSpanConverter
     {
-        public static void DrainSession(ISpan parentSpan, IEnumerable<IProfiledCommand> sessionCommands, ISampler sampler, ICollection<SpanData> spans)
+        public static ISpan ProfilerCommandToSpan(ITracer tracer, ISpan parentSpan, IProfiledCommand command)
         {
-            var parentContext = parentSpan?.Context ?? SpanContext.Blank;
+            var name = command.Command; // Example: SET;
+            if (string.IsNullOrEmpty(name))
+            {
+                name = "name";
+            }
 
+            var span = tracer.SpanBuilder(name)
+                .SetParent(parentSpan)
+                .SetSpanKind(SpanKind.Client)
+                .SetStartTimestamp(command.CommandCreated)
+                .StartSpan();
+
+            if (span.IsRecordingEvents)
+            {
+                // use https://github.com/opentracing/specification/blob/master/semantic_conventions.md for now
+
+                // Timing example:
+                // command.CommandCreated; //2019-01-10 22:18:28Z
+
+                // command.CreationToEnqueued;      // 00:00:32.4571995
+                // command.EnqueuedToSending;       // 00:00:00.0352838
+                // command.SentToResponse;          // 00:00:00.0060586
+                // command.ResponseToCompletion;    // 00:00:00.0002601
+
+                // Total:
+                // command.ElapsedTime;             // 00:00:32.4988020
+
+                span.Status = Status.Ok;
+                span.SetAttribute("db.type", "redis");
+                span.SetAttribute("redis.flags", command.Flags.ToString());
+
+                if (command.Command != null)
+                {
+                    // Example: "db.statement": SET;
+                    span.SetAttribute("db.statement", command.Command);
+                }
+
+                if (command.EndPoint != null)
+                {
+                    // Example: "db.instance": Unspecified/localhost:6379[0]
+                    span.SetAttribute("db.instance", string.Concat(command.EndPoint, "[", command.Db, "]"));
+                }
+
+                // TODO: deal with the re-transmission
+                // command.RetransmissionOf;
+                // command.RetransmissionReason;
+
+                var enqueued = command.CommandCreated.Add(command.CreationToEnqueued);
+                var send = enqueued.Add(command.EnqueuedToSending);
+                var response = send.Add(command.SentToResponse);
+
+                span.AddEvent(Event.Create("Enqueued", enqueued));
+                span.AddEvent(Event.Create("Sent", send));
+                span.AddEvent(Event.Create("ResponseReceived", response));
+
+                span.End(command.CommandCreated.Add(command.ElapsedTime));
+            }
+
+            return span;
+        }
+
+        public static void DrainSession(ITracer tracer, ISpan parentSpan, IEnumerable<IProfiledCommand> sessionCommands)
+        {
             foreach (var command in sessionCommands)
             {
-                var name = command.Command; // Example: SET;
-                if (string.IsNullOrEmpty(name))
-                {
-                    name = "name";
-                }
-
-                if (ShouldSample(parentContext, name, sampler, out var context, out var parentSpanId))
-                {
-                    var sd = ProfiledCommandToSpanData(context, name, parentSpanId, command);
-                    spans.Add(sd);
-                }
+                ProfilerCommandToSpan(tracer, parentSpan, command);
             }
-        }
-
-        internal static bool ShouldSample(SpanContext parentContext, string name, ISampler sampler, out SpanContext context, out ActivitySpanId parentSpanId)
-        {
-            ActivityTraceId traceId = default;
-            var tracestate = Tracestate.Empty;
-            parentSpanId = default;
-            var parentOptions = ActivityTraceFlags.None;
-
-            if (parentContext.IsValid)
-            {
-                traceId = parentContext.TraceId;
-                parentSpanId = parentContext.SpanId;
-                parentOptions = parentContext.TraceOptions;
-            }
-            else
-            {
-                traceId = ActivityTraceId.CreateRandom();
-            }
-
-            var result = (parentOptions & ActivityTraceFlags.Recorded) != 0;
-            var spanId = ActivitySpanId.CreateRandom();
-            var traceOptions = ActivityTraceFlags.None;
-
-            if (sampler != null)
-            {
-                traceOptions = parentContext.TraceOptions;
-                result = sampler.ShouldSample(parentContext, traceId, spanId, name, null);
-                if (result)
-                {
-                    traceOptions |= ActivityTraceFlags.Recorded;
-                }
-            }
-
-            context = SpanContext.Create(traceId, spanId, traceOptions, parentContext.Tracestate);
-
-            return result;
-        }
-
-        internal static SpanData ProfiledCommandToSpanData(SpanContext context, string name, ActivitySpanId parentSpanId, IProfiledCommand command)
-        {
-            // use https://github.com/opentracing/specification/blob/master/semantic_conventions.md for now
-
-            // Timing example:
-            // command.CommandCreated; //2019-01-10 22:18:28Z
-
-            // command.CreationToEnqueued;      // 00:00:32.4571995
-            // command.EnqueuedToSending;       // 00:00:00.0352838
-            // command.SentToResponse;          // 00:00:00.0060586
-            // command.ResponseToCompletion;    // 00:00:00.0002601
-
-            // Total:
-            // command.ElapsedTime;             // 00:00:32.4988020
-
-            // TODO: make timestamp with the better precision
-            var startTimestamp = command.CommandCreated;
-
-            var enqueued = command.CommandCreated.Add(command.CreationToEnqueued);
-            var send = enqueued.Add(command.EnqueuedToSending);
-            var response = send.Add(command.SentToResponse);
-            var events = TimedEvents<IEvent>.Create(
-                new List<IEvent>()
-                {
-                    Event.Create("Enqueued", enqueued),
-                    Event.Create("Sent", send),
-                    Event.Create("ResponseReceived", response),
-                },
-                droppedEventsCount: 0);
-
-            var endTimestamp = command.CommandCreated.Add(command.ElapsedTime);
-
-            // TODO: deal with the re-transmission
-            // command.RetransmissionOf;
-            // command.RetransmissionReason;
-
-            // TODO: determine what to do with Resource in this context
-            var resource = Resource.Empty;
-
-            var attributesMap = new Dictionary<string, object>()
-            {
-                // TODO: pre-allocate constant attribute and reuse
-                { "db.type", "redis" },
-
-                // Example: "redis.flags": None, DemandMaster
-                { "redis.flags", command.Flags.ToString() },
-            };
-
-            if (command.Command != null)
-            {
-                // Example: "db.statement": SET;
-                attributesMap.Add("db.statement", command.Command);
-            }
-
-            if (command.EndPoint != null)
-            {
-                // Example: "db.instance": Unspecified/localhost:6379[0]
-                attributesMap.Add("db.instance", command.EndPoint.ToString() + "[" + command.Db + "]");
-            }
-
-            var attributes = Attributes.Create(attributesMap, 0);
-
-            ILinks links = null;
-            int? childSpanCount = 0;
-
-            // TODO: this is strange that IProfiledCommand doesn't give the result
-            var status = Status.Ok;
-            var kind = SpanKind.Client;
-
-            return SpanData.Create(context, parentSpanId, resource, name, startTimestamp, attributes, events, links, childSpanCount, status, kind, endTimestamp);
         }
     }
 }

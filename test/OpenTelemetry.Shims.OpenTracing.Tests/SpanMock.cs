@@ -78,6 +78,11 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             this.HasEnded = true;
         }
 
+        public void End(DateTime endTimestamp)
+        {
+            this.End();
+        }
+
         public void SetAttribute(string key, string value)
         {
             this.SetAttribute<string>(key, value);

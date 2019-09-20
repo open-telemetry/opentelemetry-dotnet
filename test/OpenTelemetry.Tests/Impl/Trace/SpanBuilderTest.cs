@@ -23,7 +23,6 @@ namespace OpenTelemetry.Trace.Test
     using Moq;
     using OpenTelemetry.Abstractions.Utils;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Internal;
     using OpenTelemetry.Trace.Sampler;
     using Xunit;
 
@@ -235,6 +234,33 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
+        public void StartSpanWithStartTimestamp()
+        {
+            var timestamp = DateTime.UtcNow.AddSeconds(-100);
+            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .SetSampler(Samplers.AlwaysSample)
+                .SetStartTimestamp(timestamp)
+                .StartSpan();
+
+            var spanData = ((Span)span).ToSpanData();
+            Assert.Equal(timestamp, spanData.StartTimestamp);
+        }
+
+        [Fact]
+        public void StartSpanWithImplicitTimestamp()
+        {
+            var timestamp = PreciseTimestamp.GetUtcNow();
+            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+                .SetSpanKind(SpanKind.Internal)
+                .SetSampler(Samplers.AlwaysSample)
+                .StartSpan();
+
+            var spanData = ((Span)span).ToSpanData();
+            Assert.InRange(Math.Abs((timestamp - spanData.StartTimestamp).TotalMilliseconds), 0, 20);
+        }
+
+        [Fact]
         public void StartSpanNullParentNoRecordOptions()
         {
             var span = new SpanBuilder(SpanName, spanBuilderOptions)
@@ -402,6 +428,8 @@ namespace OpenTelemetry.Trace.Test
             Assert.NotNull(Activity.Current);
             Assert.Equal(Activity.Current, activity);
             Assert.Equal("k1=v1,k2=v2", span.Context.Tracestate.ToString());
+
+            Assert.Equal(activity.StartTimeUtc, ((Span)span).ToSpanData().StartTimestamp);
         }
 
         [Fact]

@@ -32,7 +32,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
             var startEndHandler = new Mock<IStartEndHandler>();
             var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
 
-            using (var collector = new StackExchangeRedisCallsCollector(tracer, null, null))
+            using (var collector = new StackExchangeRedisCallsCollector(tracer))
             {
                 var profilerFactory = collector.GetProfilerSessionsFactory();
                 var first = profilerFactory();

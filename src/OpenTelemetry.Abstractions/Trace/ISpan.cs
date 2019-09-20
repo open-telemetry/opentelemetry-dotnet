@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System;
     using System.Collections.Generic;
 
     /// <summary>
@@ -117,5 +118,11 @@ namespace OpenTelemetry.Trace
         /// End the span.
         /// </summary>
         void End();
+
+        /// <summary>
+        /// End the span.
+        /// </summary>
+        /// <param name="endTimestamp">End UTC timestamp.</param>
+        void End(DateTime endTimestamp);
     }
 }

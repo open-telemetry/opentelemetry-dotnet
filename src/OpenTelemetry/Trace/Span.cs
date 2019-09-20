@@ -33,11 +33,13 @@ namespace OpenTelemetry.Trace
         private readonly ITraceParams traceParams;
         private readonly IStartEndHandler startEndHandler;
         private readonly Lazy<SpanContext> spanContext;
+        private readonly DateTime startTimestamp;
         private readonly object @lock = new object();
         private EvictingQueue<KeyValuePair<string, object>> attributes;
         private EvictingQueue<IEvent> events;
         private EvictingQueue<ILink> links;
         private Status status;
+        private DateTime endTimestamp;
 
         private Span(
                 Activity activity,
@@ -45,6 +47,7 @@ namespace OpenTelemetry.Trace
                 SpanKind spanKind,
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
+                DateTime startTimestamp,
                 bool ownsActivity)
         {
             this.Activity = activity;
@@ -59,6 +62,7 @@ namespace OpenTelemetry.Trace
             this.Kind = spanKind;
             this.OwnsActivity = ownsActivity;
             this.IsRecordingEvents = this.Activity.Recorded;
+            this.startTimestamp = startTimestamp;
         }
 
         public Activity Activity { get; }
@@ -293,6 +297,12 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void End()
         {
+            this.End(PreciseTimestamp.GetUtcNow());
+        }
+
+        public void End(DateTime endTimestamp)
+        {
+            this.endTimestamp = endTimestamp;
             if (this.OwnsActivity && this.Activity == Activity.Current)
             {
                 // TODO log if current is not span activity
@@ -334,14 +344,14 @@ namespace OpenTelemetry.Trace
                 this.ParentSpanId,
                 Resource.Empty, // TODO: determine what to do with Resource in this context
                 this.Name,
-                this.Activity.StartTimeUtc,
+                this.startTimestamp,
                 attributesSpanData,
                 eventsSpanData,
                 linksSpanData,
                 null, // Not supported yet.
                 this.HasEnded ? this.StatusWithDefault : new Status(),
                 this.Kind ?? SpanKind.Internal,
-                this.HasEnded ? (this.Activity.StartTimeUtc + this.Activity.Duration) : default);
+                this.HasEnded ? this.endTimestamp : default);
         }
 
         /// <inheritdoc/>
@@ -419,6 +429,7 @@ namespace OpenTelemetry.Trace
                         SpanKind spanKind,
                         ITraceParams traceParams,
                         IStartEndHandler startEndHandler,
+                        DateTime startTimestamp,
                         bool ownsActivity = true)
         {
             var span = new Span(
@@ -427,6 +438,7 @@ namespace OpenTelemetry.Trace
                spanKind,
                traceParams,
                startEndHandler,
+               startTimestamp,
                ownsActivity);
 
             // Call onStart here instead of calling in the constructor to make sure the span is completely
