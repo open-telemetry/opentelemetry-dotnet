@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace.Sampler
 
         private static readonly IReadOnlyDictionary<string, object> EmptyDictionary = new Dictionary<string, object>();
 
-        public bool IsSampled => true;
+        public bool IsSampled => false;
 
         public IReadOnlyDictionary<string, object> Attributes => EmptyDictionary;
     }
