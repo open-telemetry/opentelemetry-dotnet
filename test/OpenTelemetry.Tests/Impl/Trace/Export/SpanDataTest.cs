@@ -36,13 +36,12 @@ namespace OpenTelemetry.Trace.Export.Test
         private static readonly DateTime eventTimestamp2 = startTimestamp.AddMilliseconds(2);
         private static readonly DateTime eventTimestamp3 = startTimestamp.AddMilliseconds(3);
         private static readonly DateTime endTimestamp = startTimestamp.AddMilliseconds(4);
-        private static readonly IEvent spanEvent = Event.Create(EVENT_TEXT);
         private static readonly Status status = Status.DeadlineExceeded.WithDescription("TooSlow");
         private readonly SpanContext spanContext;
         private readonly ActivitySpanId parentSpanId;
         private readonly Resource resource = Resource.Empty;
         private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();
-        private readonly List<ITimedEvent<IEvent>> eventList = new List<ITimedEvent<IEvent>>();
+        private readonly List<IEvent> eventList = new List<IEvent>();
         private readonly List<ILink> linksList = new List<ILink>();
 
         private readonly Attributes attributes;
@@ -58,8 +57,8 @@ namespace OpenTelemetry.Trace.Export.Test
             attributesMap.Add("MyAttributeKey2", true);
             attributes = Attributes.Create(new ReadOnlyDictionary<string, object>(attributesMap), 1);
 
-            eventList.Add(TimedEvent<IEvent>.Create(eventTimestamp1, spanEvent));
-            eventList.Add(TimedEvent<IEvent>.Create(eventTimestamp3, spanEvent));
+            eventList.Add(Event.Create(EVENT_TEXT, eventTimestamp1));
+            eventList.Add(Event.Create(EVENT_TEXT, eventTimestamp3));
             events = TimedEvents<IEvent>.Create(eventList, 2);
 
             linksList.Add(Link.FromSpanContext(spanContext));
@@ -137,7 +136,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     SPAN_NAME,
                     startTimestamp,
                     Attributes.Create(new Dictionary<string, object>(), 0),
-                    TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>(), 0),
+                    TimedEvents<IEvent>.Create(new List<IEvent>(), 0),
                     LinkList.Create(new List<ILink>(), 0),
                     0,
                     status,
@@ -196,7 +195,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     SPAN_NAME,
                     startTimestamp,
                     Attributes.Create(new Dictionary<string, object>(), 0),
-                    TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>(), 0),
+                    TimedEvents<IEvent>.Create(new List<IEvent>(), 0),
                     LinkList.Create(new List<ILink>(), 0),
                     0,
                     status,

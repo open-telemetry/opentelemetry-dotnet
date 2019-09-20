@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace
         private readonly Lazy<SpanContext> spanContext;
         private readonly object @lock = new object();
         private EvictingQueue<KeyValuePair<string, object>> attributes;
-        private EvictingQueue<ITimedEvent<IEvent>> events;
+        private EvictingQueue<IEvent> events;
         private EvictingQueue<ILink> links;
         private Status status;
 
@@ -125,14 +125,14 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        private EvictingQueue<ITimedEvent<IEvent>> InitializedEvents
+        private EvictingQueue<IEvent> InitializedEvents
         {
             get
             {
                 if (this.events == null)
                 {
                     this.events =
-                        new EvictingQueue<ITimedEvent<IEvent>>(this.traceParams.MaxNumberOfEvents);
+                        new EvictingQueue<IEvent>(this.traceParams.MaxNumberOfEvents);
                 }
 
                 return this.events;
@@ -206,7 +206,7 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(TimedEvent<IEvent>.Create(PreciseTimestamp.GetUtcNow(), Event.Create(name)));
+                this.InitializedEvents.AddEvent(Event.Create(name, PreciseTimestamp.GetUtcNow()));
             }
         }
 
@@ -236,7 +236,7 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(TimedEvent<IEvent>.Create(PreciseTimestamp.GetUtcNow(), Event.Create(name, eventAttributes)));
+                this.InitializedEvents.AddEvent(Event.Create(name, PreciseTimestamp.GetUtcNow(), eventAttributes));
             }
         }
 
@@ -261,7 +261,7 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(TimedEvent<IEvent>.Create(PreciseTimestamp.GetUtcNow(), addEvent));
+                this.InitializedEvents.AddEvent(addEvent);
             }
         }
 
@@ -284,11 +284,6 @@ namespace OpenTelemetry.Trace
                 {
                     // logger.log(Level.FINE, "Calling addLink() on an ended Span.");
                     return;
-                }
-
-                if (link == null)
-                {
-                    throw new ArgumentNullException(nameof(link));
                 }
 
                 this.InitializedLinks.AddEvent(link);

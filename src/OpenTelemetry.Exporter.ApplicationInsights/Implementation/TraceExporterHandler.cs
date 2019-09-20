@@ -224,14 +224,14 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 
                 foreach (var t in span.Events.Events)
                 {
-                    var log = new TraceTelemetry(t.Event.Name);
+                    var log = new TraceTelemetry(t.Name);
 
                     if (t.Timestamp != null)
                     {
                         log.Timestamp = t.Timestamp;
                     }
 
-                    foreach (var attr in t.Event.Attributes)
+                    foreach (var attr in t.Attributes)
                     {
                         var value = attr.Value.ToString();
 
