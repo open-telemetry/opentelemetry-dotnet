@@ -1,4 +1,8 @@
-﻿namespace LoggingTracer
+﻿// <copyright file="Logger.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+namespace LoggingTracer
 {
     using System;
     using System.Threading;

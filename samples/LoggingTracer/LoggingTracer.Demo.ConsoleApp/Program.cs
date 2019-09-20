@@ -1,4 +1,8 @@
-﻿namespace LoggingTracer.Demo.ConsoleApp
+﻿// <copyright file="Program.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+namespace LoggingTracer.Demo.ConsoleApp
 {
     using System.Threading.Tasks;
     using OpenTelemetry.Trace;

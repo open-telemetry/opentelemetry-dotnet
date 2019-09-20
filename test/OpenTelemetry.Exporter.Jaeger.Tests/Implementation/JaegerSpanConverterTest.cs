@@ -1,4 +1,4 @@
-// <copyright file="JaegerSpanConverterTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerSpanConverterTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -164,7 +164,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(events.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(jaegerLog.Fields.Count(), 2);
+            Assert.Equal(2, jaegerLog.Fields.Count());
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             jaegerLog = logs[1];
             Assert.Equal(events.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(jaegerLog.Fields.Count(), 2);
+            Assert.Equal(2, jaegerLog.Fields.Count());
             eventFields = jaegerLog.Fields.ToArray();
             eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -281,7 +281,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(events.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(jaegerLog.Fields.Count(), 2);
+            Assert.Equal(2, jaegerLog.Fields.Count());
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -292,7 +292,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             jaegerLog = logs[1];
             Assert.Equal(events.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(jaegerLog.Fields.Count(), 2);
+            Assert.Equal(2, jaegerLog.Fields.Count());
             eventFields = jaegerLog.Fields.ToArray();
             eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -526,7 +526,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             jaegerLog = logs[1];
             Assert.Equal(events.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(jaegerLog.Fields.Count(), 2);
+            Assert.Equal(2, jaegerLog.Fields.Count());
             eventFields = jaegerLog.Fields.ToArray();
             eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
