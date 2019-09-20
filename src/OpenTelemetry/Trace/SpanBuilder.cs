@@ -37,6 +37,7 @@ namespace OpenTelemetry.Trace
         private ISampler sampler;
         private List<ILink> links;
         private bool recordEvents;
+        private DateTime startTimestamp;
 
         internal SpanBuilder(string name, SpanBuilderOptions options)
         {
@@ -197,11 +198,23 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
+        public ISpanBuilder SetStartTimestamp(DateTime startTimestamp)
+        {
+            this.startTimestamp = startTimestamp;
+            return this;
+        }
+
         /// <inheritdoc/>
         public ISpan StartSpan()
         {
             var activityForSpan = this.CreateActivityForSpan(this.contextSource, this.parentSpan,
                 this.parentSpanContext, this.parentActivity, this.fromActivity);
+
+            if (this.startTimestamp == default)
+            {
+                this.startTimestamp = activityForSpan.StartTimeUtc;
+            }
+
             var activeTraceParams = this.options.TraceConfig.ActiveTraceParams;
 
             bool sampledIn = MakeSamplingDecision(
@@ -235,6 +248,7 @@ namespace OpenTelemetry.Trace
                         this.kind,
                         activeTraceParams,
                         this.options.StartEndHandler,
+                        this.startTimestamp,
                         ownsActivity: this.contextSource != ContextSource.Activity);
             if (activityForSpan.OperationName != this.name)
             {

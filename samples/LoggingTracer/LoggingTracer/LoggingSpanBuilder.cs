@@ -1,4 +1,6 @@
-﻿namespace LoggingTracer
+﻿using System;
+
+namespace LoggingTracer
 {
     using System.Collections.Generic;
     using System.Diagnostics;
@@ -99,6 +101,12 @@
         public ISpanBuilder SetRecordEvents(bool recordEvents)
         {
             Logger.Log($"SpanBuilder.SetRecordEvents({recordEvents})");
+            return this;
+        }
+
+        public ISpanBuilder SetStartTimestamp(DateTime startTimestamp)
+        {
+            Logger.Log($"SpanBuilder.SetStartTimestamp({startTimestamp})");
             return this;
         }
 
