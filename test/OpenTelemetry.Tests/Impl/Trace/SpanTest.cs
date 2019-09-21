@@ -544,7 +544,7 @@ namespace OpenTelemetry.Trace.Test
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow());
 
-            var eventTimestamps = new DateTime[2 * maxNumberOfEvents];
+            var eventTimestamps = new DateTimeOffset[2 * maxNumberOfEvents];
             
             for (int i = 0; i < 2 * maxNumberOfEvents; i++)
             {
@@ -729,7 +729,7 @@ namespace OpenTelemetry.Trace.Test
             Activity.Current = null;
         }
 
-        private void AssertApproxSameTimestamp(DateTime one, DateTime two)
+        private void AssertApproxSameTimestamp(DateTimeOffset one, DateTimeOffset two)
         {
             var timeShift = Math.Abs((one - two).TotalMilliseconds);
             Assert.InRange(timeShift, double.Epsilon, 20);

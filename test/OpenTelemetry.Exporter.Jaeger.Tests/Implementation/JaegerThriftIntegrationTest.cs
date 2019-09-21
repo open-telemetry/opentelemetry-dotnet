@@ -54,9 +54,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
         private SpanData CreateTestSpan()
         {
-            var startTimestamp = new DateTime(2019, 1, 1);
+            var startTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
             var endTimestamp = startTimestamp.AddSeconds(60);
-            var eventTimestamp = new DateTime(2019, 1, 1);
+            var eventTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
             var traceIdAsInt = new Int128(traceId);

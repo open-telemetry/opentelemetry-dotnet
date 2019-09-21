@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace.Test
         {
         }
 
-        public void End(DateTime endTimestamp)
+        public void End(DateTimeOffset endTimestamp)
         {
         }
     }

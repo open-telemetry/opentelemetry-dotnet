@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace
         private static readonly ReadOnlyDictionary<string, object> EmptyAttributes =
                 new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
 
-        internal Event(string name, DateTime timestamp, IDictionary<string, object> attributes)
+        internal Event(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
         {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.Attributes = attributes ?? throw new ArgumentNullException(nameof(attributes));
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace
         public string Name { get; }
 
         /// <inheritdoc/>
-        public DateTime Timestamp { get; }
+        public DateTimeOffset Timestamp { get; }
 
         /// <inheritdoc/>
         public IDictionary<string, object> Attributes { get; }
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Trace
         /// <param name="timestamp">The timestamp of the <see cref="Event"/>.</param>
         /// <returns>A new <see cref="Event"/> with the provided name.</returns>
         /// <exception cref="ArgumentNullException">If <c>name</c> is <c>null</c>.</exception>
-        public static IEvent Create(string name, DateTime timestamp)
+        public static IEvent Create(string name, DateTimeOffset timestamp)
         {
             return new Event(name, timestamp, EmptyAttributes);
         }
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">The <see cref="IDictionary{String, Object}"/> of attributes for the <see cref="Event"/>.</param>
         /// <returns>A new <see cref="Event"/> with the provided name and set of attributes.</returns>
         /// <exception cref="ArgumentNullException">If <c>name</c> or <c>attributes</c> is <c>null</c>.</exception>
-        public static IEvent Create(string name, DateTime timestamp, IDictionary<string, object> attributes)
+        public static IEvent Create(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
         {
             if (attributes == null)
             {
