@@ -1,4 +1,8 @@
-﻿namespace LoggingTracer.Demo.AspNetCore
+﻿// <copyright file="Startup.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+namespace LoggingTracer.Demo.AspNetCore
 {
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
