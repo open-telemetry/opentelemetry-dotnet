@@ -1336,7 +1336,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             var dependency = sentItems.OfType<DependencyTelemetry>().Single();
             Assert.Single(dependency.Properties);
-            Assert.True(dependency.Properties.TryGetValue("links", out var linksStr));
+            Assert.True(dependency.Properties.TryGetValue("_MS.links", out var linksStr));
 
             // does not throw
             var actualLinks = JsonConvert.DeserializeObject<ApplicationInsightsLink[]>(linksStr, jsonSettingThrowOnError);
@@ -1386,7 +1386,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             // attributes are ignored
             Assert.Single(dependency.Properties);
-            Assert.True(dependency.Properties.TryGetValue("links", out var linksStr));
+            Assert.True(dependency.Properties.TryGetValue("_MS.links", out var linksStr));
 
             // does not throw
             var actualLinks = JsonConvert.DeserializeObject<ApplicationInsightsLink[]>(linksStr, jsonSettingThrowOnError);
@@ -1426,7 +1426,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             var request = sentItems.OfType<RequestTelemetry>().Single();
             Assert.Single(request.Properties);
-            Assert.True(request.Properties.TryGetValue("links", out var linksStr));
+            Assert.True(request.Properties.TryGetValue("_MS.links", out var linksStr));
 
             // does not throw
             var actualLinks = JsonConvert.DeserializeObject<ApplicationInsightsLink[]>(linksStr, jsonSettingThrowOnError);
@@ -1475,7 +1475,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var request = sentItems.OfType<RequestTelemetry>().Single();
             // attributes are ignored
             Assert.Single(request.Properties);
-            Assert.True(request.Properties.TryGetValue("links", out var linksStr));
+            Assert.True(request.Properties.TryGetValue("_MS.links", out var linksStr));
 
             // does not throw
             var actualLinks = JsonConvert.DeserializeObject<ApplicationInsightsLink[]>(linksStr, jsonSettingThrowOnError);
