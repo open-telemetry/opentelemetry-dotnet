@@ -26,16 +26,6 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public static class DefaultTracing
     {
-        /// <summary>   
-        /// Gets the tracer to record spans.
-        /// </summary>
-        public static ITracer Tracer { get; private set; }
-
-        /// <summary>
-        /// Gets the exporter to use to upload spans.
-        /// </summary>
-        public static ISpanExporter SpanExporter { get; private set; }
-
         /// <summary>
         /// Initializes the default tracing implementation.
         /// </summary>
