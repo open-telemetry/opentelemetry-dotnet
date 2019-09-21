@@ -25,7 +25,8 @@ namespace OpenTelemetry.Trace
     /// <inheritdoc/>
     public class SpanBuilder : ISpanBuilder
     {
-        private readonly SpanBuilderOptions options;
+        private readonly IStartEndHandler startEndHandler;
+        private readonly TraceConfig traceConfig;
         private readonly string name;
 
         private SpanKind kind;
@@ -37,12 +38,13 @@ namespace OpenTelemetry.Trace
         private ISampler sampler;
         private List<ILink> links;
         private bool recordEvents;
-        private DateTime startTimestamp;
+        private DateTimeOffset startTimestamp;
 
-        internal SpanBuilder(string name, SpanBuilderOptions options)
+        internal SpanBuilder(string name, IStartEndHandler startEndHandler, TraceConfig traceConfig)
         {
             this.name = name ?? throw new ArgumentNullException(nameof(name));
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
+            this.startEndHandler = startEndHandler ?? throw new ArgumentNullException(nameof(startEndHandler));
+            this.traceConfig = traceConfig ?? throw new ArgumentNullException(nameof(traceConfig));
         }
 
         private enum ContextSource
@@ -198,7 +200,7 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        public ISpanBuilder SetStartTimestamp(DateTime startTimestamp)
+        public ISpanBuilder SetStartTimestamp(DateTimeOffset startTimestamp)
         {
             this.startTimestamp = startTimestamp;
             return this;
@@ -212,10 +214,8 @@ namespace OpenTelemetry.Trace
 
             if (this.startTimestamp == default)
             {
-                this.startTimestamp = activityForSpan.StartTimeUtc;
+                this.startTimestamp = new DateTimeOffset(activityForSpan.StartTimeUtc);
             }
-
-            var activeTraceParams = this.options.TraceConfig.ActiveTraceParams;
 
             bool sampledIn = MakeSamplingDecision(
                 this.parentSpanContext, // it is updated in CreateActivityForSpan
@@ -224,7 +224,7 @@ namespace OpenTelemetry.Trace
                 this.links,
                 activityForSpan.TraceId,
                 activityForSpan.SpanId,
-                activeTraceParams);
+                this.traceConfig);
 
             if (sampledIn || this.recordEvents)
             {
@@ -246,8 +246,8 @@ namespace OpenTelemetry.Trace
                         activityForSpan,
                         childTracestate, 
                         this.kind,
-                        activeTraceParams,
-                        this.options.StartEndHandler,
+                        this.traceConfig,
+                        this.startEndHandler,
                         this.startTimestamp,
                         ownsActivity: this.contextSource != ContextSource.Activity);
             if (activityForSpan.OperationName != this.name)
@@ -293,7 +293,7 @@ namespace OpenTelemetry.Trace
             List<ILink> parentLinks,
             ActivityTraceId traceId,
             ActivitySpanId spanId,
-            ITraceParams activeTraceParams)
+            TraceConfig traceConfig)
         {
             // If users set a specific sampler in the SpanBuilder, use it.
             if (sampler != null)
@@ -305,7 +305,7 @@ namespace OpenTelemetry.Trace
             // parent).
             if (parent == null || !parent.IsValid)
             {
-                return activeTraceParams
+                return traceConfig
                     .Sampler
                     .ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
             }

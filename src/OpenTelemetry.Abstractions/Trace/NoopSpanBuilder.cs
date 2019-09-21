@@ -39,7 +39,8 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        public ISpanBuilder SetStartTimestamp(DateTime startTimestamp)
+        /// <inheritdoc/>
+        public ISpanBuilder SetStartTimestamp(DateTimeOffset startTimestamp)
         {
             return this;
         }

@@ -37,19 +37,11 @@ namespace Samples
                 Tracing.SpanExporter);
             exporter.Start();
 
-            // 2. Configure 100% sample rate for the purposes of the demo
-            var traceConfig = Tracing.TraceConfig;
-            var currentConfig = traceConfig.ActiveTraceParams;
-            var newConfig = currentConfig.ToBuilder()
-                .SetSampler(Samplers.AlwaysSample)
-                .Build();
-            traceConfig.UpdateActiveTraceParams(newConfig);
-
-            // 3. Tracer is global singleton. You can register it via dependency injection if it exists
+            // 2. Tracer is global singleton. You can register it via dependency injection if it exists
             // but if not - you can use it as follows:
             var tracer = Tracing.Tracer;
 
-            // 4. Create a scoped span. It will end automatically when using statement ends
+            // 3. Create a scoped span. It will end automatically when using statement ends
             using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))
             {
                 Console.WriteLine("About to do a busy work");
@@ -59,7 +51,7 @@ namespace Samples
                 }
             }
 
-            // 5. Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
+            // 4. Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
             Tracing.SpanExporter.Dispose();
 
             return null;

@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact(Skip = "need to fix the way tracer being instantiated")]
         public void DefaultTraceConfig()
         {
-            Assert.Same(TraceConfigBase.NoopTraceConfig, Tracing.TraceConfig);
+            Assert.Same(TraceConfig.Default, Tracing.TraceConfig);
         }
 
         // [Fact]

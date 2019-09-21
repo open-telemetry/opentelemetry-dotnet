@@ -134,11 +134,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             };
         }
 
-        public static long ToEpochMicroseconds(this DateTime timestamp)
+        public static long ToEpochMicroseconds(this DateTimeOffset timestamp)
         {
             // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
             // the last digit being off by one for dates that result in negative Unix times
-            long microseconds = timestamp.Ticks / TicksPerMicrosecond;
+            long microseconds = timestamp.UtcDateTime.Ticks / TicksPerMicrosecond;
             return microseconds - UnixEpochMicroseconds;
         }
     }

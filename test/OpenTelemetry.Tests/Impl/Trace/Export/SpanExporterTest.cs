@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     sampledActivity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow());
             span.End();
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     notSampledActivity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow());
             span.End();

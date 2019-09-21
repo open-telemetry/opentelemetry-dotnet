@@ -219,7 +219,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     }
 
                     linksJson.Append("]");
-                    result.Properties["links"] = linksJson.ToString();
+                    result.Properties["_MS.links"] = linksJson.ToString();
                 }
 
                 foreach (var t in span.Events.Events)

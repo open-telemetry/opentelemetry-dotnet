@@ -62,7 +62,7 @@ namespace OpenTelemetry.Trace.Test
                 activity,
                 Tracestate.Empty,
                 SpanKind.Internal,
-                TraceParams.Default,
+                TraceConfig.Default,
                 startEndHandler,
                 default);
 
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Trace.Test
                 activity,
                 Tracestate.Empty,
                 SpanKind.Internal,
-                TraceParams.Default,
+                TraceConfig.Default,
                 startEndHandler,
                 default,
                 false);
@@ -128,7 +128,7 @@ namespace OpenTelemetry.Trace.Test
                 parentActivity,
                 Tracestate.Empty,
                 SpanKind.Internal,
-                TraceParams.Default,
+                TraceConfig.Default,
                 startEndHandler,
                 default);
             var parentScope = CurrentSpanUtils.WithSpan(parentSpan, stopSpan);
@@ -138,7 +138,7 @@ namespace OpenTelemetry.Trace.Test
                 childActivity,
                 Tracestate.Empty,
                 SpanKind.Internal,
-                TraceParams.Default,
+                TraceConfig.Default,
                 startEndHandler,
                 default);
 
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Trace.Test
                 parentActivity,
                 Tracestate.Empty,
                 SpanKind.Internal,
-                TraceParams.Default,
+                TraceConfig.Default,
                 startEndHandler,
                 default);
 
@@ -182,7 +182,7 @@ namespace OpenTelemetry.Trace.Test
                 childActivity,
                 Tracestate.Empty,
                 SpanKind.Internal,
-                TraceParams.Default,
+                TraceConfig.Default,
                 startEndHandler,
                 default);
 
@@ -207,7 +207,7 @@ namespace OpenTelemetry.Trace.Test
                 activity,
                 Tracestate.Empty,
                 SpanKind.Internal,
-                TraceParams.Default,
+                TraceConfig.Default,
                 startEndHandler,
                 default);
 
@@ -230,7 +230,7 @@ namespace OpenTelemetry.Trace.Test
                 activity,
                 Tracestate.Empty,
                 SpanKind.Internal,
-                TraceParams.Default,
+                TraceConfig.Default,
                 startEndHandler,
                 default);
 
@@ -263,7 +263,7 @@ namespace OpenTelemetry.Trace.Test
                 activity,
                 Tracestate.Empty,
                 SpanKind.Internal,
-                TraceParams.Default,
+                TraceConfig.Default,
                 startEndHandler,
                 default);
 

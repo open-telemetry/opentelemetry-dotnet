@@ -78,7 +78,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             this.HasEnded = true;
         }
 
-        public void End(DateTime endTimestamp)
+        public void End(DateTimeOffset endTimestamp)
         {
             this.End();
         }
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             public string Name { get; }
 
-            public DateTime Timestamp { get; }
+            public DateTimeOffset Timestamp { get; }
 
             public IDictionary<string, object> Attributes { get; }
         }

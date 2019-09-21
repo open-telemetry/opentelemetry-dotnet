@@ -139,9 +139,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return spanBuilder.Build();
         }
 
-        private long ToEpochMicroseconds(DateTime timestamp)
+        private long ToEpochMicroseconds(DateTimeOffset timestamp)
         {
-            return new DateTimeOffset(timestamp).ToUnixTimeMilliseconds() * 1000;
+            return timestamp.ToUnixTimeMilliseconds() * 1000;
         }
 
         private string EncodeTraceId(ActivityTraceId traceId)
