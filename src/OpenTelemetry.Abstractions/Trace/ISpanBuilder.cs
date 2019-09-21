@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics;
 
@@ -108,6 +109,14 @@ namespace OpenTelemetry.Trace
         /// <param name="recordEvents">Value indicating whether to record span.</param>
         /// <returns>This span builder for chaining.</returns>
         ISpanBuilder SetRecordEvents(bool recordEvents);
+
+        /// <summary>
+        /// Set start UTC timestamp value.
+        /// </summary>
+        /// <param name="startTimestamp">Start timestamp in UTC.
+        /// If this method was not called, during <see cref="StartSpan"/> current precise time will be used.</param>
+        /// <returns>This span builder for chaining.</returns>
+        ISpanBuilder SetStartTimestamp(DateTime startTimestamp);
 
         /// <summary>
         /// Starts the span.

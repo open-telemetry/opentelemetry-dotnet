@@ -32,15 +32,13 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
         [Fact]
         public void DrainSessionUsesCommandAsName()
         {
-            var parentSpan = BlankSpan.Instance;
             var profiledCommand = new Mock<IProfiledCommand>();
-            var sampler = new Mock<ISampler>();
-            sampler.Setup(x => x.ShouldSample(It.IsAny<SpanContext>(), It.IsAny<ActivityTraceId>(), It.IsAny<ActivitySpanId>(), It.IsAny<string>(), It.IsAny<IEnumerable<ILink>>())).Returns(true);
+            var tracer = Tracing.Tracer;
+
             profiledCommand.Setup(m => m.Command).Returns("SET");
-            var result = new List<SpanData>();
-            RedisProfilerEntryToSpanConverter.DrainSession(parentSpan, new IProfiledCommand[] { profiledCommand.Object }, sampler.Object, result);
-            Assert.Single(result);
-            Assert.Equal("SET", result[0].Name);
+
+            var result = (Span)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(tracer, BlankSpan.Instance, profiledCommand.Object);
+            Assert.Equal("SET", result.Name);
         }
 
         [Fact]
@@ -49,7 +47,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var profiledCommand = new Mock<IProfiledCommand>();
             var now = DateTimeOffset.Now;
             profiledCommand.Setup(m => m.CommandCreated).Returns(now.DateTime);
-            var result = RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "SET", default, profiledCommand.Object);
+            var result = ((Span)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(Tracing.Tracer, BlankSpan.Instance, profiledCommand.Object)).ToSpanData();
             Assert.Equal(now, result.StartTimestamp);
         }
 
@@ -57,7 +55,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
         public void ProfiledCommandToSpanDataSetsDbTypeAttributeAsRedis()
         {
             var profiledCommand = new Mock<IProfiledCommand>();
-            var result = RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "SET", default, profiledCommand.Object);
+            var result = ((Span)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(Tracing.Tracer, BlankSpan.Instance, profiledCommand.Object)).ToSpanData();
             Assert.Contains(result.Attributes.AttributeMap, kvp => kvp.Key == "db.type");
             Assert.Equal("redis", result.Attributes.GetValue("db.type"));
         }
@@ -67,7 +65,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
         {
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.Command).Returns("SET");
-            var result = RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "another name", default, profiledCommand.Object);
+            var result = ((Span)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(Tracing.Tracer, BlankSpan.Instance, profiledCommand.Object)).ToSpanData();
             Assert.Contains(result.Attributes.AttributeMap, kvp => kvp.Key == "db.statement");
             Assert.Equal("SET", result.Attributes.GetValue("db.statement"));
         }
@@ -79,9 +77,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var expectedFlags = StackExchange.Redis.CommandFlags.FireAndForget |
                                 StackExchange.Redis.CommandFlags.NoRedirect;
             profiledCommand.Setup(m => m.Flags).Returns(expectedFlags);
-            var result =
-                RedisProfilerEntryToSpanConverter.ProfiledCommandToSpanData(SpanContext.Blank, "SET", default,
-                    profiledCommand.Object);
+            var result = ((Span)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(Tracing.Tracer, BlankSpan.Instance, profiledCommand.Object)).ToSpanData();
             Assert.Contains(result.Attributes.AttributeMap, kvp => kvp.Key == "redis.flags");
             Assert.Equal("None, FireAndForget, NoRedirect", result.Attributes.GetValue("redis.flags"));
         }

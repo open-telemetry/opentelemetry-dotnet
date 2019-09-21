@@ -4,6 +4,7 @@
 
 namespace LoggingTracer
 {
+    using System;
     using System.Collections.Generic;
     using OpenTelemetry.Trace;
 
@@ -38,6 +39,8 @@ namespace LoggingTracer
         public void AddLink(ILink link) => Logger.Log($"Span.AddLink({link})");
 
         public void End() => Logger.Log($"Span.End, Name: {this.Name}");
+
+        public void End(DateTime endTimestamp) => Logger.Log($"Span.End, Name: {this.Name}, Timestamp: {endTimestamp}");
 
         public void SetAttribute(string key, object value) => this.LogSetAttribute(key, value);
 

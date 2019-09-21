@@ -71,28 +71,24 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 { "doubleKey2", 1F},
                 { "boolKey", true},
             }, 0);
-            var events = TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>
+            var events = TimedEvents<IEvent>.Create(new List<IEvent>
             {
-                TimedEvent<IEvent>.Create(
+                Event.Create(
+                    "Event1",
                     eventTimestamp,
-                    Event.Create(
-                        "Event1",
-                        new Dictionary<string, object>
+                    new Dictionary<string, object>
+                    {
+                        { "key", "value" },
+                    }
+                ),
+                Event.Create(
+                    "Event2",
+                    eventTimestamp,
+                    new Dictionary<string, object>
                         {
                             { "key", "value" },
                         }
                     )
-                ),
-                TimedEvent<IEvent>.Create(
-                    eventTimestamp,
-                    Event.Create(
-                        "Event2",
-                        new Dictionary<string, object>
-                        {
-                            { "key", "value" },
-                        }
-                    )
-                ),
             }, 0);
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());

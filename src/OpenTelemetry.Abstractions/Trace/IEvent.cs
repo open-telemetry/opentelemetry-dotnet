@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System;
     using System.Collections.Generic;
 
     /// <summary>
@@ -27,6 +28,11 @@ namespace OpenTelemetry.Trace
         /// Gets the <see cref="IEvent"/> name.
         /// </summary>
         string Name { get; }
+
+        /// <summary>
+        /// Gets the <see cref="IEvent"/> timestamp.
+        /// </summary>
+        DateTime Timestamp { get; }
 
         /// <summary>
         /// Gets the <see cref="IDictionary{String, IAttributeValue}"/> collection of attributes associated with the event.

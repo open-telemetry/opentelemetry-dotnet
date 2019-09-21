@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Utils;
+
 namespace OpenTelemetry.Trace.Export.Test
 {
     using System;
@@ -57,7 +59,8 @@ namespace OpenTelemetry.Trace.Export.Test
                     Tracestate.Empty,
                     SpanKind.Internal,
                     TraceParams.Default,
-                    startEndHandler);
+                    startEndHandler,
+                    PreciseTimestamp.GetUtcNow());
             span.End();
             return span as Span;
         }
@@ -73,7 +76,8 @@ namespace OpenTelemetry.Trace.Export.Test
                     Tracestate.Empty,
                     SpanKind.Internal,
                     TraceParams.Default,
-                    startEndHandler);
+                    startEndHandler,
+                    PreciseTimestamp.GetUtcNow());
             span.End();
             return span as Span;
         }

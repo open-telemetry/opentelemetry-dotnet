@@ -160,5 +160,9 @@ namespace OpenTelemetry.Trace
         public void End()
         {
         }
+
+        public void End(DateTime endTimestamp)
+        {
+        }
     }
 }

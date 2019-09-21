@@ -107,12 +107,12 @@ namespace OpenTelemetry.Trace
         public SpanKind Kind { get; }
 
         /// <summary>
-        /// Gets the start <see cref="DateTime"/>.
+        /// Gets the start UTC <see cref="DateTime"/>.
         /// </summary>
         public DateTime StartTimestamp { get; }
 
         /// <summary>
-        /// Gets the end <see cref="DateTime"/>.
+        /// Gets the end UTC <see cref="DateTime"/>.
         /// </summary>
         public DateTime EndTimestamp { get; }
 
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Trace
         {
             if (events == null)
             {
-                events = TimedEvents<IEvent>.Create(new List<ITimedEvent<IEvent>>(), 0);
+                events = TimedEvents<IEvent>.Create(new List<IEvent>(), 0);
             }
 
             return new SpanData(
