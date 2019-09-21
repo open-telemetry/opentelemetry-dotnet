@@ -1,10 +1,17 @@
-﻿namespace LoggingTracer
+﻿// <copyright file="CurrentSpanUtils.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+namespace LoggingTracer
 {
     using System.Threading;
     using OpenTelemetry.Context;
     using OpenTelemetry.Trace;
 
-    public static class CurrentSpanUtils
+    /// <summary>
+    /// Span utils for Logging-only SDK implementation.
+    /// </summary>
+    internal static class CurrentSpanUtils
     {
         private static AsyncLocal<ISpan> asyncLocalContext = new AsyncLocal<ISpan>();
 

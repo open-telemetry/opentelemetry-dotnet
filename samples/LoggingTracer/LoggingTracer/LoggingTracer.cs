@@ -1,4 +1,8 @@
-﻿namespace LoggingTracer
+﻿// <copyright file="LoggingTracer.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+namespace LoggingTracer
 {
     using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;

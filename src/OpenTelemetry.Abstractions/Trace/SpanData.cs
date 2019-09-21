@@ -33,14 +33,14 @@ namespace OpenTelemetry.Trace
             ActivitySpanId parentSpanId,
             Resource resource,
             string name,
-            DateTime startTimestamp,
+            DateTimeOffset startTimestamp,
             Attributes attributes,
             ITimedEvents<IEvent> events,
             ILinks links,
             int? childSpanCount,
             Status status,
             SpanKind kind,
-            DateTime endTimestamp)
+            DateTimeOffset endTimestamp)
         {
             this.Context = context ?? throw new ArgumentNullException(nameof(context));
             this.ParentSpanId = parentSpanId;
@@ -107,14 +107,14 @@ namespace OpenTelemetry.Trace
         public SpanKind Kind { get; }
 
         /// <summary>
-        /// Gets the start UTC <see cref="DateTime"/>.
+        /// Gets the start <see cref="DateTimeOffset"/>.
         /// </summary>
-        public DateTime StartTimestamp { get; }
+        public DateTimeOffset StartTimestamp { get; }
 
         /// <summary>
-        /// Gets the end UTC <see cref="DateTime"/>.
+        /// Gets the end <see cref="DateTimeOffset"/>.
         /// </summary>
-        public DateTime EndTimestamp { get; }
+        public DateTimeOffset EndTimestamp { get; }
 
         /// <summary>
         /// Returns a new immutable <see cref="SpanData"/>.
@@ -137,14 +137,14 @@ namespace OpenTelemetry.Trace
                         ActivitySpanId parentSpanId,
                         Resource resource,
                         string name,
-                        DateTime startTimestamp,
+                        DateTimeOffset startTimestamp,
                         Attributes attributes,
                         ITimedEvents<IEvent> events,
                         ILinks links,
                         int? childSpanCount,
                         Status status,
                         SpanKind kind,
-                        DateTime endTimestamp)
+                        DateTimeOffset endTimestamp)
         {
             if (events == null)
             {
@@ -196,7 +196,7 @@ namespace OpenTelemetry.Trace
             if (o is SpanData that)
             {
                 return this.Context.Equals(that.Context)
-                     && ((this.ParentSpanId == null) ? (that.ParentSpanId == null) : this.ParentSpanId.Equals(that.ParentSpanId))
+                     && ((this.ParentSpanId == default) ? (that.ParentSpanId == default) : this.ParentSpanId.Equals(that.ParentSpanId))
                      && this.Resource.Equals(that.Resource)
                      && this.Name.Equals(that.Name)
                      && this.StartTimestamp.Equals(that.StartTimestamp)
@@ -205,7 +205,7 @@ namespace OpenTelemetry.Trace
                      && this.Links.Equals(that.Links)
                      && ((this.ChildSpanCount == null) ? (that.ChildSpanCount == null) : this.ChildSpanCount.Equals(that.ChildSpanCount))
                      && this.Status.Equals(that.Status)
-                     && ((this.EndTimestamp == null) ? (that.EndTimestamp == null) : this.EndTimestamp.Equals(that.EndTimestamp));
+                     && ((this.EndTimestamp == default) ? (that.EndTimestamp == default) : this.EndTimestamp.Equals(that.EndTimestamp));
             }
 
             return false;
@@ -218,7 +218,7 @@ namespace OpenTelemetry.Trace
             h *= 1000003;
             h ^= this.Context.GetHashCode();
             h *= 1000003;
-            h ^= (this.ParentSpanId == null) ? 0 : this.ParentSpanId.GetHashCode();
+            h ^= (this.ParentSpanId == default) ? 0 : this.ParentSpanId.GetHashCode();
             h *= 1000003;
             h ^= this.Resource.GetHashCode();
             h *= 1000003;
@@ -237,7 +237,7 @@ namespace OpenTelemetry.Trace
             h *= 1000003;
             h ^= this.Status.GetHashCode();
             h *= 1000003;
-            h ^= (this.EndTimestamp == null) ? 0 : this.EndTimestamp.GetHashCode();
+            h ^= (this.EndTimestamp == default) ? 0 : this.EndTimestamp.GetHashCode();
             return h;
         }
     }

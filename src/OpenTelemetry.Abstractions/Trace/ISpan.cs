@@ -122,7 +122,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// End the span.
         /// </summary>
-        /// <param name="endTimestamp">End UTC timestamp.</param>
-        void End(DateTime endTimestamp);
+        /// <param name="endTimestamp">End timestamp.</param>
+        void End(DateTimeOffset endTimestamp);
     }
 }
