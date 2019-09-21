@@ -16,6 +16,8 @@
 
 namespace Abstractions
 {
+    using System;
+    using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Sampler;
 
     internal class Program
@@ -25,9 +27,13 @@ namespace Abstractions
             var tracer = OpenTelemetry.Trace.Tracing.Tracer;
             var spanProgram = tracer.SpanBuilder("program")
                 .SetSampler(Samplers.AlwaysSample)
+                .SetSpanKind(SpanKind.Internal)
+                .SetStartTimestamp(DateTimeOffset.UtcNow)
                 .StartSpan();
+
             var spanOperation = tracer.SpanBuilder("operation")
                 .SetParent(spanProgram)
+                .SetSpanKind(SpanKind.Server)
                 .StartSpan();
 
             spanOperation.End();
