@@ -33,13 +33,13 @@ namespace OpenTelemetry.Trace
         private readonly ITraceParams traceParams;
         private readonly IStartEndHandler startEndHandler;
         private readonly Lazy<SpanContext> spanContext;
-        private readonly DateTime startTimestamp;
+        private readonly DateTimeOffset startTimestamp;
         private readonly object @lock = new object();
         private EvictingQueue<KeyValuePair<string, object>> attributes;
         private EvictingQueue<IEvent> events;
         private EvictingQueue<ILink> links;
         private Status status;
-        private DateTime endTimestamp;
+        private DateTimeOffset endTimestamp;
 
         private Span(
                 Activity activity,
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace
                 SpanKind spanKind,
                 ITraceParams traceParams,
                 IStartEndHandler startEndHandler,
-                DateTime startTimestamp,
+                DateTimeOffset startTimestamp,
                 bool ownsActivity)
         {
             this.Activity = activity;
@@ -300,7 +300,7 @@ namespace OpenTelemetry.Trace
             this.End(PreciseTimestamp.GetUtcNow());
         }
 
-        public void End(DateTime endTimestamp)
+        public void End(DateTimeOffset endTimestamp)
         {
             this.endTimestamp = endTimestamp;
             if (this.OwnsActivity && this.Activity == Activity.Current)
@@ -429,7 +429,7 @@ namespace OpenTelemetry.Trace
                         SpanKind spanKind,
                         ITraceParams traceParams,
                         IStartEndHandler startEndHandler,
-                        DateTime startTimestamp,
+                        DateTimeOffset startTimestamp,
                         bool ownsActivity = true)
         {
             var span = new Span(

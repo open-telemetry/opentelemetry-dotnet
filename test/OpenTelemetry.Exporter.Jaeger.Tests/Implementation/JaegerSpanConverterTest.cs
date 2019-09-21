@@ -39,9 +39,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan_AllPropertiesSet()
         {
-            var startTimestamp = DateTime.Now;
+            var startTimestamp = DateTimeOffset.Now;
             var endTimestamp = startTimestamp.AddSeconds(60);
-            var eventTimestamp = DateTime.Now;
+            var eventTimestamp = DateTimeOffset.Now;
 
             var traceId = ActivityTraceId.CreateRandom();
             var traceIdAsInt = new Int128(traceId);
@@ -184,9 +184,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan_NoAttributes()
         {
-            var startTimestamp = DateTime.Now;
+            var startTimestamp = DateTimeOffset.Now;
             var endTimestamp = startTimestamp.AddSeconds(60);
-            var eventTimestamp = DateTime.Now;
+            var eventTimestamp = DateTimeOffset.Now;
 
             var traceId = ActivityTraceId.CreateRandom();
             var traceIdAsInt = new Int128(traceId);
@@ -297,9 +297,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan_NoEvents()
         {
-            var startTimestamp = DateTime.Now;
+            var startTimestamp = DateTimeOffset.Now;
             var endTimestamp = startTimestamp.AddSeconds(60);
-            var eventTimestamp = DateTime.Now;
+            var eventTimestamp = DateTimeOffset.Now;
 
             var traceId = ActivityTraceId.CreateRandom();
             var traceIdAsInt = new Int128(traceId);
@@ -400,9 +400,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan_NoLinks()
         {
-            var startTimestamp = DateTime.Now;
+            var startTimestamp = DateTimeOffset.Now;
             var endTimestamp = startTimestamp.AddSeconds(60);
-            var eventTimestamp = DateTime.Now;
+            var eventTimestamp = DateTimeOffset.Now;
 
             var traceId = ActivityTraceId.CreateRandom();
             var traceIdAsInt = new Int128(traceId);

@@ -49,7 +49,7 @@ namespace OpenTelemetry.Utils
         /// Returns high resolution (1 DateTime tick) current UTC DateTime.
         /// </summary>
         /// <returns>DateTime UTC now with high resolution.</returns>
-        public static DateTime GetUtcNow()
+        public static DateTimeOffset GetUtcNow()
         {
 #if NET45 || NET46
             // DateTime.UtcNow accuracy on .NET Framework is ~16ms, this method
@@ -63,14 +63,14 @@ namespace OpenTelemetry.Utils
             // DateTime.AddSeconds (or Milliseconds) rounds value to 1 ms, use AddTicks to prevent it
             return tmp.SyncUtcNow.AddTicks(dateTimeTicksDiff);
 #else
-            return DateTime.UtcNow;
+            return DateTimeOffset.UtcNow;
 #endif
         }
 
 #if NET45 || NET46
         private static void Sync()
         {
-            // wait for DateTime.UtcNow update to the next granular value
+            // wait for DateTimeOffset.UtcNow update to the next granular value
             Thread.Sleep(1);
             timeSync = new TimeSync();
         }
@@ -108,7 +108,7 @@ namespace OpenTelemetry.Utils
 
         private class TimeSync
         {
-            public readonly DateTime SyncUtcNow = DateTime.UtcNow;
+            public readonly DateTimeOffset SyncUtcNow = DateTimeOffset.UtcNow;
             public readonly long SyncStopwatchTicks = Stopwatch.GetTimestamp();
         }
 #endif

@@ -107,7 +107,7 @@ namespace LoggingTracer
             return this;
         }
 
-        public ISpanBuilder SetStartTimestamp(DateTime startTimestamp)
+        public ISpanBuilder SetStartTimestamp(DateTimeOffset startTimestamp)
         {
             Logger.Log($"SpanBuilder.SetStartTimestamp({startTimestamp})");
             return this;

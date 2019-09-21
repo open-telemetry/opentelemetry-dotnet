@@ -31,11 +31,11 @@ namespace OpenTelemetry.Trace.Export.Test
         private const string EVENT_TEXT = "MyEventText";
         private const SpanKind SPAN_KIND = SpanKind.Client;
         private const int CHILD_SPAN_COUNT = 13;
-        private static readonly DateTime startTimestamp = PreciseTimestamp.GetUtcNow().AddSeconds(-1);
-        private static readonly DateTime eventTimestamp1 = startTimestamp.AddMilliseconds(1);
-        private static readonly DateTime eventTimestamp2 = startTimestamp.AddMilliseconds(2);
-        private static readonly DateTime eventTimestamp3 = startTimestamp.AddMilliseconds(3);
-        private static readonly DateTime endTimestamp = startTimestamp.AddMilliseconds(4);
+        private static readonly DateTimeOffset startTimestamp = PreciseTimestamp.GetUtcNow().AddSeconds(-1);
+        private static readonly DateTimeOffset eventTimestamp1 = startTimestamp.AddMilliseconds(1);
+        private static readonly DateTimeOffset eventTimestamp2 = startTimestamp.AddMilliseconds(2);
+        private static readonly DateTimeOffset eventTimestamp3 = startTimestamp.AddMilliseconds(3);
+        private static readonly DateTimeOffset endTimestamp = startTimestamp.AddMilliseconds(4);
         private static readonly Status status = Status.DeadlineExceeded.WithDescription("TooSlow");
         private readonly SpanContext spanContext;
         private readonly ActivitySpanId parentSpanId;

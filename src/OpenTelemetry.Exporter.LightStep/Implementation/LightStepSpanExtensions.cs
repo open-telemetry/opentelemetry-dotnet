@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
             {
                 SpanId = spanId, TraceId = traceId,
             };
-            span.StartTimestamp = data.StartTimestamp;
+            span.StartTimestamp = data.StartTimestamp.UtcDateTime;
             span.DurationMicros = Convert.ToUInt64(Math.Abs(duration.Ticks) / 10);
 
             foreach (var attr in data.Attributes.AttributeMap)
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
 
                 // TODO: Make this actually pass attributes in correctly
                 fields.Add(new Tag { Key = evt.Name, StringValue = evt.Attributes.ToString() });
-                span.Logs.Add(new Log { Timestamp = evt.Timestamp, Fields = fields });
+                span.Logs.Add(new Log { Timestamp = evt.Timestamp.UtcDateTime, Fields = fields });
             }
 
             return span;

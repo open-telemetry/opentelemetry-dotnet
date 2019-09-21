@@ -40,7 +40,7 @@ namespace LoggingTracer
 
         public void End() => Logger.Log($"Span.End, Name: {this.Name}");
 
-        public void End(DateTime endTimestamp) => Logger.Log($"Span.End, Name: {this.Name}, Timestamp: {endTimestamp}");
+        public void End(DateTimeOffset endTimestamp) => Logger.Log($"Span.End, Name: {this.Name}, Timestamp: {endTimestamp:o}");
 
         public void SetAttribute(string key, object value) => this.LogSetAttribute(key, value);
 
