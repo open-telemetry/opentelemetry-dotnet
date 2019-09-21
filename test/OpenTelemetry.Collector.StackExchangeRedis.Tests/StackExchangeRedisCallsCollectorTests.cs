@@ -19,7 +19,6 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
     using Moq;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Internal;
     using StackExchange.Redis.Profiling;
     using System.Threading.Tasks;
     using Xunit;
@@ -30,7 +29,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         public async void ProfilerSessionUsesTheSameDefault()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
+            var tracer = new Tracer(startEndHandler.Object, TraceConfig.Default);
 
             using (var collector = new StackExchangeRedisCallsCollector(tracer))
             {

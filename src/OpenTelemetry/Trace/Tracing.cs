@@ -16,7 +16,6 @@
 
 namespace OpenTelemetry.Trace
 {
-    using System.Runtime.CompilerServices;
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
@@ -34,7 +33,7 @@ namespace OpenTelemetry.Trace
         {
             IEventQueue eventQueue = new SimpleEventQueue();
 
-            TraceConfig = new Config.TraceConfig();
+            TraceConfig = TraceConfig.Default;
 
             SpanExporter = Export.SpanExporter.Create();
 
@@ -59,6 +58,6 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the trace config.
         /// </summary>
-        public static ITraceConfig TraceConfig { get; private set; }
+        public static TraceConfig TraceConfig { get; private set; }
     }
 }

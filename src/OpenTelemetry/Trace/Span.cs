@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Span : ISpan
     {
-        private readonly ITraceParams traceParams;
+        private readonly TraceConfig traceConfig;
         private readonly IStartEndHandler startEndHandler;
         private readonly Lazy<SpanContext> spanContext;
         private readonly DateTimeOffset startTimestamp;
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace
                 Activity activity,
                 Tracestate tracestate,
                 SpanKind spanKind,
-                ITraceParams traceParams,
+                TraceConfig traceConfig,
                 IStartEndHandler startEndHandler,
                 DateTimeOffset startTimestamp,
                 bool ownsActivity)
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace
                 this.Activity.ActivityTraceFlags, 
                 tracestate));
             this.Name = this.Activity.OperationName;
-            this.traceParams = traceParams ?? throw new ArgumentNullException(nameof(traceParams));
+            this.traceConfig = traceConfig;
             this.startEndHandler = startEndHandler;
             this.Kind = spanKind;
             this.OwnsActivity = ownsActivity;
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Trace
             {
                 if (this.attributes == null)
                 {
-                    this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.traceParams.MaxNumberOfAttributes);
+                    this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.traceConfig.MaxNumberOfAttributes);
                 }
 
                 return this.attributes;
@@ -136,7 +136,7 @@ namespace OpenTelemetry.Trace
                 if (this.events == null)
                 {
                     this.events =
-                        new EvictingQueue<IEvent>(this.traceParams.MaxNumberOfEvents);
+                        new EvictingQueue<IEvent>(this.traceConfig.MaxNumberOfEvents);
                 }
 
                 return this.events;
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Trace
             {
                 if (this.links == null)
                 {
-                    this.links = new EvictingQueue<ILink>(this.traceParams.MaxNumberOfLinks);
+                    this.links = new EvictingQueue<ILink>(this.traceConfig.MaxNumberOfLinks);
                 }
 
                 return this.links;
@@ -427,7 +427,7 @@ namespace OpenTelemetry.Trace
                         Activity activity,
                         Tracestate tracestate,
                         SpanKind spanKind,
-                        ITraceParams traceParams,
+                        TraceConfig traceConfig,
                         IStartEndHandler startEndHandler,
                         DateTimeOffset startTimestamp,
                         bool ownsActivity = true)
@@ -436,7 +436,7 @@ namespace OpenTelemetry.Trace
                activity,
                tracestate,
                spanKind,
-               traceParams,
+               traceConfig,
                startEndHandler,
                startTimestamp,
                ownsActivity);
