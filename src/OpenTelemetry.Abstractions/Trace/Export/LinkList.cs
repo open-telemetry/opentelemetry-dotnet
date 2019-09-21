@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Export
 
         public IEnumerable<ILink> Links { get; }
 
-        public static LinkList Create(IReadOnlyCollection<ILink> links, int droppedLinksCount)
+        public static LinkList Create(IEnumerable<ILink> links, int droppedLinksCount)
         {
             if (links == null)
             {

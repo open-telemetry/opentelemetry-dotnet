@@ -93,11 +93,11 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             }
 
             Assert.Equal(2, startEndHandler.Invocations.Count); // begin and end was called
-            var spanData = ((Span)startEndHandler.Invocations[0].Arguments[0]).ToSpanData();
+            var span = ((Span)startEndHandler.Invocations[0].Arguments[0]);
 
-            Assert.Equal(SpanKind.Server, spanData.Kind);
-            Assert.Equal("/api/values", spanData.Attributes.GetValue("http.path"));
-            Assert.Equal(503L, spanData.Attributes.GetValue("http.status_code"));
+            Assert.Equal(SpanKind.Server, span.Kind);
+            Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));
+            Assert.Equal(503L, span.Attributes.GetValue("http.status_code"));
         }
     }
 }

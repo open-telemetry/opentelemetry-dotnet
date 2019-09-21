@@ -14,30 +14,30 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using Xunit;
 
 namespace OpenTelemetry.Tests
 {
+    using System.Collections.Generic;
     using System.Linq;
-    using OpenTelemetry.Trace.Export;
-
+    using Xunit;
+   
     internal static class AttributesExtensions
     {
-        public static object GetValue(this Attributes attributes, string key)
+        public static object GetValue(this IEnumerable<KeyValuePair<string, object>> attributes, string key)
         {
-            return attributes.AttributeMap.FirstOrDefault(kvp => kvp.Key == key).Value;
+            return attributes.FirstOrDefault(kvp => kvp.Key == key).Value;
         }
 
-        public static void AssertAreSame(this Attributes attributes,
+        public static void AssertAreSame(this IEnumerable<KeyValuePair<string, object>> attributes,
             IEnumerable<KeyValuePair<string, object>> expectedAttributes)
         {
-            var keyValuePairs = expectedAttributes as KeyValuePair<string, object>[] ?? expectedAttributes.ToArray();
-            Assert.Equal(attributes.AttributeMap.Count(), keyValuePairs.Count());
+            var expectedKeyValuePairs = expectedAttributes as KeyValuePair<string, object>[] ?? expectedAttributes.ToArray();
+            var actualKeyValuePairs = attributes as KeyValuePair<string, object>[] ?? attributes.ToArray();
+            Assert.Equal(actualKeyValuePairs.Count(), expectedKeyValuePairs.Count());
 
-            foreach (var attr in attributes.AttributeMap)
+            foreach (var attr in actualKeyValuePairs)
             {
-                Assert.Contains(attr, keyValuePairs);
+                Assert.Contains(attr, expectedKeyValuePairs);
             }
         }
     }

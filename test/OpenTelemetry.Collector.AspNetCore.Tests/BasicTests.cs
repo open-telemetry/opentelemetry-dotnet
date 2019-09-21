@@ -80,10 +80,10 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
 
 
             Assert.Equal(2, startEndHandler.Invocations.Count); // begin and end was called
-            var spanData = ((Span)startEndHandler.Invocations[1].Arguments[0]).ToSpanData();
+            var span = ((Span)startEndHandler.Invocations[1].Arguments[0]);
 
-            Assert.Equal(SpanKind.Server, spanData.Kind);
-            Assert.Equal("/api/values", spanData.Attributes.GetValue("http.path"));
+            Assert.Equal(SpanKind.Server, span.Kind);
+            Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));
         }
 
         [Fact]
@@ -137,14 +137,14 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             }
 
             Assert.Equal(2, startEndHandler.Invocations.Count); // begin and end was called
-            var spanData = ((Span)startEndHandler.Invocations[0].Arguments[0]).ToSpanData();
+            var span = ((Span)startEndHandler.Invocations[0].Arguments[0]);
 
-            Assert.Equal(SpanKind.Server, spanData.Kind);
-            Assert.Equal("api/Values/{id}", spanData.Name);
-            Assert.Equal("/api/values/2", spanData.Attributes.GetValue("http.path"));
+            Assert.Equal(SpanKind.Server, span.Kind);
+            Assert.Equal("api/Values/{id}", span.Name);
+            Assert.Equal("/api/values/2", span.Attributes.GetValue("http.path"));
 
-            Assert.Equal(expectedTraceId, spanData.Context.TraceId);
-            Assert.Equal(expectedSpanId, spanData.ParentSpanId);
+            Assert.Equal(expectedTraceId, span.Context.TraceId);
+            Assert.Equal(expectedSpanId, span.ParentSpanId);
         }
     }
 }
