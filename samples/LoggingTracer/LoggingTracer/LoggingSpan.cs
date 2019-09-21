@@ -1,7 +1,10 @@
-﻿using System;
+﻿// <copyright file="LoggingSpan.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
 
 namespace LoggingTracer
 {
+    using System;
     using System.Collections.Generic;
     using OpenTelemetry.Trace;
 

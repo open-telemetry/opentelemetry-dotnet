@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
     using OpenTelemetry.Trace.Export;
     using Thrift.Protocols;
     using Xunit;
-    using Process = Jaeger.Implementation.Process;
+    using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
     public class JaegerThriftIntegrationTest
     {
