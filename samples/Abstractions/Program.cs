@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace.Sampler;
-
 namespace Abstractions
 {
+    using OpenTelemetry.Trace.Sampler;
+
     internal class Program
     {
         private static void Main()

@@ -33,7 +33,12 @@ namespace OpenTelemetry.Trace.Export
 
         public Task ExportAsync(SpanData export, CancellationToken token)
         {
-            return Task.CompletedTask;
+            return
+#if NET45
+                Task.FromResult(0);
+#else
+                Task.CompletedTask;
+#endif
         }
 
         public void Dispose()
