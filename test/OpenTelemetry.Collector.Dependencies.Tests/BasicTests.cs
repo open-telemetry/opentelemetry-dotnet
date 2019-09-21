@@ -50,7 +50,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorInjectsHeadersAsync()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, null);
+            var tracer = new Tracer(startEndHandler.Object, TraceConfig.Default, null, null, null);
 
             var request = new HttpRequestMessage
             {
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, null);
+            var tracer = new Tracer(startEndHandler.Object, TraceConfig.Default, null, null, null);
 
             var request = new HttpRequestMessage
             {

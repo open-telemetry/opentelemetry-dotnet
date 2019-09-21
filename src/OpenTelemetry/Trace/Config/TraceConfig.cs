@@ -16,26 +16,70 @@
 
 namespace OpenTelemetry.Trace.Config
 {
-    public sealed class TraceConfig : TraceConfigBase
+    using System;
+    using OpenTelemetry.Trace.Sampler;
+
+    /// <summary>
+    /// Trace configuration that can be updates in runtime.
+    /// </summary>
+    public sealed class TraceConfig
     {
-        private ITraceParams activeTraceParams;
+        /// <summary>
+        /// Default trace parameters.
+        /// </summary>
+        public static readonly TraceConfig Default =
+            new TraceConfig(Samplers.AlwaysSample, DefaultSpanMaxNumAttributes, DefaultSpanMaxNumEvents, DefaultSpanMaxNumLinks);
 
-        public TraceConfig()
+        private const int DefaultSpanMaxNumAttributes = 32;
+        private const int DefaultSpanMaxNumEvents = 128;
+        private const int DefaultSpanMaxNumLinks = 32;
+
+        public TraceConfig(ISampler sampler)
+            : this(sampler, DefaultSpanMaxNumAttributes, DefaultSpanMaxNumEvents, DefaultSpanMaxNumLinks)
         {
-            this.activeTraceParams = TraceParams.Default;
         }
 
-        public override ITraceParams ActiveTraceParams
+        public TraceConfig(ISampler sampler, int maxNumberOfAttributes, int maxNumberOfEvents, int maxNumberOfLinks)
         {
-            get
+            if (maxNumberOfAttributes <= 0)
             {
-                return this.activeTraceParams;
+                throw new ArgumentOutOfRangeException(nameof(maxNumberOfAttributes));
             }
+
+            if (maxNumberOfEvents <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxNumberOfEvents));
+            }
+
+            if (maxNumberOfLinks <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxNumberOfLinks));
+            }
+
+            this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
+            this.MaxNumberOfAttributes = maxNumberOfAttributes;
+            this.MaxNumberOfEvents = maxNumberOfEvents;
+            this.MaxNumberOfLinks = maxNumberOfLinks;
         }
 
-        public override void UpdateActiveTraceParams(ITraceParams traceParams)
-        {
-            this.activeTraceParams = traceParams;
-        }
+        /// <summary>
+        /// Gets the sampler.
+        /// </summary>
+        public ISampler Sampler { get; }
+
+        /// <summary>
+        /// Gets the maximum number of attributes on span.
+        /// </summary>
+        public int MaxNumberOfAttributes { get; }
+
+        /// <summary>
+        /// Gets the maximum number of events on span.
+        /// </summary>
+        public int MaxNumberOfEvents { get; }
+
+        /// <summary>
+        /// Gets the maximum number of links on span.
+        /// </summary>
+        public int MaxNumberOfLinks { get; }
     }
 }

@@ -15,6 +15,7 @@
 // </copyright>
 
 using OpenTelemetry.Tests;
+using OpenTelemetry.Trace.Sampler;
 
 namespace OpenTelemetry.Trace.Test
 {
@@ -66,7 +67,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     default);
             // Check that adding trace events after Span#End() does not throw any exception.
@@ -96,7 +97,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     tracestate,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     default);
             Assert.NotNull(span.Context);
@@ -120,7 +121,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     tracestate,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     default);
             Assert.NotNull(span.Context);
@@ -146,7 +147,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     spanStartTime);
             var spanEndTime = PreciseTimestamp.GetUtcNow();
@@ -187,7 +188,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow());
             var spanEndTime = PreciseTimestamp.GetUtcNow();
@@ -220,7 +221,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     spanStartTime);
 
@@ -292,7 +293,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     spanStartTime);
 
@@ -360,7 +361,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow());
 
@@ -385,7 +386,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow());
 
@@ -407,14 +408,13 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var maxNumberOfAttributes = 8;
-            var traceParams =
-                TraceParams.Default.ToBuilder().SetMaxNumberOfAttributes(maxNumberOfAttributes).Build();
+            var traceConfig = new TraceConfig(Samplers.AlwaysSample, 8 , 128, 32);
             var span =
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    traceParams,
+                    traceConfig,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow());
             for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
@@ -461,14 +461,13 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var maxNumberOfAttributes = 8;
-            var traceParams =
-                TraceParams.Default.ToBuilder().SetMaxNumberOfAttributes(maxNumberOfAttributes).Build();
+            var traceConfig = new TraceConfig(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
             var span =
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    traceParams,
+                    traceConfig,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow());
             for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
@@ -533,14 +532,13 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var maxNumberOfEvents = 8;
-            var traceParams =
-                TraceParams.Default.ToBuilder().SetMaxNumberOfEvents(maxNumberOfEvents).Build();
+            var traceConfig = new TraceConfig(Samplers.AlwaysSample, 32, maxNumberOfEvents, 32);
             var span =
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    traceParams,
+                    traceConfig,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow());
 
@@ -580,14 +578,13 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var maxNumberOfLinks = 8;
-            var traceParams =
-                TraceParams.Default.ToBuilder().SetMaxNumberOfLinks(maxNumberOfLinks).Build();
+            var traceConfig = new TraceConfig(Samplers.AlwaysSample, 32, 128, maxNumberOfLinks);
             var span =
                 Span.StartSpan(
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    traceParams,
+                    traceConfig,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow());
             var link = Link.FromSpanContext(contextLink);
@@ -625,7 +622,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow());
 
@@ -660,7 +657,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow(),
                     ownsActivity: true);
@@ -685,7 +682,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow(),
                     ownsActivity: false);
@@ -713,7 +710,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     Tracestate.Empty,
                     SpanKind.Internal,
-                    TraceParams.Default,
+                    TraceConfig.Default,
                     startEndHandler,
                     PreciseTimestamp.GetUtcNow(),
                     ownsActivity: ownsActivity);

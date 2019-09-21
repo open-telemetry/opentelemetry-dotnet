@@ -32,8 +32,8 @@ namespace OpenTelemetry.Trace
         // Enforces that trace export exports data at least once every 5 seconds.
         private static readonly TimeSpan ExporterScheduleDelay = TimeSpan.FromSeconds(5);
 
-        private readonly SpanBuilderOptions spanBuilderOptions;
         private readonly SpanExporter spanExporter;
+        private readonly IStartEndHandler startEndHandler;
 
         static Tracer()
         {
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="startEndHandler">Start/end event handler.</param>
         /// <param name="traceConfig">Trace configuration.</param>
-        public Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig)
+        public Tracer(IStartEndHandler startEndHandler, TraceConfig traceConfig)
             : this(startEndHandler, traceConfig, null, null, null)
         {
         }
@@ -59,9 +59,10 @@ namespace OpenTelemetry.Trace
         /// <param name="spanExporter">Exporter for span.</param>
         /// <param name="binaryFormat">Binary format context propagator.</param>
         /// <param name="textFormat">Text format context propagator.</param>
-        public Tracer(IStartEndHandler startEndHandler, ITraceConfig traceConfig, SpanExporter spanExporter, IBinaryFormat binaryFormat, ITextFormat textFormat)
+        public Tracer(IStartEndHandler startEndHandler, TraceConfig traceConfig, SpanExporter spanExporter, IBinaryFormat binaryFormat, ITextFormat textFormat)
         {
-            this.spanBuilderOptions = new SpanBuilderOptions(startEndHandler, traceConfig);
+            this.startEndHandler = startEndHandler;
+            this.ActiveTraceConfig = traceConfig;
             this.spanExporter = spanExporter ?? (SpanExporter)SpanExporter.Create(ExporterBufferSize, ExporterScheduleDelay);
             this.BinaryFormat = binaryFormat ?? new BinaryFormat();
             this.TextFormat = textFormat ?? new TraceContextFormat();
@@ -76,6 +77,8 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ITextFormat TextFormat { get; }
 
+        public TraceConfig ActiveTraceConfig { get; set; }
+
         /// <inheritdoc/>
         public void RecordSpanData(SpanData span)
         {
@@ -85,7 +88,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ISpanBuilder SpanBuilder(string spanName)
         {
-            return new SpanBuilder(spanName, this.spanBuilderOptions);
+            return new SpanBuilder(spanName, this.startEndHandler, this.ActiveTraceConfig);
         }
 
         public IScope WithSpan(ISpan span)

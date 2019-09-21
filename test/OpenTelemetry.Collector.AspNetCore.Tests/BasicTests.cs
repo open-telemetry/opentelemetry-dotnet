@@ -46,7 +46,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
             var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
+            var tracer = new Tracer(startEndHandler.Object, TraceConfig.Default);
 
             void ConfigureTestServices(IServiceCollection services) =>
                 services.AddSingleton<ITracer>(tracer);
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 Tracestate.Empty
                 ));
 
-            var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, tf.Object);
+            var tracer = new Tracer(startEndHandler.Object, TraceConfig.Default, null, null, tf.Object);
 
             // Arrange
             using (var client = this.factory

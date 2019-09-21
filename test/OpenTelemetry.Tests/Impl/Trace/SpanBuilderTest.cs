@@ -29,31 +29,22 @@ namespace OpenTelemetry.Trace.Test
     public class SpanBuilderTest : IDisposable
     {
         private static readonly string SpanName = "MySpanName";
-        private readonly SpanBuilderOptions spanBuilderOptions;
 
-        private readonly TraceParams alwaysSampleTraceParams =
-            TraceParams.Default.ToBuilder().SetSampler(Samplers.AlwaysSample).Build();
+        private readonly TraceConfig alwaysSampleTraceConfig = new TraceConfig(Samplers.AlwaysSample);
 
         private readonly IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
-        private readonly ITraceConfig traceConfig = Mock.Of<ITraceConfig>();
 
         private readonly ITracer tracer;
         public SpanBuilderTest()
         {
-            // MockitoAnnotations.initMocks(this);
-            spanBuilderOptions =
-                new SpanBuilderOptions(startEndHandler, traceConfig);
-            var configMock = Mock.Get<ITraceConfig>(traceConfig);
-            configMock.Setup((c) => c.ActiveTraceParams).Returns(alwaysSampleTraceParams);
-
             startEndHandler = Mock.Of<IStartEndHandler>();
-            tracer = new Tracer(startEndHandler, traceConfig);
+            tracer = new Tracer(startEndHandler, alwaysSampleTraceConfig);
         }
 
         [Fact]
         public void StartSpanNullParent()
         {
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetNoParent()
                 .StartSpan();
@@ -80,7 +71,7 @@ namespace OpenTelemetry.Trace.Test
                     ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.None, Tracestate.Empty);
 
-            var span = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = (Span)new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetNoParent()
                 .SetParent(spanContext)
                 .StartSpan();
@@ -99,7 +90,7 @@ namespace OpenTelemetry.Trace.Test
                     ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.None, Tracestate.Empty);
 
-            var span = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = (Span)new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetParent(spanContext)
                 .SetNoParent()
                 .StartSpan();
@@ -117,10 +108,10 @@ namespace OpenTelemetry.Trace.Test
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.None, Tracestate.Empty);
-            var rootSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+            var rootSpan = (Span)new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .StartSpan();
 
-            var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = (Span)new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetParent(spanContext)
                 .SetParent(rootSpan)
                 .StartSpan();
@@ -138,10 +129,10 @@ namespace OpenTelemetry.Trace.Test
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.None, Tracestate.Empty);
-            var rootSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+            var rootSpan = (Span)new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .StartSpan();
 
-            var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = (Span)new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetParent(rootSpan)
                 .SetParent(spanContext)
                 .StartSpan();
@@ -163,7 +154,7 @@ namespace OpenTelemetry.Trace.Test
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
 
-            var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = (Span)new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetParent(spanContext)
                 .SetParent(activity)
                 .StartSpan();
@@ -185,7 +176,7 @@ namespace OpenTelemetry.Trace.Test
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
 
-            var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = (Span)new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetParent(spanContext)
                 .SetCreateChild(false)
                 .StartSpan();
@@ -207,7 +198,7 @@ namespace OpenTelemetry.Trace.Test
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
 
-            var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = (Span)new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetCreateChild(false)
                 .SetParent(spanContext)
                 .StartSpan();
@@ -220,7 +211,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanNullParentWithRecordEvents()
         {
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetSampler(Samplers.NeverSample)
                 .SetRecordEvents(true)
@@ -237,7 +228,7 @@ namespace OpenTelemetry.Trace.Test
         public void StartSpanWithStartTimestamp()
         {
             var timestamp = DateTime.UtcNow.AddSeconds(-100);
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetSampler(Samplers.AlwaysSample)
                 .SetStartTimestamp(timestamp)
@@ -251,7 +242,7 @@ namespace OpenTelemetry.Trace.Test
         public void StartSpanWithImplicitTimestamp()
         {
             var timestamp = PreciseTimestamp.GetUtcNow();
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetSampler(Samplers.AlwaysSample)
                 .StartSpan();
@@ -263,7 +254,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanNullParentNoRecordOptions()
         {
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetSampler(Samplers.NeverSample)
                 .SetNoParent()
@@ -276,7 +267,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartChildSpan()
         {
-            var rootSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var rootSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetNoParent()
                 .StartSpan();
@@ -285,7 +276,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(rootSpan.IsRecordingEvents);
             Assert.True((rootSpan.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
 
-            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetParent(rootSpan)
                 .StartSpan();
@@ -303,7 +294,7 @@ namespace OpenTelemetry.Trace.Test
                 .Start();
             parentActivity.TraceStateString = "k1=v1,k2=v2";
 
-            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .StartSpan();
 
@@ -326,7 +317,7 @@ namespace OpenTelemetry.Trace.Test
                 .Start();
             parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
-            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .StartSpan();
 
@@ -343,7 +334,7 @@ namespace OpenTelemetry.Trace.Test
             var parentActivity = new Activity(SpanName).Start();
             parentActivity.TraceStateString = "k1=v1,k2=v2";
 
-            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetNoParent()
                 .StartSpan();
@@ -369,7 +360,7 @@ namespace OpenTelemetry.Trace.Test
             parentActivity.TraceStateString = "k1=v1,k2=v2";
             parentActivity.Stop();
 
-            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetParent(parentActivity)
                 .StartSpan();
@@ -396,7 +387,7 @@ namespace OpenTelemetry.Trace.Test
             parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             parentActivity.Stop();
 
-            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetParent(parentActivity)
                 .StartSpan();
@@ -415,7 +406,7 @@ namespace OpenTelemetry.Trace.Test
                 .Start();
             activity.TraceStateString = "k1=v1,k2=v2";
 
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetCreateChild(false)
                 .StartSpan();
@@ -440,7 +431,7 @@ namespace OpenTelemetry.Trace.Test
                 .Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetCreateChild(false)
                 .StartSpan();
@@ -456,7 +447,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_ExplicitNoParent()
         {
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetNoParent()
                 .StartSpan();
@@ -477,7 +468,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_NoParent()
         {
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .StartSpan();
 
@@ -492,7 +483,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_BlankSpanParent()
         {
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetParent(BlankSpan.Instance)
                 .StartSpan();
@@ -507,7 +498,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_BlankSpanContextParent()
         {
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetParent(SpanContext.Blank)
                 .StartSpan();
@@ -523,7 +514,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_CurrentSpanParent()
         {
-            var rootSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var rootSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetParent(
                     SpanContext.Create(
                         ActivityTraceId.CreateRandom(), 
@@ -533,7 +524,7 @@ namespace OpenTelemetry.Trace.Test
                 .StartSpan();
             using (tracer.WithSpan(rootSpan))
             {
-                var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+                var childSpan = (Span)new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                     .StartSpan();
 
                 Assert.True(childSpan.Context.IsValid);
@@ -546,11 +537,11 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_NoParentInScopeOfCurrentSpan()
         {
-            var rootSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var rootSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .StartSpan();
             using (tracer.WithSpan(rootSpan))
             {
-                var childSpan = (Span)new SpanBuilder(SpanName, spanBuilderOptions)
+                var childSpan = (Span)new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                     .SetNoParent()
                     .StartSpan();
 
@@ -563,7 +554,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanInvalidParent()
         {
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetParent(SpanContext.Blank)
                 .StartSpan();
@@ -584,7 +575,7 @@ namespace OpenTelemetry.Trace.Test
                     ActivityTraceFlags.None,
                     Tracestate.Builder.Set("k1", "v1").Build());
 
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetParent(spanContext)
                 .SetRecordEvents(true)
@@ -607,7 +598,7 @@ namespace OpenTelemetry.Trace.Test
                     ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.None, Tracestate.Empty));
 
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .AddLink(link)
                 .StartSpan();
@@ -630,7 +621,7 @@ namespace OpenTelemetry.Trace.Test
             var contextLink = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None, Tracestate.Empty);
 
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .AddLink(contextLink)
                 .StartSpan();
@@ -658,7 +649,7 @@ namespace OpenTelemetry.Trace.Test
                     ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.None, Tracestate.Empty);
 
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .AddLink(linkContext, new Dictionary<string, object> { ["k"] = "v", })
                 .StartSpan();
@@ -686,7 +677,7 @@ namespace OpenTelemetry.Trace.Test
                     ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.None, Tracestate.Empty);
 
-            var span = new SpanBuilder(SpanName, spanBuilderOptions)
+            var span = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .AddLink(linkContext)
                 .StartSpan();
@@ -706,7 +697,7 @@ namespace OpenTelemetry.Trace.Test
         public void StartRootSpan_WithSpecifiedSampler()
         {
             // Apply given sampler before default sampler for root spans.
-            var rootSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var rootSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetNoParent()
                 .SetSampler(Samplers.NeverSample)
@@ -720,7 +711,7 @@ namespace OpenTelemetry.Trace.Test
         public void StartRootSpan_WithoutSpecifiedSampler()
         {
             // Apply default sampler (always true in the tests) for root spans.
-            var rootSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var rootSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetNoParent()
                 .StartSpan();
@@ -732,7 +723,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartRemoteChildSpan_WithSpecifiedSampler()
         {
-            var rootSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var rootSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetSampler(Samplers.AlwaysSample)
                 .SetNoParent()
@@ -741,7 +732,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(rootSpan.Context.IsValid);
             Assert.True((rootSpan.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
             // Apply given sampler before default sampler for spans with remote parent.
-            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetSampler(Samplers.NeverSample)
                 .SetParent(rootSpan.Context)
@@ -755,7 +746,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartRemoteChildSpan_WithoutSpecifiedSampler()
         {
-            var rootSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var rootSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetSampler(Samplers.NeverSample)
                 .SetNoParent()
@@ -764,7 +755,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(rootSpan.Context.IsValid);
             Assert.True((rootSpan.Context.TraceOptions & ActivityTraceFlags.Recorded) == 0);
             // Apply default sampler (always true in the tests) for spans with remote parent.
-            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetParent(rootSpan.Context)
                 .StartSpan();
@@ -777,7 +768,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartChildSpan_WithSpecifiedSampler()
         {
-            var rootSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var rootSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetSampler(Samplers.AlwaysSample)
                 .SetNoParent()
@@ -787,7 +778,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True((rootSpan.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
             // Apply the given sampler for child spans.
 
-            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetSampler(Samplers.NeverSample)
                 .SetParent(rootSpan)
@@ -801,7 +792,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartChildSpan_WithoutSpecifiedSampler()
         {
-            var rootSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var rootSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetSampler(Samplers.NeverSample)
                 .SetNoParent()
@@ -811,7 +802,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True((rootSpan.Context.TraceOptions & ActivityTraceFlags.Recorded) == 0);
 
             // Don't apply the default sampler (always true) for child spans.
-            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetParent(rootSpan)
                 .StartSpan();
@@ -824,7 +815,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartChildSpan_SampledLinkedParent()
         {
-            var rootSpanUnsampled = new SpanBuilder(SpanName, spanBuilderOptions)
+            var rootSpanUnsampled = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .SetSampler(Samplers.NeverSample)
                 .SetNoParent()
@@ -832,7 +823,7 @@ namespace OpenTelemetry.Trace.Test
 
             Assert.True((rootSpanUnsampled.Context.TraceOptions & ActivityTraceFlags.Recorded) == 0);
             var rootSpanSampled =
-                new SpanBuilder(SpanName, spanBuilderOptions)
+                new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                     .SetSpanKind(SpanKind.Internal)
                     .SetSampler(Samplers.AlwaysSample)
                     .SetNoParent()
@@ -840,7 +831,7 @@ namespace OpenTelemetry.Trace.Test
 
             Assert.True((rootSpanSampled.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
             // Sampled because the linked parent is sampled.
-            var childSpan = new SpanBuilder(SpanName, spanBuilderOptions)
+            var childSpan = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                 .SetSpanKind(SpanKind.Internal)
                 .AddLink(Link.FromSpanContext(rootSpanSampled.Context))
                 .SetParent(rootSpanUnsampled)
@@ -854,8 +845,6 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartRemoteChildSpan_WithProbabilitySamplerDefaultSampler()
         {
-            var configMock = Mock.Get<ITraceConfig>(traceConfig);
-            configMock.Setup((c) => c.ActiveTraceParams).Returns(TraceParams.Default);
             // This traceId will not be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is not less than probability * Long.MAX_VALUE;
             var traceId =
@@ -864,7 +853,7 @@ namespace OpenTelemetry.Trace.Test
 
             // If parent is sampled then the remote child must be sampled.
             var childSpan =
-                new SpanBuilder(SpanName, spanBuilderOptions)
+                new SpanBuilder(SpanName, startEndHandler, new TraceConfig(ProbabilitySampler.Create(0.1)))
                     .SetSpanKind(SpanKind.Internal)
                     .SetParent(SpanContext.Create(
                         traceId,
@@ -878,11 +867,9 @@ namespace OpenTelemetry.Trace.Test
             Assert.True((childSpan.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0);
             childSpan.End();
 
-            Assert.Equal(TraceParams.Default, traceConfig.ActiveTraceParams);
-
             // If parent is not sampled then the remote child must be not sampled.
             childSpan =
-                new SpanBuilder(SpanName, spanBuilderOptions)
+                new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig)
                     .SetSpanKind(SpanKind.Internal)
                     .SetParent(SpanContext.Create(
                         traceId,
@@ -900,10 +887,11 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SpanBuilder_BadArguments()
         {
-            Assert.Throws<ArgumentNullException>(() => new SpanBuilder(null, spanBuilderOptions));
-            Assert.Throws<ArgumentNullException>(() => new SpanBuilder(SpanName, null));
+            Assert.Throws<ArgumentNullException>(() => new SpanBuilder(null, startEndHandler, alwaysSampleTraceConfig));
+            Assert.Throws<ArgumentNullException>(() => new SpanBuilder(SpanName, null, alwaysSampleTraceConfig));
+            Assert.Throws<ArgumentNullException>(() => new SpanBuilder(SpanName, startEndHandler, null));
 
-            var spanBuilder = new SpanBuilder(SpanName, spanBuilderOptions);
+            var spanBuilder = new SpanBuilder(SpanName, startEndHandler, alwaysSampleTraceConfig);
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((ISpan)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((SpanContext)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetParent((Activity)null));
