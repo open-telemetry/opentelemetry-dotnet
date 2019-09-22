@@ -128,12 +128,12 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets span start timestamp.
         /// </summary>
-        public DateTime StartTimestamp => this.startTimestamp;
+        public DateTimeOffset StartTimestamp => this.startTimestamp;
 
         /// <summary>
         /// Gets span end timestamp.
         /// </summary>
-        public DateTime EndTimestamp => this.endTimestamp;
+        public DateTimeOffset EndTimestamp => this.endTimestamp;
 
         /// <summary>
         /// Gets or sets span kind.
