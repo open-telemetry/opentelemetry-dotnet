@@ -32,12 +32,12 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the tracer to record spans.
         /// </summary>
-        public static ITracer Tracer { get; private set; } = ProxyInstance;
+        public static ITracer Tracer { get; } = ProxyInstance;
 
         /// <summary>
         /// Gets the exporter to use to upload spans.
         /// </summary>
-        public static ISpanExporter SpanExporter { get; private set; } = ProxyInstance;
+        public static ISpanExporter SpanExporter { get; } = ProxyInstance;
 
         public static void Init(ITracer tracer, ISpanExporter spanExporter)
         {
