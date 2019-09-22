@@ -44,16 +44,30 @@ Please also see [GitHub workflow](https://github.com/open-telemetry/community/bl
 
 ### Prerequisites
 
+You can contribute to this project from a Windows, macOS or Linux machine. Requirements can very slightly:
+
+In all platforms, the requirements are:
+
 * Git client and command line tools. You may use Visual Studio to clone the repo, but we use [SourceLink](https://github.com/dotnet/sourcelink) to build and it needs git.
-* Visual Studio 2017+ or VS Code
-* .NET Framework 4.6+ and .NET Core 2.1+
+* .NET Core 2.1+
+
+#### Windows
+
+* Visual Studio 2017+, VS Code or JetBrains Rider
+* .NET Framework 4.6+
+
+#### macOS or Linux
+
+* Visual Studio for Mac, VS Code or JetBrains Rider
+
+Mono might be required by your IDE but is not required by this project.
+This is because unit tests targeting .NET Framework (i.e: `net46`) are disabled outside of Windows.
 
 ### Build
 
-You can use Visual Studio 2017+ or VS Code to contribute. Just open root folder
-or `OpenTelemetry.sln` in your editor and follow normal development process.
+Open `OpenTelemetry.sln` in your IDE of choice and follow normal development process.
 
-To build from command line you need `dotnet` version `2.0+`.
+To build from the command line you need `dotnet` version `2.1+`.
 
 ``` sh
 dotnet build OpenTelemetry.sln
@@ -61,7 +75,7 @@ dotnet build OpenTelemetry.sln
 
 ### Test
 
-You can use Visual Studio 2017 or VS Code to test your contribution. Open root
+You can use any of the IDEs mentioned above to test your contribution. Open root
 folder or `OpenTelemetry.sln` in your editor and follow normal development
 process.
 
@@ -76,6 +90,17 @@ To see test coverage, run `dotnet test` from a console window and you will see t
 ![image](https://user-images.githubusercontent.com/20248180/59361025-1e1e7980-8d29-11e9-8449-548caf0d7823.png)
 
 Or, after running the tests, open the file `TestResults\Results\index.htm` in a browser.
+
+### Coding style
+
+This project includes a [`.editorconfig`](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/.editorconfig)
+file which is supported by all the IDEs/editor mentioned above.
+It works with the IDE/editor only and does not affect the actual build of the project.
+
+This repository also includes a
+[_test_, _prod_ and _prod.loose_ _stylecop ruleset_](https://github.com/open-telemetry/opentelemetry-dotnet/tree/master/build) files.
+
+These files are used to configure the _StyleCop.Analyzers_ which runs during build. Breaking the rules will result in a broken build.
 
 ### Proposing changes
 
