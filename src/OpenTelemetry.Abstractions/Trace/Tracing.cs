@@ -16,6 +16,10 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System.Threading;
+    using System.Threading.Tasks;
+    using OpenTelemetry.Context;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Export;
 
     /// <summary>
@@ -23,14 +27,55 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public static class Tracing
     {
-        /// <summary>
-        /// Gets or sets the tracer to record spans.
-        /// </summary>
-        public static ITracer Tracer { get; set; } = NoopTracer.Instance;
+        private static readonly Proxy ProxyInstance = new Proxy();
 
         /// <summary>
-        /// Gets or sets the exporter to use to upload spans.
+        /// Gets the tracer to record spans.
         /// </summary>
-        public static ISpanExporter SpanExporter { get; set; } = NoopSpanExporter.Instance;
+        public static ITracer Tracer { get; private set; } = ProxyInstance;
+
+        /// <summary>
+        /// Gets the exporter to use to upload spans.
+        /// </summary>
+        public static ISpanExporter SpanExporter { get; private set; } = ProxyInstance;
+
+        public static void Init(ITracer tracer, ISpanExporter spanExporter)
+        {
+            ProxyInstance.ActualTracer = tracer ?? NoopTracer.Instance;
+            ProxyInstance.ActualSpanExporter = spanExporter ?? NoopSpanExporter.Instance;
+        }
+
+        private class Proxy : ITracer, ISpanExporter
+        {
+            // ITracer
+            public ISpan CurrentSpan => this.ActualTracer.CurrentSpan;
+
+            public IBinaryFormat BinaryFormat => this.ActualTracer.BinaryFormat;
+
+            public ITextFormat TextFormat => this.ActualTracer.TextFormat;
+
+            internal ITracer ActualTracer { get; set; } = NoopTracer.Instance;
+
+            internal ISpanExporter ActualSpanExporter { get; set; } = NoopSpanExporter.Instance;
+
+            public IScope WithSpan(ISpan span) => this.ActualTracer.WithSpan(span);
+
+            public ISpanBuilder SpanBuilder(string spanName) => this.ActualTracer.SpanBuilder(spanName);
+
+            public void RecordSpanData(SpanData span) => this.ActualTracer.RecordSpanData(span);
+
+            // ISpanExporter
+            public void Dispose() => this.ActualSpanExporter.Dispose();
+
+            public void AddSpan(ISpan span) => this.ActualSpanExporter.AddSpan(span);
+
+            public Task ExportAsync(SpanData export, CancellationToken token)
+                => this.ActualSpanExporter.ExportAsync(export, token);
+
+            public void RegisterHandler(string name, IHandler handler) =>
+                this.ActualSpanExporter.RegisterHandler(name, handler);
+
+            public void UnregisterHandler(string name) => this.ActualSpanExporter.UnregisterHandler(name);
+        }
     }
 }

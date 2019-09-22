@@ -18,7 +18,6 @@ namespace OpenTelemetry.Trace
 {
     using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
 
     /// <summary>
@@ -33,14 +32,16 @@ namespace OpenTelemetry.Trace
         {
             IEventQueue eventQueue = new SimpleEventQueue();
 
-            Tracing.SpanExporter = Trace.Export.SpanExporter.Create();
+            var spanExporter = Trace.Export.SpanExporter.Create();
 
             IStartEndHandler startEndHandler =
                 new StartEndHandler(
                     Trace.Export.SpanExporter.Create(),
                     eventQueue);
 
-            Tracing.Tracer = new Tracer(startEndHandler, TraceConfig.Default);
+            var tracer = new Tracer(startEndHandler, TraceConfig.Default);
+
+            Tracing.Init(tracer, spanExporter);
         }
     }
 }

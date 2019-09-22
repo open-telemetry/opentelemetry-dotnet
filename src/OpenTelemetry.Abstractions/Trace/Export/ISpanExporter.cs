@@ -33,8 +33,8 @@ namespace OpenTelemetry.Trace.Export
 
         /// <summary>
         /// Exports collection of spans. This method is used for the situation when the
-        /// span objects have been created from external sources, not using the Open Censis API.
-        /// For example, read from file or generated from objects recieved in async queue.
+        /// span objects have been created from external sources, not using the Open Telemetry API.
+        /// For example, read from file or generated from objects received in async queue.
         /// </summary>
         /// <param name="export"><see cref="SpanData"/> object to export.</param>
         /// <param name="token">Cancellation token.</param>
