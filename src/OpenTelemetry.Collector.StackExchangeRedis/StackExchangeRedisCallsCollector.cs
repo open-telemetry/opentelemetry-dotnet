@@ -18,12 +18,10 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
 {
     using System;
     using System.Collections.Concurrent;
-    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using OpenTelemetry.Collector.StackExchangeRedis.Implementation;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
     using StackExchange.Redis.Profiling;
 
     /// <summary>

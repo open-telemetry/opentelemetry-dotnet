@@ -20,6 +20,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
     using Newtonsoft.Json;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
     using System;
     using System.Collections.Generic;

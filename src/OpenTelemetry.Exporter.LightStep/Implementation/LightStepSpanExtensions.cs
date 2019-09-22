@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
 
     public static class LightStepSpanExtensions
     {
-        public static LightStepSpan ToLightStepSpan(this SpanData data)
+        public static LightStepSpan ToLightStepSpan(this Span data)
         {
             var duration = data.EndTimestamp - data.StartTimestamp;
             var span = new LightStepSpan();
@@ -47,12 +47,12 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
             span.StartTimestamp = data.StartTimestamp.UtcDateTime;
             span.DurationMicros = Convert.ToUInt64(Math.Abs(duration.Ticks) / 10);
 
-            foreach (var attr in data.Attributes.AttributeMap)
+            foreach (var attr in data.Attributes)
             {
                 span.Tags.Add(new Tag { Key = attr.Key, StringValue = attr.Value.ToString() });
             }
 
-            foreach (var evt in data.Events.Events)
+            foreach (var evt in data.Events)
             {
                 var fields = new List<Tag>();
 

@@ -19,6 +19,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
     using Moq;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
     using StackExchange.Redis.Profiling;
     using System.Threading.Tasks;
     using Xunit;

@@ -14,13 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace.Sampler;
-
 namespace OpenTelemetry.Trace.Test
 {
     using System;
     using Moq;
     using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
+    using OpenTelemetry.Trace.Sampler;
+
     using Xunit;
 
     public class TracerTest

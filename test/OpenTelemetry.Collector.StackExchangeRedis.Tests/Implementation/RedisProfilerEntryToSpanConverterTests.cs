@@ -40,7 +40,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
         }
 
         [Fact]
-        public void ProfiledCommandToSpanDataUsesTimestampAsStartTime()
+        public void ProfiledCommandToSpanUsesTimestampAsStartTime()
         {
             var profiledCommand = new Mock<IProfiledCommand>();
             var now = DateTimeOffset.Now;
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
         }
 
         [Fact]
-        public void ProfiledCommandToSpanDataSetsDbTypeAttributeAsRedis()
+        public void ProfiledCommandToSpanSetsDbTypeAttributeAsRedis()
         {
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
         }
 
         [Fact]
-        public void ProfiledCommandToSpanDataUsesCommandAsDbStatementAttribute()
+        public void ProfiledCommandToSpanUsesCommandAsDbStatementAttribute()
         {
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
         }
 
         [Fact]
-        public void ProfiledCommandToSpanDataUsesFlagsForFlagsAttribute()
+        public void ProfiledCommandToSpanUsesFlagsForFlagsAttribute()
         {
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);

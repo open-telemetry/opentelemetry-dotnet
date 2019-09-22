@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Trace.Export
 {
     /// <summary>
     /// Start event handler.
@@ -25,12 +25,12 @@ namespace OpenTelemetry.Trace
         /// Called when span is being started.
         /// </summary>
         /// <param name="span">Span that just started.</param>
-        void OnStart(ISpan span);
+        void OnStart(Span span);
 
         /// <summary>
         /// Called when span is just ended.
         /// </summary>
         /// <param name="span">Span that was just ended.</param>
-        void OnEnd(ISpan span);
+        void OnEnd(Span span);
     }
 }

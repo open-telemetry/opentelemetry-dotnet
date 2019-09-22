@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace.Internal
             this.eventQueue = eventQueue;
         }
 
-        public void OnEnd(ISpan span)
+        public void OnEnd(Span span)
         {
             if (span.IsRecordingEvents)
             {
@@ -38,17 +38,17 @@ namespace OpenTelemetry.Trace.Internal
             }
         }
 
-        public void OnStart(ISpan span)
+        public void OnStart(Span span)
         {
         }
 
         private sealed class SpanEndEvent : IEventQueueEntry
         {
-            private readonly ISpan span;
+            private readonly Span span;
             private readonly ISpanExporter spanExporter;
 
             public SpanEndEvent(
-                    ISpan span,
+                    Span span,
                     ISpanExporter spanExporter)
             {
                 this.span = span;

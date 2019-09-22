@@ -21,7 +21,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
 
     public static class JaegerConversionExtensions
     {
@@ -43,27 +42,27 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
 
-        public static JaegerSpan ToJaegerSpan(this SpanData span)
+        public static JaegerSpan ToJaegerSpan(this Span span)
         {
             IEnumerable<JaegerTag> jaegerTags = null;
 
-            if (span?.Attributes?.AttributeMap is IEnumerable<KeyValuePair<string, object>> attributeMap)
+            if (span?.Attributes is IEnumerable<KeyValuePair<string, object>> attributeMap)
             {
                 jaegerTags = attributeMap.Select(a => a.ToJaegerTag()).AsEnumerable();
             }
 
             IEnumerable<JaegerLog> jaegerLogs = null;
 
-            if (span?.Events?.Events != null)
+            if (span?.Events != null)
             {
-                jaegerLogs = span.Events.Events.Select(e => e.ToJaegerLog()).AsEnumerable();
+                jaegerLogs = span.Events.Select(e => e.ToJaegerLog()).AsEnumerable();
             }
 
             IEnumerable<JaegerSpanRef> refs = null;
 
-            if (span?.Links?.Links != null)
+            if (span?.Links != null)
             {
-                refs = span.Links.Links.Select(l => l.ToJaegerSpanRef()).Where(l => l != null).AsEnumerable();
+                refs = span.Links.Select(l => l.ToJaegerSpanRef()).Where(l => l != null).AsEnumerable();
             }
 
             var parentSpanId = new Int128(span.ParentSpanId);

@@ -26,6 +26,7 @@ namespace OpenTelemetry.Trace.Test
     using OpenTelemetry.Tests;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
     using Xunit;
 
@@ -47,40 +48,6 @@ namespace OpenTelemetry.Trace.Test
                 {
                     new KeyValuePair<string, object>("MySingleStringAttributeKey", "MySingleStringAttributeValue"),
                 };
-        }
-
-        [Fact]
-        public void ToSpanData_NoRecordEvents()
-        {
-            var link = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
-                ActivityTraceFlags.None, Tracestate.Empty);
-
-            var activity = new Activity(SpanName)
-                .SetIdFormat(ActivityIdFormat.W3C)
-                .Start();
-
-            Assert.False(activity.Recorded);
-            
-            var span =
-                Span.StartSpan(
-                    activity,
-                    Tracestate.Empty,
-                    SpanKind.Internal,
-                    TraceConfig.Default,
-                    startEndHandler,
-                    default);
-            // Check that adding trace events after Span#End() does not throw any exception.
-            foreach (var attribute in attributes)
-            {
-                span.SetAttribute(attribute);
-            }
-
-            span.AddEvent(Event.Create(EventDescription));
-            span.AddEvent(EventDescription, attributes);
-            span.AddLink(Link.FromSpanContext(link));
-            span.End();
-            // exception.expect(IllegalStateException);
-            Assert.Throws<InvalidOperationException>(() => ((Span)span).ToSpanData());
         }
 
         [Fact]
@@ -199,7 +166,7 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public async Task ToSpanData_ActiveSpan()
+        public async Task ActiveSpan_Properties()
         {
             var contextLink = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None, Tracestate.Empty);
@@ -266,15 +233,10 @@ namespace OpenTelemetry.Trace.Test
 
             var startEndMock = Mock.Get<IStartEndHandler>(startEndHandler);
             startEndMock.Verify(s => s.OnStart(span), Times.Once);
-
-            var spanData = span.ToSpanData();
-            Assert.Equal(0, spanData.Attributes.DroppedAttributesCount);
-            Assert.Equal(0, spanData.Events.DroppedEventsCount);
-            Assert.Equal(0, spanData.Links.DroppedLinksCount);
         }
 
         [Fact]
-        public async Task GoSpanData_EndedSpan()
+        public async Task EndedSpan_Properties()
         {
             var contextLink = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None, Tracestate.Empty);
@@ -340,11 +302,6 @@ namespace OpenTelemetry.Trace.Test
             var startEndMock = Mock.Get<IStartEndHandler>(startEndHandler);
             startEndMock.Verify(s => s.OnStart(span), Times.Once);
             startEndMock.Verify(s => s.OnEnd(span), Times.Once);
-
-            var spanData = span.ToSpanData();
-            Assert.Equal(0, spanData.Attributes.DroppedAttributesCount);
-            Assert.Equal(0, spanData.Events.DroppedEventsCount);
-            Assert.Equal(0, spanData.Links.DroppedLinksCount);
         }
 
         [Fact]
@@ -424,7 +381,6 @@ namespace OpenTelemetry.Trace.Test
 
             }
 
-            Assert.Equal(maxNumberOfAttributes, span.ToSpanData().Attributes.DroppedAttributesCount);
             Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
             for (var i = 0; i < maxNumberOfAttributes; i++)
             {
@@ -437,7 +393,6 @@ namespace OpenTelemetry.Trace.Test
 
             span.End();
 
-            Assert.Equal(maxNumberOfAttributes, span.ToSpanData().Attributes.DroppedAttributesCount);
             Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
             for (var i = 0; i < maxNumberOfAttributes; i++)
             {
@@ -475,7 +430,6 @@ namespace OpenTelemetry.Trace.Test
 
             }
 
-            Assert.Equal(maxNumberOfAttributes, span.ToSpanData().Attributes.DroppedAttributesCount);
             Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
             for (var i = 0; i < maxNumberOfAttributes; i++)
             {
@@ -497,7 +451,6 @@ namespace OpenTelemetry.Trace.Test
 
             }
 
-            Assert.Equal(maxNumberOfAttributes * 3 / 2, span.ToSpanData().Attributes.DroppedAttributesCount);
             Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
             // Test that we still have in the attributes map the latest maxNumberOfAttributes / 2 entries.
             for (var i = 0; i < maxNumberOfAttributes / 2; i++)
@@ -542,7 +495,6 @@ namespace OpenTelemetry.Trace.Test
                 await Task.Delay(10);
             }
 
-            Assert.Equal(maxNumberOfEvents, span.ToSpanData().Events.DroppedEventsCount);
             Assert.Equal(maxNumberOfEvents, span.Events.Count());
 
             var events = span.Events.ToArray();
@@ -554,7 +506,6 @@ namespace OpenTelemetry.Trace.Test
 
             span.End();
             
-            Assert.Equal(maxNumberOfEvents, span.ToSpanData().Events.DroppedEventsCount);
             Assert.Equal(maxNumberOfEvents, span.Events.Count());
         }
 
@@ -582,7 +533,6 @@ namespace OpenTelemetry.Trace.Test
                 span.AddLink(link);
             }
 
-            Assert.Equal(maxNumberOfLinks, span.ToSpanData().Links.DroppedLinksCount);
             Assert.Equal(maxNumberOfLinks, span.Links.Count());
             foreach (var actualLink in span.Links)
             {
@@ -591,7 +541,6 @@ namespace OpenTelemetry.Trace.Test
 
             span.End();
 
-            Assert.Equal(maxNumberOfLinks, span.ToSpanData().Links.DroppedLinksCount);
             Assert.Equal(maxNumberOfLinks, span.Links.Count());
             foreach (var actualLink in span.Links)
             {

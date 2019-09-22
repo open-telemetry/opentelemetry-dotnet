@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace
     public sealed class Span : ISpan
     {
         private readonly TraceConfig traceConfig;
-        private readonly IStartEndHandler startEndHandler;
+        private readonly Export.IStartEndHandler startEndHandler;
         private readonly Lazy<SpanContext> spanContext;
         private readonly DateTimeOffset startTimestamp;
         private readonly object @lock = new object();
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace
                 Tracestate tracestate,
                 SpanKind spanKind,
                 TraceConfig traceConfig,
-                IStartEndHandler startEndHandler,
+                Export.IStartEndHandler startEndHandler,
                 DateTimeOffset startTimestamp,
                 bool ownsActivity)
         {
@@ -138,7 +138,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets or sets span kind.
         /// </summary>
-        internal SpanKind? Kind { get; set; }
+        public SpanKind? Kind { get; set; }
 
         internal bool OwnsActivity { get; }
 
@@ -342,32 +342,6 @@ namespace OpenTelemetry.Trace
             this.startEndHandler.OnEnd(this);
         }
 
-        public SpanData ToSpanData()
-        {
-            if (!this.IsRecordingEvents)
-            {
-                throw new InvalidOperationException("Getting SpanData for a Span without RECORD_EVENTS option.");
-            }
-
-            var attributesSpanData = Export.Attributes.Create(this.attributes, this.attributes?.DroppedItems ?? 0);
-            var eventsSpanData = TimedEvents<IEvent>.Create(this.events, this.events?.DroppedItems ?? 0);
-            var linksSpanData = LinkList.Create(this.links, this.links?.DroppedItems ?? 0);
-
-            return SpanData.Create(
-                this.Context, // TODO avoid using context, use Activity instead
-                this.ParentSpanId,
-                Resource.Empty, // TODO: determine what to do with Resource in this context
-                this.Name,
-                this.startTimestamp,
-                attributesSpanData,
-                eventsSpanData,
-                linksSpanData,
-                null, // Not supported yet.
-                this.HasEnded ? this.StatusWithDefault : new Status(),
-                this.Kind ?? SpanKind.Internal,
-                this.HasEnded ? this.endTimestamp : default);
-        }
-
         /// <inheritdoc/>
         public void SetAttribute(string key, string value)
         {
@@ -442,7 +416,7 @@ namespace OpenTelemetry.Trace
                         Tracestate tracestate,
                         SpanKind spanKind,
                         TraceConfig traceConfig,
-                        IStartEndHandler startEndHandler,
+                        Export.IStartEndHandler startEndHandler,
                         DateTimeOffset startTimestamp,
                         bool ownsActivity = true)
         {
