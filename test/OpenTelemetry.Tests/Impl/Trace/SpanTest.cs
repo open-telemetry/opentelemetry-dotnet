@@ -717,7 +717,7 @@ namespace OpenTelemetry.Trace.Test
         private void AssertApproxSameTimestamp(DateTimeOffset one, DateTimeOffset two)
         {
             var timeShift = Math.Abs((one - two).TotalMilliseconds);
-            Assert.InRange(timeShift, double.Epsilon, 20);
+            Assert.InRange(timeShift, 0, 20);
         }
     }
 }
