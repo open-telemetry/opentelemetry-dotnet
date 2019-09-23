@@ -21,7 +21,6 @@ namespace Samples
     using System.Threading;
     using OpenTelemetry.Exporter.Zipkin;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Sampler;
 
     internal class TestZipkin
     {
@@ -33,9 +32,7 @@ namespace Samples
                 {
                     Endpoint = new Uri(zipkinUri),
                     ServiceName = "tracing-to-zipkin-service",
-                },
-                Tracing.SpanExporter);
-            exporter.Start();
+                });
 
             // 2. Tracer is global singleton. You can register it via dependency injection if it exists
             // but if not - you can use it as follows:
@@ -52,8 +49,7 @@ namespace Samples
             }
 
             // 4. Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
-            Tracing.SpanExporter.Dispose();
-
+            exporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
             return null;
         }
 

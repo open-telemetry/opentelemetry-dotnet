@@ -26,6 +26,7 @@ using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Sampler;
 using System.Net.Http;
 using OpenTelemetry.Exporter.Ocagent;
+using OpenTelemetry.Trace.Config;
 
 namespace TestApp.AspNetCore._2._0
 {
@@ -44,27 +45,23 @@ namespace TestApp.AspNetCore._2._0
             services.AddMvc();
             services.AddSingleton<HttpClient>();
 
-            services.AddSingleton<ITracer>(Tracing.Tracer);
             services.AddSingleton<ISampler>(Samplers.AlwaysSample);
             services.AddSingleton<RequestsCollectorOptions>(new RequestsCollectorOptions());
             services.AddSingleton<RequestsCollector>();
             services.AddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
             services.AddSingleton<DependenciesCollector>();
-            services.AddSingleton<ISpanExporter>(Tracing.SpanExporter);
             services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new CallbackMiddleware.CallbackMiddlewareImpl());
-            services.AddSingleton<OcagentExporter>((p) =>
-            {
-                var exportComponent = p.GetService<ISpanExporter>();
-                return new OcagentExporter(
-                    exportComponent,
-                    "localhost:55678",
-                    Environment.MachineName,
-                    "test-app");
-            });
+            services.AddSingleton<SpanExporter>(_ => new OcagentTraceExporter(
+                "localhost:55678",
+                Environment.MachineName,
+                "test-app"));
+            services.AddSingleton<SpanProcessor, SimpleSpanProcessor>();
+            services.AddSingleton<TraceConfig>();
+            services.AddSingleton<ITracer, Tracer>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, OcagentExporter agentExporter, IApplicationLifetime applicationLifetime)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -75,10 +72,6 @@ namespace TestApp.AspNetCore._2._0
             app.UseMvc();
             var collector = app.ApplicationServices.GetService<RequestsCollector>();
             var depCollector = app.ApplicationServices.GetService<DependenciesCollector>();
-
-            agentExporter.Start();
-
-            applicationLifetime.ApplicationStopping.Register(agentExporter.Stop);
         }
     }
 }

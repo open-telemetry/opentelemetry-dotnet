@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Trace.Test
 {
     using System;
-    using Moq;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
@@ -27,16 +26,16 @@ namespace OpenTelemetry.Trace.Test
     public class TracerTest
     {
         private const string SpanName = "MySpanName";
-        private readonly IStartEndHandler startEndHandler;
+        private readonly SpanProcessor spanProcessor;
         private readonly TraceConfig traceConfig;
         private readonly Tracer tracer;
 
 
         public TracerTest()
         {
-            startEndHandler = Mock.Of<IStartEndHandler>();
+            spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
             traceConfig = TraceConfig.Default;
-            tracer = new Tracer(startEndHandler, traceConfig);
+            tracer = new Tracer(spanProcessor, traceConfig);
         }
 
         [Fact]
@@ -91,7 +90,7 @@ namespace OpenTelemetry.Trace.Test
         public void GetActiveConfig()
         {
             var config = new TraceConfig(Samplers.NeverSample);
-            var tracer = new Tracer(startEndHandler, config);
+            var tracer = new Tracer(spanProcessor, config);
             Assert.Equal(config, tracer.ActiveTraceConfig);
         }
 

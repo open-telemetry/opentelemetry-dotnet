@@ -49,11 +49,12 @@ namespace Samples
 
         internal static object Run(string projectId)
         {
-            var exporter = new StackdriverExporter(
+            var spanExporter = new StackdriverTraceExporter(projectId);
+
+            var metricExporter = new StackdriverMetricExporter(
                 projectId,
-                Tracing.SpanExporter,
                 Stats.ViewManager);
-            exporter.Start();
+            metricExporter.Start();
 
             var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
@@ -86,6 +87,8 @@ namespace Samples
             Console.WriteLine("Done... wait for events to arrive to backend!");
             Console.ReadLine();
 
+            spanExporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
+            metricExporter.Stop();
             return null;
         }
     }

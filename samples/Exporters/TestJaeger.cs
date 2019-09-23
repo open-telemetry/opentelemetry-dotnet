@@ -21,24 +21,19 @@ namespace Samples
     using System.Threading;
     using OpenTelemetry.Exporter.Jaeger;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Sampler;
 
     internal class TestJaeger
     {
         internal static object Run(string host, int port)
         {
             // 1. Configure exporter to export traces to Jaeger
-            var exporter = new JaegerExporter(
+            var exporter = new JaegerTraceExporter(
                 new JaegerExporterOptions
                 {
                     ServiceName = "tracing-to-jaeger-service",
                     AgentHost = host,
                     AgentPort = port,
-                },
-                Tracing.SpanExporter);
-                
-            exporter.Start();
+                });
 
             // 2. Tracer is global singleton. You can register it via dependency injection if it exists
             // but if not - you can use it as follows:
@@ -55,9 +50,8 @@ namespace Samples
                 }
             }
 
-            // 4. Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
-            Tracing.SpanExporter.Dispose();
-
+            // 4. Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
+            exporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
             return null;
         }
 

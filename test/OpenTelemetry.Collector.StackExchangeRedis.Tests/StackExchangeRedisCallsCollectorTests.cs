@@ -29,8 +29,8 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         [Fact]
         public async void ProfilerSessionUsesTheSameDefault()
         {
-            var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(startEndHandler.Object, TraceConfig.Default);
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default);
 
             using (var collector = new StackExchangeRedisCallsCollector(tracer))
             {

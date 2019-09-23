@@ -18,6 +18,7 @@ namespace Samples
 {
     using System;
     using System.Net.Http;
+    using System.Threading;
     using OpenTelemetry.Collector.Dependencies;
     using OpenTelemetry.Exporter.Zipkin;
     using OpenTelemetry.Trace;
@@ -38,9 +39,7 @@ namespace Samples
                     {
                         Endpoint = new Uri("https://zipkin.azurewebsites.net/api/v2/spans"),
                         ServiceName = typeof(Program).Assembly.GetName().Name,
-                    },
-                    Tracing.SpanExporter);
-                exporter.Start();
+                    });
 
                 using (Tracer.WithSpan(Tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartSpan()))
                 {
@@ -52,6 +51,7 @@ namespace Samples
 
                 Console.ReadLine();
 
+                exporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
                 return null;
             }
         }

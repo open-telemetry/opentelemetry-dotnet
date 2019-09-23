@@ -14,24 +14,24 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Stackdriver.Implementation
+namespace OpenTelemetry.Exporter.Stackdriver
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using System.Threading;
     using System.Threading.Tasks;
     using Google.Api.Gax.Grpc;
     using Google.Cloud.Trace.V2;
     using Grpc.Core;
-    using OpenTelemetry.Exporter.Stackdriver.Utils;
-    using OpenTelemetry.Trace;
+    using OpenTelemetry.Exporter.Stackdriver.Implementation;
     using OpenTelemetry.Trace.Export;
 
     /// <summary>
     /// Exports a group of spans to Stackdriver.
     /// </summary>
-    internal class StackdriverTraceExporter : IHandler
+    public class StackdriverTraceExporter : SpanExporter
     {
         private static readonly string StackdriverExportVersion;
         private static readonly string OpenTelemetryExporterVersion;
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             this.traceServiceSettings.CallSettings = callSettings;
         }
 
-        public async Task ExportAsync(IEnumerable<Trace.Span> spanDataList)
+        public override async Task<ExportResult> ExportAsync(IEnumerable<Trace.Span> spanDataList, CancellationToken cancellationToken)
         {
             var traceWriter = TraceServiceClient.Create(settings: this.traceServiceSettings);
             
@@ -82,7 +82,15 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                 Spans = { spanDataList.Select(s => s.ToSpan(this.googleCloudProjectId.ProjectId)) },
             };
             
-            await traceWriter.BatchWriteSpansAsync(batchSpansRequest);
+            await traceWriter.BatchWriteSpansAsync(batchSpansRequest, cancellationToken).ConfigureAwait(false);
+
+            // TODO failures
+            return ExportResult.Success;
+        }
+
+        public override Task ShutdownAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
         }
 
         /// <summary>

@@ -1,4 +1,4 @@
-﻿// <copyright file="SpanExporterBase.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SimpleSpanProcessor.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,20 +18,23 @@ namespace OpenTelemetry.Trace.Export
 {
     using System.Threading;
     using System.Threading.Tasks;
+    using OpenTelemetry.Trace;
 
-    public abstract class SpanExporterBase : ISpanExporter
+    public class SimpleSpanProcessor : SpanProcessor
     {
-        public static ISpanExporter NoopSpanExporter { get; } = new NoopSpanExporter();
+        public SimpleSpanProcessor(SpanExporter exporter) : base(exporter)
+        {
+        }
 
-        public abstract void AddSpan(Span span);
+        public override void OnEnd(Span span)
+        {
+            // do not await, just start export
+            this.exporter.ExportAsync(new[] { span }, CancellationToken.None);
+        }
 
-        /// <inheritdoc/>
-        public abstract Task ExportAsync(Span export, CancellationToken token);
-
-        public abstract void Dispose();
-
-        public abstract void RegisterHandler(string name, IHandler handler);
-
-        public abstract void UnregisterHandler(string name);
+        public override Task ShutdownAsync(CancellationToken cancellationToken)
+        {
+            return this.exporter.ShutdownAsync(cancellationToken);
+        }
     }
 }

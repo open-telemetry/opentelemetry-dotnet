@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace
     /// <inheritdoc/>
     public class SpanBuilder : ISpanBuilder
     {
-        private readonly IStartEndHandler startEndHandler;
+        private readonly SpanProcessor spanProcessor;
         private readonly TraceConfig traceConfig;
         private readonly string name;
 
@@ -41,10 +41,10 @@ namespace OpenTelemetry.Trace
         private bool recordEvents;
         private DateTimeOffset startTimestamp;
 
-        internal SpanBuilder(string name, IStartEndHandler startEndHandler, TraceConfig traceConfig)
+        internal SpanBuilder(string name, SpanProcessor spanProcessor, TraceConfig traceConfig)
         {
             this.name = name ?? throw new ArgumentNullException(nameof(name));
-            this.startEndHandler = startEndHandler ?? throw new ArgumentNullException(nameof(startEndHandler));
+            this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
             this.traceConfig = traceConfig ?? throw new ArgumentNullException(nameof(traceConfig));
         }
 
@@ -243,14 +243,15 @@ namespace OpenTelemetry.Trace
                 childTracestate = this.parentSpanContext.Tracestate;
             }
 
-            var span = Span.StartSpan(
-                        activityForSpan,
-                        childTracestate, 
-                        this.kind,
-                        this.traceConfig,
-                        this.startEndHandler,
-                        this.startTimestamp,
-                        ownsActivity: this.contextSource != ContextSource.Activity);
+            var span = new Span(
+                activityForSpan,
+                childTracestate,
+                this.kind,
+                this.traceConfig,
+                this.spanProcessor,
+                this.startTimestamp,
+                ownsActivity: this.contextSource != ContextSource.Activity);
+
             if (activityForSpan.OperationName != this.name)
             {
                 span.UpdateName(this.name);

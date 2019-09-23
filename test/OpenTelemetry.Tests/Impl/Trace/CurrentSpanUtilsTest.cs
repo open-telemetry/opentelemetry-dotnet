@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace.Test
 
     public class CurrentSpanUtilsTest: IDisposable
     {
-        private readonly IStartEndHandler startEndHandler = Mock.Of<IStartEndHandler>();
+        private readonly SpanProcessor spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
 
         public CurrentSpanUtilsTest()
         {
@@ -59,13 +59,14 @@ namespace OpenTelemetry.Trace.Test
                 activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }
 
-            var span = Span.StartSpan(
+            var span = new Span(
                 activity,
                 Tracestate.Empty,
                 SpanKind.Internal,
                 TraceConfig.Default,
-                startEndHandler,
-                default);
+                spanProcessor,
+                default,
+                true);
 
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             using (CurrentSpanUtils.WithSpan(span, stopSpan))
@@ -92,12 +93,12 @@ namespace OpenTelemetry.Trace.Test
                 activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }
 
-            var span = Span.StartSpan(
+            var span = new Span(
                 activity,
                 Tracestate.Empty,
                 SpanKind.Internal,
                 TraceConfig.Default,
-                startEndHandler,
+                spanProcessor,
                 default,
                 false);
 
@@ -125,23 +126,25 @@ namespace OpenTelemetry.Trace.Test
                 parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }
 
-            var parentSpan = Span.StartSpan(
+            var parentSpan = new Span(
                 parentActivity,
                 Tracestate.Empty,
                 SpanKind.Internal,
                 TraceConfig.Default,
-                startEndHandler,
-                default);
+                spanProcessor,
+                default,
+                true);
             var parentScope = CurrentSpanUtils.WithSpan(parentSpan, stopSpan);
 
             var childActivity = new Activity("child").Start();
-            var childSpan = Span.StartSpan(
+            var childSpan = new Span(
                 childActivity,
                 Tracestate.Empty,
                 SpanKind.Internal,
                 TraceConfig.Default,
-                startEndHandler,
-                default);
+                spanProcessor,
+                default,
+                true);
 
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
 
@@ -168,24 +171,26 @@ namespace OpenTelemetry.Trace.Test
                 parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }
 
-            var parentSpan = Span.StartSpan(
+            var parentSpan = new Span(
                 parentActivity,
                 Tracestate.Empty,
                 SpanKind.Internal,
                 TraceConfig.Default,
-                startEndHandler,
-                default);
+                spanProcessor,
+                default,
+                true);
 
             var parentScope = CurrentSpanUtils.WithSpan(parentSpan, stopSpan);
 
             var childActivity = new Activity("child").Start();
-            var childSpan = Span.StartSpan(
+            var childSpan = new Span(
                 childActivity,
                 Tracestate.Empty,
                 SpanKind.Internal,
                 TraceConfig.Default,
-                startEndHandler,
-                default);
+                spanProcessor,
+                default,
+                true);
 
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
 
@@ -204,13 +209,14 @@ namespace OpenTelemetry.Trace.Test
         public void WithSpan_SameActivityCreateScopeTwice()
         {
             var activity = new Activity("foo").Start();
-            var span = Span.StartSpan(
+            var span = new Span(
                 activity,
                 Tracestate.Empty,
                 SpanKind.Internal,
                 TraceConfig.Default,
-                startEndHandler,
-                default);
+                spanProcessor,
+                default,
+                true);
 
             using(CurrentSpanUtils.WithSpan(span, true))
             using(CurrentSpanUtils.WithSpan(span, true))
@@ -227,13 +233,14 @@ namespace OpenTelemetry.Trace.Test
         public void WithSpan_NullActivity()
         {
             var activity = new Activity("foo").Start();
-            var span = Span.StartSpan(
+            var span = new Span(
                 activity,
                 Tracestate.Empty,
                 SpanKind.Internal,
                 TraceConfig.Default,
-                startEndHandler,
-                default);
+                spanProcessor,
+                default,
+                true);
 
             activity.Stop();
 
@@ -260,13 +267,14 @@ namespace OpenTelemetry.Trace.Test
                 activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }
 
-            var span = Span.StartSpan(
+            var span = new Span(
                 activity,
                 Tracestate.Empty,
                 SpanKind.Internal,
                 TraceConfig.Default,
-                startEndHandler,
-                default);
+                spanProcessor,
+                default,
+                true);
 
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             using (CurrentSpanUtils.WithSpan(span, stopSpan))

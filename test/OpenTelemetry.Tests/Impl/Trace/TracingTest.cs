@@ -22,80 +22,23 @@ namespace OpenTelemetry.Trace.Test
 
     public class TracingTest
     {
-        // @Rule public ExpectedException thrown = ExpectedException.none();
-
-        // [Fact]
-        // public void loadTraceComponent_UsesProvidedClassLoader()
-        //      {
-        //          final RuntimeException toThrow = new RuntimeException("UseClassLoader");
-        //          thrown.expect(RuntimeException.class);
-        //  thrown.expectMessage("UseClassLoader");
-        //  Tracing.loadTraceComponent(
-        //      new ClassLoader()
-        //      {
-        //          @Override
-        //        public Class<?> loadClass(String name)
-        //          {
-        //              throw toThrow;
-        //          }
-        //      });
-        // }
-
-        // [Fact]
-        //  public void loadTraceComponent_IgnoresMissingClasses()
-        //    {
-        //        ClassLoader classLoader =
-        //            new ClassLoader() {
-        //          @Override
-        //              public Class<?> loadClass(String name) throws ClassNotFoundException {
-        //            throw new ClassNotFoundException();
-        //        }
-        //    };
-        //    assertThat(Tracing.loadTraceComponent(classLoader).getClass().getName())
-        //        .isEqualTo("io.OpenTelemetry.trace.TraceComponent$NoopTraceComponent");
-        // }
-
-        [Fact(Skip = "need to fix the way tracer being instantiated")]
+        [Fact]
         public void DefaultTracer()
         {
-            Assert.Same(NoopTracer.Instance, Tracing.Tracer);
+            Assert.Equal(typeof(Tracer), Tracing.Tracer.GetType());
         }
 
-        [Fact(Skip = "need to fix the way tracer being instantiated")]
-        public void DefaultTraceExporter()
+        [Fact]
+        public void DefaultSpanProcessor()
         {
-            Assert.Equal(Export.SpanExporter.NoopSpanExporter.GetType(), Tracing.SpanExporter.GetType());
+            Assert.Equal(typeof(SimpleSpanProcessor), Tracing.SpanProcessor.GetType());
         }
 
-        [Fact(Skip = "need to fix the way tracer being instantiated")]
+
+        [Fact]
         public void DefaultTraceConfig()
         {
             Assert.Same(TraceConfig.Default, Tracing.TraceConfig);
         }
-
-        // [Fact]
-        // public void ImplementationOfTracer()
-        // {
-        //    Assert.Type<Tracer>(Tracer()).isInstanceOf(TracerImpl.;
-        // }
-
-        // [Fact]
-        // public void ImplementationOfBinaryPropagationHandler()
-        // {
-        //    assertThat(Tracing.getPropagationComponent()).isInstanceOf(PropagationComponent);
-        // }
-
-        // [Fact]
-        // public void ImplementationOfClock()
-        // {
-        //    assertThat(Tracing.getClock()).isInstanceOf(MillisClock);
-        // }
-
-        // [Fact]
-        // public void ImplementationOfTraceExporter()
-        // {
-        //    assertThat(Tracing.getExportComponent()).isInstanceOf(ExportComponentImpl;
-        // }
-
     }
 }

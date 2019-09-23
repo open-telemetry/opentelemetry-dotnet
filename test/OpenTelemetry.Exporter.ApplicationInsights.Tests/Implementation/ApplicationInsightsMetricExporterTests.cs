@@ -1,4 +1,4 @@
-﻿// <copyright file="ApplicationInsightsExporterTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ApplicationInsightsMetricExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,18 +17,17 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.ApplicationInsights.Extensibility;
-using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.ApplicationInsights.Tests.Implementation
 {
-    public class ApplicationInsightsExporterTests
+    public class ApplicationInsightsMetricExporterTests
     {
         [Fact]
         public async Task StartStopExporter()
         {
             var config = new TelemetryConfiguration { TelemetryChannel = new StubTelemetryChannel(), };
-            var exporter = new ApplicationInsightsExporter(SpanExporter.Create(), Stats.Stats.ViewManager,  config);
+            var exporter = new ApplicationInsightsMetricExporter(Stats.Stats.ViewManager,  config);
 
             exporter.Start();
             await Task.Delay(100);

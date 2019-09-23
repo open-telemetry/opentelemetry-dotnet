@@ -16,30 +16,23 @@
 
 namespace OpenTelemetry.Trace.Export
 {
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
 
-    internal sealed class NoopSpanExporter : ISpanExporter
+    /// <inheritdoc />
+    internal sealed class NoopSpanExporter : SpanExporter
     {
-        public void AddSpan(Span span)
+        /// <inheritdoc />
+        public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
         {
+            return Task.FromResult(ExportResult.Success);
         }
 
-        public Task ExportAsync(Span export, CancellationToken token)
+        /// <inheritdoc />
+        public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        {
-        }
-
-        public void RegisterHandler(string name, IHandler handler)
-        {
-        }
-
-        public void UnregisterHandler(string name)
-        {
         }
     }
 }

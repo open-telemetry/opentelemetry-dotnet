@@ -1,4 +1,4 @@
-﻿// <copyright file="TraceExporterHandlerTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ApplicationInsightsTraceExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System.Threading;
+
 namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 {
     using Microsoft.ApplicationInsights.Channel;
     using Microsoft.ApplicationInsights.DataContracts;
     using Microsoft.ApplicationInsights.Extensibility;
     using Newtonsoft.Json;
-    using OpenTelemetry.Exporter.ApplicationInsights.Implementation;
     using OpenTelemetry.Trace;
     using System;
     using System.Collections.Concurrent;
@@ -29,7 +30,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
     using System.Linq;
     using Xunit;
 
-    public class OpenTelemetryTelemetryConverterTests
+    public class ApplicationInsightsTraceExporterTests
     {
         private const string TestTraceId = "d79bdda7eb9c4a9fa9bda52fe7b48b95";
         private const string TestSpanId = "d7ddeb4aa9a5e78b";
@@ -50,7 +51,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
         private DateTime now;
 
-        public OpenTelemetryTelemetryConverterTests()
+        public ApplicationInsightsTraceExporterTests()
         {
             now = DateTime.UtcNow.AddSeconds(-1);
         }
@@ -67,8 +68,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             configuration.TelemetryChannel = channel;
 
-            var exporter = new TraceExporterHandler(configuration);
-            exporter.ExportAsync(new List<Span> { otSpan }).Wait();
+            var exporter = new ApplicationInsightsTraceExporter(configuration);
+            exporter.ExportAsync(new List<Span> { otSpan }, CancellationToken.None).Wait();
 
             return sentItems;
         }

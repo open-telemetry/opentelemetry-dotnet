@@ -19,9 +19,9 @@ namespace Samples
     using System;
     using System.Collections.Generic;
     using System.Threading;
+    using System.Threading.Tasks;
     using Microsoft.ApplicationInsights.Extensibility;
     using OpenTelemetry.Exporter.ApplicationInsights;
-    using OpenTelemetry.Internal;
     using OpenTelemetry.Stats;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
@@ -52,12 +52,11 @@ namespace Samples
 
         internal static object Run()
         {
-            SimpleEventQueue eventQueue = new SimpleEventQueue();
-            ISpanExporter exporter = OpenTelemetry.Trace.Export.SpanExporter.Create();
+            var config = new TelemetryConfiguration { InstrumentationKey = "instrumentation-key" };
+            SpanExporter exporter = new ApplicationInsightsTraceExporter(config);
 
-            TelemetryConfiguration.Active.InstrumentationKey = "instrumentation-key";
-            var appInsightsExporter = new ApplicationInsightsExporter(exporter, Stats.ViewManager, TelemetryConfiguration.Active);
-            appInsightsExporter.Start();
+            var metricExporter = new ApplicationInsightsMetricExporter(Stats.ViewManager, config);
+            metricExporter.Start();
 
             var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
@@ -88,7 +87,8 @@ namespace Samples
             Console.WriteLine("Done... wait for events to arrive to backend!");
             Console.ReadLine();
 
-            exporter.Dispose();
+            exporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
+            metricExporter.Stop();
 
             return null;
         }
