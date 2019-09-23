@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace
         /// has a name of url path and then being updated with route name when routing complete.
         /// </param>
         /// <param name="links">Links associated with the span.</param>
-        /// <returns>True of span needs to be created. False otherwise.</returns>
-        bool ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ILink> links);
+        /// <returns>Sampling decision on whether Span needs to be sampled or not.</returns>
+        Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ILink> links);
     }
 }

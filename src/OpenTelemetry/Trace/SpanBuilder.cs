@@ -299,7 +299,7 @@ namespace OpenTelemetry.Trace
             // If users set a specific sampler in the SpanBuilder, use it.
             if (sampler != null)
             {
-                return sampler.ShouldSample(parent, traceId, spanId, name, parentLinks);
+                return sampler.ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
             }
 
             // Use the default sampler if this is a root Span or this is an entry point Span (has remote
@@ -308,7 +308,7 @@ namespace OpenTelemetry.Trace
             {
                 return traceConfig
                     .Sampler
-                    .ShouldSample(parent, traceId, spanId, name, parentLinks);
+                    .ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
             }
 
             // Parent is always different than null because otherwise we use the default sampler.
