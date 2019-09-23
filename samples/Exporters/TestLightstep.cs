@@ -7,6 +7,8 @@ namespace Samples
     using System.Threading;
     using OpenTelemetry.Exporter.LightStep;
     using OpenTelemetry.Trace;
+    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
 
     internal class TestLightstep
     {
@@ -19,7 +21,7 @@ namespace Samples
                     ServiceName = "tracing-to-lightstep-service",
                 });
 
-            var tracer = Tracing.Tracer;
+            var tracer = new Tracer(new SimpleSpanProcessor(exporter), TraceConfig.Default);
             
             using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))
             {
@@ -27,7 +29,7 @@ namespace Samples
                 Console.WriteLine("About to do a busy work");
                 for (int i = 0; i < 10; i++)
                 {
-                    DoWork(i);
+                    DoWork(i, tracer);
                 }
             }
             Thread.Sleep(10000);
@@ -36,10 +38,8 @@ namespace Samples
             return null;
         }
         
-        private static void DoWork(int i)
+        private static void DoWork(int i, Tracer tracer)
         {
-            var tracer = Tracing.Tracer;
-
             using (tracer.WithSpan(tracer.SpanBuilder("DoWork").StartSpan()))
             {
                 // Simulate some work.
@@ -52,11 +52,11 @@ namespace Samples
                 }
                 catch (ArgumentOutOfRangeException e)
                 {
-                    // 6. Set status upon error
+                    // Set status upon error
                     span.Status = Status.Internal.WithDescription(e.ToString());
                 }
 
-                // 7. Annotate our span to capture metadata about our operation
+                // Annotate our span to capture metadata about our operation
                 var attributes = new Dictionary<string, object>();
                 attributes.Add("use", "demo");
                 span.AddEvent("Invoking DoWork", attributes);

@@ -22,26 +22,27 @@ namespace Samples
     using OpenTelemetry.Collector.Dependencies;
     using OpenTelemetry.Exporter.Zipkin;
     using OpenTelemetry.Trace;
+    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
 
     internal class TestHttpClient
     {
-        private static readonly ITracer Tracer = Tracing.Tracer;
-
         internal static object Run()
         {
             Console.WriteLine("Hello World!");
 
-            using (new DependenciesCollector(new DependenciesCollectorOptions(), Tracer, Samplers.AlwaysSample))
-            {
-                var exporter = new ZipkinTraceExporter(
-                    new ZipkinTraceExporterOptions()
-                    {
-                        Endpoint = new Uri("https://zipkin.azurewebsites.net/api/v2/spans"),
-                        ServiceName = typeof(Program).Assembly.GetName().Name,
-                    });
+            var exporter = new ZipkinTraceExporter(
+                new ZipkinTraceExporterOptions()
+                {
+                    Endpoint = new Uri("https://zipkin.azurewebsites.net/api/v2/spans"),
+                    ServiceName = typeof(Program).Assembly.GetName().Name,
+                });
 
-                using (Tracer.WithSpan(Tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartSpan()))
+            var tracer = new Tracer(new SimpleSpanProcessor(exporter), TraceConfig.Default);
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
+            {
+                using (tracer.WithSpan(tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartSpan()))
                 {
                     using (var client = new HttpClient())
                     {

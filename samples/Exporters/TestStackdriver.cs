@@ -25,11 +25,12 @@ namespace Samples
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
     using OpenTelemetry.Trace;
+    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
 
     internal class TestStackdriver
     {
-        private static readonly ITracer Tracer = Tracing.Tracer;
         private static readonly ITagger Tagger = Tags.Tagger;
 
         private static readonly IStatsRecorder StatsRecorder = Stats.StatsRecorder;
@@ -56,9 +57,11 @@ namespace Samples
                 Stats.ViewManager);
             metricExporter.Start();
 
+            var tracer = new Tracer(new SimpleSpanProcessor(spanExporter), TraceConfig.Default);
+
             var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
-            var spanBuilder = Tracer
+            var spanBuilder = tracer
                 .SpanBuilder("incoming request")
                 .SetRecordEvents(true)
                 .SetSampler(Samplers.AlwaysSample);
@@ -67,9 +70,9 @@ namespace Samples
 
             using (tagContextBuilder.BuildScoped())
             {
-                using (Tracer.WithSpan(spanBuilder.StartSpan()))
+                using (tracer.WithSpan(spanBuilder.StartSpan()))
                 {
-                    Tracer.CurrentSpan.AddEvent("Processing video.");
+                    tracer.CurrentSpan.AddEvent("Processing video.");
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));
 
                     StatsRecorder.NewMeasureMap()
