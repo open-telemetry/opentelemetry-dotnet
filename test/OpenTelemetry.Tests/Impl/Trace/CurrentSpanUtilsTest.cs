@@ -20,6 +20,7 @@ namespace OpenTelemetry.Trace.Test
     using System.Diagnostics;
     using Moq;
     using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
     using Xunit;
 
     public class CurrentSpanUtilsTest: IDisposable

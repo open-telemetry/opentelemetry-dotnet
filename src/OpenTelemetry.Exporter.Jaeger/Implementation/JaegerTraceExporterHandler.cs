@@ -1,4 +1,4 @@
-// <copyright file="JaegerTraceExporterHandler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerTraceExporterHandler.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,9 +41,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.jaegerAgentUdpBatcher = jaegerAgentUdpBatcher;
         }
 
-        public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
+        public async Task ExportAsync(IEnumerable<Span> otelSpanList)
         {
-            var jaegerspans = spanDataList.Select(sdl => sdl.ToJaegerSpan());
+            var jaegerspans = otelSpanList.Select(sdl => sdl.ToJaegerSpan());
 
             foreach (var s in jaegerspans)
             {

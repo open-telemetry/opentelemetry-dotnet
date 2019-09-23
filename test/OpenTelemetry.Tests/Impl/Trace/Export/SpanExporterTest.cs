@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Utils;
-
 namespace OpenTelemetry.Trace.Export.Test
 {
     using System;
@@ -29,6 +27,7 @@ namespace OpenTelemetry.Trace.Export.Test
     using OpenTelemetry.Testing.Export;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Internal;
+    using OpenTelemetry.Utils;
     using Xunit;
 
     public class SpanExporterTest : IDisposable
@@ -89,8 +88,8 @@ namespace OpenTelemetry.Trace.Export.Test
             var span2 = CreateSampledEndedSpan(SpanName2);
             var exported = serviceHandler.WaitForExport(2);
             Assert.Equal(2, exported.Count());
-            Assert.Contains(span1.ToSpanData(), exported);
-            Assert.Contains(span2.ToSpanData(), exported);
+            Assert.Contains(span1, exported);
+            Assert.Contains(span2, exported);
         }
 
         [Fact]
@@ -104,12 +103,12 @@ namespace OpenTelemetry.Trace.Export.Test
             var span6 = CreateSampledEndedSpan(SpanName1);
             var exported = serviceHandler.WaitForExport(6);
             Assert.Equal(6, exported.Count());
-            Assert.Contains(span1.ToSpanData(), exported);
-            Assert.Contains(span2.ToSpanData(), exported);
-            Assert.Contains(span3.ToSpanData(), exported);
-            Assert.Contains(span4.ToSpanData(), exported);
-            Assert.Contains(span5.ToSpanData(), exported);
-            Assert.Contains(span6.ToSpanData(), exported);
+            Assert.Contains(span1, exported);
+            Assert.Contains(span2, exported);
+            Assert.Contains(span3, exported);
+            Assert.Contains(span4, exported);
+            Assert.Contains(span5, exported);
+            Assert.Contains(span6, exported);
 
         }
 
@@ -128,7 +127,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ServiceHandlerThrowsException()
         {
             var mockHandler = Mock.Get<IHandler>(mockServiceHandler);
-            mockHandler.Setup((h) => h.ExportAsync(It.IsAny<IEnumerable<SpanData>>())).Throws(new ArgumentException("No export for you."));
+            mockHandler.Setup((h) => h.ExportAsync(It.IsAny<IEnumerable<Span>>())).Throws(new ArgumentException("No export for you."));
             // doThrow(new IllegalArgumentException("No export for you."))
             //    .when(mockServiceHandler)
             //    .export(anyListOf(SpanData));
@@ -136,13 +135,13 @@ namespace OpenTelemetry.Trace.Export.Test
             var span1 = CreateSampledEndedSpan(SpanName1);
             var exported = serviceHandler.WaitForExport(1);
             Assert.Single(exported);
-            Assert.Contains(span1.ToSpanData(), exported);
+            Assert.Contains(span1, exported);
             // assertThat(exported).containsExactly(span1.toSpanData());
             // Continue to export after the exception was received.
             var span2 = CreateSampledEndedSpan(SpanName1);
             exported = serviceHandler.WaitForExport(1);
             Assert.Single(exported);
-            Assert.Contains(span2.ToSpanData(), exported);
+            Assert.Contains(span2, exported);
             // assertThat(exported).containsExactly(span2.toSpanData());
         }
 
@@ -156,11 +155,11 @@ namespace OpenTelemetry.Trace.Export.Test
             var exported1 = serviceHandler.WaitForExport(2);
             var exported2 = serviceHandler2.WaitForExport(2);
             Assert.Equal(2, exported1.Count());
-            Assert.Contains(span1.ToSpanData(), exported1);
-            Assert.Contains(span2.ToSpanData(), exported1);
+            Assert.Contains(span1, exported1);
+            Assert.Contains(span2, exported1);
             Assert.Equal(2, exported2.Count());
-            Assert.Contains(span1.ToSpanData(), exported2);
-            Assert.Contains(span2.ToSpanData(), exported2);
+            Assert.Contains(span1, exported2);
+            Assert.Contains(span2, exported2);
         }
 
         [Fact]
@@ -176,7 +175,7 @@ namespace OpenTelemetry.Trace.Export.Test
             // Need to check this because otherwise the variable span1 is unused, other option is to not
             // have a span1 variable.
             Assert.Single(exported);
-            Assert.Contains(span2.ToSpanData(), exported);
+            Assert.Contains(span2, exported);
         }
 
         [Fact]
@@ -188,14 +187,14 @@ namespace OpenTelemetry.Trace.Export.Test
 
             exporter.RegisterHandler("first", handler1.Object);
 
-            var span1 = CreateSampledEndedSpan(SpanName1).ToSpanData();
+            var span1 = CreateSampledEndedSpan(SpanName1);
 
             await exporter.ExportAsync(span1, CancellationToken.None);
 
             Assert.Single(handler1.Invocations);
-            var args = (IEnumerable<SpanData>)handler1.Invocations.First().Arguments.First();
+            var args = (IEnumerable<Span>)handler1.Invocations.First().Arguments.First();
 
-            handler1.Verify(c => c.ExportAsync(It.Is<IEnumerable<SpanData>>(
+            handler1.Verify(c => c.ExportAsync(It.Is<IEnumerable<Span>>(
                 (x) => x.Any(s => s == span1) && x.Count() == 1)));
         }
 

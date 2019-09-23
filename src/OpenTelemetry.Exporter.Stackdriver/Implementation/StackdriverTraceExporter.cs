@@ -72,7 +72,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             this.traceServiceSettings.CallSettings = callSettings;
         }
 
-        public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
+        public async Task ExportAsync(IEnumerable<Trace.Span> spanDataList)
         {
             var traceWriter = TraceServiceClient.Create(settings: this.traceServiceSettings);
             

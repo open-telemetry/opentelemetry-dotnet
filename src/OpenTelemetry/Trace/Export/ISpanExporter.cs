@@ -29,17 +29,17 @@ namespace OpenTelemetry.Trace.Export
         /// Adds a single span to the exporter.
         /// </summary>
         /// <param name="span">Span to export.</param>
-        void AddSpan(ISpan span);
+        void AddSpan(Span span);
 
         /// <summary>
         /// Exports collection of spans. This method is used for the situation when the
-        /// span objects have been created from external sources, not using the Open Censis API.
-        /// For example, read from file or generated from objects recieved in async queue.
+        /// span objects have been created from external sources, not using the Open Telemetry API.
+        /// For example, read from file or generated from objects received in async queue.
         /// </summary>
-        /// <param name="export"><see cref="SpanData"/> object to export.</param>
+        /// <param name="export"><see cref="Span"/> object to export.</param>
         /// <param name="token">Cancellation token.</param>
         /// <returns>A <see cref="Task"/> representing asynchronous export operation.</returns>
-        Task ExportAsync(SpanData export, CancellationToken token);
+        Task ExportAsync(Span export, CancellationToken token);
 
         /// <summary>
         /// Registers the exporter handler.

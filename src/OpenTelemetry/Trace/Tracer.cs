@@ -18,7 +18,6 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Diagnostics;
-    using System.Threading;
     using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Config;
@@ -33,7 +32,7 @@ namespace OpenTelemetry.Trace
         private static readonly TimeSpan ExporterScheduleDelay = TimeSpan.FromSeconds(5);
 
         private readonly SpanExporter spanExporter;
-        private readonly IStartEndHandler startEndHandler;
+        private readonly Export.IStartEndHandler startEndHandler;
 
         static Tracer()
         {
@@ -46,7 +45,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="startEndHandler">Start/end event handler.</param>
         /// <param name="traceConfig">Trace configuration.</param>
-        public Tracer(IStartEndHandler startEndHandler, TraceConfig traceConfig)
+        public Tracer(Export.IStartEndHandler startEndHandler, TraceConfig traceConfig)
             : this(startEndHandler, traceConfig, null, null, null)
         {
         }
@@ -59,7 +58,7 @@ namespace OpenTelemetry.Trace
         /// <param name="spanExporter">Exporter for span.</param>
         /// <param name="binaryFormat">Binary format context propagator.</param>
         /// <param name="textFormat">Text format context propagator.</param>
-        public Tracer(IStartEndHandler startEndHandler, TraceConfig traceConfig, SpanExporter spanExporter, IBinaryFormat binaryFormat, ITextFormat textFormat)
+        public Tracer(Export.IStartEndHandler startEndHandler, TraceConfig traceConfig, SpanExporter spanExporter, IBinaryFormat binaryFormat, ITextFormat textFormat)
         {
             this.startEndHandler = startEndHandler;
             this.ActiveTraceConfig = traceConfig;
@@ -78,12 +77,6 @@ namespace OpenTelemetry.Trace
         public ITextFormat TextFormat { get; }
 
         public TraceConfig ActiveTraceConfig { get; set; }
-
-        /// <inheritdoc/>
-        public void RecordSpanData(SpanData span)
-        {
-            this.spanExporter.ExportAsync(span, CancellationToken.None);
-        }
 
         /// <inheritdoc/>
         public ISpanBuilder SpanBuilder(string spanName)

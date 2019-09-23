@@ -51,15 +51,6 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.IsAssignableFrom<ITextFormat>(NoopTracer.Instance.TextFormat);
             Assert.IsAssignableFrom<IBinaryFormat>(NoopTracer.Instance.BinaryFormat);
         }
-
-        [Fact]
-        public void NoopTracer_RecordData()
-        {
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.RecordSpanData(null));
-
-            // does not throw
-            NoopTracer.Instance.RecordSpanData(SpanData.Create(SpanContext.Blank, default, Resource.Empty, "foo", default, null, null, null, null, Status.Ok, SpanKind.Internal, default));
-        }
     }
 }
 

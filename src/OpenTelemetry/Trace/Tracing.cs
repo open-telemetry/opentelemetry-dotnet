@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace
 
             SpanExporter = Export.SpanExporter.Create();
 
-            IStartEndHandler startEndHandler =
+            Export.IStartEndHandler startEndHandler =
                 new StartEndHandler(
                     SpanExporter,
                     eventQueue);

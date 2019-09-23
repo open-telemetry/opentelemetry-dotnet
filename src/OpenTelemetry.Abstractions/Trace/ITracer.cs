@@ -20,7 +20,7 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Context.Propagation;
 
     /// <summary>
-    /// Tracer to record distributed tracing informaiton.
+    /// Tracer to record distributed tracing information.
     /// </summary>
     public interface ITracer
     {
@@ -52,14 +52,5 @@ namespace OpenTelemetry.Trace
         /// <param name="spanName">Span name.</param>
         /// <returns>Span builder for the span with the given name.</returns>
         ISpanBuilder SpanBuilder(string spanName);
-
-        /// <summary>
-        /// Records <see cref="SpanData"/>. This API allows to send a pre-populated span object to the
-        /// exporter.Sampling and recording decisions as well as other collection optimizations is a
-        /// responsibility of a caller.Note, the <see cref="SpanContext" /> object on the span population with
-        /// the values that will allow correlation of telemetry is also a caller responsibility.
-        /// </summary>
-        /// <param name="span">Immutable Span Data to be reported to all exporters.</param>
-        void RecordSpanData(SpanData span);
     }
 }

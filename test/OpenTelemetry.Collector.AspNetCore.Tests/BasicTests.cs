@@ -23,6 +23,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using Microsoft.Extensions.DependencyInjection;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
     using Moq;
     using Microsoft.AspNetCore.TestHost;
     using System;

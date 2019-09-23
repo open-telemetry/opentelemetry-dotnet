@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
             this.httpClient.Timeout = this.options.SatelliteTimeout;
         }
 
-        public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
+        public async Task ExportAsync(IEnumerable<Span> spanDataList)
         {
             var lsReport = new LightStepReport
             {
