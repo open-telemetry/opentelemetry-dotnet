@@ -92,8 +92,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 out var host, 
                 out var port);
 
-            var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(startEndHandler.Object, TraceConfig.Default);
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default);
             tc.url = NormalizeValues(tc.url, host, port);
 
             using (serverLifeTime)
@@ -129,8 +129,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 }
             }
 
-            Assert.Equal(2, startEndHandler.Invocations.Count); // begin and end was called
-            var span = ((Span)startEndHandler.Invocations[1].Arguments[0]);
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
 
             Assert.Equal(tc.spanName, span.Name);
             Assert.Equal(tc.spanKind, span.Kind.ToString());

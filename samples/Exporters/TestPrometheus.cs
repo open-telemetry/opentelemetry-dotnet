@@ -29,7 +29,6 @@ namespace Samples
 
     internal class TestPrometheus
     {
-        private static readonly ITracer Tracer = Tracing.Tracer;
         private static readonly ITagger Tagger = Tags.Tagger;
 
         private static readonly IStatsRecorder StatsRecorder = Stats.StatsRecorder;

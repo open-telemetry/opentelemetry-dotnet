@@ -1,4 +1,4 @@
-﻿// <copyright file="TraceExporterHandler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ApplicationInsightsTraceExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
+namespace OpenTelemetry.Exporter.ApplicationInsights
 {
     using System;
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.ApplicationInsights;
     using Microsoft.ApplicationInsights.DataContracts;
@@ -29,18 +30,18 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
-    internal class TraceExporterHandler : IHandler
+    public class ApplicationInsightsTraceExporter : SpanExporter, IDisposable
     {
         private readonly TelemetryClient telemetryClient;
         private readonly string serviceEndpoint;
 
-        public TraceExporterHandler(TelemetryConfiguration telemetryConfiguration)
+        public ApplicationInsightsTraceExporter(TelemetryConfiguration telemetryConfiguration)
         {
             this.telemetryClient = new TelemetryClient(telemetryConfiguration);
             this.serviceEndpoint = telemetryConfiguration.TelemetryChannel.EndpointAddress;
         }
 
-        public Task ExportAsync(IEnumerable<Span> spanDataList)
+        public override Task<ExportResult> ExportAsync(IEnumerable<Span> spanDataList, CancellationToken cancellationToken)
         {
             foreach (var span in spanDataList)
             {
@@ -279,7 +280,19 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                 this.telemetryClient.Track(result);
             }
 
+            return Task.FromResult(ExportResult.Success);
+        }
+
+        public override Task ShutdownAsync(CancellationToken cancellationToken)
+        {
+            // TODO cancellation support
+            this.telemetryClient.Flush();
             return Task.CompletedTask;
+        }
+
+        public void Dispose()
+        {
+            this.ShutdownAsync(CancellationToken.None).ContinueWith(_ => { }).Wait();
         }
 
         private static void AddPropertyWithAdjustedName(IDictionary<string, string> props, string name, string value)

@@ -21,18 +21,17 @@ namespace Samples
     using System.Threading;
     using Microsoft.ApplicationInsights.Extensibility;
     using OpenTelemetry.Exporter.ApplicationInsights;
-    using OpenTelemetry.Internal;
     using OpenTelemetry.Stats;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
     using OpenTelemetry.Trace;
+    using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
 
     internal class TestApplicationInsights
     {
-        private static readonly ITracer Tracer = Tracing.Tracer;
         private static readonly ITagger Tagger = Tags.Tagger;
 
         private static readonly IStatsRecorder StatsRecorder = Stats.StatsRecorder;
@@ -52,16 +51,16 @@ namespace Samples
 
         internal static object Run()
         {
-            SimpleEventQueue eventQueue = new SimpleEventQueue();
-            ISpanExporter exporter = OpenTelemetry.Trace.Export.SpanExporter.Create();
+            var config = new TelemetryConfiguration { InstrumentationKey = "instrumentation-key" };
+            SpanExporter exporter = new ApplicationInsightsTraceExporter(config);
 
-            TelemetryConfiguration.Active.InstrumentationKey = "instrumentation-key";
-            var appInsightsExporter = new ApplicationInsightsExporter(exporter, Stats.ViewManager, TelemetryConfiguration.Active);
-            appInsightsExporter.Start();
+            var metricExporter = new ApplicationInsightsMetricExporter(Stats.ViewManager, config);
+            metricExporter.Start();
 
             var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
-            var spanBuilder = Tracer
+            var tracer = new Tracer(new SimpleSpanProcessor(exporter), TraceConfig.Default);
+            var spanBuilder = tracer
                 .SpanBuilder("incoming request")
                 .SetRecordEvents(true)
                 .SetSampler(Samplers.AlwaysSample);
@@ -70,12 +69,12 @@ namespace Samples
 
             using (tagContextBuilder.BuildScoped())
             {
-                using (Tracer.WithSpan(spanBuilder.StartSpan()))
+                using (tracer.WithSpan(spanBuilder.StartSpan()))
                 {
-                    Tracer.CurrentSpan.AddEvent("Start processing video.");
+                    tracer.CurrentSpan.AddEvent("Start processing video.");
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));
                     StatsRecorder.NewMeasureMap().Put(VideoSize, 25 * MiB).Record();
-                    Tracer.CurrentSpan.AddEvent("Finished processing video.");
+                    tracer.CurrentSpan.AddEvent("Finished processing video.");
                 }
             }
 
@@ -88,7 +87,8 @@ namespace Samples
             Console.WriteLine("Done... wait for events to arrive to backend!");
             Console.ReadLine();
 
-            exporter.Dispose();
+            exporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
+            metricExporter.Stop();
 
             return null;
         }

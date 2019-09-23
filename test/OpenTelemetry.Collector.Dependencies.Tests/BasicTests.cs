@@ -50,8 +50,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollectorInjectsHeadersAsync()
         {
-            var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(startEndHandler.Object, TraceConfig.Default, null, null, null);
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default, null, null);
 
             var request = new HttpRequestMessage
             {
@@ -70,8 +70,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(2, startEndHandler.Invocations.Count); // begin and end was called
-            var span = ((Span)startEndHandler.Invocations[1].Arguments[0]);
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
 
             Assert.Equal(parent.TraceId, span.Context.TraceId);
             Assert.Equal(parent.SpanId, span.ParentSpanId);
@@ -90,8 +90,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
         {
-            var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(startEndHandler.Object, TraceConfig.Default, null, null, null);
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default, null, null);
 
             var request = new HttpRequestMessage
             {
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(0, startEndHandler.Invocations.Count); 
+            Assert.Equal(0, spanProcessor.Invocations.Count); 
         }
 
         public void Dispose()

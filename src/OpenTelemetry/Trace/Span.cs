@@ -20,7 +20,6 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
@@ -32,7 +31,7 @@ namespace OpenTelemetry.Trace
     public sealed class Span : ISpan
     {
         private readonly TraceConfig traceConfig;
-        private readonly Export.IStartEndHandler startEndHandler;
+        private readonly SpanProcessor spanProcessor;
         private readonly Lazy<SpanContext> spanContext;
         private readonly DateTimeOffset startTimestamp;
         private readonly object @lock = new object();
@@ -42,12 +41,12 @@ namespace OpenTelemetry.Trace
         private Status status;
         private DateTimeOffset endTimestamp;
 
-        private Span(
+        internal Span(
                 Activity activity,
                 Tracestate tracestate,
                 SpanKind spanKind,
                 TraceConfig traceConfig,
-                Export.IStartEndHandler startEndHandler,
+                SpanProcessor spanProcessor,
                 DateTimeOffset startTimestamp,
                 bool ownsActivity)
         {
@@ -59,11 +58,16 @@ namespace OpenTelemetry.Trace
                 tracestate));
             this.Name = this.Activity.OperationName;
             this.traceConfig = traceConfig;
-            this.startEndHandler = startEndHandler;
+            this.spanProcessor = spanProcessor;
             this.Kind = spanKind;
             this.OwnsActivity = ownsActivity;
             this.IsRecordingEvents = this.Activity.Recorded;
             this.startTimestamp = startTimestamp;
+
+            if (this.IsRecordingEvents)
+            {
+                this.spanProcessor.OnStart(this);
+            }
         }
 
         public Activity Activity { get; }
@@ -339,7 +343,7 @@ namespace OpenTelemetry.Trace
                 this.HasEnded = true;
             }
 
-            this.startEndHandler.OnEnd(this);
+            this.spanProcessor.OnEnd(this);
         }
 
         /// <inheritdoc/>
@@ -409,34 +413,6 @@ namespace OpenTelemetry.Trace
             }
 
             this.SetAttribute(new KeyValuePair<string, object>(key, value));
-        }
-
-        internal static ISpan StartSpan(
-                        Activity activity,
-                        Tracestate tracestate,
-                        SpanKind spanKind,
-                        TraceConfig traceConfig,
-                        Export.IStartEndHandler startEndHandler,
-                        DateTimeOffset startTimestamp,
-                        bool ownsActivity = true)
-        {
-            var span = new Span(
-               activity,
-               tracestate,
-               spanKind,
-               traceConfig,
-               startEndHandler,
-               startTimestamp,
-               ownsActivity);
-
-            // Call onStart here instead of calling in the constructor to make sure the span is completely
-            // initialized.
-            if (span.IsRecordingEvents)
-            {
-                startEndHandler.OnStart(span);
-            }
-
-            return span;
         }
     }
 }

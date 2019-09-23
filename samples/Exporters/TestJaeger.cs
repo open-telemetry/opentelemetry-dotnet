@@ -22,51 +22,43 @@ namespace Samples
     using OpenTelemetry.Exporter.Jaeger;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Sampler;
+    using OpenTelemetry.Trace.Export;
 
     internal class TestJaeger
     {
         internal static object Run(string host, int port)
         {
-            // 1. Configure exporter to export traces to Jaeger
-            var exporter = new JaegerExporter(
+            // Configure exporter to export traces to Jaeger
+            var exporter = new JaegerTraceExporter(
                 new JaegerExporterOptions
                 {
                     ServiceName = "tracing-to-jaeger-service",
                     AgentHost = host,
                     AgentPort = port,
-                },
-                Tracing.SpanExporter);
-                
-            exporter.Start();
+                });
 
-            // 2. Tracer is global singleton. You can register it via dependency injection if it exists
-            // but if not - you can use it as follows:
-            var tracer = Tracing.Tracer;
+            // Create a tracer. You may also need to register it as a global instance to make auto-collectors work..
+            var tracer = new Tracer(new SimpleSpanProcessor(exporter), TraceConfig.Default);
 
-            // 3. Create a scoped span. It will end automatically when using statement ends
+            // Create a scoped span. It will end automatically when using statement ends
             using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))
             {
                 tracer.CurrentSpan.SetAttribute("custom-attribute", 55);
                 Console.WriteLine("About to do a busy work");
                 for (int i = 0; i < 10; i++)
                 {
-                    DoWork(i);
+                    DoWork(i, tracer);
                 }
             }
 
-            // 4. Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
-            Tracing.SpanExporter.Dispose();
-
+            // Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
+            exporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
             return null;
         }
 
-        private static void DoWork(int i)
+        private static void DoWork(int i, Tracer tracer)
         {
-            // 6. Get the global singleton Tracer object
-            var tracer = Tracing.Tracer;
-
-            // 7. Start another span. If another span was already started, it'll use that span as the parent span.
+            // Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be
             // a child span.
             using (tracer.WithSpan(tracer.SpanBuilder("DoWork").StartSpan()))
@@ -81,11 +73,11 @@ namespace Samples
                 }
                 catch (ArgumentOutOfRangeException e)
                 {
-                    // 6. Set status upon error
+                    // Set status upon error
                     span.Status = Status.Internal.WithDescription(e.ToString());
                 }
 
-                // 7. Annotate our span to capture metadata about our operation
+                // Annotate our span to capture metadata about our operation
                 var attributes = new Dictionary<string, object>();
                 attributes.Add("use", "demo");
                 span.AddEvent("Invoking DoWork", attributes);

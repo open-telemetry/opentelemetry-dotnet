@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerTraceExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,67 +17,50 @@
 namespace OpenTelemetry.Exporter.Jaeger
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
     using OpenTelemetry.Exporter.Jaeger.Implementation;
+    using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
-    public class JaegerExporter : IDisposable
+    public class JaegerTraceExporter : SpanExporter, IDisposable
     {
         public const string DefaultAgentUdpHost = "localhost";
         public const int DefaultAgentUdpCompactPort = 6831;
         public const int DefaultMaxPacketSize = 65000;
 
-        private const string ExporterName = "JaegerTraceExporter";
-
-        private readonly object @lock = new object();
-        private readonly JaegerExporterOptions options;
-        private readonly ISpanExporter spanExporter;
-
-        private volatile bool isInitialized = false;
-        private JaegerTraceExporterHandler handler;
+        private readonly IJaegerUdpBatcher jaegerAgentUdpBatcher;
         private bool disposedValue = false; // To detect redundant dispose calls
 
-        public JaegerExporter(JaegerExporterOptions options, ISpanExporter spanExporter)
+        public JaegerTraceExporter(JaegerExporterOptions options)
         {
             this.ValidateOptions(options);
             this.InitializeOptions(options);
-
-            this.options = options;
-            this.spanExporter = spanExporter;
         }
 
-        public void Start()
+        public JaegerTraceExporter(IJaegerUdpBatcher jaegerAgentUdpBatcher)
         {
-            lock (this.@lock)
-            {
-                if (this.isInitialized)
-                {
-                    return;
-                }
-
-                if (this.spanExporter != null)
-                {
-                    this.handler = new JaegerTraceExporterHandler(this.options);
-                    this.spanExporter.RegisterHandler(ExporterName, this.handler);
-                }
-            }
+            this.jaegerAgentUdpBatcher = jaegerAgentUdpBatcher;
         }
 
-        public void Stop()
+        public override async Task<ExportResult> ExportAsync(IEnumerable<Span> otelSpanList, CancellationToken cancellationToken)
         {
-            if (!this.isInitialized)
+            var jaegerspans = otelSpanList.Select(sdl => sdl.ToJaegerSpan());
+
+            foreach (var s in jaegerspans)
             {
-                return;
+                await this.jaegerAgentUdpBatcher.AppendAsync(s, cancellationToken);
             }
 
-            lock (this.@lock)
-            {
-                if (this.spanExporter != null)
-                {
-                    this.spanExporter.UnregisterHandler(ExporterName);
-                }
-            }
+            // TODO jaeger status to ExportResult
+            return ExportResult.Success;
+        }
 
-            this.isInitialized = false;
+        public override Task ShutdownAsync(CancellationToken cancellationToken)
+        {
+            return this.jaegerAgentUdpBatcher.FlushAsync(cancellationToken);
         }
 
         public void Dispose()
@@ -92,7 +75,7 @@ namespace OpenTelemetry.Exporter.Jaeger
             {
                 if (disposing)
                 {
-                    this.handler.Dispose();
+                    this.jaegerAgentUdpBatcher.Dispose();
                 }
 
                 this.disposedValue = true;

@@ -16,59 +16,46 @@
 
 namespace OpenTelemetry.Trace.Export
 {
-    using System;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using OpenTelemetry.Trace;
 
-    public sealed class SpanExporter : SpanExporterBase
+    /// <summary>
+    /// SpanExporter base class.
+    /// </summary>
+    public abstract class SpanExporter
     {
-        private readonly Thread workerThread;
-
-        private readonly SpanExporterWorker worker;
-
-        internal SpanExporter(SpanExporterWorker worker)
+        public enum ExportResult
         {
-            this.worker = worker;
-            this.workerThread = new Thread(worker.Run)
-            {
-                IsBackground = true,
-                Name = "SpanExporter",
-            };
-            this.workerThread.Start();
+            /// <summary>
+            /// Batch is successfully exported.
+            /// </summary>
+            Success = 0,
+
+            /// <summary>
+            /// Batch export failed. Caller must not retry.
+            /// </summary>
+            FailedNotRetryable = 1,
+            
+            /// <summary>
+            /// Batch export failed transiently. Caller should record error and may retry.
+            /// </summary>
+            FailedRetryable = 2,
         }
 
-        internal Thread ServiceExporterThread => this.workerThread;
+        /// <summary>
+        /// Exports batch of spans asynchronously.
+        /// </summary>
+        /// <param name="batch">Batch of spans to export.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Result of export.</returns>
+        public abstract Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken);
 
-        public static ISpanExporter Create(int bufferSize = 32, TimeSpan? scheduleDelay = null)
-        {
-            var worker = new SpanExporterWorker(bufferSize, scheduleDelay ?? TimeSpan.FromSeconds(5));
-            return new SpanExporter(worker);
-        }
-
-        public override void AddSpan(Span span)
-        {
-            this.worker.AddSpan(span);
-        }
-
-        /// <inheritdoc/>
-        public override Task ExportAsync(Span export, CancellationToken token)
-        {
-            return this.worker.ExportAsync(export, token);
-        }
-
-        public override void RegisterHandler(string name, IHandler handler)
-        {
-            this.worker.RegisterHandler(name, handler);
-        }
-
-        public override void UnregisterHandler(string name)
-        {
-            this.worker.UnregisterHandler(name);
-        }
-
-        public override void Dispose()
-        {
-            this.worker.Dispose();
-        }
+        /// <summary>
+        /// Shuts down exporter asynchronously.
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public abstract Task ShutdownAsync(CancellationToken cancellationToken);
     }
 }

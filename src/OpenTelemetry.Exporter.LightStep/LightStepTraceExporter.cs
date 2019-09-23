@@ -17,52 +17,84 @@
 namespace OpenTelemetry.Exporter.LightStep
 {
     using System;
+    using System.Collections.Generic;
+    using System.Net;
     using System.Net.Http;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Newtonsoft.Json;
     using OpenTelemetry.Exporter.LightStep.Implementation;
+    using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
-    public class LightStepTraceExporter
+    public class LightStepTraceExporter : SpanExporter
     {
-        private const string ExporterName = "LightStepExporter";
         private readonly LightStepTraceExporterOptions options;
-        private readonly ISpanExporter exporter;
-        private readonly object lck = new object();
         private readonly HttpClient httpClient;
-        private TraceExporterHandler handler;
 
-        public LightStepTraceExporter(LightStepTraceExporterOptions options, ISpanExporter exporter, HttpClient client = null)
+        public LightStepTraceExporter(LightStepTraceExporterOptions options, HttpClient client = null)
         {
             this.options = options;
-            this.exporter = exporter;
-            this.httpClient = client;
+            this.httpClient = client ?? new HttpClient();
+            this.httpClient.Timeout = this.options.SatelliteTimeout;
         }
 
-        public void Start()
+        public override async Task<ExportResult> ExportAsync(IEnumerable<Span> spanDataList, CancellationToken cancellationToken)
         {
-            lock (this.lck)
+            var lsReport = new LightStepReport
             {
-                if (this.handler != null)
+                Auth = new Authentication { AccessToken = this.options.AccessToken },
+                Reporter = new Reporter
                 {
-                    return;
-                }
+                    // TODO: ReporterID should be randomly generated.
+                    ReporterId = 219,
+                    Tags = new List<Tag>
+                    {
+                        new Tag { Key = "lightstep.component_name", StringValue = this.options.ServiceName },
+                    },
+                },
+            };
 
-                this.handler = new TraceExporterHandler(this.options, this.httpClient);
+            foreach (var data in spanDataList)
+            {
+                lsReport.Spans.Add(data.ToLightStepSpan());
+            }
 
-                this.exporter.RegisterHandler(ExporterName, this.handler);
+            try
+            {
+                await this.SendSpansAsync(lsReport, cancellationToken).ConfigureAwait(false);
+                return ExportResult.Success;
+            }
+            catch (Exception)
+            {
+                // TODO distinguish retryable exceptions
+                return ExportResult.FailedNotRetryable;
             }
         }
 
-        public void Stop()
+        public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            lock (this.lck)
-            {
-                if (this.handler == null)
-                {
-                    return;
-                }
+            return Task.CompletedTask;
+        }
 
-                this.exporter.UnregisterHandler(ExporterName);
-                this.handler = null;
+        private Task SendSpansAsync(LightStepReport report, CancellationToken cancellationToken)
+        {
+            var requestUri = this.options.Satellite;
+            var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
+            var jsonReport = JsonConvert.SerializeObject(report);
+            request.Content = new StringContent(jsonReport, Encoding.UTF8, "application/json");
+            return this.PostSpansAsync(this.httpClient, request, cancellationToken);
+        }
+
+        private async Task PostSpansAsync(HttpClient client, HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            using (var res = await client.SendAsync(request, cancellationToken).ConfigureAwait(false))
+            {
+                if (res.StatusCode != HttpStatusCode.OK && res.StatusCode != HttpStatusCode.Accepted)
+                {
+                    var sc = (int)res.StatusCode;
+                }
             }
         }
     }
