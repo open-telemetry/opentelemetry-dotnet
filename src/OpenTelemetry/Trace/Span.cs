@@ -63,6 +63,11 @@ namespace OpenTelemetry.Trace
             this.OwnsActivity = ownsActivity;
             this.IsRecordingEvents = this.Activity.Recorded;
             this.startTimestamp = startTimestamp;
+
+            if (this.IsRecordingEvents)
+            {
+                this.spanProcessor.OnStart(this);
+            }
         }
 
         public Activity Activity { get; }

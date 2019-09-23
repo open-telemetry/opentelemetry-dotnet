@@ -80,8 +80,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             }
 
 
-            Assert.Equal(1, panProcessor.Invocations.Count); // begin and end was called
-            var span = ((Span)panProcessor.Invocations[0].Arguments[0]);
+            Assert.Equal(2, panProcessor.Invocations.Count); // begin and end was called
+            var span = ((Span)panProcessor.Invocations[1].Arguments[0]);
 
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));
@@ -137,8 +137,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 }
             }
 
-            Assert.Equal(1, spanProcessor.Invocations.Count); // begin and end was called
-            var span = ((Span)spanProcessor.Invocations[0].Arguments[0]);
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
 
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal("api/Values/{id}", span.Name);

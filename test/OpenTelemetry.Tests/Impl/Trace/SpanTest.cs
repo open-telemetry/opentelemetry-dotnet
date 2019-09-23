@@ -237,6 +237,8 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(default, span.EndTimestamp);
 
             var startEndMock = Mock.Get<SpanProcessor>(spanProcessor);
+
+            spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
             startEndMock.Verify(s => s.OnEnd(span), Times.Never);
         }
 
@@ -305,6 +307,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(Status.Cancelled, span.Status);
             AssertApproxSameTimestamp(spanEndTime, span.EndTimestamp);
 
+            spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
             spanProcessorMock.Verify(s => s.OnEnd(span), Times.Once);
         }
 
@@ -330,6 +333,7 @@ namespace OpenTelemetry.Trace.Test
             span.End();
             Assert.Equal(Status.Cancelled, span.Status);
 
+            spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
             spanProcessorMock.Verify(s => s.OnEnd(span), Times.Once);
         }
 
@@ -356,6 +360,7 @@ namespace OpenTelemetry.Trace.Test
             span.End();
             Assert.Equal(Status.Aborted, span.Status);
 
+            spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
             spanProcessorMock.Verify(s => s.OnEnd(span), Times.Once);
         }
 

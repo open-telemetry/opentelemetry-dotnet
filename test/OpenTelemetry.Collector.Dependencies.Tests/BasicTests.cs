@@ -70,8 +70,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(1, spanProcessor.Invocations.Count); // begin and end was called
-            var span = ((Span)spanProcessor.Invocations[0].Arguments[0]);
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
 
             Assert.Equal(parent.TraceId, span.Context.TraceId);
             Assert.Equal(parent.SpanId, span.ParentSpanId);

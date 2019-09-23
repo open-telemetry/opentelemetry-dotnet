@@ -20,21 +20,31 @@ namespace OpenTelemetry.Trace.Export
     using System.Threading.Tasks;
     using OpenTelemetry.Trace;
 
+    /// <summary>
+    /// Implements simple span processor that exports spans in OnEnd call without batching.
+    /// </summary>
     public class SimpleSpanProcessor : SpanProcessor
     {
         public SimpleSpanProcessor(SpanExporter exporter) : base(exporter)
         {
         }
 
+        /// <inheritdoc />
+        public override void OnStart(Span span)
+        {
+        }
+
+        /// <inheritdoc />
         public override void OnEnd(Span span)
         {
             // do not await, just start export
-            this.exporter.ExportAsync(new[] { span }, CancellationToken.None);
+            this.Exporter.ExportAsync(new[] { span }, CancellationToken.None);
         }
 
+        /// <inheritdoc />
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            return this.exporter.ShutdownAsync(cancellationToken);
+            return this.Exporter.ShutdownAsync(cancellationToken);
         }
     }
 }

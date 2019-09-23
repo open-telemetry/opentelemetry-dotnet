@@ -80,6 +80,12 @@ namespace OpenTelemetry.Trace.Export.Test
         }
 
         [Fact]
+        public void ThrowsOnNullExporter()
+        {
+            Assert.Throws<ArgumentNullException>(() => new SimpleSpanProcessor(null));
+        }
+
+        [Fact]
         public void ExportDifferentSampledSpans()
         {
             var span1 = CreateSampledEndedSpan(SpanName1);
