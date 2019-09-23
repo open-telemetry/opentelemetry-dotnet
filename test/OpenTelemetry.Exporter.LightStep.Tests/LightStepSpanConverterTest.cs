@@ -15,85 +15,87 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Linq;
 using OpenTelemetry.Exporter.LightStep.Implementation;
 
 namespace OpenTelemetry.Exporter.LightStep.Tests
 {
     using System;
     using System.Diagnostics;
-    using OpenTelemetry.Exporter.LightStep;
-    using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
     using Xunit;
-    
+
     public class LightStepSpanConverterTest
     {
         [Fact]
         public void AllPropertiesShouldTranslate()
         {
-            var startTs = DateTime.Now;
+            var startTs = DateTime.UtcNow;
             var endTs = startTs.AddSeconds(60);
-            var evtTs = DateTime.Now;
+            var evtTs = DateTime.UtcNow;
 
             var traceId = ActivityTraceId.CreateRandom();
-            var spanId = ActivitySpanId.CreateRandom();
             var parentId = ActivitySpanId.CreateRandom();
 
             var traceIdInt = traceId.ToLSTraceId();
-            var spanIdInt = spanId.ToLSSpanId();
             var parentIdInt = parentId.ToLSSpanId();
 
-            var attrs = Attributes.Create(new Dictionary<string, object>
+            var attrs = new Dictionary<string, object>
             {
-                {"stringKey", "foo"}, {"longKey", 1L}, {"doubleKey", 1D}, {"boolKey", true},
-            }, 0);
-            var evts = TimedEvents<IEvent>.Create(new List<IEvent>
+                ["stringKey"] = "foo",
+                ["longKey"] = 1L,
+                ["doubleKey"] = 1D,
+                ["boolKey"] = true,
+            };
+
+            var evts = new List<IEvent>
             {
                 Event.Create(
-                        "evt1",
-                        evtTs,
-                        new Dictionary<string, object>
-                        {
-                            {"key", "value"},
-                        }
+                    "evt1",
+                    evtTs,
+                    new Dictionary<string, object> {{"key", "value"},}
                 ),
                 Event.Create(
                     "evt2",
                     evtTs,
-                    new Dictionary<string, object>
-                    {
-                        {"key", "value"},
-                    }
-                ),
-            }, 0);
+                    new Dictionary<string, object> {{"key", "value"},}
+                )
+            };
+
             var linkedSpanId = ActivitySpanId.CreateRandom();
             var link = Link.FromSpanContext(SpanContext.Create(
                 traceId, linkedSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty));
-            var links = LinkList.Create(new List<ILink> {link}, 0);
-            var spanData = SpanData.Create(
-                SpanContext.Create(
-                    traceId, spanId, ActivityTraceFlags.Recorded, Tracestate.Empty
-                ),
-                parentId,
-                Resource.Empty,
-                "Test",
-                startTs,
-                attrs,
-                evts,
-                links,
-                null,
-                Status.Ok,
-                SpanKind.Client,
-                endTs
-            );
 
-            var lsSpan = spanData.ToLightStepSpan();
-            
+            var span = (Span)Tracing.Tracer
+                .SpanBuilder("Test")
+                .SetParent(SpanContext.Create(traceId, parentId, ActivityTraceFlags.Recorded, Tracestate.Empty))
+                .SetSpanKind(SpanKind.Client)
+                .AddLink(link)
+                .SetStartTimestamp(startTs)
+                .StartSpan();
+
+            var spanIdInt = span.Context.SpanId.ToLSSpanId();
+
+            foreach (var attribute in attrs)
+            {
+                span.SetAttribute(attribute);
+            }
+
+            foreach (var evnt in evts)
+            {
+                span.AddEvent(evnt);
+            }
+
+
+            span.End(endTs);
+            span.Status = Status.Ok;
+
+            var lsSpan = span.ToLightStepSpan();
+
             Assert.Equal("Test", lsSpan.OperationName);
             Assert.Equal(2, lsSpan.Logs.Count);
             Assert.Equal(4, lsSpan.Tags.Count);
-            
+
             Assert.Equal(traceIdInt, lsSpan.SpanContext.TraceId);
             Assert.Equal(spanIdInt, lsSpan.SpanContext.SpanId);
             Assert.Equal(parentIdInt, lsSpan.References[0].SpanContext.SpanId);

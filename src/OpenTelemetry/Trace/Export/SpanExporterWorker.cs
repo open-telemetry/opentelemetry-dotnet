@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace.Export
     internal class SpanExporterWorker : IDisposable
     {
         private readonly int bufferSize;
-        private readonly BlockingCollection<ISpan> spans;
+        private readonly BlockingCollection<Span> spans;
         private readonly ConcurrentDictionary<string, IHandler> serviceHandlers = new ConcurrentDictionary<string, IHandler>();
         private readonly TimeSpan scheduleDelay;
         private bool shutdown = false;
@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Export
         {
             this.bufferSize = bufferSize;
             this.scheduleDelay = TimeSpan.FromSeconds(scheduleDelay.Seconds);
-            this.spans = new BlockingCollection<ISpan>();
+            this.spans = new BlockingCollection<Span>();
         }
 
         public void Dispose()
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace.Export
             this.spans.CompleteAdding();
         }
 
-        internal void AddSpan(ISpan span)
+        internal void AddSpan(Span span)
         {
             if (!this.spans.IsAddingCompleted)
             {
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
-        internal async Task ExportAsync(SpanData export, CancellationToken token)
+        internal async Task ExportAsync(Span export, CancellationToken token)
         {
             var handlers = this.serviceHandlers.Values;
             foreach (var handler in handlers)
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Trace.Export
                 try
                 {
                     // TODO: the async handlers could be run in parallel.
-                    await handler.ExportAsync(new SpanData[] { export });
+                    await handler.ExportAsync(new Span[] { export });
                 }
                 catch (Exception ex)
                 {
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
-        internal async Task ExportAsync(IEnumerable<SpanData> export, CancellationToken token)
+        internal async Task ExportAsync(IEnumerable<Span> export, CancellationToken token)
         {
             var handlers = this.serviceHandlers.Values;
             foreach (var handler in handlers)
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Trace.Export
 
         internal async void Run(object obj)
         {
-            var toExport = new List<SpanData>();
+            var toExport = new List<Span>();
             while (!this.shutdown)
             {
                 try
@@ -131,30 +131,19 @@ namespace OpenTelemetry.Trace.Export
             this.serviceHandlers.TryRemove(name, out var prev);
         }
 
-        internal SpanData ToSpanData(ISpan span)
-        {
-            if (!(span is Span spanImpl))
-            {
-                throw new InvalidOperationException("ISpan not a Span");
-            }
-
-            return spanImpl.ToSpanData();
-        }
-
-        private void BuildList(ISpan item, ICollection<SpanData> toExport)
+        private void BuildList(Span item, ICollection<Span> toExport)
         {
             if (item is Span span)
             {
-                toExport.Add(span.ToSpanData());
+                toExport.Add(span);
             }
 
             // Grab as many as we can
             while (this.spans.TryTake(out item))
             {
-                span = item as Span;
-                if (span != null)
+                if (item != null)
                 {
-                    toExport.Add(span.ToSpanData());
+                    toExport.Add(item);
                 }
 
                 if (toExport.Count >= this.bufferSize)

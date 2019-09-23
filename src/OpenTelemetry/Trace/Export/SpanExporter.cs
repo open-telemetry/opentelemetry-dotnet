@@ -37,13 +37,7 @@ namespace OpenTelemetry.Trace.Export
             this.workerThread.Start();
         }
 
-        internal Thread ServiceExporterThread
-        {
-            get
-            {
-                return this.workerThread;
-            }
-        }
+        internal Thread ServiceExporterThread => this.workerThread;
 
         public static ISpanExporter Create(int bufferSize = 32, TimeSpan? scheduleDelay = null)
         {
@@ -51,13 +45,13 @@ namespace OpenTelemetry.Trace.Export
             return new SpanExporter(worker);
         }
 
-        public override void AddSpan(ISpan span)
+        public override void AddSpan(Span span)
         {
             this.worker.AddSpan(span);
         }
 
         /// <inheritdoc/>
-        public override Task ExportAsync(SpanData export, CancellationToken token)
+        public override Task ExportAsync(Span export, CancellationToken token)
         {
             return this.worker.ExportAsync(export, token);
         }

@@ -21,11 +21,11 @@ namespace OpenTelemetry.Trace.Export
 
     internal sealed class NoopSpanExporter : ISpanExporter
     {
-        public void AddSpan(ISpan span)
+        public void AddSpan(Span span)
         {
         }
 
-        public Task ExportAsync(SpanData export, CancellationToken token)
+        public Task ExportAsync(Span export, CancellationToken token)
         {
             return Task.CompletedTask;
         }

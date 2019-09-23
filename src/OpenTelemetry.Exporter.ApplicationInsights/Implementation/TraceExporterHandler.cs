@@ -40,14 +40,14 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             this.serviceEndpoint = telemetryConfiguration.TelemetryChannel.EndpointAddress;
         }
 
-        public Task ExportAsync(IEnumerable<SpanData> spanDataList)
+        public Task ExportAsync(IEnumerable<Span> spanDataList)
         {
             foreach (var span in spanDataList)
             {
                 bool shouldExport = true;
                 string httpUrlAttr = null;
 
-                foreach (var attr in span.Attributes.AttributeMap)
+                foreach (var attr in span.Attributes)
                 {
                     if (attr.Key == "http.url")
                     {
@@ -109,7 +109,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                 string httpRouteAttr = null;
                 string httpPortAttr = null;
 
-                foreach (var attr in span.Attributes.AttributeMap)
+                foreach (var attr in span.Attributes)
                 {
                     switch (attr.Key)
                     {
@@ -184,11 +184,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     request.ResponseCode = resultCode;
                 }
 
-                if (span.Links.Links.Count() != 0)
+                if (span.Links.Count() != 0)
                 {
                     var linksJson = new StringBuilder();
                     linksJson.Append('[');
-                    foreach (var link in span.Links.Links)
+                    foreach (var link in span.Links)
                     {
                         var linkTraceId = link.Context.TraceId.ToHexString();
 
@@ -222,7 +222,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     result.Properties["_MS.links"] = linksJson.ToString();
                 }
 
-                foreach (var t in span.Events.Events)
+                foreach (var t in span.Events)
                 {
                     var log = new TraceTelemetry(t.Name);
 
@@ -295,7 +295,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             props.Add(n, value);
         }
 
-        private void ExtractGenericProperties(SpanData span,  out string name, out string resultCode, out string statusDescription, out string traceId, out string spanId, out string parentId, out Tracestate tracestate, out bool? success, out TimeSpan duration)
+        private void ExtractGenericProperties(Span span,  out string name, out string resultCode, out string statusDescription, out string traceId, out string spanId, out string parentId, out Tracestate tracestate, out bool? success, out TimeSpan duration)
         {
             name = span.Name;
 
