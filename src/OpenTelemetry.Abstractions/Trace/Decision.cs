@@ -38,14 +38,16 @@ namespace OpenTelemetry.Trace
         /// Initializes a new instance of the <see cref="Decision"/> struct.
         /// </summary>
         /// <param name="isSampled">True if sampled, false otherwise.</param>
-        /// <param name="attributes">Attributes associated with the sampling decision.</param>
+        /// <param name="attributes">Attributes associated with the sampling decision. Attributes list passed to
+        /// this method must be imutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
         public Decision(bool isSampled, IEnumerable<KeyValuePair<string, object>> attributes)
         {
             this.IsSampled = isSampled;
 
-            // TODO: it's a great thing to copy the list. But may not worth it as it
-            // makes another memory allocation.
-            this.Attributes = new List<KeyValuePair<string, object>>(attributes);
+            // Note: Decision object takes ownership of the collection.
+            // Current implementation has no means to ensure the collection will not be modified by the caller.
+            // If this behavior will be abused we must switch to cloning of the collection.
+            this.Attributes = attributes;
         }
 
         /// <summary>

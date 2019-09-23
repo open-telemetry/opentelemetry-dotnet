@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Sampler.Internal
         /// <inheritdoc />
         public Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ILink> links)
         {
-            return Samplers.AlwaysOffDecision;
+            return new Decision(false);
         }
 
         /// <inheritdoc/>

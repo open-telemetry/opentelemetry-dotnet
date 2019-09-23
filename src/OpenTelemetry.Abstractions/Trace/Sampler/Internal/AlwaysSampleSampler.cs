@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace.Sampler.Internal
         /// <inheritdoc />
         public Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ILink> parentLinks)
         {
-            return Samplers.AlwaysOnDecision;
+            return new Decision(true);
         }
 
         /// <inheritdoc/>

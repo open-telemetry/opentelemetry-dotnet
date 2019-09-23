@@ -30,15 +30,5 @@ namespace OpenTelemetry.Trace.Sampler
         /// Gets the sampler than never samples.
         /// </summary>
         public static ISampler NeverSample { get; } = new Internal.NeverSampleSampler();
-
-        /// <summary>
-        /// Gets the always on sampling decision.
-        /// </summary>
-        public static Decision AlwaysOnDecision { get; } = new Decision(true);
-
-        /// <summary>
-        /// Gets the always off sampling decision.
-        /// </summary>
-        public static Decision AlwaysOffDecision { get; } = new Decision(false);
     }
 }
