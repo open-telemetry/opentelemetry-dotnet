@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Export
 
         public int DroppedAttributesCount { get; }
 
-        public static Attributes Create(IReadOnlyCollection<KeyValuePair<string, object>> attributeMap, int droppedAttributesCount)
+        public static Attributes Create(IEnumerable<KeyValuePair<string, object>> attributeMap, int droppedAttributesCount)
         {
             if (attributeMap == null)
             {

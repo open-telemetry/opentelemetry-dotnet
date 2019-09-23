@@ -20,7 +20,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
     using Newtonsoft.Json;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Internal;
     using OpenTelemetry.Trace.Sampler;
     using System;
     using System.Collections.Generic;
@@ -77,13 +76,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             return result;
         }
 
-        public static IEnumerable<object[]> TestData
-        {
-            get
-            {
-                return readTestCases();
-            }
-        }
+        public static IEnumerable<object[]> TestData => readTestCases();
 
         [Theory]
         [MemberData(nameof(TestData))]
@@ -100,7 +93,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             var startEndHandler = new Mock<IStartEndHandler>();
             var tracer = new Tracer(startEndHandler.Object, TraceConfig.Default);
-            tc.url = NormaizeValues(tc.url, host, port);
+            tc.url = NormalizeValues(tc.url, host, port);
 
             using (serverLifeTime)
             {
@@ -130,16 +123,16 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     }
                     catch (Exception)
                     {
-                        //test case can intentiaonlly send request that will result in exception
+                        //test case can intentionally send request that will result in exception
                     }
                 }
             }
 
             Assert.Equal(2, startEndHandler.Invocations.Count); // begin and end was called
-            var spanData = ((Span)startEndHandler.Invocations[1].Arguments[0]).ToSpanData();
+            var span = ((Span)startEndHandler.Invocations[1].Arguments[0]);
 
-            Assert.Equal(tc.spanName, spanData.Name);
-            Assert.Equal(tc.spanKind, spanData.Kind.ToString());
+            Assert.Equal(tc.spanName, span.Name);
+            Assert.Equal(tc.spanKind, span.Kind.ToString());
 
             var d = new Dictionary<CanonicalCode, string>()
             {
@@ -162,12 +155,12 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 { CanonicalCode.Unauthenticated, "UNAUTHENTICATED"},
             };
 
-            Assert.Equal(tc.spanStatus, d[spanData.Status.CanonicalCode]);
+            Assert.Equal(tc.spanStatus, d[span.Status.CanonicalCode]);
 
-            var normilizedAttributes = spanData.Attributes.AttributeMap.ToDictionary(x => x.Key, x => x.Value.ToString());
-            tc.spanAttributes = tc.spanAttributes.ToDictionary(x => x.Key, x => NormaizeValues(x.Value, host, port));
+            var normalizedAttributes = span.Attributes.ToDictionary(x => x.Key, x => x.Value.ToString());
+            tc.spanAttributes = tc.spanAttributes.ToDictionary(x => x.Key, x => NormalizeValues(x.Value, host, port));
 
-            Assert.Equal(tc.spanAttributes.ToHashSet(), normilizedAttributes.ToHashSet());
+            Assert.Equal(tc.spanAttributes.ToHashSet(), normalizedAttributes.ToHashSet());
         }
 
         [Fact]
@@ -198,7 +191,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             await t;
         }
 
-        private string NormaizeValues(string value, string host, int port)
+        private string NormalizeValues(string value, string host, int port)
         {
             return value.Replace("{host}", host).Replace("{port}", port.ToString());
         }

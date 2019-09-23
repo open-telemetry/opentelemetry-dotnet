@@ -70,19 +70,19 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             }
 
             Assert.Equal(2, startEndHandler.Invocations.Count); // begin and end was called
-            var spanData = ((Span)startEndHandler.Invocations[1].Arguments[0]).ToSpanData();
+            var span = ((Span)startEndHandler.Invocations[1].Arguments[0]);
 
-            Assert.Equal(parent.TraceId, spanData.Context.TraceId);
-            Assert.Equal(parent.SpanId, spanData.ParentSpanId);
-            Assert.NotEqual(parent.SpanId, spanData.Context.SpanId);
-            Assert.NotEqual(default, spanData.Context.SpanId);
+            Assert.Equal(parent.TraceId, span.Context.TraceId);
+            Assert.Equal(parent.SpanId, span.ParentSpanId);
+            Assert.NotEqual(parent.SpanId, span.Context.SpanId);
+            Assert.NotEqual(default, span.Context.SpanId);
 
             Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
             Assert.True(request.Headers.TryGetValues("tracestate", out var tracestates));
             Assert.Single(traceparents);
             Assert.Single(tracestates);
 
-            Assert.Equal($"00-{spanData.Context.TraceId}-{spanData.Context.SpanId}-01", traceparents.Single());
+            Assert.Equal($"00-{span.Context.TraceId}-{span.Context.SpanId}-01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
         }
 

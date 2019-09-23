@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Export
 
         public int DroppedEventsCount { get; }
 
-        public static ITimedEvents<T> Create(IReadOnlyCollection<T> events, int droppedEventsCount)
+        public static ITimedEvents<T> Create(IEnumerable<T> events, int droppedEventsCount)
         {
             if (events == null)
             {

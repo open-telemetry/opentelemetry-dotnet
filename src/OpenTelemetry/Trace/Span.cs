@@ -19,6 +19,7 @@ namespace OpenTelemetry.Trace
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
@@ -110,51 +111,36 @@ namespace OpenTelemetry.Trace
         public bool IsRecordingEvents { get; }
 
         /// <summary>
+        /// Gets attributes.
+        /// </summary>
+        public IEnumerable<KeyValuePair<string, object>> Attributes => this.attributes ?? Enumerable.Empty<KeyValuePair<string, object>>();
+
+        /// <summary>
+        /// Gets events.
+        /// </summary>
+        public IEnumerable<IEvent> Events => this.events ?? Enumerable.Empty<IEvent>();
+
+        /// <summary>
+        /// Gets links.
+        /// </summary>
+        public IEnumerable<ILink> Links => this.links ?? Enumerable.Empty<ILink>();
+
+        /// <summary>
+        /// Gets span start timestamp.
+        /// </summary>
+        public DateTimeOffset StartTimestamp => this.startTimestamp;
+
+        /// <summary>
+        /// Gets span end timestamp.
+        /// </summary>
+        public DateTimeOffset EndTimestamp => this.endTimestamp;
+
+        /// <summary>
         /// Gets or sets span kind.
         /// </summary>
         internal SpanKind? Kind { get; set; }
 
         internal bool OwnsActivity { get; }
-
-        private EvictingQueue<KeyValuePair<string, object>> InitializedAttributes
-        {
-            get
-            {
-                if (this.attributes == null)
-                {
-                    this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.traceConfig.MaxNumberOfAttributes);
-                }
-
-                return this.attributes;
-            }
-        }
-
-        private EvictingQueue<IEvent> InitializedEvents
-        {
-            get
-            {
-                if (this.events == null)
-                {
-                    this.events =
-                        new EvictingQueue<IEvent>(this.traceConfig.MaxNumberOfEvents);
-                }
-
-                return this.events;
-            }
-        }
-
-        private EvictingQueue<ILink> InitializedLinks
-        {
-            get
-            {
-                if (this.links == null)
-                {
-                    this.links = new EvictingQueue<ILink>(this.traceConfig.MaxNumberOfLinks);
-                }
-
-                return this.links;
-            }
-        }
 
         private Status StatusWithDefault => this.status.IsValid ? this.status : Status.Ok;
 
@@ -185,7 +171,12 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedAttributes.AddEvent(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
+                if (this.attributes == null)
+                {
+                    this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.traceConfig.MaxNumberOfAttributes);
+                }
+
+                this.attributes.AddEvent(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
             }
         }
 
@@ -210,7 +201,13 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(Event.Create(name, PreciseTimestamp.GetUtcNow()));
+                if (this.events == null)
+                {
+                    this.events =
+                        new EvictingQueue<IEvent>(this.traceConfig.MaxNumberOfEvents);
+                }
+
+                this.events.AddEvent(Event.Create(name, PreciseTimestamp.GetUtcNow()));
             }
         }
 
@@ -240,7 +237,13 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(Event.Create(name, PreciseTimestamp.GetUtcNow(), eventAttributes));
+                if (this.events == null)
+                {
+                    this.events =
+                        new EvictingQueue<IEvent>(this.traceConfig.MaxNumberOfEvents);
+                }
+
+                this.events.AddEvent(Event.Create(name, PreciseTimestamp.GetUtcNow(), eventAttributes));
             }
         }
 
@@ -265,7 +268,13 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedEvents.AddEvent(addEvent);
+                if (this.events == null)
+                {
+                    this.events =
+                        new EvictingQueue<IEvent>(this.traceConfig.MaxNumberOfEvents);
+                }
+
+                this.events.AddEvent(addEvent);
             }
         }
 
@@ -290,7 +299,12 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                this.InitializedLinks.AddEvent(link);
+                if (this.links == null)
+                {
+                    this.links = new EvictingQueue<ILink>(this.traceConfig.MaxNumberOfLinks);
+                }
+
+                this.links.AddEvent(link);
             }
         }
 
@@ -335,9 +349,9 @@ namespace OpenTelemetry.Trace
                 throw new InvalidOperationException("Getting SpanData for a Span without RECORD_EVENTS option.");
             }
 
-            var attributesSpanData = Attributes.Create(this.attributes?.ToReadOnlyCollection(), this.attributes?.DroppedItems ?? 0);
-            var eventsSpanData = TimedEvents<IEvent>.Create(this.events?.ToReadOnlyCollection(), this.events?.DroppedItems ?? 0);
-            var linksSpanData = LinkList.Create(this.links?.ToReadOnlyCollection(), this.links?.DroppedItems ?? 0);
+            var attributesSpanData = Export.Attributes.Create(this.attributes, this.attributes?.DroppedItems ?? 0);
+            var eventsSpanData = TimedEvents<IEvent>.Create(this.events, this.events?.DroppedItems ?? 0);
+            var linksSpanData = LinkList.Create(this.links, this.links?.DroppedItems ?? 0);
 
             return SpanData.Create(
                 this.Context, // TODO avoid using context, use Activity instead

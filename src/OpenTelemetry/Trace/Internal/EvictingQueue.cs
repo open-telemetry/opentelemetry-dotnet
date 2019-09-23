@@ -17,9 +17,10 @@
 namespace OpenTelemetry.Trace.Internal
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
 
-    internal class EvictingQueue<T>
+    internal class EvictingQueue<T> : IEnumerable<T>
     {
         private readonly int maxNumEvents;
         private readonly Queue<T> events;
@@ -40,9 +41,14 @@ namespace OpenTelemetry.Trace.Internal
 
         public int DroppedItems => this.totalRecorded - this.events.Count;
 
-        public IReadOnlyCollection<T> ToReadOnlyCollection()
+        public IEnumerator<T> GetEnumerator()
         {
-            return this.events.ToArray();
+            return this.events.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
         }
 
         internal void AddEvent(T evnt)
