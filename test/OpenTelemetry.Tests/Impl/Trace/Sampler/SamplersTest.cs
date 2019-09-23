@@ -56,7 +56,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                             traceId,
                             spanId,
                             "Another name",
-                            null));
+                            null).IsSampled);
 
             // Not sampled parent.
             Assert.True(
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                             traceId,
                             spanId,
                             "Yet another name",
-                            null));
+                            null).IsSampled);
 
         }
 
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                             traceId,
                             spanId,
                             "bar",
-                            null));
+                            null).IsSampled);
             // Not sampled parent.
             Assert.False(
                     Samplers.NeverSample
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                             traceId,
                             spanId,
                             "quux",
-                            null));
+                            null).IsSampled);
         }
 
         [Fact]
@@ -211,7 +211,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                         notSampledtraceId,
                         ActivitySpanId.CreateRandom(),
                         SPAN_NAME,
-                        null));
+                        null).IsSampled);
             // This traceId will be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is less than probability * Long.MAX_VALUE;
             var sampledtraceId =
@@ -241,7 +241,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                         sampledtraceId,
                         ActivitySpanId.CreateRandom(),
                         SPAN_NAME,
-                        null));
+                        null).IsSampled);
         }
 
         [Fact]
@@ -269,7 +269,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
                     SPAN_NAME,
-                    links))
+                    links).IsSampled)
                 {
                     count++;
                 }

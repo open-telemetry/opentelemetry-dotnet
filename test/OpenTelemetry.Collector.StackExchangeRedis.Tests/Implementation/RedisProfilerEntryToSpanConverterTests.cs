@@ -17,12 +17,15 @@
 
 namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 {
-    using OpenTelemetry.Trace;
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
     using Moq;
+    using OpenTelemetry.Collector.StackExchangeRedis.Tests;
+    using OpenTelemetry.Trace;
+    using OpenTelemetry.Trace.Sampler;
     using StackExchange.Redis.Profiling;
     using Xunit;
-    using System;
-    using OpenTelemetry.Collector.StackExchangeRedis.Tests;
 
     public class RedisProfilerEntryToSpanConverterTests
     {

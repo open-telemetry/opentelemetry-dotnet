@@ -67,12 +67,12 @@ namespace OpenTelemetry.Trace.Sampler
         }
 
         /// <inheritdoc />
-        public bool ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ILink> links)
+        public Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ILink> links)
         {
             // If the parent is sampled keep the sampling decision.
             if (parentContext != null && (parentContext.TraceOptions & ActivityTraceFlags.Recorded) != 0)
             {
-                return true;
+                return new Decision(true);
             }
 
             if (links != null)
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Trace.Sampler
                 {
                     if ((parentLink.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
                     {
-                        return true;
+                        return new Decision(true);
                     }
                 }
             }
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Trace.Sampler
             // code is executed in-line for every Span creation).
             Span<byte> traceIdBytes = stackalloc byte[16];
             traceId.CopyTo(traceIdBytes);
-            return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.IdUpperBound;
+            return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.IdUpperBound ? new Decision(true) : new Decision(false);
         }
 
         /// <inheritdoc/>
