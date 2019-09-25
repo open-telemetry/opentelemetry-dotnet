@@ -84,12 +84,15 @@ namespace OpenTelemetry.Exporter.LightStep
             var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
             var jsonReport = JsonConvert.SerializeObject(report);
             request.Content = new StringContent(jsonReport, Encoding.UTF8, "application/json");
-            return this.PostSpansAsync(this.httpClient, request, cancellationToken);
+
+            // avoid cancelling here: this is no return point: if we reached this point
+            // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
+            return this.PostSpansAsync(this.httpClient, request);
         }
 
-        private async Task PostSpansAsync(HttpClient client, HttpRequestMessage request, CancellationToken cancellationToken)
+        private async Task PostSpansAsync(HttpClient client, HttpRequestMessage request)
         {
-            using (var res = await client.SendAsync(request, cancellationToken).ConfigureAwait(false))
+            using (var res = await client.SendAsync(request).ConfigureAwait(false))
             {
                 if (res.StatusCode != HttpStatusCode.OK && res.StatusCode != HttpStatusCode.Accepted)
                 {

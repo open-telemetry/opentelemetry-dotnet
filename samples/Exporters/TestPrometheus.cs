@@ -25,7 +25,6 @@ namespace Samples
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
-    using OpenTelemetry.Trace;
 
     internal class TestPrometheus
     {

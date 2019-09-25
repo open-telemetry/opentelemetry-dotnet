@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Trace.Internal
 {
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
