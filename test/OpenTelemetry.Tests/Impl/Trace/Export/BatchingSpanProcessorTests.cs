@@ -277,7 +277,7 @@ namespace OpenTelemetry.Trace.Export.Test
             }
             
             Assert.Equal(spans.Count, spanExporter.ExportedSpans.Length);
-            Assert.Equal(spans.Count / batchSize, exportCalledCount);
+            Assert.InRange(exportCalledCount, spans.Count / batchSize, spans.Count);
         }
 
         [Fact]
@@ -310,8 +310,9 @@ namespace OpenTelemetry.Trace.Export.Test
                 await spanProcessor.ShutdownAsync(cts.Token);
             }
 
-            Assert.True(spanExporter.ExportedSpans.Length < spans.Count);
-            Assert.Equal(spanExporter.ExportedSpans.Length / batchSize, exportCalledCount);
+            var exportedCount = spanExporter.ExportedSpans.Length;
+            Assert.True(exportedCount < spans.Count);
+            Assert.True(exportedCount / batchSize >= exportCalledCount);
         }
 
         [Fact]
