@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace.Export.Test
     using System.Threading;
     using System.Threading.Tasks;
     using OpenTelemetry.Testing.Export;
-    using OpenTelemetry.Abstractions.Utils;
+    using OpenTelemetry.Utils;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
