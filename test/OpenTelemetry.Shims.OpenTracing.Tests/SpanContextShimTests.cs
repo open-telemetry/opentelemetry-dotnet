@@ -17,6 +17,8 @@
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
     using System;
+    using System.Diagnostics;
+    using OpenTelemetry.Trace;
     using Xunit;
 
     public class SpanContextShimTests
@@ -25,6 +27,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void CtorArgumentValidation()
         {
             Assert.Throws<ArgumentNullException>(() => new SpanContextShim(null));
+            Assert.Throws<ArgumentException>(() => new SpanContextShim(SpanContext.Blank));
+            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContext(default, default, ActivityTraceFlags.None, Tracestate.Empty)));
         }
 
         [Fact]

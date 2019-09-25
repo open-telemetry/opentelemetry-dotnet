@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace
                 bool ownsActivity)
         {
             this.Activity = activity;
-            this.spanContext = new Lazy<SpanContext>(() => SpanContext.Create(
+            this.spanContext = new Lazy<SpanContext>(() => new SpanContext(
                 this.Activity.TraceId, 
                 this.Activity.SpanId, 
                 this.Activity.ActivityTraceFlags, 

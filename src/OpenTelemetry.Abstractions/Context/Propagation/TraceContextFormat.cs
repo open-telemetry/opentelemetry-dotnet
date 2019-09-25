@@ -68,7 +68,7 @@ namespace OpenTelemetry.Context.Propagation
                     this.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
                 }
 
-                return SpanContext.Create(traceId, spanId, traceoptions, tracestate);
+                return new SpanContext(traceId, spanId, traceoptions, tracestate);
             }
             catch (Exception)
             {

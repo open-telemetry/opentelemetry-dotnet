@@ -104,7 +104,7 @@ namespace OpenTelemetry.Context.Propagation
                     traceOptions |= ActivityTraceFlags.Recorded;
                 }
 
-                return SpanContext.Create(traceId, spanId, traceOptions, Tracestate.Empty);
+                return new SpanContext(traceId, spanId, traceOptions, Tracestate.Empty);
             }
             catch (Exception e)
             {
@@ -118,6 +118,11 @@ namespace OpenTelemetry.Context.Propagation
             if (spanContext == null)
             {
                 throw new ArgumentNullException(nameof(spanContext));
+            }
+
+            if (!spanContext.IsValid)
+            {
+                throw new ArgumentException(nameof(spanContext));
             }
 
             if (carrier == null)

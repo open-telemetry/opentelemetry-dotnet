@@ -30,7 +30,14 @@ namespace OpenTelemetry.Trace
         /// </summary>
         public static readonly SpanContext Blank = new SpanContext(default(ActivityTraceId), default(ActivitySpanId), ActivityTraceFlags.None, Tracestate.Empty);
 
-        private SpanContext(ActivityTraceId traceId, ActivitySpanId spanId, ActivityTraceFlags traceOptions, Tracestate tracestate)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SpanContext"/> class with the given identifiers and options.
+        /// </summary>
+        /// <param name="traceId">The <see cref="ActivityTraceId"/> to associate with the <see cref="SpanContext"/>.</param>
+        /// <param name="spanId">The <see cref="ActivitySpanId"/> to associate with the <see cref="SpanContext"/>.</param>
+        /// <param name="traceOptions">The <see cref="TraceOptions"/> to associate with the <see cref="SpanContext"/>.</param>
+        /// <param name="tracestate">The <see cref="Tracestate"/> to associate with the <see cref="SpanContext"/>.</param>
+        public SpanContext(ActivityTraceId traceId, ActivitySpanId spanId, ActivityTraceFlags traceOptions, Tracestate tracestate)
         {
             this.TraceId = traceId;
             this.SpanId = spanId;
@@ -63,19 +70,6 @@ namespace OpenTelemetry.Trace
         /// </summary>
         public Tracestate Tracestate { get; }
 
-        /// <summary>
-        /// Creates a new <see cref="SpanContext"/> with the given identifiers and options.
-        /// </summary>
-        /// <param name="traceId">The <see cref="ActivityTraceId"/> to associate with the <see cref="SpanContext"/>.</param>
-        /// <param name="spanId">The <see cref="ActivitySpanId"/> to associate with the <see cref="SpanContext"/>.</param>
-        /// <param name="traceOptions">The <see cref="TraceOptions"/> to associate with the <see cref="SpanContext"/>.</param>
-        /// <param name="tracestate">The <see cref="Tracestate"/> to associate with the <see cref="SpanContext"/>.</param>
-        /// <returns>A new <see cref="SpanContext"/> with the given identifiers and options.</returns>
-        public static SpanContext Create(ActivityTraceId traceId, ActivitySpanId spanId, ActivityTraceFlags traceOptions, Tracestate tracestate)
-        {
-            return new SpanContext(traceId, spanId, traceOptions, tracestate);
-        }
-
         /// <inheritdoc/>
         public override int GetHashCode()
         {
@@ -83,6 +77,7 @@ namespace OpenTelemetry.Trace
             result = (31 * result) + this.TraceId.GetHashCode();
             result = (31 * result) + this.SpanId.GetHashCode();
             result = (31 * result) + this.TraceOptions.GetHashCode();
+            result = (31 * result) + this.Tracestate.GetHashCode();
             return result;
         }
 
@@ -101,19 +96,9 @@ namespace OpenTelemetry.Trace
 
             var that = (SpanContext)obj;
             return this.TraceId.Equals(that.TraceId)
-                && this.SpanId.Equals(that.SpanId)
-                && this.TraceOptions.Equals(that.TraceOptions);
-        }
-
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return nameof(SpanContext)
-                + "{"
-                + nameof(this.TraceId) + "=" + this.TraceId + ", "
-                + nameof(this.SpanId) + "=" + this.SpanId + ", "
-                + nameof(this.TraceOptions) + "=" + this.TraceOptions
-                + "}";
+                   && this.SpanId.Equals(that.SpanId)
+                   && this.TraceOptions.Equals(that.TraceOptions)
+                   && this.Tracestate.Equals(that.Tracestate);
         }
 
         private bool IsTraceIdValid(ActivityTraceId traceId)
