@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
+    using System.Collections.Generic;
     using System.Linq;
     using Google.Cloud.Trace.V2;
     using Google.Protobuf.WellKnownTypes;
@@ -24,6 +25,19 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
     internal static class SpanExtensions
     {
+        private static readonly IDictionary<string, string> LabelMappings = new Dictionary<string, string>
+        {
+            { "http.method", "/http/method" },
+            { "http.status_code", "/http/status_code" },
+            { "http.user_agent", "/http/user_agent" },
+            { "http.path", "/http/path" },
+            { "http.host", "/http/host" },
+            { "http.url", "/http/url" },
+            { "http.request.size", "/http/request_size" },
+            { "http.response.size", "/http/response_size" },
+            { "http.route", "/http/route" },
+        };
+
         /// <summary>
         /// Translating <see cref="Trace.Span"/> to Stackdriver's Span
         /// According to <see href="https://cloud.google.com/trace/docs/reference/v2/rpc/google.devtools.cloudtrace.v2"/> specifications.
@@ -71,7 +85,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                     AttributeMap =
                     {
                         spanData.Attributes?.ToDictionary(
-                                        s => s.Key,
+                                        s => FormatLabel(s.Key),
                                         s => s.Value?.ToAttributeValue()),
                     },
                 };
@@ -128,6 +142,16 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                         StringValue = new TruncatableString() { Value = av.ToString() },
                     };
             }
+        }
+
+        private static string FormatLabel(string label)
+        {
+            if (LabelMappings.ContainsKey(label))
+            {
+                return LabelMappings[label];
+            }
+
+            return label;
         }
     }
 }

@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Stackriver.Tests
+namespace OpenTelemetry.Exporter.Stackdriver.Tests
 {
     using OpenTelemetry.Exporter.Stackdriver.Implementation;
     using System;
