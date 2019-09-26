@@ -57,7 +57,7 @@ namespace Samples
                 Stats.ViewManager);
             metricExporter.Start();
 
-            var tracer = new Tracer(new SimpleSpanProcessor(spanExporter), TraceConfig.Default);
+            var tracer = new Tracer(new BatchingSpanProcessor(spanExporter), TraceConfig.Default);
 
             var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 

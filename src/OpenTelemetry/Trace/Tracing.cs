@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace
         {
             TraceConfig = TraceConfig.Default;
 
-            SpanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
+            SpanProcessor = new BatchingSpanProcessor(new NoopSpanExporter());
 
             tracer = new Tracer(SpanProcessor, TraceConfig);
         }

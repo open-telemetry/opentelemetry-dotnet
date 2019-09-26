@@ -345,7 +345,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     {
                         { "key", "value" },
                     }
-                )
+                ),
             };
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());

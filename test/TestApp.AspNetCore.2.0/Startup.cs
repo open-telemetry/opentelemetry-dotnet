@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +24,7 @@ using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Sampler;
 using System.Net.Http;
-using OpenTelemetry.Exporter.Ocagent;
+using OpenTelemetry.Exporter.Zipkin;
 using OpenTelemetry.Trace.Config;
 
 namespace TestApp.AspNetCore._2._0
@@ -51,11 +50,9 @@ namespace TestApp.AspNetCore._2._0
             services.AddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
             services.AddSingleton<DependenciesCollector>();
             services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new CallbackMiddleware.CallbackMiddlewareImpl());
-            services.AddSingleton<SpanExporter>(_ => new OcagentTraceExporter(
-                "localhost:55678",
-                Environment.MachineName,
-                "test-app"));
-            services.AddSingleton<SpanProcessor, SimpleSpanProcessor>();
+            services.AddSingleton<ZipkinTraceExporterOptions>(new ZipkinTraceExporterOptions { ServiceName = "tracing-to-zipkin-service" });
+            services.AddSingleton<SpanExporter, ZipkinTraceExporter>();
+            services.AddSingleton<SpanProcessor, BatchingSpanProcessor>();
             services.AddSingleton<TraceConfig>();
             services.AddSingleton<ITracer, Tracer>();
         }

@@ -37,7 +37,7 @@ namespace Samples
                 });
 
             // Create a tracer. You may also need to register it as a global instance to make auto-collectors work..
-            var tracer = new Tracer(new SimpleSpanProcessor(exporter), TraceConfig.Default);
+            var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
 
             // Create a scoped span. It will end automatically when using statement ends
             using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))

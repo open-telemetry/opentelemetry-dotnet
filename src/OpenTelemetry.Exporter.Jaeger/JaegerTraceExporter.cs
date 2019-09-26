@@ -51,7 +51,9 @@ namespace OpenTelemetry.Exporter.Jaeger
 
             foreach (var s in jaegerspans)
             {
-                await this.jaegerAgentUdpBatcher.AppendAsync(s, cancellationToken);
+                // avoid cancelling here: this is no return point: if we reached this point
+                // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
+                await this.jaegerAgentUdpBatcher.AppendAsync(s, CancellationToken.None);
             }
 
             // TODO jaeger status to ExportResult

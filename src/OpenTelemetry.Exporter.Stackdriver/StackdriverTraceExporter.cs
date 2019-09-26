@@ -81,8 +81,10 @@ namespace OpenTelemetry.Exporter.Stackdriver
                 ProjectName = this.googleCloudProjectId,
                 Spans = { spanDataList.Select(s => s.ToSpan(this.googleCloudProjectId.ProjectId)) },
             };
-            
-            await traceWriter.BatchWriteSpansAsync(batchSpansRequest, cancellationToken).ConfigureAwait(false);
+
+            // avoid cancelling here: this is no return point: if we reached this point
+            // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
+            await traceWriter.BatchWriteSpansAsync(batchSpansRequest).ConfigureAwait(false);
 
             // TODO failures
             return ExportResult.Success;

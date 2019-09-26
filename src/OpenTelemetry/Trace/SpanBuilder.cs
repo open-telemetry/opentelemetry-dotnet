@@ -22,6 +22,7 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
+    using OpenTelemetry.Trace.Internal;
 
     /// <inheritdoc/>
     public class SpanBuilder : ISpanBuilder

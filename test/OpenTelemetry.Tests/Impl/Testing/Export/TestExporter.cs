@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Concurrent;
+
 namespace OpenTelemetry.Testing.Export
 {
     using System;
@@ -25,27 +27,22 @@ namespace OpenTelemetry.Testing.Export
 
     public class TestExporter : SpanExporter
     {
-        private readonly bool throwOnExport = false;
-        public TestExporter(bool throwOnExport)
+        private readonly ConcurrentQueue<Span> spanDataList = new ConcurrentQueue<Span>();
+        private readonly Action<IEnumerable<Span>> onExport;
+        public TestExporter(Action<IEnumerable<Span>> onExport)
         {
-            this.throwOnExport = throwOnExport;
+            this.onExport = onExport;
         }
 
-        private readonly object monitor = new object();
-        private readonly List<Span> spanDataList = new List<Span>();
+        public Span[] ExportedSpans => spanDataList.ToArray();
 
         public override Task<ExportResult> ExportAsync(IEnumerable<Span> data, CancellationToken cancellationToken)
         {
-            lock (monitor)
+            this.onExport?.Invoke(data);
+
+            foreach (var s in data)
             {
-                this.spanDataList.AddRange(data);
-
-                if (this.throwOnExport)
-                {
-                    throw new ArgumentException("no export for you");
-                }
-
-                Monitor.PulseAll(monitor);
+                this.spanDataList.Enqueue(s);
             }
 
             return Task.FromResult(ExportResult.Success);
@@ -53,33 +50,12 @@ namespace OpenTelemetry.Testing.Export
 
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            return Task.CompletedTask;
-        }
+            while (spanDataList.TryDequeue(out var _))
+            {
 
-        public IEnumerable<Span> WaitForExport(int numberOfSpans)
-        {
-            var result = new List<Span>();
-            lock (monitor) {
-                while (spanDataList.Count < numberOfSpans)
-                {
-                    try
-                    {
-                        if (!Monitor.Wait(monitor, 5000))
-                        {
-                            return result;
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        // Preserve the interruption status as per guidance.
-                        // Thread.currentThread().interrupt();
-                        return result;
-                    }
-                }
-                result = new List<Span>(spanDataList);
-                spanDataList.Clear();
             }
-            return result;
+
+            return Task.CompletedTask;
         }
     }
 }

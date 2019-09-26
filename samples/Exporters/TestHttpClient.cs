@@ -39,7 +39,7 @@ namespace Samples
                     ServiceName = typeof(Program).Assembly.GetName().Name,
                 });
 
-            var tracer = new Tracer(new SimpleSpanProcessor(exporter), TraceConfig.Default);
+            var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
             using (new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
             {
                 using (tracer.WithSpan(tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartSpan()))

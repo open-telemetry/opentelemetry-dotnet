@@ -22,6 +22,7 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
+    using OpenTelemetry.Trace.Internal;
 
     /// <inheritdoc/>
     public sealed class Tracer : ITracer
@@ -40,8 +41,11 @@ namespace OpenTelemetry.Trace
         /// <param name="spanProcessor">Span processor.</param>
         /// <param name="traceConfig">Trace configuration.</param>
         public Tracer(SpanProcessor spanProcessor, TraceConfig traceConfig)
-            : this(spanProcessor, traceConfig, null, null)
         {
+            this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
+            this.ActiveTraceConfig = traceConfig ?? throw new ArgumentNullException(nameof(traceConfig));
+            this.BinaryFormat = new BinaryFormat();
+            this.TextFormat = new TraceContextFormat();
         }
 
         /// <summary>
@@ -53,10 +57,10 @@ namespace OpenTelemetry.Trace
         /// <param name="textFormat">Text format context propagator.</param>
         public Tracer(SpanProcessor spanProcessor, TraceConfig traceConfig, IBinaryFormat binaryFormat, ITextFormat textFormat)
         {
-            this.spanProcessor = spanProcessor ?? new SimpleSpanProcessor(new NoopSpanExporter());
-            this.ActiveTraceConfig = traceConfig;
-            this.BinaryFormat = binaryFormat ?? new BinaryFormat();
-            this.TextFormat = textFormat ?? new TraceContextFormat();
+            this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
+            this.ActiveTraceConfig = traceConfig ?? throw new ArgumentNullException(nameof(traceConfig));
+            this.BinaryFormat = binaryFormat ?? throw new ArgumentNullException(nameof(binaryFormat));
+            this.TextFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
         }
 
         /// <inheritdoc/>
