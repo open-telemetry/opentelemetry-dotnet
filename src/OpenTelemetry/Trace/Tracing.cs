@@ -16,11 +16,8 @@
 
 namespace OpenTelemetry.Trace
 {
-    using System.Runtime.CompilerServices;
-    using OpenTelemetry.Internal;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Internal;
 
     /// <summary>
     /// Class that manages a global instance of the <see cref="Tracer"/>.
@@ -32,18 +29,11 @@ namespace OpenTelemetry.Trace
 
         internal Tracing()
         {
-            IEventQueue eventQueue = new SimpleEventQueue();
+            TraceConfig = TraceConfig.Default;
 
-            TraceConfig = new Config.TraceConfig();
+            SpanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
 
-            SpanExporter = Export.SpanExporter.Create();
-
-            IStartEndHandler startEndHandler =
-                new StartEndHandler(
-                    SpanExporter,
-                    eventQueue);
-
-            tracer = new Tracer(startEndHandler, TraceConfig);
+            tracer = new Tracer(SpanProcessor, TraceConfig);
         }
 
         /// <summary>   
@@ -54,11 +44,11 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the exporter to use to upload spans.
         /// </summary>
-        public static ISpanExporter SpanExporter { get; private set; }
+        public static SpanProcessor SpanProcessor { get; private set; }
 
         /// <summary>
         /// Gets the trace config.
         /// </summary>
-        public static ITraceConfig TraceConfig { get; private set; }
+        public static TraceConfig TraceConfig { get; private set; }
     }
 }

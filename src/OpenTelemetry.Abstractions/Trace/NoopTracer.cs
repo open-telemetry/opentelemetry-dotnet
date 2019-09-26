@@ -54,14 +54,5 @@ namespace OpenTelemetry.Trace
         {
             return new NoopSpanBuilder(spanName);
         }
-
-        /// <inheritdoc/>
-        public void RecordSpanData(SpanData span)
-        {
-            if (span == null)
-            {
-                throw new ArgumentNullException(nameof(span));
-            }
-        }
     }
 }

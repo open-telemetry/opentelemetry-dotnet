@@ -1,4 +1,4 @@
-﻿// <copyright file="NoopSpanExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SimpleSpanProcessor.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,23 +16,35 @@
 
 namespace OpenTelemetry.Trace.Export
 {
-    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using OpenTelemetry.Trace;
 
-    /// <inheritdoc />
-    internal sealed class NoopSpanExporter : SpanExporter
+    /// <summary>
+    /// Implements simple span processor that exports spans in OnEnd call without batching.
+    /// </summary>
+    public class SimpleSpanProcessor : SpanProcessor
     {
-        /// <inheritdoc />
-        public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
+        public SimpleSpanProcessor(SpanExporter exporter) : base(exporter)
         {
-            return Task.FromResult(ExportResult.Success);
+        }
+
+        /// <inheritdoc />
+        public override void OnStart(Span span)
+        {
+        }
+
+        /// <inheritdoc />
+        public override void OnEnd(Span span)
+        {
+            // do not await, just start export
+            this.Exporter.ExportAsync(new[] { span }, CancellationToken.None);
         }
 
         /// <inheritdoc />
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            return Task.CompletedTask;
+            return this.Exporter.ShutdownAsync(cancellationToken);
         }
     }
 }

@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System;
+
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
     using System.Collections.Generic;
@@ -75,6 +78,11 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             this.HasEnded = true;
         }
 
+        public void End(DateTimeOffset endTimestamp)
+        {
+            this.End();
+        }
+
         public void SetAttribute(string key, string value)
         {
             this.SetAttribute<string>(key, value);
@@ -116,9 +124,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             {
                 this.Name = name;
                 this.Attributes = attributes;
+                this.Timestamp = default;
             }
 
             public string Name { get; }
+
+            public DateTimeOffset Timestamp { get; }
 
             public IDictionary<string, object> Attributes { get; }
         }

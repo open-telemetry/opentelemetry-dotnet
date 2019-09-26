@@ -1,4 +1,4 @@
-﻿// <copyright file="TestHandler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,25 +23,42 @@ namespace OpenTelemetry.Testing.Export
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
-    public class TestHandler : IHandler
+    public class TestExporter : SpanExporter
     {
-        private readonly object monitor = new object();
-        private readonly List<SpanData> spanDataList = new List<SpanData>();
+        private readonly bool throwOnExport = false;
+        public TestExporter(bool throwOnExport)
+        {
+            this.throwOnExport = throwOnExport;
+        }
 
-        public Task ExportAsync(IEnumerable<SpanData> data)
+        private readonly object monitor = new object();
+        private readonly List<Span> spanDataList = new List<Span>();
+
+        public override Task<ExportResult> ExportAsync(IEnumerable<Span> data, CancellationToken cancellationToken)
         {
             lock (monitor)
             {
                 this.spanDataList.AddRange(data);
+
+                if (this.throwOnExport)
+                {
+                    throw new ArgumentException("no export for you");
+                }
+
                 Monitor.PulseAll(monitor);
             }
 
+            return Task.FromResult(ExportResult.Success);
+        }
+
+        public override Task ShutdownAsync(CancellationToken cancellationToken)
+        {
             return Task.CompletedTask;
         }
 
-        public IEnumerable<SpanData> WaitForExport(int numberOfSpans)
+        public IEnumerable<Span> WaitForExport(int numberOfSpans)
         {
-            var result = new List<SpanData>();
+            var result = new List<Span>();
             lock (monitor) {
                 while (spanDataList.Count < numberOfSpans)
                 {
@@ -59,7 +76,7 @@ namespace OpenTelemetry.Testing.Export
                         return result;
                     }
                 }
-                result = new List<SpanData>(spanDataList);
+                result = new List<Span>(spanDataList);
                 spanDataList.Clear();
             }
             return result;

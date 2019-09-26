@@ -33,32 +33,69 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromDescription()
         {
+            var approxTimestamp = PreciseTimestamp.GetUtcNow();
             var @event = Event.Create("MyEventText");
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(0, @event.Attributes.Count);
+            Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 20);
+        }
+
+        [Fact]
+        public void FromDescriptionAndDefaultTimestamp()
+        {
+            var approxTimestamp = PreciseTimestamp.GetUtcNow();
+            var @event = Event.Create("MyEventText", default);
+            Assert.Equal("MyEventText", @event.Name);
+            Assert.Equal(0, @event.Attributes.Count);
+            Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 20);
+        }
+
+        [Fact]
+        public void FromDescriptionAndTimestamp()
+        {
+            var exactTimestamp = DateTime.UtcNow.AddSeconds(-100);
+            var @event = Event.Create("MyEventText", exactTimestamp);
+            Assert.Equal("MyEventText", @event.Name);
+            Assert.Equal(0, @event.Attributes.Count);
+            Assert.Equal(exactTimestamp, @event.Timestamp);
         }
 
         [Fact]
         public void FromDescriptionAndAttributes_NullDescription()
         {
-            Assert.Throws<ArgumentNullException>(() => Event.Create(null, new Dictionary<string, object>()));
+            Assert.Throws<ArgumentNullException>(() => Event.Create(null, DateTime.UtcNow, new Dictionary<string, object>()));
         }
 
         [Fact]
         public void FromDescriptionAndAttributes_NullAttributes()
         {
-            Assert.Throws<ArgumentNullException>(() => Event.Create("", null));
+            Assert.Throws<ArgumentNullException>(() => Event.Create("", DateTime.UtcNow, null));
         }
 
         [Fact]
-        public void FromDescriptionAndAttributes()
+        public void FromDescriptionTimestampAndAttributes()
         {
+            var timestamp = DateTime.UtcNow;
             var attributes = new Dictionary<string, object>();
             attributes.Add(
                 "MyStringAttributeKey", "MyStringAttributeValue");
-            var @event = Event.Create("MyEventText", attributes);
+            var @event = Event.Create("MyEventText", timestamp, attributes);
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(attributes, @event.Attributes);
+            Assert.Equal(timestamp, @event.Timestamp);
+        }
+
+        [Fact]
+        public void FromDescriptionDefaultTimestampAndAttributes()
+        {
+            var approxTimestamp = PreciseTimestamp.GetUtcNow();
+            var attributes = new Dictionary<string, object>();
+            attributes.Add(
+                "MyStringAttributeKey", "MyStringAttributeValue");
+            var @event = Event.Create("MyEventText", default, attributes);
+            Assert.Equal("MyEventText", @event.Name);
+            Assert.Equal(attributes, @event.Attributes);
+            Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 20);
         }
 
         [Fact]
@@ -66,7 +103,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var @event =
                 Event.Create(
-                    "MyEventText", new Dictionary<string, object>());
+                    "MyEventText", DateTime.UtcNow, new Dictionary<string, object>());
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(0, @event.Attributes.Count);
         }
@@ -98,7 +135,7 @@ namespace OpenTelemetry.Trace.Test
             var attributes = new Dictionary<string, object>();
             attributes.Add(
                 "MyStringAttributeKey", "MyStringAttributeValue");
-            @event = Event.Create("MyEventText2", attributes);
+            @event = Event.Create("MyEventText2", DateTime.UtcNow, attributes);
             Assert.Contains("MyEventText2", @event.ToString());
             Assert.Contains(string.Join(",", attributes.Select(kvp => $"{kvp.Key}={kvp.Value}")), @event.ToString());
         }

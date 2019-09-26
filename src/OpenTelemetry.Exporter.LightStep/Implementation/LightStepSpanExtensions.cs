@@ -1,4 +1,4 @@
-// <copyright file="LightStepSpanExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="LightStepSpanExtensions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
 
     public static class LightStepSpanExtensions
     {
-        public static LightStepSpan ToLightStepSpan(this SpanData data)
+        public static LightStepSpan ToLightStepSpan(this Span data)
         {
             var duration = data.EndTimestamp - data.StartTimestamp;
             var span = new LightStepSpan();
@@ -44,21 +44,21 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
             {
                 SpanId = spanId, TraceId = traceId,
             };
-            span.StartTimestamp = data.StartTimestamp;
+            span.StartTimestamp = data.StartTimestamp.UtcDateTime;
             span.DurationMicros = Convert.ToUInt64(Math.Abs(duration.Ticks) / 10);
 
-            foreach (var attr in data.Attributes.AttributeMap)
+            foreach (var attr in data.Attributes)
             {
                 span.Tags.Add(new Tag { Key = attr.Key, StringValue = attr.Value.ToString() });
             }
 
-            foreach (var evt in data.Events.Events)
+            foreach (var evt in data.Events)
             {
                 var fields = new List<Tag>();
 
                 // TODO: Make this actually pass attributes in correctly
-                fields.Add(new Tag { Key = evt.Event.Name, StringValue = evt.Event.Attributes.ToString() });
-                span.Logs.Add(new Log { Timestamp = evt.Timestamp, Fields = fields });
+                fields.Add(new Tag { Key = evt.Name, StringValue = evt.Attributes.ToString() });
+                span.Logs.Add(new Log { Timestamp = evt.Timestamp.UtcDateTime, Fields = fields });
             }
 
             return span;

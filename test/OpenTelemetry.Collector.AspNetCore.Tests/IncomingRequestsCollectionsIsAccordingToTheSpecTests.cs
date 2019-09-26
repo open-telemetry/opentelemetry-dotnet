@@ -23,7 +23,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using Microsoft.Extensions.DependencyInjection;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Internal;
+    using OpenTelemetry.Trace.Export;
     using Moq;
     using Microsoft.AspNetCore.TestHost;
     using System;
@@ -52,10 +52,10 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task SuccesfulTemplateControllerCallGeneratesASpan()
+        public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
-            var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default);
 
             // Arrange
             using (var client = this.factory
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
 
                 for (var i = 0; i < 10; i++)
                 {
-                    if (startEndHandler.Invocations.Count == 2)
+                    if (spanProcessor.Invocations.Count == 2)
                     {
                         break;
                     }
@@ -92,12 +92,12 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 }
             }
 
-            Assert.Equal(2, startEndHandler.Invocations.Count); // begin and end was called
-            var spanData = ((Span)startEndHandler.Invocations[0].Arguments[0]).ToSpanData();
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
 
-            Assert.Equal(SpanKind.Server, spanData.Kind);
-            Assert.Equal("/api/values", spanData.Attributes.GetValue("http.path"));
-            Assert.Equal(503L, spanData.Attributes.GetValue("http.status_code"));
+            Assert.Equal(SpanKind.Server, span.Kind);
+            Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));
+            Assert.Equal(503L, span.Attributes.GetValue("http.status_code"));
         }
     }
 }

@@ -19,7 +19,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
     using Moq;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Internal;
+    using OpenTelemetry.Trace.Export;
     using StackExchange.Redis.Profiling;
     using System.Threading.Tasks;
     using Xunit;
@@ -29,10 +29,10 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         [Fact]
         public async void ProfilerSessionUsesTheSameDefault()
         {
-            var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(startEndHandler.Object, new TraceConfig());
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default);
 
-            using (var collector = new StackExchangeRedisCallsCollector(tracer, null, null))
+            using (var collector = new StackExchangeRedisCallsCollector(tracer))
             {
                 var profilerFactory = collector.GetProfilerSessionsFactory();
                 var first = profilerFactory();

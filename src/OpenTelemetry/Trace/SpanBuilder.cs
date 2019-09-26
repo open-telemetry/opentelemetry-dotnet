@@ -21,11 +21,13 @@ namespace OpenTelemetry.Trace
     using System.Diagnostics;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
 
     /// <inheritdoc/>
     public class SpanBuilder : ISpanBuilder
     {
-        private readonly SpanBuilderOptions options;
+        private readonly SpanProcessor spanProcessor;
+        private readonly TraceConfig traceConfig;
         private readonly string name;
 
         private SpanKind kind;
@@ -37,11 +39,13 @@ namespace OpenTelemetry.Trace
         private ISampler sampler;
         private List<ILink> links;
         private bool recordEvents;
+        private DateTimeOffset startTimestamp;
 
-        internal SpanBuilder(string name, SpanBuilderOptions options)
+        internal SpanBuilder(string name, SpanProcessor spanProcessor, TraceConfig traceConfig)
         {
             this.name = name ?? throw new ArgumentNullException(nameof(name));
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
+            this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
+            this.traceConfig = traceConfig ?? throw new ArgumentNullException(nameof(traceConfig));
         }
 
         private enum ContextSource
@@ -197,12 +201,22 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
+        public ISpanBuilder SetStartTimestamp(DateTimeOffset startTimestamp)
+        {
+            this.startTimestamp = startTimestamp;
+            return this;
+        }
+
         /// <inheritdoc/>
         public ISpan StartSpan()
         {
             var activityForSpan = this.CreateActivityForSpan(this.contextSource, this.parentSpan,
                 this.parentSpanContext, this.parentActivity, this.fromActivity);
-            var activeTraceParams = this.options.TraceConfig.ActiveTraceParams;
+
+            if (this.startTimestamp == default)
+            {
+                this.startTimestamp = new DateTimeOffset(activityForSpan.StartTimeUtc);
+            }
 
             bool sampledIn = MakeSamplingDecision(
                 this.parentSpanContext, // it is updated in CreateActivityForSpan
@@ -211,7 +225,7 @@ namespace OpenTelemetry.Trace
                 this.links,
                 activityForSpan.TraceId,
                 activityForSpan.SpanId,
-                activeTraceParams);
+                this.traceConfig);
 
             if (sampledIn || this.recordEvents)
             {
@@ -229,13 +243,15 @@ namespace OpenTelemetry.Trace
                 childTracestate = this.parentSpanContext.Tracestate;
             }
 
-            var span = Span.StartSpan(
-                        activityForSpan,
-                        childTracestate, 
-                        this.kind,
-                        activeTraceParams,
-                        this.options.StartEndHandler,
-                        ownsActivity: this.contextSource != ContextSource.Activity);
+            var span = new Span(
+                activityForSpan,
+                childTracestate,
+                this.kind,
+                this.traceConfig,
+                this.spanProcessor,
+                this.startTimestamp,
+                ownsActivity: this.contextSource != ContextSource.Activity);
+
             if (activityForSpan.OperationName != this.name)
             {
                 span.UpdateName(this.name);
@@ -279,21 +295,21 @@ namespace OpenTelemetry.Trace
             List<ILink> parentLinks,
             ActivityTraceId traceId,
             ActivitySpanId spanId,
-            ITraceParams activeTraceParams)
+            TraceConfig traceConfig)
         {
             // If users set a specific sampler in the SpanBuilder, use it.
             if (sampler != null)
             {
-                return sampler.ShouldSample(parent, traceId, spanId, name, parentLinks);
+                return sampler.ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
             }
 
             // Use the default sampler if this is a root Span or this is an entry point Span (has remote
             // parent).
             if (parent == null || !parent.IsValid)
             {
-                return activeTraceParams
+                return traceConfig
                     .Sampler
-                    .ShouldSample(parent, traceId, spanId, name, parentLinks);
+                    .ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
             }
 
             // Parent is always different than null because otherwise we use the default sampler.

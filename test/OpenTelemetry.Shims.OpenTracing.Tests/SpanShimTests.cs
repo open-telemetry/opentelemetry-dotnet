@@ -311,21 +311,5 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Equal("bar", spanMock.Attributes.Last().Key);
             Assert.Equal("baz", (string)spanMock.Attributes.Last().Value);
         }
-
-        /// <summary>
-        /// Gets the SpanData for a given span instance. This assumes the returned value from GetDefaultSpan() is an actual Span.
-        /// </summary>
-        /// <param name="instance">The instance.</param>
-        /// <returns>an instance of SpanData</returns>
-        internal static SpanData GetSpanData(OpenTelemetry.Trace.ISpan instance)
-        {
-            // TODO An explicit interface or interface method on ISpan for retrieving the immutable properties of a given Span is probably a better approach here.
-            if (instance is Span span)
-            {
-                return span.ToSpanData();
-            }
-
-            return null;
-        }
     }
 }

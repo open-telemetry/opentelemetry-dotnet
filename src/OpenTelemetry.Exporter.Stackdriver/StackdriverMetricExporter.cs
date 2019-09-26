@@ -1,4 +1,4 @@
-﻿// <copyright file="StackdriverExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="StackdriverMetricExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,11 +26,10 @@ namespace OpenTelemetry.Exporter.Stackdriver
     /// <summary>
     /// Implementation of the exporter to Stackdriver.
     /// </summary>
-    public class StackdriverExporter
+    public class StackdriverMetricExporter
     {
         private const string ExporterName = "StackdriverTraceExporter";
 
-        private readonly ISpanExporter exporter;
         private readonly IViewManager viewManager;
         private readonly string projectId;
         private readonly string jsonPath;
@@ -39,36 +38,31 @@ namespace OpenTelemetry.Exporter.Stackdriver
         private bool isInitialized = false;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="StackdriverExporter"/> class.
+        /// Initializes a new instance of the <see cref="StackdriverMetricExporter"/> class.
         /// </summary>
         /// <param name="projectId">Google Cloud ProjectId that is used to send data to Stackdriver.</param>
-        /// <param name="exporter">Exporter to get traces from.</param>
         /// <param name="viewManager">View manager to get the stats from.</param>
-        public StackdriverExporter(
+        public StackdriverMetricExporter(
             string projectId,
-            ISpanExporter exporter,
-            IViewManager viewManager) : this(projectId, null, exporter, viewManager)
+            IViewManager viewManager) : this(projectId, null, viewManager)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="StackdriverExporter"/> class.
+        /// Initializes a new instance of the <see cref="StackdriverMetricExporter"/> class.
         /// </summary>
         /// <param name="projectId">Google Cloud ProjectId that is used to send data to Stackdriver.</param>
-        /// <param name="jsonPath">File path to the json file containing the service credential used to authenticate against Stackdriver APIs.</param>
-        /// <param name="exporter">Exporter to get traces from.</param>
+        /// <param name="jsonPath">File path to the json file containing the service credential used to authenticate against Stackdriver APIs.</param>s
         /// <param name="viewManager">View manager to get the stats from.</param>
-        public StackdriverExporter(
+        public StackdriverMetricExporter(
             string projectId,
             string jsonPath,
-            ISpanExporter exporter,
             IViewManager viewManager)
         {
             GaxPreconditions.CheckNotNullOrEmpty(projectId, "projectId");
 
             this.projectId = projectId;
             this.jsonPath = jsonPath;
-            this.exporter = exporter;
             this.viewManager = viewManager;
         }
 
@@ -82,13 +76,6 @@ namespace OpenTelemetry.Exporter.Stackdriver
                 if (this.isInitialized)
                 {
                     return;
-                }
-
-                // Register trace exporter
-                if (this.exporter != null)
-                {
-                    var traceExporter = new StackdriverTraceExporter(this.projectId);
-                    this.exporter.RegisterHandler(ExporterName, traceExporter);
                 }
 
                 // Register stats(metrics) exporter
@@ -122,12 +109,6 @@ namespace OpenTelemetry.Exporter.Stackdriver
                 if (!this.isInitialized)
                 {
                     return;
-                }
-
-                // Stop tracing exporter
-                if (this.exporter != null)
-                {
-                    this.exporter.UnregisterHandler(ExporterName);
                 }
 
                 // Stop metrics exporter

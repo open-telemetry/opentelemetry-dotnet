@@ -1,4 +1,4 @@
-// <copyright file="JaegerExporterOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerExporterOptions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,6 @@
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    using System;
     using System.Collections.Generic;
 
     public class JaegerExporterOptions

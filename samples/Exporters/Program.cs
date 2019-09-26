@@ -28,7 +28,7 @@ namespace Samples
         /// Main method - invoke this using command line.
         /// For example:
         ///
-        /// Samples.dll zipkin http://localhost:9411/api/v2/spans
+        /// Samples.dll zipkin -u http://localhost:9411/api/v2/spans
         /// Sample.dll appInsights
         /// Sample.dll prometheus.
         /// </summary>

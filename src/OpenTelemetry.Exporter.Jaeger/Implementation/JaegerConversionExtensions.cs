@@ -1,4 +1,4 @@
-// <copyright file="JaegerConversionExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerConversionExtensions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
 
     public static class JaegerConversionExtensions
     {
@@ -43,27 +42,27 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
 
-        public static JaegerSpan ToJaegerSpan(this SpanData span)
+        public static JaegerSpan ToJaegerSpan(this Span span)
         {
             IEnumerable<JaegerTag> jaegerTags = null;
 
-            if (span?.Attributes?.AttributeMap is IEnumerable<KeyValuePair<string, object>> attributeMap)
+            if (span?.Attributes is IEnumerable<KeyValuePair<string, object>> attributeMap)
             {
                 jaegerTags = attributeMap.Select(a => a.ToJaegerTag()).AsEnumerable();
             }
 
             IEnumerable<JaegerLog> jaegerLogs = null;
 
-            if (span?.Events?.Events != null)
+            if (span?.Events != null)
             {
-                jaegerLogs = span.Events.Events.Select(e => e.ToJaegerLog()).AsEnumerable();
+                jaegerLogs = span.Events.Select(e => e.ToJaegerLog()).AsEnumerable();
             }
 
             IEnumerable<JaegerSpanRef> refs = null;
 
-            if (span?.Links?.Links != null)
+            if (span?.Links != null)
             {
-                refs = span.Links.Links.Select(l => l.ToJaegerSpanRef()).Where(l => l != null).AsEnumerable();
+                refs = span.Links.Select(l => l.ToJaegerSpanRef()).Where(l => l != null).AsEnumerable();
             }
 
             var parentSpanId = new Int128(span.ParentSpanId);
@@ -108,10 +107,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.STRING, VStr = attribute.Value.ToString() };
         }
 
-        public static JaegerLog ToJaegerLog(this ITimedEvent<IEvent> timedEvent)
+        public static JaegerLog ToJaegerLog(this IEvent timedEvent)
         {
-            var tags = timedEvent.Event.Attributes.Select(a => a.ToJaegerTag()).ToList();
-            tags.Add(new JaegerTag { Key = "description", VType = JaegerTagType.STRING, VStr = timedEvent.Event.Name });
+            var tags = timedEvent.Attributes.Select(a => a.ToJaegerTag()).ToList();
+            tags.Add(new JaegerTag { Key = "description", VType = JaegerTagType.STRING, VStr = timedEvent.Name });
 
             return new JaegerLog
             {
@@ -134,11 +133,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             };
         }
 
-        public static long ToEpochMicroseconds(this DateTime timestamp)
+        public static long ToEpochMicroseconds(this DateTimeOffset timestamp)
         {
             // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
             // the last digit being off by one for dates that result in negative Unix times
-            long microseconds = timestamp.Ticks / TicksPerMicrosecond;
+            long microseconds = timestamp.UtcDateTime.Ticks / TicksPerMicrosecond;
             return microseconds - UnixEpochMicroseconds;
         }
     }

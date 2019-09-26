@@ -14,29 +14,28 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace.Sampler;
-
 namespace OpenTelemetry.Trace.Test
 {
     using System;
-    using Moq;
     using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Internal;
+    using OpenTelemetry.Trace.Export;
+    using OpenTelemetry.Trace.Sampler;
+
     using Xunit;
 
     public class TracerTest
     {
         private const string SpanName = "MySpanName";
-        private readonly IStartEndHandler startEndHandler;
-        private readonly ITraceConfig traceConfig;
+        private readonly SpanProcessor spanProcessor;
+        private readonly TraceConfig traceConfig;
         private readonly Tracer tracer;
 
 
         public TracerTest()
         {
-            startEndHandler = Mock.Of<IStartEndHandler>();
-            traceConfig = Mock.Of<ITraceConfig>();
-            tracer = new Tracer(startEndHandler, traceConfig);
+            spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
+            traceConfig = TraceConfig.Default;
+            tracer = new Tracer(spanProcessor, traceConfig);
         }
 
         [Fact]
@@ -61,10 +60,6 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetCurrentSpan()
         {
-            var traceParams = Mock.Of<ITraceParams>();
-            Mock.Get(traceParams).Setup(p => p.Sampler).Returns(Samplers.AlwaysSample);
-            Mock.Get(traceConfig).Setup(c => c.ActiveTraceParams).Returns(traceParams);
-
             var span = tracer.SpanBuilder("foo").StartSpan();
             using (tracer.WithSpan(span))
             {
@@ -89,6 +84,22 @@ namespace OpenTelemetry.Trace.Test
         public void GetBinaryFormat()
         {
             Assert.NotNull(tracer.BinaryFormat);
+        }
+
+        [Fact]
+        public void GetActiveConfig()
+        {
+            var config = new TraceConfig(Samplers.NeverSample);
+            var tracer = new Tracer(spanProcessor, config);
+            Assert.Equal(config, tracer.ActiveTraceConfig);
+        }
+
+        [Fact]
+        public void SetActiveConfig()
+        {
+            var config = new TraceConfig(Samplers.NeverSample);
+            tracer.ActiveTraceConfig = config;
+            Assert.Equal(config, tracer.ActiveTraceConfig);
         }
 
         // TODO test for sampler

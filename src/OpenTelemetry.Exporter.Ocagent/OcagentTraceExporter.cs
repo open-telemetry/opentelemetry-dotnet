@@ -1,4 +1,4 @@
-﻿// <copyright file="TraceExporterHandler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="OcagentTraceExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Ocagent.Implementation
+namespace OpenTelemetry.Exporter.Ocagent
 {
     using System;
     using System.Collections.Concurrent;
@@ -28,25 +28,27 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
     using Grpc.Core;
 
+    using OpenTelemetry.Exporter.Ocagent.Implementation;
     using OpenTelemetry.Proto.Agent.Common.V1;
     using OpenTelemetry.Proto.Agent.Trace.V1;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
-    internal class TraceExporterHandler : IHandler, IDisposable
+    // TODO support async exporting and results
+    public class OcagentTraceExporter : SpanExporter, IDisposable
     {
         private const uint MaxSpanBatchSize = 32;
         private readonly Channel channel;
         private readonly OpenTelemetry.Proto.Agent.Trace.V1.TraceService.TraceServiceClient traceClient;
-        private readonly ConcurrentQueue<SpanData> spans = new ConcurrentQueue<SpanData>();
+        private readonly ConcurrentQueue<Span> spans = new ConcurrentQueue<Span>();
         private readonly Node node;
         private readonly uint spanBatchSize;
         private CancellationTokenSource cts;
         private Task runTask;
 
-        public TraceExporterHandler(string agentEndpoint, string hostName, string serviceName, ChannelCredentials credentials, uint spanBatchSize = MaxSpanBatchSize)
+        public OcagentTraceExporter(string agentEndpoint, string hostName, string serviceName, ChannelCredentials credentials = null, uint spanBatchSize = MaxSpanBatchSize)
         {
-            this.channel = new Channel(agentEndpoint, credentials);
+            this.channel = new Channel(agentEndpoint, credentials ?? ChannelCredentials.Insecure);
             this.traceClient = new TraceService.TraceServiceClient(this.channel);
             this.spanBatchSize = spanBatchSize;
 
@@ -61,8 +63,8 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                 LibraryInfo = new LibraryInfo
                 {
                     Language = LibraryInfo.Types.Language.CSharp,
-                    CoreLibraryVersion = GetAssemblyVersion(typeof(SpanData).Assembly),
-                    ExporterVersion = GetAssemblyVersion(typeof(OcagentExporter).Assembly),
+                    CoreLibraryVersion = GetAssemblyVersion(typeof(Span).Assembly),
+                    ExporterVersion = GetAssemblyVersion(typeof(OcagentTraceExporter).Assembly),
                 },
                 ServiceInfo = new ServiceInfo
                 {
@@ -73,24 +75,44 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             this.Start();
         }
 
-        public async Task ExportAsync(IEnumerable<SpanData> spanDataList)
+        public override async Task<ExportResult> ExportAsync(IEnumerable<Span> spanDataList, CancellationToken cancellationToken)
         {
-            await Task.Run(() =>
-            {
-                if (this.cts != null && !this.cts.IsCancellationRequested)
+            await Task.Run(
+                () =>
                 {
-                    foreach (var spanData in spanDataList)
+                    if (this.cts != null && !this.cts.IsCancellationRequested)
                     {
-                        // TODO back-pressure on the queue
-                        this.spans.Enqueue(spanData);
+                        foreach (var spanData in spanDataList)
+                        {
+                            // TODO back-pressure on the queue
+                            this.spans.Enqueue(spanData);
+                        }
                     }
-                }
-            });
+                },
+                cancellationToken);
+
+            return ExportResult.Success;
+        }
+
+        public override async Task ShutdownAsync(CancellationToken cancellationToken)
+        {
+            // TODO support cancellation based on cancellationToken
+            if (this.cts != null)
+            {
+                this.cts.Cancel(false);
+
+                // ignore all exceptions
+                await this.runTask.ContinueWith(t => { }).ConfigureAwait(false);
+
+                this.cts.Dispose();
+                this.cts = null;
+                this.runTask = null;
+            }
         }
 
         public void Dispose()
         {
-            this.StopAsync().Wait();
+            this.ShutdownAsync(CancellationToken.None).Wait();
         }
 
         private static string GetAssemblyVersion(Assembly assembly)
@@ -106,21 +128,6 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
             this.cts = new CancellationTokenSource();
             this.runTask = this.RunAsync(this.cts.Token);
-        }
-
-        private async Task StopAsync()
-        {
-            if (this.cts != null)
-            {
-                this.cts.Cancel(false);
-
-                // ignore all exceptions
-                await this.runTask.ContinueWith(t => { }).ConfigureAwait(false);
-
-                this.cts.Dispose();
-                this.cts = null;
-                this.runTask = null;
-            }
         }
 
         private async Task RunAsync(CancellationToken cancellationToken)

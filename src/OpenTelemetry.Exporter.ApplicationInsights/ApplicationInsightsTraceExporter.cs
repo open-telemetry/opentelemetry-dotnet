@@ -1,4 +1,4 @@
-﻿// <copyright file="TraceExporterHandler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ApplicationInsightsTraceExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
+namespace OpenTelemetry.Exporter.ApplicationInsights
 {
     using System;
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.ApplicationInsights;
     using Microsoft.ApplicationInsights.DataContracts;
@@ -29,25 +30,25 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
-    internal class TraceExporterHandler : IHandler
+    public class ApplicationInsightsTraceExporter : SpanExporter, IDisposable
     {
         private readonly TelemetryClient telemetryClient;
         private readonly string serviceEndpoint;
 
-        public TraceExporterHandler(TelemetryConfiguration telemetryConfiguration)
+        public ApplicationInsightsTraceExporter(TelemetryConfiguration telemetryConfiguration)
         {
             this.telemetryClient = new TelemetryClient(telemetryConfiguration);
             this.serviceEndpoint = telemetryConfiguration.TelemetryChannel.EndpointAddress;
         }
 
-        public Task ExportAsync(IEnumerable<SpanData> spanDataList)
+        public override Task<ExportResult> ExportAsync(IEnumerable<Span> spanDataList, CancellationToken cancellationToken)
         {
             foreach (var span in spanDataList)
             {
                 bool shouldExport = true;
                 string httpUrlAttr = null;
 
-                foreach (var attr in span.Attributes.AttributeMap)
+                foreach (var attr in span.Attributes)
                 {
                     if (attr.Key == "http.url")
                     {
@@ -109,7 +110,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                 string httpRouteAttr = null;
                 string httpPortAttr = null;
 
-                foreach (var attr in span.Attributes.AttributeMap)
+                foreach (var attr in span.Attributes)
                 {
                     switch (attr.Key)
                     {
@@ -184,11 +185,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     request.ResponseCode = resultCode;
                 }
 
-                if (span.Links.Links.Count() != 0)
+                if (span.Links.Count() != 0)
                 {
                     var linksJson = new StringBuilder();
                     linksJson.Append('[');
-                    foreach (var link in span.Links.Links)
+                    foreach (var link in span.Links)
                     {
                         var linkTraceId = link.Context.TraceId.ToHexString();
 
@@ -219,19 +220,19 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     }
 
                     linksJson.Append("]");
-                    result.Properties["links"] = linksJson.ToString();
+                    result.Properties["_MS.links"] = linksJson.ToString();
                 }
 
-                foreach (var t in span.Events.Events)
+                foreach (var t in span.Events)
                 {
-                    var log = new TraceTelemetry(t.Event.Name);
+                    var log = new TraceTelemetry(t.Name);
 
                     if (t.Timestamp != null)
                     {
                         log.Timestamp = t.Timestamp;
                     }
 
-                    foreach (var attr in t.Event.Attributes)
+                    foreach (var attr in t.Attributes)
                     {
                         var value = attr.Value.ToString();
 
@@ -279,7 +280,19 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                 this.telemetryClient.Track(result);
             }
 
+            return Task.FromResult(ExportResult.Success);
+        }
+
+        public override Task ShutdownAsync(CancellationToken cancellationToken)
+        {
+            // TODO cancellation support
+            this.telemetryClient.Flush();
             return Task.CompletedTask;
+        }
+
+        public void Dispose()
+        {
+            this.ShutdownAsync(CancellationToken.None).ContinueWith(_ => { }).Wait();
         }
 
         private static void AddPropertyWithAdjustedName(IDictionary<string, string> props, string name, string value)
@@ -295,7 +308,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
             props.Add(n, value);
         }
 
-        private void ExtractGenericProperties(SpanData span,  out string name, out string resultCode, out string statusDescription, out string traceId, out string spanId, out string parentId, out Tracestate tracestate, out bool? success, out TimeSpan duration)
+        private void ExtractGenericProperties(Span span,  out string name, out string resultCode, out string statusDescription, out string traceId, out string spanId, out string parentId, out Tracestate tracestate, out bool? success, out TimeSpan duration)
         {
             name = span.Name;
 

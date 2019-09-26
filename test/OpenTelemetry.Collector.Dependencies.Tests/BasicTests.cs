@@ -21,6 +21,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
     using Moq;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
     using System;
     using System.Diagnostics;
@@ -49,8 +50,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollectorInjectsHeadersAsync()
         {
-            var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, null);
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default, null, null);
 
             var request = new HttpRequestMessage
             {
@@ -69,28 +70,28 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(2, startEndHandler.Invocations.Count); // begin and end was called
-            var spanData = ((Span)startEndHandler.Invocations[1].Arguments[0]).ToSpanData();
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
 
-            Assert.Equal(parent.TraceId, spanData.Context.TraceId);
-            Assert.Equal(parent.SpanId, spanData.ParentSpanId);
-            Assert.NotEqual(parent.SpanId, spanData.Context.SpanId);
-            Assert.NotEqual(default, spanData.Context.SpanId);
+            Assert.Equal(parent.TraceId, span.Context.TraceId);
+            Assert.Equal(parent.SpanId, span.ParentSpanId);
+            Assert.NotEqual(parent.SpanId, span.Context.SpanId);
+            Assert.NotEqual(default, span.Context.SpanId);
 
             Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
             Assert.True(request.Headers.TryGetValues("tracestate", out var tracestates));
             Assert.Single(traceparents);
             Assert.Single(tracestates);
 
-            Assert.Equal($"00-{spanData.Context.TraceId}-{spanData.Context.SpanId}-01", traceparents.Single());
+            Assert.Equal($"00-{span.Context.TraceId}-{span.Context.SpanId}-01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
         }
 
         [Fact]
         public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
         {
-            var startEndHandler = new Mock<IStartEndHandler>();
-            var tracer = new Tracer(startEndHandler.Object, new TraceConfig(), null, null, null);
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default, null, null);
 
             var request = new HttpRequestMessage
             {
@@ -106,7 +107,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(0, startEndHandler.Invocations.Count); 
+            Assert.Equal(0, spanProcessor.Invocations.Count); 
         }
 
         public void Dispose()

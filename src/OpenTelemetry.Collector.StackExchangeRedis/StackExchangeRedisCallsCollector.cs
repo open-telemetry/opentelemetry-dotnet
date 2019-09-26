@@ -18,12 +18,10 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
 {
     using System;
     using System.Collections.Concurrent;
-    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using OpenTelemetry.Collector.StackExchangeRedis.Implementation;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
     using StackExchange.Redis.Profiling;
 
     /// <summary>
@@ -32,8 +30,6 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
     public class StackExchangeRedisCallsCollector : IDisposable
     {
         private readonly ITracer tracer;
-        private readonly ISpanExporter exporter;
-        private readonly ISampler sampler;
 
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly CancellationToken cancellationToken;
@@ -45,13 +41,9 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         /// Initializes a new instance of the <see cref="StackExchangeRedisCallsCollector"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        /// <param name="sampler">Sampler to use to sample dependnecy calls.</param>
-        /// <param name="exporter">TEMPORARY: handler to send data to.</param>
-        public StackExchangeRedisCallsCollector(ITracer tracer, ISampler sampler, ISpanExporter exporter)
+        public StackExchangeRedisCallsCollector(ITracer tracer)
         {
             this.tracer = tracer;
-            this.exporter = exporter;
-            this.sampler = sampler;
 
             this.cancellationTokenSource = new CancellationTokenSource();
             this.cancellationToken = this.cancellationTokenSource.Token;
@@ -104,28 +96,25 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         {
             while (!this.cancellationToken.IsCancellationRequested)
             {
-                var spans = new List<SpanData>();
-
-                RedisProfilerEntryToSpanConverter.DrainSession(null, this.defaultSession.FinishProfiling(), this.sampler, spans);
+                RedisProfilerEntryToSpanConverter.DrainSession(this.tracer, null, this.defaultSession.FinishProfiling());
 
                 foreach (var entry in this.cache)
                 {
                     var span = entry.Key;
+                    ProfilingSession session;
                     if (span.HasEnded)
                     {
-                        this.cache.TryRemove(span, out var session);
-                        RedisProfilerEntryToSpanConverter.DrainSession(span, session.FinishProfiling(), this.sampler, spans);
+                        this.cache.TryRemove(span, out session);
                     }
                     else
                     {
-                        this.cache.TryGetValue(span, out var session);
-                        RedisProfilerEntryToSpanConverter.DrainSession(span, session.FinishProfiling(), this.sampler, spans);
+                        this.cache.TryGetValue(span, out session);
                     }
-                }
 
-                foreach (var s in spans)
-                {
-                    this.exporter.ExportAsync(s, CancellationToken.None).Wait();
+                    if (session != null)
+                    {
+                        RedisProfilerEntryToSpanConverter.DrainSession(this.tracer, span, session.FinishProfiling());
+                    }
                 }
 
                 Thread.Sleep(TimeSpan.FromSeconds(1));

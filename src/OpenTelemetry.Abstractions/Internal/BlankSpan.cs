@@ -160,5 +160,10 @@ namespace OpenTelemetry.Trace
         public void End()
         {
         }
+
+        /// <inheritdoc />
+        public void End(DateTimeOffset endTimestamp)
+        {
+        }
     }
 }

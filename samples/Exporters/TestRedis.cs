@@ -22,36 +22,26 @@ namespace Samples
     using OpenTelemetry.Collector.StackExchangeRedis;
     using OpenTelemetry.Exporter.Zipkin;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Sampler;
+    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Export;
     using StackExchange.Redis;
 
     internal class TestRedis
     {
         internal static object Run(string zipkinUri)
         {
-            // 1. Configure exporter to export traces to Zipkin
+            // Configure exporter to export traces to Zipkin
             var exporter = new ZipkinTraceExporter(
                 new ZipkinTraceExporterOptions()
                 {
                     Endpoint = new Uri(zipkinUri),
                     ServiceName = "tracing-to-zipkin-service",
-                },
-                Tracing.SpanExporter);
-            exporter.Start();
+                });
 
-            // 2. Configure 100% sample rate for the purposes of the demo
-            var traceConfig = Tracing.TraceConfig;
-            var currentConfig = traceConfig.ActiveTraceParams;
-            var newConfig = currentConfig.ToBuilder()
-                .SetSampler(Samplers.AlwaysSample)
-                .Build();
-            traceConfig.UpdateActiveTraceParams(newConfig);
+            // Create a tracer. You may also need to register it as a global instance to make auto-collectors work..
+            var tracer = new Tracer(new SimpleSpanProcessor(exporter), TraceConfig.Default);
 
-            // 3. Tracer is global singleton. You can register it via dependency injection if it exists
-            // but if not - you can use it as follows:
-            var tracer = Tracing.Tracer;
-
-            var collector = new StackExchangeRedisCallsCollector(tracer, null, Tracing.SpanExporter);
+            var collector = new StackExchangeRedisCallsCollector(tracer);
 
             // connect to the server
             var connection = ConnectionMultiplexer.Connect("localhost:6379");
@@ -60,28 +50,24 @@ namespace Samples
             // select a database (by default, DB = 0)
             var db = connection.GetDatabase();
 
-            // 4. Create a scoped span. It will end automatically when using statement ends
+            // Create a scoped span. It will end automatically when using statement ends
             using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))
             {
                 Console.WriteLine("About to do a busy work");
                 for (var i = 0; i < 10; i++)
                 {
-                    DoWork(db);
+                    DoWork(db, tracer);
                 }
             }
 
-            // 5. Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
-            Tracing.SpanExporter.Dispose();
-
+            // Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
+            exporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
             return null;
         }
 
-        private static void DoWork(IDatabase db)
+        private static void DoWork(IDatabase db, Tracer tracer)
         {
-            // 6. Get the global singleton Tracer object
-            var tracer = Tracing.Tracer;
-
-            // 7. Start another span. If another span was already started, it'll use that span as the parent span.
+            // Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be
             // a child span.
             using (tracer.WithSpan(tracer.SpanBuilder("DoWork").StartSpan()))
@@ -103,11 +89,11 @@ namespace Samples
                 }
                 catch (ArgumentOutOfRangeException e)
                 {
-                    // 6. Set status upon error
+                    // Set status upon error
                     span.Status = Status.Internal.WithDescription(e.ToString());
                 }
 
-                // 7. Annotate our span to capture metadata about our operation
+                // Annotate our span to capture metadata about our operation
                 var attributes = new Dictionary<string, object>
                 {
                     { "use", "demo" },

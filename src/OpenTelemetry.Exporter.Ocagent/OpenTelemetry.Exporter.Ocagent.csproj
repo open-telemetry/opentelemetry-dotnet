@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
+    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
     <PackageReference Include="Google.Protobuf" Version="3.6.1" />
     <PackageReference Include="Grpc.Core" Version="1.16.0" />
   </ItemGroup>

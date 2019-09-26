@@ -17,12 +17,15 @@
 namespace OpenTelemetry.Collector.Dependencies
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Net.Http;
+    using OpenTelemetry.Collector.Dependencies.Implementation;
     using OpenTelemetry.Trace;
 
     internal class AzureSdkDiagnosticListener : ListenerHandler<HttpRequestMessage>
     {
+        private static readonly PropertyFetcher LinksPropertyFetcher = new PropertyFetcher("Links");
         private readonly ITracer tracer;
 
         private readonly ISampler sampler;
@@ -44,15 +47,23 @@ namespace OpenTelemetry.Collector.Dependencies
 
         public override void OnStartActivity(Activity current, object valueValue)
         {
-            bool isHttp = false;
             var operationName = current.OperationName;
+            SpanKind spanKind = SpanKind.Internal;
+
             foreach (var keyValuePair in current.Tags)
             {
                 if (keyValuePair.Key == "http.url")
                 {
-                    isHttp = true;
                     operationName = keyValuePair.Value;
                     break;
+                }
+
+                if (keyValuePair.Key == "kind")
+                {
+                    if (Enum.TryParse(keyValuePair.Value, true, out SpanKind parsedSpanKind))
+                    {
+                        spanKind = parsedSpanKind;
+                    }
                 }
             }
 
@@ -60,7 +71,14 @@ namespace OpenTelemetry.Collector.Dependencies
                 .SetCreateChild(false)
                 .SetSampler(this.sampler);
 
-            spanBuilder.SetSpanKind(isHttp ? SpanKind.Client : SpanKind.Internal);
+            var links = LinksPropertyFetcher.Fetch(valueValue) as IEnumerable<Activity> ?? Array.Empty<Activity>();
+
+            foreach (var link in links)
+            {
+                spanBuilder.AddLink(Link.FromSpanContext(SpanContext.Create(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags, Tracestate.Empty)));
+            }
+
+            spanBuilder.SetSpanKind(spanKind);
 
             var span = spanBuilder.StartSpan();
 
