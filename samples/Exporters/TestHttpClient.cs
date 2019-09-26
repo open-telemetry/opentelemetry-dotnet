@@ -21,6 +21,7 @@ namespace Samples
     using System.Threading;
     using OpenTelemetry.Collector.Dependencies;
     using OpenTelemetry.Exporter.Zipkin;
+    using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
@@ -39,8 +40,9 @@ namespace Samples
                     ServiceName = typeof(Program).Assembly.GetName().Name,
                 });
 
-            var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
-            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
+            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(exporter));
+            var tracer = tracerFactory.GetTracer(string.Empty);
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory, Samplers.AlwaysSample))
             {
                 using (tracer.WithSpan(tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartSpan()))
                 {

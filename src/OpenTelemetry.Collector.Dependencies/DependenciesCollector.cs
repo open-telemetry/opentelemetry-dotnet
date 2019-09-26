@@ -19,6 +19,7 @@ namespace OpenTelemetry.Collector.Dependencies
     using System;
     using System.Collections.Generic;
     using System.Net.Http;
+    using System.Reflection;
     using OpenTelemetry.Collector.Dependencies.Implementation;
     using OpenTelemetry.Trace;
 
@@ -33,18 +34,19 @@ namespace OpenTelemetry.Collector.Dependencies
         /// Initializes a new instance of the <see cref="DependenciesCollector"/> class.
         /// </summary>
         /// <param name="options">Configuration options for dependencies collector.</param>
-        /// <param name="tracer">Tracer to record traced with.</param>
-        /// <param name="sampler">Sampler to use to sample dependnecy calls.</param>
-        public DependenciesCollector(DependenciesCollectorOptions options, ITracer tracer, ISampler sampler)
+        /// <param name="tracerFactory">TracerFactory to create a Tracer to record traced with.</param>
+        /// <param name="sampler">Sampler to use to sample dependency calls.</param>
+        public DependenciesCollector(DependenciesCollectorOptions options, ITracerFactory tracerFactory, ISampler sampler)
         {
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber<HttpRequestMessage>(
-                new Dictionary<string, Func<ITracer, Func<HttpRequestMessage, ISampler>, ListenerHandler<HttpRequestMessage>>>()
+                new Dictionary<string, Func<ITracerFactory, Func<HttpRequestMessage, ISampler>, ListenerHandler<HttpRequestMessage>>>()
                 {
-                    { "HttpHandlerDiagnosticListener", (t, s) => new HttpHandlerDiagnosticListener(t, s) },
-                    { "Azure.Clients", (t, s) => new AzureSdkDiagnosticListener("Azure.Clients", t, sampler) },
-                    { "Azure.Pipeline", (t, s) => new AzureSdkDiagnosticListener("Azure.Pipeline", t, sampler) },
+                    { "HttpHandlerDiagnosticListener", (tf, s) => new HttpHandlerDiagnosticListener(tf, s) },
+                    { "Azure.Clients", (tf, s) => new AzureSdkDiagnosticListener("Azure.Clients", version, tf, sampler) },
+                    { "Azure.Pipeline", (tf, s) => new AzureSdkDiagnosticListener("Azure.Pipeline", version, tf, sampler) },
                 },
-                tracer,
+                tracerFactory,
                 x =>
                 {
                     ISampler s = null;

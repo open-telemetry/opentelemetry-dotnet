@@ -15,6 +15,7 @@
 // </copyright>
 
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace.Test
 {
@@ -37,7 +38,7 @@ namespace OpenTelemetry.Trace.Test
         {
             spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
             traceConfig = TraceConfig.Default;
-            tracer = new Tracer(spanProcessor, traceConfig);
+            tracer = new Tracer(spanProcessor, traceConfig, Resource.Empty);
         }
 
         [Fact]
@@ -51,15 +52,17 @@ namespace OpenTelemetry.Trace.Test
         public void BadConstructorArgumentsThrow()
         {
             var noopProc = new SimpleSpanProcessor(new NoopSpanExporter());
-            Assert.Throws<ArgumentNullException>(() => new Tracer(null, TraceConfig.Default));
-            Assert.Throws<ArgumentNullException>(() => new Tracer(null, TraceConfig.Default, new BinaryFormat(), new TraceContextFormat()));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(null, TraceConfig.Default, Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(null, TraceConfig.Default, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null));
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, new BinaryFormat(), new TraceContextFormat()));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, TraceConfig.Default, null, new TraceContextFormat()));
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, TraceConfig.Default, new BinaryFormat(), null));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, TraceConfig.Default, null, new TraceContextFormat(), Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, TraceConfig.Default, new BinaryFormat(), null, Resource.Empty));
 
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, TraceConfig.Default, null));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, TraceConfig.Default, new BinaryFormat(), new TraceContextFormat(), null));
         }
 
         [Fact]
@@ -107,7 +110,7 @@ namespace OpenTelemetry.Trace.Test
         public void GetActiveConfig()
         {
             var config = new TraceConfig(Samplers.NeverSample);
-            var tracer = new Tracer(spanProcessor, config);
+            var tracer = new Tracer(spanProcessor, config, Resource.Empty);
             Assert.Equal(config, tracer.ActiveTraceConfig);
         }
 

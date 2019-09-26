@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Resources;
+
 namespace OpenTelemetry.Trace.Test
 {
     using System;
@@ -38,7 +40,7 @@ namespace OpenTelemetry.Trace.Test
         private readonly ITracer tracer;
         public SpanBuilderTest()
         {
-            tracer = new Tracer(spanProcessor, alwaysSampleTraceConfig);
+            tracer = new Tracer(spanProcessor, alwaysSampleTraceConfig, Resource.Empty);
         }
 
         [Fact]

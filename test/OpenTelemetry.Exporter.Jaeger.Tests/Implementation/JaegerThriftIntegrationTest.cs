@@ -100,7 +100,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     ActivityTraceFlags.Recorded,
                     Tracestate.Empty));
 
-            var span = (Span)Tracing.Tracer
+            var span = (Span)Tracing.TracerFactory.GetTracer("")
                 .SpanBuilder("Name")
                 .SetParent(new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty))
                 .SetSpanKind(SpanKind.Client)
