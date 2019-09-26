@@ -49,7 +49,7 @@ namespace OpenTelemetry.Trace.Export
             {
                 // do not await, just start export
                 // it can still throw in synchronous part
-                this.Exporter.ExportAsync(new[] { span }, CancellationToken.None);
+                _ = this.Exporter.ExportAsync(new[] { span }, CancellationToken.None);
             }
             catch (Exception ex)
             {
