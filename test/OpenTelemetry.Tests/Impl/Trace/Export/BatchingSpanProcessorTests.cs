@@ -353,14 +353,15 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.True(
                 SpinWait.SpinUntil(() =>
                 {
-                    if (exporter.ExportedSpans.Length == spanCount)
+                    if (exporter.ExportedSpans.Length >= spanCount)
                     {
                         return true;
                     }
 
                     Thread.Sleep(0);
                     return false;
-                }, timeout + TimeSpan.FromMilliseconds(20)));
+                }, timeout + TimeSpan.FromMilliseconds(20)),
+                $"Expected at least {spanCount}, got {exporter.ExportedSpans.Length}");
 
             return exporter.ExportedSpans;
         }
