@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
             var link = Link.FromSpanContext(SpanContext.Create(
                 traceId, linkedSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty));
 
-            var span = (Span)Tracing.Tracer
+            var span = (Span)Tracing.TracerFactory.GetTracer("")
                 .SpanBuilder("Test")
                 .SetParent(SpanContext.Create(traceId, parentId, ActivityTraceFlags.Recorded, Tracestate.Empty))
                 .SetSpanKind(SpanKind.Client)

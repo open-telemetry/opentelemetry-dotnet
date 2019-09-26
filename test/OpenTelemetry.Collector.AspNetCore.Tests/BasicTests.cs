@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Resources;
+
 namespace OpenTelemetry.Collector.AspNetCore.Tests
 {
     using Xunit;
@@ -47,7 +49,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
             var panProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracer = new Tracer(panProcessor.Object, TraceConfig.Default);
+            var tracer = new Tracer(panProcessor.Object, TraceConfig.Default, Resource.Empty);
 
             void ConfigureTestServices(IServiceCollection services) =>
                 services.AddSingleton<ITracer>(tracer);
@@ -103,7 +105,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 Tracestate.Empty
                 ));
 
-            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default, new BinaryFormat(), tf.Object);
+            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default, new BinaryFormat(), tf.Object, Resource.Empty);
 
             // Arrange
             using (var client = this.factory

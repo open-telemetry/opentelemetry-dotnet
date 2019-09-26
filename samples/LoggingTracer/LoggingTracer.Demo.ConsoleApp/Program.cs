@@ -9,19 +9,20 @@ namespace LoggingTracer.Demo.ConsoleApp
 
     public class Program
     {
-        private static ITracer tracer = new LoggingTracer();
-
         public static async Task Main(string[] args)
         {
+            var tracerFactory = new LoggingTracerFactory();
+            var tracer = tracerFactory.GetTracer("ConsoleApp", "semver:1.0.0");
+            
             var builder = tracer.SpanBuilder("Main (span1)");
             using (tracer.WithSpan(builder.StartSpan()))
             {
                 await Task.Delay(100);
-                await Foo();
+                await Foo(tracer);
             }
         }
 
-        private static async Task Foo()
+        private static async Task Foo(ITracer tracer)
         {
             var builder = tracer.SpanBuilder("Foo (span2)");
             using (tracer.WithSpan(builder.StartSpan()))

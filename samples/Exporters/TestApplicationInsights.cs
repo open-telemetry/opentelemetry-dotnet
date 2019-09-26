@@ -21,6 +21,7 @@ namespace Samples
     using System.Threading;
     using Microsoft.ApplicationInsights.Extensibility;
     using OpenTelemetry.Exporter.ApplicationInsights;
+    using OpenTelemetry.Resources;
     using OpenTelemetry.Stats;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
@@ -59,7 +60,8 @@ namespace Samples
 
             var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
-            var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
+            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(exporter));
+            var tracer = tracerFactory.GetTracer(string.Empty);
             var spanBuilder = tracer
                 .SpanBuilder("incoming request")
                 .SetRecordEvents(true)

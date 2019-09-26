@@ -1648,7 +1648,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             SpanKind kind,
             Status status)
         {
-            var spanBuilder = Tracing.Tracer
+            var spanBuilder = Tracing.TracerFactory.GetTracer("")
                 .SpanBuilder(name);
 
             if (parentSpanId != default)

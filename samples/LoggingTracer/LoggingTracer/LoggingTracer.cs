@@ -10,6 +10,11 @@ namespace LoggingTracer
 
     public class LoggingTracer : ITracer
     {
+        internal LoggingTracer()
+        {
+            Logger.Log($"Tracer.ctor()");
+        }
+        
         public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
 
         public IBinaryFormat BinaryFormat => new LoggingBinaryFormat();
