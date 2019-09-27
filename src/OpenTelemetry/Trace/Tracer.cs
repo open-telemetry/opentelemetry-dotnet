@@ -80,7 +80,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ISpanBuilder SpanBuilder(string spanName)
         {
-            return new SpanBuilder(spanName, this.spanProcessor, this.ActiveTraceConfig);
+            return new SpanBuilder(spanName, this.spanProcessor, this.ActiveTraceConfig, this.LibraryResource);
         }
 
         public IScope WithSpan(ISpan span)

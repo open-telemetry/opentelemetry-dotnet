@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Resources;
+
 namespace OpenTelemetry.Trace.Export.Test
 {
     using System;
@@ -56,7 +58,8 @@ namespace OpenTelemetry.Trace.Export.Test
                     TraceConfig.Default,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    default);
+                    default,
+                    Resource.Empty);
             span.End();
             return span;
         }
@@ -74,7 +77,8 @@ namespace OpenTelemetry.Trace.Export.Test
                     TraceConfig.Default,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    false);
+                    false,
+                    Resource.Empty);
             span.End();
             return span;
         }
@@ -242,7 +246,8 @@ namespace OpenTelemetry.Trace.Export.Test
                     TraceConfig.Default,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    default);
+                    default,
+                    Resource.Empty);
 
             // does not block
             var sw = Stopwatch.StartNew();

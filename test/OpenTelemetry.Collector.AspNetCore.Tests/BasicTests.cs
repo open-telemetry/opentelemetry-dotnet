@@ -49,10 +49,10 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
             var panProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracer = new Tracer(panProcessor.Object, TraceConfig.Default, Resource.Empty);
+            var tracerFactory = new TracerFactory(panProcessor.Object);
 
             void ConfigureTestServices(IServiceCollection services) =>
-                services.AddSingleton<ITracer>(tracer);
+                services.AddSingleton<ITracerFactory>(tracerFactory);
 
             // Arrange
             using (var client = this.factory
@@ -105,16 +105,14 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 Tracestate.Empty
                 ));
 
-            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default, new BinaryFormat(), tf.Object, Resource.Empty);
+            var tracerFactory = new TracerFactory(spanProcessor.Object) { TextFormat = tf.Object };
 
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices((services) =>
                     {
-                        services.AddSingleton<ITracer>(tracer);
-                        services.AddSingleton<ITextFormat>(tf.Object);
-                        services.AddSingleton<IBinaryFormat>(new BinaryFormat());
+                        services.AddSingleton<ITracerFactory>(tracerFactory);
                     }))
                 .CreateClient())
             {
