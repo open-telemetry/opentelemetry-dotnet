@@ -41,8 +41,23 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ITracer GetTracer(string name, string version = null)
         {
+            lock (this.lck)
+            {
+                var key = string.IsNullOrEmpty(name) ? string.Empty : $"{name}-{version}";
+                if (!this.tracerRegistry.TryGetValue(key, out var tracer))
+                {
+                    var labels = CreateLibraryResourceLabels(name, version);
+                    tracer = new Tracer(this.spanProcessor, this.traceConfig, null, this.TextFormat, Resource.Create(labels));
+                    this.tracerRegistry.Add(key, tracer);
+                }
+                
+                return tracer;
+            }
+        }
+
+        private static Dictionary<string, string> CreateLibraryResourceLabels(string name, string version)
+        {
             var labels = new Dictionary<string, string>();
-            var key = string.Empty;
             if (!string.IsNullOrEmpty(name))
             {
                 labels.Add("name", name);
@@ -50,22 +65,9 @@ namespace OpenTelemetry.Trace
                 {
                     labels.Add("version", version);
                 }
-                
-                key = $"{name}-{version}";
             }
-
-            ITracer tracer;
-            lock (this.lck)
-            {
-                if (!this.tracerRegistry.ContainsKey(key))
-                {
-                    this.tracerRegistry[key] = new Tracer(this.spanProcessor, Tracing.TraceConfig, null, this.TextFormat, Resource.Create(labels));
-                }
-
-                tracer = this.tracerRegistry[key];
-            }
-
-            return tracer;
+            
+            return labels;
         }
     }
 }
