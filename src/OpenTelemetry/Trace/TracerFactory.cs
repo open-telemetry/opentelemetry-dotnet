@@ -17,6 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     using System.Collections.Generic;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
@@ -34,28 +35,31 @@ namespace OpenTelemetry.Trace
             this.spanProcessor = spanProcessor ?? Tracing.SpanProcessor;
             this.traceConfig = traceConfig ?? Tracing.TraceConfig;
         }
-        
+
+        internal ITextFormat TextFormat { get; set; }
+
         /// <inheritdoc/>
         public ITracer GetTracer(string name, string version = null)
         {
             var labels = new Dictionary<string, string>();
+            var key = string.Empty;
             if (!string.IsNullOrEmpty(name))
             {
                 labels.Add("name", name);
-            }
-
-            if (!string.IsNullOrEmpty(version))
-            {
-                labels.Add("version", version);
+                if (!string.IsNullOrEmpty(version))
+                {
+                    labels.Add("version", version);
+                }
+                
+                key = $"{name}-{version}";
             }
 
             ITracer tracer;
-            var key = $"{name}-{version}";
             lock (this.lck)
             {
                 if (!this.tracerRegistry.ContainsKey(key))
                 {
-                    this.tracerRegistry[key] = new Tracer(this.spanProcessor, this.traceConfig, Resource.Create(labels));
+                    this.tracerRegistry[key] = new Tracer(this.spanProcessor, Tracing.TraceConfig, null, this.TextFormat, Resource.Create(labels));
                 }
 
                 tracer = this.tracerRegistry[key];

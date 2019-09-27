@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace.Test
         private TracerFactory tracerFactory = new TracerFactory();
         
         [Fact]
-        public void GetTracerWithEmptyNameAndVersion()
+        public void GetTracer_NoName_NoVersion()
         {
             var tracer = (Tracer)tracerFactory.GetTracer("");
             Assert.False(tracer.LibraryResource.Labels.ContainsKey("name"));
@@ -38,7 +38,15 @@ namespace OpenTelemetry.Trace.Test
         }
         
         [Fact]
-        public void GetTracerWithEmptyVersion()
+        public void GetTracer_NoName_Version()
+        {
+            var tracer = (Tracer)tracerFactory.GetTracer(null, "semver:1.0.0");
+            Assert.False(tracer.LibraryResource.Labels.ContainsKey("name"));
+            Assert.False(tracer.LibraryResource.Labels.ContainsKey("version"));
+        }
+        
+        [Fact]
+        public void GetTracer_Name_NoVersion()
         {
             var tracer = (Tracer)tracerFactory.GetTracer("foo");
             Assert.Equal("foo", tracer.LibraryResource.Labels["name"]);
@@ -46,7 +54,7 @@ namespace OpenTelemetry.Trace.Test
         }
         
         [Fact]
-        public void GetTracerWithNameAndVersion()
+        public void GetTracer_Name_Version()
         {
             var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("foo", tracer.LibraryResource.Labels["name"]);
@@ -63,6 +71,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer5 = tracerFactory.GetTracer("foo", "semver:1.2.3");
             var tracer6 = tracerFactory.GetTracer("");
             var tracer7 = tracerFactory.GetTracer(null);
+            var tracer8 = tracerFactory.GetTracer(null, "semver:1.2.3");
             
             Assert.NotEqual(tracer1, tracer2);
             Assert.NotEqual(tracer1, tracer3);
@@ -70,6 +79,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(tracer1, tracer5);
             Assert.NotEqual(tracer5, tracer6);
             Assert.Equal(tracer6, tracer7);
+            Assert.Equal(tracer7, tracer8);
         }
     }
 }

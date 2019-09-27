@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Resources;
+
 namespace OpenTelemetry.Trace.Test
 {
     using System;
@@ -53,6 +55,15 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
+        public void SpanHoldsSameLibraryResourceAsCreatingTracer()
+        {
+            var tracerFactory = new TracerFactory();
+            var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.0.0");
+            var span = (Span)tracer.SpanBuilder("some span").StartSpan();
+            Assert.Equal(tracer.LibraryResource, span.LibraryResource);
+        }
+
+        [Fact]
         public void GetSpanContextFromActivity()
         {
             var tracestate = Tracestate.Builder.Set("k1", "v1").Build();
@@ -67,7 +78,8 @@ namespace OpenTelemetry.Trace.Test
                     TraceConfig.Default,
                     spanProcessor,
                     default,
-                    false);
+                    false, 
+                    Resource.Empty);
             Assert.NotNull(span.Context);
             Assert.Equal(activity.TraceId, span.Context.TraceId);
             Assert.Equal(activity.SpanId, span.Context.SpanId);
@@ -91,7 +103,8 @@ namespace OpenTelemetry.Trace.Test
                     TraceConfig.Default,
                     spanProcessor,
                     default,
-                    false);
+                    false,
+                    Resource.Empty);
             Assert.NotNull(span.Context);
             Assert.Equal(activity.TraceId, span.Context.TraceId);
             Assert.Equal(activity.SpanId, span.Context.SpanId);
@@ -117,7 +130,8 @@ namespace OpenTelemetry.Trace.Test
                     TraceConfig.Default,
                     spanProcessor,
                     spanStartTime,
-                    false);
+                    false,
+                    Resource.Empty);
             var spanEndTime = PreciseTimestamp.GetUtcNow();
             span.End(spanEndTime);
             // Check that adding trace events after Span#End() does not throw any exception and are not
@@ -157,7 +171,8 @@ namespace OpenTelemetry.Trace.Test
                     TraceConfig.Default,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    false);
+                    false,
+                    Resource.Empty);
             var spanEndTime = PreciseTimestamp.GetUtcNow();
             span.End();
 
@@ -188,7 +203,8 @@ namespace OpenTelemetry.Trace.Test
                     TraceConfig.Default,
                     spanProcessor,
                     spanStartTime,
-                    false);
+                    false,
+                    Resource.Empty);
 
             span.SetAttribute(
                 "MySingleStringAttributeKey",
@@ -261,7 +277,8 @@ namespace OpenTelemetry.Trace.Test
                     TraceConfig.Default,
                     spanProcessor,
                     spanStartTime,
-                    false);
+                    false,
+                    Resource.Empty);
 
             span.SetAttribute(
                 "MySingleStringAttributeKey",
@@ -325,7 +342,8 @@ namespace OpenTelemetry.Trace.Test
                     TraceConfig.Default,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    false);
+                    false,
+                    Resource.Empty);
 
             Assert.Equal(Status.Ok, span.Status);
             ((Span)span).Status = Status.Cancelled;
@@ -351,7 +369,8 @@ namespace OpenTelemetry.Trace.Test
                     TraceConfig.Default,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    false);
+                    false,
+                    Resource.Empty);
 
             Assert.Equal(Status.Ok, span.Status);
             ((Span)span).Status = Status.Cancelled;
@@ -379,7 +398,8 @@ namespace OpenTelemetry.Trace.Test
                     traceConfig,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    false);
+                    false,
+                    Resource.Empty);
             for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
             {
                 IDictionary<string, object> attributes = new Dictionary<string, object>();
@@ -429,7 +449,8 @@ namespace OpenTelemetry.Trace.Test
                     traceConfig,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    false);
+                    false,
+                    Resource.Empty);
             for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
             {
                 IDictionary<String, object> attributes = new Dictionary<String, object>();
@@ -496,7 +517,8 @@ namespace OpenTelemetry.Trace.Test
                     traceConfig,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    false);
+                    false,
+                    Resource.Empty);
 
             var eventTimestamps = new DateTimeOffset[2 * maxNumberOfEvents];
             
@@ -539,7 +561,8 @@ namespace OpenTelemetry.Trace.Test
                     traceConfig,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    false);
+                    false,
+                    Resource.Empty);
             var link = Link.FromSpanContext(contextLink);
             for (var i = 0; i < 2 * maxNumberOfLinks; i++)
             {
@@ -575,7 +598,8 @@ namespace OpenTelemetry.Trace.Test
                     TraceConfig.Default,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    false);
+                    false,
+                    Resource.Empty);
 
             Assert.Throws<ArgumentException>(() => span.Status = new Status());
             Assert.Throws<ArgumentNullException>(() => span.UpdateName(null));
@@ -611,7 +635,8 @@ namespace OpenTelemetry.Trace.Test
                     TraceConfig.Default,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    ownsActivity: true);
+                    ownsActivity: true,
+                    Resource.Empty);
             
             span.End();
             Assert.Same(parentActivity, Activity.Current);
@@ -636,7 +661,8 @@ namespace OpenTelemetry.Trace.Test
                     TraceConfig.Default,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    ownsActivity: false);
+                    ownsActivity: false,
+                    Resource.Empty);
 
             span.End();
             Assert.Equal(recordEvents, span.HasEnded);
@@ -664,7 +690,8 @@ namespace OpenTelemetry.Trace.Test
                     TraceConfig.Default,
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    ownsActivity: ownsActivity);
+                    ownsActivity: ownsActivity,
+                    Resource.Empty);
 
             var anotherActivity = new Activity(SpanName).Start();
             span.End();
