@@ -22,146 +22,122 @@ We encourage contributions. Use tags [up-for-grabs][up-for-grabs-issues] and
 
 ## Packages
 
-### Nightly builds:
+### Nightly builds
+
 Myget feeds:
-- NuGet V3 feed: https://www.myget.org/F/opentelemetry/api/v3/index.json  
+
+- NuGet V3 feed: https://www.myget.org/F/opentelemetry/api/v3/index.json
 - NuGet V2 feed: https://www.myget.org/F/opentelemetry/api/v2 
 
 ### API and implementation
 
-| Package                 | MyGet (CI)       | NuGet (releases) |
-| ----------------------- | ---------------- | -----------------|
+| Package                    | MyGet (CI)                                                                     | NuGet (releases)                                                               |
+| -------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | OpenTelemetry              | [![MyGet Nightly][OpenTelemetry-myget-image]][OpenTelemetry-myget-url]         | [![NuGet Release][OpenTelemetry-nuget-image]][OpenTelemetry-nuget-url]         |
 | OpenTelemetry.Abstractions | [![MyGet Nightly][OpenTelemetry-abs-myget-image]][OpenTelemetry-abs-myget-url] | [![NuGet Release][OpenTelemetry-abs-nuget-image]][OpenTelemetry-abs-nuget-url] |
 
 ### Data Collectors
 
-| Package                 | MyGet (CI)       | NuGet (releases) |
-| ----------------------- | ---------------- | -----------------|
-| Asp.Net Core            | [![MyGet Nightly][OpenTelemetry-collect-aspnetcore-myget-image]][OpenTelemetry-collect-aspnetcore-myget-url]       | [![NuGet Release][OpenTelemetry-collect-aspnetcore-nuget-image]][OpenTelemetry-collect-aspnetcore-nuget-url]   |
-| .Net Core HttpClient    | [![MyGet Nightly][OpenTelemetry-collect-deps-myget-image]][OpenTelemetry-collect-deps-myget-url]                   | [![NuGet Release][OpenTelemetry-collect-deps-nuget-image]][OpenTelemetry-collect-deps-nuget-url]               |
-| StackExchange.Redis     | [![MyGet Nightly][OpenTelemetry-collect-stackexchange-redis-myget-image]][OpenTelemetry-collect-stackexchange-redis-myget-url]    | [![NuGet Release][OpenTelemetry-collect-stackexchange-redis-nuget-image]][OpenTelemetry-collect-stackexchange-redis-nuget-url]|
+| Package                           | MyGet (CI)                                                                                                                     | NuGet (releases)                                                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Asp.Net Core                      | [![MyGet Nightly][OpenTelemetry-collect-aspnetcore-myget-image]][OpenTelemetry-collect-aspnetcore-myget-url]                   | [![NuGet Release][OpenTelemetry-collect-aspnetcore-nuget-image]][OpenTelemetry-collect-aspnetcore-nuget-url]                   |
+| .Net Core HttpClient & Azure SDKs | [![MyGet Nightly][OpenTelemetry-collect-deps-myget-image]][OpenTelemetry-collect-deps-myget-url]                               | [![NuGet Release][OpenTelemetry-collect-deps-nuget-image]][OpenTelemetry-collect-deps-nuget-url]                               |
+| StackExchange.Redis               | [![MyGet Nightly][OpenTelemetry-collect-stackexchange-redis-myget-image]][OpenTelemetry-collect-stackexchange-redis-myget-url] | [![NuGet Release][OpenTelemetry-collect-stackexchange-redis-nuget-image]][OpenTelemetry-collect-stackexchange-redis-nuget-url] |
 
 ### Exporters Packages
 
-| Package                 | MyGet (CI)       | NuGet (releases) |
-| ----------------------- | ---------------- | -----------------|
-| Zipkin                  | [![MyGet Nightly][OpenTelemetry-exporter-zipkin-myget-image]][OpenTelemetry-exporter-zipkin-myget-url]            | [![NuGet release][OpenTelemetry-exporter-zipkin-nuget-image]][OpenTelemetry-exporter-zipkin-nuget-url]            |
-| Prometheus              | [![MyGet Nightly][OpenTelemetry-exporter-prom-myget-image]][OpenTelemetry-exporter-prom-myget-url]                | [![NuGet release][OpenTelemetry-exporter-prom-nuget-image]][OpenTelemetry-exporter-prom-nuget-url]                |
-| Application Insights    | [![MyGet Nightly][OpenTelemetry-exporter-ai-myget-image]][OpenTelemetry-exporter-ai-myget-url]                    | [![NuGet release][OpenTelemetry-exporter-ai-nuget-image]][OpenTelemetry-exporter-ai-nuget-url]                    |
-| Stackdriver             | [![MyGet Nightly][OpenTelemetry-exporter-stackdriver-myget-image]][OpenTelemetry-exporter-stackdriver-myget-url]  | [![NuGet release][OpenTelemetry-exporter-stackdriver-nuget-image]][OpenTelemetry-exporter-stackdriver-nuget-url]  |
+| Package              | MyGet (CI)                                                                                                       | NuGet (releases)                                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Zipkin               | [![MyGet Nightly][OpenTelemetry-exporter-zipkin-myget-image]][OpenTelemetry-exporter-zipkin-myget-url]           | [![NuGet release][OpenTelemetry-exporter-zipkin-nuget-image]][OpenTelemetry-exporter-zipkin-nuget-url]           |
+| Prometheus           | [![MyGet Nightly][OpenTelemetry-exporter-prom-myget-image]][OpenTelemetry-exporter-prom-myget-url]               | [![NuGet release][OpenTelemetry-exporter-prom-nuget-image]][OpenTelemetry-exporter-prom-nuget-url]               |
+| Application Insights | [![MyGet Nightly][OpenTelemetry-exporter-ai-myget-image]][OpenTelemetry-exporter-ai-myget-url]                   | [![NuGet release][OpenTelemetry-exporter-ai-nuget-image]][OpenTelemetry-exporter-ai-nuget-url]                   |
+| Stackdriver          | [![MyGet Nightly][OpenTelemetry-exporter-stackdriver-myget-image]][OpenTelemetry-exporter-stackdriver-myget-url] | [![NuGet release][OpenTelemetry-exporter-stackdriver-nuget-image]][OpenTelemetry-exporter-stackdriver-nuget-url] |
 
 ## OpenTelemetry QuickStart: collecting data
 
 You can use OpenTelemetry API to instrument code and report data. Or use one of
 automatic data collection modules.
 
-### Using ASP.NET Core incoming requests collector
-
-Incoming requests of ASP.NET Core app can be automatically tracked.
+### Basic Configuration
 
 1. Install packages to your project:
    [OpenTelemetry][OpenTelemetry-nuget-url]
-   [OpenTelemetry.Collector.AspNetCore][OpenTelemetry-collect-aspnetcore-nuget-url]
+   [OpenTelemetry.Exporter.Zipkin][OpenTelemetry-exporter-zipkin-nuget-url]
 
-2. Make sure `ITracer`, `ISampler`, and `IPropagationComponent` registered in DI.
+2. Create exporter and tracer
 
-    ``` csharp
-    services.AddSingleton<ITracer>(Tracing.Tracer);
+   ```csharp
+    var zipkinExporter = new ZipkinTraceExporter(new ZipkinTraceExporterOptions());
+    var tracer = new Tracer(new BatchingSpanProcessor(zipkinExporter), TraceConfig.Default);
+   ```
+
+### Configuration with DependencyInjection
+
+1. Install packages to your project:
+   [OpenTelemetry][OpenTelemetry-nuget-url]
+   [OpenTelemetry.Collector.AspNetCore][OpenTelemetry-collect-aspnetcore-nuget-url] to collect incoming HTTP requests
+   [OpenTelemetry.Collector.Dependencies](OpenTelemetry-collect-deps-nuget-url) to collect outgoing HTTP requests and Azure SDK calls
+
+2. Make sure `ITracer`, `ISampler`, and `SpanExporter` and `SpanProcessor` are registered in DI.
+
+    ```csharp
     services.AddSingleton<ISampler>(Samplers.AlwaysSample);
-    services.AddSingleton<IPropagationComponent>(new DefaultPropagationComponent());
+    services.AddSingleton<ZipkinTraceExporterOptions>(_ => new ZipkinTraceExporterOptions { ServiceName = "my-service" });
+    services.AddSingleton<SpanExporter, ZipkinTraceExporter>();
+    services.AddSingleton<SpanProcessor, BatchingSpanProcessor>();
+    services.AddSingleton<TraceConfig>();
+    services.AddSingleton<ITracer, Tracer>();
+
+    // you may also configure request and dependencies collectors
+    services.AddSingleton<RequestsCollectorOptions>(new RequestsCollectorOptions());
+    services.AddSingleton<RequestsCollector>();
+
+    services.AddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
+    services.AddSingleton<DependenciesCollector>();
     ```
 
-3. Configure data collection singletons in ConfigureServices method:
+3. Start auto-collectors
 
-    ``` csharp
-    public void ConfigureServices(IServiceCollection services)
+   To start collection, `RequestsCollector` and `DependenciesCollector` need to be resolved.
+
+    ```csharp
+    public void Configure(IApplicationBuilder app, RequestsCollector requestsCollector,  DependenciesCollector dependenciesCollector)
     {
         // ...
-        services.AddSingleton<RequestsCollectorOptions>(new RequestsCollectorOptions());
-        services.AddSingleton<RequestsCollector>();
-    ```
-
-4. Initialize data collection by instantiating singleton in Configure method
-
-    ``` csharp
-    public void Configure(IApplicationBuilder app, /*... other arguments*/ )
-    {
-        // ...
-        var collector = app.ApplicationServices.GetService<RequestsCollector>();
-    ```
-
-### Using Dependencies collector
-
-Outgoing http calls made by .NET Core `HttpClient` can be automatically tracked.
-
-1. Install package to your project:
-   [OpenTelemetry.Collector.Dependencies][OpenTelemetry-collect-deps-nuget-url]
-
-2. Make sure `ITracer`, `ISampler`, and `IPropagationComponent` registered in DI.
-
-    ``` csharp
-    services.AddSingleton<ITracer>(Tracing.Tracer);
-    services.AddSingleton<ISampler>(Samplers.AlwaysSample);
-    services.AddSingleton<IPropagationComponent>(new DefaultPropagationComponent());
-    ```
-
-3. Configure data collection singletons in ConfigureServices method:
-
-    ``` csharp
-    public void ConfigureServices(IServiceCollection services)
-    {
-        // ...
-        services.AddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
-        services.AddSingleton<DependenciesCollector>();
-    ```
-
-4. Initiate data collection by instantiating singleton in Configure method
-
-    ``` csharp
-    public void Configure(IApplicationBuilder app, /*... other arguments*/ )
-    {
-        // ...
-        var depCollector = app.ApplicationServices.GetService<DependenciesCollector>();
+    }
     ```
 
 ### Using StackExchange.Redis collector
 
-Outgoing http calls to Redis made usign StackExchange.Redis library can be automatically tracked.
+Outgoing http calls to Redis made using StackExchange.Redis library can be automatically tracked.
 
 1. Install package to your project:
    [OpenTelemetry.Collector.StackExchangeRedis][OpenTelemetry-collect-stackexchange-redis-nuget-url]
 
-2. Make sure `ITracer`, `ISampler`, and `ISpanExporter` registered in DI.
+2. Make sure `ITracer`, `ISampler`, and `SpanExporter` and `SpanProcessor` are registered in DI.
 
-    ``` csharp
-    services.AddSingleton<ITracer>(Tracing.Tracer);
+    ```csharp
     services.AddSingleton<ISampler>(Samplers.AlwaysSample);
-    services.AddSingleton<ISpanExporter>(Tracing.SpanExporter);
+    services.AddSingleton<ZipkinTraceExporterOptions>(_ => new ZipkinTraceExporterOptions { ServiceName = "my-service" });
+    services.AddSingleton<SpanExporter, ZipkinTraceExporter>();
+    services.AddSingleton<SpanProcessor, BatchingSpanProcessor>();
+    services.AddSingleton<TraceConfig>();
+    services.AddSingleton<ITracer, Tracer>();
+
+    // configure redis collection
+    services.AddSingleton<StackExchangeRedisCallsCollectorOptions>(new StackExchangeRedisCallsCollectorOptions());
+    services.AddSingleton<StackExchangeRedisCallsCollector>();
     ```
 
-3. Configure data collection singletons in ConfigureServices method:
+3. Start auto-collectors
 
-    ``` csharp
-    public void ConfigureServices(IServiceCollection services)
+    To start collection, `StackExchangeRedisCallsCollector` needs to be resolved.
+
+    ```csharp
+    public void Configure(IApplicationBuilder app, StackExchangeRedisCallsCollector redisCollector)
     {
         // ...
-        services.AddSingleton<StackExchangeRedisCallsCollectorOptions>(new StackExchangeRedisCallsCollectorOptions());
-        services.AddSingleton<StackExchangeRedisCallsCollector>();
-    ```
-
-4. Initiate data collection by instantiating singleton in Configure method
-
-    ``` csharp
-    public void Configure(IApplicationBuilder app, /*... other arguments*/ )
-    {
-        // ...
-        var redisCollector = app.ApplicationServices.GetService<StackExchangeRedisCallsCollector>();
-
-        // use collector to configure the profiler
-        ConnectionMultiplexer connection = ConnectionMultiplexer.Connect("localhost:6379");
-        connection.RegisterProfiler(redisCollector.GetProfilerSessionsFactory());
-    ```
+    }
 
 ## OpenTelemetry QuickStart: exporting data
 
@@ -179,27 +155,29 @@ the Compact Thrift API port. You can configure the Jaeger exporter by following 
     - `MaxPacketSize`: The maximum size of each UDP packet that gets sent to the agent. (default `65000`)
 3. See the [sample][jaeger-sample] for an example of how to use the exporter.
 
-``` csharp
+```csharp
 var exporter = new JaegerExporter(
     new JaegerExporterOptions
     {
         ServiceName = "tracing-to-jaeger-service",
         AgentHost = host,
         AgentPort = port,
-    },
-    Tracing.SpanExporter);
+    });
 
-exporter.Start();
+var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
 
 var span = tracer
             .SpanBuilder("incoming request")
             .SetSampler(Samplers.AlwaysSample)
             .StartSpan();
 
-Thread.Sleep(TimeSpan.FromSeconds(1));
+await Task.Delay(1000);
 span.End();
-```
 
+// Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
+// you may need to catch `OperationCancelledException` here
+await exporter.ShutdownAsync(CancellationToken.None);
+```
 
 ### Using Zipkin exporter
 
@@ -209,22 +187,25 @@ Configure Zipkin exporter to see traces in Zipkin UI.
 2. Start `ZipkinTraceExporter` as below:
 3. See [sample][zipkin-sample] for example use.
 
-``` csharp
+```csharp
 var exporter = new ZipkinTraceExporter(
   new ZipkinTraceExporterOptions() {
     Endpoint = new Uri("https://<zipkin-server:9411>/api/v2/spans"),
     ServiceName = typeof(Program).Assembly.GetName().Name,
-  },
-  Tracing.SpanExporter);
-exporter.Start();
+  });
+var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
 
 var span = tracer
             .SpanBuilder("incoming request")
             .SetSampler(Samplers.AlwaysSample)
             .StartSpan();
 
-Thread.Sleep(TimeSpan.FromSeconds(1));
+await Task.Delay(1000);
 span.End();
+
+// Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
+// you may need to catch `OperationCancelledException` here
+await exporter.ShutdownAsync(CancellationToken.None);
 ```
 
 ### Using Prometheus exporter
@@ -235,7 +216,7 @@ Configure Prometheus exporter to have stats collected by Prometheus.
 2. Start `PrometheusExporter` as below.
 3. See [sample][prometheus-sample] for example use.
 
-``` csharp
+```csharp
 var exporter = new PrometheusExporter(
     new PrometheusExporterOptions()
     {
@@ -269,12 +250,32 @@ There is also a constructor for specifying path to the service account credentia
 4. Instantiate a new instance of `StackdriverExporter` with your Google Cloud's ProjectId
 5. See [sample][stackdriver-sample] for example use.
 
-``` csharp
-    var exporter = new StackdriverExporter(
-        "YOUR-GOOGLE-PROJECT-ID",
-        Tracing.SpanExporter,
-        Stats.ViewManager);
-    exporter.Start();
+#### Traces
+
+```csharp
+var traceExporter = new StackdriverTraceExporter("YOUR-GOOGLE-PROJECT-ID");
+var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
+
+var span = tracer
+            .SpanBuilder("incoming request")
+            .SetSampler(Samplers.AlwaysSample)
+            .StartSpan();
+
+await Task.Delay(1000);
+span.End();
+
+// Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
+// you may need to catch `OperationCancelledException` here
+await exporter.ShutdownAsync(CancellationToken.None);
+```
+
+#### Metrics
+
+```csharp
+var metricExporter = new StackdriverExporter(
+    "YOUR-GOOGLE-PROJECT-ID",
+    Stats.ViewManager);
+metricExporter.Start();
 ```
 
 ### Using Application Insights exporter
@@ -288,11 +289,20 @@ There is also a constructor for specifying path to the service account credentia
 
 ``` csharp
 var config = new TelemetryConfiguration("iKey")
-var exporter = new ApplicationInsightsExporter(
-    Tracing.SpanExporter,
-    Stats.ViewManager,
-    config); // either global or local config can be used
-exporter.Start();
+var exporter = new ApplicationInsightsExporter(config);
+var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
+
+var span = tracer
+            .SpanBuilder("incoming request")
+            .SetSampler(Samplers.AlwaysSample)
+            .StartSpan();
+
+await Task.Delay(1000);
+span.End();
+
+// Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
+// you may need to catch `OperationCancelledException` here
+await exporter.ShutdownAsync(CancellationToken.None);
 ```
 
 ## Versioning
