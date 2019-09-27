@@ -253,29 +253,29 @@ There is also a constructor for specifying path to the service account credentia
 #### Traces
 
 ```csharp
-    var traceExporter = new StackdriverTraceExporter("YOUR-GOOGLE-PROJECT-ID");
-    var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
+var traceExporter = new StackdriverTraceExporter("YOUR-GOOGLE-PROJECT-ID");
+var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
 
-    var span = tracer
-                .SpanBuilder("incoming request")
-                .SetSampler(Samplers.AlwaysSample)
-                .StartSpan();
+var span = tracer
+            .SpanBuilder("incoming request")
+            .SetSampler(Samplers.AlwaysSample)
+            .StartSpan();
 
-    await Task.Delay(1000);
-    span.End();
+await Task.Delay(1000);
+span.End();
 
-    // Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
-    // you may need to catch `OperationCancelledException` here
-    await exporter.ShutdownAsync(CancellationToken.None);
+// Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
+// you may need to catch `OperationCancelledException` here
+await exporter.ShutdownAsync(CancellationToken.None);
 ```
 
 #### Metrics
 
 ```csharp
-    var metricExporter = new StackdriverExporter(
-        "YOUR-GOOGLE-PROJECT-ID",
-        Stats.ViewManager);
-    metricExporter.Start();
+var metricExporter = new StackdriverExporter(
+    "YOUR-GOOGLE-PROJECT-ID",
+    Stats.ViewManager);
+metricExporter.Start();
 ```
 
 ### Using Application Insights exporter
@@ -290,19 +290,19 @@ There is also a constructor for specifying path to the service account credentia
 ``` csharp
 var config = new TelemetryConfiguration("iKey")
 var exporter = new ApplicationInsightsExporter(config);
-    var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
+var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
 
-    var span = tracer
-                .SpanBuilder("incoming request")
-                .SetSampler(Samplers.AlwaysSample)
-                .StartSpan();
+var span = tracer
+            .SpanBuilder("incoming request")
+            .SetSampler(Samplers.AlwaysSample)
+            .StartSpan();
 
-    await Task.Delay(1000);
-    span.End();
+await Task.Delay(1000);
+span.End();
 
-    // Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
-    // you may need to catch `OperationCancelledException` here
-    await exporter.ShutdownAsync(CancellationToken.None);
+// Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
+// you may need to catch `OperationCancelledException` here
+await exporter.ShutdownAsync(CancellationToken.None);
 ```
 
 ## Versioning
