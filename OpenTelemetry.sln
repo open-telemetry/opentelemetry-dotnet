@@ -55,8 +55,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "testdata", "testdata", "{77
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.2.0", "test\TestApp.AspNetCore.2.0\TestApp.AspNetCore.2.0.csproj", "{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Ocagent", "src\OpenTelemetry.Exporter.Ocagent\OpenTelemetry.Exporter.Ocagent.csproj", "{56B0ED25-8A14-4AA2-B59D-FAAFCBACDD4A}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Stackdriver.Tests", "test\OpenTelemetry.Exporter.Stackdriver.Tests\OpenTelemetry.Exporter.Stackdriver.Tests.csproj", "{6875032B-DFDC-4CDE-A283-37CA7F99926A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.ApplicationInsights.Tests", "test\OpenTelemetry.Exporter.ApplicationInsights.Tests\OpenTelemetry.Exporter.ApplicationInsights.Tests.csproj", "{1FA1F509-7722-48E3-9A35-16CBB6774957}"
@@ -92,9 +90,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Shims.OpenTra
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Shims.OpenTracing.Tests", "test\OpenTelemetry.Shims.OpenTracing.Tests\OpenTelemetry.Shims.OpenTracing.Tests.csproj", "{49A7853F-5B6F-4B65-A781-7D29A1C92164}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.LightStep", "src\OpenTelemetry.Exporter.LightStep\OpenTelemetry.Exporter.LightStep.csproj", "{92B29D96-ACE6-4862-AEEE-F21EC5031076}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.LightStep", "src\OpenTelemetry.Exporter.LightStep\OpenTelemetry.Exporter.LightStep.csproj", "{92B29D96-ACE6-4862-AEEE-F21EC5031076}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.LightStep.Tests", "test\OpenTelemetry.Exporter.LightStep.Tests\OpenTelemetry.Exporter.LightStep.Tests.csproj", "{BFDC583B-B2F2-4354-A0CE-83816883847C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.LightStep.Tests", "test\OpenTelemetry.Exporter.LightStep.Tests\OpenTelemetry.Exporter.LightStep.Tests.csproj", "{BFDC583B-B2F2-4354-A0CE-83816883847C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -150,10 +148,6 @@ Global
 		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}.Release|Any CPU.Build.0 = Release|Any CPU
-		{56B0ED25-8A14-4AA2-B59D-FAAFCBACDD4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{56B0ED25-8A14-4AA2-B59D-FAAFCBACDD4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{56B0ED25-8A14-4AA2-B59D-FAAFCBACDD4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{56B0ED25-8A14-4AA2-B59D-FAAFCBACDD4A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6875032B-DFDC-4CDE-A283-37CA7F99926A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6875032B-DFDC-4CDE-A283-37CA7F99926A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6875032B-DFDC-4CDE-A283-37CA7F99926A}.Release|Any CPU.ActiveCfg = Release|Any CPU
