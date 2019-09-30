@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Context.Propagation;
+
 namespace OpenTelemetry.Trace.Test
 {
     using System;
@@ -43,6 +45,21 @@ namespace OpenTelemetry.Trace.Test
         {
             var spanBuilder = tracer.SpanBuilder(SpanName);
             Assert.IsType<SpanBuilder>(spanBuilder);
+        }
+
+        [Fact]
+        public void BadConstructorArgumentsThrow()
+        {
+            var noopProc = new SimpleSpanProcessor(new NoopSpanExporter());
+            Assert.Throws<ArgumentNullException>(() => new Tracer(null, TraceConfig.Default));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(null, TraceConfig.Default, new BinaryFormat(), new TraceContextFormat()));
+
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, new BinaryFormat(), new TraceContextFormat()));
+
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, TraceConfig.Default, null, new TraceContextFormat()));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, TraceConfig.Default, new BinaryFormat(), null));
+
         }
 
         [Fact]

@@ -59,7 +59,7 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
                     "evt2",
                     evtTs,
                     new Dictionary<string, object> {{"key", "value"},}
-                )
+                ),
             };
 
             var linkedSpanId = ActivitySpanId.CreateRandom();

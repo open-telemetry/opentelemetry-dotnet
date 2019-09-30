@@ -189,12 +189,15 @@ namespace OpenTelemetry.Exporter.Zipkin
             var requestUri = this.options.Endpoint;
             var request = this.GetHttpRequestMessage(HttpMethod.Post, requestUri);
             request.Content = this.GetRequestContent(spans);
-            return this.DoPostAsync(this.httpClient, request, cancellationToken);
+
+            // avoid cancelling here: this is no return point: if we reached this point
+            // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
+            return this.DoPostAsync(this.httpClient, request);
         }
 
-        private async Task DoPostAsync(HttpClient client, HttpRequestMessage request, CancellationToken cancellationToken)
+        private async Task DoPostAsync(HttpClient client, HttpRequestMessage request)
         {
-            using (var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false))
+            using (var response = await client.SendAsync(request).ConfigureAwait(false))
             {
                 if (response.StatusCode != HttpStatusCode.OK &&
                     response.StatusCode != HttpStatusCode.Accepted)

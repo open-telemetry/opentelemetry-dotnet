@@ -18,27 +18,24 @@ namespace OpenTelemetry.Trace.Export.Test
 {
     using System;
     using System.Diagnostics;
-    using System.Linq;
     using System.Threading;
+    using System.Threading.Tasks;
     using OpenTelemetry.Testing.Export;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Utils;
     using Xunit;
 
-    // TODO: review tests
-    // failure tests
-    // batch tests
-    // multi processors tests
     public class SimpleSpanProcessorTest : IDisposable
     {
         private const string SpanName1 = "MySpanName/1";
         private const string SpanName2 = "MySpanName/2";
 
-        private TestExporter spanExporter = new TestExporter(false);
+        private TestExporter spanExporter;
         private SpanProcessor spanProcessor;
 
         public SimpleSpanProcessorTest()
         {
+            spanExporter = new TestExporter(null);
             spanProcessor = new SimpleSpanProcessor(spanExporter);
         }
 
@@ -86,33 +83,84 @@ namespace OpenTelemetry.Trace.Export.Test
         }
 
         [Fact]
+        public void ThrowsInExporter()
+        {
+            spanExporter = new TestExporter(_ => throw new ArgumentException("123"));
+            spanProcessor = new SimpleSpanProcessor(spanExporter);
+
+            var sampledActivity = new Activity("foo");
+            sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            sampledActivity.SetIdFormat(ActivityIdFormat.W3C);
+            sampledActivity.Start();
+            var span =
+                new Span(
+                    sampledActivity,
+                    Tracestate.Empty,
+                    SpanKind.Internal,
+                    TraceConfig.Default,
+                    spanProcessor,
+                    PreciseTimestamp.GetUtcNow(),
+                    default);
+
+            // does not throw
+            span.End();
+        }
+
+        [Fact]
+        public void ProcessorDoesNotBlockOnExporter()
+        {
+            spanExporter = new TestExporter( async _ => await Task.Delay(500));
+
+            spanProcessor = new SimpleSpanProcessor(spanExporter);
+
+            var sampledActivity = new Activity("foo");
+            sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            sampledActivity.SetIdFormat(ActivityIdFormat.W3C);
+            sampledActivity.Start();
+            var span =
+                new Span(
+                    sampledActivity,
+                    Tracestate.Empty,
+                    SpanKind.Internal,
+                    TraceConfig.Default,
+                    spanProcessor,
+                    PreciseTimestamp.GetUtcNow(),
+                    default);
+
+            // does not block
+            var sw = Stopwatch.StartNew();
+            span.End();
+            sw.Stop();
+
+            Assert.InRange(sw.Elapsed, TimeSpan.Zero, TimeSpan.FromMilliseconds(100));
+
+            var  exported = WaitForSpans(spanExporter, 1, TimeSpan.FromMilliseconds(600));
+
+            Assert.Single(exported);
+        }
+
+
+        [Fact]
+        public async Task ShutdownTwice()
+        {
+            spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
+
+            await spanProcessor.ShutdownAsync(CancellationToken.None).ConfigureAwait(false);
+
+            // does not throw
+            await spanProcessor.ShutdownAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+
+        [Fact]
         public void ExportDifferentSampledSpans()
         {
             var span1 = CreateSampledEndedSpan(SpanName1);
             var span2 = CreateSampledEndedSpan(SpanName2);
-            var exported = spanExporter.WaitForExport(2);
-            Assert.Equal(2, exported.Count());
-            Assert.Contains(span1, exported);
-            Assert.Contains(span2, exported);
-        }
 
-        [Fact]
-        public void ExportMoreSpansThanTheBufferSize()
-        {
-            var span1 = CreateSampledEndedSpan(SpanName1);
-            var span2 = CreateSampledEndedSpan(SpanName1);
-            var span3 = CreateSampledEndedSpan(SpanName1);
-            var span4 = CreateSampledEndedSpan(SpanName1);
-            var span5 = CreateSampledEndedSpan(SpanName1);
-            var span6 = CreateSampledEndedSpan(SpanName1);
-            var exported = spanExporter.WaitForExport(6);
-            Assert.Equal(6, exported.Count());
+            var exported = WaitForSpans(spanExporter, 2, TimeSpan.FromMilliseconds(100));
+            Assert.Equal(2, exported.Length);
             Assert.Contains(span1, exported);
             Assert.Contains(span2, exported);
-            Assert.Contains(span3, exported);
-            Assert.Contains(span4, exported);
-            Assert.Contains(span5, exported);
-            Assert.Contains(span6, exported);
         }
 
         [Fact]
@@ -124,7 +172,9 @@ namespace OpenTelemetry.Trace.Export.Test
             // sampled span is not exported by creating and ending a sampled span after a non sampled span
             // and checking that the first exported span is the sampled span (the non sampled did not get
             // exported).
-            var exported = spanExporter.WaitForExport(1).ToArray();
+
+            var exported = WaitForSpans(spanExporter, 1, TimeSpan.FromMilliseconds(100));
+
             // Need to check this because otherwise the variable span1 is unused, other option is to not
             // have a span1 variable.
             Assert.Single(exported);
@@ -135,6 +185,18 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             spanExporter.ShutdownAsync(CancellationToken.None);
             Activity.Current = null;
+        }
+
+        private Span[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
+        {
+            Assert.True(
+                SpinWait.SpinUntil(() =>
+                    {
+                        Thread.Sleep(0);
+                        return exporter.ExportedSpans.Length >= spanCount;
+                    }, timeout + TimeSpan.FromMilliseconds(20)));
+
+            return exporter.ExportedSpans;
         }
     }
 }

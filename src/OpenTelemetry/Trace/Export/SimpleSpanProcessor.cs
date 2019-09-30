@@ -16,8 +16,10 @@
 
 namespace OpenTelemetry.Trace.Export
 {
+    using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using OpenTelemetry.Internal;
     using OpenTelemetry.Trace;
 
     /// <summary>
@@ -25,6 +27,12 @@ namespace OpenTelemetry.Trace.Export
     /// </summary>
     public class SimpleSpanProcessor : SpanProcessor
     {
+        private bool disposed = false;
+
+        /// <summary>
+        /// Constructs simple processor.
+        /// </summary>
+        /// <param name="exporter">Span processor instance.</param>
         public SimpleSpanProcessor(SpanExporter exporter) : base(exporter)
         {
         }
@@ -37,14 +45,28 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc />
         public override void OnEnd(Span span)
         {
-            // do not await, just start export
-            this.Exporter.ExportAsync(new[] { span }, CancellationToken.None);
+            try
+            {
+                // do not await, just start export
+                // it can still throw in synchronous part
+                _ = this.Exporter.ExportAsync(new[] { span }, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(ex);
+            }
         }
 
         /// <inheritdoc />
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            return this.Exporter.ShutdownAsync(cancellationToken);
+            if (!this.disposed)
+            {
+                this.disposed = true;
+                return this.Exporter.ShutdownAsync(cancellationToken);
+            }
+
+            return Task.CompletedTask;
         }
     }
 }

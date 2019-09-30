@@ -51,7 +51,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorInjectsHeadersAsync()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default, null, null);
+            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default);
 
             var request = new HttpRequestMessage
             {
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default, null, null);
+            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default);
 
             var request = new HttpRequestMessage
             {

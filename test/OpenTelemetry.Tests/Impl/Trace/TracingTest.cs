@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DefaultSpanProcessor()
         {
-            Assert.Equal(typeof(SimpleSpanProcessor), Tracing.SpanProcessor.GetType());
+            Assert.Equal(typeof(BatchingSpanProcessor), Tracing.SpanProcessor.GetType());
         }
 
 

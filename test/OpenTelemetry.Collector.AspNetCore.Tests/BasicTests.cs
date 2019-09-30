@@ -103,7 +103,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 Tracestate.Empty
                 ));
 
-            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default, null, tf.Object);
+            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default, new BinaryFormat(), tf.Object);
 
             // Arrange
             using (var client = this.factory

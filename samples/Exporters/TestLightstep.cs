@@ -21,7 +21,7 @@ namespace Samples
                     ServiceName = "tracing-to-lightstep-service",
                 });
 
-            var tracer = new Tracer(new SimpleSpanProcessor(exporter), TraceConfig.Default);
+            var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
             
             using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))
             {

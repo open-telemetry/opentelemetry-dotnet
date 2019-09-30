@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace.Internal;
+
 namespace OpenTelemetry.Trace.Test
 {
     using System;
