@@ -34,9 +34,13 @@ namespace OpenTelemetry.Trace
         {
             this.spanProcessor = spanProcessor ?? Tracing.SpanProcessor;
             this.traceConfig = traceConfig ?? Tracing.TraceConfig;
+            this.TextFormat = new TraceContextFormat();
+            this.BinaryFormat = new BinaryFormat();
         }
 
         internal ITextFormat TextFormat { get; set; }
+        
+        internal IBinaryFormat BinaryFormat { get; set; }
 
         /// <inheritdoc/>
         public ITracer GetTracer(string name, string version = null)
@@ -47,7 +51,7 @@ namespace OpenTelemetry.Trace
                 if (!this.tracerRegistry.TryGetValue(key, out var tracer))
                 {
                     var labels = CreateLibraryResourceLabels(name, version);
-                    tracer = new Tracer(this.spanProcessor, this.traceConfig, null, this.TextFormat, Resource.Create(labels));
+                    tracer = new Tracer(this.spanProcessor, this.traceConfig, this.BinaryFormat, this.TextFormat, Resource.Create(labels));
                     this.tracerRegistry.Add(key, tracer);
                 }
                 
