@@ -35,10 +35,8 @@ namespace OpenTelemetry.Exporter.Jaeger
         private bool disposedValue = false; // To detect redundant dispose calls
 
         public JaegerTraceExporter(JaegerExporterOptions options)
+            : this(options, new JaegerUdpBatcher(options))
         {
-            this.ValidateOptions(options);
-            this.InitializeOptions(options);
-            this.jaegerAgentUdpBatcher = new JaegerUdpBatcher(options);
         }
 
         public JaegerTraceExporter(JaegerExporterOptions options, IJaegerUdpBatcher jaegerAgentUdpBatcher)
