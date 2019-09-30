@@ -93,7 +93,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var f = new TraceContextFormat();
             var ctx = f.Extract(headers, getter);
 
-            Assert.Same(SpanContext.Blank, ctx);
+            Assert.False(ctx.IsValid);
         }
 
         [Fact]
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var f = new TraceContextFormat();
             var ctx = f.Extract(headers, getter);
 
-            Assert.Same(SpanContext.Blank, ctx);
+            Assert.False(ctx.IsValid);
         }
 
         [Fact]

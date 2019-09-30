@@ -33,7 +33,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         private static readonly byte[] ExampleBytes =
             new byte[] {0, 0, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 1, 97, 98, 99, 100,101, 102, 103, 104, 2, 1};
 
-        private static readonly SpanContext ExampleSpanContext = SpanContext.Create(TraceId, SpanId, TraceOptions, Tracestate.Empty);
+        private static readonly SpanContext ExampleSpanContext = new SpanContext(TraceId, SpanId, TraceOptions, Tracestate.Empty);
 
         private readonly BinaryFormat binaryFormat = new BinaryFormat();
 
@@ -46,13 +46,13 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void Propagate_SpanContextTracingEnabled()
         {
-            TestSpanContextConversion(SpanContext.Create(TraceId, SpanId, ActivityTraceFlags.Recorded, Tracestate.Empty));
+            TestSpanContextConversion(new SpanContext(TraceId, SpanId, ActivityTraceFlags.Recorded, Tracestate.Empty));
         }
 
         [Fact]
         public void Propagate_SpanContextNoTracing()
         {
-            TestSpanContextConversion(SpanContext.Create(TraceId, SpanId, ActivityTraceFlags.None, Tracestate.Empty));
+            TestSpanContextConversion(new SpanContext(TraceId, SpanId, ActivityTraceFlags.None, Tracestate.Empty));
         }
 
         [Fact]
@@ -103,7 +103,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         public void FromBinaryValue_UnsupportedFieldIdFirst()
         {
             Assert.Equal(
-                SpanContext.Create(default, default, ActivityTraceFlags.None, Tracestate.Empty),
+                new SpanContext(default, default, ActivityTraceFlags.None, Tracestate.Empty),
                 binaryFormat.FromByteArray(
                     new byte[] 
                     {
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         public void FromBinaryValue_UnsupportedFieldIdSecond()
         {
             Assert.Equal(
-                 SpanContext.Create(
+                 new SpanContext(
                         ActivityTraceId.CreateFromBytes(new byte[] { 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79 }),
                         default,
                         ActivityTraceFlags.None, Tracestate.Empty),

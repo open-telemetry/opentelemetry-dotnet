@@ -83,7 +83,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 spanContext = this.tracer.TextFormat?.Extract(carrierMap, GetCarrierKeyValue);
             }
 
-            return (spanContext == null || spanContext == SpanContext.Blank) ? null : new SpanContextShim(spanContext);
+            return (spanContext == null || !spanContext.IsValid) ? null : new SpanContextShim(spanContext);
         }
 
         public void Inject<TCarrier>(

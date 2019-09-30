@@ -142,6 +142,11 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(spanContext));
             }
 
+            if (!spanContext.IsValid)
+            {
+                throw new ArgumentException(nameof(spanContext));
+            }
+
             return this;
         }
 
@@ -157,11 +162,16 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpanBuilder AddLink(SpanContext context, IDictionary<string, object> attributes)
+        public ISpanBuilder AddLink(SpanContext spanContext, IDictionary<string, object> attributes)
         {
-            if (context == null)
+            if (spanContext == null)
             {
-                throw new ArgumentNullException(nameof(context));
+                throw new ArgumentNullException(nameof(spanContext));
+            }
+
+            if (!spanContext.IsValid)
+            {
+                throw new ArgumentException(nameof(spanContext));
             }
 
             if (attributes == null)

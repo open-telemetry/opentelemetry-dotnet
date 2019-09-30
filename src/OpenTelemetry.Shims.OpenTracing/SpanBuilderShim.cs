@@ -81,7 +81,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         private global::OpenTracing.IScopeManager ScopeManager { get; }
 
-        private bool ParentSet => this.parentSpan != null || this.parentSpanContext != null;
+        private bool ParentSet => this.parentSpan != null || (this.parentSpanContext != null && this.parentSpanContext.IsValid);
 
         /// <inheritdoc/>
         public ISpanBuilder AsChildOf(ISpanContext parent)
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             var builder = this.tracer.SpanBuilder(this.spanName);
 
-            if (this.parentSpan == null && this.parentSpanContext == null && (this.tracer.CurrentSpan == null || this.tracer.CurrentSpan == Trace.BlankSpan.Instance))
+            if (this.parentSpan == null && (this.parentSpanContext == null || !this.parentSpanContext.IsValid) && (this.tracer.CurrentSpan == null || this.tracer.CurrentSpan == Trace.BlankSpan.Instance))
             {
                 // We need to know if we should inherit an existing Activity-based context or start a new one.
                 if (System.Diagnostics.Activity.Current != null && System.Diagnostics.Activity.Current.IdFormat == System.Diagnostics.ActivityIdFormat.W3C)
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             {
                 builder.SetParent(this.parentSpan);
             }
-            else if (this.parentSpanContext != null)
+            else if (this.parentSpanContext != null && this.parentSpanContext.IsValid)
             {
                 builder.SetParent(this.parentSpanContext);
             }

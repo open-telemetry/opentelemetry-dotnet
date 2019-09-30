@@ -78,7 +78,7 @@ namespace OpenTelemetry.Context.Propagation
                     traceOptions = (ActivityTraceFlags)traceparentBytes[pos + IdSize];
                 }
 
-                return SpanContext.Create(traceId, spanId, traceOptions, Tracestate.Empty);
+                return new SpanContext(traceId, spanId, traceOptions, Tracestate.Empty);
             }
             catch (Exception e)
             {

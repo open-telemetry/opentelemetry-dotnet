@@ -50,7 +50,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         public void Serialize_SampledContext()
         {
             IDictionary<String, String> carrier = new Dictionary<String, String>();
-            b3Format.Inject(SpanContext.Create(TraceId, SpanId, TraceOptions, Tracestate.Empty), carrier, setter);
+            b3Format.Inject(new SpanContext(TraceId, SpanId, TraceOptions, Tracestate.Empty), carrier, setter);
             ContainsExactly(carrier, new Dictionary<string, string>() { { B3Format.XB3TraceId, TraceIdBase16 }, { B3Format.XB3SpanId, SpanIdBase16 }, { B3Format.XB3Sampled, "1" } });
         }
 
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         public void Serialize_NotSampledContext()
         {
             IDictionary<String, String> carrier = new Dictionary<String, String>();
-            var context = SpanContext.Create(TraceId, SpanId, ActivityTraceFlags.None, Tracestate.Empty);
+            var context = new SpanContext(TraceId, SpanId, ActivityTraceFlags.None, Tracestate.Empty);
             _output.WriteLine(context.ToString());
             b3Format.Inject(context, carrier, setter);
             ContainsExactly(carrier, new Dictionary<string, string>() { { B3Format.XB3TraceId, TraceIdBase16 }, { B3Format.XB3SpanId, SpanIdBase16 } });
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             IDictionary<String, String> headersNotSampled = new Dictionary<String, String>();
             headersNotSampled.Add(B3Format.XB3TraceId, TraceIdBase16);
             headersNotSampled.Add(B3Format.XB3SpanId, SpanIdBase16);
-            var spanContext = SpanContext.Create(TraceId, SpanId, ActivityTraceFlags.None, Tracestate.Empty);
+            var spanContext = new SpanContext(TraceId, SpanId, ActivityTraceFlags.None, Tracestate.Empty);
             Assert.Equal(spanContext, b3Format.Extract(headersNotSampled, getter));
         }
 
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             headersSampled.Add(B3Format.XB3TraceId, TraceIdBase16);
             headersSampled.Add(B3Format.XB3SpanId, SpanIdBase16);
             headersSampled.Add(B3Format.XB3Sampled, "1");
-            Assert.Equal(SpanContext.Create(TraceId, SpanId, TraceOptions, Tracestate.Empty), b3Format.Extract(headersSampled, getter));
+            Assert.Equal(new SpanContext(TraceId, SpanId, TraceOptions, Tracestate.Empty), b3Format.Extract(headersSampled, getter));
         }
 
         [Fact]
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             headersNotSampled.Add(B3Format.XB3TraceId, TraceIdBase16);
             headersNotSampled.Add(B3Format.XB3SpanId, SpanIdBase16);
             headersNotSampled.Add(B3Format.XB3Sampled, "0");
-            Assert.Equal(SpanContext.Create(TraceId, SpanId, ActivityTraceFlags.None, Tracestate.Empty), b3Format.Extract(headersNotSampled, getter));
+            Assert.Equal(new SpanContext(TraceId, SpanId, ActivityTraceFlags.None, Tracestate.Empty), b3Format.Extract(headersNotSampled, getter));
         }
 
         [Fact]
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             headersFlagSampled.Add(B3Format.XB3TraceId, TraceIdBase16);
             headersFlagSampled.Add(B3Format.XB3SpanId, SpanIdBase16);
             headersFlagSampled.Add(B3Format.XB3Flags, "1");
-            Assert.Equal(SpanContext.Create(TraceId, SpanId, TraceOptions, Tracestate.Empty), b3Format.Extract(headersFlagSampled, getter));
+            Assert.Equal(new SpanContext(TraceId, SpanId, TraceOptions, Tracestate.Empty), b3Format.Extract(headersFlagSampled, getter));
         }
 
         [Fact]
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             headersFlagNotSampled.Add(B3Format.XB3TraceId, TraceIdBase16);
             headersFlagNotSampled.Add(B3Format.XB3SpanId, SpanIdBase16);
             headersFlagNotSampled.Add(B3Format.XB3Flags, "0");
-            Assert.Equal(SpanContext.Create(TraceId, SpanId, ActivityTraceFlags.None, Tracestate.Empty), b3Format.Extract(headersFlagNotSampled, getter));
+            Assert.Equal(new SpanContext(TraceId, SpanId, ActivityTraceFlags.None, Tracestate.Empty), b3Format.Extract(headersFlagNotSampled, getter));
         }
 
         [Fact]
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             headersEightBytes.Add(B3Format.XB3TraceId, TraceIdBase16EightBytes);
             headersEightBytes.Add(B3Format.XB3SpanId, SpanIdBase16);
             headersEightBytes.Add(B3Format.XB3Sampled, "1");
-            Assert.Equal(SpanContext.Create(TraceIdEightBytes, SpanId, TraceOptions, Tracestate.Empty), b3Format.Extract(headersEightBytes, getter));
+            Assert.Equal(new SpanContext(TraceIdEightBytes, SpanId, TraceOptions, Tracestate.Empty), b3Format.Extract(headersEightBytes, getter));
         }
 
         [Fact]
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             IDictionary<String, String> headersEightBytes = new Dictionary<String, String>();
             headersEightBytes.Add(B3Format.XB3TraceId, TraceIdBase16EightBytes);
             headersEightBytes.Add(B3Format.XB3SpanId, SpanIdBase16);
-            Assert.Equal(SpanContext.Create(TraceIdEightBytes, SpanId, ActivityTraceFlags.None, Tracestate.Empty), b3Format.Extract(headersEightBytes, getter));
+            Assert.Equal(new SpanContext(TraceIdEightBytes, SpanId, ActivityTraceFlags.None, Tracestate.Empty), b3Format.Extract(headersEightBytes, getter));
         }
 
         [Fact]

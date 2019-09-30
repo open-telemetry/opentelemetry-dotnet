@@ -42,6 +42,9 @@ namespace OpenTelemetry.Trace.Test
 
         public SpanTest()
         {
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+
             spanProcessor = spanProcessorMock.Object;
             attributes.Add("MyStringAttributeKey", "MyStringAttributeValue");
             attributes.Add("MyLongAttributeKey", 123L);
@@ -68,7 +71,7 @@ namespace OpenTelemetry.Trace.Test
                     spanProcessor,
                     default,
                     false);
-            Assert.NotNull(span.Context);
+            Assert.True(span.Context.IsValid);
             Assert.Equal(activity.TraceId, span.Context.TraceId);
             Assert.Equal(activity.SpanId, span.Context.SpanId);
             Assert.Equal(activity.ParentSpanId, ((Span)span).ParentSpanId);
@@ -92,7 +95,7 @@ namespace OpenTelemetry.Trace.Test
                     spanProcessor,
                     default,
                     false);
-            Assert.NotNull(span.Context);
+            Assert.True(span.Context.IsValid);
             Assert.Equal(activity.TraceId, span.Context.TraceId);
             Assert.Equal(activity.SpanId, span.Context.SpanId);
             Assert.Equal(activity.ParentSpanId, ((Span)span).ParentSpanId);
@@ -103,7 +106,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void NoEventsRecordedAfterEnd()
         {
-            var link = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+            var link = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None, Tracestate.Empty);
 
             var activity = new Activity(SpanName).Start();
@@ -172,7 +175,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public async Task ActiveSpan_Properties()
         {
-            var contextLink = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None, Tracestate.Empty);
 
             var activity = new Activity(SpanName)
@@ -245,7 +248,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public async Task EndedSpan_Properties()
         {
-            var contextLink = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None, Tracestate.Empty);
 
             var activity = new Activity(SpanName)
@@ -524,7 +527,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DroppingLinks()
         {
-            var contextLink = SpanContext.Create(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None, Tracestate.Empty);
 
             var activity = new Activity(SpanName).Start();

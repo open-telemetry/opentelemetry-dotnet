@@ -40,8 +40,8 @@ namespace OpenTelemetry.Trace.Sampler.Test
             traceId = ActivityTraceId.CreateRandom();
             parentSpanId = ActivitySpanId.CreateRandom();
             spanId = ActivitySpanId.CreateRandom();
-            sampledSpanContext = SpanContext.Create(traceId, parentSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty);
-            notSampledSpanContext = SpanContext.Create(traceId, parentSpanId, ActivityTraceFlags.None, Tracestate.Empty);
+            sampledSpanContext = new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty);
+            notSampledSpanContext = new SpanContext(traceId, parentSpanId, ActivityTraceFlags.None, Tracestate.Empty);
             sampledLink = Link.FromSpanContext(sampledSpanContext);
         }
 
@@ -207,7 +207,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     });
             Assert.False(
                     defaultProbability.ShouldSample(
-                        null,
+                        SpanContext.Blank, 
                         notSampledtraceId,
                         ActivitySpanId.CreateRandom(),
                         SPAN_NAME,

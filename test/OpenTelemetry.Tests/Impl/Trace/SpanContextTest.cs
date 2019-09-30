@@ -30,13 +30,13 @@ namespace OpenTelemetry.Trace.Test
         private static readonly byte[] firstSpanIdBytes = new byte[] { 0, 0, 0, 0, 0, 0, 0, (byte)'a' };
         private static readonly byte[] secondSpanIdBytes = new byte[] { (byte)'0', 0, 0, 0, 0, 0, 0, 0 };
         private static readonly SpanContext first =
-      SpanContext.Create(
+      new SpanContext(
           ActivityTraceId.CreateFromBytes(firstTraceIdBytes),
           ActivitySpanId.CreateFromBytes(firstSpanIdBytes),
           ActivityTraceFlags.None, Tracestate.Empty);
 
         private static readonly SpanContext second =
-      SpanContext.Create(
+      new SpanContext(
           ActivityTraceId.CreateFromBytes(secondTraceIdBytes),
           ActivitySpanId.CreateFromBytes(secondSpanIdBytes),
           ActivityTraceFlags.Recorded, Tracestate.Empty);
@@ -54,11 +54,11 @@ namespace OpenTelemetry.Trace.Test
         {
             Assert.False(SpanContext.Blank.IsValid);
             Assert.False(
-                    SpanContext.Create(
+                    new SpanContext(
                             ActivityTraceId.CreateFromBytes(firstTraceIdBytes), default, ActivityTraceFlags.None, Tracestate.Empty)
                         .IsValid);
             Assert.False(
-                    SpanContext.Create(
+                    new SpanContext(
                             default, ActivitySpanId.CreateFromBytes(firstSpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)
                         .IsValid);
             Assert.True(first.IsValid);
@@ -92,32 +92,21 @@ namespace OpenTelemetry.Trace.Test
             // EqualsTester tester = new EqualsTester();
             // tester.addEqualityGroup(
             //    first,
-            //    SpanContext.create(
+            //    new SpanContext(
             //        ActivityTraceId.CreateFromBytes(firstTraceIdBytes),
             //        ActivitySpanId.CreateFromBytes(firstSpanIdBytes),
             //        TraceOptions.DEFAULT),
-            //    SpanContext.create(
+            //    new SpanContext(
             //        ActivityTraceId.CreateFromBytes(firstTraceIdBytes),
             //        ActivitySpanId.CreateFromBytes(firstSpanIdBytes),
             //        TraceOptions.builder().setIsSampled(false).build()));
             // tester.addEqualityGroup(
             //    second,
-            //    SpanContext.create(
+            //    new SpanContext(
             //        ActivityTraceId.CreateFromBytes(secondTraceIdBytes),
             //        ActivitySpanId.CreateFromBytes(secondSpanIdBytes),
             //        TraceOptions.builder().setIsSampled(true).build()));
             // tester.testEquals();
-        }
-
-        [Fact]
-        public void SpanContext_ToString()
-        {
-            Assert.Contains(ActivityTraceId.CreateFromBytes(firstTraceIdBytes).ToString(), first.ToString());
-            Assert.Contains(ActivitySpanId.CreateFromBytes(firstSpanIdBytes).ToString(), first.ToString());
-            Assert.Contains(ActivityTraceFlags.None.ToString(), first.ToString());
-            Assert.Contains(ActivityTraceId.CreateFromBytes(secondTraceIdBytes).ToString(), second.ToString());
-            Assert.Contains(ActivitySpanId.CreateFromBytes(secondSpanIdBytes).ToString(), second.ToString());
-            Assert.Contains(ActivityTraceFlags.Recorded.ToString(), second.ToString());
         }
     }
 }
