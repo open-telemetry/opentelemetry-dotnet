@@ -38,7 +38,7 @@ namespace Samples
             };
 
             var exporter = new JaegerTraceExporter(
-                jaegerOptions, new JaegerUdpBatcher(jaegerOptions));
+                jaegerOptions);
 
             // Create a tracer. You may also need to register it as a global instance to make auto-collectors work..
             var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);

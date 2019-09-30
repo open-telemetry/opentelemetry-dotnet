@@ -163,8 +163,7 @@ var jaegerOptions = new JaegerExporterOptions()
             AgentPort = port,
         };
 
-var exporter = new JaegerTraceExporter(
-    jaegerOptions, new JaegerUdpBatcher(jaegerOptions));
+var exporter = new JaegerTraceExporter(jaegerOptions);
 
 var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
 
