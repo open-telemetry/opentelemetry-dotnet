@@ -117,6 +117,8 @@ using (tracer.WithSpan(parentSpan))
 
     childSpan.End();
 }
+
+// parent span is ended when WithSpan result is disposed
 ```
 
 ### Span with attributes
@@ -172,7 +174,7 @@ using (tracer.WithSpan(span))
     tracer.CurrentSpan.AddEvent("routes reolved");
 }
 
-span.End();
+// span is ended when WithSpan result is disposed
 ```
 
 ### Context propagation out of process
