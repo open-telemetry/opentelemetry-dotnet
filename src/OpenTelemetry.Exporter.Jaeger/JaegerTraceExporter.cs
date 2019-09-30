@@ -34,14 +34,10 @@ namespace OpenTelemetry.Exporter.Jaeger
         private readonly IJaegerUdpBatcher jaegerAgentUdpBatcher;
         private bool disposedValue = false; // To detect redundant dispose calls
 
-        public JaegerTraceExporter(JaegerExporterOptions options)
+        public JaegerTraceExporter(JaegerExporterOptions options, IJaegerUdpBatcher jaegerAgentUdpBatcher)
         {
             this.ValidateOptions(options);
             this.InitializeOptions(options);
-        }
-
-        public JaegerTraceExporter(IJaegerUdpBatcher jaegerAgentUdpBatcher)
-        {
             this.jaegerAgentUdpBatcher = jaegerAgentUdpBatcher;
         }
 
