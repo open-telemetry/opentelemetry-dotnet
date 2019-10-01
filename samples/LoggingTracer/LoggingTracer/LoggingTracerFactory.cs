@@ -13,7 +13,7 @@ namespace LoggingTracer
 
     public class LoggingTracerFactory : ITracerFactory
     {
-        public ITracer GetTracer(string name, string version = null)
+        public override ITracer GetTracer(string name, string version = null)
         {
             Logger.Log($"TracerFactory.GetTracer('{name}', '{version}')");
             

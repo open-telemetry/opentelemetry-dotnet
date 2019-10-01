@@ -26,10 +26,10 @@ namespace OpenTelemetry.Collector
 
         protected readonly Func<TInput, ISampler> SamplerFactory;
 
-        public ListenerHandler(string sourceName, Version version, ITracerFactory tracerFactory, Func<TInput, ISampler> samplerFactory)
+        public ListenerHandler(string sourceName, ITracer tracer, Func<TInput, ISampler> samplerFactory)
         {
             this.SourceName = sourceName;
-            this.Tracer = tracerFactory.GetTracer(this.SourceName, $"semver:{version.Major}.{version.Minor}.{version.Revision}");
+            this.Tracer = tracer;
             this.SamplerFactory = samplerFactory;
         }
 
