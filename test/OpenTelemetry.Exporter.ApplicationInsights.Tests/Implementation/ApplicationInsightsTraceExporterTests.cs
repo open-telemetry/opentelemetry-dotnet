@@ -1499,8 +1499,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
                 tracestate, kind, status);
 
-            span.AddEvent(Event.Create("test message1", now));
-            span.AddEvent(Event.Create("test message2", DateTime.UtcNow, new Dictionary<string, object>()
+            span.AddEvent(new Event("test message1", now));
+            span.AddEvent(new Event("test message2", DateTime.UtcNow, new Dictionary<string, object>()
                         {
                             { "custom.stringAttribute", "string" },
                             { "custom.longAttribute", long.MaxValue },
@@ -1550,7 +1550,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
                 tracestate, kind, status);
 
-            span.AddEvent(Event.Create("test message1", now));
+            span.AddEvent(new Event("test message1", now));
             span.AddEvent("test message2", new Dictionary<string, object>()
             {
                 { "custom.stringAttribute", "string" },
@@ -1612,7 +1612,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             out string name,
             out DateTime startTimestamp,
             out Dictionary<string, object> attributes,
-            out List<IEvent> events,
+            out List<Event> events,
             out List<Link> links,
             out Status status,
             out SpanKind kind,

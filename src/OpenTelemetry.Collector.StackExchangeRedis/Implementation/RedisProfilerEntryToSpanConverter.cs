@@ -75,9 +75,9 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
                 var send = enqueued.Add(command.EnqueuedToSending);
                 var response = send.Add(command.SentToResponse);
 
-                span.AddEvent(Event.Create("Enqueued", enqueued));
-                span.AddEvent(Event.Create("Sent", send));
-                span.AddEvent(Event.Create("ResponseReceived", response));
+                span.AddEvent(new Event("Enqueued", enqueued));
+                span.AddEvent(new Event("Sent", send));
+                span.AddEvent(new Event("ResponseReceived", response));
 
                 span.End(command.CommandCreated.Add(command.ElapsedTime));
             }

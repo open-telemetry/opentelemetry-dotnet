@@ -62,7 +62,7 @@ namespace OpenTelemetry.Trace.Test
         {
         }
 
-        public void AddEvent(IEvent newEvent)
+        public void AddEvent(Event newEvent)
         {
         }
 

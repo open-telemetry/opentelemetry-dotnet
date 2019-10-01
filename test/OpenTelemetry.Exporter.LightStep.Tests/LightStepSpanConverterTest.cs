@@ -48,14 +48,14 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
                 ["boolKey"] = true,
             };
 
-            var evts = new List<IEvent>
+            var evts = new List<Event>
             {
-                Event.Create(
+                new Event(
                     "evt1",
                     evtTs,
                     new Dictionary<string, object> {{"key", "value"},}
                 ),
-                Event.Create(
+                new Event(
                     "evt2",
                     evtTs,
                     new Dictionary<string, object> {{"key", "value"},}

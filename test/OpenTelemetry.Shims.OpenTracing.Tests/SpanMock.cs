@@ -14,10 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
+    using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using OpenTelemetry.Trace;
@@ -32,14 +31,14 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public SpanMock(Trace.SpanContext spanContext)
         {
             this.Context = spanContext;
-            this.Events = new List<IEvent>();
+            this.Events = new List<Event>();
             this.Links = new List<Link>();
             this.Attributes = new List<KeyValuePair<string, object>>();
         }
 
         public string Name { get; private set; }
 
-        public List<IEvent> Events { get; }
+        public List<Event> Events { get; }
 
         public List<Link> Links { get; }
 
@@ -55,15 +54,15 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
         public void AddEvent(string name)
         {
-            this.Events.Add(new Event(name, EmptyAttributes));
+            this.Events.Add(new Event(name));
         }
 
         public void AddEvent(string name, IDictionary<string, object> attributes)
         {
-            this.Events.Add(new Event(name, attributes));
+            this.Events.Add(new Event(name, default, attributes));
         }
 
-        public void AddEvent(IEvent newEvent)
+        public void AddEvent(Event newEvent)
         {
             this.Events.Add(newEvent);
         }
@@ -116,22 +115,6 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         private void SetAttribute<TValue>(string key, TValue value)
         {
             this.SetAttribute(new KeyValuePair<string, object>(key, value));
-        }
-
-        public class Event : Trace.IEvent
-        {
-            public Event(string name, IDictionary<string, object> attributes)
-            {
-                this.Name = name;
-                this.Attributes = attributes;
-                this.Timestamp = default;
-            }
-
-            public string Name { get; }
-
-            public DateTimeOffset Timestamp { get; }
-
-            public IDictionary<string, object> Attributes { get; }
         }
     }
 }

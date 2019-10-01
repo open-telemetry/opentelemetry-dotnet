@@ -34,7 +34,7 @@ namespace LoggingTracer
         public void AddEvent(string name, IDictionary<string, object> attributes)
             => Logger.Log($"Span.AddEvent({name}, attributes: {attributes.Count})");
 
-        public void AddEvent(IEvent newEvent) => Logger.Log($"Span.AddEvent({newEvent})");
+        public void AddEvent(Event newEvent) => Logger.Log($"Span.AddEvent({newEvent})");
 
         public void AddLink(Link link) => Logger.Log($"Span.AddLink({link})");
 
