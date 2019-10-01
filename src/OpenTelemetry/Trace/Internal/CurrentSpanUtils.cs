@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Trace.Internal
 {
+    using System;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
     using OpenTelemetry.Context;
@@ -43,7 +44,7 @@ namespace OpenTelemetry.Trace.Internal
             }
         }
 
-        public static IScope WithSpan(ISpan span, bool endSpan)
+        public static IDisposable WithSpan(ISpan span, bool endSpan)
         {
             return new ScopeInSpan(span, endSpan);
         }
@@ -70,7 +71,7 @@ namespace OpenTelemetry.Trace.Internal
             ActivitySpanTable.Remove(activity);
         }
 
-        private sealed class ScopeInSpan : IScope
+        private sealed class ScopeInSpan : IDisposable
         {
             private readonly ISpan span;
             private readonly bool endSpan;

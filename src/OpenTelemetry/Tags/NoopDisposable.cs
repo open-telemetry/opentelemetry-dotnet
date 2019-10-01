@@ -1,4 +1,4 @@
-﻿// <copyright file="IScope.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopDisposable.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,15 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Context
+namespace OpenTelemetry.Tags
 {
     using System;
 
-    /// <summary>
-    /// Scope marker. Used as a syntactic sugar in methods like StartScopedSpan so it can be
-    /// wrapped in "using" block with automatic scope completion.
-    /// </summary>
-    public interface IScope : IDisposable
+    internal class NoopDisposable : IDisposable
     {
+        internal static readonly IDisposable Instance = new NoopDisposable();
+        
+        public void Dispose()
+        {
+        }
     }
 }
