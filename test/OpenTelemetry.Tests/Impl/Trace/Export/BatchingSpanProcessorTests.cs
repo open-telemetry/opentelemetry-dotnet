@@ -37,6 +37,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private TestExporter spanExporter = new TestExporter(null);
         private BatchingSpanProcessor spanProcessor;
         private static readonly TimeSpan DefaultDelay = TimeSpan.FromMilliseconds(30);
+        private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(1);
         public BatchingSpanProcessorTest()
         {
             spanProcessor = new BatchingSpanProcessor(spanExporter, 128, DefaultDelay, 128);
@@ -120,7 +121,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var span1 = CreateSampledEndedSpan(SpanName1);
             var span2 = CreateSampledEndedSpan(SpanName2);
 
-            var exported = WaitForSpans(spanExporter, 2, TimeSpan.FromMilliseconds(100));
+            var exported = WaitForSpans(spanExporter, 2, DefaultTimeout);
 
             Assert.Equal(2, exported.Length);
             Assert.Contains(span1, exported);
@@ -146,9 +147,11 @@ namespace OpenTelemetry.Trace.Export.Test
                 spans.Add(CreateSampledEndedSpan(i.ToString()));
             }
 
-            var exported = WaitForSpans(spanExporter, 20, TimeSpan.FromSeconds(1.1));
+            var exported = WaitForSpans(spanExporter, 20, TimeSpan.FromSeconds(2));
 
             Assert.Equal(spans.Count, exported.Length);
+            Assert.InRange(exportStartTimes.Count, 10, 20);
+
             for (int i = 1; i < exportStartTimes.Count - 1; i ++)
             {
                 Assert.InRange(exportStartTimes[i], exportEndTimes[i - 1] + 1, exportStartTimes[i + 1] - 1);
@@ -168,7 +171,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 spans.Add(CreateSampledEndedSpan(i.ToString()));
             }
 
-            var exported = WaitForSpans(spanExporter, 1, TimeSpan.FromMilliseconds(200));
+            var exported = WaitForSpans(spanExporter, 1, DefaultTimeout);
 
             Assert.Equal(1, exportCalledCount);
             Assert.InRange(exported.Length, 1,2);
@@ -188,7 +191,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var span5 = CreateSampledEndedSpan(SpanName1);
             var span6 = CreateSampledEndedSpan(SpanName1);
 
-            var exported = WaitForSpans(spanExporter, 6, TimeSpan.FromMilliseconds(100));
+            var exported = WaitForSpans(spanExporter, 6, DefaultTimeout);
             Assert.Equal(2, exportCalledCount);
 
             Assert.Equal(6, exported.Count());
@@ -214,7 +217,7 @@ namespace OpenTelemetry.Trace.Export.Test
             // sampled span is not exported by creating and ending a sampled span after a non sampled span
             // and checking that the first exported span is the sampled span (the non sampled did not get
             // exported).
-            var exported = WaitForSpans(spanExporter, 1, TimeSpan.FromMilliseconds(100));
+            var exported = WaitForSpans(spanExporter, 1, DefaultTimeout);
             Assert.Equal(1, exportCalledCount);
 
             // Need to check this because otherwise the variable span1 is unused, other option is to not
@@ -251,7 +254,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
             Assert.InRange(sw.Elapsed, TimeSpan.Zero, TimeSpan.FromMilliseconds(100));
 
-            var exported = WaitForSpans(spanExporter, 1, TimeSpan.FromMilliseconds(600));
+            var exported = WaitForSpans(spanExporter, 1, DefaultTimeout);
 
             Assert.Single(exported);
         }
@@ -271,7 +274,7 @@ namespace OpenTelemetry.Trace.Export.Test
             }
 
             Assert.True(spanExporter.ExportedSpans.Length < spans.Count);
-            using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1)))
+            using (var cts = new CancellationTokenSource(DefaultTimeout))
             {
                 await spanProcessor.ShutdownAsync(cts.Token);
             }
