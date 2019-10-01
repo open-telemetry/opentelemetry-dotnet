@@ -136,7 +136,7 @@ namespace OpenTelemetry.Trace.Test
 
             span.AddEvent(Event.Create(EventDescription));
             span.AddEvent(EventDescription, attributes);
-            span.AddLink(Link.FromSpanContext(link));
+            span.AddLink(new Link(link));
 
             Assert.Equal(spanStartTime, span.StartTimestamp);
             Assert.Empty(span.Attributes);
@@ -208,7 +208,7 @@ namespace OpenTelemetry.Trace.Test
             var secondEventTime = PreciseTimestamp.GetUtcNow();
             span.AddEvent(EventDescription, attributes);
 
-            var link = Link.FromSpanContext(contextLink);
+            var link = new Link(contextLink);
             span.AddLink(link);
 
             Assert.Equal(activity.TraceId, span.Context.TraceId);
@@ -282,7 +282,7 @@ namespace OpenTelemetry.Trace.Test
             var secondEventTime = PreciseTimestamp.GetUtcNow();
             span.AddEvent(EventDescription, attributes);
 
-            var link = Link.FromSpanContext(contextLink);
+            var link = new Link(contextLink);
             span.AddLink(link);
             span.Status = Status.Cancelled;
 
@@ -543,7 +543,7 @@ namespace OpenTelemetry.Trace.Test
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
                     false);
-            var link = Link.FromSpanContext(contextLink);
+            var link = new Link(contextLink);
             for (var i = 0; i < 2 * maxNumberOfLinks; i++)
             {
                 span.AddLink(link);

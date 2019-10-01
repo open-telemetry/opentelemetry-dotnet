@@ -34,7 +34,10 @@ namespace OpenTelemetry.Tests.Impl.Trace
         [Fact]
         public void NoopTracer_WithSpan()
         {
-            Assert.Same(NoopScope.Instance, NoopTracer.Instance.WithSpan(BlankSpan.Instance));
+            var noopScope = NoopTracer.Instance.WithSpan(BlankSpan.Instance);
+            Assert.NotNull(noopScope);
+            // does not throw
+            noopScope.Dispose();
         }
 
         [Fact]

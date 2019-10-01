@@ -1,4 +1,4 @@
-﻿// <copyright file="ILink.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopDisposable.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Tags
 {
-    using System.Collections.Generic;
+    using System;
 
-    /// <summary>
-    /// Link associated with the span.
-    /// </summary>
-    public interface ILink
+    internal class NoopDisposable : IDisposable
     {
-        /// <summary>
-        /// Gets the span context of a linked span.
-        /// </summary>
-        SpanContext Context { get; }
-
-        /// <summary>
-        /// Gets the collection of attributes associated with the link.
-        /// </summary>
-        IDictionary<string, object> Attributes { get; }
+        internal static readonly IDisposable Instance = new NoopDisposable();
+        
+        public void Dispose()
+        {
+        }
     }
 }

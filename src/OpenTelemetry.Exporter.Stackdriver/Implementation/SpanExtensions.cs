@@ -80,7 +80,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             return span;
         }
 
-        public static Google.Cloud.Trace.V2.Span.Types.Link ToLink(this ILink link)
+        public static Google.Cloud.Trace.V2.Span.Types.Link ToLink(this Link link)
         {
             var ret = new Google.Cloud.Trace.V2.Span.Types.Link();
             ret.SpanId = link.Context.SpanId.ToHexString();

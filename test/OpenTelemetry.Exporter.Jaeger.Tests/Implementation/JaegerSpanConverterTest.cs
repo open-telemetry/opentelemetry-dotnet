@@ -350,7 +350,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            var link = Link.FromSpanContext(new SpanContext(
+            var link = new Link(new SpanContext(
                     traceId,
                     linkedSpanId,
                     ActivityTraceFlags.Recorded,

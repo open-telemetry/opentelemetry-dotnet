@@ -63,7 +63,7 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
             };
 
             var linkedSpanId = ActivitySpanId.CreateRandom();
-            var link = Link.FromSpanContext(new SpanContext(
+            var link = new Link(new SpanContext(
                 traceId, linkedSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty));
 
             var span = (Span)Tracing.Tracer

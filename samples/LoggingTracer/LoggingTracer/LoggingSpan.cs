@@ -36,7 +36,7 @@ namespace LoggingTracer
 
         public void AddEvent(IEvent newEvent) => Logger.Log($"Span.AddEvent({newEvent})");
 
-        public void AddLink(ILink link) => Logger.Log($"Span.AddLink({link})");
+        public void AddLink(Link link) => Logger.Log($"Span.AddLink({link})");
 
         public void End() => Logger.Log($"Span.End, Name: {this.Name}");
 
