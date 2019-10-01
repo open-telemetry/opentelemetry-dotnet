@@ -41,7 +41,12 @@ namespace OpenTelemetry.Tags.Test
             Assert.Same(NoopTags.NoopTagContextBuilder, noopTagger.EmptyBuilder);
             Assert.Same(NoopTags.NoopTagContextBuilder, noopTagger.ToBuilder(TAG_CONTEXT));
             Assert.Same(NoopTags.NoopTagContextBuilder, noopTagger.CurrentBuilder);
-            Assert.Same(NoopScope.Instance, noopTagger.WithTagContext(TAG_CONTEXT));
+
+            using (var noopScope = noopTagger.WithTagContext(TAG_CONTEXT))
+            {
+                Assert.NotNull(noopScope);
+            }
+            // does not throw
         }
 
         [Fact]
@@ -63,8 +68,16 @@ namespace OpenTelemetry.Tags.Test
         {
             Assert.Same(NoopTags.NoopTagContext, NoopTags.NoopTagContextBuilder.Build());
             Assert.Same(NoopTags.NoopTagContext, NoopTags.NoopTagContextBuilder.Put(KEY, VALUE).Build());
-            Assert.Same(NoopScope.Instance, NoopTags.NoopTagContextBuilder.BuildScoped());
-            Assert.Same(NoopScope.Instance, NoopTags.NoopTagContextBuilder.Put(KEY, VALUE).BuildScoped());
+
+            var noopScope = NoopTags.NoopTagContextBuilder.BuildScoped();
+            Assert.NotNull(noopScope);
+            // does not throw
+            noopScope.Dispose();
+
+            noopScope = NoopTags.NoopTagContextBuilder.Put(KEY, VALUE).BuildScoped();
+            Assert.NotNull(noopScope);
+            // does not throw
+            noopScope.Dispose();
         }
 
         [Fact]

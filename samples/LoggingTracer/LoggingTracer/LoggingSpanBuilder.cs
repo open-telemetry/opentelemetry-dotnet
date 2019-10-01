@@ -124,19 +124,6 @@ namespace LoggingTracer
             Logger.Log($"SpanBuilder.SetSpanKind({spanKind})");
             return this;
         }
-
-        public IScope StartScopedSpan()
-        {
-            Logger.Log("SpanBuilder.StartScopedSpan()");
-            return new CurrentSpanUtils.LoggingScope(this.span);
-        }
-
-        public IScope StartScopedSpan(out ISpan currentSpan)
-        {
-            Logger.Log("SpanBuilder.StartScopedSpan()");
-            return new CurrentSpanUtils.LoggingScope(currentSpan = this.span);
-        }
-
         public ISpan StartSpan()
         {
             Logger.Log("SpanBuilder.StartSpan()");

@@ -46,7 +46,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var tracerMock = new Mock<ITracer>();
             var shim = new ScopeManagerShim(tracerMock.Object);
             var openTracingSpan = new SpanShim(Defaults.GetOpenTelemetrySpanMock());
-            var scopeMock = new Mock<Context.IScope>();
+            var scopeMock = new Mock<IDisposable>();
 
             tracerMock.Setup(x => x.WithSpan(openTracingSpan.Span)).Returns(scopeMock.Object);
             tracerMock.Setup(x => x.CurrentSpan).Returns(openTracingSpan.Span);
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             var tracerMock = new Mock<ITracer>();
             var shim = new ScopeManagerShim(tracerMock.Object);
-            var scopeMock = new Mock<Context.IScope>();
+            var scopeMock = new Mock<IDisposable>();
             var spanShim = new SpanShim(Defaults.GetOpenTelemetryMockSpan().Object);
 
             tracerMock.Setup(x => x.WithSpan(spanShim.Span)).Returns(scopeMock.Object);

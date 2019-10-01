@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Trace
 {
-    using OpenTelemetry.Context;
+    using System;
     using OpenTelemetry.Context.Propagation;
 
     /// <summary>
@@ -43,8 +43,8 @@ namespace OpenTelemetry.Trace
         /// Associates the span with the current context.
         /// </summary>
         /// <param name="span">Span to associate with the current context.</param>
-        /// <returns>Scope object to control span to current context association.</returns>
-        IScope WithSpan(ISpan span);
+        /// <returns>Disposable object to control span to current context association.</returns>
+        IDisposable WithSpan(ISpan span);
 
         /// <summary>
         /// Gets the span builder for the span with the given name.

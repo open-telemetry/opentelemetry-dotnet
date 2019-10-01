@@ -16,8 +16,7 @@
 
 namespace OpenTelemetry.Tags
 {
-    using OpenTelemetry.Context;
-    using OpenTelemetry.Trace;
+    using System;
 
     public sealed class Tagger : TaggerBase
     {
@@ -70,10 +69,10 @@ namespace OpenTelemetry.Tags
                 : ToTagContextBuilder(tags);
         }
 
-        public override IScope WithTagContext(ITagContext tags)
+        public override IDisposable WithTagContext(ITagContext tags)
         {
             return this.state.Internal == TaggingState.DISABLED
-                ? NoopScope.Instance
+                ? NoopDisposable.Instance
                 : CurrentTagContextUtils.WithTagContext(ToTagContext(tags));
         }
 
