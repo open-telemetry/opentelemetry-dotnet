@@ -27,14 +27,14 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromDescription_NullDescription()
         {
-            Assert.Throws<ArgumentNullException>(() => Event.Create(null));
+            Assert.Throws<ArgumentNullException>(() => new Event(null));
         }
 
         [Fact]
         public void FromDescription()
         {
             var approxTimestamp = PreciseTimestamp.GetUtcNow();
-            var @event = Event.Create("MyEventText");
+            var @event = new Event("MyEventText");
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(0, @event.Attributes.Count);
             Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 20);
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace.Test
         public void FromDescriptionAndDefaultTimestamp()
         {
             var approxTimestamp = PreciseTimestamp.GetUtcNow();
-            var @event = Event.Create("MyEventText", default);
+            var @event = new Event("MyEventText", default);
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(0, @event.Attributes.Count);
             Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 20);
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Trace.Test
         public void FromDescriptionAndTimestamp()
         {
             var exactTimestamp = DateTime.UtcNow.AddSeconds(-100);
-            var @event = Event.Create("MyEventText", exactTimestamp);
+            var @event = new Event("MyEventText", exactTimestamp);
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(0, @event.Attributes.Count);
             Assert.Equal(exactTimestamp, @event.Timestamp);
@@ -63,13 +63,13 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromDescriptionAndAttributes_NullDescription()
         {
-            Assert.Throws<ArgumentNullException>(() => Event.Create(null, DateTime.UtcNow, new Dictionary<string, object>()));
+            Assert.Throws<ArgumentNullException>(() => new Event(null, DateTime.UtcNow, new Dictionary<string, object>()));
         }
 
         [Fact]
         public void FromDescriptionAndAttributes_NullAttributes()
         {
-            Assert.Throws<ArgumentNullException>(() => Event.Create("", DateTime.UtcNow, null));
+            Assert.Throws<ArgumentNullException>(() => new Event("", DateTime.UtcNow, null));
         }
 
         [Fact]
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Trace.Test
             var attributes = new Dictionary<string, object>();
             attributes.Add(
                 "MyStringAttributeKey", "MyStringAttributeValue");
-            var @event = Event.Create("MyEventText", timestamp, attributes);
+            var @event = new Event("MyEventText", timestamp, attributes);
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(attributes, @event.Attributes);
             Assert.Equal(timestamp, @event.Timestamp);
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Trace.Test
             var attributes = new Dictionary<string, object>();
             attributes.Add(
                 "MyStringAttributeKey", "MyStringAttributeValue");
-            var @event = Event.Create("MyEventText", default, attributes);
+            var @event = new Event("MyEventText", default, attributes);
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(attributes, @event.Attributes);
             Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 20);
@@ -102,42 +102,10 @@ namespace OpenTelemetry.Trace.Test
         public void FromDescriptionAndAttributes_EmptyAttributes()
         {
             var @event =
-                Event.Create(
+                new Event(
                     "MyEventText", DateTime.UtcNow, new Dictionary<string, object>());
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(0, @event.Attributes.Count);
-        }
-
-        [Fact]
-        public void Event_EqualsAndHashCode()
-        {
-            // EqualsTester tester = new EqualsTester();
-            // Map<String, AttributeValue> attributes = new HashMap<String, AttributeValue>();
-            // attributes.put(
-            //    "MyStringAttributeKey", AttributeValue.stringAttributeValue("MyStringAttributeValue"));
-            // tester
-            //    .addEqualityGroup(
-            //        Event.Create("MyEventText"),
-            //        Event.Create(
-            //            "MyEventText", Collections.< String, AttributeValue > emptyMap()))
-            //    .addEqualityGroup(
-            //        Event.Create("MyEventText", attributes),
-            //        Event.Create("MyEventText", attributes))
-            //    .addEqualityGroup(Event.Create("MyEventText2"));
-            // tester.testEquals();
-        }
-
-        [Fact]
-        public void Event_ToString()
-        {
-            var @event = Event.Create("MyEventText");
-            Assert.Contains("MyEventText", @event.ToString());
-            var attributes = new Dictionary<string, object>();
-            attributes.Add(
-                "MyStringAttributeKey", "MyStringAttributeValue");
-            @event = Event.Create("MyEventText2", DateTime.UtcNow, attributes);
-            Assert.Contains("MyEventText2", @event.ToString());
-            Assert.Contains(string.Join(",", attributes.Select(kvp => $"{kvp.Key}={kvp.Value}")), @event.ToString());
         }
     }
 }

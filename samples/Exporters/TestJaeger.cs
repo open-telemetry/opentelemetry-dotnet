@@ -20,6 +20,7 @@ namespace Samples
     using System.Collections.Generic;
     using System.Threading;
     using OpenTelemetry.Exporter.Jaeger;
+    using OpenTelemetry.Exporter.Jaeger.Implementation;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
@@ -29,13 +30,15 @@ namespace Samples
         internal static object Run(string host, int port)
         {
             // Configure exporter to export traces to Jaeger
+            var jaegerOptions = new JaegerExporterOptions()
+            {
+                ServiceName = "tracing-to-jaeger-service",
+                AgentHost = host,
+                AgentPort = port,
+            };
+
             var exporter = new JaegerTraceExporter(
-                new JaegerExporterOptions
-                {
-                    ServiceName = "tracing-to-jaeger-service",
-                    AgentHost = host,
-                    AgentPort = port,
-                });
+                jaegerOptions);
 
             // Create a tracer. You may also need to register it as a global instance to make auto-collectors work..
             var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
@@ -80,6 +83,7 @@ namespace Samples
                 // Annotate our span to capture metadata about our operation
                 var attributes = new Dictionary<string, object>();
                 attributes.Add("use", "demo");
+                attributes.Add("iteration", i);
                 span.AddEvent("Invoking DoWork", attributes);
             }
         }

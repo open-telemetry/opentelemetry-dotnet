@@ -62,11 +62,11 @@ namespace OpenTelemetry.Trace.Test
         {
         }
 
-        public void AddEvent(IEvent newEvent)
+        public void AddEvent(Event newEvent)
         {
         }
 
-        public void AddLink(ILink link)
+        public void AddLink(Link link)
         {
         }
 

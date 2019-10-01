@@ -20,12 +20,19 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using System.Linq;
 
-    /// <inheritdoc/>
-    public sealed class Link : ILink
+    /// <summary>
+    /// Link associated with the span.
+    /// </summary>
+    public sealed class Link
     {
         private static readonly IDictionary<string, object> EmptyAttributes = new Dictionary<string, object>();
 
-        private Link(SpanContext spanContext, IDictionary<string, object> attributes)
+        public Link(SpanContext spanContext)
+            : this(spanContext, EmptyAttributes)
+        {
+        }
+
+        public Link(SpanContext spanContext, IDictionary<string, object> attributes)
         {
             if (spanContext == null)
             {
@@ -41,21 +48,15 @@ namespace OpenTelemetry.Trace
             this.Attributes = attributes ?? throw new ArgumentNullException(nameof(attributes));
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Gets the span context of a linked span.
+        /// </summary>
         public SpanContext Context { get; }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Gets the collection of attributes associated with the link.
+        /// </summary>
         public IDictionary<string, object> Attributes { get; }
-
-        public static ILink FromSpanContext(SpanContext context)
-        {
-            return new Link(context, EmptyAttributes);
-        }
-
-        public static ILink FromSpanContext(SpanContext spanContext, IDictionary<string, object> attributes)
-        {
-            return new Link(spanContext, attributes);
-        }
 
         /// <inheritdoc/>
         public override bool Equals(object o)

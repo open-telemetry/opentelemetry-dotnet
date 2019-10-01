@@ -133,7 +133,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             spanBuilderMock.Verify(o => o.SetParent(It.IsAny<Trace.SpanContext>()), Times.Never);
 
             // The rest become links
-            spanBuilderMock.Verify(o => o.AddLink(It.Is<Trace.ILink>(link => link.Context == span2.Span.Context)), Times.Once);
+            spanBuilderMock.Verify(o => o.AddLink(It.Is<Trace.Link>(link => link.Context == span2.Span.Context)), Times.Once);
         }
 
         [Fact]
@@ -190,7 +190,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             spanBuilderMock.Verify(o => o.SetParent(It.IsAny<Trace.ISpan>()), Times.Never);
 
             // The rest become links
-            spanBuilderMock.Verify(o => o.AddLink(It.Is<Trace.ILink>(link => link.Context == spanContext2.SpanContext)), Times.Once);
+            spanBuilderMock.Verify(o => o.AddLink(It.Is<Trace.Link>(link => link.Context == spanContext2.SpanContext)), Times.Once);
         }
 
         [Fact]
