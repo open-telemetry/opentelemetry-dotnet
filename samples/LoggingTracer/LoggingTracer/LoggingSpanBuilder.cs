@@ -1,4 +1,4 @@
-// <copyright file="LoggingSpanBuilder.cs" company="PlaceholderCompany">
+﻿// <copyright file="LoggingSpanBuilder.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
@@ -53,7 +53,7 @@ namespace LoggingTracer
             return this;
         }
 
-        public ISpanBuilder AddLink(ILink link)
+        public ISpanBuilder AddLink(Link link)
         {
             Logger.Log($"SpanBuilder.AddLink({link})");
             return this;

@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromSpanContext()
         {
-            var link = Link.FromSpanContext(spanContext);
+            var link = new Link(spanContext);
             Assert.Equal(spanContext.TraceId, link.Context.TraceId);
             Assert.Equal(spanContext.SpanId, link.Context.SpanId);
         }
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromSpanContext_WithAttributes()
         {
-            var link = Link.FromSpanContext(spanContext, attributesMap);
+            var link = new Link(spanContext, attributesMap);
             Assert.Equal(spanContext.TraceId, link.Context.TraceId);
             Assert.Equal(spanContext.SpanId, link.Context.SpanId);
             Assert.Equal(attributesMap, link.Attributes);

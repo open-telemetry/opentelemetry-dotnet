@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace
         private SpanContext parentSpanContext;
         private ContextSource contextSource = ContextSource.CurrentActivityParent;
         private ISampler sampler;
-        private List<ILink> links;
+        private List<Link> links;
         private bool recordEvents;
         private DateTimeOffset startTimestamp;
 
@@ -154,18 +154,18 @@ namespace OpenTelemetry.Trace
         public ISpanBuilder AddLink(SpanContext spanContext)
         {
             // let link validate arguments
-            return this.AddLink(Link.FromSpanContext(spanContext));
+            return this.AddLink(new Link(spanContext));
         }
 
         /// <inheritdoc/>
         public ISpanBuilder AddLink(SpanContext spanContext, IDictionary<string, object> attributes)
         {
             // let link validate arguments
-            return this.AddLink(Link.FromSpanContext(spanContext, attributes));
+            return this.AddLink(new Link(spanContext, attributes));
         }
 
         /// <inheritdoc/>
-        public ISpanBuilder AddLink(ILink link)
+        public ISpanBuilder AddLink(Link link)
         {
             if (link == null)
             {
@@ -174,7 +174,7 @@ namespace OpenTelemetry.Trace
 
             if (this.links == null)
             {
-                this.links = new List<ILink>();
+                this.links = new List<Link>();
             }
 
             this.links.Add(link);
@@ -261,7 +261,7 @@ namespace OpenTelemetry.Trace
             return span;
         }
 
-        private static bool IsAnyParentLinkSampled(List<ILink> parentLinks)
+        private static bool IsAnyParentLinkSampled(List<Link> parentLinks)
         {
             if (parentLinks != null)
             {
@@ -277,7 +277,7 @@ namespace OpenTelemetry.Trace
             return false;
         }
 
-        private static void LinkSpans(ISpan span, List<ILink> parentLinks)
+        private static void LinkSpans(ISpan span, List<Link> parentLinks)
         {
             if (parentLinks != null)
             {
@@ -292,7 +292,7 @@ namespace OpenTelemetry.Trace
             SpanContext parent,
             string name,
             ISampler sampler,
-            List<ILink> parentLinks,
+            List<Link> parentLinks,
             ActivityTraceId traceId,
             ActivitySpanId spanId,
             TraceConfig traceConfig)

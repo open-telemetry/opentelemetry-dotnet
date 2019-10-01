@@ -1323,7 +1323,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
                 tracestate, kind, status);
             span.AddLink(
-                    Link.FromSpanContext(
+                    new Link(
                         new SpanContext(
                             ActivityTraceId.CreateFromBytes(link0TraceIdBytes),
                             ActivitySpanId.CreateFromBytes(link0SpanIdBytes),
@@ -1331,7 +1331,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                             Tracestate.Empty)));
 
             span.AddLink(
-                Link.FromSpanContext(
+                new Link(
                     new SpanContext(
                         ActivityTraceId.CreateFromBytes(link1TraceIdBytes),
                         ActivitySpanId.CreateFromBytes(link1SpanIdBytes),
@@ -1339,7 +1339,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                         Tracestate.Empty)));
 
             span.AddLink(
-                Link.FromSpanContext(
+                new Link(
                     new SpanContext(
                         ActivityTraceId.CreateFromBytes(link2TraceIdBytes),
                         ActivitySpanId.CreateFromBytes(link2SpanIdBytes),
@@ -1376,7 +1376,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
                 tracestate, kind, status);
 
-            span.AddLink(Link.FromSpanContext(
+            span.AddLink(new Link(
                         new SpanContext(
                             ActivityTraceId.CreateFromBytes(GenerateRandomId(16).Item2),
                             ActivitySpanId.CreateFromBytes(GenerateRandomId(8).Item2),
@@ -1421,15 +1421,15 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
                 tracestate, kind, status);
 
-            span.AddLink(Link.FromSpanContext(
+            span.AddLink(new Link(
                 new SpanContext(ActivityTraceId.CreateFromBytes(link0TraceIdBytes),
                     ActivitySpanId.CreateFromBytes(link0SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)));
 
-            span.AddLink(Link.FromSpanContext(
+            span.AddLink(new Link(
                 new SpanContext(ActivityTraceId.CreateFromBytes(link1TraceIdBytes),
                     ActivitySpanId.CreateFromBytes(link1SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)));
 
-            span.AddLink(Link.FromSpanContext(
+            span.AddLink(new Link(
                 new SpanContext(ActivityTraceId.CreateFromBytes(link2TraceIdBytes),
                     ActivitySpanId.CreateFromBytes(link2SpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)));
 
@@ -1463,7 +1463,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
                 tracestate, kind, status);
 
-            span.AddLink(Link.FromSpanContext(
+            span.AddLink(new Link(
                         new SpanContext(
                             ActivityTraceId.CreateFromBytes(GenerateRandomId(16).Item2),
                             ActivitySpanId.CreateFromBytes(GenerateRandomId(8).Item2),
@@ -1613,7 +1613,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             out DateTime startTimestamp,
             out Dictionary<string, object> attributes,
             out List<IEvent> events,
-            out List<ILink> links,
+            out List<Link> links,
             out Status status,
             out SpanKind kind,
             out DateTime endTimestamp)

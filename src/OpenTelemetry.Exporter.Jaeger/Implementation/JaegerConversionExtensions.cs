@@ -118,7 +118,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             };
         }
 
-        public static JaegerSpanRef ToJaegerSpanRef(this ILink link)
+        public static JaegerSpanRef ToJaegerSpanRef(this Link link)
         {
             var traceId = Int128.Empty;
             var spanId = Int128.Empty;
