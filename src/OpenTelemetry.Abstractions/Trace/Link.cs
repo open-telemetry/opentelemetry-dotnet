@@ -18,20 +18,26 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.Diagnostics;
     using System.Linq;
-    using OpenTelemetry.Abstractions.Context.Propagation;
-    using OpenTelemetry.Abstractions.Utils;
 
     /// <inheritdoc/>
     public sealed class Link : ILink
     {
         private static readonly IDictionary<string, object> EmptyAttributes = new Dictionary<string, object>();
 
-        private Link(SpanContext context, IDictionary<string, object> attributes)
+        private Link(SpanContext spanContext, IDictionary<string, object> attributes)
         {
-            this.Context = context ?? throw new ArgumentNullException(nameof(context));
+            if (spanContext == null)
+            {
+                throw new ArgumentNullException(nameof(spanContext));
+            }
+
+            if (!spanContext.IsValid)
+            {
+                throw new ArgumentException(nameof(spanContext));
+            }
+
+            this.Context = spanContext;
             this.Attributes = attributes ?? throw new ArgumentNullException(nameof(attributes));
         }
 
@@ -46,24 +52,9 @@ namespace OpenTelemetry.Trace
             return new Link(context, EmptyAttributes);
         }
 
-        public static ILink FromSpanContext(SpanContext context, IDictionary<string, object> attributes)
+        public static ILink FromSpanContext(SpanContext spanContext, IDictionary<string, object> attributes)
         {
-            IDictionary<string, object> copy = new Dictionary<string, object>(attributes);
-            return new Link(
-                context,
-                new ReadOnlyDictionary<string, object>(copy));
-        }
-
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return nameof(Link)
-                + "{"
-                + nameof(this.Context) + "=" + this.Context.TraceId.ToHexString() + ", "
-                + nameof(this.Context) + "=" + this.Context.SpanId.ToHexString() + ", "
-                + nameof(this.Context) + "=" + this.Context.Tracestate.ToString() + ", "
-                + nameof(this.Attributes) + "=" + string.Join(", ", this.Attributes.Select(kvp => (kvp.Key + "=" + kvp.Value)))
-                + "}";
+            return new Link(spanContext, attributes);
         }
 
         /// <inheritdoc/>

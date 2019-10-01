@@ -96,7 +96,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
             var tf = new Mock<ITextFormat>();
-            tf.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(SpanContext.Create(
+            tf.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new SpanContext(
                 expectedTraceId,
                 expectedSpanId,
                 ActivityTraceFlags.None,
