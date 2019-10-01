@@ -66,7 +66,7 @@ namespace OpenTelemetry.Trace.Test
         {
         }
 
-        public void AddLink(ILink link)
+        public void AddLink(Link link)
         {
         }
 

@@ -65,7 +65,7 @@ namespace OpenTelemetry.Tags
             return new TagContext(this.Tags);
         }
 
-        public override IScope BuildScoped()
+        public override IDisposable BuildScoped()
         {
             return CurrentTagContextUtils.WithTagContext(this.Build());
         }

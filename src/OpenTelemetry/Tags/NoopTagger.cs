@@ -17,36 +17,16 @@
 namespace OpenTelemetry.Tags
 {
     using System;
-    using OpenTelemetry.Context;
-    using OpenTelemetry.Trace;
 
     internal sealed class NoopTagger : TaggerBase
     {
         internal static readonly ITagger Instance = new NoopTagger();
 
-        public override ITagContext Empty
-        {
-            get
-            {
-                return NoopTags.NoopTagContext;
-            }
-        }
+        public override ITagContext Empty => NoopTags.NoopTagContext;
 
-        public override ITagContext CurrentTagContext
-        {
-            get
-            {
-                return NoopTags.NoopTagContext;
-            }
-        }
+        public override ITagContext CurrentTagContext => NoopTags.NoopTagContext;
 
-        public override ITagContextBuilder EmptyBuilder
-        {
-            get
-            {
-                return NoopTags.NoopTagContextBuilder;
-            }
-        }
+        public override ITagContextBuilder EmptyBuilder => NoopTags.NoopTagContextBuilder;
 
         public override ITagContextBuilder CurrentBuilder
         {
@@ -66,14 +46,14 @@ namespace OpenTelemetry.Tags
             return NoopTags.NoopTagContextBuilder;
         }
 
-        public override IScope WithTagContext(ITagContext tags)
+        public override IDisposable WithTagContext(ITagContext tags)
         {
             if (tags == null)
             {
                 throw new ArgumentNullException(nameof(tags));
             }
 
-            return NoopScope.Instance;
+            return NoopDisposable.Instance;
         }
     }
 }

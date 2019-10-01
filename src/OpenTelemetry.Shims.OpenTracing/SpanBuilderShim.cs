@@ -40,7 +40,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <summary>
         /// The OpenTelemetry links. These correspond loosely to OpenTracing references.
         /// </summary>
-        private readonly List<Trace.ILink> links = new List<Trace.ILink>();
+        private readonly List<Trace.Link> links = new List<Trace.Link>();
 
         /// <summary>
         /// The OpenTelemetry attributes. These correspond to OpenTracing Tags.
@@ -133,7 +133,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             }
             else
             {
-                this.links.Add(Trace.Link.FromSpanContext(actualContext));
+                this.links.Add(new Trace.Link(actualContext));
             }
 
             return this;

@@ -67,7 +67,7 @@ namespace OpenTelemetry.Trace.Sampler
         }
 
         /// <inheritdoc />
-        public Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ILink> links)
+        public Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<Link> links)
         {
             // If the parent is sampled keep the sampling decision.
             if (parentContext != null &&

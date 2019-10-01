@@ -44,7 +44,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             a.Stop();
 
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetSampler(null));
-            Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((ILink)null));
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((Link)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((SpanContext)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink(null, null));
             Assert.Throws<ArgumentException>(() => spanBuilder.AddLink(SpanContext.Blank));

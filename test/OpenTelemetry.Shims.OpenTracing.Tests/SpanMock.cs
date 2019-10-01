@@ -32,7 +32,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             this.Context = spanContext;
             this.Events = new List<Event>();
-            this.Links = new List<ILink>();
+            this.Links = new List<Link>();
             this.Attributes = new List<KeyValuePair<string, object>>();
         }
 
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
         public List<Event> Events { get; }
 
-        public List<ILink> Links { get; }
+        public List<Link> Links { get; }
 
         public List<KeyValuePair<string, object>> Attributes { get; }
 
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             this.Events.Add(newEvent);
         }
 
-        public void AddLink(ILink link)
+        public void AddLink(Link link)
         {
             this.Links.Add(link);
         }
@@ -115,19 +115,6 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         private void SetAttribute<TValue>(string key, TValue value)
         {
             this.SetAttribute(new KeyValuePair<string, object>(key, value));
-        }
-
-        public class Link : Trace.ILink
-        {
-            public Link(SpanContext spanContext, IDictionary<string, object> attributes)
-            {
-                this.Context = spanContext;
-                this.Attributes = attributes;
-            }
-
-            public SpanContext Context { get; }
-
-            public IDictionary<string, object> Attributes { get; }
         }
     }
 }
