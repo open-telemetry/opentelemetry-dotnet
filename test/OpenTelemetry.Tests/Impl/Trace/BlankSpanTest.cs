@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace.Test
             BlankSpan.Instance.AddEvent("MyEvent", attributes);
             BlankSpan.Instance.AddEvent("MyEvent", multipleAttributes);
             BlankSpan.Instance.AddEvent(Event.Create("MyEvent"));
-            BlankSpan.Instance.AddLink(Link.FromSpanContext(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty)));
+            BlankSpan.Instance.AddLink(new Link(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty)));
 
             Assert.False(BlankSpan.Instance.Context.IsValid);
             Assert.False(BlankSpan.Instance.IsRecordingEvents);
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.AddEvent((string)null));
             Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.AddEvent((IEvent)null));
             Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.AddLink(null));
-            Assert.Throws<ArgumentException>(() => BlankSpan.Instance.AddLink(Link.FromSpanContext(SpanContext.Blank)));
+            Assert.Throws<ArgumentException>(() => BlankSpan.Instance.AddLink(new Link(SpanContext.Blank)));
         }
     }
 }

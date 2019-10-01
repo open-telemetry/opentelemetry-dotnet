@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace
         private readonly object @lock = new object();
         private EvictingQueue<KeyValuePair<string, object>> attributes;
         private EvictingQueue<IEvent> events;
-        private EvictingQueue<ILink> links;
+        private EvictingQueue<Link> links;
         private Status status;
         private DateTimeOffset endTimestamp;
 
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets links.
         /// </summary>
-        public IEnumerable<ILink> Links => this.links ?? Enumerable.Empty<ILink>();
+        public IEnumerable<Link> Links => this.links ?? Enumerable.Empty<Link>();
 
         /// <summary>
         /// Gets span start timestamp.
@@ -283,7 +283,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void AddLink(ILink link)
+        public void AddLink(Link link)
         {
             if (link == null)
             {
@@ -305,7 +305,7 @@ namespace OpenTelemetry.Trace
 
                 if (this.links == null)
                 {
-                    this.links = new EvictingQueue<ILink>(this.traceConfig.MaxNumberOfLinks);
+                    this.links = new EvictingQueue<Link>(this.traceConfig.MaxNumberOfLinks);
                 }
 
                 this.links.AddEvent(link);

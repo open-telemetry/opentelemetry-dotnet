@@ -93,7 +93,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="link"><see cref="Link"/> to set on span.</param>
         /// <returns>This span builder for chaining.</returns>
-        ISpanBuilder AddLink(ILink link);
+        ISpanBuilder AddLink(Link link);
 
         /// <summary>
         /// Set the <see cref="Link"/> on the span.
