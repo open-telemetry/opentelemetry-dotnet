@@ -30,11 +30,15 @@ namespace OpenTelemetry.Resources
         /// Maximum length of the resource type name.
         /// </summary>
         private const int MaxResourceTypeNameLength = 255;
-        private readonly Dictionary<string, string> labelCollection;
 
-        internal Resource(IDictionary<string, string> labels)
+        /// <summary>
+        /// Creates a new <see cref="Resource"/>.
+        /// </summary>
+        /// <param name="labels">An <see cref="IDictionary{String, String}"/> of labels that describe the resource.</param>
+        public Resource(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            this.labelCollection = (Dictionary<string, string>)ValidateLabels(labels);
+            ValidateLabels(labels);
+            this.Labels = labels;
         }
 
         /// <summary>
@@ -45,17 +49,7 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Gets the collection of key-value pairs describing the resource.
         /// </summary>
-        public IReadOnlyDictionary<string, string> Labels => this.labelCollection;
-
-        /// <summary>
-        /// Returns a new <see cref="Resource"/>.
-        /// </summary>
-        /// <param name="labels">An <see cref="IDictionary{String, String}"/> of labels that describe the resource.</param>
-        /// <returns><see cref="Resource"/>.</returns>
-        public static Resource Create(IDictionary<string, string> labels)
-        {
-            return new Resource(labels);
-        }
+        public IEnumerable<KeyValuePair<string, string>> Labels { get; }
 
         /// <summary>
         /// Returns a new, merged <see cref="Resource"/> by merging the current <see cref="Resource"/> with the.
@@ -65,23 +59,28 @@ namespace OpenTelemetry.Resources
         /// <returns><see cref="Resource"/>.</returns>
         public Resource Merge(Resource other)
         {
-            if (other == null)
+            var newLabels = new Dictionary<string, string>();
+
+            foreach (var label in this.Labels)
             {
-                return this;
+                newLabels.Add(label.Key, label.Value);
             }
 
-            foreach (var label in other.Labels)
+            if (other != null)
             {
-                if (this.labelCollection.ContainsKey(label.Key) == false)
+                foreach (var label in other.Labels)
                 {
-                    this.labelCollection.Add(label.Key, label.Value);
+                    if (!newLabels.TryGetValue(label.Key, out var value) || string.IsNullOrEmpty(value))
+                    {
+                        newLabels[label.Key] = label.Value;
+                    }
                 }
             }
 
-            return this;
+            return new Resource(newLabels);
         }
 
-        private static IDictionary<string, string> ValidateLabels(IDictionary<string, string> labels)
+        private static void ValidateLabels(IEnumerable<KeyValuePair<string, string>> labels)
         {
             if (labels == null)
             {
@@ -92,16 +91,14 @@ namespace OpenTelemetry.Resources
             {
                 if (!IsValidAndNotEmpty(label.Key))
                 {
-                    throw new ArgumentException($"Label key should be a string with a length greater than 0 and not exceed {MaxResourceTypeNameLength} characters.");
+                    throw new ArgumentException($"Label key should be a string with a length greater than 0 and not exceeding {MaxResourceTypeNameLength} characters.");
                 }
 
-                if (!IsValidAndNotEmpty(label.Value))
+                if (!IsValid(label.Value))
                 {
-                    throw new ArgumentException($"Label value should be a string with a length greater than 0 and not exceed {MaxResourceTypeNameLength} characters.");
+                    throw new ArgumentException($"Label value should be a string with a length not exceeding {MaxResourceTypeNameLength} characters.");
                 }
             }
-
-            return labels;
         }
 
         private static bool IsValidAndNotEmpty(string name)
@@ -111,7 +108,7 @@ namespace OpenTelemetry.Resources
 
         private static bool IsValid(string name)
         {
-            return name.Length <= MaxResourceTypeNameLength && StringUtil.IsPrintableString(name);
+            return name != null && name.Length <= MaxResourceTypeNameLength && StringUtil.IsPrintableString(name);
         }
     }
 }
