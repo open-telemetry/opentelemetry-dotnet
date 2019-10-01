@@ -23,6 +23,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
     using Microsoft.ApplicationInsights.Channel;
     using Microsoft.ApplicationInsights.DataContracts;
     using Microsoft.ApplicationInsights.Extensibility;
+    using Microsoft.ApplicationInsights.Extensibility.Implementation;
     using Newtonsoft.Json;
     using OpenTelemetry.Trace;
     using System;
@@ -106,8 +107,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.True(request.Success);
             Assert.Equal("0", request.ResponseCode);
 
-            // TODO: implement this
-            //Assert.Equal("lf_unspecified-oc:0.0.0", request.Context.GetInternalContext().SdkVersion);
+            Assert.StartsWith("ot:", request.Context.GetInternalContext().SdkVersion);
         }
 
         [Fact]
