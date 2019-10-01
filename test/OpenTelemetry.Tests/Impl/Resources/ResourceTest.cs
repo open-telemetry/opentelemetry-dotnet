@@ -268,6 +268,36 @@ namespace OpenTelemetry.Impl.Resources
         }
 
         [Fact]
+        public void MergeResource_MultiLabelSource_DuplicatedKeysInPrimary()
+        {
+            // Arrange
+            var sourceLabels = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("key1", "value1"),
+                new KeyValuePair<string, string>("key1", "value1.1"),
+            };
+            var sourceResource = new Resource(sourceLabels);
+
+            var otherLabels = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("key2", "value1"),
+            };
+
+            var otherResource = new Resource(otherLabels);
+
+            // Act
+            var newResource = sourceResource.Merge(otherResource);
+
+            // Assert
+            Assert.NotSame(otherResource, newResource);
+            Assert.NotSame(sourceResource, newResource);
+
+            Assert.Equal(2, newResource.Labels.Count());
+            Assert.Contains(new KeyValuePair<string, string>("key1", "value1"), newResource.Labels);
+            Assert.Contains(new KeyValuePair<string, string>("key2", "value2"), newResource.Labels);
+        }
+
+        [Fact]
         public void MergeResource_SecondaryCanOverridePrimaryEmptyLabelValue()
         {
             // Arrange

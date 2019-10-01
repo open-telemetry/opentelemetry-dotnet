@@ -18,6 +18,7 @@ namespace OpenTelemetry.Resources
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using OpenTelemetry.Utils;
 
     /// <summary>
@@ -26,6 +27,8 @@ namespace OpenTelemetry.Resources
     /// </summary>
     public class Resource
     {
+        // this implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/sdk-resource.md
+
         /// <summary>
         /// Maximum length of the resource type name.
         /// </summary>
@@ -44,7 +47,7 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Gets an empty Resource.
         /// </summary>
-        public static Resource Empty { get; } = new Resource(new Dictionary<string, string>());
+        public static Resource Empty { get; } = new Resource(Enumerable.Empty<KeyValuePair<string, string>>());
 
         /// <summary>
         /// Gets the collection of key-value pairs describing the resource.
@@ -63,7 +66,10 @@ namespace OpenTelemetry.Resources
 
             foreach (var label in this.Labels)
             {
-                newLabels.Add(label.Key, label.Value);
+                if (!newLabels.TryGetValue(label.Key, out var value) || string.IsNullOrEmpty(value))
+                {
+                    newLabels[label.Key] = label.Value;
+                }
             }
 
             if (other != null)
