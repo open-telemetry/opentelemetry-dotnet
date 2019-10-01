@@ -53,10 +53,201 @@ Myget feeds:
 | Application Insights | [![MyGet Nightly][OpenTelemetry-exporter-ai-myget-image]][OpenTelemetry-exporter-ai-myget-url]                   | [![NuGet release][OpenTelemetry-exporter-ai-nuget-image]][OpenTelemetry-exporter-ai-nuget-url]                   |
 | Stackdriver          | [![MyGet Nightly][OpenTelemetry-exporter-stackdriver-myget-image]][OpenTelemetry-exporter-stackdriver-myget-url] | [![NuGet release][OpenTelemetry-exporter-stackdriver-nuget-image]][OpenTelemetry-exporter-stackdriver-nuget-url] |
 
-## OpenTelemetry QuickStart: collecting data
+## OpenTelemetry Tracing QuickStart: collecting data
 
-You can use OpenTelemetry API to instrument code and report data. Or use one of
-automatic data collection modules.
+You can use OpenTelemetry API to instrument code and report data.  Check out [Tracing API overview](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md) to learn more about distributed tracing.
+
+In the examples below we demonstrate how to create and enrich spans though OpenTelemetry API.
+
+OpenTelemetry also provides auto-collectors for ASP.NET Core, HttpClient calls (.NET Core) and Azure SDKs - [configuration](#configuration) section demonstrates how to enable it.
+
+### Obtaining tracer
+
+**Applications** should follow [configuration](#configuration) section to find out how to create/obtain tracer.
+
+**Libraries** must take dependency on OpenTelemetry API package only and should never instantiate tracer or configure OpenTelemetry. Libraries **will** be able to obtain *global* tracer that may either be noop (if user application is not instrumented with OpenTelemetry) or real tracer implemented in the SDK package.
+
+### Create basic span
+
+To create the most basic span, you only specify the name. OpenTelemetry SDK collects start/end timestamps, assigns tracing context and assumes status of this span is `OK`.
+
+```csharp
+var span = tracer
+    .SpanBuilder("basic span")
+    .StartSpan();
+
+span.End();
+```
+
+### Create nested spans
+
+In many cases you want to collect nested operations. You can propagate parent spans explicitly in your code or use implicit context propagation embedded into OpenTelemetry and .NET.
+
+#### Explicit parent propagation and assignment
+
+```csharp
+var parentSpan = tracer
+    .SpanBuilder("parent")
+    .StartSpan();
+
+var childSpan = tracer
+    .SpanBuilder("child")
+    .SetParent(parentSpan) // explicitly assigning parent here
+    .StartSpan();
+
+childSpan.End();
+parentSpan.End();
+```
+
+#### Implicit parent propagation and assignment
+
+```csharp
+var parentSpan = tracer
+    .SpanBuilder("parent")
+    .StartSpan();
+
+// calling WithSpan puts parentSpan into the ambient context
+// that flows in async calls.   When child is created, it
+// implicitly becomes child of current span
+using (tracer.WithSpan(parentSpan))
+{
+    var childSpan = tracer
+        .SpanBuilder("child")
+        .StartSpan();
+
+    childSpan.End();
+}
+
+// parent span is ended when WithSpan result is disposed
+```
+
+### Span with attributes
+
+Attributes provide additional context on span specific to specific operation it tracks such as HTTP/DB/etc call properties.
+
+```csharp
+var span = tracer
+    .SpanBuilder("span with attributes")
+    // spans have Client, Server, Internal, Producer and Consumer kinds to help visualize them
+    .SetSpanKind(SpanKind.Client)
+    .StartSpan();
+
+// attributes specific to the call
+span.SetAttribute("db.type", "redis");
+span.SetAttribute("db.instance", "localhost:6379[0]");
+span.SetAttribute("db.statement", "SET");
+span.End();
+```
+
+### Span with links
+
+[Links](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md#links-between-spans) allow to create relationships between different traces i.e. allow spans to have multiple relatives. They are typically used to tracer batching scenarios where multiple traces are merged into another one.
+
+Links affect sampling decision and should be added before sampling decision is made (i.e. before span starts).
+
+```csharp
+SpanContext link1 = ExtractContext(eventHubMessage1);
+SpanContext link2 = ExtractContext(eventHubMessage2);
+
+var span = tracer
+    .SpanBuilder("span with links")
+    .SetSpanKind(SpanKind.Server)
+    .AddLink(link1)
+    .AddLink(link2)
+    .StartSpan();
+
+span.End();
+```
+
+### Span with events
+
+Events are timed text (with optional attributes) annotations on the span. Events can be added to current span (or any running span).
+
+```csharp
+var span = tracer
+    .SpanBuilder("incoming HTTP request")
+    .SetSpanKind(SpanKind.Server)
+    .StartSpan();
+
+using (tracer.WithSpan(span))
+{
+    tracer.CurrentSpan.AddEvent("routes reolved");
+}
+
+// span is ended when WithSpan result is disposed
+```
+
+### Context propagation out of process
+
+When instrumenting transport-layer operations, instrumentation should support context propagation.
+
+```csharp
+// this extracts W3C trace-context from incoming HTTP request
+// context may be valid if present and correct in the headers
+// or invalid if there was no context (or it was not valid)
+// instrumentation code should not care about it
+var context = tracer.TextFormat.Extract(incomingRequest.Headers, (headers, name) => headers[name]);
+
+var incomingSpan = tracer
+    .SpanBuilder("incoming http request")
+    .SetSpanKind(SpanKind.Server)
+    .SetParent(context)
+    .StartSpan();
+
+var outgoingRequest = new HttpRequestMessage(HttpMethod.Get, "http://microsoft.com");
+var outgoingSpan = tracer
+    .SpanBuilder("outgoing http request")
+    .SetSpanKind(SpanKind.Client)
+    .StartSpan();
+
+// now that we have outgoing span, we can inject it's context
+// Note that if there is no SDK configured, tracer is noop -
+// it creates noop spans with invalid context. we should not propagate it.
+if (outgoingSpan.Context.IsValid)
+{
+    tracer.TextFormat.Inject(
+        outgoingSpan.Context,
+        outgoingRequest.Headers,
+        (headers, name, value) => headers.Add(name, value));
+}
+
+// make outgoing call
+// ...
+
+outgoingSpan.End();
+incomingSpan.End();
+```
+
+### Auto-collector implementation for Activity/DiagnosticSource
+
+`System.Diagnostics.Activity` is similar to OpenTelemetry Span. HttpClient, ASP.NET Core, Azure SDKs use them to expose diagnostics events and context.
+
+Leaving aside subscription mechanism, here is an example how you may implement callbacks for Start/Stop Activity
+
+```csharp
+void StartActivity()
+{
+    var span = tracer
+        .SpanBuilder("GET api/values") // get name from Activity props/tags, DiagnosticSource payload
+        .SetCreateChild(false) // instructs builder to use current activity without creating a child one for span
+        .StartSpan();
+
+    // extract other things from Activity and set them on span (tags to attributes)
+    // ...
+
+    tracer.WithSpan(span); // we drop scope here as we cannot propagate it
+}
+
+void StopActivity()
+{
+    var span = tracer.CurrentSpan;
+    span.End();
+}
+```
+
+## Configuration
+
+Configuration is done by user application: it should configure exporter and may also tune sampler and other properties.
 
 ### Basic Configuration
 
@@ -66,12 +257,12 @@ automatic data collection modules.
 
 2. Create exporter and tracer
 
-   ```csharp
+    ```csharp
     var zipkinExporter = new ZipkinTraceExporter(new ZipkinTraceExporterOptions());
     var tracer = new Tracer(new BatchingSpanProcessor(zipkinExporter), TraceConfig.Default);
-   ```
+    ```
 
-### Configuration with DependencyInjection
+### Configuration with Microsoft.Extensions.DependencyInjection
 
 1. Install packages to your project:
    [OpenTelemetry][OpenTelemetry-nuget-url]
@@ -138,6 +329,41 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
     {
         // ...
     }
+
+### Custom samplers
+
+You may configure sampler of your choice
+
+```csharp
+var sampler = ProbabilitySampler.Create(0.1);
+var zipkinExporter = new ZipkinTraceExporter(new ZipkinTraceExporterOptions())
+var tracer = new Tracer(new SimpleSpanProcessor(zipkinExporter), new TraceConfig(sampler));
+```
+
+You can also implement custom sampler by implementing `ISampler` interface
+
+```csharp
+class MySampler : ISampler
+{
+    public string Description { get; } = "my custom sampler";
+
+    public Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name,
+        IEnumerable<ILink> links)
+    {
+        bool sampledIn;
+        if (parentContext != null && parentContext.IsValid)
+        {
+            sampledIn = (parentContext.TraceOptions & ActivityTraceFlags.Recorded) != 0;
+        }
+        else
+        {
+            sampledIn = Stopwatch.GetTimestamp() % 2 == 0;
+        }
+
+        return new Decision(sampledIn);
+    }
+}
+```
 
 ## OpenTelemetry QuickStart: exporting data
 
@@ -303,6 +529,44 @@ span.End();
 
 // Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
 // you may need to catch `OperationCancelledException` here
+await exporter.ShutdownAsync(CancellationToken.None);
+```
+
+### Implementing your own exporter
+
+#### Tracing
+
+Exporters should subclass `SpanExporter` and implement `ExportAsync` and `Shutdown` methods.
+Depending on user's choice and load on the application `ExportAsync` may get called concurrently with zero or more spans.
+Exporters should expect to receive only sampled-in ended spans. Exporters must not throw. Exporters should not modify spans they receive (the same span may be exported again by different exporter).
+
+It's a good practice to make exporter `IDisposable` and shut it down in IDispose unless it was shut down explicitly. This helps when exporters are registered with dependency injection framework and their lifetime is tight to the app lifetime.
+
+```csharp
+class MyExporter : SpanExporter
+{
+    public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
+    {
+        foreach (var span in batch)
+        {
+            Console.WriteLine($"[{span.StartTimestamp:o}] {span.Name} {span.Context.TraceId.ToHexString()} {span.Context.SpanId.ToHexString()}");
+        }
+
+        return Task.FromResult(ExportResult.Success);
+    }
+
+    public override Task ShutdownAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+}
+```
+
+Users may configure the exporter similarly to other exporters. You cay also provide additional methods to simplify it.
+
+```csharp
+var exporter = new MyExporter();
+var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
 await exporter.ShutdownAsync(CancellationToken.None);
 ```
 
