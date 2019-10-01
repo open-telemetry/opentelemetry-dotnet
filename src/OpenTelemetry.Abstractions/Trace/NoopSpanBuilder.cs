@@ -151,7 +151,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpanBuilder AddLink(ILink link)
+        public ISpanBuilder AddLink(Link link)
         {
             if (link == null)
             {

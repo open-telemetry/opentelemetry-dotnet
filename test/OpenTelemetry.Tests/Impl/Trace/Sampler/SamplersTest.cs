@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
         private readonly ActivitySpanId spanId;
         private readonly SpanContext sampledSpanContext;
         private readonly SpanContext notSampledSpanContext;
-        private readonly ILink sampledLink;
+        private readonly Link sampledLink;
 
         public SamplersTest()
         {
@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
             spanId = ActivitySpanId.CreateRandom();
             sampledSpanContext = new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty);
             notSampledSpanContext = new SpanContext(traceId, parentSpanId, ActivityTraceFlags.None, Tracestate.Empty);
-            sampledLink = Link.FromSpanContext(sampledSpanContext);
+            sampledLink = new Link(sampledSpanContext);
         }
 
         [Fact]
@@ -163,19 +163,19 @@ namespace OpenTelemetry.Trace.Sampler.Test
         {
             ISampler neverSample = ProbabilitySampler.Create(0.0);
             AssertSamplerSamplesWithProbability(
-                neverSample, notSampledSpanContext, new List<ILink>() { sampledLink }, 1.0);
+                neverSample, notSampledSpanContext, new List<Link>() { sampledLink }, 1.0);
             ISampler alwaysSample = ProbabilitySampler.Create(1.0);
             AssertSamplerSamplesWithProbability(
-                alwaysSample, notSampledSpanContext, new List<ILink>() { sampledLink }, 1.0);
+                alwaysSample, notSampledSpanContext, new List<Link>() { sampledLink }, 1.0);
             ISampler fiftyPercentSample = ProbabilitySampler.Create(0.5);
             AssertSamplerSamplesWithProbability(
-                fiftyPercentSample, notSampledSpanContext, new List<ILink>() { sampledLink }, 1.0);
+                fiftyPercentSample, notSampledSpanContext, new List<Link>() { sampledLink }, 1.0);
             ISampler twentyPercentSample = ProbabilitySampler.Create(0.2);
             AssertSamplerSamplesWithProbability(
-                twentyPercentSample, notSampledSpanContext, new List<ILink>() { sampledLink }, 1.0);
+                twentyPercentSample, notSampledSpanContext, new List<Link>() { sampledLink }, 1.0);
             ISampler twoThirdsSample = ProbabilitySampler.Create(2.0 / 3.0);
             AssertSamplerSamplesWithProbability(
-                twoThirdsSample, notSampledSpanContext, new List<ILink>() { sampledLink }, 1.0);
+                twoThirdsSample, notSampledSpanContext, new List<Link>() { sampledLink }, 1.0);
         }
 
         [Fact]
@@ -259,7 +259,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
 
         // Applies the given sampler to NUM_SAMPLE_TRIES random traceId/spanId pairs.
         private static void AssertSamplerSamplesWithProbability(
-            ISampler sampler, SpanContext parent, List<ILink> links, double probability)
+            ISampler sampler, SpanContext parent, List<Link> links, double probability)
         {
             var count = 0; // Count of spans with sampling enabled
             for (var i = 0; i < NUM_SAMPLE_TRIES; i++)

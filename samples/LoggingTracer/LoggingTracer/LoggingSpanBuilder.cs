@@ -53,7 +53,7 @@ namespace LoggingTracer
             return this;
         }
 
-        public ISpanBuilder AddLink(ILink link)
+        public ISpanBuilder AddLink(Link link)
         {
             Logger.Log($"SpanBuilder.AddLink({link})");
             return this;

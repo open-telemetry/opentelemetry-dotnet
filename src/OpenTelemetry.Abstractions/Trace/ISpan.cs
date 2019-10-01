@@ -112,7 +112,7 @@ namespace OpenTelemetry.Trace
         /// Adds link to the span.
         /// </summary>
         /// <param name="link">Link to add to the span.</param>
-        void AddLink(ILink link);
+        void AddLink(Link link);
 
         /// <summary>
         /// End the span.
