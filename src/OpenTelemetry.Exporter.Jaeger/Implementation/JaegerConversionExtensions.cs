@@ -106,7 +106,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.STRING, VStr = attribute.Value.ToString() };
         }
 
-        public static JaegerLog ToJaegerLog(this IEvent timedEvent)
+        public static JaegerLog ToJaegerLog(this Event timedEvent)
         {
             var tags = timedEvent.Attributes.Select(a => a.ToJaegerTag()).ToList();
             tags.Add(new JaegerTag { Key = "description", VType = JaegerTagType.STRING, VStr = timedEvent.Name });
