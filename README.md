@@ -156,13 +156,14 @@ the Compact Thrift API port. You can configure the Jaeger exporter by following 
 3. See the [sample][jaeger-sample] for an example of how to use the exporter.
 
 ```csharp
-var exporter = new JaegerExporter(
-    new JaegerExporterOptions
-    {
-        ServiceName = "tracing-to-jaeger-service",
-        AgentHost = host,
-        AgentPort = port,
-    });
+var jaegerOptions = new JaegerExporterOptions()
+        {
+            ServiceName = "tracing-to-jaeger-service",
+            AgentHost = host,
+            AgentPort = port,
+        };
+
+var exporter = new JaegerTraceExporter(jaegerOptions);
 
 var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
 
