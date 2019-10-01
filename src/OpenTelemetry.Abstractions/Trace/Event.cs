@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace
         public DateTimeOffset Timestamp { get; }
 
         /// <summary>
-        /// Gets the <see cref="IDictionary{String, IAttributeValue}"/> collection of attributes associated with the event.
+        /// Gets the <see cref="IDictionary{String, Object}"/> collection of attributes associated with the event.
         /// </summary>
         public IDictionary<string, object> Attributes { get; }
 
