@@ -22,6 +22,7 @@ namespace OpenTelemetry.Collector.AspNetCore
     using Microsoft.AspNetCore.Http;
     using OpenTelemetry.Collector.AspNetCore.Implementation;
     using OpenTelemetry.Trace;
+    using OpenTelemetry.Utils;
 
     /// <summary>
     /// Requests collector.
@@ -42,7 +43,13 @@ namespace OpenTelemetry.Collector.AspNetCore
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber<HttpRequest>(
                 new Dictionary<string, Func<ITracerFactory, Func<HttpRequest, ISampler>, ListenerHandler<HttpRequest>>>()
                 {
-                    { name, (t, s) => new HttpInListener(name, Assembly.GetExecutingAssembly().GetName().Version, t, s) },
+                    {
+                        name, (t, s) =>
+                        {
+                            var tracer = tracerFactory.GetTracer(typeof(RequestsCollector).Namespace, typeof(RequestDelegate).Assembly.GetName().Version.FormatResourceVersion());
+                            return new HttpInListener(name, tracer, s);
+                        }
+                    },
                 },
                 tracerFactory,
                 x =>

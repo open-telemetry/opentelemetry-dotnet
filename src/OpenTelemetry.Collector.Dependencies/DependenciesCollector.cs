@@ -22,6 +22,7 @@ namespace OpenTelemetry.Collector.Dependencies
     using System.Reflection;
     using OpenTelemetry.Collector.Dependencies.Implementation;
     using OpenTelemetry.Trace;
+    using OpenTelemetry.Utils;
 
     /// <summary>
     /// Dependencies collector.
@@ -38,13 +39,19 @@ namespace OpenTelemetry.Collector.Dependencies
         /// <param name="sampler">Sampler to use to sample dependency calls.</param>
         public DependenciesCollector(DependenciesCollectorOptions options, ITracerFactory tracerFactory, ISampler sampler)
         {
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            var tracer = tracerFactory.GetTracer(typeof(DependenciesCollector).Namespace, typeof(DependenciesCollector).Assembly.GetName().Version.FormatResourceVersion());
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber<HttpRequestMessage>(
                 new Dictionary<string, Func<ITracerFactory, Func<HttpRequestMessage, ISampler>, ListenerHandler<HttpRequestMessage>>>()
                 {
-                    { "HttpHandlerDiagnosticListener", (tf, s) => new HttpHandlerDiagnosticListener(tf, s) },
-                    { "Azure.Clients", (tf, s) => new AzureSdkDiagnosticListener("Azure.Clients", version, tf, sampler) },
-                    { "Azure.Pipeline", (tf, s) => new AzureSdkDiagnosticListener("Azure.Pipeline", version, tf, sampler) },
+                    {
+                        "HttpHandlerDiagnosticListener", (tf, s) => new HttpHandlerDiagnosticListener(tracer, s)
+                    },
+                    {
+                        "Azure.Clients", (tf, s) => new AzureSdkDiagnosticListener("Azure.Clients", tracer, sampler)
+                    },
+                    {
+                        "Azure.Pipeline", (tf, s) => new AzureSdkDiagnosticListener("Azure.Pipeline", tracer, sampler)
+                    },
                 },
                 tracerFactory,
                 x =>

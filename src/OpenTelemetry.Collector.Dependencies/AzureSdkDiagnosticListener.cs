@@ -28,8 +28,8 @@ namespace OpenTelemetry.Collector.Dependencies
         private static readonly PropertyFetcher LinksPropertyFetcher = new PropertyFetcher("Links");
         private readonly ISampler sampler;
 
-        public AzureSdkDiagnosticListener(string sourceName, Version version, ITracerFactory tracerFactory, ISampler sampler)
-            : base(sourceName, version, tracerFactory, null)
+        public AzureSdkDiagnosticListener(string sourceName, ITracer tracer, ISampler sampler)
+            : base(sourceName, tracer, null)
         {
             this.sampler = sampler;
         }

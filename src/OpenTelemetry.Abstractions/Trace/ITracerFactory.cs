@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Creates Tracers for an instrumentation library.
     /// </summary>
-    public interface ITracerFactory
+    public abstract class ITracerFactory
     {
         /// <summary>
         /// Returns an ITracer for a given name and version.
@@ -30,6 +30,6 @@ namespace OpenTelemetry.Trace
         /// <param name="name">Name of the instrumentation library.</param>
         /// <param name="version">Version of the instrumentation library (optional).</param>
         /// <returns>Tracer for the given name and version information.</returns>
-        ITracer GetTracer(string name, string version = null);
+        public abstract ITracer GetTracer(string name, string version = null);
     }
 }

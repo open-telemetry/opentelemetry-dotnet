@@ -105,8 +105,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 Tracestate.Empty
                 ));
 
-            var tracerFactory = new TracerFactory(spanProcessor.Object) { TextFormat = tf.Object };
-
+            var tracerFactory = new TracerFactory(spanProcessor.Object, null, tf.Object);
+        
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
