@@ -72,8 +72,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public void Finish(DateTimeOffset finishTimestamp)
         {
-            // TODO No way to add explicit timestamp.
-            throw new NotImplementedException();
+            this.Span.End(finishTimestamp);
         }
 
         /// <inheritdoc/>
@@ -88,7 +87,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields)
+        public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
         {
             if (fields is null)
             {
@@ -96,24 +95,25 @@ namespace OpenTelemetry.Shims.OpenTracing
             }
 
             var payload = ConvertToEventPayload(fields);
-            if (payload.Item2.Any())
+            var eventName = payload.Item1;
+            var eventAttributes = payload.Item2;
+
+            if (timestamp == DateTimeOffset.MinValue)
             {
-                this.Span.AddEvent(payload.Item1, payload.Item2);
-                return this;
+                this.Span.AddEvent(eventName, eventAttributes);
             }
             else
             {
-                this.Span.AddEvent(payload.Item1);
+                this.Span.AddEvent(new Trace.Event(eventName, timestamp, eventAttributes));
             }
 
             return this;
         }
 
         /// <inheritdoc/>
-        public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
+        public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields)
         {
-            // TODO No way to add explicit timestamps to Span events.
-            return this.Log(fields);
+            return this.Log(DateTimeOffset.MinValue, fields);
         }
 
         /// <inheritdoc/>
@@ -131,8 +131,13 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpan Log(DateTimeOffset timestamp, string @event)
         {
-            // TODO No way to add explicit timestamps to Span events.
-            return this.Log(@event);
+            if (@event is null)
+            {
+                throw new ArgumentNullException(nameof(@event));
+            }
+
+            this.Span.AddEvent(new Trace.Event(@event, timestamp));
+            return this;
         }
 
         /// <inheritdoc/>
