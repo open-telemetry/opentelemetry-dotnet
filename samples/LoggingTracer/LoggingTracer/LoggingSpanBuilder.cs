@@ -124,6 +124,7 @@ namespace LoggingTracer
             Logger.Log($"SpanBuilder.SetSpanKind({spanKind})");
             return this;
         }
+
         public ISpan StartSpan()
         {
             Logger.Log("SpanBuilder.StartSpan()");
