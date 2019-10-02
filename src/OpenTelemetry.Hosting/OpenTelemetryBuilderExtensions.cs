@@ -35,7 +35,7 @@ namespace OpenTelemetry.Hosting
             }
 
             builder.Services.TryAddSingleton<TCollector>();
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, CollectorHostingService<TCollector>>());
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, CollectorHostedService<TCollector>>());
             return builder;
         }
 

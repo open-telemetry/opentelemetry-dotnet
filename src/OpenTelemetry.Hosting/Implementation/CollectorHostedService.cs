@@ -1,4 +1,4 @@
-﻿// <copyright file="CollectorHostingService.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CollectorHostedService.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,14 +22,14 @@ namespace OpenTelemetry.Hosting.Implementation
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
 
-    internal class CollectorHostingService<TCollector> : IHostedService
+    internal class CollectorHostedService<TCollector> : IHostedService
         where TCollector : class
     {
         private readonly IServiceProvider serviceProvider;
 
         private TCollector collector;
 
-        public CollectorHostingService(IServiceProvider serviceProvider)
+        public CollectorHostedService(IServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
         }
