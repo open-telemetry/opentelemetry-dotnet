@@ -16,13 +16,13 @@
 
 namespace OpenTelemetry.Tags
 {
-    using OpenTelemetry.Context;
+    using System;
 
     public abstract class TagContextBuilderBase : ITagContextBuilder
     {
         public abstract ITagContext Build();
 
-        public abstract IScope BuildScoped();
+        public abstract IDisposable BuildScoped();
 
         public abstract ITagContextBuilder Put(TagKey key, TagValue value);
 

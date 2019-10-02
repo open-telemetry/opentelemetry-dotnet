@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Trace
 {
     using System;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
 
     /// <summary>
@@ -29,6 +28,8 @@ namespace OpenTelemetry.Trace
         /// Instance of the noop tracer.
         /// </summary>
         public static readonly NoopTracer Instance = new NoopTracer();
+
+        private static readonly IDisposable NoopScope = new NoopDisposable();
 
         internal NoopTracer()
         {
@@ -44,15 +45,22 @@ namespace OpenTelemetry.Trace
         public ITextFormat TextFormat => new TraceContextFormat();
 
         /// <inheritdoc/>
-        public IScope WithSpan(ISpan span)
+        public IDisposable WithSpan(ISpan span)
         {
-            return NoopScope.Instance;
+            return NoopScope;
         }
 
         /// <inheritdoc/>
         public ISpanBuilder SpanBuilder(string spanName)
         {
             return new NoopSpanBuilder(spanName);
+        }
+
+        private class NoopDisposable : IDisposable
+        {
+            public void Dispose()
+            {
+            }
         }
     }
 }

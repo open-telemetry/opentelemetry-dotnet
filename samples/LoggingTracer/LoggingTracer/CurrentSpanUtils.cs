@@ -4,8 +4,8 @@
 
 namespace LoggingTracer
 {
+    using System;
     using System.Threading;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Trace;
 
     /// <summary>
@@ -17,7 +17,7 @@ namespace LoggingTracer
 
         public static ISpan CurrentSpan => asyncLocalContext.Value;
 
-        public class LoggingScope : IScope
+        public class LoggingScope : IDisposable
         {
             private readonly ISpan origContext;
             private readonly ISpan span;

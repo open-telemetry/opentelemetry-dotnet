@@ -22,69 +22,45 @@ namespace OpenTelemetry.Trace
     using System.Linq;
     using OpenTelemetry.Abstractions.Utils;
 
-    /// <inheritdoc/>
-    public sealed class Event : IEvent
+    /// <summary>
+    /// A text annotation associated with a collection of attributes.
+    /// </summary>
+    public sealed class Event
     {
         private static readonly ReadOnlyDictionary<string, object> EmptyAttributes =
                 new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
 
-        internal Event(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
+        public Event(string name)
+            : this(name, PreciseTimestamp.GetUtcNow(), EmptyAttributes)
+        {
+        }
+
+        public Event(string name, DateTimeOffset timestamp)
+            : this(name, timestamp, EmptyAttributes)
+        {
+        }
+
+        public Event(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
         {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.Attributes = attributes ?? throw new ArgumentNullException(nameof(attributes));
             this.Timestamp = timestamp != default ? timestamp : PreciseTimestamp.GetUtcNow();
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Gets the <see cref="Event"/> name.
+        /// </summary>
         public string Name { get; }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Gets the <see cref="Event"/> timestamp.
+        /// </summary>
         public DateTimeOffset Timestamp { get; }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Gets the <see cref="IDictionary{String, Object}"/> collection of attributes associated with the event.
+        /// </summary>
         public IDictionary<string, object> Attributes { get; }
-
-        /// <summary>
-        /// Returns a new <see cref="Event"/> with the provided name.
-        /// </summary>
-        /// <param name="name">The text name for the <see cref="Event"/>.</param>
-        /// <returns>A new <see cref="Event"/> with the provided name.</returns>
-        /// <exception cref="ArgumentNullException">If <c>name</c> is <c>null</c>.</exception>
-        public static IEvent Create(string name)
-        {
-            return new Event(name, default, EmptyAttributes);
-        }
-
-        /// <summary>
-        /// Returns a new <see cref="Event"/> with the provided name.
-        /// </summary>
-        /// <param name="name">The text name for the <see cref="Event"/>.</param>
-        /// <param name="timestamp">The timestamp of the <see cref="Event"/>.</param>
-        /// <returns>A new <see cref="Event"/> with the provided name.</returns>
-        /// <exception cref="ArgumentNullException">If <c>name</c> is <c>null</c>.</exception>
-        public static IEvent Create(string name, DateTimeOffset timestamp)
-        {
-            return new Event(name, timestamp, EmptyAttributes);
-        }
-
-        /// <summary>
-        /// Returns a new <see cref="Event"/> with the provided name and set of attributes.
-        /// </summary>
-        /// <param name="name">The text name for the <see cref="Event"/>.</param>
-        /// <param name="timestamp">The timestamp of the <see cref="Event"/>.</param>
-        /// <param name="attributes">The <see cref="IDictionary{String, Object}"/> of attributes for the <see cref="Event"/>.</param>
-        /// <returns>A new <see cref="Event"/> with the provided name and set of attributes.</returns>
-        /// <exception cref="ArgumentNullException">If <c>name</c> or <c>attributes</c> is <c>null</c>.</exception>
-        public static IEvent Create(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
-        {
-            if (attributes == null)
-            {
-                throw new ArgumentNullException(nameof(attributes));
-            }
-
-            IDictionary<string, object> readOnly = new ReadOnlyDictionary<string, object>(attributes);
-            return new Event(name, timestamp, readOnly);
-        }
 
         /// <inheritdoc/>
         public override bool Equals(object obj)
@@ -115,17 +91,6 @@ namespace OpenTelemetry.Trace
             h *= 1000003;
             h ^= this.Timestamp.GetHashCode();
             return h;
-        }
-
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return nameof(Event)
-                + "{"
-                + nameof(this.Name) + "=" + this.Name + ", "
-                + nameof(this.Attributes) + "=" + string.Join(", ", this.Attributes.Select(kvp => (kvp.Key + "=" + kvp.Value))) + ", "
-                + nameof(this.Timestamp) + "=" + this.Timestamp.ToString("o")
-                + "}";
         }
     }
 }
