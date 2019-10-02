@@ -328,9 +328,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 { "doubleKey2", 1F},
                 { "boolKey", true},
             };
-            var events = new List<IEvent>
+            var events = new List<Event>
             {
-                Event.Create(
+                new Event(
                     "Event1",
                     eventTimestamp,
                     new Dictionary<string, object>
@@ -338,7 +338,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                         { "key", "value" },
                     }
                 ),
-                Event.Create(
+                new Event(
                     "Event2",
                     eventTimestamp,
                     new Dictionary<string, object>
@@ -350,7 +350,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            var link = Link.FromSpanContext(new SpanContext(
+            var link = new Link(new SpanContext(
                     traceId,
                     linkedSpanId,
                     ActivityTraceFlags.Recorded,

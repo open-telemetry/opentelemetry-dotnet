@@ -48,14 +48,14 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
                 ["boolKey"] = true,
             };
 
-            var evts = new List<IEvent>
+            var evts = new List<Event>
             {
-                Event.Create(
+                new Event(
                     "evt1",
                     evtTs,
                     new Dictionary<string, object> {{"key", "value"},}
                 ),
-                Event.Create(
+                new Event(
                     "evt2",
                     evtTs,
                     new Dictionary<string, object> {{"key", "value"},}
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
             };
 
             var linkedSpanId = ActivitySpanId.CreateRandom();
-            var link = Link.FromSpanContext(new SpanContext(
+            var link = new Link(new SpanContext(
                 traceId, linkedSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty));
 
             var span = (Span)Tracing.TracerFactory.GetTracer("")

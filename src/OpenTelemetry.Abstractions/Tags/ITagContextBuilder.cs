@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Tags
 {
-    using OpenTelemetry.Context;
+    using System;
 
     /// <summary>
     /// Tags context builder.
@@ -48,6 +48,6 @@ namespace OpenTelemetry.Tags
         /// Builds tag context and save it as current.
         /// </summary>
         /// <returns>Scope control object. Dispose it to close a scope.</returns>
-        IScope BuildScoped();
+        IDisposable BuildScoped();
     }
 }

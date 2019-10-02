@@ -588,7 +588,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_WithLink()
         {
-            var link = Link.FromSpanContext(
+            var link = new Link(
                 new SpanContext(
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
@@ -825,7 +825,7 @@ namespace OpenTelemetry.Trace.Test
             // Sampled because the linked parent is sampled.
             var childSpan = new SpanBuilder(SpanName, spanProcessor, alwaysSampleTraceConfig, Resource.Empty)
                 .SetSpanKind(SpanKind.Internal)
-                .AddLink(Link.FromSpanContext(rootSpanSampled.Context))
+                .AddLink(new Link(rootSpanSampled.Context))
                 .SetParent(rootSpanUnsampled)
                 .StartSpan();
 
@@ -899,7 +899,7 @@ namespace OpenTelemetry.Trace.Test
             a.Stop();
 
             Assert.Throws<ArgumentNullException>(() => spanBuilder.SetSampler(null));
-            Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((ILink)null));
+            Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((Link)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink((SpanContext)null));
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink(null, null));
             Assert.Throws<ArgumentException>(() => spanBuilder.AddLink(SpanContext.Blank));

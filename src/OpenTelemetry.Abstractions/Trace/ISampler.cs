@@ -42,6 +42,6 @@ namespace OpenTelemetry.Trace
         /// </param>
         /// <param name="links">Links associated with the span.</param>
         /// <returns>Sampling decision on whether Span needs to be sampled or not.</returns>
-        Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<ILink> links);
+        Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<Link> links);
     }
 }

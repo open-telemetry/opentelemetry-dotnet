@@ -20,6 +20,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
+    using System.Reflection;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -38,6 +39,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
         public ApplicationInsightsTraceExporter(TelemetryConfiguration telemetryConfiguration)
         {
             this.telemetryClient = new TelemetryClient(telemetryConfiguration);
+            this.telemetryClient.Context.GetInternalContext().SdkVersion = "ot:" + GetAssemblyVersion();
             this.serviceEndpoint = telemetryConfiguration.TelemetryChannel.EndpointAddress;
         }
 
@@ -95,6 +97,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                     result = new RequestTelemetry();
                 }
 
+                Uri url = null;
                 string data = null;
                 string target = null;
                 string type = null;
@@ -138,6 +141,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                         case "http.port":
                             httpPortAttr = attr.Value.ToString();
                             break;
+                        case "http.url":
+                            // break without doing anything - this will prevent adding url to custom property bag.
+                            // httpUrlAttr is already populated.
+                            break;
                         default:
                             var value = attr.Value.ToString();
 
@@ -161,7 +168,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                     ref data,
                     ref target,
                     ref type,
-                    ref userAgent);
+                    ref userAgent,
+                    ref url);
 
                 if (result is DependencyTelemetry dependency)
                 {
@@ -177,7 +185,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                 }
                 else if (result is RequestTelemetry request)
                 {
-                    if (Uri.TryCreate(data, UriKind.RelativeOrAbsolute, out var url))
+                    if (url != null)
                     {
                         request.Url = url;
                     }
@@ -308,6 +316,20 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             props.Add(n, value);
         }
 
+        private static string GetAssemblyVersion()
+        {
+            try
+            {
+                return typeof(ApplicationInsightsTraceExporter).GetTypeInfo().Assembly.GetCustomAttributes<AssemblyFileVersionAttribute>()
+                                      .First()
+                                      .Version;
+            }
+            catch (Exception)
+            {
+                return "0.0.0";
+            }
+        }
+
         private void ExtractGenericProperties(Span span,  out string name, out string resultCode, out string statusDescription, out string traceId, out string spanId, out string parentId, out Tracestate tracestate, out bool? success, out TimeSpan duration)
         {
             name = span.Name;
@@ -360,15 +382,14 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             ref string data,
             ref string target,
             ref string type,
-            ref string userAgent)
+            ref string userAgent,
+            ref Uri url)
         {
             if (httpStatusCodeAttr != null)
             {
                 resultCode = httpStatusCodeAttr.ToString(CultureInfo.InvariantCulture);
                 type = "Http";
             }
-
-            Uri url = null;
 
             if (httpUrlAttr != null)
             {

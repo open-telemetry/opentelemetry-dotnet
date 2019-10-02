@@ -37,8 +37,8 @@ namespace OpenTelemetry.Trace
         private readonly DateTimeOffset startTimestamp;
         private readonly object @lock = new object();
         private EvictingQueue<KeyValuePair<string, object>> attributes;
-        private EvictingQueue<IEvent> events;
-        private EvictingQueue<ILink> links;
+        private EvictingQueue<Event> events;
+        private EvictingQueue<Link> links;
         private Status status;
         private DateTimeOffset endTimestamp;
 
@@ -125,12 +125,12 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets events.
         /// </summary>
-        public IEnumerable<IEvent> Events => this.events ?? Enumerable.Empty<IEvent>();
+        public IEnumerable<Event> Events => this.events ?? Enumerable.Empty<Event>();
 
         /// <summary>
         /// Gets links.
         /// </summary>
-        public IEnumerable<ILink> Links => this.links ?? Enumerable.Empty<ILink>();
+        public IEnumerable<Link> Links => this.links ?? Enumerable.Empty<Link>();
 
         /// <summary>
         /// Gets span start timestamp.
@@ -216,10 +216,10 @@ namespace OpenTelemetry.Trace
                 if (this.events == null)
                 {
                     this.events =
-                        new EvictingQueue<IEvent>(this.traceConfig.MaxNumberOfEvents);
+                        new EvictingQueue<Event>(this.traceConfig.MaxNumberOfEvents);
                 }
 
-                this.events.AddEvent(Event.Create(name, PreciseTimestamp.GetUtcNow()));
+                this.events.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow()));
             }
         }
 
@@ -252,15 +252,15 @@ namespace OpenTelemetry.Trace
                 if (this.events == null)
                 {
                     this.events =
-                        new EvictingQueue<IEvent>(this.traceConfig.MaxNumberOfEvents);
+                        new EvictingQueue<Event>(this.traceConfig.MaxNumberOfEvents);
                 }
 
-                this.events.AddEvent(Event.Create(name, PreciseTimestamp.GetUtcNow(), eventAttributes));
+                this.events.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow(), eventAttributes));
             }
         }
 
         /// <inheritdoc/>
-        public void AddEvent(IEvent addEvent)
+        public void AddEvent(Event addEvent)
         {
             if (addEvent == null)
             {
@@ -283,7 +283,7 @@ namespace OpenTelemetry.Trace
                 if (this.events == null)
                 {
                     this.events =
-                        new EvictingQueue<IEvent>(this.traceConfig.MaxNumberOfEvents);
+                        new EvictingQueue<Event>(this.traceConfig.MaxNumberOfEvents);
                 }
 
                 this.events.AddEvent(addEvent);
@@ -291,7 +291,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void AddLink(ILink link)
+        public void AddLink(Link link)
         {
             if (link == null)
             {
@@ -313,7 +313,7 @@ namespace OpenTelemetry.Trace
 
                 if (this.links == null)
                 {
-                    this.links = new EvictingQueue<ILink>(this.traceConfig.MaxNumberOfLinks);
+                    this.links = new EvictingQueue<Link>(this.traceConfig.MaxNumberOfLinks);
                 }
 
                 this.links.AddEvent(link);

@@ -148,9 +148,9 @@ namespace OpenTelemetry.Trace.Test
                 "MySingleStringAttributeKey",
                 "MySingleStringAttributeValue");
 
-            span.AddEvent(Event.Create(EventDescription));
+            span.AddEvent(new Event(EventDescription));
             span.AddEvent(EventDescription, attributes);
-            span.AddLink(Link.FromSpanContext(link));
+            span.AddLink(new Link(link));
 
             Assert.Equal(spanStartTime, span.StartTimestamp);
             Assert.Empty(span.Attributes);
@@ -218,13 +218,13 @@ namespace OpenTelemetry.Trace.Test
             }
 
             var firstEventTime = PreciseTimestamp.GetUtcNow();
-            span.AddEvent(Event.Create(EventDescription, firstEventTime));
+            span.AddEvent(new Event(EventDescription, firstEventTime));
             await Task.Delay(TimeSpan.FromMilliseconds(100));
 
             var secondEventTime = PreciseTimestamp.GetUtcNow();
             span.AddEvent(EventDescription, attributes);
 
-            var link = Link.FromSpanContext(contextLink);
+            var link = new Link(contextLink);
             span.AddLink(link);
 
             Assert.Equal(activity.TraceId, span.Context.TraceId);
@@ -242,7 +242,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(firstEventTime, span.Events.ToList()[0].Timestamp);
             AssertApproxSameTimestamp(span.Events.ToList()[1].Timestamp, secondEventTime);
 
-            Assert.Equal(Event.Create(EventDescription, firstEventTime), span.Events.ToList()[0]);
+            Assert.Equal(new Event(EventDescription, firstEventTime), span.Events.ToList()[0]);
 
             Assert.Equal(EventDescription, span.Events.ToList()[1].Name);
             Assert.Equal(attributes, span.Events.ToList()[1].Attributes);
@@ -293,13 +293,13 @@ namespace OpenTelemetry.Trace.Test
 
             await Task.Delay(TimeSpan.FromMilliseconds(100));
             var firstEventTime = PreciseTimestamp.GetUtcNow();
-            span.AddEvent(Event.Create(EventDescription, firstEventTime));
+            span.AddEvent(new Event(EventDescription, firstEventTime));
 
             await Task.Delay(TimeSpan.FromMilliseconds(100));
             var secondEventTime = PreciseTimestamp.GetUtcNow();
             span.AddEvent(EventDescription, attributes);
 
-            var link = Link.FromSpanContext(contextLink);
+            var link = new Link(contextLink);
             span.AddLink(link);
             span.Status = Status.Cancelled;
 
@@ -320,7 +320,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(firstEventTime, span.Events.ToList()[0].Timestamp);
             AssertApproxSameTimestamp(span.Events.ToList()[1].Timestamp, secondEventTime);
 
-            Assert.Equal(Event.Create(EventDescription, firstEventTime), span.Events.ToList()[0]);
+            Assert.Equal(new Event(EventDescription, firstEventTime), span.Events.ToList()[0]);
             Assert.Single(span.Links);
             Assert.Equal(link, span.Links.First());
             Assert.Equal(spanStartTime, span.StartTimestamp);
@@ -528,7 +528,7 @@ namespace OpenTelemetry.Trace.Test
             for (int i = 0; i < 2 * maxNumberOfEvents; i++)
             {
                 eventTimestamps[i] = PreciseTimestamp.GetUtcNow();
-                span.AddEvent(Event.Create(EventDescription, eventTimestamps[i]));
+                span.AddEvent(new Event(EventDescription, eventTimestamps[i]));
                 await Task.Delay(10);
             }
 
@@ -566,7 +566,7 @@ namespace OpenTelemetry.Trace.Test
                     PreciseTimestamp.GetUtcNow(),
                     false,
                     Resource.Empty);
-            var link = Link.FromSpanContext(contextLink);
+            var link = new Link(contextLink);
             for (var i = 0; i < 2 * maxNumberOfLinks; i++)
             {
                 span.AddLink(link);
@@ -614,7 +614,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentNullException>(() => span.SetAttribute(null, 0.1d));
             Assert.Throws<ArgumentNullException>(() => span.SetAttribute(null, true));
             Assert.Throws<ArgumentNullException>(() => span.AddEvent((string)null));
-            Assert.Throws<ArgumentNullException>(() => span.AddEvent((IEvent)null));
+            Assert.Throws<ArgumentNullException>(() => span.AddEvent((Event)null));
             Assert.Throws<ArgumentNullException>(() => span.AddLink(null));
         }
 

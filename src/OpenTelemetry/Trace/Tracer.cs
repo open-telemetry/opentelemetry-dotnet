@@ -83,7 +83,7 @@ namespace OpenTelemetry.Trace
             return new SpanBuilder(spanName, this.spanProcessor, this.ActiveTraceConfig, this.LibraryResource);
         }
 
-        public IScope WithSpan(ISpan span)
+        public IDisposable WithSpan(ISpan span)
         {
             if (span == null)
             {

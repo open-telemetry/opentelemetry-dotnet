@@ -7,7 +7,7 @@ using OpenTelemetry.Resources;
 
 namespace LoggingTracer
 {
-    using OpenTelemetry.Context;
+    using System;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
 
@@ -33,7 +33,7 @@ namespace LoggingTracer
             return new LoggingSpanBuilder(spanName, SpanKind.Internal);
         }
 
-        public IScope WithSpan(ISpan span)
+        public IDisposable WithSpan(ISpan span)
         {
             Logger.Log($"{prefix}.WithSpan");
             return new CurrentSpanUtils.LoggingScope(span);
