@@ -20,9 +20,7 @@ namespace Samples
     using System.Collections.Generic;
     using System.Threading;
     using OpenTelemetry.Exporter.Zipkin;
-    using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
 
     internal class TestZipkin

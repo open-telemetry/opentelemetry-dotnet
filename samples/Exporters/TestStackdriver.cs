@@ -20,13 +20,11 @@ namespace Samples
     using System.Collections.Generic;
     using System.Threading;
     using OpenTelemetry.Exporter.Stackdriver;
-    using OpenTelemetry.Resources;
     using OpenTelemetry.Stats;
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
 

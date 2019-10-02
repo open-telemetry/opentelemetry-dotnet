@@ -20,10 +20,7 @@ namespace Samples
     using System.Collections.Generic;
     using System.Threading;
     using OpenTelemetry.Exporter.Jaeger;
-    using OpenTelemetry.Resources;
-    using OpenTelemetry.Exporter.Jaeger.Implementation;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
 
     internal class TestJaeger
