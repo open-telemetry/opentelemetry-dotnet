@@ -22,7 +22,7 @@ namespace OpenTelemetry.Hosting.Implementation
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
 
-    internal class CollectorHostedService<TCollector> : IHostedService
+    internal class CollectorHostedService<TCollector> : IHostedService, IDisposable
         where TCollector : class
     {
         private readonly IServiceProvider serviceProvider;
@@ -34,6 +34,11 @@ namespace OpenTelemetry.Hosting.Implementation
             this.serviceProvider = serviceProvider;
         }
 
+        public void Dispose()
+        {
+            (this.collector as IDisposable)?.Dispose();
+        }
+
         public Task StartAsync(CancellationToken cancellationToken)
         {
             this.collector = this.serviceProvider.GetRequiredService<TCollector>();
@@ -42,7 +47,6 @@ namespace OpenTelemetry.Hosting.Implementation
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            (this.collector as IDisposable)?.Dispose();
             return Task.CompletedTask;
         }
     }
