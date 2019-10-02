@@ -56,14 +56,14 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             Assert.Equal(ActivitySpanId.CreateFromString("b9c7c989f97918e1".AsSpan()), ctx.SpanId);
             Assert.True((ctx.TraceOptions & ActivityTraceFlags.Recorded) != 0);
 
-            Assert.Equal(2, ctx.Tracestate.Entries.Count());
+            Assert.Equal(2, ctx.Tracestate.Count());
 
-            var first = ctx.Tracestate.Entries.First();
+            var first = ctx.Tracestate.First();
 
             Assert.Equal("congo", first.Key);
             Assert.Equal("lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4", first.Value);
 
-            var last = ctx.Tracestate.Entries.Last();
+            var last = ctx.Tracestate.Last();
 
             Assert.Equal("rojo", last.Key);
             Assert.Equal("00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01", last.Value);
@@ -121,8 +121,8 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var f = new TraceContextFormat();
             var ctx = f.Extract(headers, getter);
 
-            Assert.Empty(ctx.Tracestate.Entries);
-            Assert.Equal(string.Empty, ctx.Tracestate.ToString());
+            Assert.Empty(ctx.Tracestate);
+            Assert.Equal(string.Empty, TracestateUtils.GetString(ctx.Tracestate));
         }
 
         [Fact]
@@ -137,7 +137,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var f = new TraceContextFormat();
             var ctx = f.Extract(headers, getter);
 
-            var entries = ctx.Tracestate.Entries.ToArray();
+            var entries = ctx.Tracestate.ToArray();
             Assert.Equal(3, entries.Length);
             Assert.Equal("k1", entries[0].Key);
             Assert.Equal("v1", entries[0].Value);
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             Assert.Equal("k3", entries[2].Key);
             Assert.Equal("v3", entries[2].Value);
 
-            Assert.Equal("k1=v1,k2=v2,k3=v3", ctx.Tracestate.ToString());
+            Assert.Equal("k1=v1,k2=v2,k3=v3", TracestateUtils.GetString(ctx.Tracestate));
         }
     }
 }

@@ -30,8 +30,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             return new SpanContext(
                 ActivityTraceId.CreateRandom(),
                 ActivitySpanId.CreateRandom(),
-                ActivityTraceFlags.None,
-                Tracestate.Empty);
+                ActivityTraceFlags.None);
         }
 
         /// <summary>

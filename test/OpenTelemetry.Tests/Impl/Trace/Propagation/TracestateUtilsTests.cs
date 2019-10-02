@@ -14,10 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
+using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Tests.Impl.Trace.Propagation
@@ -31,9 +30,9 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         [InlineData("\t")]
         public void EmptyTracestate(string tracestate)
         {
-            var builder = Tracestate.Builder;
-            Assert.True(TracestateUtils.TryExtractTracestate(tracestate, builder));
-            Assert.Empty(builder.Build().Entries);
+            var tracestateEntries = new List<KeyValuePair<string, string>>();
+            Assert.False(TracestateUtils.AppendTracestate(tracestate, tracestateEntries));
+            Assert.Empty(tracestateEntries);
         }
 
         [Theory]
@@ -46,19 +45,23 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         [InlineData("v=morethan256......................................................................................................................................................................................................................................................", 0)]
         public void InvalidTracestate(string tracestate, int validEntriesCount)
         {
-            var builder = Tracestate.Builder;
-            Assert.False(TracestateUtils.TryExtractTracestate(tracestate, builder));
-            Assert.Equal(validEntriesCount, builder.Build().Entries.Count());
+            var tracestateEntries = new List<KeyValuePair<string, string>>();
+            Assert.False(TracestateUtils.AppendTracestate(tracestate, tracestateEntries));
+            Assert.Equal(validEntriesCount, tracestateEntries.Count);
         }
 
         [Fact]
         public void TooManyEntries()
         {
-            var builder = Tracestate.Builder;
+            var tracestateEntries = new List<KeyValuePair<string, string>>();
             var tracestate =
                 "k0=v,k1=v,k2=v,k3=v,k4=v,k5=v,k6=v,k7=v1,k8=v,k9=v,k10=v,k11=v,k12=v,k13=v,k14=v,k15=v,k16=v,k17=v,k18=v,k19=v,k20=v,k21=v,k22=v,k23=v,k24=v,k25=v,k26=v,k27=v1,k28=v,k29=v,k30=v,k31=v,k32=v,k33=v";
-            Assert.False(TracestateUtils.TryExtractTracestate(tracestate, builder));
-            Assert.Throws<ArgumentException>(() => builder.Build());
+            Assert.True(TracestateUtils.AppendTracestate(tracestate, tracestateEntries));
+            Assert.Equal(32, tracestateEntries.Count);
+            Assert.DoesNotContain(new KeyValuePair<string, string>("k33", "v"), tracestateEntries);
+
+            Assert.Equal("k0=v,k1=v,k2=v,k3=v,k4=v,k5=v,k6=v,k7=v1,k8=v,k9=v,k10=v,k11=v,k12=v,k13=v,k14=v,k15=v,k16=v,k17=v,k18=v,k19=v,k20=v,k21=v,k22=v,k23=v,k24=v,k25=v,k26=v,k27=v1,k28=v,k29=v,k30=v,k31=v",
+                TracestateUtils.GetString(tracestateEntries));
         }
 
         [Theory]
@@ -70,9 +73,11 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         [InlineData(", k = v, ")]
         public void ValidPair(string pair)
         {
-            var builder = Tracestate.Builder;
-            Assert.True(TracestateUtils.TryExtractTracestate(pair, builder));
-            Assert.Equal("k=v", builder.Build().ToString());
+            var tracestateEntries = new List<KeyValuePair<string, string>>();
+            Assert.True(TracestateUtils.AppendTracestate(pair, tracestateEntries));
+            Assert.Single(tracestateEntries);
+            Assert.Equal(new KeyValuePair<string, string>("k", "v"), tracestateEntries.Single());
+            Assert.Equal("k=v", TracestateUtils.GetString(tracestateEntries));
         }
 
         [Theory]
@@ -82,9 +87,13 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         [InlineData("k1=v1,k2=v2, ")]
         public void ValidPairs(string tracestate)
         {
-            var builder = Tracestate.Builder;
-            Assert.True(TracestateUtils.TryExtractTracestate(tracestate, builder));
-            Assert.Equal("k1=v1,k2=v2", builder.Build().ToString());
+            var tracestateEntries = new List<KeyValuePair<string, string>>();
+            Assert.True(TracestateUtils.AppendTracestate(tracestate, tracestateEntries));
+            Assert.Equal(2, tracestateEntries.Count);
+            Assert.Contains(new KeyValuePair<string, string>("k1", "v1"), tracestateEntries);
+            Assert.Contains(new KeyValuePair<string, string>("k2", "v2"), tracestateEntries);
+
+            Assert.Equal("k1=v1,k2=v2", TracestateUtils.GetString(tracestateEntries));
         }
     }
 }

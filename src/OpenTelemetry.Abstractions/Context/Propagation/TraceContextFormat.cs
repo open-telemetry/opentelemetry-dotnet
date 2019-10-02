@@ -62,7 +62,7 @@ namespace OpenTelemetry.Context.Propagation
                     return SpanContext.Blank;
                 }
 
-                var tracestate = Tracestate.Empty;
+                List<KeyValuePair<string, string>> tracestate = null;
                 if (tracestateCollection != null)
                 {
                     this.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
@@ -87,21 +87,21 @@ namespace OpenTelemetry.Context.Propagation
 
             setter(carrier, "traceparent", traceparent);
 
-            string tracestateStr = spanContext.Tracestate.ToString();
+            string tracestateStr = TracestateUtils.GetString(spanContext.Tracestate);
             if (tracestateStr.Length > 0)
             {
                 setter(carrier, "tracestate", tracestateStr);
             }
         }
 
-        private bool TryExtractTraceparent(string traceparent, out ActivityTraceId traceId, out ActivitySpanId spanId, out ActivityTraceFlags traceoptions)
+        private bool TryExtractTraceparent(string traceparent, out ActivityTraceId traceId, out ActivitySpanId spanId, out ActivityTraceFlags traceOptions)
         {
             // from https://github.com/w3c/distributed-tracing/blob/master/trace_context/HTTP_HEADER_FORMAT.md
             // traceparent: 00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01
 
             traceId = default;
             spanId = default;
-            traceoptions = default;
+            traceOptions = default;
             var bestAttempt = false;
 
             if (string.IsNullOrWhiteSpace(traceparent) || traceparent.Length < TraceparentLengthV0)
@@ -177,7 +177,7 @@ namespace OpenTelemetry.Context.Propagation
 
             if ((options1 & 1) == 1)
             {
-                traceoptions |= ActivityTraceFlags.Recorded;
+                traceOptions |= ActivityTraceFlags.Recorded;
             }
 
             if ((!bestAttempt) && (traceparent.Length != VersionAndTraceIdAndSpanIdLength + OptionsLength))
@@ -216,27 +216,27 @@ namespace OpenTelemetry.Context.Propagation
             throw new ArgumentOutOfRangeException(nameof(c), $"Invalid character: {c}.");
         }
 
-        private bool TryExtractTracestate(string[] tracestateCollection, out Tracestate tracestateResult)
+        private bool TryExtractTracestate(string[] tracestateCollection, out List<KeyValuePair<string, string>> tracestateResult)
         {
-            tracestateResult = Tracestate.Empty;
-            var tracestateBuilder = Tracestate.Builder;
+            tracestateResult = null;
+
             try
             {
-                var names = new HashSet<string>();
                 if (tracestateCollection != null)
                 {
+                    tracestateResult = new List<KeyValuePair<string, string>>();
+
                     // Iterate in reverse order because when call builder set the elements is added in the
                     // front of the list.
                     for (int i = tracestateCollection.Length - 1; i >= 0; i--)
                     {
-                        if (!TracestateUtils.TryExtractTracestate(tracestateCollection[i], tracestateBuilder))
+                        if (!TracestateUtils.AppendTracestate(tracestateCollection[i], tracestateResult))
                         {
                             return false;
                         }
                     }
                 }
 
-                tracestateResult = tracestateBuilder.Build();
                 return true;
             }
             catch (Exception)
