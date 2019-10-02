@@ -14,12 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Concurrent;
-
 namespace OpenTelemetry.Testing.Export
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Concurrent;
     using System.Threading;
     using System.Threading.Tasks;
     using OpenTelemetry.Trace;
