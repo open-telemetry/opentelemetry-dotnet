@@ -19,7 +19,6 @@ namespace OpenTelemetry.Metrics
     using System;
     using System.Collections.Generic;
     using OpenTelemetry.Metrics.Implementation;
-    using OpenTelemetry.Resources;
     using OpenTelemetry.Tags;
     using OpenTelemetry.Trace;
 
@@ -110,8 +109,6 @@ namespace OpenTelemetry.Metrics
 
             public IMetricBuilder<ICounterDoubleTimeSeries> SetLabelKeys(IEnumerable<LabelKey> labelKeys) => this;
 
-            public IMetricBuilder<ICounterDoubleTimeSeries> SetResource(Resource resource) => this;
-
             public IMetricBuilder<ICounterDoubleTimeSeries> SetUnit(string unit) => this;
         }
 
@@ -160,8 +157,6 @@ namespace OpenTelemetry.Metrics
             public IMetricBuilder<ICounterLongTimeSeries> SetDescription(string description) => this;
 
             public IMetricBuilder<ICounterLongTimeSeries> SetLabelKeys(IEnumerable<LabelKey> labelKeys) => this;
-
-            public IMetricBuilder<ICounterLongTimeSeries> SetResource(Resource resource) => this;
 
             public IMetricBuilder<ICounterLongTimeSeries> SetUnit(string unit) => this;
         }
@@ -212,8 +207,6 @@ namespace OpenTelemetry.Metrics
 
             public IMetricBuilder<IGaugeDoubleTimeSeries> SetLabelKeys(IEnumerable<LabelKey> labelKeys) => this;
 
-            public IMetricBuilder<IGaugeDoubleTimeSeries> SetResource(Resource resource) => this;
-
             public IMetricBuilder<IGaugeDoubleTimeSeries> SetUnit(string unit) => this;
         }
 
@@ -262,8 +255,6 @@ namespace OpenTelemetry.Metrics
             public IMetricBuilder<IGaugeLongTimeSeries> SetDescription(string description) => this;
 
             public IMetricBuilder<IGaugeLongTimeSeries> SetLabelKeys(IEnumerable<LabelKey> labelKeys) => this;
-
-            public IMetricBuilder<IGaugeLongTimeSeries> SetResource(Resource resource) => this;
 
             public IMetricBuilder<IGaugeLongTimeSeries> SetUnit(string unit) => this;
         }
