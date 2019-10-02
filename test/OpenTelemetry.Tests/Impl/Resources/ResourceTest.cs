@@ -280,7 +280,7 @@ namespace OpenTelemetry.Impl.Resources
 
             var otherLabels = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("key2", "value1"),
+                new KeyValuePair<string, string>("key2", "value2"),
             };
 
             var otherResource = new Resource(otherLabels);
