@@ -19,7 +19,6 @@ namespace OpenTelemetry.Shims.OpenTracing
     using System;
     using System.Collections.Generic;
     using global::OpenTracing.Propagation;
-    using OpenTelemetry.Trace;
 
     public class TracerShim : global::OpenTracing.ITracer
     {
@@ -52,7 +51,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(format));
             }
 
-            if (carrier == default)
+            if (carrier == null)
             {
                 throw new ArgumentNullException(nameof(carrier));
             }
@@ -106,7 +105,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(format));
             }
 
-            if (carrier == default)
+            if (carrier == null)
             {
                 throw new ArgumentNullException(nameof(carrier));
             }
