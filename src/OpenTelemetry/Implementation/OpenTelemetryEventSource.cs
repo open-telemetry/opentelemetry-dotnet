@@ -20,6 +20,7 @@ namespace OpenTelemetry.Implementation
     using System.Diagnostics.Tracing;
     using System.Globalization;
     using System.Threading;
+    using OpenTelemetry.Utils;
 
     [EventSource(Name = "OpenTelemetry-Base")]
     internal class OpenTelemetryEventSource : EventSource
@@ -31,7 +32,7 @@ namespace OpenTelemetry.Implementation
         {
             if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
-                this.ExporterThrownExceptionWarning(ToInvariantString(ex));
+                this.ExporterThrownExceptionWarning(ex.ToInvariantString());
             }
         }
 
@@ -46,7 +47,7 @@ namespace OpenTelemetry.Implementation
         {
             if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
-                this.FailedReadingEnvironmentVariableWarning(environmentVariableName, ToInvariantString(ex));
+                this.FailedReadingEnvironmentVariableWarning(environmentVariableName, ex.ToInvariantString());
             }
         }
 
@@ -54,25 +55,6 @@ namespace OpenTelemetry.Implementation
         public void FailedReadingEnvironmentVariableWarning(string environmentVariableName, string ex)
         {
             this.WriteEvent(3, environmentVariableName, ex);
-        }
-
-        /// <summary>
-        /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
-        /// appropriate for diagnostics tracing.
-        /// </summary>
-        private static string ToInvariantString(Exception exception)
-        {
-            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
-
-            try
-            {
-                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
-                return exception.ToString();
-            }
-            finally
-            {
-                Thread.CurrentThread.CurrentUICulture = originalUICulture;
-            }
         }
     }
 }

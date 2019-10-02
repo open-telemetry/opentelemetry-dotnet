@@ -20,6 +20,7 @@ namespace OpenTelemetry.Collector
     using System.Diagnostics.Tracing;
     using System.Globalization;
     using System.Threading;
+    using OpenTelemetry.Utils;
 
     /// <summary>
     /// EventSource events emitted from the project.
@@ -34,7 +35,7 @@ namespace OpenTelemetry.Collector
         {
             if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
-                this.ExceptionInCustomSampler(ToInvariantString(ex));
+                this.ExceptionInCustomSampler(ex.ToInvariantString());
             }
         }
 
@@ -64,7 +65,7 @@ namespace OpenTelemetry.Collector
                 return;
             }
 
-            this.UnknownErrorProcessingEvent(handlerName, eventName, ToInvariantString(ex));
+            this.UnknownErrorProcessingEvent(handlerName, eventName, ex.ToInvariantString());
         }
 
         [Event(4, Message = "Unknown error processing event '{0}' from handler '{1}', Exception: {2}", Level = EventLevel.Error)]
@@ -77,25 +78,6 @@ namespace OpenTelemetry.Collector
         public void NullPayload(string eventName)
         {
             this.WriteEvent(5, eventName);
-        }
-
-        /// <summary>
-        /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
-        /// appropriate for diagnostics tracing.
-        /// </summary>
-        private static string ToInvariantString(Exception exception)
-        {
-            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
-
-            try
-            {
-                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
-                return exception.ToString();
-            }
-            finally
-            {
-                Thread.CurrentThread.CurrentUICulture = originalUICulture;
-            }
         }
     }
 }
