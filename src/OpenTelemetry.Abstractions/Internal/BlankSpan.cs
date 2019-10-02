@@ -139,7 +139,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public void AddEvent(IEvent newEvent)
+        public void AddEvent(Event newEvent)
         {
             if (newEvent == null)
             {

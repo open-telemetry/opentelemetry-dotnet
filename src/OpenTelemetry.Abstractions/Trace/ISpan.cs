@@ -90,23 +90,23 @@ namespace OpenTelemetry.Trace
         void SetAttribute(KeyValuePair<string, object> keyValuePair);
 
         /// <summary>
-        /// Adds a single <see cref="IEvent"/> to the <see cref="ISpan"/>.
+        /// Adds a single <see cref="Event"/> to the <see cref="ISpan"/>.
         /// </summary>
-        /// <param name="name">Name of the <see cref="IEvent"/>.</param>
+        /// <param name="name">Name of the <see cref="Event"/>.</param>
         void AddEvent(string name);
 
         /// <summary>
-        /// Adds a single <see cref="IEvent"/> with the <see cref="IDictionary{String, IAttributeValue}"/> attributes to the <see cref="ISpan"/>.
+        /// Adds a single <see cref="Event"/> with the <see cref="IDictionary{String, IAttributeValue}"/> attributes to the <see cref="ISpan"/>.
         /// </summary>
         /// <param name="name">Event name.</param>
-        /// <param name="attributes"><see cref="IDictionary{String, IAttributeValue}"/> of attributes name/value pairs associated with the <see cref="IEvent"/>.</param>
+        /// <param name="attributes"><see cref="IDictionary{String, IAttributeValue}"/> of attributes name/value pairs associated with the <see cref="Event"/>.</param>
         void AddEvent(string name, IDictionary<string, object> attributes);
 
         /// <summary>
-        /// Adds an <see cref="IEvent"/> object to the <see cref="ISpan"/>.
+        /// Adds an <see cref="Event"/> object to the <see cref="ISpan"/>.
         /// </summary>
-        /// <param name="newEvent"><see cref="IEvent"/> to add to the span.</param>
-        void AddEvent(IEvent newEvent);
+        /// <param name="newEvent"><see cref="Event"/> to add to the span.</param>
+        void AddEvent(Event newEvent);
 
         /// <summary>
         /// Adds link to the span.
