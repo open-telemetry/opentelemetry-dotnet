@@ -46,7 +46,8 @@ namespace OpenTelemetry.Collector.AspNetCore
                     {
                         name, (t, s) =>
                         {
-                            var tracer = tracerFactory.GetTracer(typeof(RequestsCollector).Namespace, typeof(RequestDelegate).Assembly.GetName().Version.FormatResourceVersion());
+                            var version = typeof(RequestDelegate).Assembly.GetName().Version;
+                            var tracer = tracerFactory.GetTracer(typeof(RequestsCollector).Namespace, $"semver:{version.Major}.{version.Minor}.{version.Revision}");
                             return new HttpInListener(name, tracer, s);
                         }
                     },

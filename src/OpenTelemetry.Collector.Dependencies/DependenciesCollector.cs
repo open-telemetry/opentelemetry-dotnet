@@ -39,18 +39,29 @@ namespace OpenTelemetry.Collector.Dependencies
         /// <param name="sampler">Sampler to use to sample dependency calls.</param>
         public DependenciesCollector(DependenciesCollectorOptions options, ITracerFactory tracerFactory, ISampler sampler)
         {
-            var tracer = tracerFactory.GetTracer(typeof(DependenciesCollector).Namespace, typeof(DependenciesCollector).Assembly.GetName().Version.FormatResourceVersion());
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber<HttpRequestMessage>(
                 new Dictionary<string, Func<ITracerFactory, Func<HttpRequestMessage, ISampler>, ListenerHandler<HttpRequestMessage>>>()
                 {
                     {
-                        "HttpHandlerDiagnosticListener", (tf, s) => new HttpHandlerDiagnosticListener(tracer, s)
+                        "HttpHandlerDiagnosticListener", (tf, s) =>
+                        {
+                            var tracer = tracerFactory.GetTracer("OpenTelemetry.Collector.Dependencies.HttpHandlerDiagnosticListener");
+                            return new HttpHandlerDiagnosticListener(tracer, s);
+                        }
                     },
                     {
-                        "Azure.Clients", (tf, s) => new AzureSdkDiagnosticListener("Azure.Clients", tracer, sampler)
+                        "Azure.Clients", (tf, s) =>
+                        {
+                            var tracer = tracerFactory.GetTracer("OpenTelemetry.Collector.Dependencies.Azure.Clients");
+                            return new AzureSdkDiagnosticListener("Azure.Clients", tracer, sampler);
+                        }
                     },
                     {
-                        "Azure.Pipeline", (tf, s) => new AzureSdkDiagnosticListener("Azure.Pipeline", tracer, sampler)
+                        "Azure.Pipeline", (tf, s) =>
+                        {
+                            var tracer = tracerFactory.GetTracer("OpenTelemetry.Collector.Dependencies.Azure.Pipeline");
+                            return new AzureSdkDiagnosticListener("Azure.Pipeline", tracer, sampler);
+                        }
                     },
                 },
                 tracerFactory,
