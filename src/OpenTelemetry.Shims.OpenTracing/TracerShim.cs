@@ -52,7 +52,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(format));
             }
 
-            if (carrier == default)
+            if (Equals(carrier, default))
             {
                 throw new ArgumentNullException(nameof(carrier));
             }
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(format));
             }
 
-            if (carrier == default)
+            if (Equals(carrier, default))
             {
                 throw new ArgumentNullException(nameof(carrier));
             }
