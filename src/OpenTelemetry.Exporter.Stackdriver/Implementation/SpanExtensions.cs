@@ -20,7 +20,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     using Google.Cloud.Trace.V2;
     using Google.Protobuf.WellKnownTypes;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
 
     internal static class SpanExtensions
     {
@@ -90,8 +89,6 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             {
                 ret.Attributes = new Google.Cloud.Trace.V2.Span.Types.Attributes
                 {
-                    DroppedAttributesCount = TraceConfig.Default.MaxNumberOfAttributes - link.Attributes.Count,
-
                     AttributeMap =
                     {
                         link.Attributes.ToDictionary(
