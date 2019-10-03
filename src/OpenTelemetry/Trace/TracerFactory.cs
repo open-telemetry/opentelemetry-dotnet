@@ -56,7 +56,7 @@ namespace OpenTelemetry.Trace
                 if (!this.tracerRegistry.TryGetValue(key, out var tracer))
                 {
                     var labels = CreateLibraryResourceLabels(name, version);
-                    tracer = new Tracer(this.spanProcessor, this.traceConfig, this.binaryFormat, this.textFormat, Resource.Create(labels));
+                    tracer = new Tracer(this.spanProcessor, this.traceConfig, this.binaryFormat, this.textFormat, new Resource(labels));
                     this.tracerRegistry.Add(key, tracer);
                 }
                 
