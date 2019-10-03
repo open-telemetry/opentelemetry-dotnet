@@ -46,13 +46,7 @@ namespace OpenTelemetry.Context.Propagation
         private static readonly HashSet<string> AllFields = new HashSet<string>() { XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags };
 
         /// <inheritdoc/>
-        public ISet<string> Fields
-        {
-            get
-            {
-                return AllFields;
-            }
-        }
+        public ISet<string> Fields => AllFields;
 
         /// <inheritdoc/>
         public SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
@@ -104,7 +98,7 @@ namespace OpenTelemetry.Context.Propagation
                     traceOptions |= ActivityTraceFlags.Recorded;
                 }
 
-                return new SpanContext(traceId, spanId, traceOptions, Tracestate.Empty);
+                return new SpanContext(traceId, spanId, traceOptions);
             }
             catch (Exception e)
             {

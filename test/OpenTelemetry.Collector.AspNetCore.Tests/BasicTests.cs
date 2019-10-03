@@ -101,9 +101,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             tf.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new SpanContext(
                 expectedTraceId,
                 expectedSpanId,
-                ActivityTraceFlags.None,
-                Tracestate.Empty
-                ));
+                ActivityTraceFlags.None));
 
             var tracerFactory = new TracerFactory(spanProcessor.Object, null, tf.Object);
         
