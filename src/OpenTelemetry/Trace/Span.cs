@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace
 
         internal Span(
                 Activity activity,
-                Tracestate tracestate,
+                IEnumerable<KeyValuePair<string, string>> tracestate,
                 SpanKind spanKind,
                 TraceConfig traceConfig,
                 SpanProcessor spanProcessor,

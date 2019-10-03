@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace.Test
 
         public LinkTest()
         {
-            spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty); ;
+            spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
 
             attributesMap.Add("MyAttributeKey0", "MyStringAttribute");
             attributesMap.Add("MyAttributeKey1", 10L);

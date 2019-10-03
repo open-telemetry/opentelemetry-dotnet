@@ -19,6 +19,7 @@ namespace OpenTelemetry.Trace
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Config;
@@ -227,22 +228,22 @@ namespace OpenTelemetry.Trace
                 activityForSpan.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
             }
 
-            var childTracestate = Tracestate.Empty;
+            var childTracestate = Enumerable.Empty<KeyValuePair<string, string>>();
 
             if (this.parentSpanContext != null && this.parentSpanContext.IsValid)
             {
                 if (this.parentSpanContext.Tracestate != null &&
-                    this.parentSpanContext.Tracestate != Tracestate.Empty)
+                    this.parentSpanContext.Tracestate.Any())
                 {
                     childTracestate = this.parentSpanContext.Tracestate;
                 }
             }
             else if (activityForSpan.TraceStateString != null)
             {
-                var tracestateBuilder = Tracestate.Builder;
-                if (TracestateUtils.TryExtractTracestate(activityForSpan.TraceStateString, tracestateBuilder))
+                var tracestate = new List<KeyValuePair<string, string>>();
+                if (TracestateUtils.AppendTracestate(activityForSpan.TraceStateString, tracestate))
                 {
-                    childTracestate = tracestateBuilder.Build();
+                    childTracestate = tracestate;
                 }
             }
 
@@ -324,11 +325,12 @@ namespace OpenTelemetry.Trace
         {
             if (activity.TraceId != default && activity.ParentSpanId != default)
             {
-                var tracestate = Tracestate.Empty;
-                var tracestateBuilder = Tracestate.Builder;
-                if (TracestateUtils.TryExtractTracestate(activity.TraceStateString, tracestateBuilder))
+                List<KeyValuePair<string, string>> tracestate = null;
+
+                if (!string.IsNullOrEmpty(activity.TraceStateString))
                 {
-                    tracestate = tracestateBuilder.Build();
+                    tracestate = new List<KeyValuePair<string, string>>();
+                    TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate);
                 }
 
                 return new SpanContext(
@@ -407,10 +409,10 @@ namespace OpenTelemetry.Trace
                         spanActivity.SetParentId(this.parentSpanContext.TraceId,
                             this.parentSpanContext.SpanId,
                             this.parentSpanContext.TraceOptions);
+                        spanActivity.TraceStateString = TracestateUtils.GetString(this.parentSpanContext.Tracestate);
                     }
 
                     spanActivity.SetIdFormat(ActivityIdFormat.W3C);
-                    spanActivity.TraceStateString = this.parentSpanContext.Tracestate.ToString();
                     spanActivity.Start();
 
                     break;
@@ -424,10 +426,11 @@ namespace OpenTelemetry.Trace
                         spanActivity.SetParentId(this.parentSpan.Context.TraceId,
                             this.parentSpan.Context.SpanId,
                             this.parentSpan.Context.TraceOptions);
+
+                        spanActivity.TraceStateString = TracestateUtils.GetString(this.parentSpan.Context.Tracestate);
                     }
 
                     spanActivity.SetIdFormat(ActivityIdFormat.W3C);
-                    spanActivity.TraceStateString = this.parentSpan.Context.Tracestate.ToString();
                     spanActivity.Start();
 
                     this.parentSpanContext = this.parentSpan.Context;

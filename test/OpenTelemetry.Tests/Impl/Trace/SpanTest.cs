@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetSpanContextFromActivity()
         {
-            var tracestate = Tracestate.Builder.Set("k1", "v1").Build();
+            var tracestate = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("k1", "v1") };
             var activity = new Activity(SpanName).Start();
             activity.TraceStateString = tracestate.ToString();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetSpanContextFromActivityRecordedWithParent()
         {
-            var tracestate = Tracestate.Builder.Set("k1", "v1").Build();
+            var tracestate = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("k1", "v1") };
             var parent = new Activity(SpanName).Start();
             var activity = new Activity(SpanName).Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -119,8 +119,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void NoEventsRecordedAfterEnd()
         {
-            var link = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
-                ActivityTraceFlags.None, Tracestate.Empty);
+            var link = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
 
             var activity = new Activity(SpanName).Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -128,7 +127,7 @@ namespace OpenTelemetry.Trace.Test
             var spanStartTime = PreciseTimestamp.GetUtcNow();
             var span = new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     TraceConfig.Default,
                     spanProcessor,
@@ -169,7 +168,7 @@ namespace OpenTelemetry.Trace.Test
             var spanStartTime = PreciseTimestamp.GetUtcNow();
             var span = new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     TraceConfig.Default,
                     spanProcessor,
@@ -190,8 +189,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public async Task ActiveSpan_Properties()
         {
-            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
-                ActivityTraceFlags.None, Tracestate.Empty);
+            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
 
             var activity = new Activity(SpanName)
                 .SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom())
@@ -201,7 +199,7 @@ namespace OpenTelemetry.Trace.Test
             var spanStartTime = PreciseTimestamp.GetUtcNow();
             var span = new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     TraceConfig.Default,
                     spanProcessor,
@@ -231,7 +229,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(activity.SpanId, span.Context.SpanId);
             Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
             Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
-            Assert.Same(Tracestate.Empty, span.Context.Tracestate);
+            Assert.Empty(span.Context.Tracestate);
 
             Assert.Equal(SpanName, span.Name);
             Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
@@ -264,8 +262,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public async Task EndedSpan_Properties()
         {
-            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
-                ActivityTraceFlags.None, Tracestate.Empty);
+            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
 
             var activity = new Activity(SpanName)
                 .SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom())
@@ -275,7 +272,7 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             var span = new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     TraceConfig.Default,
                     spanProcessor,
@@ -340,7 +337,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     TraceConfig.Default,
                     spanProcessor,
@@ -367,7 +364,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     TraceConfig.Default,
                     spanProcessor,
@@ -396,7 +393,7 @@ namespace OpenTelemetry.Trace.Test
             var traceConfig = new TraceConfig(Samplers.AlwaysSample, 8 , 128, 32);
             var span = new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     traceConfig,
                     spanProcessor,
@@ -447,7 +444,7 @@ namespace OpenTelemetry.Trace.Test
             var traceConfig = new TraceConfig(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
             var span = new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     traceConfig,
                     spanProcessor,
@@ -515,7 +512,7 @@ namespace OpenTelemetry.Trace.Test
             var traceConfig = new TraceConfig(Samplers.AlwaysSample, 32, maxNumberOfEvents, 32);
             var span = new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     traceConfig,
                     spanProcessor,
@@ -549,8 +546,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DroppingLinks()
         {
-            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
-                ActivityTraceFlags.None, Tracestate.Empty);
+            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
 
             var activity = new Activity(SpanName).Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -559,7 +555,7 @@ namespace OpenTelemetry.Trace.Test
             var traceConfig = new TraceConfig(Samplers.AlwaysSample, 32, 128, maxNumberOfLinks);
             var span = new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     traceConfig,
                     spanProcessor,
@@ -596,7 +592,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     TraceConfig.Default,
                     spanProcessor,
@@ -633,7 +629,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     TraceConfig.Default,
                     spanProcessor,
@@ -659,7 +655,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     TraceConfig.Default,
                     spanProcessor,
@@ -688,7 +684,7 @@ namespace OpenTelemetry.Trace.Test
             var span =
                 new Span(
                     activity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
                     TraceConfig.Default,
                     spanProcessor,
