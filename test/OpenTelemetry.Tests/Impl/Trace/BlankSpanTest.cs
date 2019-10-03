@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace.Test
             BlankSpan.Instance.AddEvent("MyEvent", attributes);
             BlankSpan.Instance.AddEvent("MyEvent", multipleAttributes);
             BlankSpan.Instance.AddEvent(new Event("MyEvent"));
-            BlankSpan.Instance.AddLink(new Link(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, Tracestate.Empty)));
+            BlankSpan.Instance.AddLink(new Link(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None)));
 
             Assert.False(BlankSpan.Instance.Context.IsValid);
             Assert.False(BlankSpan.Instance.IsRecordingEvents);

@@ -16,7 +16,9 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
 
     /// <summary>
     /// A class that represents a span context. A span context contains the state that must propagate to
@@ -28,7 +30,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// A blank <see cref="SpanContext"/> that can be used for no-op operations.
         /// </summary>
-        public static readonly SpanContext Blank = new SpanContext(default(ActivityTraceId), default(ActivitySpanId), ActivityTraceFlags.None, Tracestate.Empty);
+        public static readonly SpanContext Blank = new SpanContext(default, default, ActivityTraceFlags.None);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SpanContext"/> class with the given identifiers and options.
@@ -36,13 +38,13 @@ namespace OpenTelemetry.Trace
         /// <param name="traceId">The <see cref="ActivityTraceId"/> to associate with the <see cref="SpanContext"/>.</param>
         /// <param name="spanId">The <see cref="ActivitySpanId"/> to associate with the <see cref="SpanContext"/>.</param>
         /// <param name="traceOptions">The <see cref="TraceOptions"/> to associate with the <see cref="SpanContext"/>.</param>
-        /// <param name="tracestate">The <see cref="Tracestate"/> to associate with the <see cref="SpanContext"/>.</param>
-        public SpanContext(ActivityTraceId traceId, ActivitySpanId spanId, ActivityTraceFlags traceOptions, Tracestate tracestate)
+        /// <param name="tracestate">The tracestate to associate with the <see cref="SpanContext"/>.</param>
+        public SpanContext(ActivityTraceId traceId, ActivitySpanId spanId, ActivityTraceFlags traceOptions, IEnumerable<KeyValuePair<string, string>> tracestate = null)
         {
             this.TraceId = traceId;
             this.SpanId = spanId;
             this.TraceOptions = traceOptions;
-            this.Tracestate = tracestate;
+            this.Tracestate = tracestate ?? Enumerable.Empty<KeyValuePair<string, string>>();
         }
 
         /// <summary>
@@ -68,7 +70,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the <see cref="Tracestate"/> associated with this <see cref="SpanContext"/>.
         /// </summary>
-        public Tracestate Tracestate { get; }
+        public IEnumerable<KeyValuePair<string, string>> Tracestate { get; }
 
         /// <inheritdoc/>
         public override int GetHashCode()

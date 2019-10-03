@@ -97,12 +97,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var link = new Link(new SpanContext(
                     traceId,
                     linkedSpanId,
-                    ActivityTraceFlags.Recorded,
-                    Tracestate.Empty));
+                    ActivityTraceFlags.Recorded));
 
             var span = (Span)Tracing.TracerFactory.GetTracer("")
                 .SpanBuilder("Name")
-                .SetParent(new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty))
+                .SetParent(new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded))
                 .SetSpanKind(SpanKind.Client)
                 .SetStartTimestamp(startTimestamp)
                 .StartSpan();

@@ -33,13 +33,13 @@ namespace OpenTelemetry.Trace.Test
       new SpanContext(
           ActivityTraceId.CreateFromBytes(firstTraceIdBytes),
           ActivitySpanId.CreateFromBytes(firstSpanIdBytes),
-          ActivityTraceFlags.None, Tracestate.Empty);
+          ActivityTraceFlags.None);
 
         private static readonly SpanContext second =
       new SpanContext(
           ActivityTraceId.CreateFromBytes(secondTraceIdBytes),
           ActivitySpanId.CreateFromBytes(secondSpanIdBytes),
-          ActivityTraceFlags.Recorded, Tracestate.Empty);
+          ActivityTraceFlags.Recorded);
 
         [Fact]
         public void InvalidSpanContext()
@@ -55,11 +55,11 @@ namespace OpenTelemetry.Trace.Test
             Assert.False(SpanContext.Blank.IsValid);
             Assert.False(
                     new SpanContext(
-                            ActivityTraceId.CreateFromBytes(firstTraceIdBytes), default, ActivityTraceFlags.None, Tracestate.Empty)
+                            ActivityTraceId.CreateFromBytes(firstTraceIdBytes), default, ActivityTraceFlags.None)
                         .IsValid);
             Assert.False(
                     new SpanContext(
-                            default, ActivitySpanId.CreateFromBytes(firstSpanIdBytes), ActivityTraceFlags.None, Tracestate.Empty)
+                            default, ActivitySpanId.CreateFromBytes(firstSpanIdBytes), ActivityTraceFlags.None)
                         .IsValid);
             Assert.True(first.IsValid);
             Assert.True(second.IsValid);
@@ -84,29 +84,6 @@ namespace OpenTelemetry.Trace.Test
         {
             Assert.Equal(ActivityTraceFlags.None, first.TraceOptions);
             Assert.Equal(ActivityTraceFlags.Recorded, second.TraceOptions);
-        }
-
-        [Fact]
-        public void SpanContext_EqualsAndHashCode()
-        {
-            // EqualsTester tester = new EqualsTester();
-            // tester.addEqualityGroup(
-            //    first,
-            //    new SpanContext(
-            //        ActivityTraceId.CreateFromBytes(firstTraceIdBytes),
-            //        ActivitySpanId.CreateFromBytes(firstSpanIdBytes),
-            //        TraceOptions.DEFAULT),
-            //    new SpanContext(
-            //        ActivityTraceId.CreateFromBytes(firstTraceIdBytes),
-            //        ActivitySpanId.CreateFromBytes(firstSpanIdBytes),
-            //        TraceOptions.builder().setIsSampled(false).build()));
-            // tester.addEqualityGroup(
-            //    second,
-            //    new SpanContext(
-            //        ActivityTraceId.CreateFromBytes(secondTraceIdBytes),
-            //        ActivitySpanId.CreateFromBytes(secondSpanIdBytes),
-            //        TraceOptions.builder().setIsSampled(true).build()));
-            // tester.testEquals();
         }
     }
 }

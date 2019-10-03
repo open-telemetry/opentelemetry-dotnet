@@ -28,7 +28,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             Assert.Throws<ArgumentNullException>(() => new SpanContextShim(null));
             Assert.Throws<ArgumentException>(() => new SpanContextShim(SpanContext.Blank));
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContext(default, default, ActivityTraceFlags.None, Tracestate.Empty)));
+            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContext(default, default, ActivityTraceFlags.None)));
         }
 
         [Fact]

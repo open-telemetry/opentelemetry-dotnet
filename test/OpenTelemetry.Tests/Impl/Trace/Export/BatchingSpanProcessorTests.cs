@@ -54,7 +54,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var span =
                 new Span(
                     sampledActivity,
-                    Tracestate.Empty,
+                    Enumerable.Empty<KeyValuePair<string, string>>(),
                     SpanKind.Internal,
                     new TracerConfiguration(),
                     spanProcessor,
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var span =
                 new Span(
                     notSampledActivity,
-                    Tracestate.Empty,
+                    Enumerable.Empty<KeyValuePair<string, string>>(),
                     SpanKind.Internal,
                     new TracerConfiguration(),
                     spanProcessor,
@@ -244,7 +244,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var span =
                 new Span(
                     sampledActivity,
-                    Tracestate.Empty,
+                    Enumerable.Empty<KeyValuePair<string, string>>(),
                     SpanKind.Internal,
                     new TracerConfiguration(),
                     spanProcessor,
