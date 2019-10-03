@@ -26,14 +26,11 @@ namespace OpenTelemetry.Collector.Dependencies
     internal class AzureSdkDiagnosticListener : ListenerHandler<HttpRequestMessage>
     {
         private static readonly PropertyFetcher LinksPropertyFetcher = new PropertyFetcher("Links");
-        private readonly ITracer tracer;
-
         private readonly ISampler sampler;
 
         public AzureSdkDiagnosticListener(string sourceName, ITracer tracer, ISampler sampler)
             : base(sourceName, tracer, null)
         {
-            this.tracer = tracer;
             this.sampler = sampler;
         }
 
@@ -67,7 +64,7 @@ namespace OpenTelemetry.Collector.Dependencies
                 }
             }
 
-            var spanBuilder = this.tracer.SpanBuilder(operationName)
+            var spanBuilder = this.Tracer.SpanBuilder(operationName)
                 .SetCreateChild(false)
                 .SetSampler(this.sampler);
 
@@ -84,23 +81,23 @@ namespace OpenTelemetry.Collector.Dependencies
 
             span.Status = Status.Ok;
 
-            this.tracer.WithSpan(span);
+            this.Tracer.WithSpan(span);
         }
 
         public override void OnStopActivity(Activity current, object valueValue)
         {
-            var span = this.tracer.CurrentSpan;
+            var span = this.Tracer.CurrentSpan;
             foreach (var keyValuePair in current.Tags)
             {
                 span.SetAttribute(keyValuePair.Key, keyValuePair.Value);
             }
 
-            this.tracer.CurrentSpan.End();
+            this.Tracer.CurrentSpan.End();
         }
 
         public override void OnException(Activity current, object valueValue)
         {
-            var span = this.tracer.CurrentSpan;
+            var span = this.Tracer.CurrentSpan;
 
             span.Status = Status.Unknown.WithDescription(valueValue?.ToString());
         }

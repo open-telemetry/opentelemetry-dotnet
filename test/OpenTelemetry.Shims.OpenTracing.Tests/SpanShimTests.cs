@@ -55,8 +55,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void FinishSpanUsingSpecificTimestamp()
         {
-            var shim = new SpanShim(Defaults.GetOpenTelemetryMockSpan().Object);
-            Assert.Throws<NotImplementedException>(() => shim.Finish(DateTimeOffset.UtcNow));
+            var spanMock = Defaults.GetOpenTelemetryMockSpan();
+            var shim = new SpanShim(spanMock.Object);
+
+            var endTime = DateTimeOffset.UtcNow;
+            shim.Finish(endTime);
+
+            spanMock.Verify(o => o.End(endTime), Times.Once());
         }
 
         [Fact]
@@ -105,11 +110,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var spanMock = Defaults.GetOpenTelemetrySpanMock();
             var shim = new SpanShim(spanMock);
 
-            shim.Log(DateTimeOffset.UtcNow, "foo");
+            var now = DateTimeOffset.UtcNow;
+            shim.Log(now, "foo");
 
             Assert.Single(spanMock.Events);
             var first = spanMock.Events.First();
             Assert.Equal("foo", first.Name);
+            Assert.Equal(now, first.Timestamp);
             Assert.False(first.Attributes.Any());
         }
 
@@ -147,19 +154,19 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void LogUsingFieldsWithExplicitTimestamp()
         {
-            // TODO Explicit timestamps are unsupported in OpenTelemetry?
             var spanMock = Defaults.GetOpenTelemetrySpanMock();
             var shim = new SpanShim(spanMock);
 
             Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null));
+            var now = DateTimeOffset.UtcNow;
 
-            shim.Log(DateTimeOffset.UtcNow, new List<KeyValuePair<string, object>>
+            shim.Log(now, new List<KeyValuePair<string, object>>
             {
                 new KeyValuePair<string, object>("foo", "bar"),
             });
 
             // "event" is a special event name
-            shim.Log(DateTimeOffset.UtcNow, new List<KeyValuePair<string, object>>
+            shim.Log(now, new List<KeyValuePair<string, object>>
             {
                 new KeyValuePair<string, object>("event", "foo"),
             });
@@ -170,9 +177,11 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             Assert.Equal(SpanShim.DefaultEventName, first.Name);
             Assert.True(first.Attributes.Any());
+            Assert.Equal(now, first.Timestamp);
 
             Assert.Equal("foo", last.Name);
             Assert.False(last.Attributes.Any());
+            Assert.Equal(now, last.Timestamp);
         }
 
         [Fact]

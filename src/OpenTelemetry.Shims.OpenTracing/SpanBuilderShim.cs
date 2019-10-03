@@ -65,6 +65,11 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// </summary>
         private Trace.SpanContext parentSpanContext;
 
+        /// <summary>
+        /// The explicit start time, if any.
+        /// </summary>
+        private DateTimeOffset? explicitStartTime;
+
         private bool ignoreActiveSpan;
 
         private Trace.SpanKind spanKind;
@@ -182,6 +187,11 @@ namespace OpenTelemetry.Shims.OpenTracing
                 builder.SetNoParent();
             }
 
+            if (this.explicitStartTime.HasValue)
+            {
+                builder.SetStartTimestamp(this.explicitStartTime.Value);
+            }
+
             foreach (var link in this.links)
             {
                 builder.AddLink(link);
@@ -220,8 +230,8 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithStartTimestamp(DateTimeOffset timestamp)
         {
-            // TODO No explicit timestamp support.
-            throw new NotImplementedException();
+            this.explicitStartTime = timestamp;
+            return this;
         }
 
         /// <inheritdoc/>
