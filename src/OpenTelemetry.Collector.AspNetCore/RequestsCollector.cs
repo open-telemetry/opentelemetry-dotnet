@@ -18,9 +18,11 @@ namespace OpenTelemetry.Collector.AspNetCore
 {
     using System;
     using System.Collections.Generic;
+    using System.Reflection;
     using Microsoft.AspNetCore.Http;
     using OpenTelemetry.Collector.AspNetCore.Implementation;
     using OpenTelemetry.Trace;
+    using OpenTelemetry.Utils;
 
     /// <summary>
     /// Requests collector.
@@ -33,16 +35,24 @@ namespace OpenTelemetry.Collector.AspNetCore
         /// Initializes a new instance of the <see cref="RequestsCollector"/> class.
         /// </summary>
         /// <param name="options">Configuration options for dependencies collector.</param>
-        /// <param name="tracer">Tracer to record traced with.</param>
+        /// <param name="tracerFactory">TracerFactory which creates the Tracer to record traced with.</param>
         /// <param name="sampler">Sampler to use to sample dependency calls.</param>
-        public RequestsCollector(RequestsCollectorOptions options, ITracer tracer, ISampler sampler)
+        public RequestsCollector(RequestsCollectorOptions options, ITracerFactory tracerFactory, ISampler sampler)
         {
+            const string name = "Microsoft.AspNetCore";
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber<HttpRequest>(
-                new Dictionary<string, Func<ITracer, Func<HttpRequest, ISampler>, ListenerHandler<HttpRequest>>>()
+                new Dictionary<string, Func<ITracerFactory, Func<HttpRequest, ISampler>, ListenerHandler<HttpRequest>>>()
                 {
-                    { "Microsoft.AspNetCore", (t, s) => new HttpInListener(t, s) },
+                    {
+                        name, (t, s) =>
+                        {
+                            var version = typeof(RequestDelegate).Assembly.GetName().Version;
+                            var tracer = tracerFactory.GetTracer(typeof(RequestsCollector).Namespace, "semver:" + version.ToString());
+                            return new HttpInListener(name, tracer, s);
+                        }
+                    },
                 },
-                tracer,
+                tracerFactory,
                 x =>
                 {
                     ISampler s = null;

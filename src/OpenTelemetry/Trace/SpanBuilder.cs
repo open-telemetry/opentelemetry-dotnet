@@ -21,6 +21,7 @@ namespace OpenTelemetry.Trace
     using System.Diagnostics;
     using System.Linq;
     using OpenTelemetry.Context.Propagation;
+    using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
@@ -42,12 +43,14 @@ namespace OpenTelemetry.Trace
         private List<Link> links;
         private bool recordEvents;
         private DateTimeOffset startTimestamp;
+        private Resource libraryResource;
 
-        internal SpanBuilder(string name, SpanProcessor spanProcessor, TraceConfig traceConfig)
+        internal SpanBuilder(string name, SpanProcessor spanProcessor, TraceConfig traceConfig, Resource libraryResource)
         {
             this.name = name ?? throw new ArgumentNullException(nameof(name));
             this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
             this.traceConfig = traceConfig ?? throw new ArgumentNullException(nameof(traceConfig));
+            this.libraryResource = libraryResource ?? throw new ArgumentNullException(nameof(libraryResource));
         }
 
         private enum ContextSource
@@ -251,7 +254,8 @@ namespace OpenTelemetry.Trace
                 this.traceConfig,
                 this.spanProcessor,
                 this.startTimestamp,
-                ownsActivity: this.contextSource != ContextSource.Activity);
+                ownsActivity: this.contextSource != ContextSource.Activity,
+                this.libraryResource);
 
             if (activityForSpan.OperationName != this.name)
             {

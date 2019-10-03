@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Linq;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
@@ -51,7 +52,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorInjectsHeadersAsync()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default);
+            var tracerFactory = new TracerFactory(spanProcessor.Object);
 
             var request = new HttpRequestMessage
             {
@@ -64,7 +65,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
 
-            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory, Samplers.AlwaysSample))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);
@@ -91,7 +92,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default);
+            var tracerFactory = new TracerFactory(spanProcessor.Object);
 
             var request = new HttpRequestMessage
             {
@@ -101,7 +102,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory, Samplers.AlwaysSample))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);

@@ -7,7 +7,6 @@ namespace Samples
     using System.Threading;
     using OpenTelemetry.Exporter.LightStep;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
 
     internal class TestLightstep
@@ -21,7 +20,8 @@ namespace Samples
                     ServiceName = "tracing-to-lightstep-service",
                 });
 
-            var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
+            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(exporter));
+            var tracer = tracerFactory.GetTracer(string.Empty);
             
             using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))
             {
@@ -38,7 +38,7 @@ namespace Samples
             return null;
         }
         
-        private static void DoWork(int i, Tracer tracer)
+        private static void DoWork(int i, ITracer tracer)
         {
             using (tracer.WithSpan(tracer.SpanBuilder("DoWork").StartSpan()))
             {

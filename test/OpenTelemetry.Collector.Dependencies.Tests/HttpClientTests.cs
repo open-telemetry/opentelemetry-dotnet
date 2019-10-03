@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Resources;
+
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     using Moq;
@@ -93,12 +95,12 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 out var port);
 
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default);
+            var tracerFactory = new TracerFactory(spanProcessor.Object);
             tc.url = NormalizeValues(tc.url, host, port);
 
             using (serverLifeTime)
             {
-                using (var dc = new DependenciesCollector(new DependenciesCollectorOptions(), tracer, Samplers.AlwaysSample))
+                using (var dc = new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory, Samplers.AlwaysSample))
                 {
 
                     try

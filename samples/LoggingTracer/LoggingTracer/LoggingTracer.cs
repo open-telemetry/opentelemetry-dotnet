@@ -10,6 +10,13 @@ namespace LoggingTracer
 
     public class LoggingTracer : ITracer
     {
+        private string prefix;
+
+        internal LoggingTracer()
+        {
+            Logger.Log("Tracer.ctor()");
+        }
+        
         public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
 
         public IBinaryFormat BinaryFormat => new LoggingBinaryFormat();
@@ -18,13 +25,13 @@ namespace LoggingTracer
 
         public ISpanBuilder SpanBuilder(string spanName)
         {
-            Logger.Log($"Tracer.SpanBuilder({spanName})");
+            Logger.Log($"{prefix}.SpanBuilder({spanName})");
             return new LoggingSpanBuilder(spanName, SpanKind.Internal);
         }
 
         public IDisposable WithSpan(ISpan span)
         {
-            Logger.Log("Tracer.WithSpan");
+            Logger.Log($"{prefix}.WithSpan");
             return new CurrentSpanUtils.LoggingScope(span);
         }
     }

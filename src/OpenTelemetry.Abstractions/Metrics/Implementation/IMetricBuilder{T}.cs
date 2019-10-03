@@ -17,7 +17,6 @@
 namespace OpenTelemetry.Metrics.Implementation
 {
     using System.Collections.Generic;
-    using OpenTelemetry.Resources;
 
     /// <summary>
     /// Metric builder interface.
@@ -59,13 +58,6 @@ namespace OpenTelemetry.Metrics.Implementation
         /// <param name="component">Component reporting this metric.</param>
         /// <returns>This builder instance.</returns>
         IMetricBuilder<T> SetComponent(string component);
-
-        /// <summary>
-        /// Sets the description of the <see cref="IMetric{T}"/>.
-        /// </summary>
-        /// <param name="resource">Resource associated with the metric.</param>
-        /// <returns>This builder instance.</returns>
-        IMetricBuilder<T> SetResource(Resource resource);
 
         /// <summary>
         /// Builds the <see cref="IMetric{T}"/>.

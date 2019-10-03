@@ -25,7 +25,6 @@ namespace Samples
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
 
@@ -57,7 +56,8 @@ namespace Samples
                 Stats.ViewManager);
             metricExporter.Start();
 
-            var tracer = new Tracer(new BatchingSpanProcessor(spanExporter), TraceConfig.Default);
+            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(spanExporter));
+            var tracer = tracerFactory.GetTracer(string.Empty);
 
             var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
