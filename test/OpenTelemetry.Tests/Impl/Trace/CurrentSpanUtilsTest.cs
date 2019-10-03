@@ -15,6 +15,7 @@
 // </copyright>
 
 using OpenTelemetry.Trace.Internal;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace.Test
 {
@@ -68,7 +69,8 @@ namespace OpenTelemetry.Trace.Test
                 TraceConfig.Default,
                 spanProcessor,
                 default,
-                true);
+                true,
+                Resource.Empty);
 
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             using (CurrentSpanUtils.WithSpan(span, stopSpan))
@@ -102,7 +104,8 @@ namespace OpenTelemetry.Trace.Test
                 TraceConfig.Default,
                 spanProcessor,
                 default,
-                false);
+                false,
+                Resource.Empty);
 
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             using (CurrentSpanUtils.WithSpan(span, stopSpan))
@@ -135,7 +138,9 @@ namespace OpenTelemetry.Trace.Test
                 TraceConfig.Default,
                 spanProcessor,
                 default,
-                true);
+                true,
+                Resource.Empty);
+            
             var parentScope = CurrentSpanUtils.WithSpan(parentSpan, stopSpan);
 
             var childActivity = new Activity("child").Start();
@@ -146,7 +151,8 @@ namespace OpenTelemetry.Trace.Test
                 TraceConfig.Default,
                 spanProcessor,
                 default,
-                true);
+                true,
+                Resource.Empty);
 
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
 
@@ -180,7 +186,8 @@ namespace OpenTelemetry.Trace.Test
                 TraceConfig.Default,
                 spanProcessor,
                 default,
-                true);
+                true,
+                Resource.Empty);
 
             var parentScope = CurrentSpanUtils.WithSpan(parentSpan, stopSpan);
 
@@ -192,7 +199,8 @@ namespace OpenTelemetry.Trace.Test
                 TraceConfig.Default,
                 spanProcessor,
                 default,
-                true);
+                true,
+                Resource.Empty);
 
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
 
@@ -218,7 +226,8 @@ namespace OpenTelemetry.Trace.Test
                 TraceConfig.Default,
                 spanProcessor,
                 default,
-                true);
+                true,
+                Resource.Empty);
 
             using(CurrentSpanUtils.WithSpan(span, true))
             using(CurrentSpanUtils.WithSpan(span, true))
@@ -242,7 +251,8 @@ namespace OpenTelemetry.Trace.Test
                 TraceConfig.Default,
                 spanProcessor,
                 default,
-                true);
+                true,
+                Resource.Empty);
 
             activity.Stop();
 
@@ -276,7 +286,8 @@ namespace OpenTelemetry.Trace.Test
                 TraceConfig.Default,
                 spanProcessor,
                 default,
-                true);
+                true,
+                Resource.Empty);
 
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             using (CurrentSpanUtils.WithSpan(span, stopSpan))
