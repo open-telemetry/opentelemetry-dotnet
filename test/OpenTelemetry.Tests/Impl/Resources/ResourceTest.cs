@@ -24,15 +24,15 @@ namespace OpenTelemetry.Impl.Resources
 
     public class ResourceTest
     {
-        private const string keyName = "key";
-        private const string valueName = "value";
-        private static readonly Random random = new Random();
+        private const string KeyName = "key";
+        private const string ValueName = "value";
+        private static readonly Random Random = new Random();
 
         [Fact]
         public static void CreateResource_NullLabelCollection()
         {
             // Act and Assert
-            Exception ex = Assert.Throws<ArgumentNullException>(() => Resource.Create(null));
+            Assert.Throws<ArgumentNullException>(() => new Resource(null));
         }
 
         [Fact]
@@ -44,40 +44,50 @@ namespace OpenTelemetry.Impl.Resources
             labels.Add("NullValue", null);
 
             // Act
-            Exception ex = Assert.Throws<ArgumentException>(() => Resource.Create(labels));
+            var ex = Assert.Throws<ArgumentException>(() => new Resource(labels));
 
             // Assert
-            Assert.Equal("Label value should be a string with a length greater than 0 and not exceed 255 characters.", ex.Message);
+            Assert.Equal("Label value should be a string with a length not exceeding 255 characters.", ex.Message);
+        }
+
+        [Fact]
+        public void CreateResource_EmptyLabelKey()
+        {
+            // Arrange
+            var labels = new Dictionary<string, string> { { string.Empty, "value" } };
+
+            // Act
+            var ex = Assert.Throws<ArgumentException>(() => new Resource(labels));
+
+            // Assert
+            Assert.Equal("Label key should be a string with a length greater than 0 and not exceeding 255 characters.", ex.Message);
         }
 
         [Fact]
         public void CreateResource_EmptyLabelValue()
         {
             // Arrange
-            var labelCount = 3;
-            var labels = CreateLabels(labelCount);
-            labels.Add("EmptyValue", string.Empty);
+            var labels = new Dictionary<string, string> {{"EmptyValue", string.Empty}};
 
-            // Act
-            Exception ex = Assert.Throws<ArgumentException>(() => Resource.Create(labels));
+            // does not throw
+            var resource = new Resource(labels);
 
             // Assert
-            Assert.Equal("Label value should be a string with a length greater than 0 and not exceed 255 characters.", ex.Message);
+            Assert.Single(resource.Labels);
+            Assert.Contains(new KeyValuePair<string, string>("EmptyValue", string.Empty), resource.Labels);
         }
 
         [Fact]
         public void CreateResource_ExceedsLengthLabelValue()
         {
             // Arrange
-            var labelCount = 3;
-            var labels = CreateLabels(labelCount);
-            labels.Add("ExceedsLengthValue", RandomString(256));
+            var labels = new Dictionary<string, string> { { "ExceedsLengthValue", RandomString(256) }};
 
             // Act
-            Exception ex = Assert.Throws<ArgumentException>(() => Resource.Create(labels));
+            var ex = Assert.Throws<ArgumentException>(() => new Resource(labels));
 
             // Assert
-            Assert.Equal("Label value should be a string with a length greater than 0 and not exceed 255 characters.", ex.Message);
+            Assert.Equal("Label value should be a string with a length not exceeding 255 characters.", ex.Message);
         }
 
 
@@ -85,17 +95,16 @@ namespace OpenTelemetry.Impl.Resources
         public void CreateResource_MaxLengthLabelValue()
         {
             // Arrange
-            var labelCount = 3;
-            var labels = CreateLabels(labelCount);
-            labels.Add("MaxLengthValue", RandomString(255));
+            var labels = new Dictionary<string, string> { { "ExceedsLengthValue", RandomString(255) } };
 
             // Act
-            var resource = Resource.Create(labels);
+            var resource = new Resource(labels);
 
             // Assert
             Assert.NotNull(resource);
             Assert.NotNull(resource.Labels);
-            Assert.True(resource.Labels.Count == labelCount + 1);
+            Assert.Single( resource.Labels);
+            Assert.Contains(labels.Single(), resource.Labels);
         }
 
         [Fact]
@@ -106,7 +115,7 @@ namespace OpenTelemetry.Impl.Resources
             var labels = CreateLabels(labelCount);
 
             // Act
-            var resource = Resource.Create(labels);
+            var resource = new Resource(labels);
 
             // Assert
             ValidateResource(resource, labelCount);
@@ -120,7 +129,7 @@ namespace OpenTelemetry.Impl.Resources
             var labels = CreateLabels(labelCount);
 
             // Act
-            var resource = Resource.Create(labels);
+            var resource = new Resource(labels);
 
             // Assert
             ValidateResource(resource, labelCount);
@@ -134,7 +143,7 @@ namespace OpenTelemetry.Impl.Resources
             var labels = CreateLabels(labelCount);
 
             // Act
-            var resource = Resource.Create(labels);
+            var resource = new Resource(labels);
 
             // Assert
             ValidateResource(resource, labelCount);
@@ -146,17 +155,20 @@ namespace OpenTelemetry.Impl.Resources
             // Arrange
             var sourceLabelCount = 0;
             var sourceLabels = CreateLabels(sourceLabelCount);
-            var sourceResource = Resource.Create(sourceLabels);
+            var sourceResource = new Resource(sourceLabels);
 
-            var targetLabelCount = 3;
-            var targetLabels = CreateLabels(targetLabelCount);
-            var targetResource = Resource.Create(targetLabels);
+            var otherLabelCount = 3;
+            var otherLabels = CreateLabels(otherLabelCount);
+            var otherResource = new Resource(otherLabels);
 
             // Act
-            targetResource.Merge(sourceResource);
+            var newResource = sourceResource.Merge(otherResource);
 
             // Assert
-            ValidateResource(targetResource, sourceLabelCount + targetLabelCount);
+            Assert.NotSame(otherResource, newResource);
+            Assert.NotSame(sourceResource, newResource);
+
+            ValidateResource(newResource, sourceLabelCount + otherLabelCount);
         }
 
         [Fact]
@@ -165,17 +177,19 @@ namespace OpenTelemetry.Impl.Resources
             // Arrange
             var sourceLabelCount = 3;
             var sourceLabels = CreateLabels(sourceLabelCount);
-            var sourceResource = Resource.Create(sourceLabels);
+            var sourceResource = new Resource(sourceLabels);
 
-            var targetLabelCount = 0;
-            var targetLabels = CreateLabels(targetLabelCount);
-            var targetResource = Resource.Create(targetLabels);
+            var otherLabelCount = 0;
+            var otherLabels = CreateLabels(otherLabelCount);
+            var otherResource = new Resource(otherLabels);
 
             // Act
-            targetResource.Merge(sourceResource);
+            var newResource = sourceResource.Merge(otherResource);
 
             // Assert
-            ValidateResource(targetResource, sourceLabelCount + targetLabelCount);
+            Assert.NotSame(otherResource, newResource);
+            Assert.NotSame(sourceResource, newResource);
+            ValidateResource(newResource, sourceLabelCount + otherLabelCount);
         }
 
         [Fact]
@@ -184,17 +198,19 @@ namespace OpenTelemetry.Impl.Resources
             // Arrange
             var sourceLabelCount = 3;
             var sourceLabels = CreateLabels(sourceLabelCount);
-            var sourceResource = Resource.Create(sourceLabels);
+            var sourceResource = new Resource(sourceLabels);
 
-            var targetLabelCount = 3;
-            var targetLabels = CreateLabels(targetLabelCount, sourceLabelCount);
-            var targetResource = Resource.Create(targetLabels);
+            var otherLabelCount = 3;
+            var otherLabels = CreateLabels(otherLabelCount, sourceLabelCount);
+            var otherResource = new Resource(otherLabels);
 
             // Act
-            targetResource.Merge(sourceResource);
+            var newResource = sourceResource.Merge(otherResource);
 
             // Assert
-            ValidateResource(targetResource, sourceLabelCount + targetLabelCount);
+            Assert.NotSame(otherResource, newResource);
+            Assert.NotSame(sourceResource, newResource);
+            ValidateResource(newResource, sourceLabelCount + otherLabelCount);
         }
 
         [Fact]
@@ -203,23 +219,24 @@ namespace OpenTelemetry.Impl.Resources
             // Arrange
             var sourceLabelCount = 3;
             var sourceLabels = CreateLabels(sourceLabelCount);
-            var sourceResource = Resource.Create(sourceLabels);
+            var sourceResource = new Resource(sourceLabels);
 
-            var targetLabelCount = 3;
-            var targetLabels = CreateLabels(targetLabelCount, sourceLabelCount - 1);
-            var targetResource = Resource.Create(targetLabels);
+            var otherLabelCount = 3;
+            var otherLabels = CreateLabels(otherLabelCount, sourceLabelCount - 1);
+            var otherResource = new Resource(otherLabels);
 
             // Act
-            targetResource.Merge(sourceResource);
+            var newResource = sourceResource.Merge(otherResource);
 
             // Assert
-            ValidateResource(targetResource, sourceLabelCount + targetLabelCount - 1);
+            Assert.NotSame(otherResource, newResource);
+            Assert.NotSame(sourceResource, newResource);
+            ValidateResource(newResource, sourceLabelCount + otherLabelCount - 1);
 
             // Also verify target labels were not overwritten
-            foreach (var targetLabel in targetLabels)
+            foreach (var otherLabel in otherLabels)
             {
-                Assert.True(targetResource.Labels.ContainsKey(targetLabel.Key));
-                Assert.Equal(targetLabel.Value, targetResource.Labels[targetLabel.Key]);
+                Assert.Contains(otherLabel, otherResource.Labels);
             }
         }
 
@@ -229,31 +246,78 @@ namespace OpenTelemetry.Impl.Resources
             // Arrange
             var sourceLabelCount = 3;
             var sourceLabels = CreateLabels(sourceLabelCount);
-            var sourceResource = Resource.Create(sourceLabels);
+            var sourceResource = new Resource(sourceLabels);
 
-            var targetLabelCount = 3;
-            var targetLabels = CreateLabels(targetLabelCount);
-            var targetResource = Resource.Create(targetLabels);
+            var otherLabelCount = 3;
+            var otherLabels = CreateLabels(otherLabelCount);
+            var otherResource = new Resource(otherLabels);
 
             // Act
-            targetResource.Merge(sourceResource);
+            var newResource = sourceResource.Merge(otherResource);
 
             // Assert
-            ValidateResource(targetResource, targetLabelCount);
+            Assert.NotSame(otherResource, newResource);
+            Assert.NotSame(sourceResource, newResource);
+            ValidateResource(newResource, otherLabelCount);
 
             // Also verify target labels were not overwritten
-            foreach (var targetLabel in targetLabels)
+            foreach (var otherLabel in otherLabels)
             {
-                Assert.True(targetResource.Labels.ContainsKey(targetLabel.Key));
-                Assert.Equal(targetLabel.Value, targetResource.Labels[targetLabel.Key]);
+                Assert.Contains(otherLabel, otherResource.Labels);
             }
+        }
+
+        [Fact]
+        public void MergeResource_MultiLabelSource_DuplicatedKeysInPrimary()
+        {
+            // Arrange
+            var sourceLabels = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("key1", "value1"),
+                new KeyValuePair<string, string>("key1", "value1.1"),
+            };
+            var sourceResource = new Resource(sourceLabels);
+
+            var otherLabels = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("key2", "value2"),
+            };
+
+            var otherResource = new Resource(otherLabels);
+
+            // Act
+            var newResource = sourceResource.Merge(otherResource);
+
+            // Assert
+            Assert.NotSame(otherResource, newResource);
+            Assert.NotSame(sourceResource, newResource);
+
+            Assert.Equal(2, newResource.Labels.Count());
+            Assert.Contains(new KeyValuePair<string, string>("key1", "value1"), newResource.Labels);
+            Assert.Contains(new KeyValuePair<string, string>("key2", "value2"), newResource.Labels);
+        }
+
+        [Fact]
+        public void MergeResource_SecondaryCanOverridePrimaryEmptyLabelValue()
+        {
+            // Arrange
+            var primaryLabels = new Dictionary<string, string> { { "value", string.Empty } };
+            var secondaryLabels = new Dictionary<string, string> { { "value", "not empty" } };
+            var primaryResource = new Resource(primaryLabels);
+            var secondaryResource = new Resource(secondaryLabels);
+
+            var newResource = primaryResource.Merge(secondaryResource);
+
+            // Assert
+            Assert.Single(newResource.Labels);
+            Assert.Contains(new KeyValuePair<string, string>("value", "not empty"), newResource.Labels);
         }
 
         private static void AddLabels(Dictionary<string, string> labels, int labelCount, int startIndex = 0)
         {
             for (var i = startIndex; i < labelCount + startIndex; ++i)
             {
-                labels.Add($"{keyName}{i}", $"{valueName}{i}");
+                labels.Add($"{KeyName}{i}", $"{ValueName}{i}");
             }
         }
 
@@ -264,12 +328,13 @@ namespace OpenTelemetry.Impl.Resources
             return labels;
         }
 
-        private static void ValidateLabels(IReadOnlyDictionary<string, string> labels, int startIndex = 0)
+        private static void ValidateLabels(IEnumerable<KeyValuePair<string, string>> labels, int startIndex = 0)
         {
-            for (var i = startIndex; i < labels.Count; ++i)
+            var keyValuePairs = labels as KeyValuePair<string, string>[] ?? labels.ToArray();
+            for (var i = startIndex; i < keyValuePairs.Length; ++i)
             {
-                Assert.True(labels.ContainsKey($"{keyName}{i}"));
-                Assert.Equal($"{valueName}{i}", labels[$"{keyName}{i}"]);
+                Assert.Contains(new KeyValuePair<string, string>(
+                    $"{KeyName}{i}", $"{ValueName}{i}"), keyValuePairs);
             }
         }
 
@@ -277,7 +342,7 @@ namespace OpenTelemetry.Impl.Resources
         {
             Assert.NotNull(resource);
             Assert.NotNull(resource.Labels);
-            Assert.True(resource.Labels.Count == labelCount);
+            Assert.Equal(labelCount, resource.Labels.Count());
             ValidateLabels(resource.Labels);
         }
 
@@ -285,7 +350,7 @@ namespace OpenTelemetry.Impl.Resources
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, length)
-              .Select(s => s[random.Next(s.Length)]).ToArray());
+              .Select(s => s[Random.Next(s.Length)]).ToArray());
         }
     }
 }

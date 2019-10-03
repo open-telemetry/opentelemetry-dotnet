@@ -14,51 +14,46 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace.Test
 {
-    using System;
-    using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Sampler;
-
+    using System.Linq;
     using Xunit;
 
     public class TracerFactoryTest
     {
-        private TracerFactory tracerFactory = new TracerFactory();
+        private readonly TracerFactory tracerFactory = new TracerFactory();
         
         [Fact]
         public void GetTracer_NoName_NoVersion()
         {
             var tracer = (Tracer)tracerFactory.GetTracer("");
-            Assert.False(tracer.LibraryResource.Labels.ContainsKey("name"));
-            Assert.False(tracer.LibraryResource.Labels.ContainsKey("version"));
+            Assert.DoesNotContain(tracer.LibraryResource.Labels, kvp => kvp.Key == "name");
+            Assert.DoesNotContain(tracer.LibraryResource.Labels, kvp => kvp.Key == "version");
         }
-        
+
         [Fact]
         public void GetTracer_NoName_Version()
         {
             var tracer = (Tracer)tracerFactory.GetTracer(null, "semver:1.0.0");
-            Assert.False(tracer.LibraryResource.Labels.ContainsKey("name"));
-            Assert.False(tracer.LibraryResource.Labels.ContainsKey("version"));
+            Assert.DoesNotContain(tracer.LibraryResource.Labels, kvp => kvp.Key == "name");
+            Assert.DoesNotContain(tracer.LibraryResource.Labels, kvp => kvp.Key == "version");
         }
         
         [Fact]
         public void GetTracer_Name_NoVersion()
         {
             var tracer = (Tracer)tracerFactory.GetTracer("foo");
-            Assert.Equal("foo", tracer.LibraryResource.Labels["name"]);
-            Assert.False(tracer.LibraryResource.Labels.ContainsKey("version"));
+            Assert.Equal("foo", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "name").Value);
+            Assert.DoesNotContain(tracer.LibraryResource.Labels, kvp => kvp.Key == "version");
         }
         
         [Fact]
         public void GetTracer_Name_Version()
         {
             var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
-            Assert.Equal("foo", tracer.LibraryResource.Labels["name"]);
-            Assert.Equal("semver:1.2.3", tracer.LibraryResource.Labels["version"]);
+            Assert.Equal("foo", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "name").Value);
+            Assert.Equal("semver:1.2.3", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "version").Value);
         }
         
         [Fact]

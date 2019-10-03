@@ -2,9 +2,6 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-using System.Linq;
-using OpenTelemetry.Resources;
-
 namespace LoggingTracer
 {
     using System;
@@ -15,10 +12,9 @@ namespace LoggingTracer
     {
         private string prefix;
 
-        internal LoggingTracer(Resource libraryResource)
+        internal LoggingTracer()
         {
-            this.prefix = "Tracer(" + string.Join(", ", libraryResource.Labels.Select(l => l.Value).ToArray()) + ")";
-            Logger.Log($"{prefix}.ctor()");
+            Logger.Log("Tracer.ctor()");
         }
         
         public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
