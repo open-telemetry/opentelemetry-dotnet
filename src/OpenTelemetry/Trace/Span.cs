@@ -20,6 +20,7 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+    using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
@@ -48,7 +49,8 @@ namespace OpenTelemetry.Trace
                 TraceConfig traceConfig,
                 SpanProcessor spanProcessor,
                 DateTimeOffset startTimestamp,
-                bool ownsActivity)
+                bool ownsActivity,
+                Resource libraryResource)
         {
             this.Activity = activity;
             this.spanContext = new Lazy<SpanContext>(() => new SpanContext(
@@ -63,6 +65,7 @@ namespace OpenTelemetry.Trace
             this.OwnsActivity = ownsActivity;
             this.IsRecordingEvents = this.Activity.Recorded;
             this.startTimestamp = startTimestamp;
+            this.LibraryResource = libraryResource;
 
             if (this.IsRecordingEvents)
             {
@@ -140,12 +143,17 @@ namespace OpenTelemetry.Trace
         public DateTimeOffset EndTimestamp => this.endTimestamp;
 
         /// <summary>
-        /// Gets or sets span kind.
+        /// Gets the span kind.
         /// </summary>
-        public SpanKind? Kind { get; set; }
+        public SpanKind? Kind { get; }
 
+        /// <summary>
+        /// Gets the "Library Resource" (name + version) associated with the Tracer that produced this span.
+        /// </summary>
+        public Resource LibraryResource { get; }
+        
         internal bool OwnsActivity { get; }
-
+        
         private Status StatusWithDefault => this.status.IsValid ? this.status : Status.Ok;
 
         /// <inheritdoc />

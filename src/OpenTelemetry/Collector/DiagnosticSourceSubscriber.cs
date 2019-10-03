@@ -25,18 +25,18 @@ namespace OpenTelemetry.Collector
 
     public class DiagnosticSourceSubscriber<TInput> : IDisposable, IObserver<DiagnosticListener>
     {
-        private readonly Dictionary<string, Func<ITracer, Func<TInput, ISampler>, ListenerHandler<TInput>>> handlers;
-        private readonly ITracer tracer;
+        private readonly Dictionary<string, Func<ITracerFactory, Func<TInput, ISampler>, ListenerHandler<TInput>>> handlers;
+        private readonly ITracerFactory tracerFactory;
         private readonly Func<TInput, ISampler> sampler;
         private ConcurrentDictionary<string, DiagnosticSourceListener<TInput>> subscriptions;
         private long disposed;
         private IDisposable subscription;
 
-        public DiagnosticSourceSubscriber(Dictionary<string, Func<ITracer, Func<TInput, ISampler>, ListenerHandler<TInput>>> handlers, ITracer tracer, Func<TInput, ISampler> sampler)
+        public DiagnosticSourceSubscriber(Dictionary<string, Func<ITracerFactory, Func<TInput, ISampler>, ListenerHandler<TInput>>> handlers, ITracerFactory tracerFactory, Func<TInput, ISampler> sampler)
         {
             this.subscriptions = new ConcurrentDictionary<string, DiagnosticSourceListener<TInput>>();
             this.handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
-            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            this.tracerFactory = tracerFactory ?? throw new ArgumentNullException(nameof(tracerFactory));
             this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
         }
 
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Collector
                 {
                     this.subscriptions.GetOrAdd(value.Name, name =>
                     {
-                        var dl = new DiagnosticSourceListener<TInput>(this.handlers[value.Name](this.tracer, this.sampler));
+                        var dl = new DiagnosticSourceListener<TInput>(this.handlers[value.Name](this.tracerFactory, this.sampler));
                         dl.Subscription = value.Subscribe(dl);
                         return dl;
                     });

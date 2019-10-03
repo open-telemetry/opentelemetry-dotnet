@@ -20,9 +20,7 @@ namespace Samples
     using System.Collections.Generic;
     using System.Threading;
     using OpenTelemetry.Exporter.Jaeger;
-    using OpenTelemetry.Exporter.Jaeger.Implementation;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
 
     internal class TestJaeger
@@ -41,7 +39,8 @@ namespace Samples
                 jaegerOptions);
 
             // Create a tracer. You may also need to register it as a global instance to make auto-collectors work..
-            var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
+            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(exporter));
+            var tracer = tracerFactory.GetTracer(string.Empty);
 
             // Create a scoped span. It will end automatically when using statement ends
             using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))
@@ -59,7 +58,7 @@ namespace Samples
             return null;
         }
 
-        private static void DoWork(int i, Tracer tracer)
+        private static void DoWork(int i, ITracer tracer)
         {
             // Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be
