@@ -25,7 +25,7 @@ using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Sampler;
 using System.Net.Http;
 using OpenTelemetry.Exporter.Zipkin;
-using OpenTelemetry.Trace.Config;
+using OpenTelemetry.Trace.Configuration;
 
 namespace TestApp.AspNetCore._2._0
 {

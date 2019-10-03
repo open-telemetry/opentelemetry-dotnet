@@ -18,10 +18,9 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Diagnostics;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Resources;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
 

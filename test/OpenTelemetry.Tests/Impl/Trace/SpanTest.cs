@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Resources;
-
 namespace OpenTelemetry.Trace.Test
 {
     using System;
@@ -27,9 +25,10 @@ namespace OpenTelemetry.Trace.Test
     using OpenTelemetry.Abstractions.Utils;
     using OpenTelemetry.Tests;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
+    using OpenTelemetry.Resources;
     using Xunit;
 
     public class SpanTest : IDisposable

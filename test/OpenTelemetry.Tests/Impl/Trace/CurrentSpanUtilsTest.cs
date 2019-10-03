@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace.Test
     using System;
     using System.Diagnostics;
     using Moq;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using Xunit;
 

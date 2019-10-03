@@ -19,7 +19,7 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Resources;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
    
     /// <inheritdoc/>

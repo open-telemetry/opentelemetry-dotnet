@@ -14,19 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Resources;
-
 namespace OpenTelemetry.Trace.Test
 {
     using System;
     using System.Diagnostics;
     using System.Collections.Generic;
     using System.Linq;
-    using Moq;
     using OpenTelemetry.Abstractions.Utils;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
+    using OpenTelemetry.Resources;
     using Xunit;
 
     public class SpanBuilderTest : IDisposable

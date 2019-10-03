@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Trace.Config.Test
 {
     using System;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Sampler;
     using Xunit;
 

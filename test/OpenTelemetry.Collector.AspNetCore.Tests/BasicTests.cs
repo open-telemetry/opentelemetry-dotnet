@@ -24,7 +24,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using System.Threading.Tasks;
     using Microsoft.Extensions.DependencyInjection;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using Moq;
     using Microsoft.AspNetCore.TestHost;
@@ -48,8 +48,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         [Fact]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
-            var panProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracerFactory = new TracerFactory(panProcessor.Object);
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var tracerFactory = new TracerFactory(spanProcessor.Object);
 
             void ConfigureTestServices(IServiceCollection services) =>
                 services.AddSingleton<ITracerFactory>(tracerFactory);
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
 
                 for (var i = 0; i < 10; i++)
                 {
-                    if (panProcessor.Invocations.Count == 2)
+                    if (spanProcessor.Invocations.Count == 2)
                     {
                         break;
                     }
@@ -82,8 +82,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             }
 
 
-            Assert.Equal(2, panProcessor.Invocations.Count); // begin and end was called
-            var span = ((Span)panProcessor.Invocations[1].Arguments[0]);
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
 
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));
