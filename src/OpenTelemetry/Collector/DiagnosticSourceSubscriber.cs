@@ -24,9 +24,9 @@ namespace OpenTelemetry.Collector
     {
         private readonly ListenerHandler handler;
         private readonly Func<string, object, object, bool> filter;
-        private DiagnosticSourceListener listener;
         private long disposed;
-        private IDisposable subscription;
+        private IDisposable allSourcesSubscription;
+        private IDisposable listenerSubscription;
 
         public DiagnosticSourceSubscriber(ListenerHandler handler, Func<string, object, object, bool> filter)
         {
@@ -36,23 +36,22 @@ namespace OpenTelemetry.Collector
 
         public void Subscribe()
         {
-            if (this.subscription == null)
+            if (this.allSourcesSubscription == null)
             {
-                this.subscription = DiagnosticListener.AllListeners.Subscribe(this);
+                this.allSourcesSubscription = DiagnosticListener.AllListeners.Subscribe(this);
             }
         }
 
         public void OnNext(DiagnosticListener value)
         {
-            if ((Interlocked.Read(ref this.disposed) == 0) && this.listener == null)
+            if ((Interlocked.Read(ref this.disposed) == 0) && 
+                this.listenerSubscription == null && 
+                this.handler.SourceName == value.Name)
             {
-                if (this.handler.SourceName == value.Name)
-                {
-                    this.listener = new DiagnosticSourceListener(this.handler);
-                    this.listener.Subscription = this.filter == null ?
-                        value.Subscribe(this.listener) : 
-                        value.Subscribe(this.listener, this.filter);
-                }
+                var listener = new DiagnosticSourceListener(this.handler);
+                this.listenerSubscription = this.filter == null ?
+                    value.Subscribe(listener) : 
+                    value.Subscribe(listener, this.filter);
             }
         }
 
@@ -71,11 +70,11 @@ namespace OpenTelemetry.Collector
                 return;
             }
 
-            this.listener?.Dispose();
-            this.listener = null;
+            this.listenerSubscription?.Dispose();
+            this.listenerSubscription = null;
 
-            this.subscription?.Dispose();
-            this.subscription = null;
+            this.allSourcesSubscription?.Dispose();
+            this.allSourcesSubscription = null;
         }
     }
 }

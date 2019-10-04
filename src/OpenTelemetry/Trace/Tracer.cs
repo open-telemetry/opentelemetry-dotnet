@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Trace.Internal;
 
     /// <inheritdoc/>
-    public sealed class Tracer : ITracer
+    internal sealed class Tracer : ITracer
     {
         private readonly SpanProcessor spanProcessor;
 
