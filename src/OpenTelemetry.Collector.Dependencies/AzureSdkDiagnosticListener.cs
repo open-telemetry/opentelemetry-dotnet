@@ -23,15 +23,13 @@ namespace OpenTelemetry.Collector.Dependencies
     using OpenTelemetry.Collector.Dependencies.Implementation;
     using OpenTelemetry.Trace;
 
-    internal class AzureSdkDiagnosticListener : ListenerHandler<HttpRequestMessage>
+    internal class AzureSdkDiagnosticListener : ListenerHandler
     {
         private static readonly PropertyFetcher LinksPropertyFetcher = new PropertyFetcher("Links");
-        private readonly ISampler sampler;
 
-        public AzureSdkDiagnosticListener(string sourceName, ITracer tracer, ISampler sampler)
-            : base(sourceName, tracer, null)
+        public AzureSdkDiagnosticListener(string sourceName, ITracer tracer)
+            : base(sourceName, tracer)
         {
-            this.sampler = sampler;
         }
 
         public void OnCompleted()
@@ -65,8 +63,7 @@ namespace OpenTelemetry.Collector.Dependencies
             }
 
             var spanBuilder = this.Tracer.SpanBuilder(operationName)
-                .SetCreateChild(false)
-                .SetSampler(this.sampler);
+                .SetCreateChild(false);
 
             var links = LinksPropertyFetcher.Fetch(valueValue) as IEnumerable<Activity> ?? Array.Empty<Activity>();
 
