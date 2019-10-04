@@ -16,9 +16,6 @@
 
 namespace OpenTelemetry.Trace
 {
-    using OpenTelemetry.Context;
-    using OpenTelemetry.Context.Propagation;
-
     /// <summary>
     /// Creates Tracers for an instrumentation library.
     /// </summary>

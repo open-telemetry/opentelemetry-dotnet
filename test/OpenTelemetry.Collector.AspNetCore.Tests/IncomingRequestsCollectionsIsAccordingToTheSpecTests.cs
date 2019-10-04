@@ -58,14 +58,14 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
             var tracerFactory = new TracerFactory(spanProcessor.Object);
-
+            
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl());
-                        services.AddSingleton<ITracerFactory>(tracerFactory);
+                        services.AddSingleton<ITracer>(tracerFactory.GetTracer(null));
                     }))
                 .CreateClient())
             {

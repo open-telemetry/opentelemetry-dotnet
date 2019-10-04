@@ -11,7 +11,7 @@ namespace LoggingTracer
     {
         public override ITracer GetTracer(string name, string version = null)
         {
-            Logger.Log($"TracerFactory.GetTracer('{name}', '{version}')");
+            Logger.Log($"ITracerFactory.GetTracer('{name}', '{version}')");
 
             // Create a Resource from "name" and "version" information.
             var labels = new Dictionary<string, string>();

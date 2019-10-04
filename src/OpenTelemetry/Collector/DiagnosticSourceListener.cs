@@ -20,7 +20,7 @@ namespace OpenTelemetry.Collector
     using System.Collections.Generic;
     using System.Diagnostics;
 
-    internal class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>, IDisposable
+    internal class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>
     {
         private readonly ListenerHandler handler;
 
@@ -28,8 +28,6 @@ namespace OpenTelemetry.Collector
         {
             this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
         }
-
-        public IDisposable Subscription { get; set; }
 
         public void OnCompleted()
         {
@@ -70,11 +68,6 @@ namespace OpenTelemetry.Collector
             {
                 CollectorEventSource.Log.UnknownErrorProcessingEvent(this.handler?.SourceName, value.Key, ex);
             }
-        }
-
-        public void Dispose()
-        {
-            this.Subscription?.Dispose();
         }
     }
 }

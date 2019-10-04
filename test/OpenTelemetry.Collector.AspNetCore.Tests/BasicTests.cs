@@ -53,7 +53,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             var tracerFactory = new TracerFactory(spanProcessor.Object);
 
             void ConfigureTestServices(IServiceCollection services) =>
-                services.AddSingleton<ITracerFactory>(tracerFactory);
+                services.AddSingleton<ITracer>(tracerFactory.GetTracer(null));
 
             // Arrange
             using (var client = this.factory
@@ -94,13 +94,14 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 ActivityTraceFlags.Recorded));
 
             var tracerFactory = new TracerFactory(spanProcessor.Object, null, tf.Object);
-        
+
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices((services) =>
+                    builder.ConfigureTestServices(services =>
                     {
-                        services.AddSingleton<ITracerFactory>(tracerFactory);
+                        services.AddSingleton<ITracer>(tracerFactory.GetTracer(null));
+
                     }))
                 .CreateClient())
             {
@@ -145,8 +146,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     return true;
                 }
 
-                services.AddSingleton<RequestsCollectorOptions>(_ => new RequestsCollectorOptions(Filter));
-                services.AddSingleton<ITracerFactory>(tracerFactory);
+                services.AddSingleton<AspNetCoreCollectorOptions>(_ => new AspNetCoreCollectorOptions(Filter));
+                services.AddSingleton<ITracer>(tracerFactory.GetTracer(null)); ;
             }
 
             // Arrange
