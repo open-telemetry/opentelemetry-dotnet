@@ -61,7 +61,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), null, new TraceContextFormat(), Resource.Empty));
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), new BinaryFormat(), null, Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration()));
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), null));
         }
 
