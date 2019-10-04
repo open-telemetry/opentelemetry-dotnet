@@ -24,8 +24,7 @@ namespace Samples
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Sampler;
 
     internal class TestStackdriver
@@ -56,38 +55,40 @@ namespace Samples
                 Stats.ViewManager);
             metricExporter.Start();
 
-            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(spanExporter));
-            var tracer = tracerFactory.GetTracer(string.Empty);
-
-            var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
-
-            Stats.ViewManager.RegisterView(VideoSizeView);
-
-            using (tagContextBuilder.BuildScoped())
+            using (var tracerBuilder = new TracerFactory()
+                .SetExporter(spanExporter))
             {
-                using (tracer.WithSpan(tracer.StartSpan("incoming request")))
+                var tracer = tracerBuilder.GetTracer("stackdriver-test");
+
+                var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
+
+                Stats.ViewManager.RegisterView(VideoSizeView);
+
+                using (tagContextBuilder.BuildScoped())
                 {
-                    tracer.CurrentSpan.AddEvent("Processing video.");
-                    Thread.Sleep(TimeSpan.FromMilliseconds(10));
+                    using (tracer.WithSpan(tracer.StartSpan("incoming request")))
+                    {
+                        tracer.CurrentSpan.AddEvent("Processing video.");
+                        Thread.Sleep(TimeSpan.FromMilliseconds(10));
 
-                    StatsRecorder.NewMeasureMap()
-                        .Put(VideoSize, 25 * MiB)
-                        .Record();
+                        StatsRecorder.NewMeasureMap()
+                            .Put(VideoSize, 25 * MiB)
+                            .Record();
+                    }
                 }
+
+                Thread.Sleep(TimeSpan.FromMilliseconds(5100));
+
+                var viewData = Stats.ViewManager.GetView(VideoSizeViewName);
+
+                Console.WriteLine(viewData);
+
+                Console.WriteLine("Done... wait for events to arrive to backend!");
+                Console.ReadLine();
+
+                metricExporter.Stop();
+                return null;
             }
-
-            Thread.Sleep(TimeSpan.FromMilliseconds(5100));
-
-            var viewData = Stats.ViewManager.GetView(VideoSizeViewName);
-
-            Console.WriteLine(viewData);
-
-            Console.WriteLine("Done... wait for events to arrive to backend!");
-            Console.ReadLine();
-
-            spanExporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
-            metricExporter.Stop();
-            return null;
         }
     }
 }

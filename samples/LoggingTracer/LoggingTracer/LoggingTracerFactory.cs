@@ -7,7 +7,7 @@ namespace LoggingTracer
     using System.Collections.Generic;
     using OpenTelemetry.Trace;
 
-    public class LoggingTracerFactory : ITracerFactory
+    public class LoggingTracerFactory : TracerFactoryBase
     {
         public override ITracer GetTracer(string name, string version = null)
         {

@@ -18,11 +18,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Collector.AspNetCore;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Sampler;
 using System.Net.Http;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using OpenTelemetry.Trace.Configuration;
 
 namespace TestApp.AspNetCore._2._0
 {
@@ -42,6 +43,7 @@ namespace TestApp.AspNetCore._2._0
             services.AddSingleton<HttpClient>();
 
             services.AddSingleton<ISampler>(Samplers.AlwaysSample);
+            services.TryAddSingleton<TracerConfiguration>();
             services.TryAddSingleton<AspNetCoreCollectorOptions>();
             services.AddSingleton<AspNetCoreCollector>();
             services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new CallbackMiddleware.CallbackMiddlewareImpl());

@@ -28,7 +28,9 @@ namespace OpenTelemetry.Collector
         private IDisposable allSourcesSubscription;
         private IDisposable listenerSubscription;
 
-        public DiagnosticSourceSubscriber(ListenerHandler handler, Func<string, object, object, bool> filter)
+        public DiagnosticSourceSubscriber(
+            ListenerHandler handler, 
+            Func<string, object, object, bool> filter)
         {
             this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
             this.filter = filter;

@@ -18,11 +18,9 @@ namespace Samples
 {
     using System;
     using System.Net.Http;
-    using System.Threading;
     using OpenTelemetry.Collector.Dependencies;
     using OpenTelemetry.Exporter.Zipkin;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Sampler;
 
     internal class TestHttpClient
@@ -31,17 +29,11 @@ namespace Samples
         {
             Console.WriteLine("Hello World!");
 
-            var exporter = new ZipkinTraceExporter(
-                new ZipkinTraceExporterOptions()
-                {
-                    Endpoint = new Uri("https://zipkin.azurewebsites.net/api/v2/spans"),
-                    ServiceName = typeof(Program).Assembly.GetName().Name,
-                });
-
-            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(exporter));
-            var tracer = tracerFactory.GetTracer(nameof(HttpClientCollector));
-            using (new HttpClientCollector(new HttpClientCollectorOptions(), tracer))
+            using (var tracerBuilder = new TracerFactory()
+                .UseZipkin(o => o.ServiceName = "http-client-test")
+                .AddDependencyCollector(new HttpClientCollectorOptions()))
             {
+                var tracer = tracerBuilder.GetTracer("http-client-test");
                 using (tracer.WithSpan(tracer.StartSpan("incoming request")))
                 {
                     using (var client = new HttpClient())
@@ -52,7 +44,6 @@ namespace Samples
 
                 Console.ReadLine();
 
-                exporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
                 return null;
             }
         }

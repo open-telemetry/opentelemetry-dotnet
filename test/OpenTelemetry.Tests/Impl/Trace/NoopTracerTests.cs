@@ -28,13 +28,13 @@ namespace OpenTelemetry.Tests.Impl.Trace
         [Fact]
         public void NoopTracer_CurrentSpan()
         {
-            Assert.Same(BlankSpan.Instance, NoopTracer.Instance.CurrentSpan);
+            Assert.Same(BlankSpan.Instance, ProxyTracer.Instance.CurrentSpan);
         }
 
         [Fact]
         public void NoopTracer_WithSpan()
         {
-            var noopScope = NoopTracer.Instance.WithSpan(BlankSpan.Instance);
+            var noopScope = ProxyTracer.Instance.WithSpan(BlankSpan.Instance);
             Assert.NotNull(noopScope);
             // does not throw
             noopScope.Dispose();
@@ -43,36 +43,38 @@ namespace OpenTelemetry.Tests.Impl.Trace
         [Fact]
         public void NoopTracer_CreateSpan_BadArgs()
         {
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartRootSpan(null));
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartRootSpan(null, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartRootSpan(null, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartRootSpan(null, SpanKind.Client, default, null));
+            var proxyTracer = new ProxyTracer();
+            
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null, SpanKind.Client, default, null));
 
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null));
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanKind.Client, default, null));
 
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, BlankSpan.Instance));
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, BlankSpan.Instance, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null));
 
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanContext.Blank));
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanContext.Blank, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanContext.Blank, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null));
 
             Assert.Throws<ArgumentNullException>(() =>
-                NoopTracer.Instance.StartSpanFromActivity(null, new Activity("foo").Start()));
+                proxyTracer.StartSpanFromActivity(null, new Activity("foo").Start()));
 
-            Assert.Throws<ArgumentNullException>(() => 
-                NoopTracer.Instance.StartSpanFromActivity("foo", null));
+            Assert.Throws<ArgumentNullException>(() =>
+                proxyTracer.StartSpanFromActivity("foo", null));
 
-            Assert.Throws<ArgumentException>(() => 
-                NoopTracer.Instance.StartSpanFromActivity("foo", new Activity("foo")));
+            Assert.Throws<ArgumentException>(() =>
+                proxyTracer.StartSpanFromActivity("foo", new Activity("foo")));
 
-            Assert.Throws<ArgumentException>(() => NoopTracer.Instance.StartSpanFromActivity(
+            Assert.Throws<ArgumentException>(() => proxyTracer.StartSpanFromActivity(
                     "foo", 
                     new Activity("foo").SetIdFormat(ActivityIdFormat.Hierarchical).Start()));
         }
@@ -80,39 +82,40 @@ namespace OpenTelemetry.Tests.Impl.Trace
         [Fact]
         public void NoopTracer_CreateSpan_ValidArgs()
         {
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartRootSpan("foo"));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartRootSpan("foo", SpanKind.Client));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartRootSpan("foo", SpanKind.Client, default));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartRootSpan("foo", SpanKind.Client, default, null));
+            var proxyTracer = new ProxyTracer();
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo"));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo", SpanKind.Client));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo", SpanKind.Client, default));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo", SpanKind.Client, default, null));
 
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo"));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanKind.Client));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanKind.Client, default));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanKind.Client, default, null));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo"));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanKind.Client));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanKind.Client, default));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanKind.Client, default, null));
 
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", BlankSpan.Instance));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", BlankSpan.Instance, SpanKind.Client));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, default));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, default, null));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, default));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, default, null));
 
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanContext.Blank));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanContext.Blank, SpanKind.Client));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanContext.Blank, SpanKind.Client, default));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanContext.Blank, SpanKind.Client, default, null));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client, default));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client, default, null));
 
             var validActivity = new Activity("foo").SetIdFormat(ActivityIdFormat.W3C).Start();
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpanFromActivity("foo", validActivity));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpanFromActivity("foo", validActivity, SpanKind.Consumer));
-            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpanFromActivity("foo", validActivity, SpanKind.Client, null));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Consumer));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Client, null));
         }
 
         [Fact]
         public void NoopTracer_Formats()
         {
-            Assert.NotNull(NoopTracer.Instance.TextFormat);
-            Assert.NotNull(NoopTracer.Instance.BinaryFormat);
-            Assert.IsAssignableFrom<ITextFormat>(NoopTracer.Instance.TextFormat);
-            Assert.IsAssignableFrom<IBinaryFormat>(NoopTracer.Instance.BinaryFormat);
+            Assert.NotNull(ProxyTracer.Instance.TextFormat);
+            Assert.NotNull(ProxyTracer.Instance.BinaryFormat);
+            Assert.IsAssignableFrom<ITextFormat>(ProxyTracer.Instance.TextFormat);
+            Assert.IsAssignableFrom<IBinaryFormat>(ProxyTracer.Instance.BinaryFormat);
         }
     }
 }

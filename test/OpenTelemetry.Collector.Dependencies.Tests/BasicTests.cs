@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace.Configuration;
+
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     using Moq;
@@ -49,7 +51,10 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorInjectsHeadersAsync()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracerFactory = new TracerFactory(spanProcessor.Object);
+
+            var tracer = new TracerFactory()
+                .SetProcessor(_ => spanProcessor.Object)
+                .GetTracer(null);
 
             var request = new HttpRequestMessage
             {
@@ -63,7 +68,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using (new DependenciesCollector(new HttpClientCollectorOptions(), tracerFactory))
+            using (new HttpClientCollector(new HttpClientCollectorOptions(), tracer))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);
@@ -90,7 +95,10 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracerFactory = new TracerFactory(spanProcessor.Object);
+
+            var tracer = new TracerFactory()
+                .SetProcessor(_ => spanProcessor.Object)
+                .GetTracer(null);
 
             var request = new HttpRequestMessage
             {
@@ -100,7 +108,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (new DependenciesCollector(new HttpClientCollectorOptions(), tracerFactory))
+            using (new HttpClientCollector(new HttpClientCollectorOptions(), tracer))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);
@@ -113,13 +121,16 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorFiltersOutRequests()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracerFactory = new TracerFactory(spanProcessor.Object);
+
+            var tracer = new TracerFactory()
+                .SetProcessor(_ => spanProcessor.Object)
+                .GetTracer(null);
 
             var options = new HttpClientCollectorOptions((activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
                                                                                         arg1 is HttpRequestMessage request &&
                                                                                         request.RequestUri.OriginalString.Contains(url)));
 
-            using (new DependenciesCollector(options, tracerFactory))
+            using (new HttpClientCollector(options, tracer))
             using (var c = new HttpClient())
             {
                 await c.GetAsync(url);
@@ -133,11 +144,14 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorFiltersOutRequestsToExporterEndpoints()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracerFactory = new TracerFactory(spanProcessor.Object);
+
+            var tracer = new TracerFactory()
+                .SetProcessor(_ => spanProcessor.Object)
+                .GetTracer(null);
 
             var options = new HttpClientCollectorOptions();
 
-            using (new DependenciesCollector(options, tracerFactory))
+            using (new HttpClientCollector(options, tracer))
             using (var c = new HttpClient())
             using (var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100)))
             {

@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace.Configuration;
+
 namespace OpenTelemetry.Trace.Test
 {
     using System;
@@ -81,7 +83,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentSpan_IgnoresCurrentParent()
         {
-            var tracer = new TracerFactory().GetTracer(null);
+            var tracer = TracerFactory.Create().GetTracer(null);
 
             tracer.WithSpan(tracer.StartRootSpan("outer"));
             {

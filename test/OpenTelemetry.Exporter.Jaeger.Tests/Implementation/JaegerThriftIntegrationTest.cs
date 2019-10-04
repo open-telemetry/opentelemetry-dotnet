@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+
+using OpenTelemetry.Trace.Configuration;
+
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
     using System;
@@ -29,6 +32,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
     public class JaegerThriftIntegrationTest
     {
+        private readonly ITracer tracer;
+
+        public JaegerThriftIntegrationTest()
+        {
+            tracer = new TracerFactory().GetTracer(null);
+        }
+
         [Fact]
         public async void JaegerThriftIntegrationTest_TAbstractBaseGeneratesConsistentThriftPayload()
         {

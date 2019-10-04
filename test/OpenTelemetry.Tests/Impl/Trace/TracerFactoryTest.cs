@@ -14,9 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-
 namespace OpenTelemetry.Trace.Test
 {
+    using OpenTelemetry.Trace.Configuration;
     using System.Linq;
     using Xunit;
 

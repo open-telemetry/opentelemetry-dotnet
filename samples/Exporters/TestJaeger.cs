@@ -21,7 +21,7 @@ namespace Samples
     using System.Threading;
     using OpenTelemetry.Exporter.Jaeger;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
+    using OpenTelemetry.Trace.Configuration;
 
     internal class TestJaeger
     {
@@ -30,7 +30,7 @@ namespace Samples
             // Configure exporter to export traces to Jaeger
             var jaegerOptions = new JaegerExporterOptions()
             {
-                ServiceName = "tracing-to-jaeger-service",
+                ServiceName = "jaeger-test",
                 AgentHost = host,
                 AgentPort = port,
             };
@@ -38,24 +38,25 @@ namespace Samples
             var exporter = new JaegerTraceExporter(
                 jaegerOptions);
 
-            // Create a tracer. You may also need to register it as a global instance to make auto-collectors work..
-            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(exporter));
-            var tracer = tracerFactory.GetTracer(string.Empty);
-
-            // Create a scoped span. It will end automatically when using statement ends
-            using (tracer.WithSpan(tracer.StartSpan("Main")))
+            // Create a tracer. 
+            using (var tracerFactory = new TracerFactory()
+                .SetExporter(exporter))
             {
-                tracer.CurrentSpan.SetAttribute("custom-attribute", 55);
-                Console.WriteLine("About to do a busy work");
-                for (int i = 0; i < 10; i++)
-                {
-                    DoWork(i, tracer);
-                }
-            }
+                var tracer = tracerFactory.GetTracer("jaeger-test");
 
-            // Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
-            exporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
-            return null;
+                // Create a scoped span. It will end automatically when using statement ends
+                using (tracer.WithSpan(tracer.StartSpan("Main")))
+                {
+                    tracer.CurrentSpan.SetAttribute("custom-attribute", 55);
+                    Console.WriteLine("About to do a busy work");
+                    for (int i = 0; i < 10; i++)
+                    {
+                        DoWork(i, tracer);
+                    }
+                }
+
+                return null;
+            }
         }
 
         private static void DoWork(int i, ITracer tracer)

@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Exporter.LightStep.Implementation;
+using OpenTelemetry.Trace.Configuration;
 
 namespace OpenTelemetry.Exporter.LightStep.Tests
 {
@@ -27,6 +28,13 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
 
     public class LightStepSpanConverterTest
     {
+        private readonly ITracer tracer;
+
+        public LightStepSpanConverterTest()
+        {
+            tracer = new TracerFactory().GetTracer(null);
+        }
+
         [Fact]
         public void AllPropertiesShouldTranslate()
         {
