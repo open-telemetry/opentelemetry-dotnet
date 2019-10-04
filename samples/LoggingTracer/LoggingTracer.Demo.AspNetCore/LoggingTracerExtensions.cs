@@ -15,19 +15,19 @@ namespace LoggingTracer.Demo.AspNetCore
     {
         internal static void AddLoggingTracer(this IServiceCollection services)
         {
-            services.AddSingleton<ITracerFactory, LoggingTracerFactory>();
+            services.AddSingleton<TracerFactory, LoggingTracerFactory>();
 
             services.AddSingleton(Samplers.AlwaysSample);
-            services.AddSingleton<RequestsCollectorOptions>();
-            services.AddSingleton<RequestsCollector>();
+            services.AddSingleton<AspNetCoreCollectorOptions>();
+            services.AddSingleton<AspNetCoreCollector>();
 
-            services.AddSingleton<DependenciesCollectorOptions>();
+            services.AddSingleton<HttpClientCollectorOptions>();
             services.AddSingleton<DependenciesCollector>();
         }
 
         internal static void UseLoggingTracer(this IApplicationBuilder app)
         {
-            app.ApplicationServices.GetService<RequestsCollector>(); // get it instantiated
+            app.ApplicationServices.GetService<AspNetCoreCollector>(); // get it instantiated
             app.ApplicationServices.GetService<DependenciesCollector>(); // get it instantiated
         }
     }

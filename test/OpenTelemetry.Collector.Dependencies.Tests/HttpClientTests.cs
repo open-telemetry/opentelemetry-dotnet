@@ -21,9 +21,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
     using Moq;
     using Newtonsoft.Json;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Sampler;
     using System;
     using System.Collections.Generic;
     using System.IO;
@@ -95,12 +93,12 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 out var port);
 
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracerFactory = new TracerFactory(spanProcessor.Object);
+            var tracerFactory = new TracerFactorySdk(spanProcessor.Object);
             tc.url = NormalizeValues(tc.url, host, port);
 
             using (serverLifeTime)
             {
-                using (var dc = new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory))
+                using (var dc = new HttpClientCollector(new HttpClientCollectorOptions(), tracerFactory.GetTracer(null)))
                 {
 
                     try

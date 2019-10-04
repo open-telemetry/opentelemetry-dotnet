@@ -1,4 +1,4 @@
-﻿// <copyright file="RequestsCollectorOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AspNetCoreCollectorOptions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,21 +21,21 @@ namespace OpenTelemetry.Collector.AspNetCore
     /// <summary>
     /// Options for requests collector.
     /// </summary>
-    public class RequestsCollectorOptions
+    public class AspNetCoreCollectorOptions
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="RequestsCollectorOptions"/> class.
+        /// Initializes a new instance of the <see cref="AspNetCoreCollectorOptions"/> class.
         /// </summary>
-        public RequestsCollectorOptions()
+        public AspNetCoreCollectorOptions()
         {
             this.EventFilter = DefaultFilter;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RequestsCollectorOptions"/> class.
+        /// Initializes a new instance of the <see cref="AspNetCoreCollectorOptions"/> class.
         /// </summary>
         /// <param name="eventFilter">Custom filtering predicate for DiagnosticSource events, if any.</param>
-        internal RequestsCollectorOptions(Func<string, object, object, bool> eventFilter = null)
+        internal AspNetCoreCollectorOptions(Func<string, object, object, bool> eventFilter = null)
         {
             // TODO This API is unusable and likely to change, let's not expose it for now.
 

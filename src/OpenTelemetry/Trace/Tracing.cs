@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
         {
             TracerConfiguration = new TracerConfiguration();
             SpanProcessor = new BatchingSpanProcessor(new NoopSpanExporter());
-            tracerFactory = new TracerFactory(SpanProcessor, TracerConfiguration);
+            tracerFactory = new TracerFactorySdk(SpanProcessor, TracerConfiguration);
         }
 
         /// <summary>   

@@ -56,7 +56,7 @@ namespace Samples
                 Stats.ViewManager);
             metricExporter.Start();
 
-            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(spanExporter));
+            var tracerFactory = new TracerFactorySdk(new BatchingSpanProcessor(spanExporter));
             var tracer = tracerFactory.GetTracer(string.Empty);
 
             var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));

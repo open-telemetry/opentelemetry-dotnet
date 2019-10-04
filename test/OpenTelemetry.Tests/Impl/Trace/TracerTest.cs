@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace.Test
         {
             spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
             tracerConfiguration = new TracerConfiguration();
-            tracer = new Tracer(spanProcessor, tracerConfiguration, Resource.Empty);
+            tracer = new Tracer(spanProcessor, tracerConfiguration);
         }
 
         [Fact]
@@ -52,16 +52,16 @@ namespace OpenTelemetry.Trace.Test
         public void BadConstructorArgumentsThrow()
         {
             var noopProc = new SimpleSpanProcessor(new NoopSpanExporter());
-            Assert.Throws<ArgumentNullException>(() => new Tracer(null, new TracerConfiguration(), Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(null, new TracerConfiguration()));
             Assert.Throws<ArgumentNullException>(() => new Tracer(null, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null));
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), null, new TraceContextFormat(), Resource.Empty));
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), new BinaryFormat(), null, Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), null));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration()));
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), null));
         }
 
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Trace.Test
         public void GetActiveConfig()
         {
             var config = new TracerConfiguration(Samplers.NeverSample);
-            var tracer = new Tracer(spanProcessor, config, Resource.Empty);
+            var tracer = new Tracer(spanProcessor, config);
             Assert.Equal(config, tracer.ActiveTracerConfiguration);
         }
 

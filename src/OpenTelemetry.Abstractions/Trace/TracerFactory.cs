@@ -1,4 +1,4 @@
-﻿// <copyright file="ITracerFactory.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerFactory.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,13 +16,10 @@
 
 namespace OpenTelemetry.Trace
 {
-    using OpenTelemetry.Context;
-    using OpenTelemetry.Context.Propagation;
-
     /// <summary>
     /// Creates Tracers for an instrumentation library.
     /// </summary>
-    public abstract class ITracerFactory
+    public abstract class TracerFactory
     {
         /// <summary>
         /// Returns an ITracer for a given name and version.

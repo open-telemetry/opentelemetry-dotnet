@@ -36,7 +36,7 @@ namespace Samples
                 });
 
             // Create a tracer. You may also need to register it as a global instance to make auto-collectors work..
-            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(exporter));
+            var tracerFactory = new TracerFactorySdk(new BatchingSpanProcessor(exporter));
             var tracer = tracerFactory.GetTracer(string.Empty);
 
             // Create a scoped span. It will end automatically when using statement ends

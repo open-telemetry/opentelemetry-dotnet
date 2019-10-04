@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DefaultTracerFactory()
         {
-            Assert.Equal(typeof(TracerFactory), Tracing.TracerFactory.GetType());
+            Assert.Equal(typeof(TracerFactorySdk), Tracing.TracerFactory.GetType());
         }
 
         [Fact]

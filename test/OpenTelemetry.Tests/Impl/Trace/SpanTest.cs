@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SpanHoldsSameLibraryResourceAsCreatingTracer()
         {
-            var tracerFactory = new TracerFactory();
+            var tracerFactory = new TracerFactorySdk();
             var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.0.0");
             var span = (Span)tracer.SpanBuilder("some span").StartSpan();
             Assert.Equal(tracer.LibraryResource, span.LibraryResource);

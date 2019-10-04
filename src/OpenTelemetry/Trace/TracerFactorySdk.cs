@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerFactory.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerFactorySdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Resources;
@@ -23,17 +24,16 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Trace.Export;
    
     /// <inheritdoc/>
-    public sealed class TracerFactory : ITracerFactory
+    public sealed class TracerFactorySdk : TracerFactory
     {
-        private readonly object lck = new object();
         private readonly SpanProcessor spanProcessor;
         private readonly TracerConfiguration tracerConfiguration;
         private readonly ITextFormat textFormat;
         private readonly IBinaryFormat binaryFormat;
         private readonly Tracer defaultTracer;
-        private readonly Dictionary<TracerRegistryKey, ITracer> tracerRegistry = new Dictionary<TracerRegistryKey, ITracer>();
+        private readonly ConcurrentDictionary<TracerRegistryKey, ITracer> tracerRegistry = new ConcurrentDictionary<TracerRegistryKey, ITracer>();
 
-        public TracerFactory(SpanProcessor spanProcessor = null, TracerConfiguration tracerConfiguration = null, ITextFormat textFormat = null, IBinaryFormat binaryFormat = null)
+        public TracerFactorySdk(SpanProcessor spanProcessor = null, TracerConfiguration tracerConfiguration = null, ITextFormat textFormat = null, IBinaryFormat binaryFormat = null)
         {
             this.spanProcessor = spanProcessor ?? Tracing.SpanProcessor;
             this.tracerConfiguration = tracerConfiguration ?? Tracing.TracerConfiguration;
@@ -50,21 +50,13 @@ namespace OpenTelemetry.Trace
                 return this.defaultTracer;
             }
             
-            lock (this.lck)
-            {
-                var key = new TracerRegistryKey(name, version);
-                if (!this.tracerRegistry.TryGetValue(key, out var tracer))
-                {
-                    var labels = CreateLibraryResourceLabels(name, version);
-                    tracer = new Tracer(this.spanProcessor, this.tracerConfiguration, this.binaryFormat, this.textFormat, new Resource(labels));
-                    this.tracerRegistry.Add(key, tracer);
-                }
-                
-                return tracer;
-            }
+            var key = new TracerRegistryKey(name, version);
+            return this.tracerRegistry.GetOrAdd(
+                key, 
+                k => new Tracer(this.spanProcessor, this.tracerConfiguration, this.binaryFormat, this.textFormat, key.CreateResource()));
         }
-
-        private static Dictionary<string, string> CreateLibraryResourceLabels(string name, string version)
+        
+        private static IEnumerable<KeyValuePair<string, string>> CreateLibraryResourceLabels(string name, string version)
         {
             var labels = new Dictionary<string, string> { { "name", name } };
             if (!string.IsNullOrEmpty(version))
@@ -85,6 +77,11 @@ namespace OpenTelemetry.Trace
                 this.name = name;
                 this.version = version;
             }
-        }  
+
+            internal Resource CreateResource()
+            {
+                return new Resource(CreateLibraryResourceLabels(this.name, this.version));
+            }
+        }
     }
 }

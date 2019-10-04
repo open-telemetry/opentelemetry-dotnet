@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerFactoryTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerFactorySdkTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +20,9 @@ namespace OpenTelemetry.Trace.Test
     using System.Linq;
     using Xunit;
 
-    public class TracerFactoryTest
+    public class TracerFactorySdkTest
     {
-        private readonly TracerFactory tracerFactory = new TracerFactory();
+        private readonly TracerFactory tracerFactory = new TracerFactorySdk();
         
         [Fact]
         public void GetTracer_NoName_NoVersion()

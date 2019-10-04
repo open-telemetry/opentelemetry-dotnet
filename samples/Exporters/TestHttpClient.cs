@@ -38,9 +38,9 @@ namespace Samples
                     ServiceName = typeof(Program).Assembly.GetName().Name,
                 });
 
-            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(exporter));
-            var tracer = tracerFactory.GetTracer(string.Empty);
-            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory))
+            var tracerFactory = new TracerFactorySdk(new BatchingSpanProcessor(exporter));
+            var tracer = tracerFactory.GetTracer(nameof(HttpClientCollector));
+            using (new HttpClientCollector(new HttpClientCollectorOptions(), tracer))
             {
                 using (tracer.WithSpan(tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartSpan()))
                 {
