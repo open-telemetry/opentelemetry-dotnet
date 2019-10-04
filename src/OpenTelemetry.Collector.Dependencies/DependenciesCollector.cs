@@ -18,68 +18,50 @@ namespace OpenTelemetry.Collector.Dependencies
 {
     using System;
     using System.Collections.Generic;
-    using System.Net.Http;
-    using System.Reflection;
     using OpenTelemetry.Collector.Dependencies.Implementation;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Utils;
 
     /// <summary>
     /// Dependencies collector.
     /// </summary>
     public class DependenciesCollector : IDisposable
     {
-        private readonly DiagnosticSourceSubscriber<HttpRequestMessage> diagnosticSourceSubscriber;
+        private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DependenciesCollector"/> class.
         /// </summary>
         /// <param name="options">Configuration options for dependencies collector.</param>
         /// <param name="tracerFactory">TracerFactory to create a Tracer to record traced with.</param>
-        /// <param name="sampler">Sampler to use to sample dependency calls.</param>
-        public DependenciesCollector(DependenciesCollectorOptions options, ITracerFactory tracerFactory, ISampler sampler)
+        public DependenciesCollector(DependenciesCollectorOptions options, ITracerFactory tracerFactory)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber<HttpRequestMessage>(
-                new Dictionary<string, Func<ITracerFactory, Func<HttpRequestMessage, ISampler>, ListenerHandler<HttpRequestMessage>>>()
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
+                new Dictionary<string, Func<ITracerFactory, ListenerHandler>>()
                 {
                     {
-                        "HttpHandlerDiagnosticListener", (tf, s) =>
+                        "HttpHandlerDiagnosticListener", (tf) =>
                         {
-                            var tracer = tracerFactory.GetTracer("OpenTelemetry.Collector.Dependencies.HttpHandlerDiagnosticListener");
-                            return new HttpHandlerDiagnosticListener(tracer, s);
+                            var tracer = tf.GetTracer("OpenTelemetry.Collector.Dependencies.HttpHandlerDiagnosticListener");
+                            return new HttpHandlerDiagnosticListener(tracer);
                         }
                     },
                     {
-                        "Azure.Clients", (tf, s) =>
+                        "Azure.Clients", (tf) =>
                         {
-                            var tracer = tracerFactory.GetTracer("OpenTelemetry.Collector.Dependencies.Azure.Clients");
-                            return new AzureSdkDiagnosticListener("Azure.Clients", tracer, sampler);
+                            var tracer = tf.GetTracer("OpenTelemetry.Collector.Dependencies.Azure.Clients");
+                            return new AzureSdkDiagnosticListener("Azure.Clients", tracer);
                         }
                     },
                     {
-                        "Azure.Pipeline", (tf, s) =>
+                        "Azure.Pipeline", (tf) =>
                         {
-                            var tracer = tracerFactory.GetTracer("OpenTelemetry.Collector.Dependencies.Azure.Pipeline");
-                            return new AzureSdkDiagnosticListener("Azure.Pipeline", tracer, sampler);
+                            var tracer = tf.GetTracer("OpenTelemetry.Collector.Dependencies.Azure.Pipeline");
+                            return new AzureSdkDiagnosticListener("Azure.Pipeline", tracer);
                         }
                     },
                 },
                 tracerFactory,
-                x =>
-                {
-                    ISampler s = null;
-                    try
-                    {
-                        s = options.CustomSampler(x);
-                    }
-                    catch (Exception e)
-                    {
-                        s = null;
-                        CollectorEventSource.Log.ExceptionInCustomSampler(e);
-                    }
-
-                    return s ?? sampler;
-                    });
+                options.EventFilter);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

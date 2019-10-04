@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Collector.AspNetCore;
 using OpenTelemetry.Collector.Dependencies;
 using OpenTelemetry.Trace;
@@ -45,9 +46,9 @@ namespace TestApp.AspNetCore._2._0
             services.AddSingleton<HttpClient>();
 
             services.AddSingleton<ISampler>(Samplers.AlwaysSample);
-            services.AddSingleton<RequestsCollectorOptions>(new RequestsCollectorOptions());
+            services.TryAddSingleton<RequestsCollectorOptions>(new RequestsCollectorOptions());
             services.AddSingleton<RequestsCollector>();
-            services.AddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
+            services.TryAddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
             services.AddSingleton<DependenciesCollector>();
             services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new CallbackMiddleware.CallbackMiddlewareImpl());
             services.AddSingleton<ZipkinTraceExporterOptions>(new ZipkinTraceExporterOptions { ServiceName = "tracing-to-zipkin-service" });

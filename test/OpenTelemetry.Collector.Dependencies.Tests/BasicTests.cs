@@ -19,11 +19,11 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
     using Moq;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Sampler;
     using System;
     using System.Diagnostics;
     using System.Linq;
     using System.Net.Http;
+    using System.Threading;
     using System.Threading.Tasks;
     using Xunit;
 
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
 
-            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory, Samplers.AlwaysSample))
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);
@@ -99,13 +99,59 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory, Samplers.AlwaysSample))
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);
             }
 
             Assert.Equal(0, spanProcessor.Invocations.Count); 
+        }
+
+        [Fact]
+        public async Task HttpDependenciesCollectorFiltersOutRequests()
+        {
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var tracerFactory = new TracerFactory(spanProcessor.Object);
+
+            var options = new DependenciesCollectorOptions((activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
+                                                                                        arg1 is HttpRequestMessage request &&
+                                                                                        request.RequestUri.OriginalString.Contains(url)));
+
+            using (new DependenciesCollector(options, tracerFactory))
+            using (var c = new HttpClient())
+            {
+                await c.GetAsync(url);
+            }
+
+            Assert.Equal(0, spanProcessor.Invocations.Count);
+        }
+
+
+        [Fact]
+        public async Task HttpDependenciesCollectorFiltersOutRequestsToExporterEndpoints()
+        {
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var tracerFactory = new TracerFactory(spanProcessor.Object);
+
+            var options = new DependenciesCollectorOptions();
+
+            using (new DependenciesCollector(options, tracerFactory))
+            using (var c = new HttpClient())
+            using (var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100)))
+            {
+                try
+                {
+                    await c.PostAsync("https://dc.services.visualstudio.com/", new StringContent(""), cts.Token);
+                    await c.PostAsync("https://localhost:9411/api/v2/spans", new StringContent(""), cts.Token);
+                }
+                catch
+                {
+                    // ignore all, whatever response is,  we don't want anything tracked
+                }
+            }
+
+            Assert.Equal(0, spanProcessor.Invocations.Count);
         }
 
         public void Dispose()

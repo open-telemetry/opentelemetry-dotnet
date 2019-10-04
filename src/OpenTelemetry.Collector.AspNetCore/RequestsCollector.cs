@@ -29,45 +29,30 @@ namespace OpenTelemetry.Collector.AspNetCore
     /// </summary>
     public class RequestsCollector : IDisposable
     {
-        private readonly DiagnosticSourceSubscriber<HttpRequest> diagnosticSourceSubscriber;
+        private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RequestsCollector"/> class.
         /// </summary>
         /// <param name="options">Configuration options for dependencies collector.</param>
         /// <param name="tracerFactory">TracerFactory which creates the Tracer to record traced with.</param>
-        /// <param name="sampler">Sampler to use to sample dependency calls.</param>
-        public RequestsCollector(RequestsCollectorOptions options, ITracerFactory tracerFactory, ISampler sampler)
+        public RequestsCollector(RequestsCollectorOptions options, ITracerFactory tracerFactory)
         {
             const string name = "Microsoft.AspNetCore";
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber<HttpRequest>(
-                new Dictionary<string, Func<ITracerFactory, Func<HttpRequest, ISampler>, ListenerHandler<HttpRequest>>>()
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
+                new Dictionary<string, Func<ITracerFactory, ListenerHandler>>()
                 {
                     {
-                        name, (t, s) =>
+                        name, (t) =>
                         {
                             var version = typeof(RequestDelegate).Assembly.GetName().Version;
                             var tracer = tracerFactory.GetTracer(typeof(RequestsCollector).Namespace, "semver:" + version.ToString());
-                            return new HttpInListener(name, tracer, s);
+                            return new HttpInListener(name, tracer);
                         }
                     },
                 },
                 tracerFactory,
-                x =>
-                {
-                    ISampler s = null;
-                    try
-                    {
-                        s = options.CustomSampler(x);
-                    }
-                    catch (Exception e)
-                    {
-                        s = null;
-                        CollectorEventSource.Log.ExceptionInCustomSampler(e);
-                    }
-
-                    return s ?? sampler;
-                });
+                options.EventFilter);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
