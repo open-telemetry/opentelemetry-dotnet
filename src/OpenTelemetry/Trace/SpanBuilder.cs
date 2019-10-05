@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
     public class SpanBuilder : ISpanBuilder
     {
         private readonly SpanProcessor spanProcessor;
-        private readonly TracerConfiguration tracerConfiguration;
+        private readonly TracerConfigurationOptions tracerConfigurationOptions;
         private readonly string name;
 
         private SpanKind kind;
@@ -45,11 +45,11 @@ namespace OpenTelemetry.Trace
         private DateTimeOffset startTimestamp;
         private Resource libraryResource;
 
-        internal SpanBuilder(string name, SpanProcessor spanProcessor, TracerConfiguration tracerConfiguration, Resource libraryResource)
+        internal SpanBuilder(string name, SpanProcessor spanProcessor, TracerConfigurationOptions tracerConfigurationOptions, Resource libraryResource)
         {
             this.name = name ?? throw new ArgumentNullException(nameof(name));
             this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
-            this.tracerConfiguration = tracerConfiguration ?? throw new ArgumentNullException(nameof(tracerConfiguration));
+            this.tracerConfigurationOptions = tracerConfigurationOptions ?? throw new ArgumentNullException(nameof(tracerConfigurationOptions));
             this.libraryResource = libraryResource ?? throw new ArgumentNullException(nameof(libraryResource));
         }
 
@@ -217,7 +217,7 @@ namespace OpenTelemetry.Trace
                 this.links,
                 activityForSpan.TraceId,
                 activityForSpan.SpanId,
-                this.tracerConfiguration);
+                this.tracerConfigurationOptions);
 
             if (sampledIn || this.recordEvents)
             {
@@ -251,7 +251,7 @@ namespace OpenTelemetry.Trace
                 activityForSpan,
                 childTracestate,
                 this.kind,
-                this.tracerConfiguration,
+                this.tracerConfigurationOptions,
                 this.spanProcessor,
                 this.startTimestamp,
                 ownsActivity: this.contextSource != ContextSource.Activity,
@@ -300,7 +300,7 @@ namespace OpenTelemetry.Trace
             List<Link> parentLinks,
             ActivityTraceId traceId,
             ActivitySpanId spanId,
-            TracerConfiguration tracerConfiguration)
+            TracerConfigurationOptions tracerConfigurationOptions)
         {
             // If users set a specific sampler in the SpanBuilder, use it.
             if (sampler != null)
@@ -312,7 +312,7 @@ namespace OpenTelemetry.Trace
             // parent).
             if (parent == null || !parent.IsValid)
             {
-                return tracerConfiguration
+                return tracerConfigurationOptions
                     .Sampler
                     .ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
             }

@@ -39,10 +39,10 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DefaultTraceConfig()
         {
-            Assert.IsType<AlwaysSampleSampler>(Tracing.TracerConfiguration.Sampler);
-            Assert.Equal(32, Tracing.TracerConfiguration.MaxNumberOfAttributes);
-            Assert.Equal(128, Tracing.TracerConfiguration.MaxNumberOfEvents);
-            Assert.Equal(32, Tracing.TracerConfiguration.MaxNumberOfLinks);
+            Assert.IsType<AlwaysSampleSampler>(Tracing.TracerConfigurationOptions.Sampler);
+            Assert.Equal(32, Tracing.TracerConfigurationOptions.MaxNumberOfAttributes);
+            Assert.Equal(128, Tracing.TracerConfigurationOptions.MaxNumberOfEvents);
+            Assert.Equal(32, Tracing.TracerConfigurationOptions.MaxNumberOfLinks);
         }
     }
 }

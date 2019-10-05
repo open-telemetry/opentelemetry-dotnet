@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace.Config.Test
         [Fact]
         public void DefaultTraceConfig()
         {
-            var config = new TracerConfiguration();
+            var config = new TracerConfigurationOptions();
             Assert.Equal(Samplers.AlwaysSample, config.Sampler);
             Assert.Equal(32, config.MaxNumberOfAttributes);
             Assert.Equal(128, config.MaxNumberOfEvents);
@@ -36,32 +36,32 @@ namespace OpenTelemetry.Trace.Config.Test
         [Fact]
         public void UpdateTraceParams_NullSampler()
         {
-            Assert.Throws<ArgumentNullException>(() => new TracerConfiguration(null));
+            Assert.Throws<ArgumentNullException>(() => new TracerConfigurationOptions(null));
         }
 
         [Fact]
         public void UpdateTraceParams_NonPositiveMaxNumberOfAttributes()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfiguration(Samplers.AlwaysSample, 0 ,1, 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfigurationOptions(Samplers.AlwaysSample, 0 ,1, 1));
         }
 
         [Fact]
         public void UpdateTraceParams_NonPositiveMaxNumberOfEvents()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfiguration(Samplers.AlwaysSample, 1, 0, 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfigurationOptions(Samplers.AlwaysSample, 1, 0, 1));
         }
 
 
         [Fact]
         public void updateTraceParams_NonPositiveMaxNumberOfLinks()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfiguration(Samplers.AlwaysSample, 1, 1, 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfigurationOptions(Samplers.AlwaysSample, 1, 1, 0));
         }
 
         [Fact]
         public void UpdateTraceParams_All()
         {
-            var traceParams = new TracerConfiguration(Samplers.NeverSample, 8, 9, 11);
+            var traceParams = new TracerConfigurationOptions(Samplers.NeverSample, 8, 9, 11);
 
             Assert.Equal(Samplers.NeverSample, traceParams.Sampler);
             Assert.Equal(8, traceParams.MaxNumberOfAttributes);

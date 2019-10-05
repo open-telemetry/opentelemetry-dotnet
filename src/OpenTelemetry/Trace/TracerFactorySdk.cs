@@ -27,19 +27,19 @@ namespace OpenTelemetry.Trace
     public sealed class TracerFactorySdk : TracerFactory
     {
         private readonly SpanProcessor spanProcessor;
-        private readonly TracerConfiguration tracerConfiguration;
+        private readonly TracerConfigurationOptions tracerConfigurationOptions;
         private readonly ITextFormat textFormat;
         private readonly IBinaryFormat binaryFormat;
         private readonly Tracer defaultTracer;
         private readonly ConcurrentDictionary<TracerRegistryKey, ITracer> tracerRegistry = new ConcurrentDictionary<TracerRegistryKey, ITracer>();
 
-        public TracerFactorySdk(SpanProcessor spanProcessor = null, TracerConfiguration tracerConfiguration = null, ITextFormat textFormat = null, IBinaryFormat binaryFormat = null)
+        public TracerFactorySdk(SpanProcessor spanProcessor = null, TracerConfigurationOptions tracerConfigurationOptions = null, ITextFormat textFormat = null, IBinaryFormat binaryFormat = null)
         {
             this.spanProcessor = spanProcessor ?? Tracing.SpanProcessor;
-            this.tracerConfiguration = tracerConfiguration ?? Tracing.TracerConfiguration;
+            this.tracerConfigurationOptions = tracerConfigurationOptions ?? Tracing.TracerConfigurationOptions;
             this.textFormat = textFormat ?? new TraceContextFormat();
             this.binaryFormat = binaryFormat ?? new BinaryFormat();
-            this.defaultTracer = new Tracer(this.spanProcessor, this.tracerConfiguration, this.binaryFormat, this.textFormat, Resource.Empty);
+            this.defaultTracer = new Tracer(this.spanProcessor, this.tracerConfigurationOptions, this.binaryFormat, this.textFormat, Resource.Empty);
         }
 
         /// <inheritdoc/>
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace
             var key = new TracerRegistryKey(name, version);
             return this.tracerRegistry.GetOrAdd(
                 key, 
-                k => new Tracer(this.spanProcessor, this.tracerConfiguration, this.binaryFormat, this.textFormat, key.CreateResource()));
+                k => new Tracer(this.spanProcessor, this.tracerConfigurationOptions, this.binaryFormat, this.textFormat, key.CreateResource()));
         }
         
         private static IEnumerable<KeyValuePair<string, string>> CreateLibraryResourceLabels(string name, string version)

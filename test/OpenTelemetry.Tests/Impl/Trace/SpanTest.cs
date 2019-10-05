@@ -77,7 +77,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     tracestate,
                     SpanKind.Internal,
-                    new TracerConfiguration(),
+                    new TracerConfigurationOptions(),
                     spanProcessor,
                     default,
                     false,
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     tracestate,
                     SpanKind.Internal,
-                    new TracerConfiguration(),
+                    new TracerConfigurationOptions(),
                     spanProcessor,
                     default,
                     false,
@@ -128,7 +128,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     null,
                     SpanKind.Internal,
-                    new TracerConfiguration(),
+                    new TracerConfigurationOptions(),
                     spanProcessor,
                     spanStartTime,
                     false,
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     null,
                     SpanKind.Internal,
-                    new TracerConfiguration(),
+                    new TracerConfigurationOptions(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
                     false,
@@ -200,7 +200,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     null,
                     SpanKind.Internal,
-                    new TracerConfiguration(),
+                    new TracerConfigurationOptions(),
                     spanProcessor,
                     spanStartTime,
                     false,
@@ -273,7 +273,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     null,
                     SpanKind.Internal,
-                    new TracerConfiguration(),
+                    new TracerConfigurationOptions(),
                     spanProcessor,
                     spanStartTime,
                     false,
@@ -338,7 +338,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     null,
                     SpanKind.Internal,
-                    new TracerConfiguration(),
+                    new TracerConfigurationOptions(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
                     false,
@@ -365,7 +365,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     null,
                     SpanKind.Internal,
-                    new TracerConfiguration(),
+                    new TracerConfigurationOptions(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
                     false,
@@ -389,7 +389,7 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var maxNumberOfAttributes = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 8 , 128, 32);
+            var traceConfig = new TracerConfigurationOptions(Samplers.AlwaysSample, 8 , 128, 32);
             var span = new Span(
                     activity,
                     null,
@@ -440,7 +440,7 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var maxNumberOfAttributes = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
+            var traceConfig = new TracerConfigurationOptions(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
             var span = new Span(
                     activity,
                     null,
@@ -508,7 +508,7 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var maxNumberOfEvents = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, maxNumberOfEvents, 32);
+            var traceConfig = new TracerConfigurationOptions(Samplers.AlwaysSample, 32, maxNumberOfEvents, 32);
             var span = new Span(
                     activity,
                     null,
@@ -551,7 +551,7 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var maxNumberOfLinks = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, 128, maxNumberOfLinks);
+            var traceConfig = new TracerConfigurationOptions(Samplers.AlwaysSample, 32, 128, maxNumberOfLinks);
             var span = new Span(
                     activity,
                     null,
@@ -593,7 +593,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     null,
                     SpanKind.Internal,
-                    new TracerConfiguration(),
+                    new TracerConfigurationOptions(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
                     false,
@@ -630,7 +630,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     null,
                     SpanKind.Internal,
-                    new TracerConfiguration(),
+                    new TracerConfigurationOptions(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
                     ownsActivity: true,
@@ -656,7 +656,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     null,
                     SpanKind.Internal,
-                    new TracerConfiguration(),
+                    new TracerConfigurationOptions(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
                     ownsActivity: false,
@@ -685,7 +685,7 @@ namespace OpenTelemetry.Trace.Test
                     activity,
                     null,
                     SpanKind.Internal,
-                    new TracerConfiguration(),
+                    new TracerConfigurationOptions(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
                     ownsActivity: ownsActivity,

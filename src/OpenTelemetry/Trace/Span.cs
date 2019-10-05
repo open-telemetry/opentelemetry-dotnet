@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Span : ISpan
     {
-        private readonly TracerConfiguration tracerConfiguration;
+        private readonly TracerConfigurationOptions tracerConfigurationOptions;
         private readonly SpanProcessor spanProcessor;
         private readonly Lazy<SpanContext> spanContext;
         private readonly DateTimeOffset startTimestamp;
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace
                 Activity activity,
                 IEnumerable<KeyValuePair<string, string>> tracestate,
                 SpanKind spanKind,
-                TracerConfiguration tracerConfiguration,
+                TracerConfigurationOptions tracerConfigurationOptions,
                 SpanProcessor spanProcessor,
                 DateTimeOffset startTimestamp,
                 bool ownsActivity,
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace
                 this.Activity.ActivityTraceFlags, 
                 tracestate));
             this.Name = this.Activity.OperationName;
-            this.tracerConfiguration = tracerConfiguration;
+            this.tracerConfigurationOptions = tracerConfigurationOptions;
             this.spanProcessor = spanProcessor;
             this.Kind = spanKind;
             this.OwnsActivity = ownsActivity;
@@ -185,7 +185,7 @@ namespace OpenTelemetry.Trace
 
                 if (this.attributes == null)
                 {
-                    this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
+                    this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfigurationOptions.MaxNumberOfAttributes);
                 }
 
                 this.attributes.AddEvent(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
@@ -216,7 +216,7 @@ namespace OpenTelemetry.Trace
                 if (this.events == null)
                 {
                     this.events =
-                        new EvictingQueue<Event>(this.tracerConfiguration.MaxNumberOfEvents);
+                        new EvictingQueue<Event>(this.tracerConfigurationOptions.MaxNumberOfEvents);
                 }
 
                 this.events.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow()));
@@ -252,7 +252,7 @@ namespace OpenTelemetry.Trace
                 if (this.events == null)
                 {
                     this.events =
-                        new EvictingQueue<Event>(this.tracerConfiguration.MaxNumberOfEvents);
+                        new EvictingQueue<Event>(this.tracerConfigurationOptions.MaxNumberOfEvents);
                 }
 
                 this.events.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow(), eventAttributes));
@@ -283,7 +283,7 @@ namespace OpenTelemetry.Trace
                 if (this.events == null)
                 {
                     this.events =
-                        new EvictingQueue<Event>(this.tracerConfiguration.MaxNumberOfEvents);
+                        new EvictingQueue<Event>(this.tracerConfigurationOptions.MaxNumberOfEvents);
                 }
 
                 this.events.AddEvent(addEvent);
@@ -313,7 +313,7 @@ namespace OpenTelemetry.Trace
 
                 if (this.links == null)
                 {
-                    this.links = new EvictingQueue<Link>(this.tracerConfiguration.MaxNumberOfLinks);
+                    this.links = new EvictingQueue<Link>(this.tracerConfigurationOptions.MaxNumberOfLinks);
                 }
 
                 this.links.AddEvent(link);

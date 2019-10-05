@@ -28,9 +28,9 @@ namespace OpenTelemetry.Trace
 
         static Tracing()
         {
-            TracerConfiguration = new TracerConfiguration();
+            TracerConfigurationOptions = new TracerConfigurationOptions();
             SpanProcessor = new BatchingSpanProcessor(new NoopSpanExporter());
-            tracerFactory = new TracerFactorySdk(SpanProcessor, TracerConfiguration);
+            tracerFactory = new TracerFactorySdk(SpanProcessor, TracerConfigurationOptions);
         }
 
         /// <summary>   
@@ -46,6 +46,6 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the trace config.
         /// </summary>
-        public static TracerConfiguration TracerConfiguration { get; }
+        public static TracerConfigurationOptions TracerConfigurationOptions { get; }
     }
 }
