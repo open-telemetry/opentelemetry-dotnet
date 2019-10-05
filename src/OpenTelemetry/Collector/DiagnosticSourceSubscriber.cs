@@ -54,7 +54,7 @@ namespace OpenTelemetry.Collector
             {
                 if (this.handlers.ContainsKey(value.Name))
                 {
-                    this.subscriptions.GetOrAdd(value.Name, name =>
+                    this.subscriptions?.GetOrAdd(value.Name, name =>
                     {
                         var dl = new DiagnosticSourceListener<TInput>(this.handlers[value.Name](this.tracerFactory, this.sampler));
                         dl.Subscription = value.Subscribe(dl);
