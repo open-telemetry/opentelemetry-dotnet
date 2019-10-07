@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace.Test
     using System;
     using System.Diagnostics;
     using Moq;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using Xunit;
 
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Trace.Test
                 activity,
                 null,
                 SpanKind.Internal,
-                TraceConfig.Default,
+                new TracerConfiguration(),
                 spanProcessor,
                 default,
                 true,
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Trace.Test
                 activity,
                 null,
                 SpanKind.Internal,
-                TraceConfig.Default,
+                new TracerConfiguration(),
                 spanProcessor,
                 default,
                 false,
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Trace.Test
                 parentActivity,
                 null,
                 SpanKind.Internal,
-                TraceConfig.Default,
+                new TracerConfiguration(),
                 spanProcessor,
                 default,
                 true,
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Trace.Test
                 childActivity,
                 null,
                 SpanKind.Internal,
-                TraceConfig.Default,
+                new TracerConfiguration(),
                 spanProcessor,
                 default,
                 true,
@@ -183,7 +183,7 @@ namespace OpenTelemetry.Trace.Test
                 parentActivity,
                 null,
                 SpanKind.Internal,
-                TraceConfig.Default,
+                new TracerConfiguration(),
                 spanProcessor,
                 default,
                 true,
@@ -196,7 +196,7 @@ namespace OpenTelemetry.Trace.Test
                 childActivity,
                 null,
                 SpanKind.Internal,
-                TraceConfig.Default,
+                new TracerConfiguration(),
                 spanProcessor,
                 default,
                 true,
@@ -223,7 +223,7 @@ namespace OpenTelemetry.Trace.Test
                 activity,
                 null,
                 SpanKind.Internal,
-                TraceConfig.Default,
+                new TracerConfiguration(),
                 spanProcessor,
                 default,
                 true,
@@ -248,7 +248,7 @@ namespace OpenTelemetry.Trace.Test
                 activity,
                 null,
                 SpanKind.Internal,
-                TraceConfig.Default,
+                new TracerConfiguration(),
                 spanProcessor,
                 default,
                 true,
@@ -283,7 +283,7 @@ namespace OpenTelemetry.Trace.Test
                 activity,
                 null,
                 SpanKind.Internal,
-                TraceConfig.Default,
+                new TracerConfiguration(),
                 spanProcessor,
                 default,
                 true,

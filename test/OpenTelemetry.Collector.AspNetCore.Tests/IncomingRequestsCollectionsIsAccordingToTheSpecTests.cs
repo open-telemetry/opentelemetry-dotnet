@@ -24,7 +24,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
     using System.Threading.Tasks;
     using Microsoft.Extensions.DependencyInjection;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using Moq;
     using Microsoft.AspNetCore.TestHost;

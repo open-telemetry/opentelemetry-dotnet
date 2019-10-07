@@ -25,7 +25,7 @@ using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Sampler;
 using System.Net.Http;
 using OpenTelemetry.Exporter.Zipkin;
-using OpenTelemetry.Trace.Config;
+using OpenTelemetry.Trace.Configuration;
 
 namespace TestApp.AspNetCore._2._0
 {
@@ -53,7 +53,7 @@ namespace TestApp.AspNetCore._2._0
             services.AddSingleton<ZipkinTraceExporterOptions>(new ZipkinTraceExporterOptions { ServiceName = "tracing-to-zipkin-service" });
             services.AddSingleton<SpanExporter, ZipkinTraceExporter>();
             services.AddSingleton<SpanProcessor, BatchingSpanProcessor>();
-            services.AddSingleton<TraceConfig>();
+            services.AddSingleton<TracerConfiguration>();
             services.AddSingleton<ITracer, Tracer>();
         }
 

@@ -1,4 +1,4 @@
-﻿// <copyright file="TraceConfig.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerConfiguration.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Config
+namespace OpenTelemetry.Trace.Configuration
 {
     using System;
     using OpenTelemetry.Trace.Sampler;
@@ -22,24 +22,23 @@ namespace OpenTelemetry.Trace.Config
     /// <summary>
     /// Trace configuration that can be updates in runtime.
     /// </summary>
-    public sealed class TraceConfig
+    public sealed class TracerConfiguration
     {
-        /// <summary>
-        /// Default trace parameters.
-        /// </summary>
-        public static readonly TraceConfig Default =
-            new TraceConfig(Samplers.AlwaysSample, DefaultSpanMaxNumAttributes, DefaultSpanMaxNumEvents, DefaultSpanMaxNumLinks);
-
         private const int DefaultSpanMaxNumAttributes = 32;
         private const int DefaultSpanMaxNumEvents = 128;
         private const int DefaultSpanMaxNumLinks = 32;
 
-        public TraceConfig(ISampler sampler)
+        public TracerConfiguration()
+            : this(Samplers.AlwaysSample, DefaultSpanMaxNumAttributes, DefaultSpanMaxNumEvents, DefaultSpanMaxNumLinks)
+        {
+        }
+
+        public TracerConfiguration(ISampler sampler)
             : this(sampler, DefaultSpanMaxNumAttributes, DefaultSpanMaxNumEvents, DefaultSpanMaxNumLinks)
         {
         }
 
-        public TraceConfig(ISampler sampler, int maxNumberOfAttributes, int maxNumberOfEvents, int maxNumberOfLinks)
+        public TracerConfiguration(ISampler sampler, int maxNumberOfAttributes, int maxNumberOfEvents, int maxNumberOfLinks)
         {
             if (maxNumberOfAttributes <= 0)
             {

@@ -14,18 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-using System.Linq;
-using OpenTelemetry.Resources;
-
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     using Moq;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
     using System;
     using System.Diagnostics;
+    using System.Linq;
     using System.Net.Http;
     using System.Threading.Tasks;
     using Xunit;

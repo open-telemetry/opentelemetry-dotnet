@@ -19,7 +19,7 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Resources;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
    
     /// <inheritdoc/>
@@ -27,19 +27,19 @@ namespace OpenTelemetry.Trace
     {
         private readonly object lck = new object();
         private readonly SpanProcessor spanProcessor;
-        private readonly TraceConfig traceConfig;
+        private readonly TracerConfiguration tracerConfiguration;
         private readonly ITextFormat textFormat;
         private readonly IBinaryFormat binaryFormat;
         private readonly Tracer defaultTracer;
         private readonly Dictionary<TracerRegistryKey, ITracer> tracerRegistry = new Dictionary<TracerRegistryKey, ITracer>();
 
-        public TracerFactory(SpanProcessor spanProcessor = null, TraceConfig traceConfig = null, ITextFormat textFormat = null, IBinaryFormat binaryFormat = null)
+        public TracerFactory(SpanProcessor spanProcessor = null, TracerConfiguration tracerConfiguration = null, ITextFormat textFormat = null, IBinaryFormat binaryFormat = null)
         {
             this.spanProcessor = spanProcessor ?? Tracing.SpanProcessor;
-            this.traceConfig = traceConfig ?? Tracing.TraceConfig;
+            this.tracerConfiguration = tracerConfiguration ?? Tracing.TracerConfiguration;
             this.textFormat = textFormat ?? new TraceContextFormat();
             this.binaryFormat = binaryFormat ?? new BinaryFormat();
-            this.defaultTracer = new Tracer(this.spanProcessor, this.traceConfig, this.binaryFormat, this.textFormat, Resource.Empty);
+            this.defaultTracer = new Tracer(this.spanProcessor, this.tracerConfiguration, this.binaryFormat, this.textFormat, Resource.Empty);
         }
 
         /// <inheritdoc/>
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Trace
                 if (!this.tracerRegistry.TryGetValue(key, out var tracer))
                 {
                     var labels = CreateLibraryResourceLabels(name, version);
-                    tracer = new Tracer(this.spanProcessor, this.traceConfig, this.binaryFormat, this.textFormat, new Resource(labels));
+                    tracer = new Tracer(this.spanProcessor, this.tracerConfiguration, this.binaryFormat, this.textFormat, new Resource(labels));
                     this.tracerRegistry.Add(key, tracer);
                 }
                 
