@@ -24,7 +24,7 @@ namespace OpenTelemetry.Collector.Dependencies
     {
         private readonly List<IDisposable> collectors = new List<IDisposable>();
 
-        public DependenciesCollector(HttpClientCollectorOptions options, TracerFactory tracerFactory)
+        public DependenciesCollector(HttpClientCollectorOptions options, TracerFactoryBase tracerFactory)
         {
             var assemblyVersion = typeof(DependenciesCollector).Assembly.GetName().Version;
             var httpClientListener = new HttpClientCollector(options, tracerFactory.GetTracer(nameof(HttpClientCollector), "semver:" + assemblyVersion));

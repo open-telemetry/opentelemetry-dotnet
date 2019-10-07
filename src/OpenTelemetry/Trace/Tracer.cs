@@ -18,13 +18,13 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Diagnostics;
+
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
 
-    /// <inheritdoc/>
     internal sealed class Tracer : ITracer
     {
         private readonly SpanProcessor spanProcessor;

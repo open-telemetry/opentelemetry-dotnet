@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// No-op span builder.
     /// </summary>
-    public class NoopSpanBuilder : ISpanBuilder
+    internal class NoopSpanBuilder : ISpanBuilder
     {
         internal NoopSpanBuilder(string name)
         {
