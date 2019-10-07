@@ -51,9 +51,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorInjectsHeadersAsync()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-
-            var tracer = new TracerFactory()
-                .SetProcessor(_ => spanProcessor.Object)
+            var tracer = TracerFactory.Create(b => b.SetProcessor(_ => spanProcessor.Object))
                 .GetTracer(null);
 
             var request = new HttpRequestMessage
@@ -95,9 +93,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-
-            var tracer = new TracerFactory()
-                .SetProcessor(_ => spanProcessor.Object)
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor.Object))
                 .GetTracer(null);
 
             var request = new HttpRequestMessage
@@ -122,8 +119,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
 
-            var tracer = new TracerFactory()
-                .SetProcessor(_ => spanProcessor.Object)
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor.Object))
                 .GetTracer(null);
 
             var options = new HttpClientCollectorOptions((activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
@@ -145,8 +142,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
 
-            var tracer = new TracerFactory()
-                .SetProcessor(_ => spanProcessor.Object)
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor.Object))
                 .GetTracer(null);
 
             var options = new HttpClientCollectorOptions();

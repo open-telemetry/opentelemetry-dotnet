@@ -21,7 +21,6 @@ namespace Samples
     using OpenTelemetry.Collector.Dependencies;
     using OpenTelemetry.Exporter.Zipkin;
     using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Sampler;
 
     internal class TestHttpClient
     {
@@ -29,11 +28,12 @@ namespace Samples
         {
             Console.WriteLine("Hello World!");
 
-            using (var tracerBuilder = new TracerFactory()
+            using (var tracerFactory = TracerFactory.Create(builder => builder
                 .UseZipkin(o => o.ServiceName = "http-client-test")
-                .AddDependencyCollector(new HttpClientCollectorOptions()))
+                .AddDependencyCollector()))
             {
-                var tracer = tracerBuilder.GetTracer("http-client-test");
+                var tracer = tracerFactory.GetTracer("http-client-test");
+
                 using (tracer.WithSpan(tracer.StartSpan("incoming request")))
                 {
                     using (var client = new HttpClient())

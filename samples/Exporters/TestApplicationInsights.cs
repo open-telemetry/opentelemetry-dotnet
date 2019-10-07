@@ -51,15 +51,15 @@ namespace Samples
 
         internal static object Run()
         {
-            var config = new TelemetryConfiguration { InstrumentationKey = "instrumentation-key" };
-            var metricExporter = new ApplicationInsightsMetricExporter(Stats.ViewManager, config);
+            var metricExporter = new ApplicationInsightsMetricExporter(Stats.ViewManager, new TelemetryConfiguration("instrumentation-key"));
             metricExporter.Start();
 
             var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
 
-            using (var tracerBuilder = new TracerFactory().UseApplicationInsights(config))
+            using (var tracerFactory = TracerFactory.Create(builder => builder
+                .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key")))
             {
-                var tracer = tracerBuilder.GetTracer("application-insights-test");
+                var tracer = tracerFactory.GetTracer("application-insights-test");
 
                 var span = tracer.StartSpan("incoming request");
                 Stats.ViewManager.RegisterView(VideoSizeView);

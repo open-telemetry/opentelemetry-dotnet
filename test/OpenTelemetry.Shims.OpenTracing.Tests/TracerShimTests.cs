@@ -33,9 +33,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
         public TracerShimTests()
         {
-            tracer = new TracerFactory()
-                .SetProcessor(e => new SimpleSpanProcessor(e))
-                .GetTracer(null);
+            tracer = TracerFactory.Create(b => b.SetProcessor(e => new SimpleSpanProcessor(e))).GetTracer(null);
         }
 
         [Fact]

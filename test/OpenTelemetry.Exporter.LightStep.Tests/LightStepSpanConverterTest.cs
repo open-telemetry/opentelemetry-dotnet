@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
 
         public LightStepSpanConverterTest()
         {
-            tracer = new TracerFactory().GetTracer(null);
+            tracer = TracerFactory.Create(b => { }).GetTracer(null);
         }
 
         [Fact]

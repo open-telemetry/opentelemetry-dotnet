@@ -28,8 +28,8 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(typeof(TracerFactoryBase), TracerFactoryBase.Default.GetType());
             Assert.Equal(typeof(ProxyTracer), TracerFactoryBase.Default.GetTracer(null).GetType());
 
-            var newFactory = new TracerFactory();
-            newFactory.InitDefaultFactory();
+            var newFactory = TracerFactory.Create(_ => { });
+            TracerFactoryBase.Default = newFactory;
             Assert.IsAssignableFrom<TracerFactory>(TracerFactoryBase.Default);
         }
 

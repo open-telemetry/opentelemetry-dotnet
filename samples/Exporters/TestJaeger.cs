@@ -35,12 +35,8 @@ namespace Samples
                 AgentPort = port,
             };
 
-            var exporter = new JaegerTraceExporter(
-                jaegerOptions);
-
             // Create a tracer. 
-            using (var tracerFactory = new TracerFactory()
-                .SetExporter(exporter))
+            using (var tracerFactory = TracerFactory.Create(builder => builder.SetExporter(new JaegerTraceExporter(jaegerOptions))))
             {
                 var tracer = tracerFactory.GetTracer("jaeger-test");
 

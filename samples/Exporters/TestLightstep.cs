@@ -23,10 +23,9 @@ namespace Samples
                 });
 
             // Create a tracer. 
-            using (var tracerBuilder = new TracerFactory()
-                .SetExporter(exporter))
+            using (var tracerFactory = TracerFactory.Create(builder => builder.SetExporter(exporter)))
             {
-                var tracer = tracerBuilder.GetTracer("lightstep-test");
+                var tracer = tracerFactory.GetTracer("lightstep-test");
                 using (tracer.WithSpan(tracer.StartSpan("Main")))
                 {
                     tracer.CurrentSpan.SetAttribute("custom-attribute", 55);

@@ -33,7 +33,7 @@ namespace Samples
             var connection = ConnectionMultiplexer.Connect("localhost:6379");
 
             // Configure exporter to export traces to Zipkin
-            using (var tracerBuilder = new TracerFactory()
+            using (var tracerFactory = TracerFactory.Create(builder => builder
                 .UseZipkin(o =>
                 {
                     o.ServiceName = "redis-test";
@@ -44,9 +44,9 @@ namespace Samples
                     var collector = new StackExchangeRedisCallsCollector(t);
                     connection.RegisterProfiler(collector.GetProfilerSessionsFactory());
                     return collector;
-                }))
+                })))
             {
-                var tracer = tracerBuilder.GetTracer("redis-test");
+                var tracer = tracerFactory.GetTracer("redis-test");
 
                 // select a database (by default, DB = 0)
                 var db = connection.GetDatabase();

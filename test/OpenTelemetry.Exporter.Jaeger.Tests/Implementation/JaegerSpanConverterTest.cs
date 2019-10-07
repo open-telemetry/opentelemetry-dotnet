@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
         public JaegerSpanConverterTest()
         {
-            tracer = new TracerFactory().GetTracer(null);
+            tracer = TracerFactory.Create(b => { }).GetTracer(null);
         }
 
         [Fact]
