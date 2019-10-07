@@ -16,14 +16,17 @@
 
 namespace OpenTelemetry.Exporter.ApplicationInsights
 {
+    using System;
     using Microsoft.ApplicationInsights.Extensibility;
     using OpenTelemetry.Trace.Configuration;
 
     public static class TracerBuilderExtensions
     {
-        public static TracerFactory UseApplicationInsights(this TracerFactory factory, TelemetryConfiguration configuration)
+        public static TracerBuilder UseApplicationInsights(this TracerBuilder builder, Action<TelemetryConfiguration> configure)
         {
-            return factory.SetExporter(new ApplicationInsightsTraceExporter(configuration));
+            var configuration = new TelemetryConfiguration();
+            configure(configuration);
+            return builder.SetExporter(new ApplicationInsightsTraceExporter(configuration));
         }
     }
 }

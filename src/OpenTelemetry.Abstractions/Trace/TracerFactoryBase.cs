@@ -16,6 +16,8 @@
 
 namespace OpenTelemetry.Trace
 {
+    using System;
+
     /// <summary>
     /// Creates Tracers for an instrumentation library.
     /// </summary>
@@ -24,7 +26,21 @@ namespace OpenTelemetry.Trace
         private static bool isInitialized;
         private readonly ProxyTracer proxy = new ProxyTracer();
 
-        public static TracerFactoryBase Default { get; private set; } = new TracerFactoryBase();
+        private static TracerFactoryBase defaultFactory = new TracerFactoryBase();
+        public static TracerFactoryBase Default
+        {
+            get => defaultFactory;
+            set
+            {
+                if (isInitialized)
+                {
+                    throw new InvalidOperationException("Default factory is already set");
+                }
+
+                defaultFactory = value;
+                isInitialized = true;
+            }
+        } 
 
         /// <summary>
         /// Returns an ITracer for a given name and version.
@@ -34,25 +50,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Tracer for the given name and version information.</returns>
         public virtual ITracer GetTracer(string name, string version = null)
         {
-            return isInitialized ? Default.GetTracer(name, version) : this.proxy;
-        }
-
-        protected void Init(TracerFactoryBase factoryImplementation)
-        {
-            // if already init - throw
-            if (!isInitialized)
-            {
-                // some libraries might have already used and cached ProxyTracer.
-                // let's update it to real one and forward all calls.
-
-                // resource assignment is not possible for libraries that cache tracer before SDK is initialized.
-                // SDK (Tracer) must be at least partially initialized before any collection starts to capture resources.
-                // we might be able to work this around with events.
-                this.proxy.UpdateTracer(factoryImplementation.GetTracer(null));
-
-                Default = factoryImplementation;
-                isInitialized = true;
-            }
+            return isInitialized ? defaultFactory.GetTracer(name, version) : this.proxy;
         }
     }
 }

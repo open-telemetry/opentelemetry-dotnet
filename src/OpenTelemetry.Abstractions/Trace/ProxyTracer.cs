@@ -25,11 +25,6 @@ namespace OpenTelemetry.Trace
     /// </summary>
     internal sealed class ProxyTracer : ITracer
     {
-        /// <summary>
-        /// Instance of the noop tracer.
-        /// </summary>
-        public static readonly ProxyTracer Instance = new ProxyTracer();
-
         private static readonly IDisposable NoopScope = new NoopDisposable();
         private readonly IBinaryFormat binaryFormat = new BinaryFormat();
         private readonly ITextFormat textFormat = new TraceContextFormat();
