@@ -45,7 +45,7 @@ namespace OpenTelemetry.Collector.AspNetCore
         /// <summary>
         /// Gets a hook to exclude calls based on domain or other per-request criterion.
         /// </summary>
-        public Func<string, object, object, bool> EventFilter { get; }
+        internal Func<string, object, object, bool> EventFilter { get; }
 
         private static bool DefaultFilter(string activityName, object arg1, object unused)
         {
