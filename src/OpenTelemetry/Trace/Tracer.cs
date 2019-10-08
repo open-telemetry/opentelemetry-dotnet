@@ -38,17 +38,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Creates an instance of <see cref="ITracer"/>.
-        /// </summary>
-        /// <param name="spanProcessor">Span processor.</param>
-        /// <param name="tracerConfiguration">Trace configuration.</param>
-        /// <param name="libraryResource">Resource describing the instrumentation library.</param>
-        public Tracer(SpanProcessor spanProcessor, TracerConfiguration tracerConfiguration, Resource libraryResource) 
-            : this(spanProcessor, tracerConfiguration, new BinaryFormat(), new TraceContextFormat(), libraryResource)
-        {
-        }
-
-        /// <summary>
         /// Creates an instance of <see cref="Tracer"/>.
         /// </summary>
         /// <param name="spanProcessor">Span processor.</param>

@@ -16,6 +16,7 @@
 
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Sampler;
 
 namespace OpenTelemetry.Collector.AspNetCore.Tests
 {
@@ -53,8 +54,11 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                services.AddSingleton<SpanProcessor>(spanProcessor.Object);
-                services.AddSingleton<ITracer, Tracer>();
+                services.AddSingleton<TracerFactory>(_ =>
+                    TracerFactory.Create(b => b
+                        .SetSampler(Samplers.AlwaysSample)
+                        .SetProcessor(e => spanProcessor.Object)
+                        .AddRequestCollector()));
             }
             
             // Arrange
@@ -72,7 +76,6 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
 
                 WaitForProcessorInvocations(spanProcessor, 2);
             }
-
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
             var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
@@ -100,8 +103,12 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
-                        services.AddSingleton<ITracer>(_ => 
-                            new Tracer(spanProcessor.Object, new TracerConfiguration(), new BinaryFormat(), tf.Object, Resource.Empty));
+                        services.AddSingleton<TracerFactory>(_ =>
+                            TracerFactory.Create(b => b
+                                .SetSampler(Samplers.AlwaysSample)
+                                .SetTextFormat(tf.Object)
+                                .SetProcessor(e => spanProcessor.Object)
+                                .AddRequestCollector()));
                     }))
                 .CreateClient())
             {
@@ -145,9 +152,11 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                services.AddSingleton<SpanProcessor>(spanProcessor.Object);
-                services.AddSingleton<AspNetCoreCollectorOptions>(new AspNetCoreCollectorOptions(Filter));
-                services.AddSingleton<ITracer, Tracer>();
+                services.AddSingleton<TracerFactory>(_ =>
+                    TracerFactory.Create(b => b
+                        .SetSampler(Samplers.AlwaysSample)
+                        .SetProcessor(e => spanProcessor.Object)
+                        .AddRequestCollector(o => o.EventFilter = Filter)));
             }
 
             // Arrange

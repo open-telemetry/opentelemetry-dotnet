@@ -16,6 +16,7 @@
 
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Sampler;
 
 namespace OpenTelemetry.Collector.AspNetCore.Tests
 {
@@ -64,8 +65,11 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl());
-                        services.AddSingleton<SpanProcessor>(spanProcessor.Object);
-                        services.AddSingleton<ITracer, Tracer>();
+                        services.AddSingleton<TracerFactory>(_ =>
+                            TracerFactory.Create(b => b
+                                .SetSampler(Samplers.AlwaysSample)
+                                .SetProcessor(e => spanProcessor.Object)
+                                .AddRequestCollector()));
                     }))
                 .CreateClient())
             {

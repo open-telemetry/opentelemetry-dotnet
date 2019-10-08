@@ -39,7 +39,10 @@ namespace OpenTelemetry.Trace.Test
         private readonly ITracer tracer;
         public SpanBuilderTest()
         {
-            tracer = new Tracer(spanProcessor, alwaysSampleTracerConfiguration, Resource.Empty);
+            tracer = TracerFactory.Create(b => b
+                .SetProcessor(_ => spanProcessor)
+                .SetTracerOptions(alwaysSampleTracerConfiguration))
+                .GetTracer(null);
         }
 
         [Fact]

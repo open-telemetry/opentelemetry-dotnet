@@ -32,7 +32,9 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         public async void ProfilerSessionUsesTheSameDefault()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracer = new Tracer(spanProcessor.Object, new TracerConfiguration(), Resource.Empty);
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor.Object))
+                .GetTracer(null);
 
             using (var collector = new StackExchangeRedisCallsCollector(tracer))
             {

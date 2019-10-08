@@ -22,10 +22,15 @@ namespace OpenTelemetry.Collector.AspNetCore
 
     public static class TracerBuilderExtensions
     {
+        public static TracerBuilder AddRequestCollector(this TracerBuilder builder)
+        {
+            return builder.AddRequestCollector(null);
+        }
+
         public static TracerBuilder AddRequestCollector(this TracerBuilder builder, Action<AspNetCoreCollectorOptions> configure)
         {
             var options = new AspNetCoreCollectorOptions();
-            configure(options);
+            configure?.Invoke(options);
 
             builder.AddCollector(t => new AspNetCoreCollector(options, t));
             return builder;

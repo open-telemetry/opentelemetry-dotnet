@@ -23,19 +23,15 @@ namespace OpenTelemetry.Trace.Configuration
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
 
-    public class TracerBuilder : IDisposable
-    {
-        private TracerConfiguration tracerConfigurationOptions;
-        private ISampler sampler = Samplers.AlwaysSample;
-        private Func<SpanExporter, SpanProcessor> processorFactory;
-        private SpanExporter spanExporter;
-        private SpanProcessor spanProcessor;
-        private IBinaryFormat binaryFormat = new BinaryFormat();
-        private ITextFormat textFormat = new TraceContextFormat();
-        private bool isBuilt;
+    public class TracerBuilder
+    { internal TracerConfiguration TracerConfigurationOptions { get; private set; }
+        internal ISampler Sampler { get; private set; }
+        internal Func<SpanExporter, SpanProcessor> ProcessorFactory { get; private set; }
+        internal SpanExporter SpanExporter;
+        internal IBinaryFormat BinaryFormat { get; private set; }
+        internal ITextFormat TextFormat { get; private set; }
 
-        private List<Func<ITracer, object>> collectorFactories;
-        private readonly List<IDisposable> disposables = new List<IDisposable>();
+        internal List<CollectorFactory> CollectorFactories { get; private set; }
 
         internal TracerBuilder()
         {
@@ -43,34 +39,19 @@ namespace OpenTelemetry.Trace.Configuration
 
         public TracerBuilder SetSampler(ISampler sampler)
         {
-            if (this.isBuilt)
-            {
-                throw new InvalidOperationException(nameof(TracerBuilder) + "is already built");
-            }
-
-            this.sampler = sampler;
+            this.Sampler = sampler;
             return this;
         }
 
         public TracerBuilder SetExporter(SpanExporter spanExporter)
         {
-            if (this.isBuilt)
-            {
-                throw new InvalidOperationException(nameof(TracerBuilder) + "is already built");
-            }
-
-            this.spanExporter = spanExporter;
+            this.SpanExporter = spanExporter;
             return this;
         }
 
         public TracerBuilder SetProcessor(Func<SpanExporter, SpanProcessor> processorFactory)
         {
-            if (this.isBuilt)
-            {
-                throw new InvalidOperationException(nameof(TracerBuilder) + "is already built");
-            }
-
-            this.processorFactory = processorFactory;
+            this.ProcessorFactory = processorFactory;
             return this;
         }
 
@@ -78,107 +59,135 @@ namespace OpenTelemetry.Trace.Configuration
             Func<ITracer, TCollector> collectorFactory)
             where TCollector : class
         {
-            if (this.isBuilt)
+            if (this.CollectorFactories == null)
             {
-                throw new InvalidOperationException(nameof(TracerBuilder) + "is already built");
+                this.CollectorFactories = new List<CollectorFactory>();
             }
 
-            if (this.collectorFactories == null)
-            {
-                this.collectorFactories = new List<Func<ITracer, object>>();
-            }
-
-            this.collectorFactories.Add(collectorFactory);
+            this.CollectorFactories.Add(new CollectorFactory(typeof(TCollector).Name, null /*TODO*/, collectorFactory));
 
             return this;
         }
 
         public TracerBuilder SetTracerOptions(TracerConfiguration options)
         {
-            if (this.isBuilt)
-            {
-                throw new InvalidOperationException(nameof(TracerBuilder) + "is already built");
-            }
-
-            this.tracerConfigurationOptions = options;
+            this.TracerConfigurationOptions = options;
             return this;
         }
 
         public TracerBuilder SetTextFormat(ITextFormat textFormat)
         {
-            if (this.isBuilt)
-            {
-                throw new InvalidOperationException(nameof(TracerBuilder) + "is already built");
-            }
-
-            this.textFormat = textFormat;
+            this.TextFormat = textFormat;
             return this;
         }
 
         public TracerBuilder SetBinaryFormat(IBinaryFormat binaryFormat)
         {
-            if (this.isBuilt)
-            {
-                throw new InvalidOperationException(nameof(TracerBuilder) + "is already built");
-            }
-
-            this.binaryFormat = binaryFormat;
+            this.BinaryFormat = binaryFormat;
             return this;
         }
 
-        internal ITracer Build(Resource resource)
+        internal readonly struct CollectorFactory
         {
-            ITracer tracer;
-            if (!this.isBuilt)
+            public readonly string Name;
+            public readonly string Version;
+            public readonly Func<ITracer, object> Factory;
+
+            internal CollectorFactory(string name, string version, Func<ITracer, object> factory)
             {
-                if (this.tracerConfigurationOptions == null)
+                this.Name = name;
+                this.Version = version;
+                this.Factory = factory;
+            }
+        }
+    }
+
+    public class TracerFactory : TracerFactoryBase, IDisposable
+    {
+        private readonly object lck = new object();
+        private readonly Dictionary<TracerRegistryKey, ITracer> tracerRegistry = new Dictionary<TracerRegistryKey, ITracer>();
+        private readonly List<IDisposable> disposables = new List<IDisposable>();
+
+        private ITracer defaultTracer;
+        private readonly ISampler sampler;
+        private readonly TracerConfiguration configurationOptions;
+        private readonly SpanExporter exporter;
+        private readonly SpanProcessor spanProcessor;
+        private readonly IBinaryFormat binaryFormat;
+        private readonly ITextFormat textFormat;
+
+        private TracerFactory(TracerBuilder builder)
+        {
+            this.sampler = builder.Sampler ?? Samplers.AlwaysSample;
+
+            // TODO separate sampler from options
+            this.configurationOptions =
+                builder.TracerConfigurationOptions ?? new TracerConfiguration(this.sampler);
+
+            // TODO log warning (or throw?) if there is no exporter
+            this.exporter = builder.SpanExporter ?? new NoopSpanExporter();
+
+            this.spanProcessor = builder.ProcessorFactory != null ? 
+                builder.ProcessorFactory(this.exporter) :
+                new BatchingSpanProcessor(this.exporter);
+
+            this.binaryFormat = builder.BinaryFormat ?? new BinaryFormat();
+            this.textFormat = builder.TextFormat ?? new TraceContextFormat();
+
+            this.defaultTracer = new Tracer(
+                this.spanProcessor,
+                this.configurationOptions,
+                this.binaryFormat,
+                this.textFormat,
+                Resource.Empty);
+        }
+
+        public static TracerFactory Create(Action<TracerBuilder> configure)
+        {
+            var builder = new TracerBuilder();
+            configure(builder);
+            var factory = new TracerFactory(builder);
+
+            if (builder.CollectorFactories != null)
+            {
+                foreach (var collector in builder.CollectorFactories)
                 {
-                    // TODO separate sampler from options
-                    this.tracerConfigurationOptions = new TracerConfiguration(this.sampler);
-                }
+                    var tracer = factory.GetTracer(collector.Name, collector.Version);
 
-                if (this.spanExporter == null)
-                {
-                    // TODO log warning
-                    this.spanExporter = new NoopSpanExporter();
-                }
-
-                this.spanProcessor = this.processorFactory != null
-                    ? this.processorFactory(this.spanExporter)
-                    : new BatchingSpanProcessor(this.spanExporter);
-
-                tracer = new Tracer(
-                    this.spanProcessor,
-                    this.tracerConfigurationOptions,
-                    this.binaryFormat,
-                    this.textFormat,
-                    resource);
-
-                if (this.collectorFactories != null)
-                {
-                    foreach (var collector in this.collectorFactories)
+                    var collectorInstance = collector.Factory(tracer);
+                    if (collectorInstance is IDisposable disposableCollector)
                     {
-                        var collectorInstance = collector.Invoke(tracer);
-                        if (collectorInstance is IDisposable disposableCollector)
-                        {
-                            this.disposables.Add(disposableCollector);
-                        }
+                        factory.disposables.Add(disposableCollector);
                     }
                 }
-
-                this.isBuilt = true;
             }
-            else
+
+            return factory;
+        }
+
+        public override ITracer GetTracer(string name, string version = null)
+        {
+            if (string.IsNullOrEmpty(name))
             {
-                tracer = new Tracer(
-                    this.spanProcessor,
-                    this.tracerConfigurationOptions,
-                    this.binaryFormat,
-                    this.textFormat,
-                    resource);
+                return this.defaultTracer;
             }
 
-            return tracer;
+            lock (this.lck)
+            {
+                var key = new TracerRegistryKey(name, version);
+                if (!this.tracerRegistry.TryGetValue(key, out var tracer))
+                {
+                    tracer = this.defaultTracer = new Tracer(
+                        this.spanProcessor,
+                        this.configurationOptions,
+                        this.binaryFormat,
+                        this.textFormat,
+                        new Resource(CreateLibraryResourceLabels(name, version)));
+                    this.tracerRegistry.Add(key, tracer);
+                }
+
+                return tracer;
+            }
         }
 
         public void Dispose()
@@ -192,51 +201,6 @@ namespace OpenTelemetry.Trace.Configuration
             {
                 disposable.Dispose();
             }
-        }
-    }
-
-    public class TracerFactory : TracerFactoryBase, IDisposable
-    {
-        private readonly object lck = new object();
-        private readonly Dictionary<TracerRegistryKey, ITracer> tracerRegistry = new Dictionary<TracerRegistryKey, ITracer>();
-        private ITracer defaultTracer;
-        private readonly TracerBuilder builder;
-
-        private TracerFactory(TracerBuilder builder)
-        {
-            this.builder = builder;
-        }
-
-        public static TracerFactory Create(Action<TracerBuilder> builder)
-        {
-            var builderInstance = new TracerBuilder();
-            builder.Invoke(builderInstance);
-            return new TracerFactory(builderInstance);
-        }
-
-        public override ITracer GetTracer(string name, string version = null)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                return this.defaultTracer ?? (this.defaultTracer = this.builder.Build(Resource.Empty));
-            }
-
-            lock (this.lck)
-            {
-                var key = new TracerRegistryKey(name, version);
-                if (!this.tracerRegistry.TryGetValue(key, out var tracer))
-                {
-                    tracer = this.builder.Build(new Resource(CreateLibraryResourceLabels(name, version)));
-                    this.tracerRegistry.Add(key, tracer);
-                }
-
-                return tracer;
-            }
-        }
-
-        public void Dispose()
-        {
-            this.builder.Dispose();
         }
 
         private static IEnumerable<KeyValuePair<string, string>> CreateLibraryResourceLabels(string name, string version)

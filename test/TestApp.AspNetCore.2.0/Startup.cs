@@ -41,16 +41,16 @@ namespace TestApp.AspNetCore._2._0
         {
             services.AddMvc();
             services.AddSingleton<HttpClient>();
-
-            services.AddSingleton<ISampler>(Samplers.AlwaysSample);
-            services.TryAddSingleton<TracerConfiguration>();
-            services.TryAddSingleton<AspNetCoreCollectorOptions>();
-            services.AddSingleton<AspNetCoreCollector>();
             services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new CallbackMiddleware.CallbackMiddlewareImpl());
+            services.AddSingleton<ITracer>(p =>
+            {
+                var factory = p.GetService<TracerFactory>();
+                return factory.GetTracer("null");
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, AspNetCoreCollector requestCollector)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ITracer tracer)
         {
             if (env.IsDevelopment())
             {
