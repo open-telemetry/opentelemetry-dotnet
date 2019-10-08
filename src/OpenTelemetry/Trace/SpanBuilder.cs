@@ -19,8 +19,10 @@ namespace OpenTelemetry.Trace
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
     using OpenTelemetry.Context.Propagation;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Resources;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
 
@@ -28,7 +30,7 @@ namespace OpenTelemetry.Trace
     public class SpanBuilder : ISpanBuilder
     {
         private readonly SpanProcessor spanProcessor;
-        private readonly TraceConfig traceConfig;
+        private readonly TracerConfiguration tracerConfiguration;
         private readonly string name;
 
         private SpanKind kind;
@@ -41,12 +43,14 @@ namespace OpenTelemetry.Trace
         private List<Link> links;
         private bool recordEvents;
         private DateTimeOffset startTimestamp;
+        private Resource libraryResource;
 
-        internal SpanBuilder(string name, SpanProcessor spanProcessor, TraceConfig traceConfig)
+        internal SpanBuilder(string name, SpanProcessor spanProcessor, TracerConfiguration tracerConfiguration, Resource libraryResource)
         {
             this.name = name ?? throw new ArgumentNullException(nameof(name));
             this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
-            this.traceConfig = traceConfig ?? throw new ArgumentNullException(nameof(traceConfig));
+            this.tracerConfiguration = tracerConfiguration ?? throw new ArgumentNullException(nameof(tracerConfiguration));
+            this.libraryResource = libraryResource ?? throw new ArgumentNullException(nameof(libraryResource));
         }
 
         private enum ContextSource
@@ -213,7 +217,7 @@ namespace OpenTelemetry.Trace
                 this.links,
                 activityForSpan.TraceId,
                 activityForSpan.SpanId,
-                this.traceConfig);
+                this.tracerConfiguration);
 
             if (sampledIn || this.recordEvents)
             {
@@ -224,22 +228,22 @@ namespace OpenTelemetry.Trace
                 activityForSpan.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
             }
 
-            var childTracestate = Tracestate.Empty;
+            var childTracestate = Enumerable.Empty<KeyValuePair<string, string>>();
 
             if (this.parentSpanContext != null && this.parentSpanContext.IsValid)
             {
                 if (this.parentSpanContext.Tracestate != null &&
-                    this.parentSpanContext.Tracestate != Tracestate.Empty)
+                    this.parentSpanContext.Tracestate.Any())
                 {
                     childTracestate = this.parentSpanContext.Tracestate;
                 }
             }
             else if (activityForSpan.TraceStateString != null)
             {
-                var tracestateBuilder = Tracestate.Builder;
-                if (TracestateUtils.TryExtractTracestate(activityForSpan.TraceStateString, tracestateBuilder))
+                var tracestate = new List<KeyValuePair<string, string>>();
+                if (TracestateUtils.AppendTracestate(activityForSpan.TraceStateString, tracestate))
                 {
-                    childTracestate = tracestateBuilder.Build();
+                    childTracestate = tracestate;
                 }
             }
 
@@ -247,10 +251,11 @@ namespace OpenTelemetry.Trace
                 activityForSpan,
                 childTracestate,
                 this.kind,
-                this.traceConfig,
+                this.tracerConfiguration,
                 this.spanProcessor,
                 this.startTimestamp,
-                ownsActivity: this.contextSource != ContextSource.Activity);
+                ownsActivity: this.contextSource != ContextSource.Activity,
+                this.libraryResource);
 
             if (activityForSpan.OperationName != this.name)
             {
@@ -295,7 +300,7 @@ namespace OpenTelemetry.Trace
             List<Link> parentLinks,
             ActivityTraceId traceId,
             ActivitySpanId spanId,
-            TraceConfig traceConfig)
+            TracerConfiguration tracerConfiguration)
         {
             // If users set a specific sampler in the SpanBuilder, use it.
             if (sampler != null)
@@ -307,7 +312,7 @@ namespace OpenTelemetry.Trace
             // parent).
             if (parent == null || !parent.IsValid)
             {
-                return traceConfig
+                return tracerConfiguration
                     .Sampler
                     .ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
             }
@@ -320,11 +325,12 @@ namespace OpenTelemetry.Trace
         {
             if (activity.TraceId != default && activity.ParentSpanId != default)
             {
-                var tracestate = Tracestate.Empty;
-                var tracestateBuilder = Tracestate.Builder;
-                if (TracestateUtils.TryExtractTracestate(activity.TraceStateString, tracestateBuilder))
+                List<KeyValuePair<string, string>> tracestate = null;
+
+                if (!string.IsNullOrEmpty(activity.TraceStateString))
                 {
-                    tracestate = tracestateBuilder.Build();
+                    tracestate = new List<KeyValuePair<string, string>>();
+                    TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate);
                 }
 
                 return new SpanContext(
@@ -403,10 +409,10 @@ namespace OpenTelemetry.Trace
                         spanActivity.SetParentId(this.parentSpanContext.TraceId,
                             this.parentSpanContext.SpanId,
                             this.parentSpanContext.TraceOptions);
+                        spanActivity.TraceStateString = TracestateUtils.GetString(this.parentSpanContext.Tracestate);
                     }
 
                     spanActivity.SetIdFormat(ActivityIdFormat.W3C);
-                    spanActivity.TraceStateString = this.parentSpanContext.Tracestate.ToString();
                     spanActivity.Start();
 
                     break;
@@ -420,10 +426,11 @@ namespace OpenTelemetry.Trace
                         spanActivity.SetParentId(this.parentSpan.Context.TraceId,
                             this.parentSpan.Context.SpanId,
                             this.parentSpan.Context.TraceOptions);
+
+                        spanActivity.TraceStateString = TracestateUtils.GetString(this.parentSpan.Context.Tracestate);
                     }
 
                     spanActivity.SetIdFormat(ActivityIdFormat.W3C);
-                    spanActivity.TraceStateString = this.parentSpan.Context.Tracestate.ToString();
                     spanActivity.Start();
 
                     this.parentSpanContext = this.parentSpan.Context;

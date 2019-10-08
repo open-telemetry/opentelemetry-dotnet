@@ -15,13 +15,15 @@
 // </copyright>
 
 
+using OpenTelemetry.Resources;
+
 namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 {
     using System;
     using Moq;
     using OpenTelemetry.Collector.StackExchangeRedis.Tests;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using StackExchange.Redis.Profiling;
     using Xunit;
@@ -32,7 +34,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 
         public RedisProfilerEntryToSpanConverterTests()
         {
-            tracer = new Tracer(new SimpleSpanProcessor(new NoopSpanExporter()), TraceConfig.Default);
+            tracer = new Tracer(new SimpleSpanProcessor(new NoopSpanExporter()), new TracerConfiguration(), Resource.Empty);
         }
 
         [Fact]

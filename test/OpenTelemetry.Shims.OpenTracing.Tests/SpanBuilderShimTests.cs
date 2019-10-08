@@ -54,6 +54,20 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         }
 
         [Fact]
+        public void StartWithExplicitTimestamp()
+        {
+            var spanBuilderMock = GetDefaultSpanBuilderMock();
+            var shim = new SpanBuilderShim(GetDefaultTracer(spanBuilderMock), "foo");
+
+            var startTimestamp = DateTimeOffset.UtcNow;
+            shim.WithStartTimestamp(startTimestamp);
+
+            shim.Start();
+            spanBuilderMock.Verify(x => x.SetStartTimestamp(startTimestamp), Times.Once);
+            spanBuilderMock.Verify(x => x.StartSpan(), Times.Once);
+        }
+
+        [Fact]
         public void AsChildOf_WithNullSpan()
         {
             var spanBuilderMock = GetDefaultSpanBuilderMock();

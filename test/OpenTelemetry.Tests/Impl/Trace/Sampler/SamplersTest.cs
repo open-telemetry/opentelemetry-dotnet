@@ -40,8 +40,8 @@ namespace OpenTelemetry.Trace.Sampler.Test
             traceId = ActivityTraceId.CreateRandom();
             parentSpanId = ActivitySpanId.CreateRandom();
             spanId = ActivitySpanId.CreateRandom();
-            sampledSpanContext = new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded, Tracestate.Empty);
-            notSampledSpanContext = new SpanContext(traceId, parentSpanId, ActivityTraceFlags.None, Tracestate.Empty);
+            sampledSpanContext = new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded);
+            notSampledSpanContext = new SpanContext(traceId, parentSpanId, ActivityTraceFlags.None);
             sampledLink = new Link(sampledSpanContext);
         }
 

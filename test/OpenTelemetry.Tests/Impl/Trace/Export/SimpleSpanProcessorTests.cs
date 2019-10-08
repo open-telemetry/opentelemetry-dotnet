@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Resources;
+
 namespace OpenTelemetry.Trace.Export.Test
 {
     using System;
@@ -21,7 +23,7 @@ namespace OpenTelemetry.Trace.Export.Test
     using System.Threading;
     using System.Threading.Tasks;
     using OpenTelemetry.Testing.Export;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Utils;
     using Xunit;
 
@@ -48,12 +50,13 @@ namespace OpenTelemetry.Trace.Export.Test
             var span =
                 new Span(
                     sampledActivity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
-                    TraceConfig.Default,
+                    new TracerConfiguration(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    default);
+                    default,
+                    Resource.Empty);
             span.End();
             return span;
         }
@@ -66,12 +69,13 @@ namespace OpenTelemetry.Trace.Export.Test
             var span =
                 new Span(
                     notSampledActivity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
-                    TraceConfig.Default,
+                    new TracerConfiguration(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    false);
+                    false,
+                    Resource.Empty);
             span.End();
             return span;
         }
@@ -95,12 +99,13 @@ namespace OpenTelemetry.Trace.Export.Test
             var span =
                 new Span(
                     sampledActivity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
-                    TraceConfig.Default,
+                    new TracerConfiguration(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    default);
+                    default,
+                    Resource.Empty);
 
             // does not throw
             span.End();
@@ -120,12 +125,13 @@ namespace OpenTelemetry.Trace.Export.Test
             var span =
                 new Span(
                     sampledActivity,
-                    Tracestate.Empty,
+                    null,
                     SpanKind.Internal,
-                    TraceConfig.Default,
+                    new TracerConfiguration(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
-                    default);
+                    default,
+                    Resource.Empty);
 
             // does not block
             var sw = Stopwatch.StartNew();

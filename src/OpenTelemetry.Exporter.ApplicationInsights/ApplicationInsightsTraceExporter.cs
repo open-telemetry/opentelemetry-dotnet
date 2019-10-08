@@ -76,7 +76,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                     out var traceId,
                     out var spanId,
                     out var parentId,
-                    out var tracestate,
                     out var success,
                     out var duration);
 
@@ -274,7 +273,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                 // TODO: this concatenation is required for Application Insights backward compatibility reasons
                 result.Id = string.Concat("|", traceId, ".", spanId, ".");
 
-                foreach (var ts in tracestate.Entries)
+                foreach (var ts in span.Context.Tracestate)
                 {
                     result.Properties[ts.Key] = ts.Value;
                 }
@@ -330,7 +329,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             }
         }
 
-        private void ExtractGenericProperties(Span span,  out string name, out string resultCode, out string statusDescription, out string traceId, out string spanId, out string parentId, out Tracestate tracestate, out bool? success, out TimeSpan duration)
+        private void ExtractGenericProperties(Span span,  out string name, out string resultCode, out string statusDescription, out string traceId, out string spanId, out string parentId, out bool? success, out TimeSpan duration)
         {
             name = span.Name;
 
@@ -356,7 +355,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                 }
             }
 
-            tracestate = span.Context.Tracestate;
             duration = span.EndTimestamp - span.StartTimestamp;
         }
 

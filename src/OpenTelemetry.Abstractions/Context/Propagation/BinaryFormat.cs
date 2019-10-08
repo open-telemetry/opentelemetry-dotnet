@@ -17,7 +17,9 @@
 namespace OpenTelemetry.Context.Propagation
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
     using OpenTelemetry.Trace;
 
     public class BinaryFormat : IBinaryFormat
@@ -78,7 +80,7 @@ namespace OpenTelemetry.Context.Propagation
                     traceOptions = (ActivityTraceFlags)traceparentBytes[pos + IdSize];
                 }
 
-                return new SpanContext(traceId, spanId, traceOptions, Tracestate.Empty);
+                return new SpanContext(traceId, spanId, traceOptions);
             }
             catch (Exception e)
             {

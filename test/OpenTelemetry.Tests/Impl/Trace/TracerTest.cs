@@ -15,11 +15,12 @@
 // </copyright>
 
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace.Test
 {
     using System;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
 
@@ -29,15 +30,15 @@ namespace OpenTelemetry.Trace.Test
     {
         private const string SpanName = "MySpanName";
         private readonly SpanProcessor spanProcessor;
-        private readonly TraceConfig traceConfig;
+        private readonly TracerConfiguration tracerConfiguration;
         private readonly Tracer tracer;
 
 
         public TracerTest()
         {
             spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
-            traceConfig = TraceConfig.Default;
-            tracer = new Tracer(spanProcessor, traceConfig);
+            tracerConfiguration = new TracerConfiguration();
+            tracer = new Tracer(spanProcessor, tracerConfiguration, Resource.Empty);
         }
 
         [Fact]
@@ -51,15 +52,17 @@ namespace OpenTelemetry.Trace.Test
         public void BadConstructorArgumentsThrow()
         {
             var noopProc = new SimpleSpanProcessor(new NoopSpanExporter());
-            Assert.Throws<ArgumentNullException>(() => new Tracer(null, TraceConfig.Default));
-            Assert.Throws<ArgumentNullException>(() => new Tracer(null, TraceConfig.Default, new BinaryFormat(), new TraceContextFormat()));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(null, new TracerConfiguration(), Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(null, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null));
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, new BinaryFormat(), new TraceContextFormat()));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, TraceConfig.Default, null, new TraceContextFormat()));
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, TraceConfig.Default, new BinaryFormat(), null));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), null, new TraceContextFormat(), Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), new BinaryFormat(), null, Resource.Empty));
 
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), null));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), null));
         }
 
         [Fact]
@@ -106,17 +109,17 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetActiveConfig()
         {
-            var config = new TraceConfig(Samplers.NeverSample);
-            var tracer = new Tracer(spanProcessor, config);
-            Assert.Equal(config, tracer.ActiveTraceConfig);
+            var config = new TracerConfiguration(Samplers.NeverSample);
+            var tracer = new Tracer(spanProcessor, config, Resource.Empty);
+            Assert.Equal(config, tracer.ActiveTracerConfiguration);
         }
 
         [Fact]
         public void SetActiveConfig()
         {
-            var config = new TraceConfig(Samplers.NeverSample);
-            tracer.ActiveTraceConfig = config;
-            Assert.Equal(config, tracer.ActiveTraceConfig);
+            var config = new TracerConfiguration(Samplers.NeverSample);
+            tracer.ActiveTracerConfiguration = config;
+            Assert.Equal(config, tracer.ActiveTracerConfiguration);
         }
 
         // TODO test for sampler

@@ -16,39 +16,36 @@
 
 namespace OpenTelemetry.Trace
 {
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
 
     /// <summary>
     /// Class that manages a global instance of the <see cref="Tracer"/>.
     /// </summary>
-    public sealed class Tracing
+    public static class Tracing
     {
-        private static Tracing tracingValue = new Tracing();
-        private static Tracer tracer;
+        private static TracerFactory tracerFactory;
 
-        internal Tracing()
+        static Tracing()
         {
-            TraceConfig = TraceConfig.Default;
-
+            TracerConfiguration = new TracerConfiguration();
             SpanProcessor = new BatchingSpanProcessor(new NoopSpanExporter());
-
-            tracer = new Tracer(SpanProcessor, TraceConfig);
+            tracerFactory = new TracerFactory(SpanProcessor, TracerConfiguration);
         }
 
         /// <summary>   
         /// Gets the tracer to record spans.
         /// </summary>
-        public static ITracer Tracer => (ITracer)tracer;
-
+        public static TracerFactory TracerFactory => tracerFactory;
+        
         /// <summary>
         /// Gets the exporter to use to upload spans.
         /// </summary>
-        public static SpanProcessor SpanProcessor { get; private set; }
+        public static SpanProcessor SpanProcessor { get; }
 
         /// <summary>
         /// Gets the trace config.
         /// </summary>
-        public static TraceConfig TraceConfig { get; private set; }
+        public static TracerConfiguration TracerConfiguration { get; }
     }
 }

@@ -20,7 +20,8 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Resources;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
     using OpenTelemetry.Utils;
@@ -30,7 +31,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Span : ISpan
     {
-        private readonly TraceConfig traceConfig;
+        private readonly TracerConfiguration tracerConfiguration;
         private readonly SpanProcessor spanProcessor;
         private readonly Lazy<SpanContext> spanContext;
         private readonly DateTimeOffset startTimestamp;
@@ -43,12 +44,13 @@ namespace OpenTelemetry.Trace
 
         internal Span(
                 Activity activity,
-                Tracestate tracestate,
+                IEnumerable<KeyValuePair<string, string>> tracestate,
                 SpanKind spanKind,
-                TraceConfig traceConfig,
+                TracerConfiguration tracerConfiguration,
                 SpanProcessor spanProcessor,
                 DateTimeOffset startTimestamp,
-                bool ownsActivity)
+                bool ownsActivity,
+                Resource libraryResource)
         {
             this.Activity = activity;
             this.spanContext = new Lazy<SpanContext>(() => new SpanContext(
@@ -57,12 +59,13 @@ namespace OpenTelemetry.Trace
                 this.Activity.ActivityTraceFlags, 
                 tracestate));
             this.Name = this.Activity.OperationName;
-            this.traceConfig = traceConfig;
+            this.tracerConfiguration = tracerConfiguration;
             this.spanProcessor = spanProcessor;
             this.Kind = spanKind;
             this.OwnsActivity = ownsActivity;
             this.IsRecordingEvents = this.Activity.Recorded;
             this.startTimestamp = startTimestamp;
+            this.LibraryResource = libraryResource;
 
             if (this.IsRecordingEvents)
             {
@@ -140,12 +143,17 @@ namespace OpenTelemetry.Trace
         public DateTimeOffset EndTimestamp => this.endTimestamp;
 
         /// <summary>
-        /// Gets or sets span kind.
+        /// Gets the span kind.
         /// </summary>
-        public SpanKind? Kind { get; set; }
+        public SpanKind? Kind { get; }
 
+        /// <summary>
+        /// Gets the "Library Resource" (name + version) associated with the Tracer that produced this span.
+        /// </summary>
+        public Resource LibraryResource { get; }
+        
         internal bool OwnsActivity { get; }
-
+        
         private Status StatusWithDefault => this.status.IsValid ? this.status : Status.Ok;
 
         /// <inheritdoc />
@@ -177,7 +185,7 @@ namespace OpenTelemetry.Trace
 
                 if (this.attributes == null)
                 {
-                    this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.traceConfig.MaxNumberOfAttributes);
+                    this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
                 this.attributes.AddEvent(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
@@ -208,7 +216,7 @@ namespace OpenTelemetry.Trace
                 if (this.events == null)
                 {
                     this.events =
-                        new EvictingQueue<Event>(this.traceConfig.MaxNumberOfEvents);
+                        new EvictingQueue<Event>(this.tracerConfiguration.MaxNumberOfEvents);
                 }
 
                 this.events.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow()));
@@ -244,7 +252,7 @@ namespace OpenTelemetry.Trace
                 if (this.events == null)
                 {
                     this.events =
-                        new EvictingQueue<Event>(this.traceConfig.MaxNumberOfEvents);
+                        new EvictingQueue<Event>(this.tracerConfiguration.MaxNumberOfEvents);
                 }
 
                 this.events.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow(), eventAttributes));
@@ -275,7 +283,7 @@ namespace OpenTelemetry.Trace
                 if (this.events == null)
                 {
                     this.events =
-                        new EvictingQueue<Event>(this.traceConfig.MaxNumberOfEvents);
+                        new EvictingQueue<Event>(this.tracerConfiguration.MaxNumberOfEvents);
                 }
 
                 this.events.AddEvent(addEvent);
@@ -305,7 +313,7 @@ namespace OpenTelemetry.Trace
 
                 if (this.links == null)
                 {
-                    this.links = new EvictingQueue<Link>(this.traceConfig.MaxNumberOfLinks);
+                    this.links = new EvictingQueue<Link>(this.tracerConfiguration.MaxNumberOfLinks);
                 }
 
                 this.links.AddEvent(link);
