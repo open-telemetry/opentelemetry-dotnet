@@ -20,7 +20,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
 {
     using Moq;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using StackExchange.Redis.Profiling;
     using System.Threading.Tasks;
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         public async void ProfilerSessionUsesTheSameDefault()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracer = new Tracer(spanProcessor.Object, TraceConfig.Default, Resource.Empty);
+            var tracer = new Tracer(spanProcessor.Object, new TracerConfiguration(), Resource.Empty);
 
             using (var collector = new StackExchangeRedisCallsCollector(tracer))
             {

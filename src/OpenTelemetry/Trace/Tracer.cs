@@ -18,10 +18,9 @@ namespace OpenTelemetry.Trace
 {
     using System;
     using System.Diagnostics;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Resources;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
 
@@ -40,10 +39,10 @@ namespace OpenTelemetry.Trace
         /// Creates an instance of <see cref="ITracer"/>.
         /// </summary>
         /// <param name="spanProcessor">Span processor.</param>
-        /// <param name="traceConfig">Trace configuration.</param>
+        /// <param name="tracerConfiguration">Trace configuration.</param>
         /// <param name="libraryResource">Resource describing the instrumentation library.</param>
-        public Tracer(SpanProcessor spanProcessor, TraceConfig traceConfig, Resource libraryResource) 
-            : this(spanProcessor, traceConfig, new BinaryFormat(), new TraceContextFormat(), libraryResource)
+        public Tracer(SpanProcessor spanProcessor, TracerConfiguration tracerConfiguration, Resource libraryResource) 
+            : this(spanProcessor, tracerConfiguration, new BinaryFormat(), new TraceContextFormat(), libraryResource)
         {
         }
 
@@ -51,14 +50,14 @@ namespace OpenTelemetry.Trace
         /// Creates an instance of <see cref="Tracer"/>.
         /// </summary>
         /// <param name="spanProcessor">Span processor.</param>
-        /// <param name="traceConfig">Trace configuration.</param>
+        /// <param name="tracerConfiguration">Trace configuration.</param>
         /// <param name="binaryFormat">Binary format context propagator.</param>
         /// <param name="textFormat">Text format context propagator.</param>
         /// <param name="libraryResource">Resource describing the instrumentation library.</param>
-        internal Tracer(SpanProcessor spanProcessor, TraceConfig traceConfig, IBinaryFormat binaryFormat, ITextFormat textFormat, Resource libraryResource)
+        internal Tracer(SpanProcessor spanProcessor, TracerConfiguration tracerConfiguration, IBinaryFormat binaryFormat, ITextFormat textFormat, Resource libraryResource)
         {
             this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
-            this.ActiveTraceConfig = traceConfig ?? throw new ArgumentNullException(nameof(traceConfig));
+            this.ActiveTracerConfiguration = tracerConfiguration ?? throw new ArgumentNullException(nameof(tracerConfiguration));
             this.BinaryFormat = binaryFormat ?? throw new ArgumentNullException(nameof(binaryFormat));
             this.TextFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
             this.LibraryResource = libraryResource ?? throw new ArgumentNullException(nameof(libraryResource));
@@ -75,12 +74,12 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ITextFormat TextFormat { get; }
 
-        public TraceConfig ActiveTraceConfig { get; set; }
+        public TracerConfiguration ActiveTracerConfiguration { get; set; }
 
         /// <inheritdoc/>
         public ISpanBuilder SpanBuilder(string spanName)
         {
-            return new SpanBuilder(spanName, this.spanProcessor, this.ActiveTraceConfig, this.LibraryResource);
+            return new SpanBuilder(spanName, this.spanProcessor, this.ActiveTracerConfiguration, this.LibraryResource);
         }
 
         public IDisposable WithSpan(ISpan span)

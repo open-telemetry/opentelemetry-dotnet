@@ -269,7 +269,7 @@ Configuration is done by user application: it should configure exporter and may 
    [OpenTelemetry.Collector.AspNetCore][OpenTelemetry-collect-aspnetcore-nuget-url] to collect incoming HTTP requests
    [OpenTelemetry.Collector.Dependencies](OpenTelemetry-collect-deps-nuget-url) to collect outgoing HTTP requests and Azure SDK calls
 
-2. Make sure `ITracer`, `ISampler`, and `SpanExporter` and `SpanProcessor` are registered in DI.
+2. Make sure `ITracerFactory`, `ISampler`, and `SpanExporter` and `SpanProcessor` are registered in DI.
 
     ```csharp
     services.AddSingleton<ISampler>(Samplers.AlwaysSample);
@@ -277,7 +277,7 @@ Configuration is done by user application: it should configure exporter and may 
     services.AddSingleton<SpanExporter, ZipkinTraceExporter>();
     services.AddSingleton<SpanProcessor, BatchingSpanProcessor>();
     services.AddSingleton<TraceConfig>();
-    services.AddSingleton<ITracer, Tracer>();
+    services.AddSingleton<ITracerFactory, TracerFactory>();
 
     // you may also configure request and dependencies collectors
     services.AddSingleton<RequestsCollectorOptions>(new RequestsCollectorOptions());
@@ -305,7 +305,7 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
 1. Install package to your project:
    [OpenTelemetry.Collector.StackExchangeRedis][OpenTelemetry-collect-stackexchange-redis-nuget-url]
 
-2. Make sure `ITracer`, `ISampler`, and `SpanExporter` and `SpanProcessor` are registered in DI.
+2. Make sure `ITracerFactory`, `ISampler`, and `SpanExporter` and `SpanProcessor` are registered in DI.
 
     ```csharp
     services.AddSingleton<ISampler>(Samplers.AlwaysSample);
@@ -313,7 +313,7 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
     services.AddSingleton<SpanExporter, ZipkinTraceExporter>();
     services.AddSingleton<SpanProcessor, BatchingSpanProcessor>();
     services.AddSingleton<TraceConfig>();
-    services.AddSingleton<ITracer, Tracer>();
+    services.AddSingleton<ITracerFactory, TracerFactory>();
 
     // configure redis collection
     services.AddSingleton<StackExchangeRedisCallsCollectorOptions>(new StackExchangeRedisCallsCollectorOptions());

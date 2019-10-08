@@ -14,10 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Threading;
-using OpenTelemetry.Trace.Config;
-using OpenTelemetry.Trace.Export;
-
 namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 {
     using Microsoft.ApplicationInsights.Channel;
@@ -31,6 +27,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+    using System.Threading;
     using Xunit;
 
     public class ApplicationInsightsTraceExporterTests

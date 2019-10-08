@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace.Sampler.Internal;
+
 namespace OpenTelemetry.Trace.Test
 {
     using OpenTelemetry.Trace.Config;
@@ -34,11 +36,13 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(typeof(BatchingSpanProcessor), Tracing.SpanProcessor.GetType());
         }
 
-
         [Fact]
         public void DefaultTraceConfig()
         {
-            Assert.Same(TraceConfig.Default, Tracing.TraceConfig);
+            Assert.IsType<AlwaysSampleSampler>(Tracing.TracerConfiguration.Sampler);
+            Assert.Equal(32, Tracing.TracerConfiguration.MaxNumberOfAttributes);
+            Assert.Equal(128, Tracing.TracerConfiguration.MaxNumberOfEvents);
+            Assert.Equal(32, Tracing.TracerConfiguration.MaxNumberOfLinks);
         }
     }
 }

@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace.Export.Test
     using System.Threading;
     using System.Threading.Tasks;
     using OpenTelemetry.Testing.Export;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Utils;
     using Xunit;
 
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     sampledActivity,
                     null,
                     SpanKind.Internal,
-                    TraceConfig.Default,
+                    new TracerConfiguration(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
                     default,
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     notSampledActivity,
                     null,
                     SpanKind.Internal,
-                    TraceConfig.Default,
+                    new TracerConfiguration(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
                     false,
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     sampledActivity,
                     null,
                     SpanKind.Internal,
-                    TraceConfig.Default,
+                    new TracerConfiguration(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
                     default,
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Trace.Export.Test
                     sampledActivity,
                     null,
                     SpanKind.Internal,
-                    TraceConfig.Default,
+                    new TracerConfiguration(),
                     spanProcessor,
                     PreciseTimestamp.GetUtcNow(),
                     default,
