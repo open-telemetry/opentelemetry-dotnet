@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Trace.Config.Test
 {
     using System;
-    using OpenTelemetry.Trace.Config;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Sampler;
     using Xunit;
 
@@ -26,41 +26,42 @@ namespace OpenTelemetry.Trace.Config.Test
         [Fact]
         public void DefaultTraceConfig()
         {
-            Assert.Equal(Samplers.AlwaysSample, TraceConfig.Default.Sampler);
-            Assert.Equal(32, TraceConfig.Default.MaxNumberOfAttributes);
-            Assert.Equal(128, TraceConfig.Default.MaxNumberOfEvents);
-            Assert.Equal(32, TraceConfig.Default.MaxNumberOfLinks);
+            var config = new TracerConfiguration();
+            Assert.Equal(Samplers.AlwaysSample, config.Sampler);
+            Assert.Equal(32, config.MaxNumberOfAttributes);
+            Assert.Equal(128, config.MaxNumberOfEvents);
+            Assert.Equal(32, config.MaxNumberOfLinks);
         }
 
         [Fact]
         public void UpdateTraceParams_NullSampler()
         {
-            Assert.Throws<ArgumentNullException>(() => new TraceConfig(null));
+            Assert.Throws<ArgumentNullException>(() => new TracerConfiguration(null));
         }
 
         [Fact]
         public void UpdateTraceParams_NonPositiveMaxNumberOfAttributes()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new TraceConfig(Samplers.AlwaysSample, 0 ,1, 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfiguration(Samplers.AlwaysSample, 0 ,1, 1));
         }
 
         [Fact]
         public void UpdateTraceParams_NonPositiveMaxNumberOfEvents()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new TraceConfig(Samplers.AlwaysSample, 1, 0, 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfiguration(Samplers.AlwaysSample, 1, 0, 1));
         }
 
 
         [Fact]
         public void updateTraceParams_NonPositiveMaxNumberOfLinks()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new TraceConfig(Samplers.AlwaysSample, 1, 1, 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfiguration(Samplers.AlwaysSample, 1, 1, 0));
         }
 
         [Fact]
         public void UpdateTraceParams_All()
         {
-            var traceParams = new TraceConfig(Samplers.NeverSample, 8, 9, 11);
+            var traceParams = new TracerConfiguration(Samplers.NeverSample, 8, 9, 11);
 
             Assert.Equal(Samplers.NeverSample, traceParams.Sampler);
             Assert.Equal(8, traceParams.MaxNumberOfAttributes);
