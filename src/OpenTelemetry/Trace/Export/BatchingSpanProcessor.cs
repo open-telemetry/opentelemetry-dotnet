@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace.Export
         private readonly TimeSpan scheduleDelay;
         private readonly Task worker;
         private CancellationTokenSource cts;
-        private int currentQueueSize;
+        private volatile int currentQueueSize;
         private bool stopping = false;
 
         /// <summary>
@@ -113,6 +113,7 @@ namespace OpenTelemetry.Trace.Export
             }
 
             Interlocked.Increment(ref this.currentQueueSize);
+
             this.exportQueue.Enqueue(span);
         }
 
@@ -130,9 +131,7 @@ namespace OpenTelemetry.Trace.Export
                 // if there are more items, continue until cancellation token allows
                 while (this.currentQueueSize > 0 && !cancellationToken.IsCancellationRequested)
                 {
-                    Debug.WriteLine($"!!! {DateTime.UtcNow:o}  export " + this.currentQueueSize);
                     await this.ExportBatchAsync(cancellationToken).ConfigureAwait(false);
-                    Debug.WriteLine($"!!! {DateTime.UtcNow:o}  export finished" + this.currentQueueSize);
                 }
 
                 // there is no point in waiting for a worker task if cancellation happens
@@ -161,16 +160,19 @@ namespace OpenTelemetry.Trace.Export
                     return;
                 }
 
-                var nextBatchSize = Math.Min(this.currentQueueSize, this.maxExportBatchSize);
-
-                if (nextBatchSize == 0)
+                List<Span> batch = null;
+                if (this.exportQueue.TryDequeue(out var nextSpan))
                 {
+                    Interlocked.Decrement(ref this.currentQueueSize);
+                    batch = new List<Span> { nextSpan };
+                }
+                else
+                {
+                    // nothing in queue
                     return;
                 }
 
-                var batch = new List<Span>(nextBatchSize);
-
-                while (batch.Count < nextBatchSize && this.exportQueue.TryDequeue(out var nextSpan))
+                while (batch.Count < this.maxExportBatchSize && this.exportQueue.TryDequeue(out nextSpan))
                 {
                     Interlocked.Decrement(ref this.currentQueueSize);
                     batch.Add(nextSpan);
