@@ -24,7 +24,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
     using Microsoft.AspNetCore.Http.Features;
     using OpenTelemetry.Trace;
 
-    internal class HttpInListener : ListenerHandler<HttpRequest>
+    internal class HttpInListener : ListenerHandler
     {
         private static readonly string UnknownHostName = "UNKNOWN-HOST";
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
@@ -34,8 +34,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
         private readonly bool hostingSupportsW3C = false;
 
-        public HttpInListener(string name, ITracer tracer, Func<HttpRequest, ISampler> samplerFactory)
-            : base(name, tracer, samplerFactory)
+        public HttpInListener(string name, ITracer tracer)
+            : base(name, tracer)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
         }
@@ -65,8 +65,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
             var spanBuilder = this.Tracer.SpanBuilder(path)
-                .SetSpanKind(SpanKind.Server)
-                .SetSampler(this.SamplerFactory(request));
+                .SetSpanKind(SpanKind.Server);
 
             if (this.hostingSupportsW3C)
             {

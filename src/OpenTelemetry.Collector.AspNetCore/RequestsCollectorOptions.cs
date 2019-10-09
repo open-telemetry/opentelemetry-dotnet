@@ -17,29 +17,39 @@
 namespace OpenTelemetry.Collector.AspNetCore
 {
     using System;
-    using Microsoft.AspNetCore.Http;
-    using OpenTelemetry.Trace;
 
     /// <summary>
     /// Options for requests collector.
     /// </summary>
     public class RequestsCollectorOptions
     {
-        private static readonly Func<HttpRequest, ISampler> DefaultSampler = (req) => { return null; };
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RequestsCollectorOptions"/> class.
+        /// </summary>
+        public RequestsCollectorOptions()
+        {
+            this.EventFilter = DefaultFilter;
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RequestsCollectorOptions"/> class.
         /// </summary>
-        /// <param name="sampler">Custom sampling function, if any.</param>
-        public RequestsCollectorOptions(Func<HttpRequest, ISampler> sampler = null)
+        /// <param name="eventFilter">Custom filtering predicate for DiagnosticSource events, if any.</param>
+        internal RequestsCollectorOptions(Func<string, object, object, bool> eventFilter = null)
         {
-            this.CustomSampler = sampler ?? DefaultSampler;
+            // TODO This API is unusable and likely to change, let's not expose it for now.
+
+            this.EventFilter = eventFilter;
         }
 
         /// <summary>
-        /// Gets a hook to exclude calls based on domain
-        /// or other per-request criterion.
+        /// Gets a hook to exclude calls based on domain or other per-request criterion.
         /// </summary>
-        public Func<HttpRequest, ISampler> CustomSampler { get; private set; }
+        internal Func<string, object, object, bool> EventFilter { get; }
+
+        private static bool DefaultFilter(string activityName, object arg1, object unused)
+        {
+            return true;
+        }
     }
 }

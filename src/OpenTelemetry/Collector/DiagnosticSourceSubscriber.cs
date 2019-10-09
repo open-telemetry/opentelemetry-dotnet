@@ -23,21 +23,21 @@ namespace OpenTelemetry.Collector
     using System.Threading;
     using OpenTelemetry.Trace;
 
-    public class DiagnosticSourceSubscriber<TInput> : IDisposable, IObserver<DiagnosticListener>
+    public class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
     {
-        private readonly Dictionary<string, Func<ITracerFactory, Func<TInput, ISampler>, ListenerHandler<TInput>>> handlers;
+        private readonly Dictionary<string, Func<ITracerFactory, ListenerHandler>> handlers;
         private readonly ITracerFactory tracerFactory;
-        private readonly Func<TInput, ISampler> sampler;
-        private ConcurrentDictionary<string, DiagnosticSourceListener<TInput>> subscriptions;
+        private readonly Func<string, object, object, bool> filter;
+        private ConcurrentDictionary<string, DiagnosticSourceListener> subscriptions;
         private long disposed;
         private IDisposable subscription;
 
-        public DiagnosticSourceSubscriber(Dictionary<string, Func<ITracerFactory, Func<TInput, ISampler>, ListenerHandler<TInput>>> handlers, ITracerFactory tracerFactory, Func<TInput, ISampler> sampler)
+        public DiagnosticSourceSubscriber(Dictionary<string, Func<ITracerFactory, ListenerHandler>> handlers, ITracerFactory tracerFactory, Func<string, object, object, bool> filter)
         {
-            this.subscriptions = new ConcurrentDictionary<string, DiagnosticSourceListener<TInput>>();
+            this.subscriptions = new ConcurrentDictionary<string, DiagnosticSourceListener>();
             this.handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
             this.tracerFactory = tracerFactory ?? throw new ArgumentNullException(nameof(tracerFactory));
-            this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
+            this.filter = filter;
         }
 
         public void Subscribe()
@@ -56,8 +56,8 @@ namespace OpenTelemetry.Collector
                 {
                     this.subscriptions?.GetOrAdd(value.Name, name =>
                     {
-                        var dl = new DiagnosticSourceListener<TInput>(this.handlers[value.Name](this.tracerFactory, this.sampler));
-                        dl.Subscription = value.Subscribe(dl);
+                        var dl = new DiagnosticSourceListener(this.handlers[value.Name](this.tracerFactory));
+                        dl.Subscription = this.filter == null ? value.Subscribe(dl) : value.Subscribe(dl, this.filter);
                         return dl;
                     });
                 }
