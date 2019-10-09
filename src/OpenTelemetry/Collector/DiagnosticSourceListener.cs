@@ -20,11 +20,11 @@ namespace OpenTelemetry.Collector
     using System.Collections.Generic;
     using System.Diagnostics;
 
-    internal class DiagnosticSourceListener<TInput> : IObserver<KeyValuePair<string, object>>, IDisposable
+    internal class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>, IDisposable
     {
-        private readonly ListenerHandler<TInput> handler;
+        private readonly ListenerHandler handler;
 
-        public DiagnosticSourceListener(ListenerHandler<TInput> handler)
+        public DiagnosticSourceListener(ListenerHandler handler)
         {
             this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
         }

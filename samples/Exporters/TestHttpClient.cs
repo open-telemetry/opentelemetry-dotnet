@@ -40,7 +40,7 @@ namespace Samples
 
             var tracerFactory = new TracerFactory(new BatchingSpanProcessor(exporter));
             var tracer = tracerFactory.GetTracer(string.Empty);
-            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory, Samplers.AlwaysSample))
+            using (new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory))
             {
                 using (tracer.WithSpan(tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartSpan()))
                 {

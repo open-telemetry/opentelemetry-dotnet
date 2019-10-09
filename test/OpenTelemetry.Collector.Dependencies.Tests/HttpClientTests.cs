@@ -100,7 +100,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             using (serverLifeTime)
             {
-                using (var dc = new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory, Samplers.AlwaysSample))
+                using (var dc = new DependenciesCollector(new DependenciesCollectorOptions(), tracerFactory))
                 {
 
                     try

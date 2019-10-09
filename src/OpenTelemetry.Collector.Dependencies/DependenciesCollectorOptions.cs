@@ -18,29 +18,66 @@ namespace OpenTelemetry.Collector.Dependencies
 {
     using System;
     using System.Net.Http;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Sampler;
 
     /// <summary>
     /// Options for dependencies collector.
     /// </summary>
     public class DependenciesCollectorOptions
     {
-        private static readonly Func<HttpRequestMessage, ISampler> DefaultSampler = (req) => { return ((req.RequestUri != null) && req.RequestUri.ToString().Contains("zipkin.azurewebsites.net")) ? Samplers.NeverSample : null; };
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DependenciesCollectorOptions"/> class.
+        /// </summary>
+        public DependenciesCollectorOptions()
+        {
+            this.EventFilter = DefaultFilter;
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DependenciesCollectorOptions"/> class.
         /// </summary>
-        /// <param name="sampler">Custom sampling function, if any.</param>
-        public DependenciesCollectorOptions(Func<HttpRequestMessage, ISampler> sampler = null)
+        /// <param name="eventFilter">Custom filtering predicate for DiagnosticSource events, if any.</param>
+        internal DependenciesCollectorOptions(Func<string, object, object, bool> eventFilter)
         {
-            this.CustomSampler = sampler ?? DefaultSampler;
+            // TODO This API is unusable and likely to change, let's not expose it for now.
+
+            this.EventFilter = eventFilter;
         }
 
         /// <summary>
-        /// Gets a hook to exclude calls based on domain
-        /// or other per-request criterion.
+        /// Gets a hook to exclude calls based on domain or other per-request criterion.
         /// </summary>
-        public Func<HttpRequestMessage, ISampler> CustomSampler { get; private set; }
+        internal Func<string, object, object, bool> EventFilter { get; }
+
+        private static bool DefaultFilter(string activityName, object arg1, object unused)
+        {
+            // TODO: there is some preliminary consensus that we should introduce 'terminal' spans or context.
+            // exporters should ensure they set it
+
+            if (activityName == "System.Net.Http.HttpRequestOut" &&
+                arg1 is HttpRequestMessage request &&
+                request.RequestUri != null &&
+                request.Method == HttpMethod.Post)
+            {
+                var originalString = request.RequestUri.OriginalString;
+
+                // zipkin
+                if (originalString.Contains(":9411/api/v2/spans"))
+                {
+                    return false;
+                }
+
+                // applicationinsights
+                if (originalString.StartsWith("https://dc.services.visualstudio") ||
+                    originalString.StartsWith("https://rt.services.visualstudio") ||
+                    originalString.StartsWith("https://dc.applicationinsights") ||
+                    originalString.StartsWith("https://live.applicationinsights") ||
+                    originalString.StartsWith("https://quickpulse.applicationinsights"))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }

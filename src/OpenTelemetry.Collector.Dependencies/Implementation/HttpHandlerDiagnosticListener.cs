@@ -26,7 +26,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
     using System.Threading.Tasks;
     using OpenTelemetry.Trace;
 
-    internal class HttpHandlerDiagnosticListener : ListenerHandler<HttpRequestMessage>
+    internal class HttpHandlerDiagnosticListener : ListenerHandler
     {
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
         private readonly PropertyFetcher stopResponseFetcher = new PropertyFetcher("Response");
@@ -34,8 +34,8 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         private readonly PropertyFetcher stopRequestStatusFetcher = new PropertyFetcher("RequestTaskStatus");
         private readonly bool httpClientSupportsW3C = false;
 
-        public HttpHandlerDiagnosticListener(ITracer tracer, Func<HttpRequestMessage, ISampler> samplerFactory)
-            : base("HttpHandlerDiagnosticListener", tracer, samplerFactory)
+        public HttpHandlerDiagnosticListener(ITracer tracer)
+            : base("HttpHandlerDiagnosticListener", tracer)
         {
             var framework = Assembly
                 .GetEntryAssembly()?
@@ -68,7 +68,6 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
             var span = this.Tracer.SpanBuilder(request.RequestUri.AbsolutePath)
                 .SetSpanKind(SpanKind.Client)
-                .SetSampler(this.SamplerFactory(request))
                 .SetCreateChild(false)
                 .StartSpan();
 
