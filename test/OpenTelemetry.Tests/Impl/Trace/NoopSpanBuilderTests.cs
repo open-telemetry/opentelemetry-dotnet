@@ -23,7 +23,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
 
     public class NoopSpanBuilderTests
     {
-        [Fact]
+        /*[Fact]
         public void NoopSpanBuilder_BadArguments()
         {
             Assert.Throws<ArgumentNullException>(() => new NoopSpanBuilder(null));
@@ -56,6 +56,6 @@ namespace OpenTelemetry.Tests.Impl.Trace
         public void NoopSpanBuilder_Ok()
         {
             Assert.Same(BlankSpan.Instance, new NoopSpanBuilder("foo").StartSpan());
-        }
+        }*/
     }
 }

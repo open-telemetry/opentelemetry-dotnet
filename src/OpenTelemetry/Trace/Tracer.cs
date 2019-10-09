@@ -17,12 +17,14 @@
 namespace OpenTelemetry.Trace
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
+    using OpenTelemetry.Utils;
 
     /// <inheritdoc/>
     public sealed class Tracer : ITracer
@@ -76,12 +78,6 @@ namespace OpenTelemetry.Trace
 
         public TracerConfiguration ActiveTracerConfiguration { get; set; }
 
-        /// <inheritdoc/>
-        public ISpanBuilder SpanBuilder(string spanName)
-        {
-            return new SpanBuilder(spanName, this.spanProcessor, this.ActiveTracerConfiguration, this.LibraryResource);
-        }
-
         public IDisposable WithSpan(ISpan span)
         {
             if (span == null)
@@ -90,6 +86,176 @@ namespace OpenTelemetry.Trace
             }
 
             return CurrentSpanUtils.WithSpan(span, true);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateRootSpan(string operationName)
+        {
+            return this.CreateRootSpan(operationName, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+        }
+
+        public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            return this.CreateRootSpan(operationName, kind, startTimestamp, null);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (startTimestamp == default)
+            {
+                startTimestamp = PreciseTimestamp.GetUtcNow();
+            }
+
+            return new Span(operationName, kind, startTimestamp, links, this.ActiveTracerConfiguration, this.spanProcessor, this.LibraryResource);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateSpan(string operationName)
+        {
+            return this.CreateSpan(operationName, this.CurrentSpan, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            return this.CreateSpan(operationName, null, kind, startTimestamp, null);
+        }
+
+        public ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            return this.CreateSpan(operationName, null, kind, startTimestamp, links);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateSpan(string operationName, ISpan parent)
+        {
+            return this.CreateSpan(operationName, parent, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind)
+        {
+            return this.CreateSpan(operationName, parent, kind, PreciseTimestamp.GetUtcNow(), null);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            return this.CreateSpan(operationName, parent, SpanKind.Internal, startTimestamp, null);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (parent == null)
+            {
+                parent = this.CurrentSpan;
+            }
+
+            if (startTimestamp == default)
+            {
+                startTimestamp = PreciseTimestamp.GetUtcNow();
+            }
+
+            if (parent != null)
+            {
+                return new Span(operationName, parent, kind, startTimestamp, links, this.ActiveTracerConfiguration,
+                    this.spanProcessor, this.LibraryResource);
+            }
+
+            return new Span(operationName, kind, startTimestamp, links, this.ActiveTracerConfiguration,
+                this.spanProcessor, this.LibraryResource);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateSpan(string operationName, in SpanContext parent)
+        {
+            return this.CreateSpan(operationName, parent, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+        }
+        
+        /// <inheritdoc/>
+        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind)
+        {
+            return this.CreateSpan(operationName, parent, kind, PreciseTimestamp.GetUtcNow(), null);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            return this.CreateSpan(operationName, parent, kind, startTimestamp, null);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (startTimestamp == default)
+            {
+                startTimestamp = PreciseTimestamp.GetUtcNow();
+            }
+
+            if (parent != null)
+            {
+                return new Span(operationName, parent, kind, startTimestamp, links, this.ActiveTracerConfiguration,
+                    this.spanProcessor, this.LibraryResource);
+            }
+
+            return new Span(operationName, kind, startTimestamp, links, this.ActiveTracerConfiguration,
+                this.spanProcessor, this.LibraryResource);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateSpanFromActivity(string operationName, Activity activity)
+        {
+            return this.CreateSpanFromActivity(operationName, activity, SpanKind.Internal, null);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind)
+        {
+            return this.CreateSpanFromActivity(operationName, activity, kind, null);
+        }
+
+        /// <inheritdoc/>
+        public ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (activity == null)
+            {
+                throw new ArgumentException("Current Activity cannot be null");
+            }
+
+            if (activity.IdFormat != ActivityIdFormat.W3C)
+            {
+                throw new ArgumentException("Current Activity is not in W3C format");
+            }
+
+            if (activity.StartTimeUtc == default || activity.Duration != default)
+            {
+                throw new ArgumentException(
+                    "Current Activity is not running: it has not been started or has been stopped");
+            }
+
+            return new Span(operationName, activity, kind, links, this.ActiveTracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
     }
 }

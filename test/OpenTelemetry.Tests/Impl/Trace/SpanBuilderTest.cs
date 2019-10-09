@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace.Test
 
     public class SpanBuilderTest : IDisposable
     {
-        private static readonly string SpanName = "MySpanName";
+/*        private static readonly string SpanName = "MySpanName";
 
         private readonly TracerConfiguration alwaysSampleTracerConfiguration = new TracerConfiguration(Samplers.AlwaysSample);
 
@@ -901,7 +901,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentNullException>(() => spanBuilder.AddLink(null, null));
             Assert.Throws<ArgumentException>(() => spanBuilder.AddLink(SpanContext.Blank));
             Assert.Throws<ArgumentException>(() => spanBuilder.AddLink(SpanContext.Blank, null));
-        }
+        }*/
 
         public void Dispose()
         {

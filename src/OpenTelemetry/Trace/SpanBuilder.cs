@@ -26,8 +26,7 @@ namespace OpenTelemetry.Trace
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Internal;
 
-    /// <inheritdoc/>
-    public class SpanBuilder : ISpanBuilder
+    /*public class SpanBuilder 
     {
         private readonly SpanProcessor spanProcessor;
         private readonly TracerConfiguration tracerConfiguration;
@@ -453,5 +452,5 @@ namespace OpenTelemetry.Trace
 
             return spanActivity;
         }
-    }
+    }*/
 }

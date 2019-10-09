@@ -20,6 +20,7 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
@@ -33,7 +34,6 @@ namespace OpenTelemetry.Trace
     {
         private readonly TracerConfiguration tracerConfiguration;
         private readonly SpanProcessor spanProcessor;
-        private readonly Lazy<SpanContext> spanContext;
         private readonly DateTimeOffset startTimestamp;
         private readonly object @lock = new object();
         private EvictingQueue<KeyValuePair<string, object>> attributes;
@@ -43,39 +43,104 @@ namespace OpenTelemetry.Trace
         private DateTimeOffset endTimestamp;
 
         internal Span(
-                Activity activity,
-                IEnumerable<KeyValuePair<string, string>> tracestate,
-                SpanKind spanKind,
-                TracerConfiguration tracerConfiguration,
-                SpanProcessor spanProcessor,
-                DateTimeOffset startTimestamp,
-                bool ownsActivity,
-                Resource libraryResource)
+            string name,
+            ISpan parentSpan,
+            SpanKind spanKind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<Link> links,
+            TracerConfiguration tracerConfiguration,
+            SpanProcessor spanProcessor,
+            Resource libraryResource) : this(name, parentSpan.Context, FromParentSpan(name, parentSpan), true, spanKind, startTimestamp, links, tracerConfiguration, spanProcessor, libraryResource)
         {
-            this.Activity = activity;
-            this.spanContext = new Lazy<SpanContext>(() => new SpanContext(
-                this.Activity.TraceId, 
-                this.Activity.SpanId, 
-                this.Activity.ActivityTraceFlags, 
-                tracestate));
-            this.Name = this.Activity.OperationName;
+        }
+
+        internal Span(
+            string name,
+            SpanContext parentContext,
+            SpanKind spanKind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<Link> links,
+            TracerConfiguration tracerConfiguration,
+            SpanProcessor spanProcessor,
+            Resource libraryResource) : this(name, parentContext, FromParentSpanContext(name, parentContext), true, spanKind, startTimestamp, links, tracerConfiguration, spanProcessor, libraryResource)
+        {
+        }
+
+        internal Span(
+            string name,
+            SpanKind spanKind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<Link> links,
+            TracerConfiguration tracerConfiguration,
+            SpanProcessor spanProcessor,
+            Resource libraryResource) : this(name, SpanContext.Blank, FromParentSpanContext(name, SpanContext.Blank), true, spanKind, startTimestamp, links, tracerConfiguration, spanProcessor, libraryResource)
+        {
+        }
+
+        internal Span(
+            string name,
+            Activity activity,
+            SpanKind spanKind,
+            IEnumerable<Link> links,
+            TracerConfiguration tracerConfiguration,
+            SpanProcessor spanProcessor,
+            Resource libraryResource) : this(name, ParentContextFromActivity(activity), FromActivity(name, activity), false, spanKind,
+            new DateTimeOffset(activity.StartTimeUtc), links, tracerConfiguration, spanProcessor, libraryResource)
+        {
+        }
+
+        private Span(
+            string name,
+            SpanContext parentSpanContext,
+            ActivityAndSpanContext activityAndSpanContext,
+            bool ownsActivity,
+            SpanKind spanKind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<Link> links,
+            TracerConfiguration tracerConfiguration,
+            SpanProcessor spanProcessor,
+            Resource libraryResource)
+        {
+            this.Name = name;
+            this.LibraryResource = libraryResource;
+            this.startTimestamp = startTimestamp;
             this.tracerConfiguration = tracerConfiguration;
             this.spanProcessor = spanProcessor;
             this.Kind = spanKind;
             this.OwnsActivity = ownsActivity;
-            this.IsRecordingEvents = this.Activity.Recorded;
-            this.startTimestamp = startTimestamp;
-            this.LibraryResource = libraryResource;
+            this.Activity = activityAndSpanContext.Activity;
+            this.Context = activityAndSpanContext.Context;
+
+            this.IsRecordingEvents = MakeSamplingDecision(
+                parentSpanContext,
+                name,
+                null,
+                links, // we'll enumerate again, but double enumeration over small collection is cheaper than allocation
+                this.Activity.TraceId,
+                this.Activity.SpanId,
+                this.tracerConfiguration);
 
             if (this.IsRecordingEvents)
             {
+                this.Activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+
+                if (this.links != null)
+                {
+                    foreach (var link in links)
+                    {
+                        this.AddLink(link);
+                    }
+                }
+
                 this.spanProcessor.OnStart(this);
+            }
+            else
+            {
+                this.Activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
             }
         }
 
-        public Activity Activity { get; }
-
-        public SpanContext Context => this.spanContext.Value;
+        public SpanContext Context { get; private set; }
 
         public string Name { get; private set; }
 
@@ -153,7 +218,9 @@ namespace OpenTelemetry.Trace
         public Resource LibraryResource { get; }
         
         internal bool OwnsActivity { get; }
-        
+
+        internal Activity Activity { get; }
+
         private Status StatusWithDefault => this.status.IsValid ? this.status : Status.Ok;
 
         /// <inheritdoc />
@@ -421,6 +488,131 @@ namespace OpenTelemetry.Trace
             }
 
             this.SetAttribute(new KeyValuePair<string, object>(key, value));
+        }
+
+        private static SpanContext ParentContextFromActivity(Activity activity)
+        {
+            if (activity.TraceId != default && activity.ParentSpanId != default)
+            {
+                return new SpanContext(
+                    activity.TraceId,
+                    activity.ParentSpanId,
+                    activity.ActivityTraceFlags);
+            }
+
+            return null;
+        }
+
+        private static bool MakeSamplingDecision(
+            SpanContext parent,
+            string name,
+            ISampler sampler,
+            IEnumerable<Link> parentLinks,
+            ActivityTraceId traceId,
+            ActivitySpanId spanId,
+            TracerConfiguration tracerConfiguration)
+        {
+            // If users set a specific sampler in the SpanBuilder, use it.
+            if (sampler != null)
+            {
+                return sampler.ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
+            }
+
+            // Use the default sampler if this is a root Span or this is an entry point Span (has remote
+            // parent).
+            if (parent == null || !parent.IsValid)
+            {
+                return tracerConfiguration
+                    .Sampler
+                    .ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
+            }
+
+            // Parent is always different than null because otherwise we use the default sampler.
+            return (parent.TraceOptions & ActivityTraceFlags.Recorded) != 0 || IsAnyParentLinkSampled(parentLinks);
+        }
+
+        private static bool IsAnyParentLinkSampled(IEnumerable<Link> parentLinks)
+        {
+            if (parentLinks != null)
+            {
+                foreach (var parentLink in parentLinks)
+                {
+                    if ((parentLink.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static ActivityAndSpanContext FromParentSpan(string spanName, ISpan parentSpan)
+        {
+            if (parentSpan is Span parentSpanImpl && parentSpanImpl.Activity == Activity.Current)
+            {
+                var activity = new Activity(spanName);
+                activity.SetIdFormat(ActivityIdFormat.W3C);
+                activity.TraceStateString = parentSpanImpl.Activity.TraceStateString;
+
+                var originalActivity = Activity.Current;
+                activity.Start();
+                Activity.Current = originalActivity;
+
+                return new ActivityAndSpanContext(activity, new SpanContext(activity.TraceId, activity.SpanId, activity.ActivityTraceFlags, parentSpan.Context.Tracestate));
+            }
+
+            return FromParentSpanContext(spanName, parentSpan.Context);
+        }
+
+        private static ActivityAndSpanContext FromParentSpanContext(string spanName, SpanContext parentContext)
+        {
+            var activity = new Activity(spanName);
+
+            IEnumerable<KeyValuePair<string, string>> tracestate = null;
+            if (parentContext != null && parentContext.IsValid)
+            {
+                activity.SetParentId(parentContext.TraceId,
+                    parentContext.SpanId,
+                    parentContext.TraceOptions);
+                if (parentContext.Tracestate != null && parentContext.Tracestate.Any())
+                {
+                    activity.TraceStateString = TracestateUtils.GetString(parentContext.Tracestate);
+                    tracestate = parentContext.Tracestate;
+                }
+            }
+
+            activity.SetIdFormat(ActivityIdFormat.W3C);
+
+            var originalActivity = Activity.Current;
+            activity.Start();
+            Activity.Current = originalActivity;
+
+            return new ActivityAndSpanContext(activity, new SpanContext(activity.TraceId, activity.SpanId, activity.ActivityTraceFlags, tracestate));
+        }
+
+        private static ActivityAndSpanContext FromActivity(string spanName, Activity activity)
+        {
+            List<KeyValuePair<string, string>> tracestate = null;
+            if (activity.TraceStateString != null)
+            {
+                tracestate = new List<KeyValuePair<string, string>>();
+                TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate);
+            }
+
+            return new ActivityAndSpanContext(activity, new SpanContext(activity.TraceId, activity.SpanId, activity.ActivityTraceFlags, tracestate));
+        }
+
+        private readonly struct ActivityAndSpanContext
+        {
+            public readonly Activity Activity;
+            public readonly SpanContext Context;
+
+            public ActivityAndSpanContext(Activity activity, SpanContext context)
+            {
+                this.Activity = activity;
+                this.Context = context;
+            }
         }
     }
 }

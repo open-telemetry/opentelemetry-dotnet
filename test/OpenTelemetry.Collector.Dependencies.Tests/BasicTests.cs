@@ -61,6 +61,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
+            parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
             using (new DependenciesCollector(new HttpClientCollectorOptions(), tracerFactory))
             using (var c = new HttpClient())

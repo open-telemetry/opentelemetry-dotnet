@@ -17,6 +17,8 @@
 namespace OpenTelemetry.Trace
 {
     using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Context.Propagation;
 
     /// <summary>
@@ -50,10 +52,91 @@ namespace OpenTelemetry.Trace
             return NoopScope;
         }
 
-        /// <inheritdoc/>
-        public ISpanBuilder SpanBuilder(string spanName)
+        // TODO validation
+
+        public ISpan CreateRootSpan(string operationName)
         {
-            return new NoopSpanBuilder(spanName);
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpan(string operationName)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpan(string operationName, ISpan parent)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpan(string operationName, in SpanContext parent)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpanFromActivity(string operationName, Activity activity)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        {
+            return BlankSpan.Instance;
         }
 
         private class NoopDisposable : IDisposable

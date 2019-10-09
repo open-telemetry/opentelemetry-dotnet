@@ -2,6 +2,10 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+
 namespace LoggingTracer
 {
     using System;
@@ -23,16 +27,113 @@ namespace LoggingTracer
 
         public ITextFormat TextFormat => new LoggingTextFormat();
 
-        public ISpanBuilder SpanBuilder(string spanName)
-        {
-            Logger.Log($"{prefix}.SpanBuilder({spanName})");
-            return new LoggingSpanBuilder(spanName, SpanKind.Internal);
-        }
-
         public IDisposable WithSpan(ISpan span)
         {
             Logger.Log($"{prefix}.WithSpan");
             return new CurrentSpanUtils.LoggingScope(span);
+        }
+
+        public ISpan CreateRootSpan(string operationName)
+        {
+            Logger.Log($"{prefix}.CreateRootSpan({operationName})");
+            return new LoggingSpan(operationName, SpanKind.Internal);
+        }
+
+        public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            Logger.Log($"{prefix}.CreateRootSpan({operationName}, {kind}, {startTimestamp:o})");
+            return new LoggingSpan(operationName, kind);
+        }
+
+        public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            Logger.Log($"{prefix}.CreateRootSpan({operationName}, {kind}, {startTimestamp:o}, {links})");
+            return new LoggingSpan(operationName, kind);
+        }
+
+        public ISpan CreateSpan(string operationName)
+        {
+            Logger.Log($"{prefix}.CreateSpan({operationName})");
+            return new LoggingSpan(operationName, SpanKind.Internal);
+        }
+
+        public ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            Logger.Log($"{prefix}.CreateSpan({operationName}, {kind}, {startTimestamp:o})");
+            return new LoggingSpan(operationName, kind);
+        }
+
+        public ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            Logger.Log($"{prefix}.CreateSpan({operationName}, {kind}, {startTimestamp:o} {links})");
+            return new LoggingSpan(operationName, kind);
+        }
+
+        public ISpan CreateSpan(string operationName, ISpan parent)
+        {
+            Logger.Log($"{prefix}.CreateSpan({operationName}, {parent.GetType().Name})");
+            return new LoggingSpan(operationName, SpanKind.Internal);
+        }
+
+        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind)
+        {
+            Logger.Log($"{prefix}.CreateSpan({operationName}, {parent.GetType().Name}, {kind})");
+            return new LoggingSpan(operationName, kind);
+        }
+
+        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            Logger.Log($"{prefix}.CreateSpan({operationName}, {parent.GetType().Name}, {kind} {startTimestamp:o})");
+            return new LoggingSpan(operationName, kind);
+        }
+
+        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            Logger.Log($"{prefix}.CreateSpan({operationName}, {parent.GetType().Name}, {kind} {startTimestamp:o}, {links})");
+            return new LoggingSpan(operationName, kind);
+        }
+
+        public ISpan CreateSpan(string operationName, in SpanContext parent)
+        {
+            Logger.Log($"{prefix}.CreateSpan({operationName}, {parent.GetType().Name})");
+            return new LoggingSpan(operationName, SpanKind.Internal);
+        }
+
+        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind)
+        {
+            Logger.Log($"{prefix}.CreateSpan({operationName}, {parent.GetType().Name} {kind})");
+            return new LoggingSpan(operationName, kind);
+        }
+
+        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            Logger.Log($"{prefix}.CreateSpan({operationName}, {parent.GetType().Name} {kind} {startTimestamp:o})");
+            return new LoggingSpan(operationName, kind);
+        }
+
+        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp,
+            IEnumerable<Link> links)
+        {
+            Logger.Log($"{prefix}.CreateSpan({operationName}, {parent.GetType().Name} {kind} {startTimestamp:o} {links})");
+            return new LoggingSpan(operationName, kind);
+        }
+
+        public ISpan CreateSpanFromActivity(string operationName, Activity activity)
+        {
+            Logger.Log($"{prefix}.CreateSpanFromActivity({operationName}, {activity.OperationName})");
+            return new LoggingSpan(operationName, SpanKind.Internal);
+        }
+
+        public ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind)
+        {
+            Logger.Log($"{prefix}.CreateSpanFromActivity({operationName}, {activity.OperationName} {kind})");
+            return new LoggingSpan(operationName, kind);
+        }
+
+        public ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        {
+            Logger.Log($"{prefix}.CreateSpanFromActivity({operationName}, {activity.OperationName} {kind} {links})");
+            return new LoggingSpan(operationName, kind);
         }
     }
 }

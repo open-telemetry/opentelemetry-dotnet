@@ -1642,23 +1642,17 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             SpanKind kind,
             Status status)
         {
-            var spanBuilder = Tracing.TracerFactory.GetTracer("")
-                .SpanBuilder(name);
-
-            if (parentSpanId != default)
-            {
-                spanBuilder.SetParent(new SpanContext(traceId, parentSpanId, traceOptions, tracestate));
-            }
-            var span = (Span)spanBuilder.SetSpanKind(kind)
-                .SetStartTimestamp(startTimestamp)
-                .StartSpan();
+            var tracer = Tracing.TracerFactory.GetTracer("");
+            var span = parentSpanId == default ? 
+                tracer.CreateRootSpan(name, kind, startTimestamp) :
+                tracer.CreateSpan(name, new SpanContext(traceId, parentSpanId, traceOptions, tracestate), kind, startTimestamp);
 
             if (status.IsValid)
             {
                 span.Status = status;
             }
 
-            return span;
+            return (Span)span;
         }
     }
 };

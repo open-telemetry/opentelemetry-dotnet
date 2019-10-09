@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
 
@@ -42,13 +43,6 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void CreateSpanBuilder()
-        {
-            var spanBuilder = tracer.SpanBuilder(SpanName);
-            Assert.IsType<SpanBuilder>(spanBuilder);
-        }
-
-        [Fact]
         public void BadConstructorArgumentsThrow()
         {
             var noopProc = new SimpleSpanProcessor(new NoopSpanExporter());
@@ -68,7 +62,10 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void CreateSpanBuilderWithNullName()
         {
-            Assert.Throws<ArgumentNullException>(() => tracer.SpanBuilder(null));
+            Assert.Throws<ArgumentNullException>(() => tracer.CreateSpan(null));
+            Assert.Throws<ArgumentNullException>(() => tracer.CreateRootSpan(null));
+            Assert.Throws<ArgumentNullException>(() => tracer.CreateSpanFromActivity(null, new Activity("foo").Start()));
+            // TODO
         }
 
         [Fact]
@@ -80,7 +77,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetCurrentSpan()
         {
-            var span = tracer.SpanBuilder("foo").StartSpan();
+            var span = tracer.CreateSpan("foo");
             using (tracer.WithSpan(span))
             {
                 Assert.Same(span, tracer.CurrentSpan);
