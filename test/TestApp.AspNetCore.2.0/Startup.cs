@@ -14,15 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Collector.AspNetCore;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Sampler;
-using System.Net.Http;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Trace.Configuration;
 
 namespace TestApp.AspNetCore._2._0
@@ -41,16 +38,12 @@ namespace TestApp.AspNetCore._2._0
         {
             services.AddMvc();
             services.AddSingleton<HttpClient>();
-            services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new CallbackMiddleware.CallbackMiddlewareImpl());
-            services.AddSingleton<ITracer>(p =>
-            {
-                var factory = p.GetService<TracerFactory>();
-                return factory.GetTracer("null");
-            });
+            services.AddSingleton(
+                new CallbackMiddleware.CallbackMiddlewareImpl());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ITracer tracer)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, TracerFactory factory)
         {
             if (env.IsDevelopment())
             {

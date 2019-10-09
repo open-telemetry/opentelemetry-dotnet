@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class TracerFactoryBase
     {
-        private static readonly ProxyTracer Proxy = new ProxyTracer();
+        private static ProxyTracer proxy = new ProxyTracer();
         private static bool isInitialized;
         private static TracerFactoryBase defaultFactory = new TracerFactoryBase();
 
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
                 // resource assignment is not possible for libraries that cache tracer before SDK is initialized.
                 // SDK (Tracer) must be at least partially initialized before any collection starts to capture resources.
                 // we might be able to work this around with events.
-                Proxy.UpdateTracer(defaultFactory.GetTracer(null));
+                proxy.UpdateTracer(defaultFactory.GetTracer(null));
 
                 defaultFactory = value;
                 isInitialized = true;
@@ -58,7 +58,15 @@ namespace OpenTelemetry.Trace
         /// <returns>Tracer for the given name and version information.</returns>
         public virtual ITracer GetTracer(string name, string version = null)
         {
-            return isInitialized ? defaultFactory.GetTracer(name, version) : Proxy;
+            return isInitialized ? defaultFactory.GetTracer(name, version) : proxy;
+        }
+
+        // for tests
+        internal void Reset()
+        {
+            proxy = new ProxyTracer();
+            isInitialized = false;
+            defaultFactory = new TracerFactoryBase();
         }
     }
 }

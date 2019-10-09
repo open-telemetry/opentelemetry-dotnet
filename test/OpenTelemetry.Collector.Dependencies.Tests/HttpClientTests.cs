@@ -97,7 +97,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             tc.url = NormalizeValues(tc.url, host, port);
 
             using (serverLifeTime)
-            using (new HttpClientCollector(new HttpClientCollectorOptions(), tracer))
+
+            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
             {
                 try
                 {

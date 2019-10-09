@@ -66,7 +66,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using (new HttpClientCollector(new HttpClientCollectorOptions(), tracer))
+            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);
@@ -90,6 +90,42 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         }
 
         [Fact]
+        public async Task HttpDependenciesCollector_AddViaFactory_HttpCollector_CollectsSpans()
+        {
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+
+            using (TracerFactory.Create(b => b
+                .SetProcessor(_ => spanProcessor.Object)
+                .AddCollector(t => new HttpClientCollector(t))))
+            {
+                using (var c = new HttpClient())
+                {
+                    await c.GetAsync(url);
+                }
+            }
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.IsType<Span>(spanProcessor.Invocations[1].Arguments[0]);
+        }
+
+        [Fact]
+        public async Task HttpDependenciesCollector_AddViaFactory_DependencyCollector_CollectsSpans()
+        {
+            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+
+            using (TracerFactory.Create(b => b
+                .SetProcessor(_ => spanProcessor.Object)
+                .AddDependencyCollector()))
+            {
+                using (var c = new HttpClient())
+                {
+                    await c.GetAsync(url);
+                }
+            }
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.IsType<Span>(spanProcessor.Invocations[1].Arguments[0]);
+        }
+
+        [Fact]
         public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
@@ -105,7 +141,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (new HttpClientCollector(new HttpClientCollectorOptions(), tracer))
+            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);
@@ -127,7 +163,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                                                                                         arg1 is HttpRequestMessage request &&
                                                                                         request.RequestUri.OriginalString.Contains(url)));
 
-            using (new HttpClientCollector(options, tracer))
+            using (new HttpClientCollector(tracer, options))
             using (var c = new HttpClient())
             {
                 await c.GetAsync(url);
@@ -148,7 +184,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             var options = new HttpClientCollectorOptions();
 
-            using (new HttpClientCollector(options, tracer))
+            using (new HttpClientCollector(tracer, options))
             using (var c = new HttpClient())
             using (var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100)))
             {

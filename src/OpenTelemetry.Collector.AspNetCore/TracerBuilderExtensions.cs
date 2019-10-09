@@ -14,10 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Collector.AspNetCore
 {
+    using System;
     using OpenTelemetry.Trace.Configuration;
 
     public static class TracerBuilderExtensions
@@ -32,7 +31,7 @@ namespace OpenTelemetry.Collector.AspNetCore
             var options = new AspNetCoreCollectorOptions();
             configure?.Invoke(options);
 
-            builder.AddCollector(t => new AspNetCoreCollector(options, t));
+            builder.AddCollector(t => new AspNetCoreCollector(t, options));
             return builder;
         }
     }

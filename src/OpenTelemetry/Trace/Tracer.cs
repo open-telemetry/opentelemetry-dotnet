@@ -30,6 +30,7 @@ namespace OpenTelemetry.Trace
     internal sealed class Tracer : ITracer
     {
         private readonly SpanProcessor spanProcessor;
+        private readonly TracerConfiguration tracerConfiguration;
 
         static Tracer()
         {
@@ -48,7 +49,7 @@ namespace OpenTelemetry.Trace
         internal Tracer(SpanProcessor spanProcessor, TracerConfiguration tracerConfiguration, IBinaryFormat binaryFormat, ITextFormat textFormat, Resource libraryResource)
         {
             this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
-            this.ActiveTracerConfiguration = tracerConfiguration ?? throw new ArgumentNullException(nameof(tracerConfiguration));
+            this.tracerConfiguration = tracerConfiguration ?? throw new ArgumentNullException(nameof(tracerConfiguration));
             this.BinaryFormat = binaryFormat ?? throw new ArgumentNullException(nameof(binaryFormat));
             this.TextFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
             this.LibraryResource = libraryResource ?? throw new ArgumentNullException(nameof(libraryResource));
@@ -64,8 +65,6 @@ namespace OpenTelemetry.Trace
 
         /// <inheritdoc/>
         public ITextFormat TextFormat { get; }
-
-        public TracerConfiguration ActiveTracerConfiguration { get; set; }
 
         public IDisposable WithSpan(ISpan span)
         {
@@ -90,7 +89,7 @@ namespace OpenTelemetry.Trace
                 startTimestamp = PreciseTimestamp.GetUtcNow();
             }
 
-            return Span.CreateRoot(operationName, kind, startTimestamp, links, this.ActiveTracerConfiguration, this.spanProcessor, this.LibraryResource);
+            return Span.CreateRoot(operationName, kind, startTimestamp, links, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
@@ -117,7 +116,7 @@ namespace OpenTelemetry.Trace
                 startTimestamp = PreciseTimestamp.GetUtcNow();
             }
 
-            return Span.CreateFromParentSpan(operationName, parent, kind, startTimestamp, links, this.ActiveTracerConfiguration,
+            return Span.CreateFromParentSpan(operationName, parent, kind, startTimestamp, links, this.tracerConfiguration,
                     this.spanProcessor, this.LibraryResource);
         }
 
@@ -136,11 +135,11 @@ namespace OpenTelemetry.Trace
 
             if (parent != null)
             {
-                return Span.CreateFromParentContext(operationName, parent, kind, startTimestamp, links, this.ActiveTracerConfiguration,
+                return Span.CreateFromParentContext(operationName, parent, kind, startTimestamp, links, this.tracerConfiguration,
                     this.spanProcessor, this.LibraryResource);
             }
 
-            return Span.CreateRoot(operationName, kind, startTimestamp, links, this.ActiveTracerConfiguration,
+            return Span.CreateRoot(operationName, kind, startTimestamp, links, this.tracerConfiguration,
                 this.spanProcessor, this.LibraryResource);
         }
 
@@ -168,7 +167,7 @@ namespace OpenTelemetry.Trace
                     "Current Activity is not running: it has not been started or has been stopped");
             }
 
-            return Span.CreateFromActivity(operationName, activity, kind, links, this.ActiveTracerConfiguration, this.spanProcessor, this.LibraryResource);
+            return Span.CreateFromActivity(operationName, activity, kind, links, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
     }
 }

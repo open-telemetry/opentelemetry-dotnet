@@ -23,7 +23,7 @@ namespace OpenTelemetry.Collector.Dependencies
     {
         public static TracerBuilder AddDependencyCollector(this TracerBuilder builder)
         {
-            return AddDependencyCollector(builder, options => { });
+            return AddDependencyCollector(builder, null);
         }
 
         public static TracerBuilder AddDependencyCollector(this TracerBuilder builder, Action<HttpClientCollectorOptions> configure)
@@ -32,8 +32,8 @@ namespace OpenTelemetry.Collector.Dependencies
             builder.AddCollector((t) => new AzurePipelineCollector(t));
 
             var options = new HttpClientCollectorOptions();
-            configure(options);
-            builder.AddCollector((t) => new HttpClientCollector(options, t));
+            configure?.Invoke(options);
+            builder.AddCollector((t) => new HttpClientCollector(t, options));
             return builder;
         }
     }

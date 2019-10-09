@@ -23,98 +23,20 @@ namespace OpenTelemetry.Trace.Configuration
     using OpenTelemetry.Trace.Export;
     using OpenTelemetry.Trace.Sampler;
 
-    public class TracerBuilder
-    { internal TracerConfiguration TracerConfigurationOptions { get; private set; }
-        internal ISampler Sampler { get; private set; }
-        internal Func<SpanExporter, SpanProcessor> ProcessorFactory { get; private set; }
-        internal SpanExporter SpanExporter;
-        internal IBinaryFormat BinaryFormat { get; private set; }
-        internal ITextFormat TextFormat { get; private set; }
-
-        internal List<CollectorFactory> CollectorFactories { get; private set; }
-
-        internal TracerBuilder()
-        {
-        }
-
-        public TracerBuilder SetSampler(ISampler sampler)
-        {
-            this.Sampler = sampler;
-            return this;
-        }
-
-        public TracerBuilder SetExporter(SpanExporter spanExporter)
-        {
-            this.SpanExporter = spanExporter;
-            return this;
-        }
-
-        public TracerBuilder SetProcessor(Func<SpanExporter, SpanProcessor> processorFactory)
-        {
-            this.ProcessorFactory = processorFactory;
-            return this;
-        }
-
-        public TracerBuilder AddCollector<TCollector>(
-            Func<ITracer, TCollector> collectorFactory)
-            where TCollector : class
-        {
-            if (this.CollectorFactories == null)
-            {
-                this.CollectorFactories = new List<CollectorFactory>();
-            }
-
-            this.CollectorFactories.Add(new CollectorFactory(typeof(TCollector).Name, null /*TODO*/, collectorFactory));
-
-            return this;
-        }
-
-        public TracerBuilder SetTracerOptions(TracerConfiguration options)
-        {
-            this.TracerConfigurationOptions = options;
-            return this;
-        }
-
-        public TracerBuilder SetTextFormat(ITextFormat textFormat)
-        {
-            this.TextFormat = textFormat;
-            return this;
-        }
-
-        public TracerBuilder SetBinaryFormat(IBinaryFormat binaryFormat)
-        {
-            this.BinaryFormat = binaryFormat;
-            return this;
-        }
-
-        internal readonly struct CollectorFactory
-        {
-            public readonly string Name;
-            public readonly string Version;
-            public readonly Func<ITracer, object> Factory;
-
-            internal CollectorFactory(string name, string version, Func<ITracer, object> factory)
-            {
-                this.Name = name;
-                this.Version = version;
-                this.Factory = factory;
-            }
-        }
-    }
-
     public class TracerFactory : TracerFactoryBase, IDisposable
     {
         private readonly object lck = new object();
         private readonly Dictionary<TracerRegistryKey, ITracer> tracerRegistry = new Dictionary<TracerRegistryKey, ITracer>();
         private readonly List<IDisposable> disposables = new List<IDisposable>();
 
-        private ITracer defaultTracer;
         private readonly ISampler sampler;
         private readonly TracerConfiguration configurationOptions;
         private readonly SpanExporter exporter;
         private readonly SpanProcessor spanProcessor;
         private readonly IBinaryFormat binaryFormat;
         private readonly ITextFormat textFormat;
+
+        private ITracer defaultTracer;
 
         private TracerFactory(TracerBuilder builder)
         {
