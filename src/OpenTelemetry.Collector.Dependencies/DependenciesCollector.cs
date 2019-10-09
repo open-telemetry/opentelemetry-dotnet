@@ -18,56 +18,30 @@ namespace OpenTelemetry.Collector.Dependencies
 {
     using System;
     using System.Collections.Generic;
-    using OpenTelemetry.Collector.Dependencies.Implementation;
     using OpenTelemetry.Trace;
 
-    /// <summary>
-    /// Dependencies collector.
-    /// </summary>
     public class DependenciesCollector : IDisposable
     {
-        private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
+        private readonly List<IDisposable> collectors = new List<IDisposable>();
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DependenciesCollector"/> class.
-        /// </summary>
-        /// <param name="options">Configuration options for dependencies collector.</param>
-        /// <param name="tracerFactory">TracerFactory to create a Tracer to record traced with.</param>
-        public DependenciesCollector(DependenciesCollectorOptions options, ITracerFactory tracerFactory)
+        public DependenciesCollector(HttpClientCollectorOptions options, ITracerFactory tracerFactory)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-                new Dictionary<string, Func<ITracerFactory, ListenerHandler>>()
-                {
-                    {
-                        "HttpHandlerDiagnosticListener", (tf) =>
-                        {
-                            var tracer = tf.GetTracer("OpenTelemetry.Collector.Dependencies.HttpHandlerDiagnosticListener");
-                            return new HttpHandlerDiagnosticListener(tracer);
-                        }
-                    },
-                    {
-                        "Azure.Clients", (tf) =>
-                        {
-                            var tracer = tf.GetTracer("OpenTelemetry.Collector.Dependencies.Azure.Clients");
-                            return new AzureSdkDiagnosticListener("Azure.Clients", tracer);
-                        }
-                    },
-                    {
-                        "Azure.Pipeline", (tf) =>
-                        {
-                            var tracer = tf.GetTracer("OpenTelemetry.Collector.Dependencies.Azure.Pipeline");
-                            return new AzureSdkDiagnosticListener("Azure.Pipeline", tracer);
-                        }
-                    },
-                },
-                tracerFactory,
-                options.EventFilter);
-            this.diagnosticSourceSubscriber.Subscribe();
+            var assemblyVersion = typeof(DependenciesCollector).Assembly.GetName().Version;
+            var httpClientListener = new HttpClientCollector(options, tracerFactory.GetTracer(nameof(HttpClientCollector), "semver:" + assemblyVersion));
+            var azureClientsListener = new AzureClientsCollector(tracerFactory.GetTracer(nameof(AzureClientsCollector), "semver:" + assemblyVersion));
+            var azurePipelineListener = new AzurePipelineCollector(tracerFactory.GetTracer(nameof(AzurePipelineCollector), "semver:" + assemblyVersion));
+
+            this.collectors.Add(httpClientListener);
+            this.collectors.Add(azureClientsListener);
+            this.collectors.Add(azurePipelineListener);
         }
 
         public void Dispose()
         {
-            this.diagnosticSourceSubscriber?.Dispose();
+            foreach (var collector in this.collectors)
+            {
+                collector.Dispose();
+            }
         }
     }
 }

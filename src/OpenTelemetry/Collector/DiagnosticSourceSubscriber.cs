@@ -17,50 +17,41 @@
 namespace OpenTelemetry.Collector
 {
     using System;
-    using System.Collections.Concurrent;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading;
-    using OpenTelemetry.Trace;
 
     public class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
     {
-        private readonly Dictionary<string, Func<ITracerFactory, ListenerHandler>> handlers;
-        private readonly ITracerFactory tracerFactory;
+        private readonly ListenerHandler handler;
         private readonly Func<string, object, object, bool> filter;
-        private ConcurrentDictionary<string, DiagnosticSourceListener> subscriptions;
         private long disposed;
-        private IDisposable subscription;
+        private IDisposable allSourcesSubscription;
+        private IDisposable listenerSubscription;
 
-        public DiagnosticSourceSubscriber(Dictionary<string, Func<ITracerFactory, ListenerHandler>> handlers, ITracerFactory tracerFactory, Func<string, object, object, bool> filter)
+        public DiagnosticSourceSubscriber(ListenerHandler handler, Func<string, object, object, bool> filter)
         {
-            this.subscriptions = new ConcurrentDictionary<string, DiagnosticSourceListener>();
-            this.handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
-            this.tracerFactory = tracerFactory ?? throw new ArgumentNullException(nameof(tracerFactory));
+            this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
             this.filter = filter;
         }
 
         public void Subscribe()
         {
-            if (this.subscription == null)
+            if (this.allSourcesSubscription == null)
             {
-                this.subscription = DiagnosticListener.AllListeners.Subscribe(this);
+                this.allSourcesSubscription = DiagnosticListener.AllListeners.Subscribe(this);
             }
         }
 
         public void OnNext(DiagnosticListener value)
         {
-            if ((Interlocked.Read(ref this.disposed) == 0) && this.subscriptions != null)
+            if ((Interlocked.Read(ref this.disposed) == 0) && 
+                this.listenerSubscription == null && 
+                this.handler.SourceName == value.Name)
             {
-                if (this.handlers.ContainsKey(value.Name))
-                {
-                    this.subscriptions?.GetOrAdd(value.Name, name =>
-                    {
-                        var dl = new DiagnosticSourceListener(this.handlers[value.Name](this.tracerFactory));
-                        dl.Subscription = this.filter == null ? value.Subscribe(dl) : value.Subscribe(dl, this.filter);
-                        return dl;
-                    });
-                }
+                var listener = new DiagnosticSourceListener(this.handler);
+                this.listenerSubscription = this.filter == null ?
+                    value.Subscribe(listener) : 
+                    value.Subscribe(listener, this.filter);
             }
         }
 
@@ -79,20 +70,11 @@ namespace OpenTelemetry.Collector
                 return;
             }
 
-            var subsCopy = this.subscriptions;
-            this.subscriptions = null;
+            this.listenerSubscription?.Dispose();
+            this.listenerSubscription = null;
 
-            var keys = subsCopy.Keys;
-            foreach (var key in keys)
-            {
-                if (subsCopy.TryRemove(key, out var sub))
-                {
-                    sub?.Dispose();
-                }
-            }
-
-            this.subscription?.Dispose();
-            this.subscription = null;
+            this.allSourcesSubscription?.Dispose();
+            this.allSourcesSubscription = null;
         }
     }
 }

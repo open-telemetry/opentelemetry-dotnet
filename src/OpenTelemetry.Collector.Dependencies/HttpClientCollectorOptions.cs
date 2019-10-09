@@ -1,4 +1,4 @@
-﻿// <copyright file="DependenciesCollectorOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpClientCollectorOptions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,21 +22,21 @@ namespace OpenTelemetry.Collector.Dependencies
     /// <summary>
     /// Options for dependencies collector.
     /// </summary>
-    public class DependenciesCollectorOptions
+    public class HttpClientCollectorOptions
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="DependenciesCollectorOptions"/> class.
+        /// Initializes a new instance of the <see cref="HttpClientCollectorOptions"/> class.
         /// </summary>
-        public DependenciesCollectorOptions()
+        public HttpClientCollectorOptions()
         {
             this.EventFilter = DefaultFilter;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DependenciesCollectorOptions"/> class.
+        /// Initializes a new instance of the <see cref="HttpClientCollectorOptions"/> class.
         /// </summary>
         /// <param name="eventFilter">Custom filtering predicate for DiagnosticSource events, if any.</param>
-        internal DependenciesCollectorOptions(Func<string, object, object, bool> eventFilter)
+        internal HttpClientCollectorOptions(Func<string, object, object, bool> eventFilter)
         {
             // TODO This API is unusable and likely to change, let's not expose it for now.
 
