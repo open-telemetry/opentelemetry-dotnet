@@ -59,6 +59,11 @@ namespace OpenTelemetry.Trace
             return BlankSpan.Instance;
         }
 
+        public ISpan CreateRootSpan(string operationName, SpanKind kind)
+        {
+            return BlankSpan.Instance;
+        }
+
         public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
         {
             return BlankSpan.Instance;
@@ -70,6 +75,11 @@ namespace OpenTelemetry.Trace
         }
 
         public ISpan CreateSpan(string operationName)
+        {
+            return BlankSpan.Instance;
+        }
+
+        public ISpan CreateSpan(string operationName, SpanKind kind)
         {
             return BlankSpan.Instance;
         }

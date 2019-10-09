@@ -54,9 +54,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public bool HasEnded { get; }
-
-        /// <inheritdoc />
         public void UpdateName(string name)
         {
             if (name == null)

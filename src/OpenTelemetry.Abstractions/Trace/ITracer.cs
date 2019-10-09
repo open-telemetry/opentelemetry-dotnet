@@ -63,6 +63,14 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="operationName">Span name.</param>
         /// <param name="kind">Kind.</param>
+        /// <returns>Span instance.</returns>
+        ISpan CreateRootSpan(string operationName, SpanKind kind);
+
+        /// <summary>
+        /// Creates root span.
+        /// </summary>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="kind">Kind.</param>
         /// <param name="startTimestamp">Start timestamp.</param>
         /// <returns>Span instance.</returns>
         ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp);
@@ -83,6 +91,14 @@ namespace OpenTelemetry.Trace
         /// <param name="operationName">Span name.</param>
         /// <returns>Span instance.</returns>
         ISpan CreateSpan(string operationName);
+
+        /// <summary>
+        /// Creates span. If there is active current span, it becomes a parent for returned span.
+        /// </summary>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="kind">Kind.</param>
+        /// <returns>Span instance.</returns>
+        ISpan CreateSpan(string operationName, SpanKind kind);
 
         /// <summary>
         /// Creates span. If there is active current span, it becomes a parent for returned span.

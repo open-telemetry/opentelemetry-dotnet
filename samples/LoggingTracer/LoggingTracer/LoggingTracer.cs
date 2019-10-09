@@ -39,6 +39,12 @@ namespace LoggingTracer
             return new LoggingSpan(operationName, SpanKind.Internal);
         }
 
+        public ISpan CreateRootSpan(string operationName, SpanKind kind)
+        {
+            Logger.Log($"{prefix}.CreateRootSpan({operationName} {kind})");
+            return new LoggingSpan(operationName, kind);
+        }
+
         public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
         {
             Logger.Log($"{prefix}.CreateRootSpan({operationName}, {kind}, {startTimestamp:o})");
@@ -55,6 +61,12 @@ namespace LoggingTracer
         {
             Logger.Log($"{prefix}.CreateSpan({operationName})");
             return new LoggingSpan(operationName, SpanKind.Internal);
+        }
+
+        public ISpan CreateSpan(string operationName, SpanKind kind)
+        {
+            Logger.Log($"{prefix}.CreateSpan({operationName} {kind})");
+            return new LoggingSpan(operationName, kind);
         }
 
         public ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)

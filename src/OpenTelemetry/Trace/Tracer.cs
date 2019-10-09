@@ -94,6 +94,11 @@ namespace OpenTelemetry.Trace
             return this.CreateRootSpan(operationName, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
         }
 
+        public ISpan CreateRootSpan(string operationName, SpanKind kind)
+        {
+            return this.CreateRootSpan(operationName, kind, PreciseTimestamp.GetUtcNow(), null);
+        }
+
         public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
         {
             return this.CreateRootSpan(operationName, kind, startTimestamp, null);
@@ -112,13 +117,18 @@ namespace OpenTelemetry.Trace
                 startTimestamp = PreciseTimestamp.GetUtcNow();
             }
 
-            return new Span(operationName, kind, startTimestamp, links, this.ActiveTracerConfiguration, this.spanProcessor, this.LibraryResource);
+            return Span.CreateRoot(operationName, kind, startTimestamp, links, this.ActiveTracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
         public ISpan CreateSpan(string operationName)
         {
             return this.CreateSpan(operationName, this.CurrentSpan, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+        }
+
+        public ISpan CreateSpan(string operationName, SpanKind kind)
+        {
+            return this.CreateSpan(operationName, this.CurrentSpan, kind, PreciseTimestamp.GetUtcNow(), null);
         }
 
         /// <inheritdoc/>
@@ -147,7 +157,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp)
         {
-            return this.CreateSpan(operationName, parent, SpanKind.Internal, startTimestamp, null);
+            return this.CreateSpan(operationName, parent, kind, startTimestamp, null);
         }
 
         /// <inheritdoc/>
@@ -168,14 +178,8 @@ namespace OpenTelemetry.Trace
                 startTimestamp = PreciseTimestamp.GetUtcNow();
             }
 
-            if (parent != null)
-            {
-                return new Span(operationName, parent, kind, startTimestamp, links, this.ActiveTracerConfiguration,
+            return Span.CreateFromParentSpan(operationName, parent, kind, startTimestamp, links, this.ActiveTracerConfiguration,
                     this.spanProcessor, this.LibraryResource);
-            }
-
-            return new Span(operationName, kind, startTimestamp, links, this.ActiveTracerConfiguration,
-                this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
@@ -211,11 +215,11 @@ namespace OpenTelemetry.Trace
 
             if (parent != null)
             {
-                return new Span(operationName, parent, kind, startTimestamp, links, this.ActiveTracerConfiguration,
+                return Span.CreateFromParentContext(operationName, parent, kind, startTimestamp, links, this.ActiveTracerConfiguration,
                     this.spanProcessor, this.LibraryResource);
             }
 
-            return new Span(operationName, kind, startTimestamp, links, this.ActiveTracerConfiguration,
+            return Span.CreateRoot(operationName, kind, startTimestamp, links, this.ActiveTracerConfiguration,
                 this.spanProcessor, this.LibraryResource);
         }
 
@@ -255,7 +259,7 @@ namespace OpenTelemetry.Trace
                     "Current Activity is not running: it has not been started or has been stopped");
             }
 
-            return new Span(operationName, activity, kind, links, this.ActiveTracerConfiguration, this.spanProcessor, this.LibraryResource);
+            return Span.CreateFromActivity(operationName, activity, kind, links, this.ActiveTracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
     }
 }

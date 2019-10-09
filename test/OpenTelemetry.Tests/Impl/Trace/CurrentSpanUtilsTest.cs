@@ -70,7 +70,6 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Same(span, CurrentSpanUtils.CurrentSpan);
             }
 
-            Assert.Equal(stopSpan & recordEvents, span.HasEnded);
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             Assert.Null(Activity.Current);
         }
@@ -122,8 +121,6 @@ namespace OpenTelemetry.Trace.Test
 
             parentScope.Dispose();
 
-            Assert.Equal(stopSpan & recordEvents, parentSpan.HasEnded);
-            Assert.False(childSpan.HasEnded);
             Assert.Same(childSpan, CurrentSpanUtils.CurrentSpan);
             Assert.Equal(childActivity, Activity.Current);
         }
@@ -146,9 +143,6 @@ namespace OpenTelemetry.Trace.Test
             var childScope = CurrentSpanUtils.WithSpan(childSpan, stopSpan);
 
             childScope.Dispose();
-
-            Assert.Equal(stopSpan & recordEvents, childSpan.HasEnded);
-            Assert.False(parentSpan.HasEnded);
 
             Assert.Same(parentSpan, CurrentSpanUtils.CurrentSpan);
             Assert.Equal(parentActivity, Activity.Current);
@@ -206,7 +200,6 @@ namespace OpenTelemetry.Trace.Test
                 var anotherActivity = new Activity("foo").Start();
             }
 
-            Assert.Equal(stopSpan & recordEvents, span.HasEnded);
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             Assert.NotSame(span.Activity, Activity.Current);
             Assert.NotNull(Activity.Current);
