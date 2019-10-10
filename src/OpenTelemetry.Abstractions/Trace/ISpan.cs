@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Updates the <see cref="ISpan"/> name.
         ///
-        /// If used, this will override the name provided via CreateSpan method overload.
+        /// If used, this will override the name provided via StartSpan method overload.
         /// Upon this update, any sampling behavior based on <see cref="ISpan"/> name will depend on the
         /// implementation.
         /// </summary>

@@ -66,7 +66,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 return;
             }
 
-            var span = this.Tracer.CreateSpanFromActivity(request.RequestUri.AbsolutePath, Activity.Current, SpanKind.Client);
+            var span = this.Tracer.StartSpanFromActivity(request.RequestUri.AbsolutePath, Activity.Current, SpanKind.Client);
 
             this.Tracer.WithSpan(span);
 

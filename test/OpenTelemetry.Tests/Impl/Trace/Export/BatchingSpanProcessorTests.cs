@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (Span)tracer.CreateSpan(spanName, context);
+            var span = (Span)tracer.StartSpan(spanName, context);
             span.End();
             return span;
         }
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-            var span = (Span)tracer.CreateSpan(spanName, context);
+            var span = (Span)tracer.StartSpan(spanName, context);
             span.End();
             return span;
         }
@@ -227,7 +227,7 @@ namespace OpenTelemetry.Trace.Export.Test
             {
                 var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
                 var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-                var span = (Span)tracer.CreateSpan("foo", context);
+                var span = (Span)tracer.StartSpan("foo", context);
 
                 // does not block
                 var sw = Stopwatch.StartNew();

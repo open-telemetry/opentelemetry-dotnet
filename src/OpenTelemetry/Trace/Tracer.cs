@@ -89,23 +89,23 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan CreateRootSpan(string operationName)
+        public ISpan StartRootSpan(string operationName)
         {
-            return this.CreateRootSpan(operationName, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+            return this.StartRootSpan(operationName, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
         }
 
-        public ISpan CreateRootSpan(string operationName, SpanKind kind)
+        public ISpan StartRootSpan(string operationName, SpanKind kind)
         {
-            return this.CreateRootSpan(operationName, kind, PreciseTimestamp.GetUtcNow(), null);
+            return this.StartRootSpan(operationName, kind, PreciseTimestamp.GetUtcNow(), null);
         }
 
-        public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
+        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
         {
-            return this.CreateRootSpan(operationName, kind, startTimestamp, null);
+            return this.StartRootSpan(operationName, kind, startTimestamp, null);
         }
 
         /// <inheritdoc/>
-        public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
         {
             if (operationName == null)
             {
@@ -121,47 +121,47 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan CreateSpan(string operationName)
+        public ISpan StartSpan(string operationName)
         {
-            return this.CreateSpan(operationName, this.CurrentSpan, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+            return this.StartSpan(operationName, this.CurrentSpan, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
         }
 
-        public ISpan CreateSpan(string operationName, SpanKind kind)
+        public ISpan StartSpan(string operationName, SpanKind kind)
         {
-            return this.CreateSpan(operationName, this.CurrentSpan, kind, PreciseTimestamp.GetUtcNow(), null);
-        }
-
-        /// <inheritdoc/>
-        public ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
-        {
-            return this.CreateSpan(operationName, null, kind, startTimestamp, null);
-        }
-
-        public ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
-        {
-            return this.CreateSpan(operationName, null, kind, startTimestamp, links);
+            return this.StartSpan(operationName, this.CurrentSpan, kind, PreciseTimestamp.GetUtcNow(), null);
         }
 
         /// <inheritdoc/>
-        public ISpan CreateSpan(string operationName, ISpan parent)
+        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
         {
-            return this.CreateSpan(operationName, parent, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+            return this.StartSpan(operationName, null, kind, startTimestamp, null);
+        }
+
+        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            return this.StartSpan(operationName, null, kind, startTimestamp, links);
         }
 
         /// <inheritdoc/>
-        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind)
+        public ISpan StartSpan(string operationName, ISpan parent)
         {
-            return this.CreateSpan(operationName, parent, kind, PreciseTimestamp.GetUtcNow(), null);
+            return this.StartSpan(operationName, parent, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
         }
 
         /// <inheritdoc/>
-        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp)
+        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind)
         {
-            return this.CreateSpan(operationName, parent, kind, startTimestamp, null);
+            return this.StartSpan(operationName, parent, kind, PreciseTimestamp.GetUtcNow(), null);
         }
 
         /// <inheritdoc/>
-        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp)
+        {
+            return this.StartSpan(operationName, parent, kind, startTimestamp, null);
+        }
+
+        /// <inheritdoc/>
+        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
         {
             if (operationName == null)
             {
@@ -183,25 +183,25 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan CreateSpan(string operationName, in SpanContext parent)
+        public ISpan StartSpan(string operationName, in SpanContext parent)
         {
-            return this.CreateSpan(operationName, parent, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+            return this.StartSpan(operationName, parent, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
         }
         
         /// <inheritdoc/>
-        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind)
+        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind)
         {
-            return this.CreateSpan(operationName, parent, kind, PreciseTimestamp.GetUtcNow(), null);
+            return this.StartSpan(operationName, parent, kind, PreciseTimestamp.GetUtcNow(), null);
         }
 
         /// <inheritdoc/>
-        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp)
+        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp)
         {
-            return this.CreateSpan(operationName, parent, kind, startTimestamp, null);
+            return this.StartSpan(operationName, parent, kind, startTimestamp, null);
         }
 
         /// <inheritdoc/>
-        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
         {
             if (operationName == null)
             {
@@ -224,19 +224,19 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan CreateSpanFromActivity(string operationName, Activity activity)
+        public ISpan StartSpanFromActivity(string operationName, Activity activity)
         {
-            return this.CreateSpanFromActivity(operationName, activity, SpanKind.Internal, null);
+            return this.StartSpanFromActivity(operationName, activity, SpanKind.Internal, null);
         }
 
         /// <inheritdoc/>
-        public ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind)
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind)
         {
-            return this.CreateSpanFromActivity(operationName, activity, kind, null);
+            return this.StartSpanFromActivity(operationName, activity, kind, null);
         }
 
         /// <inheritdoc/>
-        public ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
             if (operationName == null)
             {
@@ -245,7 +245,7 @@ namespace OpenTelemetry.Trace
 
             if (activity == null)
             {
-                throw new ArgumentException("Current Activity cannot be null");
+                throw new ArgumentNullException(nameof(activity));
             }
 
             if (activity.IdFormat != ActivityIdFormat.W3C)

@@ -53,10 +53,10 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="operationName">Span name.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateRootSpan(string operationName);
+        ISpan StartRootSpan(string operationName);
 
         // TODO: add sampling hints
-        // ISpan CreateRootSpan(string operationName, SpanKind kind, SamplingHint samplingHint, IEnumerable<Link> links);
+        // ISpan StartRootSpan(string operationName, SpanKind kind, SamplingHint samplingHint, IEnumerable<Link> links);
 
         /// <summary>
         /// Creates root span.
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Trace
         /// <param name="operationName">Span name.</param>
         /// <param name="kind">Kind.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateRootSpan(string operationName, SpanKind kind);
+        ISpan StartRootSpan(string operationName, SpanKind kind);
 
         /// <summary>
         /// Creates root span.
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="startTimestamp">Start timestamp.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp);
+        ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp);
 
         /// <summary>
         /// Creates root span.
@@ -83,14 +83,14 @@ namespace OpenTelemetry.Trace
         /// <param name="startTimestamp">Start timestamp.</param>
         /// <param name="links">Links collection.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links);
+        ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links);
 
         /// <summary>
         /// Creates span. If there is active current span, it becomes a parent for returned span.
         /// </summary>
         /// <param name="operationName">Span name.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateSpan(string operationName);
+        ISpan StartSpan(string operationName);
 
         /// <summary>
         /// Creates span. If there is active current span, it becomes a parent for returned span.
@@ -98,7 +98,7 @@ namespace OpenTelemetry.Trace
         /// <param name="operationName">Span name.</param>
         /// <param name="kind">Kind.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateSpan(string operationName, SpanKind kind);
+        ISpan StartSpan(string operationName, SpanKind kind);
 
         /// <summary>
         /// Creates span. If there is active current span, it becomes a parent for returned span.
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="startTimestamp">Start timestamp.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp);
+        ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp);
 
         /// <summary>
         /// Creates span. If there is active current span, it becomes a parent for returned span.
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Trace
         /// <param name="startTimestamp">Start timestamp.</param>
         /// <param name="links">Links collection.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links);
+        ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links);
 
         /// <summary>
         /// Creates span.
@@ -125,45 +125,7 @@ namespace OpenTelemetry.Trace
         /// <param name="operationName">Span name.</param>
         /// <param name="parent">Parent for new span.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateSpan(string operationName, ISpan parent);
-
-        /// <summary>
-        /// Creates span.
-        /// </summary>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="parent">Parent for new span.</param>
-        /// <param name="kind">Kind.</param>
-        /// <returns>Span instance.</returns>
-        ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind);
-
-        /// <summary>
-        /// Creates span.
-        /// </summary>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="parent">Parent for new span.</param>
-        /// <param name="kind">Kind.</param>
-        /// <param name="startTimestamp">Start timestamp.</param>
-        /// <returns>Span instance.</returns>
-        ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp);
-
-        /// <summary>
-        /// Creates span.
-        /// </summary>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="parent">Parent for new span.</param>
-        /// <param name="kind">Kind.</param>
-        /// <param name="startTimestamp">Start timestamp.</param>
-        /// <param name="links">Links collection.</param>
-        /// <returns>Span instance.</returns>
-        ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links);
-
-        /// <summary>
-        /// Creates span.
-        /// </summary>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="parent">Parent for new span.</param>
-        /// <returns>Span instance.</returns>
-        ISpan CreateSpan(string operationName, in SpanContext parent);
+        ISpan StartSpan(string operationName, ISpan parent);
 
         /// <summary>
         /// Creates span.
@@ -172,7 +134,7 @@ namespace OpenTelemetry.Trace
         /// <param name="parent">Parent for new span.</param>
         /// <param name="kind">Kind.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind);
+        ISpan StartSpan(string operationName, ISpan parent, SpanKind kind);
 
         /// <summary>
         /// Creates span.
@@ -182,7 +144,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="startTimestamp">Start timestamp.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp);
+        ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp);
 
         /// <summary>
         /// Creates span.
@@ -193,10 +155,48 @@ namespace OpenTelemetry.Trace
         /// <param name="startTimestamp">Start timestamp.</param>
         /// <param name="links">Links collection.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links);
+        ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links);
+
+        /// <summary>
+        /// Creates span.
+        /// </summary>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="parent">Parent for new span.</param>
+        /// <returns>Span instance.</returns>
+        ISpan StartSpan(string operationName, in SpanContext parent);
+
+        /// <summary>
+        /// Creates span.
+        /// </summary>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="parent">Parent for new span.</param>
+        /// <param name="kind">Kind.</param>
+        /// <returns>Span instance.</returns>
+        ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind);
+
+        /// <summary>
+        /// Creates span.
+        /// </summary>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="parent">Parent for new span.</param>
+        /// <param name="kind">Kind.</param>
+        /// <param name="startTimestamp">Start timestamp.</param>
+        /// <returns>Span instance.</returns>
+        ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp);
+
+        /// <summary>
+        /// Creates span.
+        /// </summary>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="parent">Parent for new span.</param>
+        /// <param name="kind">Kind.</param>
+        /// <param name="startTimestamp">Start timestamp.</param>
+        /// <param name="links">Links collection.</param>
+        /// <returns>Span instance.</returns>
+        ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links);
 
         // TODO: add sampling hints
-        /*ISpan CreateSpan(string operationName, SpanKind kind, SamplingHint samplingHint, DateTimeOffset startTimestamp,
+        /*ISpan StartSpan(string operationName, SpanKind kind, SamplingHint samplingHint, DateTimeOffset startTimestamp,
             IEnumerable<Link> links = null);*/
 
         /// <summary>
@@ -205,7 +205,7 @@ namespace OpenTelemetry.Trace
         /// <param name="operationName">Span name.</param>
         /// <param name="activity">Activity instance to create span from.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateSpanFromActivity(string operationName, Activity activity);
+        ISpan StartSpanFromActivity(string operationName, Activity activity);
 
         /// <summary>
         /// Creates span from auto-collected System.Diagnostics.Activity.
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Trace
         /// <param name="activity">Activity instance to create span from.</param>
         /// <param name="kind">Kind.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind);
+        ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind);
 
         /// <summary>
         /// Creates span from auto-collected System.Diagnostics.Activity.
@@ -224,9 +224,9 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="links">Links collection.</param>
         /// <returns>Span instance.</returns>
-        ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links);
+        ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links);
 
         // TODO add sampling hints
-        // ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind, SamplingHint samplingHint, IEnumerable<Link> links = null);
+        // ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, SamplingHint samplingHint, IEnumerable<Link> links = null);
     }
 }

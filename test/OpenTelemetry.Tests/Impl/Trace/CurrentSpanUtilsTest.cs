@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace.Test
         public void WithSpan_CloseDetaches(bool stopSpan, bool recordEvents)
         {
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
-            var span = (Span)tracer.CreateSpan("foo", spanContext);
+            var span = (Span)tracer.StartSpan("foo", spanContext);
 
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             using (CurrentSpanUtils.WithSpan(span, stopSpan))
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Trace.Test
             }
 
             activity.Start();
-            var span = (Span)tracer.CreateSpanFromActivity("foo", activity);
+            var span = (Span)tracer.StartSpanFromActivity("foo", activity);
 
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             using (CurrentSpanUtils.WithSpan(span, stopSpan))
@@ -110,10 +110,10 @@ namespace OpenTelemetry.Trace.Test
         {
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
 
-            var parentSpan = tracer.CreateSpan("parent", spanContext);
+            var parentSpan = tracer.StartSpan("parent", spanContext);
             var parentScope = CurrentSpanUtils.WithSpan(parentSpan, stopSpan);
 
-            var childSpan = (Span)tracer.CreateSpan("child", parentSpan);
+            var childSpan = (Span)tracer.StartSpan("child", parentSpan);
             var childActivity = childSpan.Activity;
             Assert.Same(parentSpan, CurrentSpanUtils.CurrentSpan);
 
@@ -134,11 +134,11 @@ namespace OpenTelemetry.Trace.Test
         {
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
 
-            var parentSpan = (Span)tracer.CreateSpan("parent", spanContext);
+            var parentSpan = (Span)tracer.StartSpan("parent", spanContext);
             var parentActivity = parentSpan.Activity;
             var parentScope = CurrentSpanUtils.WithSpan(parentSpan, stopSpan);
 
-            var childSpan = (Span)tracer.CreateSpan("child");
+            var childSpan = (Span)tracer.StartSpan("child");
             Assert.Same(parentSpan, CurrentSpanUtils.CurrentSpan);
             var childScope = CurrentSpanUtils.WithSpan(childSpan, stopSpan);
 
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void WithSpan_SameActivityCreateScopeTwice()
         {
-            var span = (Span)tracer.CreateRootSpan("foo");
+            var span = (Span)tracer.StartRootSpan("foo");
 
             using(CurrentSpanUtils.WithSpan(span, true))
             using(CurrentSpanUtils.WithSpan(span, true))
@@ -167,7 +167,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void WithSpan_NullActivity()
         {
-            var span = (Span)tracer.CreateRootSpan("foo");
+            var span = (Span)tracer.StartRootSpan("foo");
 
             span.Activity.Stop();
 
@@ -190,7 +190,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
 
-            var span = (Span)tracer.CreateSpan("foo", spanContext);
+            var span = (Span)tracer.StartSpan("foo", spanContext);
             Assert.Same(BlankSpan.Instance, CurrentSpanUtils.CurrentSpan);
             using (CurrentSpanUtils.WithSpan(span, stopSpan))
             {

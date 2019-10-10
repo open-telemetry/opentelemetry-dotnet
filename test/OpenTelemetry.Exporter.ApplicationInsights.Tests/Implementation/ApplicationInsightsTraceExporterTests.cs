@@ -1644,8 +1644,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             var tracer = Tracing.TracerFactory.GetTracer("");
             var span = parentSpanId == default ? 
-                tracer.CreateRootSpan(name, kind, startTimestamp) :
-                tracer.CreateSpan(name, new SpanContext(traceId, parentSpanId, traceOptions, tracestate), kind, startTimestamp);
+                tracer.StartRootSpan(name, kind, startTimestamp) :
+                tracer.StartSpan(name, new SpanContext(traceId, parentSpanId, traceOptions, tracestate), kind, startTimestamp);
 
             if (status.IsValid)
             {

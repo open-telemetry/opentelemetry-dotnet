@@ -60,7 +60,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
             if (this.hostingSupportsW3C)
             {
-                span = this.Tracer.CreateSpanFromActivity(path, Activity.Current, SpanKind.Server);
+                span = this.Tracer.StartSpanFromActivity(path, Activity.Current, SpanKind.Server);
             }
             else
             {
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                     request,
                     (r, name) => r.Headers[name]);
 
-                span = this.Tracer.CreateSpan(path, ctx, SpanKind.Server);
+                span = this.Tracer.StartSpan(path, ctx, SpanKind.Server);
             }
 
             this.Tracer.WithSpan(span);

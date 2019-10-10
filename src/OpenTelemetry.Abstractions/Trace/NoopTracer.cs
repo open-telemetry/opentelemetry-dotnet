@@ -54,98 +54,223 @@ namespace OpenTelemetry.Trace
 
         // TODO validation
 
-        public ISpan CreateRootSpan(string operationName)
+        public ISpan StartRootSpan(string operationName)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateRootSpan(string operationName, SpanKind kind)
+        public ISpan StartRootSpan(string operationName, SpanKind kind)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
+        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpan(string operationName)
+        public ISpan StartSpan(string operationName)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpan(string operationName, SpanKind kind)
+        public ISpan StartSpan(string operationName, SpanKind kind)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
+        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpan(string operationName, ISpan parent)
+        public ISpan StartSpan(string operationName, ISpan parent)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind)
+        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp)
+        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpan(string operationName, in SpanContext parent)
+        public ISpan StartSpan(string operationName, in SpanContext parent)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind)
+        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp)
+        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpanFromActivity(string operationName, Activity activity)
+        public ISpan StartSpanFromActivity(string operationName, Activity activity)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (activity == null)
+            {
+                throw new ArgumentNullException(nameof(activity));
+            }
+
+            if (activity.IdFormat != ActivityIdFormat.W3C)
+            {
+                throw new ArgumentException("Current Activity is not in W3C format");
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind)
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (activity == null)
+            {
+                throw new ArgumentNullException(nameof(activity));
+            }
+
+            if (activity.IdFormat != ActivityIdFormat.W3C)
+            {
+                throw new ArgumentException("Current Activity is not in W3C format");
+            }
+
             return BlankSpan.Instance;
         }
 
-        public ISpan CreateSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (activity == null)
+            {
+                throw new ArgumentNullException(nameof(activity));
+            }
+
+            if (activity.IdFormat != ActivityIdFormat.W3C)
+            {
+                throw new ArgumentException("Current Activity is not in W3C format");
+            }
+
             return BlankSpan.Instance;
         }
 
