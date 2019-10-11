@@ -14,9 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Concurrent;
 using Microsoft.ApplicationInsights.Channel;
-using Microsoft.ApplicationInsights.Extensibility;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
@@ -44,6 +44,13 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             tracer.SpanBuilder("foo").StartSpan().End();
 
             Assert.Single(sentItems);
+        }
+
+        [Fact]
+        public void UseApplicationInsights_BadArgs()
+        {
+            Assert.Throws<ArgumentNullException>(() => TracerBuilderExtensions.UseApplicationInsights(null, _ => { }));
+            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.UseApplicationInsights(null)));
         }
     }
 }

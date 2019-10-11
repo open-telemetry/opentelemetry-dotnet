@@ -37,6 +37,8 @@ namespace OpenTelemetry.Trace
                     throw new InvalidOperationException("Default factory is already set");
                 }
 
+                defaultFactory = value ?? throw new ArgumentNullException(nameof(value));
+
                 // some libraries might have already used and cached ProxyTracer.
                 // let's update it to real one and forward all calls.
 
@@ -45,7 +47,6 @@ namespace OpenTelemetry.Trace
                 // we might be able to work this around with events.
                 proxy.UpdateTracer(defaultFactory.GetTracer(null));
 
-                defaultFactory = value;
                 isInitialized = true;
             }
         }

@@ -30,6 +30,12 @@ namespace OpenTelemetry.Trace.Test
     public class TracerFactoryTest
     {
         [Fact]
+        public void CreateFactory_NullBuilder()
+        {
+            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(null));
+        }
+
+        [Fact]
         public void CreateFactory_DefaultBuilder()
         {
             var tracerFactory = TracerFactory.Create(b => { });

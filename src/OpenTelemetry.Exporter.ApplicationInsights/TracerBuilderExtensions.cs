@@ -24,6 +24,16 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
     {
         public static TracerBuilder UseApplicationInsights(this TracerBuilder builder, Action<TelemetryConfiguration> configure)
         {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
             var configuration = new TelemetryConfiguration();
             configure(configuration);
             return builder.SetExporter(new ApplicationInsightsTraceExporter(configuration));

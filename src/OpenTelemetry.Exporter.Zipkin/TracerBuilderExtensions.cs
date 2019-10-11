@@ -23,8 +23,18 @@ namespace OpenTelemetry.Exporter.Zipkin
     {
         public static TracerBuilder UseZipkin(this TracerBuilder builder, Action<ZipkinTraceExporterOptions> configure)
         {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
             var options = new ZipkinTraceExporterOptions();
-            configure?.Invoke(options);
+            configure(options);
             return builder.SetExporter(new ZipkinTraceExporter(options));
         }
     }

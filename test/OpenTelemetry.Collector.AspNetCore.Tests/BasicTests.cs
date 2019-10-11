@@ -48,6 +48,13 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         }
 
         [Fact]
+        public void AddRequestCollector_BadArgs()
+        {
+            Assert.Throws<ArgumentNullException>(() => TracerBuilderExtensions.AddRequestCollector(null));
+            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddRequestCollector(null)));
+        }
+
+        [Fact]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());

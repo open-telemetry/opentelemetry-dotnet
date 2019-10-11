@@ -47,6 +47,14 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             this.url = $"http://{host}:{port}/";
         }
 
+
+        [Fact]
+        public void AddDependencyCollector_BadArgs()
+        {
+            Assert.Throws<ArgumentNullException>(() => TracerBuilderExtensions.AddDependencyCollector(null));
+            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddDependencyCollector(null)));
+        }
+
         [Fact]
         public async Task HttpDependenciesCollectorInjectsHeadersAsync()
         {

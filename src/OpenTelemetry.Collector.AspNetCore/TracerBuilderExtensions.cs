@@ -23,16 +23,30 @@ namespace OpenTelemetry.Collector.AspNetCore
     {
         public static TracerBuilder AddRequestCollector(this TracerBuilder builder)
         {
-            return builder.AddRequestCollector(null);
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            return builder.AddCollector(t => new AspNetCoreCollector(t));
         }
 
         public static TracerBuilder AddRequestCollector(this TracerBuilder builder, Action<AspNetCoreCollectorOptions> configure)
         {
-            var options = new AspNetCoreCollectorOptions();
-            configure?.Invoke(options);
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
 
-            builder.AddCollector(t => new AspNetCoreCollector(t, options));
-            return builder;
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            var options = new AspNetCoreCollectorOptions();
+            configure(options);
+
+            return builder.AddCollector(t => new AspNetCoreCollector(t, options));
         }
     }
 }

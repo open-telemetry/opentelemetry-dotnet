@@ -40,6 +40,11 @@ namespace OpenTelemetry.Trace.Configuration
 
         private TracerFactory(TracerBuilder builder)
         {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
             this.sampler = builder.Sampler ?? Samplers.AlwaysSample;
 
             // TODO separate sampler from options

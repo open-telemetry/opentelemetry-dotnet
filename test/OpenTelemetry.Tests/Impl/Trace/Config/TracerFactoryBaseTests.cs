@@ -52,6 +52,12 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
         }
 
         [Fact]
+        public void TraceFactory_SetDefaultNull()
+        {
+            Assert.Throws<ArgumentNullException>(() => TracerFactoryBase.Default = null);
+        }
+
+        [Fact]
         public void TraceFactory_SetDefaultTwice_Throws()
         {
             TracerFactoryBase.Default = TracerFactory.Create(b => { });
