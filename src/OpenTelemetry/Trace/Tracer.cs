@@ -89,22 +89,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan StartRootSpan(string operationName)
-        {
-            return this.StartRootSpan(operationName, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
-        }
-
-        public ISpan StartRootSpan(string operationName, SpanKind kind)
-        {
-            return this.StartRootSpan(operationName, kind, PreciseTimestamp.GetUtcNow(), null);
-        }
-
-        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
-        {
-            return this.StartRootSpan(operationName, kind, startTimestamp, null);
-        }
-
-        /// <inheritdoc/>
         public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
         {
             if (operationName == null)
@@ -121,43 +105,9 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpan(string operationName)
-        {
-            return this.StartSpan(operationName, this.CurrentSpan, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
-        }
-
-        public ISpan StartSpan(string operationName, SpanKind kind)
-        {
-            return this.StartSpan(operationName, this.CurrentSpan, kind, PreciseTimestamp.GetUtcNow(), null);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
-        {
-            return this.StartSpan(operationName, null, kind, startTimestamp, null);
-        }
-
         public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
         {
             return this.StartSpan(operationName, null, kind, startTimestamp, links);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, ISpan parent)
-        {
-            return this.StartSpan(operationName, parent, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind)
-        {
-            return this.StartSpan(operationName, parent, kind, PreciseTimestamp.GetUtcNow(), null);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp)
-        {
-            return this.StartSpan(operationName, parent, kind, startTimestamp, null);
         }
 
         /// <inheritdoc/>
@@ -183,24 +133,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, in SpanContext parent)
-        {
-            return this.StartSpan(operationName, parent, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
-        }
-        
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind)
-        {
-            return this.StartSpan(operationName, parent, kind, PreciseTimestamp.GetUtcNow(), null);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp)
-        {
-            return this.StartSpan(operationName, parent, kind, startTimestamp, null);
-        }
-
-        /// <inheritdoc/>
         public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
         {
             if (operationName == null)
@@ -221,18 +153,6 @@ namespace OpenTelemetry.Trace
 
             return Span.CreateRoot(operationName, kind, startTimestamp, links, this.ActiveTracerConfiguration,
                 this.spanProcessor, this.LibraryResource);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpanFromActivity(string operationName, Activity activity)
-        {
-            return this.StartSpanFromActivity(operationName, activity, SpanKind.Internal, null);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind)
-        {
-            return this.StartSpanFromActivity(operationName, activity, kind, null);
         }
 
         /// <inheritdoc/>

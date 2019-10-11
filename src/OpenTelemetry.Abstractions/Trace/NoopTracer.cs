@@ -52,69 +52,7 @@ namespace OpenTelemetry.Trace
             return NoopScope;
         }
 
-        // TODO validation
-
-        public ISpan StartRootSpan(string operationName)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return BlankSpan.Instance;
-        }
-
-        public ISpan StartRootSpan(string operationName, SpanKind kind)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return BlankSpan.Instance;
-        }
-
-        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return BlankSpan.Instance;
-        }
-
         public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return BlankSpan.Instance;
-        }
-
-        public ISpan StartSpan(string operationName)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return BlankSpan.Instance;
-        }
-
-        public ISpan StartSpan(string operationName, SpanKind kind)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return BlankSpan.Instance;
-        }
-
-        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp)
         {
             if (operationName == null)
             {
@@ -134,67 +72,7 @@ namespace OpenTelemetry.Trace
             return BlankSpan.Instance;
         }
 
-        public ISpan StartSpan(string operationName, ISpan parent)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return BlankSpan.Instance;
-        }
-
-        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return BlankSpan.Instance;
-        }
-
-        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return BlankSpan.Instance;
-        }
-
         public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return BlankSpan.Instance;
-        }
-
-        public ISpan StartSpan(string operationName, in SpanContext parent)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return BlankSpan.Instance;
-        }
-
-        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return BlankSpan.Instance;
-        }
-
-        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp)
         {
             if (operationName == null)
             {
