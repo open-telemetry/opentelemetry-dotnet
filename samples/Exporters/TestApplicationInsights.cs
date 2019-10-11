@@ -60,16 +60,12 @@ namespace Samples
 
             var tracerFactory = new TracerFactory(new BatchingSpanProcessor(exporter));
             var tracer = tracerFactory.GetTracer(string.Empty);
-            var spanBuilder = tracer
-                .SpanBuilder("incoming request")
-                .SetRecordEvents(true)
-                .SetSampler(Samplers.AlwaysSample);
 
             Stats.ViewManager.RegisterView(VideoSizeView);
 
             using (tagContextBuilder.BuildScoped())
             {
-                using (tracer.WithSpan(spanBuilder.StartSpan()))
+                using (tracer.WithSpan(tracer.StartSpan("incoming request")))
                 {
                     tracer.CurrentSpan.AddEvent("Start processing video.");
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));

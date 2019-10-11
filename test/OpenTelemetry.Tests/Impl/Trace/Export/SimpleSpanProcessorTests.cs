@@ -43,42 +43,22 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private Span CreateSampledEndedSpan(string spanName)
         {
-            var sampledActivity = new Activity(spanName);
-            sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            sampledActivity.SetIdFormat(ActivityIdFormat.W3C);
-            sampledActivity.Start();
-            var span =
-                new Span(
-                    sampledActivity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    default,
-                    Resource.Empty);
+            var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
+            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var span = (Span)tracer.StartSpan(spanName, context);
             span.End();
             return span;
         }
 
         private Span CreateNotSampledEndedSpan(string spanName)
         {
-            var notSampledActivity = new Activity(spanName);
-            notSampledActivity.SetIdFormat(ActivityIdFormat.W3C);
-            notSampledActivity.Start();
-            var span =
-                new Span(
-                    notSampledActivity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    false,
-                    Resource.Empty);
+            var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
+            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+            var span = (Span)tracer.StartSpan(spanName, context);
             span.End();
             return span;
         }
+
 
         [Fact]
         public void ThrowsOnNullExporter()
@@ -92,20 +72,9 @@ namespace OpenTelemetry.Trace.Export.Test
             spanExporter = new TestExporter(_ => throw new ArgumentException("123"));
             spanProcessor = new SimpleSpanProcessor(spanExporter);
 
-            var sampledActivity = new Activity("foo");
-            sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            sampledActivity.SetIdFormat(ActivityIdFormat.W3C);
-            sampledActivity.Start();
-            var span =
-                new Span(
-                    sampledActivity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    default,
-                    Resource.Empty);
+            var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
+            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var span = (Span)tracer.StartSpan("foo", context);
 
             // does not throw
             span.End();
@@ -115,23 +84,10 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ProcessorDoesNotBlockOnExporter()
         {
             spanExporter = new TestExporter( async _ => await Task.Delay(500));
-
             spanProcessor = new SimpleSpanProcessor(spanExporter);
-
-            var sampledActivity = new Activity("foo");
-            sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            sampledActivity.SetIdFormat(ActivityIdFormat.W3C);
-            sampledActivity.Start();
-            var span =
-                new Span(
-                    sampledActivity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    default,
-                    Resource.Empty);
+            var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
+            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var span = (Span)tracer.StartSpan("foo", context);
 
             // does not block
             var sw = Stopwatch.StartNew();

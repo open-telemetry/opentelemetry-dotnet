@@ -43,7 +43,7 @@ namespace OpenTelemetry.Collector.Dependencies
         public override void OnStartActivity(Activity current, object valueValue)
         {
             var operationName = current.OperationName;
-            SpanKind spanKind = SpanKind.Internal;
+            var spanKind = SpanKind.Internal;
 
             foreach (var keyValuePair in current.Tags)
             {
@@ -62,21 +62,17 @@ namespace OpenTelemetry.Collector.Dependencies
                 }
             }
 
-            var spanBuilder = this.Tracer.SpanBuilder(operationName)
-                .SetCreateChild(false);
-
-            var links = LinksPropertyFetcher.Fetch(valueValue) as IEnumerable<Activity> ?? Array.Empty<Activity>();
-
-            foreach (var link in links)
+            List<Link> links = null;
+            if (LinksPropertyFetcher.Fetch(valueValue) is IEnumerable<Activity> activityLinks)
             {
-                spanBuilder.AddLink(new Link(new SpanContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
+                links = new List<Link>();
+                foreach (var link in activityLinks)
+                {
+                    links.Add(new Link(new SpanContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
+                }
             }
 
-            spanBuilder.SetSpanKind(spanKind);
-
-            var span = spanBuilder.StartSpan();
-
-            span.Status = Status.Ok;
+            var span = this.Tracer.StartSpanFromActivity(operationName, Activity.Current, spanKind, links);
 
             this.Tracer.WithSpan(span);
         }

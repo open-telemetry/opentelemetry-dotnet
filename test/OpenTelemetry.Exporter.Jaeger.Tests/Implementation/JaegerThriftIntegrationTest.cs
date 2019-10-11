@@ -14,18 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-using System.Reflection;
-
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading;
+    using System.Reflection;
     using OpenTelemetry.Exporter.Jaeger.Implementation;
-    using OpenTelemetry.Resources;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
     using Thrift.Protocols;
     using Xunit;
     using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
@@ -100,14 +97,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     ActivityTraceFlags.Recorded));
 
             var span = (Span)Tracing.TracerFactory.GetTracer("")
-                .SpanBuilder("Name")
-                .SetParent(new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded))
-                .SetSpanKind(SpanKind.Client)
-                .SetStartTimestamp(startTimestamp)
-                .StartSpan();
+                .StartSpan("Name",  new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded), SpanKind.Client, startTimestamp);
 
-            var spanIdField = typeof(Activity).GetField("_spanId", BindingFlags.Instance | BindingFlags.NonPublic);
-            spanIdField.SetValue(span.Activity, spanId); ;
+            var spanContextSetter = typeof(Span).GetMethod("set_Context", BindingFlags.Instance | BindingFlags.NonPublic);
+            spanContextSetter.Invoke(span, new []{ new SpanContext(traceId, ActivitySpanId.CreateFromString(spanId.AsSpan()), ActivityTraceFlags.Recorded) });
 
             span.AddLink(link);
 

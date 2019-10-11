@@ -102,7 +102,10 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
                 {
                     var span = entry.Key;
                     ProfilingSession session;
-                    if (span.HasEnded)
+
+                    // TODO expose end timestamp on ISpan (needed anyway) and use it as indicator that span has ended.
+                    // after that, Redis can depend on abstractions
+                    if (span is Span spanImpl && spanImpl.EndTimestamp != default)
                     {
                         this.cache.TryRemove(span, out session);
                     }

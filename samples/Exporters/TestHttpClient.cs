@@ -42,7 +42,7 @@ namespace Samples
             var tracer = tracerFactory.GetTracer(nameof(HttpClientCollector));
             using (new HttpClientCollector(new HttpClientCollectorOptions(), tracer))
             {
-                using (tracer.WithSpan(tracer.SpanBuilder("incoming request").SetSampler(Samplers.AlwaysSample).StartSpan()))
+                using (tracer.WithSpan(tracer.StartSpan("incoming request")))
                 {
                     using (var client = new HttpClient())
                     {

@@ -23,7 +23,7 @@ namespace Samples
             var tracerFactory = new TracerFactory(new BatchingSpanProcessor(exporter));
             var tracer = tracerFactory.GetTracer(string.Empty);
             
-            using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))
+            using (tracer.WithSpan(tracer.StartSpan("Main")))
             {
                 tracer.CurrentSpan.SetAttribute("custom-attribute", 55);
                 Console.WriteLine("About to do a busy work");
@@ -40,7 +40,7 @@ namespace Samples
         
         private static void DoWork(int i, ITracer tracer)
         {
-            using (tracer.WithSpan(tracer.SpanBuilder("DoWork").StartSpan()))
+            using (tracer.WithSpan(tracer.StartSpan("DoWork")))
             {
                 // Simulate some work.
                 var span = tracer.CurrentSpan;

@@ -17,6 +17,8 @@
 namespace OpenTelemetry.Trace
 {
     using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Context.Propagation;
 
     /// <summary>
@@ -46,11 +48,59 @@ namespace OpenTelemetry.Trace
         /// <returns>Disposable object to control span to current context association.</returns>
         IDisposable WithSpan(ISpan span);
 
+        // TODO: add sampling hints
+        // TODO: add lazy links
+
         /// <summary>
-        /// Gets the span builder for the span with the given name.
+        /// Creates root span.
         /// </summary>
-        /// <param name="spanName">Span name.</param>
-        /// <returns>Span builder for the span with the given name.</returns>
-        ISpanBuilder SpanBuilder(string spanName);
+        /// <param name="operationName">Span name.</param>
+        /// <param name="kind">Kind.</param>
+        /// <param name="startTimestamp">Start timestamp.</param>
+        /// <param name="links">Links collection.</param>
+        /// <returns>Span instance.</returns>
+        ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links);
+
+        /// <summary>
+        /// Creates span. If there is active current span, it becomes a parent for returned span.
+        /// </summary>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="kind">Kind.</param>
+        /// <param name="startTimestamp">Start timestamp.</param>
+        /// <param name="links">Links collection.</param>
+        /// <returns>Span instance.</returns>
+        ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links);
+
+        /// <summary>
+        /// Creates span.
+        /// </summary>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="parent">Parent for new span.</param>
+        /// <param name="kind">Kind.</param>
+        /// <param name="startTimestamp">Start timestamp.</param>
+        /// <param name="links">Links collection.</param>
+        /// <returns>Span instance.</returns>
+        ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links);
+
+        /// <summary>
+        /// Creates span.
+        /// </summary>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="parent">Parent for new span.</param>
+        /// <param name="kind">Kind.</param>
+        /// <param name="startTimestamp">Start timestamp.</param>
+        /// <param name="links">Links collection.</param>
+        /// <returns>Span instance.</returns>
+        ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links);
+
+        /// <summary>
+        /// Creates span from auto-collected System.Diagnostics.Activity.
+        /// </summary>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="activity">Activity instance to create span from.</param>
+        /// <param name="kind">Kind.</param>
+        /// <param name="links">Links collection.</param>
+        /// <returns>Span instance.</returns>
+        ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links);
     }
 }

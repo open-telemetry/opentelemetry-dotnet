@@ -44,15 +44,9 @@ namespace OpenTelemetry.Trace
         Status Status { set; }
 
         /// <summary>
-        /// Gets a value indicating whether this span was already stopped.
-        /// </summary>
-        /// <remarks>This method is not compliant with the specification. https://github.com/open-telemetry/opentelemetry-specification/issues/55 .</remarks>
-        bool HasEnded { get; }
-
-        /// <summary>
         /// Updates the <see cref="ISpan"/> name.
         ///
-        /// If used, this will override the name provided via <see cref="ISpanBuilder"/>.
+        /// If used, this will override the name provided via StartSpan method overload.
         /// Upon this update, any sampling behavior based on <see cref="ISpan"/> name will depend on the
         /// implementation.
         /// </summary>

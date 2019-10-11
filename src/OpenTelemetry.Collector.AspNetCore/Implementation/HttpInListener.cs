@@ -53,30 +53,24 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
             var request = context.Request;
 
-            SpanContext ctx = null;
-            if (!this.hostingSupportsW3C)
-            {
-                ctx = this.Tracer.TextFormat.Extract<HttpRequest>(
-                    request,
-                    (r, name) => r.Headers[name]);
-            }
-
             // see the spec https://github.com/open-telemetry/OpenTelemetry-specs/blob/master/trace/HTTP.md
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
-            var spanBuilder = this.Tracer.SpanBuilder(path)
-                .SetSpanKind(SpanKind.Server);
+            ISpan span = null;
 
             if (this.hostingSupportsW3C)
             {
-                spanBuilder.SetCreateChild(false);
+                span = this.Tracer.StartSpanFromActivity(path, Activity.Current, SpanKind.Server);
             }
             else
             {
-                spanBuilder.SetParent(ctx);
+                var ctx = this.Tracer.TextFormat.Extract<HttpRequest>(
+                    request,
+                    (r, name) => r.Headers[name]);
+
+                span = this.Tracer.StartSpan(path, ctx, SpanKind.Server);
             }
 
-            var span = spanBuilder.StartSpan();
             this.Tracer.WithSpan(span);
 
             if (span.IsRecordingEvents)

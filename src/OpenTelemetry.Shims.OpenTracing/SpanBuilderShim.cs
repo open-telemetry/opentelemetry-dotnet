@@ -154,55 +154,38 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpan Start()
         {
-            var builder = this.tracer.SpanBuilder(this.spanName);
+            Trace.ISpan span = null;
 
-            if (this.parentSpan == null && (this.parentSpanContext == null || !this.parentSpanContext.IsValid) && (this.tracer.CurrentSpan == null || this.tracer.CurrentSpan == Trace.BlankSpan.Instance))
+            // If specified, this takes precedence.
+            if (this.ignoreActiveSpan)
+            {
+                span = this.tracer.StartRootSpan(this.spanName, this.spanKind, this.explicitStartTime ?? default, this.links);
+            }
+            else if (this.parentSpan != null)
+            {
+                span = this.tracer.StartSpan(this.spanName, this.parentSpan, this.spanKind, this.explicitStartTime ?? default, this.links);
+            }
+            else if (this.parentSpanContext != null && this.parentSpanContext.IsValid)
+            {
+                span = this.tracer.StartSpan(this.spanName, this.parentSpanContext, this.spanKind, this.explicitStartTime ?? default, this.links);
+            }
+            else if (this.parentSpan == null && (this.parentSpanContext == null || !this.parentSpanContext.IsValid) && (this.tracer.CurrentSpan == null || this.tracer.CurrentSpan == Trace.BlankSpan.Instance))
             {
                 // We need to know if we should inherit an existing Activity-based context or start a new one.
                 if (System.Diagnostics.Activity.Current != null && System.Diagnostics.Activity.Current.IdFormat == System.Diagnostics.ActivityIdFormat.W3C)
                 {
-                    var operationName = System.Diagnostics.Activity.Current.OperationName;
-                    if (this.rootOperationNamesForActivityBasedAutoCollectors.Contains(operationName))
+                    var currentActivity = System.Diagnostics.Activity.Current;
+                    if (this.rootOperationNamesForActivityBasedAutoCollectors.Contains(currentActivity.OperationName))
                     {
-                        builder.SetCreateChild(false);
-                    }
-                    else
-                    {
-                        builder.SetCreateChild(true);
+                        span = this.tracer.StartSpanFromActivity(this.spanName, currentActivity, this.spanKind, this.links);
                     }
                 }
             }
-            else if (this.parentSpan != null)
+            
+            if (span == null)
             {
-                builder.SetParent(this.parentSpan);
+                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.explicitStartTime ?? default, this.links);
             }
-            else if (this.parentSpanContext != null && this.parentSpanContext.IsValid)
-            {
-                builder.SetParent(this.parentSpanContext);
-            }
-
-            // If specified, this takes precedence and will clear a previously set parent.
-            if (this.ignoreActiveSpan)
-            {
-                builder.SetNoParent();
-            }
-
-            if (this.explicitStartTime.HasValue)
-            {
-                builder.SetStartTimestamp(this.explicitStartTime.Value);
-            }
-
-            foreach (var link in this.links)
-            {
-                builder.AddLink(link);
-            }
-
-            if (this.spanKind != default)
-            {
-                builder.SetSpanKind(this.spanKind);
-            }
-
-            var span = builder.StartSpan();
 
             foreach (var kvp in this.attributes)
             {

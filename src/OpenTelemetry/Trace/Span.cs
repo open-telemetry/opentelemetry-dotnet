@@ -20,6 +20,7 @@ namespace OpenTelemetry.Trace
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+    using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Resources;
     using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
@@ -33,7 +34,6 @@ namespace OpenTelemetry.Trace
     {
         private readonly TracerConfiguration tracerConfiguration;
         private readonly SpanProcessor spanProcessor;
-        private readonly Lazy<SpanContext> spanContext;
         private readonly DateTimeOffset startTimestamp;
         private readonly object @lock = new object();
         private EvictingQueue<KeyValuePair<string, object>> attributes;
@@ -41,41 +41,63 @@ namespace OpenTelemetry.Trace
         private EvictingQueue<Link> links;
         private Status status;
         private DateTimeOffset endTimestamp;
+        private bool hasEnded;
 
-        internal Span(
-                Activity activity,
-                IEnumerable<KeyValuePair<string, string>> tracestate,
-                SpanKind spanKind,
-                TracerConfiguration tracerConfiguration,
-                SpanProcessor spanProcessor,
-                DateTimeOffset startTimestamp,
-                bool ownsActivity,
-                Resource libraryResource)
+        private Span(
+            string name,
+            SpanContext parentSpanContext,
+            ActivityAndTracestate activityAndTracestate,
+            bool ownsActivity,
+            SpanKind spanKind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<Link> links,
+            TracerConfiguration tracerConfiguration,
+            SpanProcessor spanProcessor,
+            Resource libraryResource)
         {
-            this.Activity = activity;
-            this.spanContext = new Lazy<SpanContext>(() => new SpanContext(
-                this.Activity.TraceId, 
-                this.Activity.SpanId, 
-                this.Activity.ActivityTraceFlags, 
-                tracestate));
-            this.Name = this.Activity.OperationName;
+            this.Name = name;
+            this.LibraryResource = libraryResource;
+            this.startTimestamp = startTimestamp;
             this.tracerConfiguration = tracerConfiguration;
             this.spanProcessor = spanProcessor;
             this.Kind = spanKind;
             this.OwnsActivity = ownsActivity;
-            this.IsRecordingEvents = this.Activity.Recorded;
-            this.startTimestamp = startTimestamp;
-            this.LibraryResource = libraryResource;
+            this.Activity = activityAndTracestate.Activity;
+
+            var tracestate = activityAndTracestate.Tracestate;
+
+            this.IsRecordingEvents = MakeSamplingDecision(
+                parentSpanContext,
+                name,
+                null,
+                links, // we'll enumerate again, but double enumeration over small collection is cheaper than allocation
+                this.Activity.TraceId,
+                this.Activity.SpanId,
+                this.tracerConfiguration);
 
             if (this.IsRecordingEvents)
             {
+                this.Activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                
+                if (links != null)
+                {
+                    foreach (var link in links)
+                    {
+                        this.AddLink(link);
+                    }
+                }
+
                 this.spanProcessor.OnStart(this);
             }
+            else
+            {
+                this.Activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
+            }
+
+            this.Context = new SpanContext(this.Activity.TraceId, this.Activity.SpanId, this.Activity.ActivityTraceFlags, tracestate);
         }
 
-        public Activity Activity { get; }
-
-        public SpanContext Context => this.spanContext.Value;
+        public SpanContext Context { get; private set; }
 
         public string Name { get; private set; }
 
@@ -99,20 +121,12 @@ namespace OpenTelemetry.Trace
 
                 lock (this.@lock)
                 {
-                    if (this.HasEnded)
-                    {
-                        // logger.log(Level.FINE, "Calling setStatus() on an ended Span.");
-                        return;
-                    }
-
                     this.status = value.IsValid ? value : throw new ArgumentException(nameof(value));
                 }
             }
         }
 
         public ActivitySpanId ParentSpanId => this.Activity.ParentSpanId;
-
-        public bool HasEnded { get; private set; }
 
         /// <inheritdoc/>
         public bool IsRecordingEvents { get; }
@@ -153,7 +167,9 @@ namespace OpenTelemetry.Trace
         public Resource LibraryResource { get; }
         
         internal bool OwnsActivity { get; }
-        
+
+        internal Activity Activity { get; }
+
         private Status StatusWithDefault => this.status.IsValid ? this.status : Status.Ok;
 
         /// <inheritdoc />
@@ -170,19 +186,13 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(keyValuePair));
             }
 
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecordingEvents || this.hasEnded)
             {
                 return;
             }
 
             lock (this.@lock)
             {
-                if (this.HasEnded)
-                {
-                    // logger.log(Level.FINE, "Calling putAttributes() on an ended Span.");
-                    return;
-                }
-
                 if (this.attributes == null)
                 {
                     this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
@@ -200,19 +210,13 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(name));
             }
 
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecordingEvents || this.hasEnded)
             {
                 return;
             }
 
             lock (this.@lock)
             {
-                if (this.HasEnded)
-                {
-                    // logger.log(Level.FINE, "Calling AddEvent() on an ended Span.");
-                    return;
-                }
-
                 if (this.events == null)
                 {
                     this.events =
@@ -236,14 +240,14 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(eventAttributes));
             }
 
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecordingEvents || this.hasEnded)
             {
                 return;
             }
 
             lock (this.@lock)
             {
-                if (this.HasEnded)
+                if (this.hasEnded)
                 {
                     // logger.log(Level.FINE, "Calling AddEvent() on an ended Span.");
                     return;
@@ -274,7 +278,7 @@ namespace OpenTelemetry.Trace
 
             lock (this.@lock)
             {
-                if (this.HasEnded)
+                if (this.hasEnded)
                 {
                     // logger.log(Level.FINE, "Calling AddEvent() on an ended Span.");
                     return;
@@ -305,7 +309,7 @@ namespace OpenTelemetry.Trace
 
             lock (this.@lock)
             {
-                if (this.HasEnded)
+                if (this.hasEnded)
                 {
                     // logger.log(Level.FINE, "Calling addLink() on an ended Span.");
                     return;
@@ -328,6 +332,12 @@ namespace OpenTelemetry.Trace
 
         public void End(DateTimeOffset endTimestamp)
         {
+            if (this.hasEnded)
+            {
+                return;
+            }
+
+            this.hasEnded = true;
             this.endTimestamp = endTimestamp;
             if (this.OwnsActivity && this.Activity == Activity.Current)
             {
@@ -338,17 +348,6 @@ namespace OpenTelemetry.Trace
             if (!this.IsRecordingEvents)
             {
                 return;
-            }
-
-            lock (this.@lock)
-            {
-                if (this.HasEnded)
-                {
-                    // logger.log(Level.FINE, "Calling end() on an ended Span.");
-                    return;
-                }
-
-                this.HasEnded = true;
             }
 
             this.spanProcessor.OnEnd(this);
@@ -421,6 +420,290 @@ namespace OpenTelemetry.Trace
             }
 
             this.SetAttribute(new KeyValuePair<string, object>(key, value));
+        }
+
+        internal static Span CreateFromParentSpan(
+            string name,
+            ISpan parentSpan,
+            SpanKind spanKind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<Link> links,
+            TracerConfiguration tracerConfiguration,
+            SpanProcessor spanProcessor,
+            Resource libraryResource)
+        {
+            if (parentSpan.Context.IsValid)
+            {
+                return new Span(
+                    name,
+                    parentSpan.Context,
+                    FromParentSpan(name, parentSpan),
+                    true,
+                    spanKind,
+                    startTimestamp,
+                    links,
+                    tracerConfiguration,
+                    spanProcessor,
+                    libraryResource);
+            }
+
+            var currentActivity = Activity.Current;
+            if (currentActivity == null)
+            {
+                return new Span(
+                    name,
+                    SpanContext.Blank,
+                    CreateRoot(name),
+                    true,
+                    spanKind,
+                    startTimestamp,
+                    links,
+                    tracerConfiguration,
+                    spanProcessor,
+                    libraryResource);
+            }
+
+            return new Span(
+                name,
+                new SpanContext(
+                    currentActivity.TraceId,
+                    currentActivity.SpanId,
+                    currentActivity.ActivityTraceFlags),
+                FromCurrentParentActivity(name, currentActivity),
+                true,
+                spanKind,
+                startTimestamp,
+                links,
+                tracerConfiguration,
+                spanProcessor,
+                libraryResource);
+        }
+
+        internal static Span CreateFromParentContext(
+            string name,
+            SpanContext parentContext,
+            SpanKind spanKind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<Link> links,
+            TracerConfiguration tracerConfiguration,
+            SpanProcessor spanProcessor,
+            Resource libraryResource)
+        {
+            return new Span(
+                name,
+                parentContext,
+                FromParentSpanContext(name, parentContext),
+                true,
+                spanKind,
+                startTimestamp,
+                links,
+                tracerConfiguration,
+                spanProcessor,
+                libraryResource);
+        }
+
+        internal static Span CreateRoot(
+            string name,
+            SpanKind spanKind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<Link> links,
+            TracerConfiguration tracerConfiguration,
+            SpanProcessor spanProcessor,
+            Resource libraryResource)
+        {
+            return new Span(
+                name,
+                SpanContext.Blank,
+                CreateRoot(name),
+                true,
+                spanKind,
+                startTimestamp,
+                links,
+                tracerConfiguration,
+                spanProcessor,
+                libraryResource);
+        }
+
+        internal static Span CreateFromActivity(
+            string name,
+            Activity activity,
+            SpanKind spanKind,
+            IEnumerable<Link> links,
+            TracerConfiguration tracerConfiguration,
+            SpanProcessor spanProcessor,
+            Resource libraryResource)
+        {
+            return new Span(
+                name,
+                ParentContextFromActivity(activity),
+                FromActivity(name, activity),
+                false,
+                spanKind,
+                new DateTimeOffset(activity.StartTimeUtc),
+                links,
+                tracerConfiguration,
+                spanProcessor,
+                libraryResource);
+        }
+
+        private static bool MakeSamplingDecision(
+            SpanContext parent,
+            string name,
+            ISampler sampler,
+            IEnumerable<Link> parentLinks,
+            ActivityTraceId traceId,
+            ActivitySpanId spanId,
+            TracerConfiguration tracerConfiguration)
+        {
+            // If users set a specific sampler in the SpanBuilder, use it.
+            if (sampler != null)
+            {
+                return sampler.ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
+            }
+
+            // Use the default sampler if this is a root Span or this is an entry point Span (has remote
+            // parent).
+            if (parent == null || !parent.IsValid)
+            {
+                return tracerConfiguration
+                    .Sampler
+                    .ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
+            }
+
+            // Parent is always different than null because otherwise we use the default sampler.
+            return (parent.TraceOptions & ActivityTraceFlags.Recorded) != 0 || IsAnyParentLinkSampled(parentLinks);
+        }
+
+        private static bool IsAnyParentLinkSampled(IEnumerable<Link> parentLinks)
+        {
+            if (parentLinks != null)
+            {
+                foreach (var parentLink in parentLinks)
+                {
+                    if ((parentLink.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static ActivityAndTracestate FromCurrentParentActivity(string spanName, Activity current)
+        {
+            var activity = new Activity(spanName);
+            activity.SetIdFormat(ActivityIdFormat.W3C);
+
+            activity.Start();
+            Activity.Current = current;
+
+            List<KeyValuePair<string, string>> tracestate = null;
+            if (activity.TraceStateString != null)
+            {
+                tracestate = new List<KeyValuePair<string, string>>();
+                TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate);
+            }
+
+            return new ActivityAndTracestate(activity, tracestate);
+        }
+
+        private static ActivityAndTracestate FromParentSpan(string spanName, ISpan parentSpan)
+        {
+            if (parentSpan is Span parentSpanImpl && parentSpanImpl.Activity == Activity.Current)
+            {
+                var activity = new Activity(spanName);
+                activity.SetIdFormat(ActivityIdFormat.W3C);
+                activity.TraceStateString = parentSpanImpl.Activity.TraceStateString;
+
+                var originalActivity = Activity.Current;
+                activity.Start();
+                Activity.Current = originalActivity;
+
+                return new ActivityAndTracestate(activity, parentSpan.Context.Tracestate);
+            }
+
+            return FromParentSpanContext(spanName, parentSpan.Context);
+        }
+
+        private static ActivityAndTracestate FromParentSpanContext(string spanName, SpanContext parentContext)
+        {
+            var activity = new Activity(spanName);
+
+            IEnumerable<KeyValuePair<string, string>> tracestate = null;
+            if (parentContext != null && parentContext.IsValid)
+            {
+                activity.SetParentId(parentContext.TraceId,
+                    parentContext.SpanId,
+                    parentContext.TraceOptions);
+                if (parentContext.Tracestate != null && parentContext.Tracestate.Any())
+                {
+                    activity.TraceStateString = TracestateUtils.GetString(parentContext.Tracestate);
+                    tracestate = parentContext.Tracestate;
+                }
+            }
+
+            activity.SetIdFormat(ActivityIdFormat.W3C);
+
+            var originalActivity = Activity.Current;
+            activity.Start();
+            Activity.Current = originalActivity;
+
+            return new ActivityAndTracestate(activity, tracestate);
+        }
+
+        private static ActivityAndTracestate CreateRoot(string spanName)
+        {
+            var activity = new Activity(spanName);
+            activity.SetIdFormat(ActivityIdFormat.W3C);
+
+            var originalActivity = Activity.Current;
+            if (originalActivity != null)
+            {
+                activity.SetParentId(" ");
+            }
+
+            activity.Start();
+            Activity.Current = originalActivity;
+
+            return new ActivityAndTracestate(activity, null);
+        }
+
+        private static ActivityAndTracestate FromActivity(string spanName, Activity activity)
+        {
+            List<KeyValuePair<string, string>> tracestate = null;
+            if (activity.TraceStateString != null)
+            {
+                tracestate = new List<KeyValuePair<string, string>>();
+                TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate);
+            }
+
+            return new ActivityAndTracestate(activity, tracestate);
+        }
+
+        private static SpanContext ParentContextFromActivity(Activity activity)
+        {
+            if (activity.TraceId != default && activity.ParentSpanId != default)
+            {
+                return new SpanContext(
+                    activity.TraceId,
+                    activity.ParentSpanId,
+                    activity.ActivityTraceFlags);
+            }
+
+            return null;
+        }
+
+        private readonly struct ActivityAndTracestate
+        {
+            public readonly Activity Activity;
+            public readonly IEnumerable<KeyValuePair<string, string>> Tracestate;
+
+            public ActivityAndTracestate(Activity activity, IEnumerable<KeyValuePair<string, string>> tracestate)
+            {
+                this.Activity = activity;
+                this.Tracestate = tracestate;
+            }
         }
     }
 }

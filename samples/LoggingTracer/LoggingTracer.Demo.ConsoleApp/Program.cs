@@ -13,9 +13,8 @@ namespace LoggingTracer.Demo.ConsoleApp
         {
             var tracerFactory = new LoggingTracerFactory();
             var tracer = tracerFactory.GetTracer("ConsoleApp", "semver:1.0.0");
-            
-            var builder = tracer.SpanBuilder("Main (span1)");
-            using (tracer.WithSpan(builder.StartSpan()))
+
+            using (tracer.WithSpan(tracer.StartSpan("Main (span1)")))
             {
                 await Task.Delay(100);
                 await Foo(tracer);
@@ -24,8 +23,7 @@ namespace LoggingTracer.Demo.ConsoleApp
 
         private static async Task Foo(ITracer tracer)
         {
-            var builder = tracer.SpanBuilder("Foo (span2)");
-            using (tracer.WithSpan(builder.StartSpan()))
+            using (tracer.WithSpan(tracer.StartSpan("Foo (span2)")))
             {
                 tracer.CurrentSpan.SetAttribute("myattribute", "mvalue");
                 await Task.Delay(100);

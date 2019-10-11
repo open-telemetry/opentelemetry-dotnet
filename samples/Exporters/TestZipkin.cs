@@ -40,7 +40,7 @@ namespace Samples
             var tracer = tracerFactory.GetTracer(string.Empty);
 
             // Create a scoped span. It will end automatically when using statement ends
-            using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))
+            using (tracer.WithSpan(tracer.StartSpan("Main")))
             {
                 Console.WriteLine("About to do a busy work");
                 for (var i = 0; i < 10; i++)
@@ -59,7 +59,7 @@ namespace Samples
             // Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be
             // a child span.
-            using (tracer.WithSpan(tracer.SpanBuilder("DoWork").StartSpan()))
+            using (tracer.WithSpan(tracer.StartSpan("DoWork")))
             {
                 // Simulate some work.
                 var span = tracer.CurrentSpan;

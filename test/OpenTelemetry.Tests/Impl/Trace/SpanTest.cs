@@ -25,10 +25,7 @@ namespace OpenTelemetry.Trace.Test
     using OpenTelemetry.Abstractions.Utils;
     using OpenTelemetry.Tests;
     using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Sampler;
-    using OpenTelemetry.Resources;
     using Xunit;
 
     public class SpanTest : IDisposable
@@ -36,7 +33,7 @@ namespace OpenTelemetry.Trace.Test
         private const string SpanName = "MySpanName";
         private const string EventDescription = "MyEvent";
 
-        private readonly IDictionary<string, object> attributes = new Dictionary<String, object>();
+        private readonly IDictionary<string, object> attributes = new Dictionary<string, object>();
         private readonly List<KeyValuePair<string, object>> expectedAttributes;
         private readonly Mock<SpanProcessor> spanProcessorMock = new Mock<SpanProcessor>(new NoopSpanExporter());
         private readonly SpanProcessor spanProcessor;
@@ -51,90 +48,652 @@ namespace OpenTelemetry.Trace.Test
             attributes.Add("MyLongAttributeKey", 123L);
             attributes.Add("MyBooleanAttributeKey", false);
             expectedAttributes = new List<KeyValuePair<string, object>>(attributes)
-                {
-                    new KeyValuePair<string, object>("MySingleStringAttributeKey", "MySingleStringAttributeValue"),
-                };
+            {
+                new KeyValuePair<string, object>("MySingleStringAttributeKey", "MySingleStringAttributeValue"),
+            };
         }
 
         [Fact]
-        public void SpanHoldsSameLibraryResourceAsCreatingTracer()
+        public void StartSpanFrom_Recorded_ParentSpan()
         {
-            var tracerFactory = new TracerFactory();
-            var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.0.0");
-            var span = (Span)tracer.SpanBuilder("some span").StartSpan();
-            Assert.Equal(tracer.LibraryResource, span.LibraryResource);
-        }
+            var tracer = new TracerFactory().GetTracer(null);
 
-        [Fact]
-        public void GetSpanContextFromActivity()
-        {
-            var tracestate = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("k1", "v1") };
-            var activity = new Activity(SpanName).Start();
-            activity.TraceStateString = tracestate.ToString();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            var traceState = new List<KeyValuePair<string, string>> {new KeyValuePair<string, string>("k1", "v1")};
+            var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, traceState);
+            var parentSpan = (Span)tracer.StartSpan(SpanName, grandParentContext);
 
-            var span = new Span(
-                    activity,
-                    tracestate,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    default,
-                    false,
-                    Resource.Empty);
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartSpan(SpanName, parentSpan);
+
             Assert.True(span.Context.IsValid);
+            Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
+            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+            Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
+            Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
+            Assert.Same(traceState, span.Context.Tracestate);
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Internal, span.Kind);
+            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ParentSpan_IgnoresCurrentParent()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            tracer.WithSpan(tracer.StartRootSpan("outer"));
+            {
+                var parentSpan = (Span)tracer.StartRootSpan(SpanName);
+
+                var span = (Span)tracer.StartSpan(SpanName, parentSpan);
+
+                Assert.True(span.Context.IsValid);
+                Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
+                Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+                Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
+                Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
+            }
+        }
+
+        [Fact]
+        public void StartSpanFrom_NotRecorded_ParentSpan()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+            var parentSpan = (Span)tracer.StartSpan(SpanName, grandParentContext);
+
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartSpan(SpanName, parentSpan);
+
+            Assert.True(span.Context.IsValid);
+            Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
+            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+            Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
+            Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
+            Assert.Empty(span.Context.Tracestate);
+
+            Assert.False(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Internal, span.Kind);
+            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ParentSpan_Kind()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var parentSpan = tracer.StartRootSpan(SpanName);
+
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartSpan(SpanName, parentSpan, SpanKind.Client);
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Client, span.Kind);
+            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ParentSpan_Kind_Timestamp()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var parentSpan = tracer.StartRootSpan(SpanName);
+
+            var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
+            var span = (Span)tracer.StartSpan(SpanName, parentSpan, SpanKind.Server, startTimestamp);
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Server, span.Kind);
+            Assert.Equal(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ParentSpan_Kind_Links()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var parentSpan = tracer.StartRootSpan(SpanName);
+            var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartSpan(SpanName, parentSpan, SpanKind.Server, default, new [] { new Link(linkContext) });
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Server, span.Kind);
+            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+            Assert.Single(span.Links);
+            Assert.Same(linkContext, span.Links.Single().Context);
+        }
+
+        [Fact]
+        public void StartRootSpan_IgnoresCurrentParent()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            tracer.WithSpan(tracer.StartRootSpan("outer"));
+            {
+                var span = (Span)tracer.StartRootSpan(SpanName);
+
+                Assert.True(span.Context.IsValid);
+                Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
+                Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+                Assert.Equal(default, span.ParentSpanId);
+                Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceOptions);
+            }
+        }
+
+        [Fact]
+        public void StartRootSpan_IgnoresCurrentActivity()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var outerActivity = new Activity("outer").SetIdFormat(ActivityIdFormat.W3C).Start();
+
+            var span = (Span)tracer.StartRootSpan(SpanName);
+
+            Assert.True(span.Context.IsValid);
+            Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
+            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+            Assert.Equal(default, span.ParentSpanId);
+            Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceOptions);
+
+            outerActivity.Stop();
+        }
+
+        [Fact]
+        public void StartRootSpan()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartRootSpan(SpanName);
+
+            Assert.True(span.Context.IsValid);
+            Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
+            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+            Assert.Equal(default, span.ParentSpanId);
+            Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceOptions);
+            Assert.Empty(span.Context.Tracestate);
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Internal, span.Kind);
+            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+        }
+
+        [Fact]
+        public void StartRootSpanFrom_Kind()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Consumer);
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Consumer, span.Kind);
+            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+        }
+
+        [Fact]
+        public void StartRootSpanFrom_Kind_Timestamp()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
+            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Client, startTimestamp);
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Client, span.Kind);
+            Assert.Equal(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+        }
+
+        [Fact]
+        public void StartRootSpanFrom_Kind_Timestamp_Links()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Server, startTimestamp, new[] { new Link(linkContext) });
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Server, span.Kind);
+            Assert.Equal(startTimestamp, span.StartTimestamp);
+            Assert.Single(span.Links);
+            Assert.Same(linkContext, span.Links.Single().Context);
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ParentContext()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var traceState = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("k1", "v1") };
+            var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, traceState);
+
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartSpan(SpanName, parentContext);
+
+            Assert.True(span.Context.IsValid);
+            Assert.Equal(parentContext.TraceId, span.Context.TraceId);
+            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+            Assert.Equal(parentContext.SpanId, span.ParentSpanId);
+            Assert.Equal(parentContext.TraceOptions, span.Context.TraceOptions);
+            Assert.Same(traceState, span.Context.Tracestate);
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Internal, span.Kind);
+            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+        }
+
+        [Fact]
+        public void StartSpanFrom_InvalidContext()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+            var parentContext = SpanContext.Blank;
+
+            var span = (Span)tracer.StartSpan(SpanName, parentContext);
+
+            Assert.True(span.Context.IsValid);
+            Assert.NotEqual(default, span.Context.TraceId);
+            Assert.NotEqual(default, span.Context.SpanId);
+            Assert.Equal(default, span.ParentSpanId);
+
+            // always sample sampler
+            Assert.Equal(ActivityTraceFlags.Recorded, span.Context.TraceOptions);
+            Assert.True(span.IsRecordingEvents);
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ParentContext_IgnoresCurrentParent()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            tracer.WithSpan(tracer.StartRootSpan("outer"));
+            {
+                var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.Recorded);
+
+                var span = (Span)tracer.StartSpan(SpanName, parentContext);
+
+                Assert.True(span.Context.IsValid);
+                Assert.Equal(parentContext.TraceId, span.Context.TraceId);
+                Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+                Assert.Equal(parentContext.SpanId, span.ParentSpanId);
+                Assert.Equal(parentContext.TraceOptions, span.Context.TraceOptions);
+            }
+        }
+
+        [Fact]
+        public void StartSpanFrom_NotRecorded_ParentContext()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartSpan(SpanName, parentContext);
+
+            Assert.True(span.Context.IsValid);
+            Assert.Equal(parentContext.TraceId, span.Context.TraceId);
+            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+            Assert.Equal(parentContext.SpanId, span.ParentSpanId);
+            Assert.Equal(parentContext.TraceOptions, span.Context.TraceOptions);
+            Assert.Empty(span.Context.Tracestate);
+
+            Assert.False(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Internal, span.Kind);
+            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ParentContext_Kind()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartSpan(SpanName, parentContext, SpanKind.Client);
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Client, span.Kind);
+            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ParentContext_Kind_Timestamp()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+
+            var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
+            var span = (Span)tracer.StartSpan(SpanName, parentContext, SpanKind.Server, startTimestamp);
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Server, span.Kind);
+            Assert.Equal(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ParentContext_Kind_Links()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartSpan(SpanName, parentContext, SpanKind.Server, default, new[] { new Link(linkContext) });
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Server, span.Kind);
+            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+            Assert.Single(span.Links);
+            Assert.Same(linkContext, span.Links.Single().Context);
+        }
+
+        [Fact]
+        public void StartSpan_Recorded_FromActivity()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            activity.TraceStateString = "k1=v1,k2=v2";
+
+            var span = (Span)tracer.StartSpanFromActivity(SpanName, activity);
+
             Assert.Equal(activity.TraceId, span.Context.TraceId);
             Assert.Equal(activity.SpanId, span.Context.SpanId);
-            Assert.Equal(activity.ParentSpanId, ((Span)span).ParentSpanId);
+            Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
             Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
-            Assert.Same(tracestate, span.Context.Tracestate);
+            Assert.Equal(2, span.Context.Tracestate.Count());
+            Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k1" && pair.Value == "v1");
+            Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k2" && pair.Value == "v2");
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Internal, span.Kind);
+            Assert.Equal(activity.StartTimeUtc, span.StartTimestamp.DateTime);
+            Assert.Equal(activity, span.Activity);
+            Assert.Empty(span.Links);
         }
 
         [Fact]
-        public void GetSpanContextFromActivityRecordedWithParent()
+        public void StartSpan_Recorded_FromActivity_IgnoresCurrentParent()
         {
-            var tracestate = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("k1", "v1") };
-            var parent = new Activity(SpanName).Start();
-            var activity = new Activity(SpanName).Start();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            var tracer = new TracerFactory().GetTracer(null);
+            tracer.WithSpan(tracer.StartRootSpan("outer"));
+            {
+                var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).SetParentId(" ").Start();
+                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
-            var span = new Span(
-                    activity,
-                    tracestate,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    default,
-                    false,
-                    Resource.Empty);
-            Assert.True(span.Context.IsValid);
+                var span = (Span)tracer.StartSpanFromActivity(SpanName, activity);
+
+                Assert.Equal(activity.TraceId, span.Context.TraceId);
+                Assert.Equal(activity.SpanId, span.Context.SpanId);
+                Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
+                Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
+            }
+        }
+
+        [Fact]
+        public void StartSpan_NotRecorded_FromActivity()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
+            activity.ActivityTraceFlags = ActivityTraceFlags.None;
+            activity.TraceStateString = "k1=v1,k2=v2";
+
+            var span = (Span)tracer.StartSpanFromActivity(SpanName, activity);
+
             Assert.Equal(activity.TraceId, span.Context.TraceId);
             Assert.Equal(activity.SpanId, span.Context.SpanId);
-            Assert.Equal(activity.ParentSpanId, ((Span)span).ParentSpanId);
+            Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
             Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
-            Assert.Same(tracestate, span.Context.Tracestate);
+            Assert.Equal(2, span.Context.Tracestate.Count());
+            Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k1" && pair.Value == "v1");
+            Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k2" && pair.Value == "v2");
+
+            // activity is not a parent and sampling decision is made 
+            // based on sampler alone
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Internal, span.Kind);
+            Assert.Equal(activity.StartTimeUtc, span.StartTimestamp.DateTime);
+            Assert.Equal(activity, span.Activity);
+            Assert.Empty(span.Links);
         }
 
         [Fact]
-        public void NoEventsRecordedAfterEnd()
+        public void StartSpan_Recorded_FromActivity_Kind()
         {
-            var link = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+            var tracer = new TracerFactory().GetTracer(null);
 
-            var activity = new Activity(SpanName).Start();
+            var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
-            var spanStartTime = PreciseTimestamp.GetUtcNow();
-            var span = new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    spanStartTime,
-                    false,
-                    Resource.Empty);
-            var spanEndTime = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartSpanFromActivity(SpanName, activity, SpanKind.Client);
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Client, span.Kind);
+            Assert.Equal(activity.StartTimeUtc, span.StartTimestamp.DateTime);
+            Assert.Equal(activity, span.Activity);
+            Assert.Empty(span.Links);
+        }
+
+        [Fact]
+        public void StartSpan_Recorded_FromActivity_Kind_Links()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+
+            var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+
+            var span = (Span)tracer.StartSpanFromActivity(SpanName, activity, SpanKind.Server, new[] { new Link(linkContext) });
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Server, span.Kind);
+            Assert.Equal(activity.StartTimeUtc, span.StartTimestamp.DateTime);
+            Assert.Equal(activity, span.Activity);
+            Assert.Single(span.Links);
+            Assert.Same(linkContext, span.Links.Single().Context);
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ImplicitParentSpan()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+            var traceState = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("k1", "v1") };
+            var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, traceState);
+            using (tracer.WithSpan(tracer.StartSpan(SpanName, grandParentContext)))
+            {
+                var parentSpan = tracer.CurrentSpan;
+
+                var startTimestamp = PreciseTimestamp.GetUtcNow();
+                var span = (Span)tracer.StartSpan(SpanName);
+
+                Assert.True(span.Context.IsValid);
+                Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
+                Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+                Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
+                Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
+                Assert.Same(traceState, span.Context.Tracestate);
+
+                Assert.True(span.IsRecordingEvents);
+                Assert.Equal(SpanKind.Internal, span.Kind);
+                AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+                Assert.Empty(span.Links);
+            }
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ImplicitParentActivity()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+            
+            var parentActivity = new Activity("foo").SetIdFormat(ActivityIdFormat.W3C).Start();
+            parentActivity.TraceStateString = "k1=v1,k2=v2";
+            parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartSpan(SpanName);
+
+            Assert.True(span.Context.IsValid);
+            Assert.Equal(parentActivity.TraceId, span.Context.TraceId);
+            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+            Assert.Equal(parentActivity.SpanId, span.ParentSpanId);
+            Assert.Equal(parentActivity.ActivityTraceFlags, span.Context.TraceOptions);
+            Assert.Equal(2, span.Context.Tracestate.Count());
+            Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k1" && pair.Value == "v1");
+            Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k2" && pair.Value == "v2");
+
+            Assert.True(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Internal, span.Kind);
+            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+            
+            parentActivity.Stop();
+        }
+
+        [Fact]
+        public void StartSpanFrom_NotRecorded_ImplicitParentActivity()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var parentActivity = new Activity("foo").SetIdFormat(ActivityIdFormat.W3C).Start();
+            parentActivity.TraceStateString = "k1=v1,k2=v2";
+            parentActivity.ActivityTraceFlags = ActivityTraceFlags.None;
+
+            var startTimestamp = PreciseTimestamp.GetUtcNow();
+            var span = (Span)tracer.StartSpan(SpanName);
+
+            Assert.True(span.Context.IsValid);
+            Assert.Equal(parentActivity.TraceId, span.Context.TraceId);
+            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+            Assert.Equal(parentActivity.SpanId, span.ParentSpanId);
+            Assert.Equal(parentActivity.ActivityTraceFlags, span.Context.TraceOptions);
+            Assert.Equal(2, span.Context.Tracestate.Count());
+            Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k1" && pair.Value == "v1");
+            Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k2" && pair.Value == "v2");
+
+            Assert.False(span.IsRecordingEvents);
+            Assert.Equal(SpanKind.Internal, span.Kind);
+            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+            Assert.Empty(span.Links);
+
+            parentActivity.Stop();
+        }
+
+        [Fact]
+        public void StartSpanFrom_NotRecorded_ImplicitParentSpan()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+            var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+            using (tracer.WithSpan(tracer.StartSpan(SpanName, grandParentContext)))
+            {
+                var parentSpan = tracer.CurrentSpan;
+
+                var startTimestamp = PreciseTimestamp.GetUtcNow();
+                var span = (Span)tracer.StartSpan(SpanName);
+
+                Assert.True(span.Context.IsValid);
+                Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
+                Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+                Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
+                Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
+                Assert.Empty(span.Context.Tracestate);
+
+                Assert.False(span.IsRecordingEvents);
+                Assert.Equal(SpanKind.Internal, span.Kind);
+                AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+                Assert.Empty(span.Links);
+            }
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ImplicitParentSpan_Kind()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            using (tracer.WithSpan(tracer.StartRootSpan(SpanName)))
+            {
+                var startTimestamp = PreciseTimestamp.GetUtcNow();
+                var span = (Span)tracer.StartSpan(SpanName, SpanKind.Producer);
+
+                Assert.True(span.IsRecordingEvents);
+                Assert.Equal(SpanKind.Producer, span.Kind);
+                AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
+                Assert.Empty(span.Links);
+            }
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ImplicitParentSpan_Kind_Timestamp()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            using (tracer.WithSpan(tracer.StartRootSpan(SpanName)))
+            {
+                var startTimestamp = DateTimeOffset.UtcNow.AddSeconds(-10);
+                var span = (Span)tracer.StartSpan(SpanName, SpanKind.Server, startTimestamp);
+
+                Assert.True(span.IsRecordingEvents);
+                Assert.Equal(SpanKind.Server, span.Kind);
+                Assert.Equal(startTimestamp, span.StartTimestamp);
+                Assert.Empty(span.Links);
+            }
+        }
+
+        [Fact]
+        public void StartSpanFrom_Recorded_ImplicitParentSpan_Kind_Timestamp_Links()
+        {
+            var tracer = new TracerFactory().GetTracer(null);
+
+            using (tracer.WithSpan(tracer.StartRootSpan(SpanName)))
+            {
+                var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.Recorded);
+
+                var startTimestamp = DateTimeOffset.UtcNow.AddSeconds(-10);
+                var span = (Span)tracer.StartSpan(SpanName, SpanKind.Server, startTimestamp, new[] {new Link(linkContext)});
+
+                Assert.True(span.IsRecordingEvents);
+                Assert.Equal(SpanKind.Server, span.Kind);
+                Assert.Equal(startTimestamp, span.StartTimestamp);
+                Assert.Single(span.Links);
+                Assert.Same(linkContext, span.Links.Single().Context);
+            }
+        }
+
+        [Fact]
+        public void EndSpan_EventsNotRecorded()
+        {
+            var link = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+
+            var tracer = new TracerFactory().GetTracer(null);
+
+            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Client);
+
+            var spanEndTime = DateTimeOffset.UtcNow.AddSeconds(10);
             span.End(spanEndTime);
+
             // Check that adding trace events after Span#End() does not throw any exception and are not
             // recorded.
             foreach (var attribute in attributes)
@@ -150,7 +709,7 @@ namespace OpenTelemetry.Trace.Test
             span.AddEvent(EventDescription, attributes);
             span.AddLink(new Link(link));
 
-            Assert.Equal(spanStartTime, span.StartTimestamp);
+            Assert.NotEqual(default, span.StartTimestamp);
             Assert.Empty(span.Attributes);
             Assert.Empty(span.Events);
             Assert.Empty(span.Links);
@@ -159,52 +718,14 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void ImplicitTimestamps()
+        public async Task StartSpan_PropertiesAccessible()
         {
-            var activity = new Activity(SpanName).Start();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.None);
 
-            var spanStartTime = PreciseTimestamp.GetUtcNow();
-            var span = new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    false,
-                    Resource.Empty);
-            var spanEndTime = PreciseTimestamp.GetUtcNow();
-            span.End();
-
-            AssertApproxSameTimestamp(spanStartTime, span.StartTimestamp);
-            Assert.Empty(span.Attributes);
-            Assert.Empty(span.Events);
-            Assert.Empty(span.Links);
-            Assert.Equal(Status.Ok, span.Status);
-            AssertApproxSameTimestamp(spanEndTime, span.EndTimestamp);
-        }
-
-        [Fact]
-        public async Task ActiveSpan_Properties()
-        {
-            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-
-            var activity = new Activity(SpanName)
-                .SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom())
-                .Start();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-            var spanStartTime = PreciseTimestamp.GetUtcNow();
-            var span = new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    spanStartTime,
-                    false,
-                    Resource.Empty);
+            var tracer = new TracerFactory(spanProcessor).GetTracer(null);
+            var startTime = DateTimeOffset.UtcNow.AddSeconds(-1);
+            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Client, startTime, null);
 
             span.SetAttribute(
                 "MySingleStringAttributeKey",
@@ -224,14 +745,14 @@ namespace OpenTelemetry.Trace.Test
             var link = new Link(contextLink);
             span.AddLink(link);
 
-            Assert.Equal(activity.TraceId, span.Context.TraceId);
-            Assert.Equal(activity.SpanId, span.Context.SpanId);
-            Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
-            Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
+            Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
+            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+            Assert.Equal(span.Activity.ParentSpanId, span.ParentSpanId);
+            Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceOptions);
             Assert.Empty(span.Context.Tracestate);
 
             Assert.Equal(SpanName, span.Name);
-            Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
+            Assert.Equal(span.Activity.ParentSpanId, span.ParentSpanId);
 
             span.Attributes.AssertAreSame(expectedAttributes);
 
@@ -247,38 +768,26 @@ namespace OpenTelemetry.Trace.Test
             Assert.Single(span.Links);
             Assert.Equal(link, span.Links.First());
 
-            Assert.Equal(spanStartTime, span.StartTimestamp);
+            Assert.Equal(startTime, span.StartTimestamp);
 
             Assert.True(span.Status.IsValid);
             Assert.Equal(default, span.EndTimestamp);
 
-            var startEndMock = Mock.Get<SpanProcessor>(spanProcessor);
+            var startEndMock = Mock.Get(spanProcessor);
 
             spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
             startEndMock.Verify(s => s.OnEnd(span), Times.Never);
         }
 
         [Fact]
-        public async Task EndedSpan_Properties()
+        public async Task EndSpan_Properties()
         {
-            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.None);
 
-            var activity = new Activity(SpanName)
-                .SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom())
-                .Start();
-
-            var spanStartTime = PreciseTimestamp.GetUtcNow();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            var span = new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    spanStartTime,
-                    false,
-                    Resource.Empty);
-
+            var tracer = new TracerFactory(spanProcessor).GetTracer(null);
+            var startTime = DateTimeOffset.UtcNow.AddSeconds(-1);
+            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Client, startTime, null);
             span.SetAttribute(
                 "MySingleStringAttributeKey",
                 "MySingleStringAttributeValue");
@@ -302,13 +811,13 @@ namespace OpenTelemetry.Trace.Test
             var spanEndTime = PreciseTimestamp.GetUtcNow();
             span.End();
 
-            Assert.Equal(activity.TraceId, span.Context.TraceId);
-            Assert.Equal(activity.SpanId, span.Context.SpanId);
-            Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
-            Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
+            Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
+            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
+            Assert.Equal(span.Activity.ParentSpanId, span.ParentSpanId);
+            Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceOptions);
 
             Assert.Equal(SpanName, span.Name);
-            Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
+            Assert.Equal(span.Activity.ParentSpanId, span.ParentSpanId);
 
             span.Attributes.AssertAreSame(expectedAttributes);
             Assert.Equal(2, span.Events.Count());
@@ -319,7 +828,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(new Event(EventDescription, firstEventTime), span.Events.ToList()[0]);
             Assert.Single(span.Links);
             Assert.Equal(link, span.Links.First());
-            Assert.Equal(spanStartTime, span.StartTimestamp);
+            Assert.Equal(startTime, span.StartTimestamp);
             Assert.Equal(Status.Cancelled, span.Status);
             AssertApproxSameTimestamp(spanEndTime, span.EndTimestamp);
 
@@ -328,276 +837,26 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void Status_ViaSetStatus()
+        public void SetStatus()
         {
-            var activity = new Activity(SpanName).Start();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-            var span =
-                new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    false,
-                    Resource.Empty);
+            var tracer = new TracerFactory(spanProcessor).GetTracer(null);
+            var span = (Span)tracer.StartRootSpan(SpanName);
 
             Assert.Equal(Status.Ok, span.Status);
-            ((Span)span).Status = Status.Cancelled;
+            span.Status = Status.Cancelled;
             Assert.Equal(Status.Cancelled, span.Status);
             span.End();
             Assert.Equal(Status.Cancelled, span.Status);
 
             spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
             spanProcessorMock.Verify(s => s.OnEnd(span), Times.Once);
-        }
-
-        [Fact]
-        public void status_ViaEndSpanOptions()
-        {
-            var activity = new Activity(SpanName).Start();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-            var span =
-                new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    false,
-                    Resource.Empty);
-
-            Assert.Equal(Status.Ok, span.Status);
-            ((Span)span).Status = Status.Cancelled;
-            Assert.Equal(Status.Cancelled, span.Status);
-            span.Status = Status.Aborted;
-            span.End();
-            Assert.Equal(Status.Aborted, span.Status);
-
-            spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
-            spanProcessorMock.Verify(s => s.OnEnd(span), Times.Once);
-        }
-
-        [Fact]
-        public void DroppingAttributes()
-        {
-            var activity = new Activity(SpanName).Start();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-            var maxNumberOfAttributes = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 8 , 128, 32);
-            var span = new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    traceConfig,
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    false,
-                    Resource.Empty);
-            for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
-            {
-                IDictionary<string, object> attributes = new Dictionary<string, object>();
-                attributes.Add("MyStringAttributeKey" + i, i);
-                foreach (var attribute in attributes)
-                {
-                    span.SetAttribute(attribute);
-                }
-
-            }
-
-            Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
-            for (var i = 0; i < maxNumberOfAttributes; i++)
-            {
-                Assert.Equal(
-                    i + maxNumberOfAttributes,
-                    span
-                        .Attributes
-                        .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes)));
-            }
-
-            span.End();
-
-            Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
-            for (var i = 0; i < maxNumberOfAttributes; i++)
-            {
-                Assert.Equal(
-                    i + maxNumberOfAttributes,
-                    span
-                        .Attributes
-                        .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes)));
-            }
-        }
-
-        [Fact]
-        public void DroppingAndAddingAttributes()
-        {
-            var activity = new Activity(SpanName).Start();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-            var maxNumberOfAttributes = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
-            var span = new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    traceConfig,
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    false,
-                    Resource.Empty);
-            for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
-            {
-                IDictionary<String, object> attributes = new Dictionary<String, object>();
-                attributes.Add("MyStringAttributeKey" + i, i);
-                foreach (var attribute in attributes)
-                {
-                    span.SetAttribute(attribute);
-                }
-
-            }
-
-            Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
-            for (var i = 0; i < maxNumberOfAttributes; i++)
-            {
-                Assert.Equal(
-                    i + maxNumberOfAttributes,
-                    span
-                        .Attributes
-                        .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes)));
-            }
-
-            for (var i = 0; i < maxNumberOfAttributes / 2; i++)
-            {
-                IDictionary<string, object> attributes = new Dictionary<string, object>();
-                attributes.Add("MyStringAttributeKey" + i, i);
-                foreach (var attribute in attributes)
-                {
-                    span.SetAttribute(attribute);
-                }
-
-            }
-
-            Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
-            // Test that we still have in the attributes map the latest maxNumberOfAttributes / 2 entries.
-            for (var i = 0; i < maxNumberOfAttributes / 2; i++)
-            {
-                Assert.Equal(
-                    i + maxNumberOfAttributes * 3 / 2,
-                    span
-                        .Attributes
-                        .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes * 3 / 2)));
-            }
-
-            // Test that we have the newest re-added initial entries.
-            for (var i = 0; i < maxNumberOfAttributes / 2; i++)
-            {
-                Assert.Equal(i,
-                    span.Attributes.GetValue("MyStringAttributeKey" + i));
-            }
-        }
-
-        [Fact]
-        public async Task DroppingEvents()
-        {
-            var activity = new Activity(SpanName).Start();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-            var maxNumberOfEvents = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, maxNumberOfEvents, 32);
-            var span = new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    traceConfig,
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    false,
-                    Resource.Empty);
-
-            var eventTimestamps = new DateTimeOffset[2 * maxNumberOfEvents];
-            
-            for (int i = 0; i < 2 * maxNumberOfEvents; i++)
-            {
-                eventTimestamps[i] = PreciseTimestamp.GetUtcNow();
-                span.AddEvent(new Event(EventDescription, eventTimestamps[i]));
-                await Task.Delay(10);
-            }
-
-            Assert.Equal(maxNumberOfEvents, span.Events.Count());
-
-            var events = span.Events.ToArray();
-
-            for (int i = 0; i < maxNumberOfEvents; i++)
-            {
-                Assert.Equal(eventTimestamps[i + maxNumberOfEvents], events[i].Timestamp);
-            }
-
-            span.End();
-            
-            Assert.Equal(maxNumberOfEvents, span.Events.Count());
-        }
-
-        [Fact]
-        public void DroppingLinks()
-        {
-            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-
-            var activity = new Activity(SpanName).Start();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-            var maxNumberOfLinks = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, 128, maxNumberOfLinks);
-            var span = new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    traceConfig,
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    false,
-                    Resource.Empty);
-            var link = new Link(contextLink);
-            for (var i = 0; i < 2 * maxNumberOfLinks; i++)
-            {
-                span.AddLink(link);
-            }
-
-            Assert.Equal(maxNumberOfLinks, span.Links.Count());
-            foreach (var actualLink in span.Links)
-            {
-                Assert.Equal(link, actualLink);
-            }
-
-            span.End();
-
-            Assert.Equal(maxNumberOfLinks, span.Links.Count());
-            foreach (var actualLink in span.Links)
-            {
-                Assert.Equal(link, actualLink);
-            }
         }
 
         [Fact]
         public void BadArguments()
         {
-            var activity = new Activity(SpanName).Start();
-            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-            var span =
-                new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    false,
-                    Resource.Empty);
+            var tracer = new TracerFactory().GetTracer(null);
+            var span = (Span)tracer.StartRootSpan(SpanName);
 
             Assert.Throws<ArgumentException>(() => span.Status = new Status());
             Assert.Throws<ArgumentNullException>(() => span.UpdateName(null));
@@ -618,25 +877,13 @@ namespace OpenTelemetry.Trace.Test
         [InlineData(false)]
         public void EndSpanStopsActivity(bool recordEvents)
         {
-            var parentActivity = new Activity(SpanName).Start();
-            var activity = new Activity(SpanName).Start();
-            if (recordEvents)
-            {
-                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            }
+            var parentActivity = new Activity("parent").Start();
 
-            var span =
-                new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    ownsActivity: true,
-                    Resource.Empty);
-            
+            var tracer = new TracerFactory()
+                .GetTracer(null);
+            var span = (Span)tracer.StartSpan(SpanName);
             span.End();
+
             Assert.Same(parentActivity, Activity.Current);
         }
 
@@ -645,25 +892,17 @@ namespace OpenTelemetry.Trace.Test
         [InlineData(false)]
         public void EndSpanDoesNotStopActivityWhenDoesNotOwnIt(bool recordEvents)
         {
-            var activity = new Activity(SpanName).Start();
+            var activity = new Activity("foo").Start();
             if (recordEvents)
             {
                 activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }
 
-            var span =
-                new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    ownsActivity: false,
-                    Resource.Empty);
-
+            var tracer = new TracerFactory()
+                .GetTracer(null);
+            var span = (Span)tracer.StartSpanFromActivity(SpanName, activity);
             span.End();
-            Assert.Equal(recordEvents, span.HasEnded);
+
             Assert.Same(activity, Activity.Current);
         }
 
@@ -679,33 +918,34 @@ namespace OpenTelemetry.Trace.Test
             {
                 activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }
+            var tracer = new TracerFactory()
+                .GetTracer(null);
 
-            var span =
-                new Span(
-                    activity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    ownsActivity: ownsActivity,
-                    Resource.Empty);
+            Span span;
+            if (ownsActivity)
+            {
+                span = (Span)tracer.StartSpanFromActivity(SpanName, activity);
+            }
+            else
+            {
+                span = (Span)tracer.StartSpan(SpanName);
+            }
 
             var anotherActivity = new Activity(SpanName).Start();
             span.End();
-            Assert.Equal(recordEvents, span.HasEnded);
-            Assert.Same(anotherActivity, Activity.Current);
-        }
 
-        public void Dispose()
-        {
-            Activity.Current = null;
+            Assert.Same(anotherActivity, Activity.Current);
         }
 
         private void AssertApproxSameTimestamp(DateTimeOffset one, DateTimeOffset two)
         {
             var timeShift = Math.Abs((one - two).TotalMilliseconds);
             Assert.InRange(timeShift, 0, 20);
+        }
+
+        public void Dispose()
+        {
+            Activity.Current = null;
         }
     }
 }

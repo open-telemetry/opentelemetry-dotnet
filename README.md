@@ -72,10 +72,8 @@ OpenTelemetry also provides auto-collectors for ASP.NET Core, HttpClient calls (
 To create the most basic span, you only specify the name. OpenTelemetry SDK collects start/end timestamps, assigns tracing context and assumes status of this span is `OK`.
 
 ```csharp
-var span = tracer
-    .SpanBuilder("basic span")
-    .StartSpan();
-
+var span = tracer.StartSpan("basic span");
+// ...
 span.End();
 ```
 
@@ -86,14 +84,10 @@ In many cases you want to collect nested operations. You can propagate parent sp
 #### Explicit parent propagation and assignment
 
 ```csharp
-var parentSpan = tracer
-    .SpanBuilder("parent")
-    .StartSpan();
+var parentSpan = tracer.StartSpan("parent span");
 
-var childSpan = tracer
-    .SpanBuilder("child")
-    .SetParent(parentSpan) // explicitly assigning parent here
-    .StartSpan();
+// explicitly assigning parent here
+var childSpan = tracer.StartSpan("child span", parentSpan);
 
 childSpan.End();
 parentSpan.End();
@@ -102,18 +96,14 @@ parentSpan.End();
 #### Implicit parent propagation and assignment
 
 ```csharp
-var parentSpan = tracer
-    .SpanBuilder("parent")
-    .StartSpan();
+var parentSpan = tracer.StartSpan("parent span");
 
 // calling WithSpan puts parentSpan into the ambient context
 // that flows in async calls.   When child is created, it
 // implicitly becomes child of current span
 using (tracer.WithSpan(parentSpan))
 {
-    var childSpan = tracer
-        .SpanBuilder("child")
-        .StartSpan();
+    var childSpan = tracer.StartSpan("child span");
 
     childSpan.End();
 }
@@ -126,11 +116,8 @@ using (tracer.WithSpan(parentSpan))
 Attributes provide additional context on span specific to specific operation it tracks such as HTTP/DB/etc call properties.
 
 ```csharp
-var span = tracer
-    .SpanBuilder("span with attributes")
-    // spans have Client, Server, Internal, Producer and Consumer kinds to help visualize them
-    .SetSpanKind(SpanKind.Client)
-    .StartSpan();
+// spans have Client, Server, Internal, Producer and Consumer kinds to help visualize them
+var span = tracer.StartSpan("span with attributes", SpanKind.Client);
 
 // attributes specific to the call
 span.SetAttribute("db.type", "redis");
@@ -149,13 +136,7 @@ Links affect sampling decision and should be added before sampling decision is m
 SpanContext link1 = ExtractContext(eventHubMessage1);
 SpanContext link2 = ExtractContext(eventHubMessage2);
 
-var span = tracer
-    .SpanBuilder("span with links")
-    .SetSpanKind(SpanKind.Server)
-    .AddLink(link1)
-    .AddLink(link2)
-    .StartSpan();
-
+var span = tracer.StartSpan("span with links", SpanKind.Server, DateTime.UtcNow, new [] {link1, link2});
 span.End();
 ```
 
@@ -164,14 +145,11 @@ span.End();
 Events are timed text (with optional attributes) annotations on the span. Events can be added to current span (or any running span).
 
 ```csharp
-var span = tracer
-    .SpanBuilder("incoming HTTP request")
-    .SetSpanKind(SpanKind.Server)
-    .StartSpan();
+var span = tracer.StartSpan("incoming HTTP request", SpanKind.Server);
 
 using (tracer.WithSpan(span))
 {
-    tracer.CurrentSpan.AddEvent("routes reolved");
+    span.AddEvent("routes resolved");
 }
 
 // span is ended when WithSpan result is disposed
@@ -188,17 +166,10 @@ When instrumenting transport-layer operations, instrumentation should support co
 // instrumentation code should not care about it
 var context = tracer.TextFormat.Extract(incomingRequest.Headers, (headers, name) => headers[name]);
 
-var incomingSpan = tracer
-    .SpanBuilder("incoming http request")
-    .SetSpanKind(SpanKind.Server)
-    .SetParent(context)
-    .StartSpan();
+var incomingSpan = tracer.StartSpan("incoming http request", context, SpanKind.Server);
 
 var outgoingRequest = new HttpRequestMessage(HttpMethod.Get, "http://microsoft.com");
-var outgoingSpan = tracer
-    .SpanBuilder("outgoing http request")
-    .SetSpanKind(SpanKind.Client)
-    .StartSpan();
+var outgoingSpan = tracer.StartSpan("outgoing http request", SpanKind.Client);
 
 // now that we have outgoing span, we can inject it's context
 // Note that if there is no SDK configured, tracer is noop -
@@ -227,15 +198,12 @@ Leaving aside subscription mechanism, here is an example how you may implement c
 ```csharp
 void StartActivity()
 {
-    var span = tracer
-        .SpanBuilder("GET api/values") // get name from Activity props/tags, DiagnosticSource payload
-        .SetCreateChild(false) // instructs builder to use current activity without creating a child one for span
-        .StartSpan();
+    var span = tracer.StartSpanFromActivity("GET api/values", Activity.Current);
 
     // extract other things from Activity and set them on span (tags to attributes)
     // ...
 
-    tracer.WithSpan(span); // we drop scope here as we cannot propagate it
+    tracer.WithSpan(span); // we drop scope here as we cannot propagate it all the way to stop event
 }
 
 void StopActivity()

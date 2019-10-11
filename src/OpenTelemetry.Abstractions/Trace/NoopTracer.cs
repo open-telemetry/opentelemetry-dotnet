@@ -17,6 +17,8 @@
 namespace OpenTelemetry.Trace
 {
     using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
     using OpenTelemetry.Context.Propagation;
 
     /// <summary>
@@ -50,10 +52,104 @@ namespace OpenTelemetry.Trace
             return NoopScope;
         }
 
-        /// <inheritdoc/>
-        public ISpanBuilder SpanBuilder(string spanName)
+        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
         {
-            return new NoopSpanBuilder(spanName);
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            return BlankSpan.Instance;
+        }
+
+        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            return BlankSpan.Instance;
+        }
+
+        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            return BlankSpan.Instance;
+        }
+
+        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            return BlankSpan.Instance;
+        }
+
+        public ISpan StartSpanFromActivity(string operationName, Activity activity)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (activity == null)
+            {
+                throw new ArgumentNullException(nameof(activity));
+            }
+
+            if (activity.IdFormat != ActivityIdFormat.W3C)
+            {
+                throw new ArgumentException("Current Activity is not in W3C format");
+            }
+
+            return BlankSpan.Instance;
+        }
+
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (activity == null)
+            {
+                throw new ArgumentNullException(nameof(activity));
+            }
+
+            if (activity.IdFormat != ActivityIdFormat.W3C)
+            {
+                throw new ArgumentException("Current Activity is not in W3C format");
+            }
+
+            return BlankSpan.Instance;
+        }
+
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (activity == null)
+            {
+                throw new ArgumentNullException(nameof(activity));
+            }
+
+            if (activity.IdFormat != ActivityIdFormat.W3C)
+            {
+                throw new ArgumentException("Current Activity is not in W3C format");
+            }
+
+            return BlankSpan.Instance;
         }
 
         private class NoopDisposable : IDisposable

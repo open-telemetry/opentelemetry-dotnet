@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Resources;
+using System;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Tests.Impl.Trace
 {
-    using System;
     using OpenTelemetry.Context.Propagation;
     using OpenTelemetry.Trace;
     using Xunit;
@@ -41,9 +41,69 @@ namespace OpenTelemetry.Tests.Impl.Trace
         }
 
         [Fact]
-        public void NoopTracer_SpanBuilder()
+        public void NoopTracer_CreateSpan_BadArgs()
         {
-            Assert.IsType<NoopSpanBuilder>(NoopTracer.Instance.SpanBuilder("foo"));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartRootSpan(null));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartRootSpan(null, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartRootSpan(null, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartRootSpan(null, SpanKind.Client, default, null));
+
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanKind.Client, default, null));
+
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, BlankSpan.Instance));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, BlankSpan.Instance, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null));
+
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanContext.Blank));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanContext.Blank, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanContext.Blank, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => NoopTracer.Instance.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null));
+
+            Assert.Throws<ArgumentNullException>(() =>
+                NoopTracer.Instance.StartSpanFromActivity(null, new Activity("foo").Start()));
+
+            Assert.Throws<ArgumentNullException>(() => 
+                NoopTracer.Instance.StartSpanFromActivity("foo", null));
+
+            Assert.Throws<ArgumentException>(() => 
+                NoopTracer.Instance.StartSpanFromActivity("foo", new Activity("foo")));
+
+            Assert.Throws<ArgumentException>(() => NoopTracer.Instance.StartSpanFromActivity(
+                    "foo", 
+                    new Activity("foo").SetIdFormat(ActivityIdFormat.Hierarchical).Start()));
+        }
+
+        [Fact]
+        public void NoopTracer_CreateSpan_ValidArgs()
+        {
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartRootSpan("foo"));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartRootSpan("foo", SpanKind.Client));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartRootSpan("foo", SpanKind.Client, default));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartRootSpan("foo", SpanKind.Client, default, null));
+
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo"));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanKind.Client));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanKind.Client, default));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanKind.Client, default, null));
+
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", BlankSpan.Instance));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", BlankSpan.Instance, SpanKind.Client));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, default));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, default, null));
+
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanContext.Blank));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanContext.Blank, SpanKind.Client));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanContext.Blank, SpanKind.Client, default));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpan("foo", SpanContext.Blank, SpanKind.Client, default, null));
+
+            var validActivity = new Activity("foo").SetIdFormat(ActivityIdFormat.W3C).Start();
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpanFromActivity("foo", validActivity));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpanFromActivity("foo", validActivity, SpanKind.Consumer));
+            Assert.Equal(BlankSpan.Instance, NoopTracer.Instance.StartSpanFromActivity("foo", validActivity, SpanKind.Client, null));
         }
 
         [Fact]
