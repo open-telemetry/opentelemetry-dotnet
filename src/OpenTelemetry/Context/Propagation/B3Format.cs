@@ -14,14 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Context.Propagation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using OpenTelemetry.Trace;
-
     /// <summary>
     /// B3 text propagator. See https://github.com/openzipkin/b3-propagation for the specification.
     /// </summary>

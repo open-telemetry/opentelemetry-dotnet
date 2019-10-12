@@ -14,13 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using OpenTelemetry.Tags;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using OpenTelemetry.Tags;
-
     public static class StatsExtensions
     {
         public static bool ContainsKeys(this IView view, IEnumerable<TagKey> keys)

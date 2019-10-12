@@ -14,16 +14,16 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using OpenTelemetry.Stats.Measurements;
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Utils;
+using Xunit;
+
 namespace OpenTelemetry.Stats.Test
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using OpenTelemetry.Stats.Measurements;
-    using OpenTelemetry.Stats.Measures;
-    using OpenTelemetry.Utils;
-    using Xunit;
-
     public class MeasureMapBuilderTest
     {
 

@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Trace.Test
 {
-    using System;
-    using System.Collections.Generic;
-
     public class TestSpan : ISpan
     {
         public TestSpan()

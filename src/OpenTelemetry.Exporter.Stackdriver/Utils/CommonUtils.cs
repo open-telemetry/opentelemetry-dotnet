@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Exporter.Stackdriver.Utils
 {
-    using System.Collections.Generic;
-
     /// <summary>
     /// Common Utility Methods that are not metrics/trace specific.
     /// </summary>

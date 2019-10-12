@@ -15,27 +15,26 @@
 // </copyright>
 
 using OpenTelemetry.Trace.Configuration;
+using Moq;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
+using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
-    using Moq;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
-    using System;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Net.Http;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Xunit;
-
     public partial class HttpClientTests : IDisposable
     {
         private readonly IDisposable serverLifeTime;
         private readonly string url;
         public HttpClientTests()
         {
-            this.serverLifeTime = TestServer.RunServer(
+            serverLifeTime = TestServer.RunServer(
                 (ctx) =>
                 {
                     ctx.Response.StatusCode = 200;
@@ -44,7 +43,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 out var host,
                 out var port);
 
-            this.url = $"http://{host}:{port}/";
+            url = $"http://{host}:{port}/";
         }
 
 

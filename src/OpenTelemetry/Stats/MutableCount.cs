@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-
     internal sealed class MutableCount : MutableAggregation
     {
         internal MutableCount()

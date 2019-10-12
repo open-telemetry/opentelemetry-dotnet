@@ -14,14 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using OpenTelemetry.Utils;
+
 namespace OpenTelemetry.Stats.Aggregations
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using OpenTelemetry.Utils;
-
     [DebuggerDisplay("{ToString(),nq}")]
     public class DistributionData : AggregationData, IDistributionData
     {

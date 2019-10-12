@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+using Xunit;
+
 namespace OpenTelemetry.Tags.Test
 {
-    using System.Collections.Generic;
-    using Xunit;
-
     public class ScopedTagContextsTest
     {
         private static readonly TagKey KEY_1 = TagKey.Create("key 1");

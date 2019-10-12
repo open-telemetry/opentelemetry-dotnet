@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
-
     public interface IJaegerUdpBatcher : IDisposable
     {
         Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken);

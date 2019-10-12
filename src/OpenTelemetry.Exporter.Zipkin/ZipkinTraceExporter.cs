@@ -14,22 +14,22 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Http;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
+
 namespace OpenTelemetry.Exporter.Zipkin
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Net;
-    using System.Net.Http;
-    using System.Net.Sockets;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Newtonsoft.Json;
-    using OpenTelemetry.Exporter.Zipkin.Implementation;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
-
     public class ZipkinTraceExporter : SpanExporter
     {
         private const long MillisPerSecond = 1000L;

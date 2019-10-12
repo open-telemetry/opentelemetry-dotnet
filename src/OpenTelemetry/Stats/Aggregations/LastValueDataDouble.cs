@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Diagnostics;
+using OpenTelemetry.Utils;
+
 namespace OpenTelemetry.Stats.Aggregations
 {
-    using System;
-    using System.Diagnostics;
-    using OpenTelemetry.Utils;
-
     [DebuggerDisplay("{ToString(),nq}")]
     public sealed class LastValueDataDouble : AggregationData, ILastValueDataDouble
     {

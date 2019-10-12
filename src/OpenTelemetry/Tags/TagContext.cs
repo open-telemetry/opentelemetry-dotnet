@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+
 namespace OpenTelemetry.Tags
 {
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.Linq;
-
     public sealed class TagContext : TagContextBase
     {
         public static readonly ITagContext Empty = new TagContext(new Dictionary<TagKey, TagValue>());

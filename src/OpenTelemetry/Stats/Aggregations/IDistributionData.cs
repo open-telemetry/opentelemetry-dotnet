@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Stats.Aggregations
 {
-    using System.Collections.Generic;
-
     /// <summary>
     /// Data accumulated by distributed aggregation.
     /// </summary>

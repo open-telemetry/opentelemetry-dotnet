@@ -14,15 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net.Http;
+using OpenTelemetry.Collector.Dependencies.Implementation;
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Collector.Dependencies
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Net.Http;
-    using OpenTelemetry.Collector.Dependencies.Implementation;
-    using OpenTelemetry.Trace;
-
     internal class AzureSdkDiagnosticListener : ListenerHandler
     {
         private static readonly PropertyFetcher LinksPropertyFetcher = new PropertyFetcher("Links");

@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Stats
 {
-    using System.Collections.Generic;
-
     /// <summary>
     /// Bucket boundaries for the distribution aggregator.
     /// </summary>

@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    using System.Collections.Generic;
-
     public class JaegerExporterOptions
     {
         public string ServiceName { get; set; }

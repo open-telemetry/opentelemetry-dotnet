@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using OpenTelemetry.Trace.Sampler;
+
 namespace OpenTelemetry.Trace.Configuration
 {
-    using System;
-    using OpenTelemetry.Trace.Sampler;
-
     /// <summary>
     /// Trace configuration that can be updates in runtime.
     /// </summary>

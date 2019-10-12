@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Collector
 {
-    using System.Diagnostics;
-    using OpenTelemetry.Trace;
-
     public abstract class ListenerHandler
     {
         protected readonly ITracer Tracer;

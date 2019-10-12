@@ -14,13 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using OpenTelemetry.Tags;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.Immutable;
-    using OpenTelemetry.Tags;
-
     internal sealed class NoopViewManager : ViewManagerBase
     {
         private readonly IDictionary<IViewName, IView> registeredViews = new Dictionary<IViewName, IView>();

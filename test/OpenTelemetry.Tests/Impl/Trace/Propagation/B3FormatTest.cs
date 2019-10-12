@@ -14,15 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using OpenTelemetry.Trace;
+using Xunit;
+using Xunit.Abstractions;
+
 namespace OpenTelemetry.Context.Propagation.Test
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using OpenTelemetry.Trace;
-    using Xunit;
-    using Xunit.Abstractions;
-
     public class B3FormatTest
     {
         private static readonly string TraceIdBase16 = "ff000000000000000000000000000041";

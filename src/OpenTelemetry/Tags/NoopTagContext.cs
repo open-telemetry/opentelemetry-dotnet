@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Tags
 {
-    using System.Collections.Generic;
-
     public sealed class NoopTagContext : TagContextBase
     {
         internal static readonly ITagContext Instance = new NoopTagContext();

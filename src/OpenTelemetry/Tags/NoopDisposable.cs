@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Tags
 {
-    using System;
-
     internal class NoopDisposable : IDisposable
     {
         internal static readonly IDisposable Instance = new NoopDisposable();

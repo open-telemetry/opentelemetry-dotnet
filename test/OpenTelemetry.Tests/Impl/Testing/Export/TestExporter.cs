@@ -14,16 +14,16 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
+
 namespace OpenTelemetry.Testing.Export
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.Concurrent;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
-
     public class TestExporter : SpanExporter
     {
         private readonly ConcurrentQueue<Span> spanDataList = new ConcurrentQueue<Span>();

@@ -14,17 +14,17 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using OpenTelemetry.Collector.StackExchangeRedis;
+using OpenTelemetry.Exporter.Zipkin;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using StackExchange.Redis;
+
 namespace Samples
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using OpenTelemetry.Collector.StackExchangeRedis;
-    using OpenTelemetry.Exporter.Zipkin;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
-    using StackExchange.Redis;
-
     internal class TestRedis
     {
         internal static object Run(string zipkinUri)

@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Diagnostics;
+
 namespace OpenTelemetry.Stats.Aggregations
 {
-    using System;
-    using System.Diagnostics;
-
     [DebuggerDisplay("{ToString(),nq}")]
     public sealed class Count : Aggregation, ICount
     {

@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-
     internal sealed class MutableLastValue : MutableAggregation
     {
         internal double LastValue = double.NaN;

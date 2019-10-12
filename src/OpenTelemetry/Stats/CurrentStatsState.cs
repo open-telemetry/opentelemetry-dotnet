@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-
     public sealed class CurrentStatsState
     {
         private readonly object lck = new object();

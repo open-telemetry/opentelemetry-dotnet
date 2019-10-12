@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Tags.Propagation.Test
 {
-    using System.Collections.Generic;
-
     public class TagContextBinarySerializerTest
     {
         private readonly CurrentTaggingState state;

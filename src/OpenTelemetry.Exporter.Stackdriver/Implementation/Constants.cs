@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
-    using System;
-
     internal class Constants
     {
         public static readonly string PackagVersionUndefined = "undefined";

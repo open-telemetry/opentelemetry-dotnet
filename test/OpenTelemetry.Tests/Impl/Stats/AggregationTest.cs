@@ -14,13 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Stats.Aggregations;
+using Xunit;
+
 namespace OpenTelemetry.Stats.Test
 {
-    using System;
-    using System.Collections.Generic;
-    using OpenTelemetry.Stats.Aggregations;
-    using Xunit;
-
     public class AggregationTest
     {
         [Fact]

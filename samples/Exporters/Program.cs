@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using CommandLine;
+
 namespace Samples
 {
-    using System;
-    using CommandLine;
-
     /// <summary>
     /// Main samples entry point.
     /// </summary>

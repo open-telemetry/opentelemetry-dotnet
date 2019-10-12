@@ -14,15 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using OpenTelemetry.Exporter.Zipkin;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+
 namespace Samples
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using OpenTelemetry.Exporter.Zipkin;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
-
     internal class TestZipkin
     {
         internal static object Run(string zipkinUri)

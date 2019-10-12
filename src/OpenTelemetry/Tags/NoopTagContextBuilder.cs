@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Tags
 {
-    using System;
-
     internal sealed class NoopTagContextBuilder : TagContextBuilderBase
     {
         internal static readonly ITagContextBuilder Instance = new NoopTagContextBuilder();

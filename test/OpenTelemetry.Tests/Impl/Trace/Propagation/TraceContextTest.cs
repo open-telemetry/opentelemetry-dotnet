@@ -14,16 +14,16 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Context.Propagation;
+using Xunit;
+
 namespace OpenTelemetry.Impl.Trace.Propagation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Context.Propagation;
-    using Xunit;
-
     public class TraceContextTest
     {
         private static readonly string[] empty = new string[0];

@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Net.Http;
+
 namespace OpenTelemetry.Collector.Dependencies
 {
-    using System;
-    using System.Net.Http;
-
     /// <summary>
     /// Options for dependencies collector.
     /// </summary>

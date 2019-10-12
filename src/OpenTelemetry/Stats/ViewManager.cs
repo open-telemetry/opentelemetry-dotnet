@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Stats
 {
-    using System.Collections.Generic;
-
     public sealed class ViewManager : ViewManagerBase
     {
         private readonly StatsManager statsManager;

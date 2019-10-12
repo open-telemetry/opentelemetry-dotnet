@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using OpenTelemetry.Collector.AspNetCore.Implementation;
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Collector.AspNetCore
 {
-    using System;
-    using OpenTelemetry.Collector.AspNetCore.Implementation;
-    using OpenTelemetry.Trace;
-
     /// <summary>
     /// Requests collector.
     /// </summary>

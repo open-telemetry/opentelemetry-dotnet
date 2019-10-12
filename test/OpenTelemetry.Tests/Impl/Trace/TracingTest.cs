@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Sampler.Internal;
+using Xunit;
+
 namespace OpenTelemetry.Trace.Test
 {
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Sampler.Internal;
-    using Xunit;
-
     public class TracingTest
     {
         [Fact]

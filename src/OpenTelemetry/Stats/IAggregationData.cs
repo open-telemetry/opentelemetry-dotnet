@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using OpenTelemetry.Stats.Aggregations;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using OpenTelemetry.Stats.Aggregations;
-
     /// <summary>
     /// Gets the aggregation data.
     /// </summary>

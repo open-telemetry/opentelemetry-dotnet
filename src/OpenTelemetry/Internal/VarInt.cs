@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.IO;
+
 namespace OpenTelemetry.Internal
 {
-    using System;
-    using System.IO;
-
     public static class VarInt
     {
         /// <summary>

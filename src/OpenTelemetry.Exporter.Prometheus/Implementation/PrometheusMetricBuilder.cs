@@ -14,16 +14,16 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using OpenTelemetry.Stats;
+using OpenTelemetry.Stats.Aggregations;
+
 namespace OpenTelemetry.Exporter.Prometheus.Implementation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Text;
-    using OpenTelemetry.Stats;
-    using OpenTelemetry.Stats.Aggregations;
-
     internal class PrometheusMetricBuilder
     {
         public static readonly string ContentType = "text/plain; version = 0.0.4";

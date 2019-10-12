@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
+
 namespace TestApp.AspNetCore._2._0.Controllers
 {
-    using System.Collections.Generic;
-    using Microsoft.AspNetCore.Mvc;
-
     [Route("api/[controller]")]
     public class ValuesController : Controller
     {

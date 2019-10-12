@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Stats
 {
-    using OpenTelemetry.Internal;
-
     public class Stats
     {
         private static readonly Stats StatsValue = new Stats();

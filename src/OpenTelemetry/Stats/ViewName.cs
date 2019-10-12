@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using OpenTelemetry.Utils;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using OpenTelemetry.Utils;
-
     public sealed class ViewName : IViewName
     {
         internal const int NameMaxLength = 255;

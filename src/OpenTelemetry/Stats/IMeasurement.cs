@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using OpenTelemetry.Stats.Measurements;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using OpenTelemetry.Stats.Measurements;
-
     /// <summary>
     /// Represents a single measurement for a measure.
     /// </summary>

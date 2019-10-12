@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
+
 namespace TestApp.AspNetCore._2._0
 {
-    using Microsoft.AspNetCore.Http;
-    using System.Threading.Tasks;
-
     public class CallbackMiddleware
     {
         public class CallbackMiddlewareImpl

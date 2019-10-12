@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Tags
 {
-    using System;
-
     public sealed class Tagger : TaggerBase
     {
         private readonly CurrentTaggingState state;

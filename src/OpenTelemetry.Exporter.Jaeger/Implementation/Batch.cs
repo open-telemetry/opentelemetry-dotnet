@@ -14,19 +14,19 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Thrift.Protocols;
+using Thrift.Protocols.Entities;
+using Thrift.Protocols.Utilities;
+
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Thrift.Protocols;
-    using Thrift.Protocols.Entities;
-    using Thrift.Protocols.Utilities;
-
     public class Batch : TAbstractBase
     {
         public Batch()

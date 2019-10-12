@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+using System.Linq;
+
 namespace OpenTelemetry.Tags.Test
 {
-    using System.Collections.Generic;
-    using System.Linq;
-
     internal static class TagsTestUtil
     {
         public static ICollection<Tag> TagContextToList(ITagContext tags)

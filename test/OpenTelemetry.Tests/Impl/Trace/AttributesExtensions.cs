@@ -15,12 +15,12 @@
 // </copyright>
 
 
+using System.Collections.Generic;
+using System.Linq;
+using Xunit;
+
 namespace OpenTelemetry.Tests
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using Xunit;
-   
     internal static class AttributesExtensions
     {
         public static object GetValue(this IEnumerable<KeyValuePair<string, object>> attributes, string key)

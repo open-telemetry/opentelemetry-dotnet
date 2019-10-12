@@ -15,18 +15,17 @@
 // </copyright>
 
 using OpenTelemetry.Resources;
+using System;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Testing.Export;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Utils;
+using Xunit;
 
 namespace OpenTelemetry.Trace.Export.Test
 {
-    using System;
-    using System.Diagnostics;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using OpenTelemetry.Testing.Export;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Utils;
-    using Xunit;
-
     public class SimpleSpanProcessorTest : IDisposable
     {
         private const string SpanName1 = "MySpanName/1";

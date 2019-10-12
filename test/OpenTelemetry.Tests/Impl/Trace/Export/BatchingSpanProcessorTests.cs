@@ -16,22 +16,21 @@
 
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Sampler;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Testing.Export;
+using OpenTelemetry.Utils;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
+using Xunit;
 
 namespace OpenTelemetry.Trace.Export.Test
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using OpenTelemetry.Testing.Export;
-    using OpenTelemetry.Utils;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Export;
-    using Xunit;
-
     public class BatchingSpanProcessorTest : IDisposable
     {
         private const string SpanName1 = "MySpanName/1";

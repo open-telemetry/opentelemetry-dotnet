@@ -14,15 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace.Sampler;
+
 namespace OpenTelemetry.Trace.Configuration
 {
-    using System;
-    using System.Collections.Generic;
-    using OpenTelemetry.Context.Propagation;
-    using OpenTelemetry.Resources;
-    using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Sampler;
-
     public class TracerFactory : TracerFactoryBase, IDisposable
     {
         private readonly object lck = new object();

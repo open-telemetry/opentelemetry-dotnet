@@ -14,14 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using System.Diagnostics;
+using Xunit;
+
 namespace OpenTelemetry.Trace.Test
 {
-    using System;
-    using System.Linq;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using Xunit;
-
     public class LinkTest : IDisposable
     {
         private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();

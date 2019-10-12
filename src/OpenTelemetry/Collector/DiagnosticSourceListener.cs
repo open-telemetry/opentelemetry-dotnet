@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+
 namespace OpenTelemetry.Collector
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-
     internal class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>
     {
         private readonly ListenerHandler handler;

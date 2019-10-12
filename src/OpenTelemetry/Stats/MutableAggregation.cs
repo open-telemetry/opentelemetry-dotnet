@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-
     internal abstract class MutableAggregation
     {
         private const double Tolerance = 1e-6;

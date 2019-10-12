@@ -14,13 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using OpenTelemetry.Utils;
+
 namespace OpenTelemetry.Trace.Sampler
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using OpenTelemetry.Utils;
-
     /// <inheritdoc />
     public sealed class ProbabilitySampler : ISampler
     {

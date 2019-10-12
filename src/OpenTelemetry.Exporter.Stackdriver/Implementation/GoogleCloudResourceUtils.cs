@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.IO;
+using Google.Api;
+
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
-    using System;
-    using System.IO;
-    using Google.Api;
-
     /// <summary>
     /// Utility methods for working with Google Cloud Resources.
     /// </summary>

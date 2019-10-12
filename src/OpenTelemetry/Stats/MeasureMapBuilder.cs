@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+using OpenTelemetry.Stats.Measurements;
+using OpenTelemetry.Stats.Measures;
+
 namespace OpenTelemetry.Stats
 {
-    using System.Collections.Generic;
-    using OpenTelemetry.Stats.Measurements;
-    using OpenTelemetry.Stats.Measures;
-
     internal class MeasureMapBuilder
     {
         private readonly List<IMeasurement> measurements = new List<IMeasurement>();

@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Tags
 {
-    using System;
-
     internal sealed class NoopTagger : TaggerBase
     {
         internal static readonly ITagger Instance = new NoopTagger();

@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Utils
 {
-    using System;
-
     internal static class DoubleUtil
     {
         public static long ToInt64(double arg)

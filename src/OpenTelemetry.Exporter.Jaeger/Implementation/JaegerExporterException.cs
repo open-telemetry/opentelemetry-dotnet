@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-
     public class JaegerExporterException : Exception
     {
         public JaegerExporterException(string message, Exception originalException)

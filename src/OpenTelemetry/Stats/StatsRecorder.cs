@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-
     public sealed class StatsRecorder : StatsRecorderBase
     {
         private readonly StatsManager statsManager;

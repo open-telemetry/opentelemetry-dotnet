@@ -14,19 +14,19 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+
+using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace.Internal;
+using OpenTelemetry.Utils;
+
 namespace OpenTelemetry.Trace
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-
-    using OpenTelemetry.Context.Propagation;
-    using OpenTelemetry.Resources;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Utils;
-
     internal sealed class Tracer : ITracer
     {
         private readonly SpanProcessor spanProcessor;

@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Tags
 {
-    using System;
-
     public abstract class TaggerBase : ITagger
     {
         public abstract ITagContext Empty { get; }

@@ -14,15 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Net.Http;
+using OpenTelemetry.Collector.Dependencies;
+using OpenTelemetry.Exporter.Zipkin;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+
 namespace Samples
 {
-    using System;
-    using System.Net.Http;
-    using OpenTelemetry.Collector.Dependencies;
-    using OpenTelemetry.Exporter.Zipkin;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
-
     internal class TestHttpClient
     {
         internal static object Run()

@@ -14,14 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using OpenTelemetry.Utils;
+using Xunit;
+
 namespace OpenTelemetry.Trace.Test
 {
-    using System;
-    using System.Linq;
-    using System.Collections.Generic;
-    using OpenTelemetry.Utils;
-    using Xunit;
-
     public class EventTest
     {
         [Fact]

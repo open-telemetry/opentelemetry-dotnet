@@ -14,15 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.IO;
+using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
+using Thrift.Transports;
+
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-    using System.IO;
-    using System.Net.Sockets;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Thrift.Transports;
-
     public class JaegerThriftClientTransport : TClientTransport
     {
         private readonly IJaegerUdpClient udpClient;

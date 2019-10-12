@@ -14,17 +14,17 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using OpenTelemetry.Abstractions.Utils;
+using OpenTelemetry.Stats.Aggregations;
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Tags;
+using Xunit;
+
 namespace OpenTelemetry.Stats.Test
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using OpenTelemetry.Abstractions.Utils;
-    using OpenTelemetry.Stats.Aggregations;
-    using OpenTelemetry.Stats.Measures;
-    using OpenTelemetry.Tags;
-    using Xunit;
-
     public class ViewManagerTest
     {
         private static readonly TagKey Key = TagKey.Create("Key");

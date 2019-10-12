@@ -14,14 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.IO;
+using System.Text;
+using OpenTelemetry.Internal;
+using Xunit;
+
 namespace OpenTelemetry.Tags.Propagation.Test
 {
-    using System;
-    using System.IO;
-    using System.Text;
-    using OpenTelemetry.Internal;
-    using Xunit;
-
     public class TagContextDeserializationTest
     {
         private readonly CurrentTaggingState state;

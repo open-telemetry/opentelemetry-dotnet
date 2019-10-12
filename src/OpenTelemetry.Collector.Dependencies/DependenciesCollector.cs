@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Collector.Dependencies
 {
-    using System;
-    using System.Collections.Generic;
-    using OpenTelemetry.Trace;
-
     public class DependenciesCollector : IDisposable
     {
         private readonly List<IDisposable> collectors = new List<IDisposable>();

@@ -14,17 +14,17 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using Moq;
+using OpenTelemetry.Exporter.Jaeger.Implementation;
+using Thrift.Transports;
+using Xunit;
+
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
-    using System;
-    using System.IO;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Moq;
-    using OpenTelemetry.Exporter.Jaeger.Implementation;
-    using Thrift.Transports;
-    using Xunit;
-
     public class ThriftUdpClientTransportTests: IDisposable
     {
         private MemoryStream testingMemoryStream = new MemoryStream();

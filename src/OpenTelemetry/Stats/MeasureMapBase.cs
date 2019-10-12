@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Tags;
+
 namespace OpenTelemetry.Stats
 {
-    using OpenTelemetry.Stats.Measures;
-    using OpenTelemetry.Tags;
-
     public abstract class MeasureMapBase : IMeasureMap
     {
         public abstract IMeasureMap Put(IMeasureDouble measure, double value);

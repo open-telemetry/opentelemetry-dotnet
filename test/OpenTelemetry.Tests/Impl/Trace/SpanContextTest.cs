@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+using Xunit;
+
 namespace OpenTelemetry.Trace.Test
 {
-    using System.Diagnostics;
-    using Xunit;
-
     public class SpanContextTest
     {
         private static readonly byte[] firstTraceIdBytes =

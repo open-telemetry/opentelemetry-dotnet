@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using Xunit;
+
 namespace OpenTelemetry.Trace.Test
 {
-    using Xunit;
-
     public class StatusTest
     {
         [Fact]

@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using OpenTelemetry.Trace.Configuration;
+
 namespace OpenTelemetry.Collector.AspNetCore
 {
-    using System;
-    using OpenTelemetry.Trace.Configuration;
-
     public static class TracerBuilderExtensions
     {
         public static TracerBuilder AddRequestCollector(this TracerBuilder builder)

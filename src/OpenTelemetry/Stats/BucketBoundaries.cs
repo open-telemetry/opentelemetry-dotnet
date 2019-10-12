@@ -14,13 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using OpenTelemetry.Utils;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using OpenTelemetry.Utils;
-
     public sealed class BucketBoundaries : IBucketBoundaries
     {
         private BucketBoundaries(IReadOnlyList<double> boundaries)

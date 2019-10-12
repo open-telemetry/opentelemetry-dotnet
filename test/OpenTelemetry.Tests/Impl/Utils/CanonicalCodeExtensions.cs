@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Utils
 {
-    using OpenTelemetry.Trace;
-
     internal static class CanonicalCodeExtensions
     {
         public static Status ToStatus(this CanonicalCode code)

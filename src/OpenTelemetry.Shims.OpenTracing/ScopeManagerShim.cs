@@ -14,13 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using global::OpenTracing;
+
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    using System;
-    using System.Runtime.CompilerServices;
-    using System.Threading;
-    using global::OpenTracing;
-
     public sealed class ScopeManagerShim : IScopeManager
     {
         private static readonly ConditionalWeakTable<Trace.ISpan, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<Trace.ISpan, global::OpenTracing.IScope>();

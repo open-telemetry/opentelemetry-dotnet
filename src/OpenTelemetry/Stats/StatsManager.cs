@@ -14,13 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Internal;
+using OpenTelemetry.Tags;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using System.Collections.Generic;
-    using OpenTelemetry.Internal;
-    using OpenTelemetry.Tags;
-
     internal sealed class StatsManager
     {
         private readonly IEventQueue queue;

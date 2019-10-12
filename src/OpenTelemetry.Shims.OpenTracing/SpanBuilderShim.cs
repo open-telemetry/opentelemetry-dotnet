@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using global::OpenTracing;
+
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    using System;
-    using System.Collections.Generic;
-    using global::OpenTracing;
-
     /// <summary>
     /// Adapts OpenTracing ISpanBuilder to an underlying OpenTelemetry ISpanBuilder.
     /// </summary>

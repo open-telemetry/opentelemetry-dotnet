@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Diagnostics;
+
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-    using System.Diagnostics;
-
     public struct Int128
     {
         public static Int128 Empty = default;

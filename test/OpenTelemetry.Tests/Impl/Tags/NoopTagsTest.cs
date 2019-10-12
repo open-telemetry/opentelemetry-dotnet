@@ -15,16 +15,15 @@
 // </copyright>
 
 using OpenTelemetry.Trace;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using OpenTelemetry.Internal;
+using Xunit;
 
 namespace OpenTelemetry.Tags.Test
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Linq;
-    using OpenTelemetry.Internal;
-    using Xunit;
-
     public class NoopTagsTest
     {
         private static readonly TagKey KEY = TagKey.Create("key");

@@ -14,15 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Thrift.Protocols;
+using Thrift.Protocols.Entities;
+
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Thrift.Protocols;
-    using Thrift.Protocols.Entities;
-
     public class JaegerTag : TAbstractBase
     {
         public JaegerTag()

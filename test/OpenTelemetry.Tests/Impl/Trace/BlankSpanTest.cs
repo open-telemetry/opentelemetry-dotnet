@@ -16,12 +16,11 @@
 
 using System;
 using System.Diagnostics;
+using System.Collections.Generic;
+using Xunit;
 
 namespace OpenTelemetry.Trace.Test
 {
-    using System.Collections.Generic;
-    using Xunit;
-
     public class BlankSpanTest
     {
         [Fact]

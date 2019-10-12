@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using Xunit;
+
 namespace OpenTelemetry.Internal.Test
 {
-    using Xunit;
-
     public class TimestampConverterTest
     {
         [Fact]

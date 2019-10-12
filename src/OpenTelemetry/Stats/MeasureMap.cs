@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Tags;
+using OpenTelemetry.Tags.Unsafe;
+
 namespace OpenTelemetry.Stats
 {
-    using OpenTelemetry.Stats.Measures;
-    using OpenTelemetry.Tags;
-    using OpenTelemetry.Tags.Unsafe;
-
     internal sealed class MeasureMap : MeasureMapBase
     {
         private readonly StatsManager statsManager;

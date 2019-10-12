@@ -14,16 +14,16 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+using System.Linq;
+using OpenTelemetry.Stats.Aggregations;
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Tags;
+using Xunit;
+using Xunit.Abstractions;
+
 namespace OpenTelemetry.Stats.Test
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using OpenTelemetry.Stats.Aggregations;
-    using OpenTelemetry.Stats.Measures;
-    using OpenTelemetry.Tags;
-    using Xunit;
-    using Xunit.Abstractions;
-
     public class QuickStartExampleTest
     {
         readonly ITestOutputHelper output;

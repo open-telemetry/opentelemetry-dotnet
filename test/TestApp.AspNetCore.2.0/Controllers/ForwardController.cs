@@ -14,14 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+
 namespace TestApp.AspNetCore._2._0.Controllers
 {
-    using System.Net.Http;
-    using System.Text;
-    using System.Threading.Tasks;
-    using Microsoft.AspNetCore.Mvc;
-    using Newtonsoft.Json;
-
     [Route("api/[controller]")]
     public class ForwardController : Controller
     {

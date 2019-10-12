@@ -15,11 +15,11 @@
 // </copyright>
 
 
+using System.Linq;
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Collector.StackExchangeRedis.Tests
 {
-    using System.Linq;
-    using System.Collections.Generic;
-
     internal static class AttributesExtensions
     {
         public static object GetValue(this IEnumerable<KeyValuePair<string, object>> attributes, string key)

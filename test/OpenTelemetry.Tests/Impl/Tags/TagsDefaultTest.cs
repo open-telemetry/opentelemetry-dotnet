@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using Xunit;
+
 namespace OpenTelemetry.Tags.Test
 {
-    using Xunit;
-
     public class TagsDefaultTest
     {
         [Fact(Skip = "Fix statics usage")]

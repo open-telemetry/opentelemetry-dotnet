@@ -14,14 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using OpenTelemetry.Tags;
+
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using System.Collections.Concurrent;
-    using System.Collections.Generic;
-    using System.Collections.Immutable;
-    using OpenTelemetry.Tags;
-
     internal sealed class MeasureToViewMap
     {
         private readonly IDictionary<string, ICollection<MutableViewData>> mutableMap = new ConcurrentDictionary<string, ICollection<MutableViewData>>();

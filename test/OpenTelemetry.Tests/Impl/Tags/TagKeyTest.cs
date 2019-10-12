@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using Xunit;
+
 namespace OpenTelemetry.Tags.Test
 {
-    using System;
-    using Xunit;
-
     public class TagKeyTest
     {
         [Fact]

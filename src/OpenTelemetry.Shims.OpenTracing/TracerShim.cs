@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using global::OpenTracing.Propagation;
+
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    using System;
-    using System.Collections.Generic;
-    using global::OpenTracing.Propagation;
-
     public class TracerShim : global::OpenTracing.ITracer
     {
         private readonly Trace.ITracer tracer;
