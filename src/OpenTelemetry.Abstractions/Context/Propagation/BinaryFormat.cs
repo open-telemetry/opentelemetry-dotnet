@@ -14,14 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Diagnostics;
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Context.Propagation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using OpenTelemetry.Trace;
-
     public class BinaryFormat : IBinaryFormat
     {
         private const byte VersionId = 0;

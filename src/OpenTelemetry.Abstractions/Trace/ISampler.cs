@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+using System.Diagnostics;
+
 namespace OpenTelemetry.Trace
 {
-    using System.Collections.Generic;
-    using System.Diagnostics;
-
     /// <summary>
     /// Sampler to reduce data volume. This sampler executes before Span object was created.
     /// </summary>

@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Diagnostics;
+using OpenTelemetry.Abstractions.Utils;
+
 namespace OpenTelemetry.Trace
 {
-    using System;
-    using System.Diagnostics;
-    using OpenTelemetry.Abstractions.Utils;
-
     public static class TracerExtensions
     {
         /// <summary>

@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+using System.Diagnostics;
+
 namespace OpenTelemetry.Trace.Sampler.Internal
 {
-    using System.Collections.Generic;
-    using System.Diagnostics;
-
     internal sealed class AlwaysSampleSampler : ISampler
     {
         internal AlwaysSampleSampler()

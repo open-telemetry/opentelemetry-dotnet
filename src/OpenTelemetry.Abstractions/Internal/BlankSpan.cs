@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Trace
 {
-    using System;
-    using System.Collections.Generic;
-
     /// <summary>
     /// Blank span.
     /// </summary>

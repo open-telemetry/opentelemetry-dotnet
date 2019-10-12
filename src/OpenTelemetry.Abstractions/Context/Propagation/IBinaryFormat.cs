@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Context.Propagation
 {
-    using OpenTelemetry.Trace;
-
     /// <summary>
     /// Binary format propagator.
     /// </summary>

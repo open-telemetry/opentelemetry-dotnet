@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Tags
 {
-    using System;
-
     /// <summary>
     /// Tag with the key and value.
     /// </summary>

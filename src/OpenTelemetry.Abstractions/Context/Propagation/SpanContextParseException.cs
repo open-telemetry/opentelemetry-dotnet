@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Context.Propagation
 {
-    using System;
-
     public class SpanContextParseException : Exception
     {
         public SpanContextParseException(string message)

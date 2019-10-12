@@ -14,15 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using OpenTelemetry.Abstractions.Context.Propagation;
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Context.Propagation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using OpenTelemetry.Abstractions.Context.Propagation;
-    using OpenTelemetry.Trace;
-
     /// <summary>
     /// W3C trace context text wire protocol formatter. See https://github.com/w3c/distributed-tracing/.
     /// </summary>

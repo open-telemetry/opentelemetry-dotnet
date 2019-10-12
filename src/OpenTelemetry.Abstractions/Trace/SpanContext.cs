@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+
 namespace OpenTelemetry.Trace
 {
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-
     /// <summary>
     /// A class that represents a span context. A span context contains the state that must propagate to
     /// child <see cref="ISpan"/> and across process boundaries. It contains the identifiers <see cref="ActivityTraceId"/>

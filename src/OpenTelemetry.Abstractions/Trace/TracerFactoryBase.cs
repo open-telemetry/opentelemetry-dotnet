@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Trace
 {
-    using System;
-
     /// <summary>
     /// Creates Tracers for an instrumentation library.
     /// </summary>
