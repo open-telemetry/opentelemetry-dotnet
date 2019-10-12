@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using OpenTelemetry.Tags.Propagation;
 
 namespace OpenTelemetry.Tags
 {
-    using System;
-    using OpenTelemetry.Tags.Propagation;
-
     public class NoopTagContextBinarySerializer : TagContextBinarySerializerBase
     {
         internal static readonly ITagContextBinarySerializer Instance = new NoopTagContextBinarySerializer();

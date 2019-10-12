@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace OpenTelemetry.Exporter.LightStep.Implementation
 {
 #pragma warning disable SA1402 // File may only contain a single type
-    using System.Collections.Generic;
-    using Newtonsoft.Json;
-
     internal class LightStepReport
     {
         [JsonProperty("auth")]

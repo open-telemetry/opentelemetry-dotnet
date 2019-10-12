@@ -1,14 +1,13 @@
 ﻿// <copyright file="LoggingBinaryFormat.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Trace;
 
 namespace LoggingTracer
 {
-    using System;
-    using System.Collections.Generic;
-    using OpenTelemetry.Context.Propagation;
-    using OpenTelemetry.Trace;
-
     public sealed class LoggingBinaryFormat : IBinaryFormat
     {
         public ISet<string> Fields => null;

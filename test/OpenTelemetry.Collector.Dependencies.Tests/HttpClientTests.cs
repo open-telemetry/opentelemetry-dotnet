@@ -13,23 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using Moq;
+using Newtonsoft.Json;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Reflection;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
-    using Moq;
-    using Newtonsoft.Json;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Export;
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Net.Http;
-    using System.Reflection;
-    using System.Threading.Tasks;
-    using Xunit;
-
     public partial class HttpClientTests
     {
         public class HttpOutTestCase

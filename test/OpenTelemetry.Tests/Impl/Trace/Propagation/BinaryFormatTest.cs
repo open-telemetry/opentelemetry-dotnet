@@ -13,15 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Diagnostics;
+using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Trace;
+using System;
+using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Test
 {
-    using System.Diagnostics;
-    using OpenTelemetry.Context.Propagation;
-    using OpenTelemetry.Trace;
-    using System;
-    using Xunit;
-
     public class BinaryFormatTest
     {
         private static readonly byte[] TraceIdBytes = new byte[] { 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79 };

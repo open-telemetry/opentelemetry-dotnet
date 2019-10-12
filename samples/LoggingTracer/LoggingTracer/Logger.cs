@@ -1,12 +1,11 @@
 ﻿// <copyright file="Logger.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
+using System;
+using System.Threading;
 
 namespace LoggingTracer
 {
-    using System;
-    using System.Threading;
-
     public static class Logger
     {
         private static DateTime startTime = DateTime.UtcNow;

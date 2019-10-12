@@ -1,12 +1,11 @@
 ﻿// <copyright file="Program.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
+using System.Threading.Tasks;
+using OpenTelemetry.Trace;
 
 namespace LoggingTracer.Demo.ConsoleApp
 {
-    using System.Threading.Tasks;
-    using OpenTelemetry.Trace;
-
     public class Program
     {
         public static async Task Main(string[] args)

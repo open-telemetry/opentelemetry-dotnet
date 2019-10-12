@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using OpenTelemetry.Tags.Propagation;
 
 namespace OpenTelemetry.Tags
 {
-    using OpenTelemetry.Tags.Propagation;
-
     internal sealed class NoopTags
     {
         internal static ITagger NoopTagger

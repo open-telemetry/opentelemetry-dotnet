@@ -1,4 +1,4 @@
-// <copyright file="Batch.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Batch.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,20 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Thrift.Protocols;
+using Thrift.Protocols.Entities;
+using Thrift.Protocols.Utilities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Thrift.Protocols;
-    using Thrift.Protocols.Entities;
-    using Thrift.Protocols.Utilities;
-
     public class Batch : TAbstractBase
     {
         public Batch()

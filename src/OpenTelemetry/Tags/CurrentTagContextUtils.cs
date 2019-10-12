@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using OpenTelemetry.Tags.Unsafe;
 
 namespace OpenTelemetry.Tags
 {
-    using System;
-    using OpenTelemetry.Tags.Unsafe;
-
     internal static class CurrentTagContextUtils
     {
         internal static ITagContext CurrentTagContext => AsyncLocalContext.CurrentTagContext;

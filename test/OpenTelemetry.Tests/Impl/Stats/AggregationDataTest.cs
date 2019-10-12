@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Stats.Aggregations;
+using Xunit;
 
 namespace OpenTelemetry.Stats.Test
 {
-    using System;
-    using System.Collections.Generic;
-    using OpenTelemetry.Stats.Aggregations;
-    using Xunit;
-
     public class AggregationDataTest
     {
         private static readonly double TOLERANCE = 1e-6;

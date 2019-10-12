@@ -13,15 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Tags.Propagation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Text;
-    using OpenTelemetry.Internal;
-
     internal static class SerializationUtils
     {
         internal const int VersionId = 0;

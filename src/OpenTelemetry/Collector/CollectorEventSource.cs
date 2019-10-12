@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Diagnostics.Tracing;
+using System.Globalization;
+using System.Threading;
 
 namespace OpenTelemetry.Collector
 {
-    using System;
-    using System.Diagnostics.Tracing;
-    using System.Globalization;
-    using System.Threading;
-
     /// <summary>
     /// EventSource events emitted from the project.
     /// </summary>

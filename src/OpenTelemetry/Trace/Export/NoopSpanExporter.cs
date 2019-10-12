@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace OpenTelemetry.Trace.Export
 {
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
-
     /// <inheritdoc />
     internal sealed class NoopSpanExporter : SpanExporter
     {

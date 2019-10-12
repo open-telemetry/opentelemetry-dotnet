@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using Xunit;
 
 namespace OpenTelemetry.Stats.Test
 {
-    using Xunit;
-
     public class StatsTest
     {
         [Fact(Skip = "Fix statics usage")]

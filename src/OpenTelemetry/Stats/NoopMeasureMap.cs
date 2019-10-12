@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Tags;
 
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using OpenTelemetry.Stats.Measures;
-    using OpenTelemetry.Tags;
-
     internal sealed class NoopMeasureMap : MeasureMapBase
     {
         internal static readonly NoopMeasureMap Instance = new NoopMeasureMap();

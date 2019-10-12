@@ -13,16 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using Google.Api.Gax;
+using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Monitoring.V3;
+using OpenTelemetry.Exporter.Stackdriver.Implementation;
+using OpenTelemetry.Stats;
+using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Stackdriver
 {
-    using Google.Api.Gax;
-    using Google.Apis.Auth.OAuth2;
-    using Google.Cloud.Monitoring.V3;
-    using OpenTelemetry.Exporter.Stackdriver.Implementation;
-    using OpenTelemetry.Stats;
-    using OpenTelemetry.Trace.Export;
-
     /// <summary>
     /// Implementation of the exporter to Stackdriver.
     /// </summary>

@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using OpenTelemetry.Utils;
 
 namespace OpenTelemetry.Resources
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using OpenTelemetry.Utils;
-
     /// <summary>
     /// <see cref="Resource"/> represents a resource, which captures identifying information about the entities
     /// for which signals (stats or traces) are reported.

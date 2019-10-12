@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Trace.Export
 {
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using OpenTelemetry.Trace;
-
     /// <summary>
     /// Span processor base class. 
     /// </summary>

@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Diagnostics.Tracing;
+using System.Globalization;
+using System.Threading;
 
 namespace OpenTelemetry.Implementation
 {
-    using System;
-    using System.Diagnostics.Tracing;
-    using System.Globalization;
-    using System.Threading;
-
     [EventSource(Name = "OpenTelemetry-Base")]
     internal class OpenTelemetryEventSource : EventSource
     {

@@ -13,17 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Diagnostics;
+using System.Collections.Generic;
+using System.Globalization;
+using OpenTelemetry.Trace.Internal;
+using OpenTelemetry.Trace.Test;
+using Xunit;
 
 namespace OpenTelemetry.Trace.Sampler.Test
 {
-    using System;
-    using System.Diagnostics;
-    using System.Collections.Generic;
-    using System.Globalization;
-    using OpenTelemetry.Trace.Internal;
-    using OpenTelemetry.Trace.Test;
-    using Xunit;
-
     public class SamplersTest
     {
         private static readonly String SPAN_NAME = "MySpanName";

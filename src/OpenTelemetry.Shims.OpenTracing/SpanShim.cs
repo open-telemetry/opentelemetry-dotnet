@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using global::OpenTracing;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using global::OpenTracing;
-
     public sealed class SpanShim : ISpan
     {
         /// <summary>

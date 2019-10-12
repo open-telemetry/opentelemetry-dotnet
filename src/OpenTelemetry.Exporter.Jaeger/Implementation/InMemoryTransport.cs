@@ -1,4 +1,4 @@
-// <copyright file="InMemoryTransport.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="InMemoryTransport.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using Thrift.Transports;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-    using System.IO;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Thrift.Transports;
-
     public class InMemoryTransport : TClientTransport
     {
         private readonly MemoryStream byteStream;

@@ -13,18 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using OpenTelemetry.Internal;
+using Xunit;
 
 namespace OpenTelemetry.Tags.Propagation.Test
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Text;
-    using OpenTelemetry.Internal;
-    using Xunit;
-
     public class TagContextSerializationTest
     {
         private static readonly TagKey K1 = TagKey.Create("k1");

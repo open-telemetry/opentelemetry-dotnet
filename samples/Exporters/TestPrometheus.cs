@@ -13,19 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Exporter.Prometheus;
+using OpenTelemetry.Stats;
+using OpenTelemetry.Stats.Aggregations;
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Tags;
 
 namespace Samples
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using OpenTelemetry.Exporter.Prometheus;
-    using OpenTelemetry.Stats;
-    using OpenTelemetry.Stats.Aggregations;
-    using OpenTelemetry.Stats.Measures;
-    using OpenTelemetry.Tags;
-
     internal class TestPrometheus
     {
         private static readonly ITagger Tagger = Tags.Tagger;

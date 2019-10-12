@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Diagnostics;
+using OpenTelemetry.Trace;
+using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
-    using System;
-    using System.Diagnostics;
-    using OpenTelemetry.Trace;
-    using Xunit;
-
     public class SpanContextShimTests
     {
         [Fact]
