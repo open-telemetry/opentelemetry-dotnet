@@ -236,21 +236,23 @@ Configuration is done by user application: it should configure exporter and may 
 ### Configuration with Microsoft.Extensions.DependencyInjection
 
 1. Install packages to your project:
-   [OpenTelemetry][OpenTelemetry-nuget-url]
+   [OpenTelemetry.Hosting][OpenTelemetry-hosting-nuget-url] to provide `AddOpenTelemetry` helper method
    [OpenTelemetry.Collector.AspNetCore][OpenTelemetry-collect-aspnetcore-nuget-url] to collect incoming HTTP requests
    [OpenTelemetry.Collector.Dependencies](OpenTelemetry-collect-deps-nuget-url) to collect outgoing HTTP requests and Azure SDK calls
 
 2. Make sure `TracerFactory`, is registered in DI.
 
     ```csharp
-    services.AddSingleton<TracerFactory>(_ =>
-            TracerFactory.Create(b => b
-                .SetSampler(Samplers.AlwaysSample)
-                .UseZipkin(o => o.ServiceName = "my-service")
+    services.AddOpenTelemetry(builder =>
+    {
+        builder
+            .SetSampler(Samplers.AlwaysSample)
+            .UseZipkin(o => o.ServiceName = "my-service")
 
-                // you may also configure request and dependencies collectors
-                .AddRequestCollector()
-                .AddDependencyCollector()));
+            // you may also configure request and dependencies collectors
+            .AddRequestCollector()
+            .AddDependencyCollector())
+    });
     ```
 
 3. Start auto-collectors
@@ -563,6 +565,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-collect-stackexchange-redis-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Collector.StackExchangeRedis
 [OpenTelemetry-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.svg
 [OpenTelemetry-nuget-url]:https://www.nuget.org/packages/OpenTelemetry
+[OpenTelemetry-hosting-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Hosting.svg
+[OpenTelemetry-hosting-nuget-url]:https://www.nuget.org/packages/OpenTelemetry.Hosting
 [OpenTelemetry-abs-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Abstractions.svg
 [OpenTelemetry-abs-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Abstractions
 [OpenTelemetry-exporter-zipkin-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Zipkin.svg
