@@ -13,6 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using Xunit;
+using OpenTelemetry.Resources;
+using System.Collections.Generic;
+using System;
+using System.Linq;
 
 using Xunit;
 using OpenTelemetry.Resources;

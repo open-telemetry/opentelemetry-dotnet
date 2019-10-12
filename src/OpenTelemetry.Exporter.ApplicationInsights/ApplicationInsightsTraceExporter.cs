@@ -13,6 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights.Extensibility.Implementation;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 
 using System;
 using System.Collections.Generic;

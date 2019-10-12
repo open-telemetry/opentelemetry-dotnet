@@ -13,6 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.IO;
+using System.Text;
+using OpenTelemetry.Internal;
+using Xunit;
 
 using System;
 using System.IO;

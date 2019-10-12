@@ -13,6 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Metrics.Implementation;
+using OpenTelemetry.Tags;
+using OpenTelemetry.Trace;
 
 using System;
 using System.Collections.Generic;

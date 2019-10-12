@@ -13,6 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using OpenTelemetry.Exporter.LightStep.Implementation;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 
 using System;
 using System.Collections.Generic;

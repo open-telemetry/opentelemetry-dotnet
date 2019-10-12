@@ -13,6 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Collector.StackExchangeRedis.Implementation;
+using OpenTelemetry.Trace;
+using StackExchange.Redis.Profiling;
 
 using System;
 using System.Collections.Concurrent;

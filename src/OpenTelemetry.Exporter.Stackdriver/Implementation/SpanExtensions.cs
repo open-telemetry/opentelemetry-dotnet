@@ -13,6 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Linq;
+using Google.Cloud.Trace.V2;
+using Google.Protobuf.WellKnownTypes;
+using OpenTelemetry.Trace;
 
 using System.Linq;
 using Google.Cloud.Trace.V2;

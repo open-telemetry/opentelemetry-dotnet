@@ -13,6 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using Microsoft.ApplicationInsights.Extensibility;
+using OpenTelemetry.Exporter.ApplicationInsights;
+using OpenTelemetry.Stats;
+using OpenTelemetry.Stats.Aggregations;
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Tags;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
 
 using System;
 using System.Collections.Generic;

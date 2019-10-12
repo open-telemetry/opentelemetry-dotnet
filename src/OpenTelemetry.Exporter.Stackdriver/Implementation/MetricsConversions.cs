@@ -13,6 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
+using Google.Api;
+using Google.Cloud.Monitoring.V3;
+using Google.Protobuf.WellKnownTypes;
+using OpenTelemetry.Exporter.Stackdriver.Utils;
+using OpenTelemetry.Stats;
+using OpenTelemetry.Stats.Aggregations;
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Tags;
 
 using System.Collections.Generic;
 using Google.Api;

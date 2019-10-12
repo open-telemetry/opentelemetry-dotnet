@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using OpenTelemetry.Exporter.Stackdriver.Implementation;
+using System;
+using Xunit;
 
 using OpenTelemetry.Exporter.Stackdriver.Implementation;
 using System;
