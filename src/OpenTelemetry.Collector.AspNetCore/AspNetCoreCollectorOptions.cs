@@ -24,28 +24,9 @@ namespace OpenTelemetry.Collector.AspNetCore
     public class AspNetCoreCollectorOptions
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="AspNetCoreCollectorOptions"/> class.
+        /// Gets or sets a hook to exclude calls based on domain or other per-request criterion.
         /// </summary>
-        public AspNetCoreCollectorOptions()
-        {
-            this.EventFilter = DefaultFilter;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AspNetCoreCollectorOptions"/> class.
-        /// </summary>
-        /// <param name="eventFilter">Custom filtering predicate for DiagnosticSource events, if any.</param>
-        internal AspNetCoreCollectorOptions(Func<string, object, object, bool> eventFilter = null)
-        {
-            // TODO This API is unusable and likely to change, let's not expose it for now.
-
-            this.EventFilter = eventFilter;
-        }
-
-        /// <summary>
-        /// Gets a hook to exclude calls based on domain or other per-request criterion.
-        /// </summary>
-        internal Func<string, object, object, bool> EventFilter { get; }
+        internal Func<string, object, object, bool> EventFilter { get; set; } = DefaultFilter;
 
         private static bool DefaultFilter(string activityName, object arg1, object unused)
         {

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,42 +21,46 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Utils;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Sampler;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Test
 {
+    using System;
+    using OpenTelemetry.Trace.Configuration;
+    using OpenTelemetry.Trace.Export;
+
+    using Xunit;
+
     public class TracerTest
     {
         private const string SpanName = "MySpanName";
         private readonly SpanProcessor spanProcessor;
         private readonly TracerConfiguration tracerConfiguration;
         private readonly Tracer tracer;
-
+        private readonly TracerFactory tracerFactory;
 
         public TracerTest()
         {
             spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
             tracerConfiguration = new TracerConfiguration();
-            tracer = new Tracer(spanProcessor, tracerConfiguration, Resource.Empty);
+            tracerFactory = TracerFactory.Create(b => b
+                    .SetExporter(new NoopSpanExporter())
+                    .SetProcessor(e => new SimpleSpanProcessor(e)));
+            tracer = (Tracer)tracerFactory.GetTracer(null);
         }
 
         [Fact]
         public void BadConstructorArgumentsThrow()
         {
             var noopProc = new SimpleSpanProcessor(new NoopSpanExporter());
-            Assert.Throws<ArgumentNullException>(() => new Tracer(null, new TracerConfiguration(), Resource.Empty));
             Assert.Throws<ArgumentNullException>(() => new Tracer(null, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, Resource.Empty));
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), null, new TraceContextFormat(), Resource.Empty));
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), new BinaryFormat(), null, Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), null));
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), null));
         }
 
@@ -122,15 +125,19 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void CreateSpan_NotSampled()
         {
-            var span = new Tracer(spanProcessor, new TracerConfiguration(Samplers.NeverSample), Resource.Empty)
-                .StartSpan("foo");
+            var tracer = TracerFactory.Create(b => b
+                    .SetSampler(Samplers.NeverSample)
+                    .SetProcessor(_ => spanProcessor))
+                .GetTracer(null);
+
+            var span = tracer.StartSpan("foo");
             Assert.False(span.IsRecordingEvents);
         }
 
         [Fact]
         public void CreateSpan_ByTracerWithResource()
         {
-            var tracerFactory = new TracerFactory();
+
             var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.0.0");
             var span = (Span)tracer.StartSpan("some span");
             Assert.Equal(tracer.LibraryResource, span.LibraryResource);
@@ -155,27 +162,15 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void GetActiveConfig()
-        {
-            var config = new TracerConfiguration(Samplers.NeverSample);
-            var tracer = new Tracer(spanProcessor, config, Resource.Empty);
-            Assert.Equal(config, tracer.ActiveTracerConfiguration);
-        }
-
-        [Fact]
-        public void SetActiveConfig()
-        {
-            var config = new TracerConfiguration(Samplers.NeverSample);
-            tracer.ActiveTracerConfiguration = config;
-            Assert.Equal(config, tracer.ActiveTracerConfiguration);
-        }
-
-        [Fact]
         public void DroppingAndAddingAttributes()
         {
             var maxNumberOfAttributes = 8;
             var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
-            var tracer = new TracerFactory(spanProcessor, traceConfig).GetTracer(null);
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor)
+                    .SetTracerOptions(traceConfig))
+                .GetTracer(null);
+
             var span = (Span)tracer.StartRootSpan(SpanName);
 
             for (long i = 0; i < 2 * maxNumberOfAttributes; i++)
@@ -222,7 +217,11 @@ namespace OpenTelemetry.Trace.Test
         {
             var maxNumberOfEvents = 8;
             var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, maxNumberOfEvents, 32);
-            var tracer = new TracerFactory(spanProcessor, traceConfig).GetTracer(null);
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor)
+                    .SetTracerOptions(traceConfig))
+                .GetTracer(null);
+
             var span = (Span)tracer.StartRootSpan(SpanName);
 
             var eventTimestamps = new DateTimeOffset[2 * maxNumberOfEvents];
@@ -256,7 +255,11 @@ namespace OpenTelemetry.Trace.Test
 
             var maxNumberOfLinks = 8;
             var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, 128, maxNumberOfLinks);
-            var tracer = new TracerFactory(spanProcessor, traceConfig).GetTracer(null);
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor)
+                    .SetTracerOptions(traceConfig))
+                .GetTracer(null);
+
             var span = (Span)tracer.StartRootSpan(SpanName);
             var link = new Link(contextLink);
             for (var i = 0; i < 2 * maxNumberOfLinks; i++)
@@ -284,7 +287,10 @@ namespace OpenTelemetry.Trace.Test
         {
             var maxNumberOfAttributes = 8;
             var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
-            var tracer = new TracerFactory(spanProcessor, traceConfig).GetTracer(null);
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor)
+                    .SetTracerOptions(traceConfig))
+                .GetTracer(null);
 
             var span = (Span)tracer.StartRootSpan(SpanName);
             for (var i = 0; i < 2 * maxNumberOfAttributes; i++)

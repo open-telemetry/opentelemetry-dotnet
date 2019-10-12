@@ -34,7 +34,10 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 
         public RedisProfilerEntryToSpanConverterTests()
         {
-            tracer = new Tracer(new SimpleSpanProcessor(new NoopSpanExporter()), new TracerConfiguration(), Resource.Empty);
+            tracer = TracerFactory.Create(b => b
+                    .SetExporter(new NoopSpanExporter())
+                    .SetProcessor(e => new SimpleSpanProcessor(e)))
+                    .GetTracer(null);
         }
 
         [Fact]

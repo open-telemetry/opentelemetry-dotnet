@@ -14,13 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Resources;
-
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     using Moq;
     using Newtonsoft.Json;
     using OpenTelemetry.Trace;
+    using OpenTelemetry.Trace.Configuration;
     using OpenTelemetry.Trace.Export;
     using System;
     using System.Collections.Generic;
@@ -93,39 +92,38 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 out var port);
 
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracerFactory = new TracerFactory(spanProcessor.Object);
+            var tracer = TracerFactory.Create(b => b.SetProcessor(_ => spanProcessor.Object))
+                .GetTracer(null);
             tc.url = NormalizeValues(tc.url, host, port);
 
             using (serverLifeTime)
+
+            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
             {
-                using (var dc = new HttpClientCollector(new HttpClientCollectorOptions(), tracerFactory.GetTracer(null)))
+                try
                 {
-
-                    try
+                    using (var c = new HttpClient())
                     {
-                        using (var c = new HttpClient())
+                        var request = new HttpRequestMessage
                         {
-                            var request = new HttpRequestMessage
-                            {
-                                RequestUri = new Uri(tc.url),
-                                Method = new HttpMethod(tc.method),
-                            };
+                            RequestUri = new Uri(tc.url),
+                            Method = new HttpMethod(tc.method),
+                        };
 
-                            if (tc.headers != null)
+                        if (tc.headers != null)
+                        {
+                            foreach (var header in tc.headers)
                             {
-                                foreach (var header in tc.headers)
-                                {
-                                    request.Headers.Add(header.Key, header.Value);
-                                }
+                                request.Headers.Add(header.Key, header.Value);
                             }
-
-                            await c.SendAsync(request);
                         }
+
+                        await c.SendAsync(request);
                     }
-                    catch (Exception)
-                    {
-                        //test case can intentionally send request that will result in exception
-                    }
+                }
+                catch (Exception)
+                {
+                    //test case can intentionally send request that will result in exception
                 }
             }
 

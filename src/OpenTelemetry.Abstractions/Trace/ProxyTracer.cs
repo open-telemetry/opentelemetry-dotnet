@@ -1,4 +1,4 @@
-﻿// <copyright file="NoopTracer.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ProxyTracer.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,37 +19,33 @@ namespace OpenTelemetry.Trace
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Threading;
     using OpenTelemetry.Context.Propagation;
 
     /// <summary>
     /// No-op tracer.
     /// </summary>
-    public sealed class NoopTracer : ITracer
+    internal sealed class ProxyTracer : ITracer
     {
-        /// <summary>
-        /// Instance of the noop tracer.
-        /// </summary>
-        public static readonly NoopTracer Instance = new NoopTracer();
-
         private static readonly IDisposable NoopScope = new NoopDisposable();
+        private readonly IBinaryFormat binaryFormat = new BinaryFormat();
+        private readonly ITextFormat textFormat = new TraceContextFormat();
 
-        internal NoopTracer()
-        {
-        }
-
-        /// <inheritdoc/>
-        public ISpan CurrentSpan => BlankSpan.Instance;
+        private ITracer realTracer;
 
         /// <inheritdoc/>
-        public IBinaryFormat BinaryFormat => new BinaryFormat();
+        public ISpan CurrentSpan => this.realTracer?.CurrentSpan ?? BlankSpan.Instance;
 
         /// <inheritdoc/>
-        public ITextFormat TextFormat => new TraceContextFormat();
+        public IBinaryFormat BinaryFormat => this.realTracer?.BinaryFormat ?? this.binaryFormat;
+
+        /// <inheritdoc/>
+        public ITextFormat TextFormat => this.realTracer?.TextFormat ?? this.textFormat;
 
         /// <inheritdoc/>
         public IDisposable WithSpan(ISpan span)
         {
-            return NoopScope;
+            return this.realTracer != null ? this.realTracer.WithSpan(span) : NoopScope;
         }
 
         public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
@@ -59,7 +55,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            return BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartRootSpan(operationName, kind, startTimestamp, links) : BlankSpan.Instance;
         }
 
         public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
@@ -69,7 +65,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            return BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartSpan(operationName, kind, startTimestamp, links) : BlankSpan.Instance;
         }
 
         public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
@@ -79,7 +75,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            return BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, startTimestamp, links) : BlankSpan.Instance;
         }
 
         public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
@@ -89,47 +85,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            return BlankSpan.Instance;
-        }
-
-        public ISpan StartSpanFromActivity(string operationName, Activity activity)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            if (activity == null)
-            {
-                throw new ArgumentNullException(nameof(activity));
-            }
-
-            if (activity.IdFormat != ActivityIdFormat.W3C)
-            {
-                throw new ArgumentException("Current Activity is not in W3C format");
-            }
-
-            return BlankSpan.Instance;
-        }
-
-        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            if (activity == null)
-            {
-                throw new ArgumentNullException(nameof(activity));
-            }
-
-            if (activity.IdFormat != ActivityIdFormat.W3C)
-            {
-                throw new ArgumentException("Current Activity is not in W3C format");
-            }
-
-            return BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, startTimestamp, links) : BlankSpan.Instance;
         }
 
         public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
@@ -149,7 +105,18 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentException("Current Activity is not in W3C format");
             }
 
-            return BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartSpanFromActivity(operationName, activity, kind, links) : BlankSpan.Instance;
+        }
+
+        public void UpdateTracer(ITracer realTracer)
+        {
+            if (this.realTracer != null)
+            {
+                return;
+            }
+
+            // just in case user calls init concurrently
+            Interlocked.CompareExchange(ref this.realTracer, realTracer, null);
         }
 
         private class NoopDisposable : IDisposable

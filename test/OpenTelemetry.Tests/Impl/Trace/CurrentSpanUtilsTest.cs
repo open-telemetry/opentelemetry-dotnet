@@ -15,8 +15,6 @@
 // </copyright>
 
 using OpenTelemetry.Trace.Internal;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Utils;
 
 namespace OpenTelemetry.Trace.Test
 {
@@ -37,7 +35,10 @@ namespace OpenTelemetry.Trace.Test
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
 
-            tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
+            tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor)
+                    .SetTracerOptions(new TracerConfiguration()))
+                .GetTracer(null);
         }
 
         [Fact]

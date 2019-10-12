@@ -15,6 +15,7 @@
 // </copyright>
 
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace.Sampler;
 
 namespace OpenTelemetry.Trace.Export.Test
 {
@@ -41,7 +42,10 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private Span CreateSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
         {
-            var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
+            var tracer = TracerFactory.Create(b => b
+                .SetSampler(Samplers.AlwaysSample)
+                .SetProcessor(_ => spanProcessor)
+                .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var span = (Span)tracer.StartSpan(spanName, context);
             span.End();
@@ -50,7 +54,10 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private Span CreateNotSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
         {
-            var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
+            var tracer = TracerFactory.Create(b => b
+                .SetSampler(Samplers.NeverSample)
+                .SetProcessor(_ => spanProcessor)
+                .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
             var span = (Span)tracer.StartSpan(spanName, context);
             span.End();
@@ -225,7 +232,10 @@ namespace OpenTelemetry.Trace.Export.Test
             var spanExporter = new TestExporter( _ => Thread.Sleep(500));
             using (var spanProcessor = new BatchingSpanProcessor(spanExporter, 128, DefaultDelay, 128))
             {
-                var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
+                var tracer = TracerFactory.Create(b => b
+                        .SetProcessor(e => spanProcessor))
+                    .GetTracer(null);
+
                 var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
                 var span = (Span)tracer.StartSpan("foo", context);
 

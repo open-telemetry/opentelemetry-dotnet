@@ -223,11 +223,14 @@ Configuration is done by user application: it should configure exporter and may 
    [OpenTelemetry][OpenTelemetry-nuget-url]
    [OpenTelemetry.Exporter.Zipkin][OpenTelemetry-exporter-zipkin-nuget-url]
 
-2. Create exporter and tracer
+2. Create `TracerFactory`
 
     ```csharp
-    var zipkinExporter = new ZipkinTraceExporter(new ZipkinTraceExporterOptions());
-    var tracer = new Tracer(new BatchingSpanProcessor(zipkinExporter), TraceConfig.Default);
+    using (TracerFactory.Create(builder => builder
+            .UseZipkin(o => o.ServiceName = "http-client-test"))
+    {
+        // ...
+    }
     ```
 
 ### Configuration with Microsoft.Extensions.DependencyInjection
@@ -237,30 +240,25 @@ Configuration is done by user application: it should configure exporter and may 
    [OpenTelemetry.Collector.AspNetCore][OpenTelemetry-collect-aspnetcore-nuget-url] to collect incoming HTTP requests
    [OpenTelemetry.Collector.Dependencies](OpenTelemetry-collect-deps-nuget-url) to collect outgoing HTTP requests and Azure SDK calls
 
-2. Make sure `ITracerFactory`, `ISampler`, and `SpanExporter` and `SpanProcessor` are registered in DI.
+2. Make sure `TracerFactory`, is registered in DI.
 
     ```csharp
-    services.AddSingleton<ISampler>(Samplers.AlwaysSample);
-    services.AddSingleton<ZipkinTraceExporterOptions>(_ => new ZipkinTraceExporterOptions { ServiceName = "my-service" });
-    services.AddSingleton<SpanExporter, ZipkinTraceExporter>();
-    services.AddSingleton<SpanProcessor, BatchingSpanProcessor>();
-    services.AddSingleton<TraceConfig>();
-    services.AddSingleton<ITracerFactory, TracerFactory>();
+    services.AddSingleton<TracerFactory>(_ =>
+            TracerFactory.Create(b => b
+                .SetSampler(Samplers.AlwaysSample)
+                .UseZipkin(o => o.ServiceName = "my-service")
 
-    // you may also configure request and dependencies collectors
-    services.AddSingleton<RequestsCollectorOptions>(new RequestsCollectorOptions());
-    services.AddSingleton<RequestsCollector>();
-
-    services.AddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
-    services.AddSingleton<DependenciesCollector>();
+                // you may also configure request and dependencies collectors
+                .AddRequestCollector()
+                .AddDependencyCollector()));
     ```
 
 3. Start auto-collectors
 
-   To start collection, `RequestsCollector` and `DependenciesCollector` need to be resolved.
+   To start collection or just to create tracers to creates spans manually, `TracerFactory` needs to be resolved.
 
     ```csharp
-    public void Configure(IApplicationBuilder app, RequestsCollector requestsCollector,  DependenciesCollector dependenciesCollector)
+    public void Configure(IApplicationBuilder app, TracerFactory factory)
     {
         // ...
     }
@@ -273,39 +271,39 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
 1. Install package to your project:
    [OpenTelemetry.Collector.StackExchangeRedis][OpenTelemetry-collect-stackexchange-redis-nuget-url]
 
-2. Make sure `ITracerFactory`, `ISampler`, and `SpanExporter` and `SpanProcessor` are registered in DI.
+2. Configure Redis collector
 
     ```csharp
-    services.AddSingleton<ISampler>(Samplers.AlwaysSample);
-    services.AddSingleton<ZipkinTraceExporterOptions>(_ => new ZipkinTraceExporterOptions { ServiceName = "my-service" });
-    services.AddSingleton<SpanExporter, ZipkinTraceExporter>();
-    services.AddSingleton<SpanProcessor, BatchingSpanProcessor>();
-    services.AddSingleton<TraceConfig>();
-    services.AddSingleton<ITracerFactory, TracerFactory>();
+    // connect to the server
+    var connection = ConnectionMultiplexer.Connect("localhost:6379");
 
-    // configure redis collection
-    services.AddSingleton<StackExchangeRedisCallsCollectorOptions>(new StackExchangeRedisCallsCollectorOptions());
-    services.AddSingleton<StackExchangeRedisCallsCollector>();
+    using (TracerFactory.Create(b => b
+                .SetSampler(Samplers.AlwaysSample)
+                .UseZipkin(o => o.ServiceName = "my-service")
+                .AddCollector(t =>
+                {
+                    var collector = new StackExchangeRedisCallsCollector(t);
+                    connection.RegisterProfiler(collector.GetProfilerSessionsFactory());
+                    return collector;
+                })))
+    {
+
+    }
     ```
 
-3. Start auto-collectors
-
-    To start collection, `StackExchangeRedisCallsCollector` needs to be resolved.
-
-    ```csharp
-    public void Configure(IApplicationBuilder app, StackExchangeRedisCallsCollector redisCollector)
-    {
-        // ...
-    }
+You can combine it with dependency injection as shown in previous example, in this case, do not forget to resolve `TracerFactory`.
 
 ### Custom samplers
 
 You may configure sampler of your choice
 
 ```csharp
-var sampler = ProbabilitySampler.Create(0.1);
-var zipkinExporter = new ZipkinTraceExporter(new ZipkinTraceExporterOptions())
-var tracer = new Tracer(new SimpleSpanProcessor(zipkinExporter), new TraceConfig(sampler));
+ using (TracerFactory.Create(b => b
+            .SetSampler(ProbabilitySampler.Create(0.1))
+            .UseZipkin(o => o.ServiceName = "my-service")))
+{
+
+}
 ```
 
 You can also implement custom sampler by implementing `ISampler` interface
@@ -343,35 +341,29 @@ the Compact Thrift API port. You can configure the Jaeger exporter by following 
 1. [Get Jaeger][jaeger-get-started].
 2. Configure the `JaegerExporter`
     - `ServiceName`: The name of your application or service.
-    - `AgengHost`: Usually `localhost` since an agent should 
-    usually be running on the same machine as your application or service.
+    - `AgentHost`: Usually `localhost` since an agent should usually be running on the same machine as your application or service.
     - `AgentPort`: The compact thrift protocol port of the Jaeger Agent (default `6831`)
     - `MaxPacketSize`: The maximum size of each UDP packet that gets sent to the agent. (default `65000`)
 3. See the [sample][jaeger-sample] for an example of how to use the exporter.
 
 ```csharp
 var jaegerOptions = new JaegerExporterOptions()
-        {
-            ServiceName = "tracing-to-jaeger-service",
-            AgentHost = host,
-            AgentPort = port,
-        };
+{
+    ServiceName = "jaeger-test",
+    AgentHost = <jaeger server>
+};
 
-var exporter = new JaegerTraceExporter(jaegerOptions);
+using (var tracerFactory = TracerFactory.Create(
+    builder => builder.SetExporter(new JaegerTraceExporter(jaegerOptions))))
+{
+    var tracer = tracerFactory.GetTracer("jaeger-test");
+    var span = tracer
+        .SpanBuilder("incoming request")
+        .StartSpan();
 
-var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
-
-var span = tracer
-            .SpanBuilder("incoming request")
-            .SetSampler(Samplers.AlwaysSample)
-            .StartSpan();
-
-await Task.Delay(1000);
-span.End();
-
-// Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
-// you may need to catch `OperationCancelledException` here
-await exporter.ShutdownAsync(CancellationToken.None);
+    await Task.Delay(1000);
+    span.End();
+}
 ```
 
 ### Using Zipkin exporter
@@ -379,28 +371,23 @@ await exporter.ShutdownAsync(CancellationToken.None);
 Configure Zipkin exporter to see traces in Zipkin UI.
 
 1. Get Zipkin using [getting started guide][zipkin-get-started].
-2. Start `ZipkinTraceExporter` as below:
+2. Configure `ZipkinTraceExporter` as below:
 3. See [sample][zipkin-sample] for example use.
 
 ```csharp
-var exporter = new ZipkinTraceExporter(
-  new ZipkinTraceExporterOptions() {
-    Endpoint = new Uri("https://<zipkin-server:9411>/api/v2/spans"),
-    ServiceName = typeof(Program).Assembly.GetName().Name,
-  });
-var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
+using (var tracerFactory = TracerFactory.Create(
+    builder => builder.UseZipkin(o =>
+        o.ServiceName = "my-service";
+        o.Endpoint = new Uri("https://<zipkin-server:9411>/api/v2/spans"))))
+{
+    var tracer = tracerFactory.GetTracer("zipkin-test");
+    var span = tracer
+        .SpanBuilder("incoming request")
+        .StartSpan();
 
-var span = tracer
-            .SpanBuilder("incoming request")
-            .SetSampler(Samplers.AlwaysSample)
-            .StartSpan();
-
-await Task.Delay(1000);
-span.End();
-
-// Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
-// you may need to catch `OperationCancelledException` here
-await exporter.ShutdownAsync(CancellationToken.None);
+    await Task.Delay(1000);
+    span.End();
+}
 ```
 
 ### Using Prometheus exporter
@@ -448,20 +435,17 @@ There is also a constructor for specifying path to the service account credentia
 #### Traces
 
 ```csharp
-var traceExporter = new StackdriverTraceExporter("YOUR-GOOGLE-PROJECT-ID");
-var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
+using (var tracerFactory = TracerFactory.Create(
+    builder => builder.SetExporter(new StackdriverTraceExporter("YOUR-GOOGLE-PROJECT-ID"))))
+{
+    var tracer = tracerFactory.GetTracer("stackdriver-test");
+    var span = tracer
+        .SpanBuilder("incoming request")
+        .StartSpan();
 
-var span = tracer
-            .SpanBuilder("incoming request")
-            .SetSampler(Samplers.AlwaysSample)
-            .StartSpan();
-
-await Task.Delay(1000);
-span.End();
-
-// Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
-// you may need to catch `OperationCancelledException` here
-await exporter.ShutdownAsync(CancellationToken.None);
+    await Task.Delay(1000);
+    span.End();
+}
 ```
 
 #### Metrics
@@ -483,21 +467,17 @@ metricExporter.Start();
 4. See [sample][ai-sample] for example use.
 
 ``` csharp
-var config = new TelemetryConfiguration("iKey")
-var exporter = new ApplicationInsightsExporter(config);
-var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
+using (var tracerFactory = TracerFactory.Create(builder => builder
+    .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key")))
+{
+    var tracer = tracerFactory.GetTracer("application-insights-test");
+    var span = tracer
+        .SpanBuilder("incoming request")
+        .StartSpan();
 
-var span = tracer
-            .SpanBuilder("incoming request")
-            .SetSampler(Samplers.AlwaysSample)
-            .StartSpan();
-
-await Task.Delay(1000);
-span.End();
-
-// Gracefully shutdown the exporter so it'll flush queued traces to Jaeger.
-// you may need to catch `OperationCancelledException` here
-await exporter.ShutdownAsync(CancellationToken.None);
+    await Task.Delay(1000);
+    span.End();
+}
 ```
 
 ### Implementing your own exporter
@@ -530,12 +510,15 @@ class MyExporter : SpanExporter
 }
 ```
 
-Users may configure the exporter similarly to other exporters. You cay also provide additional methods to simplify it.
+Users may configure the exporter similarly to other exporters. You cay also provide additional methods to simplify configuration similarly to `UseZipkin` extension method.
 
 ```csharp
 var exporter = new MyExporter();
-var tracer = new Tracer(new BatchingSpanProcessor(exporter), TraceConfig.Default);
-await exporter.ShutdownAsync(CancellationToken.None);
+using (var tracerFactory = TracerFactory.Create(
+    builder => builder.SetExporter(new MyExporter())))
+{
+    // ...
+}
 ```
 
 ## Versioning

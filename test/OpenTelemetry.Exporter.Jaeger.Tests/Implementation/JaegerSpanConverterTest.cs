@@ -15,6 +15,8 @@
 // </copyright>
 
 
+using OpenTelemetry.Trace.Configuration;
+
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
     using System;
@@ -30,9 +32,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         private const long MillisPerSecond = 1000L;
         private const long NanosPerMillisecond = 1000 * 1000;
         private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
+        private ITracer tracer;
 
         public JaegerSpanConverterTest()
         {
+            tracer = TracerFactory.Create(b => { }).GetTracer(null);
         }
 
         [Fact]
@@ -309,7 +313,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("Event2", eventField.VStr);
         }
 
-        internal static Span CreateTestSpan(bool setAttributes = true,
+        internal Span CreateTestSpan(bool setAttributes = true,
     bool addEvents = true,
     bool addLinks = true)
         {
@@ -355,7 +359,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     linkedSpanId,
                     ActivityTraceFlags.Recorded));
 
-            var span = (Span)Tracing.TracerFactory.GetTracer("")
+            var span = (Span)tracer
                 .StartSpan("Name", new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded), SpanKind.Client, startTimestamp);
 
             if (addLinks)

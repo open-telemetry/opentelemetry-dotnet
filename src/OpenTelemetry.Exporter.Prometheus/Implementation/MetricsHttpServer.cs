@@ -77,7 +77,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                                 {
                                     var metricValueBuilder = builder.AddValue();
 
-                                    // TODO: This is not optimal. Need to refactor to split builder into separate functions
+                                    // TODO: This is not optimal. Need to refactor to split factory into separate functions
                                     metricValueBuilder = value.Value.Match<PrometheusMetricBuilder.PrometheusMetricValueBuilder>(
                                         metricValueBuilder.WithValue,
                                         metricValueBuilder.WithValue,

@@ -14,12 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace.Sampler.Internal;
-
 namespace OpenTelemetry.Trace.Test
 {
-    using OpenTelemetry.Trace.Config;
-    using OpenTelemetry.Trace.Export;
+    using OpenTelemetry.Trace.Configuration;
+    using OpenTelemetry.Trace.Sampler.Internal;
     using Xunit;
 
     public class TracingTest
@@ -27,22 +25,22 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DefaultTracerFactory()
         {
-            Assert.Equal(typeof(TracerFactory), Tracing.TracerFactory.GetType());
-        }
+            Assert.Equal(typeof(TracerFactoryBase), TracerFactoryBase.Default.GetType());
+            Assert.Equal(typeof(ProxyTracer), TracerFactoryBase.Default.GetTracer(null).GetType());
 
-        [Fact]
-        public void DefaultSpanProcessor()
-        {
-            Assert.Equal(typeof(BatchingSpanProcessor), Tracing.SpanProcessor.GetType());
+            var newFactory = TracerFactory.Create(_ => { });
+            TracerFactoryBase.Default = newFactory;
+            Assert.IsAssignableFrom<TracerFactory>(TracerFactoryBase.Default);
         }
 
         [Fact]
         public void DefaultTraceConfig()
         {
-            Assert.IsType<AlwaysSampleSampler>(Tracing.TracerConfiguration.Sampler);
-            Assert.Equal(32, Tracing.TracerConfiguration.MaxNumberOfAttributes);
-            Assert.Equal(128, Tracing.TracerConfiguration.MaxNumberOfEvents);
-            Assert.Equal(32, Tracing.TracerConfiguration.MaxNumberOfLinks);
+            var options = new TracerConfiguration();
+            Assert.IsType<AlwaysSampleSampler>(options.Sampler);
+            Assert.Equal(32, options.MaxNumberOfAttributes);
+            Assert.Equal(128, options.MaxNumberOfEvents);
+            Assert.Equal(32, options.MaxNumberOfLinks);
         }
     }
 }
