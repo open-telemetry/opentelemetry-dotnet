@@ -98,6 +98,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks", "benchmarks\Benchmarks.csproj", "{CEB7F146-81DC-41DB-8015-140EC6A64E6C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Hosting", "src\OpenTelemetry.Hosting\OpenTelemetry.Hosting.csproj", "{A03102CD-A996-4418-BA19-7141C34B5A7D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Hosting.Tests", "test\OpenTelemetry.Hosting.Tests\OpenTelemetry.Hosting.Tests.csproj", "{4CB1187F-27F2-48F9-83F4-3A7567F73B5F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -216,6 +220,14 @@ Global
 		{CEB7F146-81DC-41DB-8015-140EC6A64E6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CEB7F146-81DC-41DB-8015-140EC6A64E6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CEB7F146-81DC-41DB-8015-140EC6A64E6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A03102CD-A996-4418-BA19-7141C34B5A7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A03102CD-A996-4418-BA19-7141C34B5A7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A03102CD-A996-4418-BA19-7141C34B5A7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A03102CD-A996-4418-BA19-7141C34B5A7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CB1187F-27F2-48F9-83F4-3A7567F73B5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CB1187F-27F2-48F9-83F4-3A7567F73B5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CB1187F-27F2-48F9-83F4-3A7567F73B5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CB1187F-27F2-48F9-83F4-3A7567F73B5F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
