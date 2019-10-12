@@ -24,8 +24,8 @@ namespace Samples
     using OpenTelemetry.Stats.Aggregations;
     using OpenTelemetry.Stats.Measures;
     using OpenTelemetry.Tags;
+    using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Sampler;
 
     internal class TestStackdriver
     {

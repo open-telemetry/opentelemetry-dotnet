@@ -17,6 +17,8 @@
 using System;
 using System.Collections.Concurrent;
 using Microsoft.ApplicationInsights.Channel;
+
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
@@ -41,7 +43,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                     .UseApplicationInsights(o => o.TelemetryChannel = channel))
                 .GetTracer(null);
 
-            tracer.SpanBuilder("foo").StartSpan().End();
+            tracer.StartSpan("foo").End();
 
             Assert.Single(sentItems);
         }

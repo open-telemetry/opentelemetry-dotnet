@@ -1645,7 +1645,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             SpanKind kind,
             Status status)
         {
-            var tracer = Tracing.TracerFactory.GetTracer("");
             var span = parentSpanId == default ? 
                 tracer.StartRootSpan(name, kind, startTimestamp) :
                 tracer.StartSpan(name, new SpanContext(traceId, parentSpanId, traceOptions, tracestate), kind, startTimestamp);

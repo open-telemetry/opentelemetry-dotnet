@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.IsType<BinaryFormat>(tracer.BinaryFormat);
             Assert.IsType<TraceContextFormat>(tracer.TextFormat);
 
-            var span = tracer.SpanBuilder("foo").StartSpan();
+            var span = tracer.StartSpan("foo");
             Assert.NotNull(span);
             Assert.IsType<Span>(span);
 
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Trace.Test
                 }));
 
             var tracer = tracerFactory.GetTracer("my-app");
-            var span = tracer.SpanBuilder("foo").StartSpan();
+            var span = tracer.StartSpan("foo");
             span.End();
 
             // default sampler is always sample
@@ -219,7 +219,7 @@ namespace OpenTelemetry.Trace.Test
 
             public Span Collect()
             {
-                var span = this.tracer.SpanBuilder("foo").StartSpan();
+                var span = this.tracer.StartSpan("foo");
                 span.End();
                 return (Span)span;
             }

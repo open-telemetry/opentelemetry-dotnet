@@ -33,17 +33,19 @@ namespace OpenTelemetry.Trace.Export.Test
         private const string SpanName2 = "MySpanName/2";
 
         private TestExporter spanExporter;
-        private SpanProcessor spanProcessor;
+        private ITracer tracer;
 
         public SimpleSpanProcessorTest()
         {
             spanExporter = new TestExporter(null);
-            spanProcessor = new SimpleSpanProcessor(spanExporter);
+            tracer = TracerFactory.Create(b => b
+                    .SetExporter(spanExporter)
+                    .SetProcessor(e => new SimpleSpanProcessor(e)))
+                .GetTracer(null);
         }
 
         private Span CreateSampledEndedSpan(string spanName)
         {
-            var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var span = (Span)tracer.StartSpan(spanName, context);
             span.End();
@@ -52,7 +54,6 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private Span CreateNotSampledEndedSpan(string spanName)
         {
-            var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
             var span = (Span)tracer.StartSpan(spanName, context);
             span.End();
@@ -70,9 +71,11 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ThrowsInExporter()
         {
             spanExporter = new TestExporter(_ => throw new ArgumentException("123"));
-            spanProcessor = new SimpleSpanProcessor(spanExporter);
+            tracer = TracerFactory.Create(b => b
+                    .SetExporter(spanExporter)
+                    .SetProcessor(e => new SimpleSpanProcessor(e)))
+                .GetTracer(null);
 
-            var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var span = (Span)tracer.StartSpan("foo", context);
 
@@ -84,8 +87,11 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ProcessorDoesNotBlockOnExporter()
         {
             spanExporter = new TestExporter( async _ => await Task.Delay(500));
-            spanProcessor = new SimpleSpanProcessor(spanExporter);
-            var tracer = new Tracer(spanProcessor, new TracerConfiguration(), Resource.Empty);
+            tracer = TracerFactory.Create(b => b
+                    .SetExporter(spanExporter)
+                    .SetProcessor(e => new SimpleSpanProcessor(e)))
+                .GetTracer(null);
+
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var span = (Span)tracer.StartSpan("foo", context);
 
@@ -105,7 +111,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public async Task ShutdownTwice()
         {
-            spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
+            var spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
 
             await spanProcessor.ShutdownAsync(CancellationToken.None).ConfigureAwait(false);
 
