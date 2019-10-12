@@ -21,14 +21,6 @@ using System.Text;
 using OpenTelemetry.Stats;
 using OpenTelemetry.Stats.Aggregations;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using OpenTelemetry.Stats;
-using OpenTelemetry.Stats.Aggregations;
-
 namespace OpenTelemetry.Exporter.Prometheus.Implementation
 {
     internal class PrometheusMetricBuilder

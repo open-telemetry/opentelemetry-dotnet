@@ -18,11 +18,6 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Tags;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using OpenTelemetry.Tags;
-
 namespace OpenTelemetry.Stats
 {
     public static class StatsExtensions

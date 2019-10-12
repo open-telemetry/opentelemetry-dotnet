@@ -16,9 +16,6 @@
 using System.Collections.Generic;
 using Xunit;
 
-using System.Collections.Generic;
-using Xunit;
-
 namespace OpenTelemetry.Tags.Test
 {
     public class TagContextBaseTest

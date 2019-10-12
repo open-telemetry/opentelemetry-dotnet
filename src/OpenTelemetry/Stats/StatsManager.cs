@@ -18,11 +18,6 @@ using System.Collections.Generic;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tags;
 
-using System;
-using System.Collections.Generic;
-using OpenTelemetry.Internal;
-using OpenTelemetry.Tags;
-
 namespace OpenTelemetry.Stats
 {
     internal sealed class StatsManager

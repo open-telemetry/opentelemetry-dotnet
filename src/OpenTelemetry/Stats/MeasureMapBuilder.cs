@@ -17,10 +17,6 @@ using System.Collections.Generic;
 using OpenTelemetry.Stats.Measurements;
 using OpenTelemetry.Stats.Measures;
 
-using System.Collections.Generic;
-using OpenTelemetry.Stats.Measurements;
-using OpenTelemetry.Stats.Measures;
-
 namespace OpenTelemetry.Stats
 {
     internal class MeasureMapBuilder

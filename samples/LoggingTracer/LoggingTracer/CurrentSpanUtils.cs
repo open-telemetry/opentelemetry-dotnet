@@ -17,10 +17,6 @@ using System;
 using System.Threading;
 using OpenTelemetry.Trace;
 
-using System;
-using System.Threading;
-using OpenTelemetry.Trace;
-
 namespace LoggingTracer
 {
     /// <summary>

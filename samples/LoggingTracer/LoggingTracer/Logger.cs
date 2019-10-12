@@ -16,9 +16,6 @@
 using System;
 using System.Threading;
 
-using System;
-using System.Threading;
-
 namespace LoggingTracer
 {
     public static class Logger

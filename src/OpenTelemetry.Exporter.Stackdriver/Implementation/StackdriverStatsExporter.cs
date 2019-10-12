@@ -30,23 +30,6 @@ using Grpc.Core;
 using OpenTelemetry.Exporter.Stackdriver.Utils;
 using OpenTelemetry.Stats;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using Google.Api;
-using Google.Api.Gax;
-using Google.Api.Gax.Grpc;
-using Google.Apis.Auth.OAuth2;
-using Google.Cloud.Monitoring.V3;
-using Grpc.Auth;
-using Grpc.Core;
-using OpenTelemetry.Exporter.Stackdriver.Utils;
-using OpenTelemetry.Stats;
-
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
     internal class StackdriverStatsExporter

@@ -21,14 +21,6 @@ using System.Threading.Tasks;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
-using System;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Threading;
-using System.Threading.Tasks;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
-
 namespace OpenTelemetry.Testing.Export
 {
     public class TestExporter : SpanExporter

@@ -16,11 +16,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Trace;
-
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Trace.Export
 {

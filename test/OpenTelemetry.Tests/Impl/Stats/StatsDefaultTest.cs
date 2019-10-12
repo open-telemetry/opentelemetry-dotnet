@@ -15,8 +15,6 @@
 // </copyright>
 using Xunit;
 
-using Xunit;
-
 namespace OpenTelemetry.Stats.Test
 {
     public class StatsDefaultTest

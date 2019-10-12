@@ -16,9 +16,6 @@
 using System;
 using Xunit;
 
-using System;
-using Xunit;
-
 namespace OpenTelemetry.Tags.Propagation.Test
 {
     public class TagContextSerializationExceptionTest

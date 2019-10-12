@@ -16,9 +16,6 @@
 using Microsoft.ApplicationInsights.Channel;
 using System;
 
-using Microsoft.ApplicationInsights.Channel;
-using System;
-
 namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 {
     /// <summary>

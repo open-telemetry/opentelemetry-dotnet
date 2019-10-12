@@ -18,11 +18,6 @@ using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Threading;
 
-using System;
-using System.Diagnostics.Tracing;
-using System.Globalization;
-using System.Threading;
-
 namespace OpenTelemetry.Implementation
 {
     [EventSource(Name = "OpenTelemetry-Base")]

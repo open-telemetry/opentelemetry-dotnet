@@ -15,8 +15,6 @@
 // </copyright>
 using Xunit;
 
-using Xunit;
-
 namespace OpenTelemetry.Internal.Test
 {
     public class TimestampConverterTest

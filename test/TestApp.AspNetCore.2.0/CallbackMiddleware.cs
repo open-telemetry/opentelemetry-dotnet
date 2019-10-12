@@ -16,9 +16,6 @@
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
-using Microsoft.AspNetCore.Http;
-using System.Threading.Tasks;
-
 namespace TestApp.AspNetCore._2._0
 {
     public class CallbackMiddleware

@@ -17,10 +17,6 @@ using OpenTelemetry.Stats.Measures;
 using OpenTelemetry.Tags;
 using OpenTelemetry.Tags.Unsafe;
 
-using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Tags;
-using OpenTelemetry.Tags.Unsafe;
-
 namespace OpenTelemetry.Stats
 {
     internal sealed class MeasureMap : MeasureMapBase

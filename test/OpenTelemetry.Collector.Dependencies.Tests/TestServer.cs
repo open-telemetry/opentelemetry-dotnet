@@ -19,12 +19,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-using System;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
-
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     public class TestServer

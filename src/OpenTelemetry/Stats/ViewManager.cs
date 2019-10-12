@@ -15,8 +15,6 @@
 // </copyright>
 using System.Collections.Generic;
 
-using System.Collections.Generic;
-
 namespace OpenTelemetry.Stats
 {
     public sealed class ViewManager : ViewManagerBase

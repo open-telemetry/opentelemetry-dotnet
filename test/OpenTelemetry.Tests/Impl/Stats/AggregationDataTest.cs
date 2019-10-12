@@ -18,11 +18,6 @@ using System.Collections.Generic;
 using OpenTelemetry.Stats.Aggregations;
 using Xunit;
 
-using System;
-using System.Collections.Generic;
-using OpenTelemetry.Stats.Aggregations;
-using Xunit;
-
 namespace OpenTelemetry.Stats.Test
 {
     public class AggregationDataTest

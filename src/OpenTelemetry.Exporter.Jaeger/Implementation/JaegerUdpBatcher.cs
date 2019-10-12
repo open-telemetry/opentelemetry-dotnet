@@ -19,12 +19,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Protocols;
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Thrift.Protocols;
-
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public class JaegerUdpBatcher : IJaegerUdpBatcher

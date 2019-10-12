@@ -22,15 +22,6 @@ using Microsoft.ApplicationInsights.Extensibility;
 using OpenTelemetry.Stats;
 using OpenTelemetry.Stats.Aggregations;
 
-using System;
-using System.Diagnostics;
-using System.Threading;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
-using OpenTelemetry.Stats;
-using OpenTelemetry.Stats.Aggregations;
-
 namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 {
     internal class MetricsExporterThread

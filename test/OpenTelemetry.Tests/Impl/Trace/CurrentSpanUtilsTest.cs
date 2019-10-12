@@ -17,7 +17,6 @@
 using OpenTelemetry.Trace.Internal;
 using System;
 using System.Diagnostics;
-using Moq;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;

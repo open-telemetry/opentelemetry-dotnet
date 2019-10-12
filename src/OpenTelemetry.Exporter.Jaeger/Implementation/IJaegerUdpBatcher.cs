@@ -17,10 +17,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public interface IJaegerUdpBatcher : IDisposable

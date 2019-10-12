@@ -27,20 +27,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 
-using Moq;
-using Newtonsoft.Json;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Reflection;
-using System.Threading.Tasks;
-using Xunit;
-
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     public partial class HttpClientTests

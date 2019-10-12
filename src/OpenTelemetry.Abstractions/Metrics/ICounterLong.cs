@@ -15,8 +15,6 @@
 // </copyright>
 using OpenTelemetry.Metrics.Implementation;
 
-using OpenTelemetry.Metrics.Implementation;
-
 namespace OpenTelemetry.Metrics
 {
     /// <summary>

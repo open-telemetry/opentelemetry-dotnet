@@ -16,9 +16,6 @@
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
-
 namespace TestApp.AspNetCore._2._0.Controllers
 {
     [Route("api/[controller]")]

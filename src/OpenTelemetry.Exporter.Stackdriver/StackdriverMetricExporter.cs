@@ -18,13 +18,6 @@ using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Monitoring.V3;
 using OpenTelemetry.Exporter.Stackdriver.Implementation;
 using OpenTelemetry.Stats;
-using OpenTelemetry.Trace.Export;
-
-using Google.Api.Gax;
-using Google.Apis.Auth.OAuth2;
-using Google.Cloud.Monitoring.V3;
-using OpenTelemetry.Exporter.Stackdriver.Implementation;
-using OpenTelemetry.Stats;
 
 namespace OpenTelemetry.Exporter.Stackdriver
 {

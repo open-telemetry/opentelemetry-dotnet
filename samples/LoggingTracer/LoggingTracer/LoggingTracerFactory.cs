@@ -16,9 +16,6 @@
 using System.Collections.Generic;
 using OpenTelemetry.Trace;
 
-using System.Collections.Generic;
-using OpenTelemetry.Trace;
-
 namespace LoggingTracer
 {
     public class LoggingTracerFactory : TracerFactoryBase

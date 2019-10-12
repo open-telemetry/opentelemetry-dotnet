@@ -24,17 +24,6 @@ using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Internal;
 using OpenTelemetry.Utils;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
-using OpenTelemetry.Trace.Internal;
-using OpenTelemetry.Utils;
-
 namespace OpenTelemetry.Trace
 {
     /// <summary>

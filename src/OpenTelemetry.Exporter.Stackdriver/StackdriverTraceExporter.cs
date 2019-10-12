@@ -25,18 +25,6 @@ using Grpc.Core;
 using OpenTelemetry.Exporter.Stackdriver.Implementation;
 using OpenTelemetry.Trace.Export;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using Google.Api.Gax.Grpc;
-using Google.Cloud.Trace.V2;
-using Grpc.Core;
-using OpenTelemetry.Exporter.Stackdriver.Implementation;
-using OpenTelemetry.Trace.Export;
-
 namespace OpenTelemetry.Exporter.Stackdriver
 {
     /// <summary>

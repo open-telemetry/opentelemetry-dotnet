@@ -17,10 +17,6 @@ using System.Collections.Generic;
 using OpenTelemetry.Tags.Unsafe;
 using Xunit;
 
-using System.Collections.Generic;
-using OpenTelemetry.Tags.Unsafe;
-using Xunit;
-
 namespace OpenTelemetry.Tags.Test
 {
     public class TaggerTest

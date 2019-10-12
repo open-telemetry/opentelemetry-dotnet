@@ -18,11 +18,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using OpenTelemetry.Tags;
 
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using OpenTelemetry.Tags;
-
 namespace OpenTelemetry.Stats
 {
     internal class CumulativeMutableViewData : MutableViewData

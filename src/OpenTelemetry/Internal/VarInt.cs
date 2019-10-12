@@ -16,9 +16,6 @@
 using System;
 using System.IO;
 
-using System;
-using System.IO;
-
 namespace OpenTelemetry.Internal
 {
     public static class VarInt

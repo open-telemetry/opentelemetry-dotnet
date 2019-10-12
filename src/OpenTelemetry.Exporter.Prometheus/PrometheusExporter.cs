@@ -19,12 +19,6 @@ using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Stats;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Prometheus.Implementation;
-using OpenTelemetry.Stats;
-
 namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>

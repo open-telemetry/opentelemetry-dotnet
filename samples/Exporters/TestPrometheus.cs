@@ -23,16 +23,6 @@ using OpenTelemetry.Stats.Aggregations;
 using OpenTelemetry.Stats.Measures;
 using OpenTelemetry.Tags;
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Prometheus;
-using OpenTelemetry.Stats;
-using OpenTelemetry.Stats.Aggregations;
-using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Tags;
-
 namespace Samples
 {
     internal class TestPrometheus

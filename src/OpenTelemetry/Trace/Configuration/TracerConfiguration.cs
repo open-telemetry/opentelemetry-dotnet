@@ -16,9 +16,6 @@
 using System;
 using OpenTelemetry.Trace.Sampler;
 
-using System;
-using OpenTelemetry.Trace.Sampler;
-
 namespace OpenTelemetry.Trace.Configuration
 {
     /// <summary>

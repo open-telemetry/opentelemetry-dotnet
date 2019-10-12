@@ -16,9 +16,6 @@
 using System;
 using OpenTelemetry.Stats.Measurements;
 
-using System;
-using OpenTelemetry.Stats.Measurements;
-
 namespace OpenTelemetry.Stats
 {
     public abstract class Measurement : IMeasurement

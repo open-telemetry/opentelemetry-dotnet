@@ -17,10 +17,6 @@ using System;
 using System.IO;
 using Google.Api;
 
-using System;
-using System.IO;
-using Google.Api;
-
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
     /// <summary>

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Sampler;
 using Xunit;

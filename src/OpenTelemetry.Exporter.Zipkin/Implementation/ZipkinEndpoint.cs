@@ -15,8 +15,6 @@
 // </copyright>
 using Newtonsoft.Json;
 
-using Newtonsoft.Json;
-
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     internal class ZipkinEndpoint

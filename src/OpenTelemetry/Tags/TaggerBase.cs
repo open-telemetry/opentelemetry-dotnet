@@ -15,8 +15,6 @@
 // </copyright>
 using System;
 
-using System;
-
 namespace OpenTelemetry.Tags
 {
     public abstract class TaggerBase : ITagger

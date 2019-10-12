@@ -17,10 +17,6 @@ using System;
 using System.Diagnostics;
 using OpenTelemetry.Abstractions.Utils;
 
-using System;
-using System.Diagnostics;
-using OpenTelemetry.Abstractions.Utils;
-
 namespace OpenTelemetry.Trace
 {
     public static class TracerExtensions

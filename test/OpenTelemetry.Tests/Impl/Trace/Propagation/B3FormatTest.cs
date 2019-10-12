@@ -20,13 +20,6 @@ using OpenTelemetry.Trace;
 using Xunit;
 using Xunit.Abstractions;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using OpenTelemetry.Trace;
-using Xunit;
-using Xunit.Abstractions;
-
 namespace OpenTelemetry.Context.Propagation.Test
 {
     public class B3FormatTest

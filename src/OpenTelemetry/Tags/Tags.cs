@@ -15,8 +15,6 @@
 // </copyright>
 using OpenTelemetry.Tags.Propagation;
 
-using OpenTelemetry.Tags.Propagation;
-
 namespace OpenTelemetry.Tags
 {
     public sealed class Tags

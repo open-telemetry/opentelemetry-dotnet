@@ -24,17 +24,6 @@ using OpenTelemetry.Tags;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using OpenTelemetry.Exporter.Stackdriver;
-using OpenTelemetry.Stats;
-using OpenTelemetry.Stats.Aggregations;
-using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Tags;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
-
 namespace Samples
 {
     internal class TestStackdriver

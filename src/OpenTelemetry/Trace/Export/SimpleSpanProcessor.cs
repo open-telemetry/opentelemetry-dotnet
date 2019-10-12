@@ -17,12 +17,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
-
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace.Export
 {

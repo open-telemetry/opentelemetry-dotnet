@@ -17,10 +17,6 @@ using System;
 using System.Collections.Generic;
 using OpenTelemetry.Tags;
 
-using System;
-using System.Collections.Generic;
-using OpenTelemetry.Tags;
-
 namespace OpenTelemetry.Stats
 {
     /// <summary>

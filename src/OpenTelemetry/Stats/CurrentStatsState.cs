@@ -15,8 +15,6 @@
 // </copyright>
 using System;
 
-using System;
-
 namespace OpenTelemetry.Stats
 {
     public sealed class CurrentStatsState

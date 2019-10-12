@@ -17,10 +17,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-
 namespace OpenTelemetry.Trace.Internal
 {
     internal class EvictingQueue<T> : IEnumerable<T>

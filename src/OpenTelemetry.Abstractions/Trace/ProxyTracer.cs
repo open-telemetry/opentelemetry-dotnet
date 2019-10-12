@@ -19,12 +19,6 @@ using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Context.Propagation;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
-using OpenTelemetry.Context.Propagation;
-
 namespace OpenTelemetry.Trace
 {
     /// <summary>

@@ -25,18 +25,6 @@ using OpenTelemetry.Exporter.LightStep.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using OpenTelemetry.Exporter.LightStep.Implementation;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
-
 namespace OpenTelemetry.Exporter.LightStep
 {
     public class LightStepTraceExporter : SpanExporter

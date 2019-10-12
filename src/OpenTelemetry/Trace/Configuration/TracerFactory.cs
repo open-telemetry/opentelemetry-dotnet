@@ -20,13 +20,6 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Sampler;
 
-using System;
-using System.Collections.Generic;
-using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Export;
-using OpenTelemetry.Trace.Sampler;
-
 namespace OpenTelemetry.Trace.Configuration
 {
     public class TracerFactory : TracerFactoryBase, IDisposable

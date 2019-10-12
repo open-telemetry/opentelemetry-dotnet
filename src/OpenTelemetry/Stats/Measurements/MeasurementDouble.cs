@@ -18,11 +18,6 @@ using System.Diagnostics;
 using OpenTelemetry.Stats.Measures;
 using OpenTelemetry.Utils;
 
-using System;
-using System.Diagnostics;
-using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Utils;
-
 namespace OpenTelemetry.Stats.Measurements
 {
     [DebuggerDisplay("{ToString(),nq}")]

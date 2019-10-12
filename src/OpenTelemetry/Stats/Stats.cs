@@ -15,8 +15,6 @@
 // </copyright>
 using OpenTelemetry.Internal;
 
-using OpenTelemetry.Internal;
-
 namespace OpenTelemetry.Stats
 {
     public class Stats

@@ -15,8 +15,6 @@
 // </copyright>
 using System;
 
-using System;
-
 namespace OpenTelemetry.Utils
 {
     internal static class DoubleUtil

@@ -18,11 +18,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using OpenTelemetry.Context.Propagation;
-
 namespace OpenTelemetry.Trace
 {
     /// <summary>

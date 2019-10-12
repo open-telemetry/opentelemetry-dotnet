@@ -19,12 +19,6 @@ using System.Net;
 using System.Threading;
 using OpenTelemetry.Stats;
 
-using System;
-using System.IO;
-using System.Net;
-using System.Threading;
-using OpenTelemetry.Stats;
-
 namespace OpenTelemetry.Exporter.Prometheus.Implementation
 {
     internal class MetricsHttpServer

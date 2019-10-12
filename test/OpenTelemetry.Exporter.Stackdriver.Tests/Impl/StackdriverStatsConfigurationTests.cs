@@ -17,10 +17,6 @@ using OpenTelemetry.Exporter.Stackdriver.Implementation;
 using System;
 using Xunit;
 
-using OpenTelemetry.Exporter.Stackdriver.Implementation;
-using System;
-using Xunit;
-
 namespace OpenTelemetry.Exporter.Stackriver.Tests
 {
     public class StackdriverStatsConfigurationTests

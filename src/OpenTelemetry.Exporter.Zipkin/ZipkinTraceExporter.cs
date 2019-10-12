@@ -27,20 +27,6 @@ using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using OpenTelemetry.Exporter.Zipkin.Implementation;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
-
 namespace OpenTelemetry.Exporter.Zipkin
 {
     public class ZipkinTraceExporter : SpanExporter

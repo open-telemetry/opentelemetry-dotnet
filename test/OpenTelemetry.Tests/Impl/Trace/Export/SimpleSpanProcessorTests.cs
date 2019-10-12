@@ -14,14 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Resources;
 using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Utils;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Export.Test

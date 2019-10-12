@@ -16,9 +16,6 @@
 using System;
 using Xunit;
 
-using System;
-using Xunit;
-
 namespace OpenTelemetry.Context.Propagation.Test
 {
     public class SpanContextParseExceptionTest

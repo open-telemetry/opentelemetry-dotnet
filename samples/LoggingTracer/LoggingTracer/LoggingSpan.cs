@@ -17,10 +17,6 @@ using System;
 using System.Collections.Generic;
 using OpenTelemetry.Trace;
 
-using System;
-using System.Collections.Generic;
-using OpenTelemetry.Trace;
-
 namespace LoggingTracer
 {
     public class LoggingSpan : ISpan

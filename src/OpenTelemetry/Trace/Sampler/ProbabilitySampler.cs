@@ -18,11 +18,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Utils;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using OpenTelemetry.Utils;
-
 namespace OpenTelemetry.Trace.Sampler
 {
     /// <inheritdoc />

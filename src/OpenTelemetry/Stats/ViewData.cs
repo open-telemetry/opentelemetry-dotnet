@@ -19,14 +19,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using OpenTelemetry.Stats.Aggregations;
 using OpenTelemetry.Tags;
-using OpenTelemetry.Utils;
-
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using OpenTelemetry.Stats.Aggregations;
-using OpenTelemetry.Tags;
 
 namespace OpenTelemetry.Stats
 {

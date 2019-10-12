@@ -17,10 +17,6 @@ using System;
 using Microsoft.ApplicationInsights.Extensibility;
 using OpenTelemetry.Trace.Configuration;
 
-using System;
-using Microsoft.ApplicationInsights.Extensibility;
-using OpenTelemetry.Trace.Configuration;
-
 namespace OpenTelemetry.Exporter.ApplicationInsights
 {
     public static class TracerBuilderExtensions

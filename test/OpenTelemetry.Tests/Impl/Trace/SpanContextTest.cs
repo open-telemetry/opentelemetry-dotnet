@@ -16,9 +16,6 @@
 using System.Diagnostics;
 using Xunit;
 
-using System.Diagnostics;
-using Xunit;
-
 namespace OpenTelemetry.Trace.Test
 {
     public class SpanContextTest

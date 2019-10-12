@@ -16,11 +16,6 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using OpenTelemetry.Context;
-
-using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Trace.Internal
 {

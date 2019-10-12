@@ -19,12 +19,6 @@ using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Trace;
-
 namespace LoggingTracer
 {
     /// <summary>

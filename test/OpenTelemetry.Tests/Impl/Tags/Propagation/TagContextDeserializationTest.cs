@@ -19,12 +19,6 @@ using System.Text;
 using OpenTelemetry.Internal;
 using Xunit;
 
-using System;
-using System.IO;
-using System.Text;
-using OpenTelemetry.Internal;
-using Xunit;
-
 namespace OpenTelemetry.Tags.Propagation.Test
 {
     public class TagContextDeserializationTest

@@ -19,12 +19,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using OpenTelemetry.Tags;
 
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using OpenTelemetry.Tags;
-
 namespace OpenTelemetry.Stats
 {
     internal sealed class MeasureToViewMap

@@ -15,8 +15,6 @@
 // </copyright>
 using OpenTelemetry.Trace;
 
-using OpenTelemetry.Trace;
-
 namespace OpenTelemetry.Utils
 {
     internal static class CanonicalCodeExtensions

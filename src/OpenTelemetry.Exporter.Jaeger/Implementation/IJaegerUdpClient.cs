@@ -17,10 +17,6 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 
-using System;
-using System.Net;
-using System.Threading.Tasks;
-
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public interface IJaegerUdpClient : IDisposable

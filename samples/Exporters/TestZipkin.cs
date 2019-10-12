@@ -20,13 +20,6 @@ using OpenTelemetry.Exporter.Zipkin;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using OpenTelemetry.Exporter.Zipkin;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
-
 namespace Samples
 {
     internal class TestZipkin

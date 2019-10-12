@@ -18,11 +18,6 @@ using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Threading;
 
-using System;
-using System.Diagnostics.Tracing;
-using System.Globalization;
-using System.Threading;
-
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
     [EventSource(Name = "OpenTelemetry-Exporter-Stackdriver")]

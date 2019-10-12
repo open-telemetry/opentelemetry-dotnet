@@ -19,12 +19,6 @@ using System.Globalization;
 using System.Threading;
 using OpenTelemetry.Trace.Export;
 
-using System;
-using System.Diagnostics.Tracing;
-using System.Globalization;
-using System.Threading;
-using OpenTelemetry.Trace.Export;
-
 namespace OpenTelemetry.Internal
 {
     /// <summary>

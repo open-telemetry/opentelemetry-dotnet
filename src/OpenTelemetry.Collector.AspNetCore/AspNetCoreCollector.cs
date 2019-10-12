@@ -17,10 +17,6 @@ using System;
 using OpenTelemetry.Collector.AspNetCore.Implementation;
 using OpenTelemetry.Trace;
 
-using System;
-using OpenTelemetry.Collector.AspNetCore.Implementation;
-using OpenTelemetry.Trace;
-
 namespace OpenTelemetry.Collector.AspNetCore
 {
     /// <summary>

@@ -17,10 +17,6 @@ using System.Collections.Generic;
 using OpenTelemetry.Trace;
 using StackExchange.Redis.Profiling;
 
-using System.Collections.Generic;
-using OpenTelemetry.Trace;
-using StackExchange.Redis.Profiling;
-
 namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 {
     internal static class RedisProfilerEntryToSpanConverter

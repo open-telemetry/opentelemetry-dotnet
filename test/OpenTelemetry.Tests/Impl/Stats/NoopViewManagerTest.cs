@@ -20,13 +20,6 @@ using OpenTelemetry.Stats.Measures;
 using OpenTelemetry.Tags;
 using Xunit;
 
-using System;
-using System.Collections.Generic;
-using OpenTelemetry.Stats.Aggregations;
-using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Tags;
-using Xunit;
-
 namespace OpenTelemetry.Stats.Test
 {
     public class NoopViewManagerTest

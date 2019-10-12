@@ -19,12 +19,6 @@ using System.IO;
 using System.Text;
 using OpenTelemetry.Internal;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using OpenTelemetry.Internal;
-
 namespace OpenTelemetry.Tags.Propagation
 {
     internal static class SerializationUtils

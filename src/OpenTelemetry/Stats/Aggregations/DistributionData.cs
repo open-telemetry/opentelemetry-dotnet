@@ -19,12 +19,6 @@ using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Utils;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using OpenTelemetry.Utils;
-
 namespace OpenTelemetry.Stats.Aggregations
 {
     [DebuggerDisplay("{ToString(),nq}")]

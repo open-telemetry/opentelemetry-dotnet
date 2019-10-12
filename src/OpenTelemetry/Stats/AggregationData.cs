@@ -16,9 +16,6 @@
 using System;
 using OpenTelemetry.Stats.Aggregations;
 
-using System;
-using OpenTelemetry.Stats.Aggregations;
-
 namespace OpenTelemetry.Stats
 {
     public abstract class AggregationData : IAggregationData

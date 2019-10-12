@@ -16,9 +16,6 @@
 using System.Diagnostics;
 using OpenTelemetry.Trace;
 
-using System.Diagnostics;
-using OpenTelemetry.Trace;
-
 namespace OpenTelemetry.Collector
 {
     public abstract class ListenerHandler

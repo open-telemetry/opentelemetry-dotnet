@@ -22,15 +22,6 @@ using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Jaeger.Implementation;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
-
 namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerTraceExporter : SpanExporter, IDisposable

@@ -17,10 +17,6 @@ using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Sampler.Internal;
 using Xunit;
 
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Sampler.Internal;
-using Xunit;
-
 namespace OpenTelemetry.Trace.Test
 {
     public class TracingTest

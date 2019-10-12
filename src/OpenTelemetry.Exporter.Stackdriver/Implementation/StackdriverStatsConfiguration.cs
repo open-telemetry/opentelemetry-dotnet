@@ -17,10 +17,6 @@ using System;
 using Google.Api;
 using Google.Apis.Auth.OAuth2;
 
-using System;
-using Google.Api;
-using Google.Apis.Auth.OAuth2;
-
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
     /// <summary>

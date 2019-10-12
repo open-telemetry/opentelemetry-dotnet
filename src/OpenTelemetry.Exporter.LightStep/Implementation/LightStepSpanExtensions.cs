@@ -18,11 +18,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using OpenTelemetry.Trace;
-
 namespace OpenTelemetry.Exporter.LightStep.Implementation
 {
     public static class LightStepSpanExtensions

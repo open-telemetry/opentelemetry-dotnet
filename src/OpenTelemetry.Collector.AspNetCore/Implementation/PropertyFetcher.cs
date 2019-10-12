@@ -17,10 +17,6 @@ using System;
 using System.Linq;
 using System.Reflection;
 
-using System;
-using System.Linq;
-using System.Reflection;
-
 namespace OpenTelemetry.Collector.AspNetCore.Implementation
 {
     internal class PropertyFetcher

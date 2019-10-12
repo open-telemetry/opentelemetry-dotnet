@@ -18,11 +18,6 @@ using System.Collections.Generic;
 using OpenTelemetry.Stats.Aggregations;
 using OpenTelemetry.Tags;
 
-using System;
-using System.Collections.Generic;
-using OpenTelemetry.Stats.Aggregations;
-using OpenTelemetry.Tags;
-
 namespace OpenTelemetry.Stats
 {
     internal abstract class MutableViewData

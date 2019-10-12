@@ -19,12 +19,6 @@ using OpenTelemetry.Metrics.Implementation;
 using OpenTelemetry.Tags;
 using OpenTelemetry.Trace;
 
-using System;
-using System.Collections.Generic;
-using OpenTelemetry.Metrics.Implementation;
-using OpenTelemetry.Tags;
-using OpenTelemetry.Trace;
-
 namespace OpenTelemetry.Metrics
 {
     /// <summary>

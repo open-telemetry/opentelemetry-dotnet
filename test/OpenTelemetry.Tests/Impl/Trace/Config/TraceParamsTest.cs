@@ -18,11 +18,6 @@ using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Sampler;
 using Xunit;
 
-using System;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Sampler;
-using Xunit;
-
 namespace OpenTelemetry.Trace.Config.Test
 {
     public class TraceConfigTest

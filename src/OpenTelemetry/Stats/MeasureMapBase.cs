@@ -16,9 +16,6 @@
 using OpenTelemetry.Stats.Measures;
 using OpenTelemetry.Tags;
 
-using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Tags;
-
 namespace OpenTelemetry.Stats
 {
     public abstract class MeasureMapBase : IMeasureMap

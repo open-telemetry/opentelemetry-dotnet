@@ -18,10 +18,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-using System.Collections.Generic;
-using System.Linq;
-using Xunit;
-
 namespace OpenTelemetry.Tests
 {
     internal static class AttributesExtensions

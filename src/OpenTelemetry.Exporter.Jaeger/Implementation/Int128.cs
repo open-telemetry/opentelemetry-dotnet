@@ -16,9 +16,6 @@
 using System;
 using System.Diagnostics;
 
-using System;
-using System.Diagnostics;
-
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public struct Int128

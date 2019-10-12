@@ -22,15 +22,6 @@ using OpenTelemetry.Exporter.Jaeger.Implementation;
 using Thrift.Transports;
 using Xunit;
 
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Moq;
-using OpenTelemetry.Exporter.Jaeger.Implementation;
-using Thrift.Transports;
-using Xunit;
-
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
     public class ThriftUdpClientTransportTests: IDisposable

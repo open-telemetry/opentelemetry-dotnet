@@ -20,13 +20,6 @@ using Thrift;
 using Thrift.Protocols;
 using Thrift.Protocols.Entities;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Thrift;
-using Thrift.Protocols;
-using Thrift.Protocols.Entities;
-
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public class JaegerThriftClient : TBaseClient, IDisposable

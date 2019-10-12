@@ -19,12 +19,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using OpenTelemetry.Abstractions.Utils;
 
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using OpenTelemetry.Abstractions.Utils;
-
 namespace OpenTelemetry.Trace
 {
     /// <summary>

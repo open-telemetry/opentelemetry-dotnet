@@ -19,12 +19,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
-
 namespace OpenTelemetry.Stats.Test
 {
     public class CurrentStatsStateTest

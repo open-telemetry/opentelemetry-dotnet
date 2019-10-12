@@ -17,10 +17,6 @@ using System;
 using System.Diagnostics;
 using OpenTelemetry.Utils;
 
-using System;
-using System.Diagnostics;
-using OpenTelemetry.Utils;
-
 namespace OpenTelemetry.Stats.Measures
 {
     [DebuggerDisplay("{ToString(),nq}")]

@@ -18,11 +18,6 @@ using System.Collections.Generic;
 using OpenTelemetry.Stats.Measures;
 using Xunit;
 
-using System;
-using System.Collections.Generic;
-using OpenTelemetry.Stats.Measures;
-using Xunit;
-
 namespace OpenTelemetry.Stats.Test
 {
     public class MeasureTest

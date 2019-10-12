@@ -18,11 +18,6 @@ using System.Collections.Generic;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace.Export;
 
-using System;
-using System.Collections.Generic;
-using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Trace.Export;
-
 namespace OpenTelemetry.Trace.Configuration
 {
     public class TracerBuilder

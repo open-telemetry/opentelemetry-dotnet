@@ -21,14 +21,6 @@ using OpenTelemetry.Collector.StackExchangeRedis.Implementation;
 using OpenTelemetry.Trace;
 using StackExchange.Redis.Profiling;
 
-using System;
-using System.Collections.Concurrent;
-using System.Threading;
-using System.Threading.Tasks;
-using OpenTelemetry.Collector.StackExchangeRedis.Implementation;
-using OpenTelemetry.Trace;
-using StackExchange.Redis.Profiling;
-
 namespace OpenTelemetry.Collector.StackExchangeRedis
 {
     /// <summary>

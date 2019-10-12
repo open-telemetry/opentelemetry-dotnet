@@ -15,7 +15,6 @@
 // </copyright>
 
 
-using OpenTelemetry.Resources;
 using System;
 using Moq;
 using OpenTelemetry.Collector.StackExchangeRedis.Tests;

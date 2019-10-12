@@ -16,9 +16,6 @@
 using System;
 using Xunit;
 
-using System;
-using Xunit;
-
 namespace OpenTelemetry.Tags.Test
 {
     public class TagKeyTest

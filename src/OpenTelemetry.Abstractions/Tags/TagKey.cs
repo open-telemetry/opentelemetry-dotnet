@@ -16,9 +16,6 @@
 using System;
 using OpenTelemetry.Utils;
 
-using System;
-using OpenTelemetry.Utils;
-
 namespace OpenTelemetry.Tags
 {
     /// <summary>

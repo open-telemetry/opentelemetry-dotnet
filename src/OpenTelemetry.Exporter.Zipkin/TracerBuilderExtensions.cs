@@ -16,9 +16,6 @@
 using System;
 using OpenTelemetry.Trace.Configuration;
 
-using System;
-using OpenTelemetry.Trace.Configuration;
-
 namespace OpenTelemetry.Exporter.Zipkin
 {
     public static class TracerBuilderExtensions

@@ -21,14 +21,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using OpenTelemetry.Internal;
-
 namespace OpenTelemetry.Trace.Export
 {
     /// <summary>

@@ -17,10 +17,6 @@ using System;
 using OpenTelemetry.Stats.Measures;
 using OpenTelemetry.Tags;
 
-using System;
-using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Tags;
-
 namespace OpenTelemetry.Stats
 {
     internal sealed class NoopMeasureMap : MeasureMapBase

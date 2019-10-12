@@ -17,10 +17,6 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
-using System;
-using System.Diagnostics;
-using System.Threading;
-
 namespace OpenTelemetry.Collector
 {
     public class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>

@@ -19,12 +19,6 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 
-using Xunit;
-using OpenTelemetry.Resources;
-using System.Collections.Generic;
-using System;
-using System.Linq;
-
 namespace OpenTelemetry.Impl.Resources
 {
     public class ResourceTest

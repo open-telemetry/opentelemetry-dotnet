@@ -23,16 +23,6 @@ using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using OpenTelemetry.Trace;
 
-using System;
-using System.Diagnostics;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Reflection;
-using System.Runtime.Versioning;
-using System.Threading.Tasks;
-using OpenTelemetry.Trace;
-
 namespace OpenTelemetry.Collector.Dependencies.Implementation
 {
     internal class HttpHandlerDiagnosticListener : ListenerHandler

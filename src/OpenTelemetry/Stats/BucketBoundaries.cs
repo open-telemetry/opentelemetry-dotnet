@@ -16,12 +16,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using OpenTelemetry.Utils;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using OpenTelemetry.Utils;
 
 namespace OpenTelemetry.Stats
 {

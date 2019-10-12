@@ -16,9 +16,6 @@
 using System;
 using OpenTelemetry.Tags.Propagation;
 
-using System;
-using OpenTelemetry.Tags.Propagation;
-
 namespace OpenTelemetry.Tags
 {
     public class NoopTagContextBinarySerializer : TagContextBinarySerializerBase

@@ -15,10 +15,6 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
-using OpenTelemetry.Context;
-
-using System;
-using System.Collections.Generic;
 
 namespace OpenTelemetry.Tags
 {

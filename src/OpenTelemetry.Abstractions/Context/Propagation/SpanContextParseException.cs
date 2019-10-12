@@ -15,8 +15,6 @@
 // </copyright>
 using System;
 
-using System;
-
 namespace OpenTelemetry.Context.Propagation
 {
     public class SpanContextParseException : Exception

@@ -16,9 +16,6 @@
 using System;
 using CommandLine;
 
-using System;
-using CommandLine;
-
 namespace Samples
 {
     /// <summary>
