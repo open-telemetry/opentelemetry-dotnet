@@ -19,7 +19,6 @@ using Newtonsoft.Json;
 
 #pragma warning disable SA1402 // File may only contain a single type
 
-
 namespace OpenTelemetry.Exporter.LightStep.Implementation
 {
     public class LightStepSpan
