@@ -13,17 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using OpenTelemetry.Stats.Aggregations;
+using OpenTelemetry.Tags;
+using OpenTelemetry.Utils;
 
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.Linq;
-    using OpenTelemetry.Stats.Aggregations;
-    using OpenTelemetry.Tags;
-    using OpenTelemetry.Utils;
-
     public sealed class ViewData : IViewData
     {
         internal ViewData(IView view, IDictionary<TagValues, IAggregationData> aggregationMap, DateTimeOffset start, DateTimeOffset end)

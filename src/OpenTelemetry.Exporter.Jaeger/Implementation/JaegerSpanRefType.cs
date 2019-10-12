@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-
     /// <summary>
     /// Represents the different types of Jaeger Spans.
     /// </summary>

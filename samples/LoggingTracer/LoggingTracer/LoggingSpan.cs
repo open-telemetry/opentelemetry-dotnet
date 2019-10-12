@@ -1,13 +1,12 @@
 ﻿// <copyright file="LoggingSpan.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Trace;
 
 namespace LoggingTracer
 {
-    using System;
-    using System.Collections.Generic;
-    using OpenTelemetry.Trace;
-
     public class LoggingSpan : ISpan
     {
         public LoggingSpan(string name, SpanKind kind)

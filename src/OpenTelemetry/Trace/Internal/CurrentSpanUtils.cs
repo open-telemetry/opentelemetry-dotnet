@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using OpenTelemetry.Context;
 
 namespace OpenTelemetry.Trace.Internal
 {
-    using System;
-    using System.Diagnostics;
-    using System.Runtime.CompilerServices;
-    using OpenTelemetry.Context;
-
     internal static class CurrentSpanUtils
     {
         private static readonly ConditionalWeakTable<Activity, ISpan> ActivitySpanTable = new ConditionalWeakTable<Activity, ISpan>();

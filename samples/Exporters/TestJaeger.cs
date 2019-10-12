@@ -13,16 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using OpenTelemetry.Exporter.Jaeger;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
 
 namespace Samples
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using OpenTelemetry.Exporter.Jaeger;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
-
     internal class TestJaeger
     {
         internal static object Run(string host, int port)

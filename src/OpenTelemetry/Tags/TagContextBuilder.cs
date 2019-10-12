@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Context;
 
 namespace OpenTelemetry.Tags
 {
-    using System;
-    using System.Collections.Generic;
-    using OpenTelemetry.Context;
-
     internal sealed class TagContextBuilder : TagContextBuilderBase
     {
         internal TagContextBuilder(IDictionary<TagKey, TagValue> tags)

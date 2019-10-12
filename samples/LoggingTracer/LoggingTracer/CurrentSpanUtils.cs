@@ -1,13 +1,12 @@
 ﻿// <copyright file="CurrentSpanUtils.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
+using System;
+using System.Threading;
+using OpenTelemetry.Trace;
 
 namespace LoggingTracer
 {
-    using System;
-    using System.Threading;
-    using OpenTelemetry.Trace;
-
     /// <summary>
     /// Span utils for Logging-only SDK implementation.
     /// </summary>

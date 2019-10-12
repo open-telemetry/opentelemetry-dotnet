@@ -1,12 +1,11 @@
 ﻿// <copyright file="Program.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
+using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Hosting;
 
 namespace LoggingTracer.Demo.AspNetCore
 {
-    using Microsoft.AspNetCore;
-    using Microsoft.AspNetCore.Hosting;
-
     public class Program
     {
         public static void Main(string[] args)

@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using OpenTelemetry.Tags;
 
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using OpenTelemetry.Tags;
-
     public sealed class View : IView
     {
         internal View(IViewName name, string description, IMeasure measure, IAggregation aggregation, IReadOnlyList<TagKey> columns)

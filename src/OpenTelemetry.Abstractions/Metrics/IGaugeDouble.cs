@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Metrics
 {
-    using OpenTelemetry.Metrics.Implementation;
-
     /// <summary>
     /// Gauge metric, to report instantaneous measurement of a double value. Cumulative values can go
     /// up or down.

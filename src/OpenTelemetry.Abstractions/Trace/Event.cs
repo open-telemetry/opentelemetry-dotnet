@@ -13,15 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using OpenTelemetry.Abstractions.Utils;
 
 namespace OpenTelemetry.Trace
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.Linq;
-    using OpenTelemetry.Abstractions.Utils;
-
     /// <summary>
     /// A text annotation associated with a collection of attributes.
     /// </summary>

@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics.Implementation
 {
-    using System.Collections.Generic;
-
     /// <summary>
     /// Metric builder interface.
     /// </summary>

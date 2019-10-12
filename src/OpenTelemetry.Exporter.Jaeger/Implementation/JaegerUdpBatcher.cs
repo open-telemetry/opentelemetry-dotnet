@@ -13,15 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Thrift.Protocols;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Thrift.Protocols;
-
     public class JaegerUdpBatcher : IJaegerUdpBatcher
     {
         private const int DefaultMaxPacketSize = 65000;

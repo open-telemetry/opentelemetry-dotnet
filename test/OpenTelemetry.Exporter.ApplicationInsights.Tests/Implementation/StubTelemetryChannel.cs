@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using Microsoft.ApplicationInsights.Channel;
+using System;
 
 namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 {
-    using Microsoft.ApplicationInsights.Channel;
-    using System;
-
     /// <summary>
     /// A stub of <see cref="ITelemetryChannel"/>.
     /// </summary>

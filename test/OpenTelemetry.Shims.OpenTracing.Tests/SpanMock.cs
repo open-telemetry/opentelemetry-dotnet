@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using OpenTelemetry.Trace;
-
     /// <summary>
     /// A mock ISpan implementation for unit tests. Sometimes an actual Mock is just easier to deal with than objects created with Moq.
     /// </summary>

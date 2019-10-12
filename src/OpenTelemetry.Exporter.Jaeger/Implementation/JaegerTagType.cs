@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-
     /// <summary>
     /// Indicates the data type of a Jaeger tag.
     /// </summary>

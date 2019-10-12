@@ -14,17 +14,16 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using OpenTelemetry.Trace;
+using Moq;
+using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using OpenTelemetry.Trace;
-    using Moq;
-    using Xunit;
-
     public class SpanBuilderShimTests
     {
         [Fact]
