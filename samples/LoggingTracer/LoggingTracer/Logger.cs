@@ -21,7 +21,7 @@ namespace LoggingTracer
 {
     public static class Logger
     {
-        private static readonly DateTime startTime = DateTime.UtcNow;
+        private static readonly DateTime StartTime = DateTime.UtcNow;
 
         static Logger() => PrintHeader();
 
@@ -37,7 +37,7 @@ namespace LoggingTracer
 
         private static int MillisSinceStart()
         {
-            return (int)DateTime.UtcNow.Subtract(startTime).TotalMilliseconds;
+            return (int)DateTime.UtcNow.Subtract(StartTime).TotalMilliseconds;
         }
     }
 }

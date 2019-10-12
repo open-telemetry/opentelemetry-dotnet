@@ -43,6 +43,11 @@ namespace Benchmarks
             this.noopTracer = TracerFactoryBase.Default.GetTracer(null);
         }
 
+        public static void Main(string[] args)
+        {
+            var summary = BenchmarkRunner.Run<OpenTelemetrySdkBenchmarks>();
+        }
+
         [Benchmark]
         public ISpan CreateSpan_Sampled() => SpanCreationScenarios.CreateSpan(this.alwaysSampleTracer);
 
@@ -63,10 +68,5 @@ namespace Benchmarks
 
         [Benchmark]
         public ISpan CreateSpan_Propagate_Noop() => SpanCreationScenarios.CreateSpan_Propagate(this.noopTracer);
-
-        public static void Main(string[] args)
-        {
-            var summary = BenchmarkRunner.Run<OpenTelemetrySdkBenchmarks>();
-        }
     }
 }
