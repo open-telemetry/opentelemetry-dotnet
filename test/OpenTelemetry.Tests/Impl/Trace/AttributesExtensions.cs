@@ -20,7 +20,7 @@ using Xunit;
 
 namespace OpenTelemetry.Tests
 {
-       internal static class AttributesExtensions
+    internal static class AttributesExtensions
     {
         public static object GetValue(this IEnumerable<KeyValuePair<string, object>> attributes, string key)
         {

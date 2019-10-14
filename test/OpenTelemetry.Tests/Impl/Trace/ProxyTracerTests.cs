@@ -18,14 +18,13 @@ using System;
 using System.Diagnostics;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Utils;
+using System.Linq;
+using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Trace;
+using Xunit;
 
 namespace OpenTelemetry.Tests.Impl.Trace
 {
-    using System.Linq;
-    using OpenTelemetry.Context.Propagation;
-    using OpenTelemetry.Trace;
-    using Xunit;
-
     public class ProxyTracerTests
     {
         [Fact]

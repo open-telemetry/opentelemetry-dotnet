@@ -28,9 +28,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         /// </summary>
         public StubTelemetryChannel()
         {
-            this.OnSend = telemetry => { };
-            this.OnFlush = () => { };
-            this.OnDispose = () => { };
+            OnSend = telemetry => { };
+            OnFlush = () => { };
+            OnDispose = () => { };
         }
 
         /// <summary>
@@ -68,12 +68,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         /// </summary>
         public void Send(ITelemetry item)
         {
-            if (this.ThrowError)
+            if (ThrowError)
             {
                 throw new Exception("test error");
             }
 
-            this.OnSend(item);
+            OnSend(item);
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         /// </summary>
         public void Dispose()
         {
-            this.OnDispose();
+            OnDispose();
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         /// </summary>
         public void Flush()
         {
-            this.OnFlush();
+            OnFlush();
         }
     }
 }

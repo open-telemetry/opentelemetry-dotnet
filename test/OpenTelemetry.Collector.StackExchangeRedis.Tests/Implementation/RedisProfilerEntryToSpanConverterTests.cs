@@ -15,19 +15,17 @@
 // </copyright>
 
 
-using OpenTelemetry.Resources;
+using System;
+using Moq;
+using OpenTelemetry.Collector.StackExchangeRedis.Tests;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
+using StackExchange.Redis.Profiling;
+using Xunit;
 
 namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 {
-    using System;
-    using Moq;
-    using OpenTelemetry.Collector.StackExchangeRedis.Tests;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Export;
-    using StackExchange.Redis.Profiling;
-    using Xunit;
-
     public class RedisProfilerEntryToSpanConverterTests
     {
         private readonly ITracer tracer;

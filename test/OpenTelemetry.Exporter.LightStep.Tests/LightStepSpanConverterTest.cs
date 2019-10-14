@@ -17,14 +17,13 @@
 using System.Collections.Generic;
 using OpenTelemetry.Exporter.LightStep.Implementation;
 using OpenTelemetry.Trace.Configuration;
+using System;
+using System.Diagnostics;
+using OpenTelemetry.Trace;
+using Xunit;
 
 namespace OpenTelemetry.Exporter.LightStep.Tests
 {
-    using System;
-    using System.Diagnostics;
-    using OpenTelemetry.Trace;
-    using Xunit;
-
     public class LightStepSpanConverterTest
     {
         private readonly ITracer tracer;
@@ -70,11 +69,11 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
             };
 
             var linkedSpanId = ActivitySpanId.CreateRandom();
-            var link = new Link(new SpanContext(
+            var link = new Link(new Trace.SpanContext(
                 traceId, linkedSpanId, ActivityTraceFlags.Recorded));
 
             var span = (Span)tracer
-                .StartSpan("Test", new SpanContext(traceId, parentId, ActivityTraceFlags.Recorded), SpanKind.Client, startTs, new [] {link});
+                .StartSpan("Test", new Trace.SpanContext(traceId, parentId, ActivityTraceFlags.Recorded), SpanKind.Client, startTs, new [] {link});
 
             var spanIdInt = span.Context.SpanId.ToLSSpanId();
 

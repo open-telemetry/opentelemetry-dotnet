@@ -16,9 +16,10 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
+#pragma warning disable SA1402 // File may only contain a single type
+
 namespace OpenTelemetry.Exporter.LightStep.Implementation
 {
-#pragma warning disable SA1402 // File may only contain a single type
     internal class LightStepReport
     {
         [JsonProperty("auth")]

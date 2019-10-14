@@ -17,8 +17,6 @@ using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Globalization;
-using OpenTelemetry.Trace.Internal;
-using OpenTelemetry.Trace.Test;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Sampler.Test

@@ -22,7 +22,8 @@ namespace OpenTelemetry.Stats
 {
     public sealed class View : IView
     {
-        internal View(IViewName name, string description, IMeasure measure, IAggregation aggregation, IReadOnlyList<TagKey> columns)
+        internal View(IViewName name, string description, IMeasure measure, IAggregation aggregation,
+            IReadOnlyList<TagKey> columns)
         {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.Description = description ?? throw new ArgumentNullException(nameof(description));
@@ -41,7 +42,8 @@ namespace OpenTelemetry.Stats
 
         public IReadOnlyList<TagKey> Columns { get; }
 
-        public static IView Create(IViewName name, string description, IMeasure measure, IAggregation aggregation, IReadOnlyList<TagKey> columns)
+        public static IView Create(IViewName name, string description, IMeasure measure, IAggregation aggregation,
+            IReadOnlyList<TagKey> columns)
         {
             var set = new HashSet<TagKey>(columns);
             if (set.Count != columns.Count)
@@ -61,13 +63,13 @@ namespace OpenTelemetry.Stats
         public override string ToString()
         {
             return nameof(View)
-                + "{"
-                + nameof(this.Name) + "=" + this.Name + ", "
-                + nameof(this.Description) + "=" + this.Description + ", "
-                + nameof(this.Measure) + "=" + this.Measure + ", "
-                + nameof(this.Aggregation) + "=" + this.Aggregation + ", "
-                + nameof(this.Columns) + "=" + this.Columns + ", "
-                + "}";
+                   + "{"
+                   + nameof(this.Name) + "=" + this.Name + ", "
+                   + nameof(this.Description) + "=" + this.Description + ", "
+                   + nameof(this.Measure) + "=" + this.Measure + ", "
+                   + nameof(this.Aggregation) + "=" + this.Aggregation + ", "
+                   + nameof(this.Columns) + "=" + this.Columns + ", "
+                   + "}";
         }
 
         /// <inheritdoc/>
@@ -81,16 +83,16 @@ namespace OpenTelemetry.Stats
             if (o is View that)
             {
                 return this.Name.Equals(that.Name)
-                     && this.Description.Equals(that.Description)
-                     && this.Measure.Equals(that.Measure)
-                     && this.Aggregation.Equals(that.Aggregation)
-                     && this.Columns.SequenceEqual(that.Columns);
+                       && this.Description.Equals(that.Description)
+                       && this.Measure.Equals(that.Measure)
+                       && this.Aggregation.Equals(that.Aggregation)
+                       && this.Columns.SequenceEqual(that.Columns);
             }
 
             return false;
         }
 
-    /// <inheritdoc/>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             var h = 1;

@@ -33,35 +33,35 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
     {
         public class HttpOutTestCase
         {
-            public string name { get; set; }
+            public string Name { get; set; }
 
-            public string method { get; set; }
+            public string Method { get; set; }
 
-            public string url { get; set; }
+            public string Url { get; set; }
 
-            public Dictionary<string, string> headers { get; set; }
+            public Dictionary<string, string> Headers { get; set; }
 
-            public int responseCode { get; set; }
+            public int ResponseCode { get; set; }
 
-            public string spanName { get; set; }
+            public string SpanName { get; set; }
 
-            public string spanKind { get; set; }
+            public string SpanKind { get; set; }
 
-            public string spanStatus { get; set; }
+            public string SpanStatus { get; set; }
 
-            public Dictionary<string, string> spanAttributes { get; set; }
+            public Dictionary<string, string> SpanAttributes { get; set; }
         }
 
-        private static IEnumerable<object[]> readTestCases()
+        private static IEnumerable<object[]> ReadTestCases()
         {
             var assembly = Assembly.GetExecutingAssembly();
             var serializer = new JsonSerializer();
             var input = serializer.Deserialize<HttpOutTestCase[]>(new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream("OpenTelemetry.Collector.Dependencies.Tests.http-out-test-cases.json"))));
 
-            return getArgumentsFromTestCaseObject(input);
+            return GetArgumentsFromTestCaseObject(input);
         }
 
-        private static IEnumerable<object[]> getArgumentsFromTestCaseObject(IEnumerable<HttpOutTestCase> input)
+        private static IEnumerable<object[]> GetArgumentsFromTestCaseObject(IEnumerable<HttpOutTestCase> input)
         {
             var result = new List<object[]>();
 
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             return result;
         }
 
-        public static IEnumerable<object[]> TestData => readTestCases();
+        public static IEnumerable<object[]> TestData => ReadTestCases();
 
         [Theory]
         [MemberData(nameof(TestData))]
@@ -84,7 +84,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             var serverLifeTime = TestServer.RunServer(
                 (ctx) =>
                 {
-                    ctx.Response.StatusCode = tc.responseCode == 0 ? 200 : tc.responseCode;
+                    ctx.Response.StatusCode = tc.ResponseCode == 0 ? 200 : tc.ResponseCode;
                     ctx.Response.OutputStream.Close();
                 },
                 out var host, 
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
             var tracer = TracerFactory.Create(b => b.SetProcessor(_ => spanProcessor.Object))
                 .GetTracer(null);
-            tc.url = NormalizeValues(tc.url, host, port);
+            tc.Url = NormalizeValues(tc.Url, host, port);
 
             using (serverLifeTime)
 
@@ -105,13 +105,13 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     {
                         var request = new HttpRequestMessage
                         {
-                            RequestUri = new Uri(tc.url),
-                            Method = new HttpMethod(tc.method),
+                            RequestUri = new Uri(tc.Url),
+                            Method = new HttpMethod(tc.Method),
                         };
 
-                        if (tc.headers != null)
+                        if (tc.Headers != null)
                         {
-                            foreach (var header in tc.headers)
+                            foreach (var header in tc.Headers)
                             {
                                 request.Headers.Add(header.Key, header.Value);
                             }
@@ -129,8 +129,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
             var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
 
-            Assert.Equal(tc.spanName, span.Name);
-            Assert.Equal(tc.spanKind, span.Kind.ToString());
+            Assert.Equal(tc.SpanName, span.Name);
+            Assert.Equal(tc.SpanKind, span.Kind.ToString());
 
             var d = new Dictionary<CanonicalCode, string>()
             {
@@ -153,12 +153,12 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 { CanonicalCode.Unauthenticated, "UNAUTHENTICATED"},
             };
 
-            Assert.Equal(tc.spanStatus, d[span.Status.CanonicalCode]);
+            Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
 
             var normalizedAttributes = span.Attributes.ToDictionary(x => x.Key, x => x.Value.ToString());
-            tc.spanAttributes = tc.spanAttributes.ToDictionary(x => x.Key, x => NormalizeValues(x.Value, host, port));
+            tc.SpanAttributes = tc.SpanAttributes.ToDictionary(x => x.Key, x => NormalizeValues(x.Value, host, port));
 
-            Assert.Equal(tc.spanAttributes.ToHashSet(), normalizedAttributes.ToHashSet());
+            Assert.Equal(tc.SpanAttributes.ToHashSet(), normalizedAttributes.ToHashSet());
         }
 
         [Fact]
@@ -185,7 +185,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 ]
 ")));
 
-            var t = (Task)this.GetType().InvokeMember(nameof(HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, getArgumentsFromTestCaseObject(input).First());
+            var t = (Task)GetType().InvokeMember(nameof(HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, GetArgumentsFromTestCaseObject(input).First());
             await t;
         }
 

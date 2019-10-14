@@ -17,17 +17,15 @@ using System.Collections.Generic;
 using Google.Api;
 using Google.Cloud.Monitoring.V3;
 using Google.Protobuf.WellKnownTypes;
-using OpenTelemetry.Exporter.Stackdriver.Utils;
 using OpenTelemetry.Stats;
 using OpenTelemetry.Stats.Aggregations;
 using OpenTelemetry.Stats.Measures;
 using OpenTelemetry.Tags;
+using static Google.Api.Distribution.Types;
+using static Google.Api.MetricDescriptor.Types;
 
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
-    using static Google.Api.Distribution.Types;
-    using static Google.Api.MetricDescriptor.Types;
-
     /// <summary>
     /// Conversion methods from OpenTelemetry Stats API to Stackdriver Metrics API.
     /// </summary>
