@@ -15,16 +15,14 @@
 // </copyright>
 
 using OpenTelemetry.Trace.Internal;
+using System;
+using System.Diagnostics;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
+using Xunit;
 
 namespace OpenTelemetry.Trace.Test
 {
-    using System;
-    using System.Diagnostics;
-    using Moq;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Export;
-    using Xunit;
-
     public class CurrentSpanUtilsTest: IDisposable
     {
         private readonly SpanProcessor spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());

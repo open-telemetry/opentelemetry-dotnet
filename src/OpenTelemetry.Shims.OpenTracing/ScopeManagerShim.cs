@@ -13,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using global::OpenTracing;

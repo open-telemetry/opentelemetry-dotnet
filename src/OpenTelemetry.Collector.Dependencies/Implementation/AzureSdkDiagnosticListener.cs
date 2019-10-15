@@ -16,7 +16,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net.Http;
 using OpenTelemetry.Collector.Dependencies.Implementation;
 using OpenTelemetry.Trace;
 

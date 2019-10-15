@@ -23,15 +23,12 @@ using OpenTelemetry.Tests;
 using OpenTelemetry.Utils;
 using OpenTelemetry.Trace.Sampler;
 using Xunit;
+using System;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace.Test
 {
-    using System;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Export;
-
-    using Xunit;
-
     public class TracerTest
     {
         private const string SpanName = "MySpanName";

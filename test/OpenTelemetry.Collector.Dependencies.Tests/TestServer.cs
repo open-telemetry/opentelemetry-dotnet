@@ -34,21 +34,21 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             public RunningServer(Action<HttpListenerContext> action, string host, int port)
             {
-                this.cts = new CancellationTokenSource();
-                this.listener = new HttpListener();
+                cts = new CancellationTokenSource();
+                listener = new HttpListener();
 
-                var token = this.cts.Token;
+                var token = cts.Token;
 
-                this.listener.Prefixes.Add($"http://{host}:{port}/");
-                this.listener.Start();
+                listener.Prefixes.Add($"http://{host}:{port}/");
+                listener.Start();
 
-                this.httpListenerTask = new Task(() =>
+                httpListenerTask = new Task(() =>
                 {
                     while (!token.IsCancellationRequested)
                     {
-                        var ctxTask = this.listener.GetContextAsync();
+                        var ctxTask = listener.GetContextAsync();
 
-                        this.initialized.Set();
+                        initialized.Set();
 
                         try
                         {
@@ -72,15 +72,15 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             public void Start()
             {
-                this.httpListenerTask.Start();
-                this.initialized.WaitOne();
+                httpListenerTask.Start();
+                initialized.WaitOne();
             }
 
             public void Dispose()
             {
                 try
                 {
-                    this.listener?.Stop();
+                    listener?.Stop();
                     cts.Cancel();
                 }
                 catch (ObjectDisposedException)

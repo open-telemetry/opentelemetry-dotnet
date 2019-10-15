@@ -17,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Context.Propagation;
 using Xunit;
 

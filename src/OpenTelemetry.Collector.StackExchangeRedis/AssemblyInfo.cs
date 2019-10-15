@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("OpenTelemetry.Collector.StackExchangeRedis.Tests" + AssemblyInfo.PublicKey)]

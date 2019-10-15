@@ -16,23 +16,22 @@
 
 
 using OpenTelemetry.Trace.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using OpenTelemetry.Exporter.Jaeger.Implementation;
+using OpenTelemetry.Trace;
+using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using OpenTelemetry.Exporter.Jaeger.Implementation;
-    using OpenTelemetry.Trace;
-    using Xunit;
-
     public class JaegerSpanConverterTest
     {
         private const long MillisPerSecond = 1000L;
         private const long NanosPerMillisecond = 1000 * 1000;
         private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
-        private ITracer tracer;
+        private readonly ITracer tracer;
 
         public JaegerSpanConverterTest()
         {

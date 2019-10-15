@@ -21,7 +21,6 @@ using OpenTelemetry.Stats.Measures;
 using OpenTelemetry.Tags;
 using OpenTelemetry.Tags.Unsafe;
 using Xunit;
-using System.Collections;
 
 namespace OpenTelemetry.Stats.Test
 {

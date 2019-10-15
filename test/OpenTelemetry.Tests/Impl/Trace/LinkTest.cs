@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Xunit;

@@ -14,24 +14,22 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Sampler;
+using Xunit;
+using Microsoft.AspNetCore.Mvc.Testing;
+using TestApp.AspNetCore._2._0;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
+using Moq;
+using Microsoft.AspNetCore.TestHost;
+using System;
+using Microsoft.AspNetCore.Http;
 
 namespace OpenTelemetry.Collector.AspNetCore.Tests
 {
-    using Xunit;
-    using Microsoft.AspNetCore.Mvc.Testing;
-    using TestApp.AspNetCore._2._0;
-    using System.Threading.Tasks;
-    using Microsoft.Extensions.DependencyInjection;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
-    using Moq;
-    using Microsoft.AspNetCore.TestHost;
-    using System;
-    using Microsoft.AspNetCore.Http;
-
     public class IncomingRequestsCollectionsIsAccordingToTheSpecTests
         : IClassFixture<WebApplicationFactory<Startup>>
     {

@@ -15,21 +15,19 @@
 // </copyright>
 
 using OpenTelemetry.Trace.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+using Moq;
+using OpenTelemetry.Abstractions.Utils;
+using OpenTelemetry.Tests;
+using OpenTelemetry.Trace.Export;
+using Xunit;
 
 namespace OpenTelemetry.Trace.Test
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using Moq;
-    using OpenTelemetry.Abstractions.Utils;
-    using OpenTelemetry.Tests;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
-    using Xunit;
-
     public class SpanTest : IDisposable
     {
         private const string SpanName = "MySpanName";
@@ -882,6 +880,11 @@ namespace OpenTelemetry.Trace.Test
         public void EndSpanStopsActivity(bool recordEvents)
         {
             var parentActivity = new Activity("parent").Start();
+
+            if (recordEvents)
+            {
+                parentActivity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            }
 
             var tracer = tracerFactory
                 .GetTracer(null);

@@ -13,11 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using Microsoft.ApplicationInsights.Extensibility;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Exporter.ApplicationInsights;
 
-namespace OpenTelemetry.Exporter.ApplicationInsights
+namespace OpenTelemetry.Trace.Configuration
 {
     public static class TracerBuilderExtensions
     {
