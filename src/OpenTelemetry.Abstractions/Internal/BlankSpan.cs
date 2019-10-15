@@ -144,15 +144,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public void AddLink(Link link)
-        {
-            if (link == null)
-            {
-                throw new ArgumentNullException(nameof(link));
-            }
-        }
-
-        /// <inheritdoc />
         public void End()
         {
         }

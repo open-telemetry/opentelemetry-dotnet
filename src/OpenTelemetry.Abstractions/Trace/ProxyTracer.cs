@@ -47,47 +47,47 @@ namespace OpenTelemetry.Trace
             return this.realTracer != null ? this.realTracer.WithSpan(span) : NoopScope;
         }
 
-        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, LinksProvider linksProvider)
         {
             if (operationName == null)
             {
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            return this.realTracer != null ? this.realTracer.StartRootSpan(operationName, kind, startTimestamp, links) : BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartRootSpan(operationName, kind, startTimestamp, linksProvider) : BlankSpan.Instance;
         }
 
-        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, LinksProvider linksProvider)
         {
             if (operationName == null)
             {
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            return this.realTracer != null ? this.realTracer.StartSpan(operationName, kind, startTimestamp, links) : BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartSpan(operationName, kind, startTimestamp, linksProvider) : BlankSpan.Instance;
         }
 
-        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, LinksProvider linksProvider)
         {
             if (operationName == null)
             {
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, startTimestamp, links) : BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, startTimestamp, linksProvider) : BlankSpan.Instance;
         }
 
-        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, LinksProvider linksProvider)
         {
             if (operationName == null)
             {
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, startTimestamp, links) : BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, startTimestamp, linksProvider) : BlankSpan.Instance;
         }
 
-        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, LinksProvider linksProvider)
         {
             if (operationName == null)
             {
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentException("Current Activity is not in W3C format");
             }
 
-            return this.realTracer != null ? this.realTracer.StartSpanFromActivity(operationName, activity, kind, links) : BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartSpanFromActivity(operationName, activity, kind, linksProvider) : BlankSpan.Instance;
         }
 
         public void UpdateTracer(ITracer realTracer)

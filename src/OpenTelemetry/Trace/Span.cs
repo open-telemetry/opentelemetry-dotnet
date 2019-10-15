@@ -49,7 +49,7 @@ namespace OpenTelemetry.Trace
             bool ownsActivity,
             SpanKind spanKind,
             DateTimeOffset startTimestamp,
-            IEnumerable<Link> links,
+            LinksProvider linksProvider,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace
                 parentSpanContext,
                 name,
                 null,
-                links, // we'll enumerate again, but double enumeration over small collection is cheaper than allocation
+                linksProvider,
                 this.Activity.TraceId,
                 this.Activity.SpanId,
                 this.tracerConfiguration);
@@ -78,11 +78,13 @@ namespace OpenTelemetry.Trace
             {
                 this.Activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
                 
-                if (links != null)
+                var parentLinks = linksProvider.GetLinks();
+                if (parentLinks != null)
                 {
-                    foreach (var link in links)
+                    this.links = new EvictingQueue<Link>(this.tracerConfiguration.MaxNumberOfLinks);
+                    foreach (var link in parentLinks)
                     {
-                        this.AddLink(link);
+                        this.links.AddEvent(link);
                     }
                 }
 
@@ -294,36 +296,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void AddLink(Link link)
-        {
-            if (link == null)
-            {
-                throw new ArgumentNullException(nameof(link));
-            }
-
-            if (!this.IsRecordingEvents)
-            {
-                return;
-            }
-
-            lock (this.@lock)
-            {
-                if (this.hasEnded)
-                {
-                    // logger.log(Level.FINE, "Calling addLink() on an ended Span.");
-                    return;
-                }
-
-                if (this.links == null)
-                {
-                    this.links = new EvictingQueue<Link>(this.tracerConfiguration.MaxNumberOfLinks);
-                }
-
-                this.links.AddEvent(link);
-            }
-        }
-
-        /// <inheritdoc/>
         public void End()
         {
             this.End(PreciseTimestamp.GetUtcNow());
@@ -426,7 +398,7 @@ namespace OpenTelemetry.Trace
             ISpan parentSpan,
             SpanKind spanKind,
             DateTimeOffset startTimestamp,
-            IEnumerable<Link> links,
+            LinksProvider linksProvider,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -440,7 +412,7 @@ namespace OpenTelemetry.Trace
                     true,
                     spanKind,
                     startTimestamp,
-                    links,
+                    linksProvider,
                     tracerConfiguration,
                     spanProcessor,
                     libraryResource);
@@ -456,7 +428,7 @@ namespace OpenTelemetry.Trace
                     true,
                     spanKind,
                     startTimestamp,
-                    links,
+                    linksProvider,
                     tracerConfiguration,
                     spanProcessor,
                     libraryResource);
@@ -472,7 +444,7 @@ namespace OpenTelemetry.Trace
                 true,
                 spanKind,
                 startTimestamp,
-                links,
+                linksProvider,
                 tracerConfiguration,
                 spanProcessor,
                 libraryResource);
@@ -483,7 +455,7 @@ namespace OpenTelemetry.Trace
             SpanContext parentContext,
             SpanKind spanKind,
             DateTimeOffset startTimestamp,
-            IEnumerable<Link> links,
+            LinksProvider linksProvider,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -495,7 +467,7 @@ namespace OpenTelemetry.Trace
                 true,
                 spanKind,
                 startTimestamp,
-                links,
+                linksProvider,
                 tracerConfiguration,
                 spanProcessor,
                 libraryResource);
@@ -505,7 +477,7 @@ namespace OpenTelemetry.Trace
             string name,
             SpanKind spanKind,
             DateTimeOffset startTimestamp,
-            IEnumerable<Link> links,
+            LinksProvider linksProvider,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -517,7 +489,7 @@ namespace OpenTelemetry.Trace
                 true,
                 spanKind,
                 startTimestamp,
-                links,
+                linksProvider,
                 tracerConfiguration,
                 spanProcessor,
                 libraryResource);
@@ -527,7 +499,7 @@ namespace OpenTelemetry.Trace
             string name,
             Activity activity,
             SpanKind spanKind,
-            IEnumerable<Link> links,
+            LinksProvider linksProvider,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -539,7 +511,7 @@ namespace OpenTelemetry.Trace
                 false,
                 spanKind,
                 new DateTimeOffset(activity.StartTimeUtc),
-                links,
+                linksProvider,
                 tracerConfiguration,
                 spanProcessor,
                 libraryResource);
@@ -549,7 +521,7 @@ namespace OpenTelemetry.Trace
             SpanContext parent,
             string name,
             ISampler sampler,
-            IEnumerable<Link> parentLinks,
+            LinksProvider linksProvider,
             ActivityTraceId traceId,
             ActivitySpanId spanId,
             TracerConfiguration tracerConfiguration)
@@ -557,7 +529,7 @@ namespace OpenTelemetry.Trace
             // If users set a specific sampler in the SpanBuilder, use it.
             if (sampler != null)
             {
-                return sampler.ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
+                return sampler.ShouldSample(parent, traceId, spanId, name, linksProvider).IsSampled;
             }
 
             // Use the default sampler if this is a root Span or this is an entry point Span (has remote
@@ -566,11 +538,12 @@ namespace OpenTelemetry.Trace
             {
                 return tracerConfiguration
                     .Sampler
-                    .ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
+                    .ShouldSample(parent, traceId, spanId, name, linksProvider).IsSampled;
             }
 
             // Parent is always different than null because otherwise we use the default sampler.
-            return (parent.TraceOptions & ActivityTraceFlags.Recorded) != 0 || IsAnyParentLinkSampled(parentLinks);
+            var links = linksProvider.GetLinks();
+            return (parent.TraceOptions & ActivityTraceFlags.Recorded) != 0 || IsAnyParentLinkSampled(links);
         }
 
         private static bool IsAnyParentLinkSampled(IEnumerable<Link> parentLinks)

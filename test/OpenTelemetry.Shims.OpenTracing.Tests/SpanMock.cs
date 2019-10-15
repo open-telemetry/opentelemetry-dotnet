@@ -66,11 +66,6 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             this.Events.Add(newEvent);
         }
 
-        public void AddLink(Link link)
-        {
-            this.Links.Add(link);
-        }
-
         public void End()
         {
             this.HasEnded = true;
