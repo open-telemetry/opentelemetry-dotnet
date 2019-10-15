@@ -48,7 +48,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         [Fact]
         public void AddRequestCollector_BadArgs()
         {
-            Assert.Throws<ArgumentNullException>(() => TracerBuilderExtensions.AddRequestCollector(null));
+            TracerBuilder builder = null;
+            Assert.Throws<ArgumentNullException>(() => builder.AddRequestCollector());
             Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddRequestCollector(null)));
         }
 

@@ -50,7 +50,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public void AddDependencyCollector_BadArgs()
         {
-            Assert.Throws<ArgumentNullException>(() => TracerBuilderExtensions.AddDependencyCollector(null));
+            TracerBuilder builder = null;
+            Assert.Throws<ArgumentNullException>(() => builder.AddDependencyCollector());
             Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddDependencyCollector(null)));
         }
 
