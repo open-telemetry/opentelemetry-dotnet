@@ -76,7 +76,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, Func<IEnumerable<Link>> linksGetter)
         {
             if (operationName == null)
             {
@@ -88,17 +88,17 @@ namespace OpenTelemetry.Trace
                 startTimestamp = PreciseTimestamp.GetUtcNow();
             }
 
-            return Span.CreateRoot(operationName, kind, startTimestamp, links, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
+            return Span.CreateRoot(operationName, kind, startTimestamp, linksGetter, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, Func<IEnumerable<Link>> linksGetter)
         {
-            return this.StartSpan(operationName, null, kind, startTimestamp, links);
+            return this.StartSpan(operationName, null, kind, startTimestamp, linksGetter);
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, Func<IEnumerable<Link>> linksGetter)
         {
             if (operationName == null)
             {
@@ -115,12 +115,12 @@ namespace OpenTelemetry.Trace
                 startTimestamp = PreciseTimestamp.GetUtcNow();
             }
 
-            return Span.CreateFromParentSpan(operationName, parent, kind, startTimestamp, links, this.tracerConfiguration,
+            return Span.CreateFromParentSpan(operationName, parent, kind, startTimestamp, linksGetter, this.tracerConfiguration,
                     this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, Func<IEnumerable<Link>> linksGetter)
         {
             if (operationName == null)
             {
@@ -134,16 +134,16 @@ namespace OpenTelemetry.Trace
 
             if (parent != null)
             {
-                return Span.CreateFromParentContext(operationName, parent, kind, startTimestamp, links, this.tracerConfiguration,
+                return Span.CreateFromParentContext(operationName, parent, kind, startTimestamp, linksGetter, this.tracerConfiguration,
                     this.spanProcessor, this.LibraryResource);
             }
 
-            return Span.CreateRoot(operationName, kind, startTimestamp, links, this.tracerConfiguration,
+            return Span.CreateRoot(operationName, kind, startTimestamp, linksGetter, this.tracerConfiguration,
                 this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, Func<IEnumerable<Link>> linksGetter)
         {
             if (operationName == null)
             {
@@ -166,7 +166,7 @@ namespace OpenTelemetry.Trace
                     "Current Activity is not running: it has not been started or has been stopped");
             }
 
-            return Span.CreateFromActivity(operationName, activity, kind, links, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
+            return Span.CreateFromActivity(operationName, activity, kind, linksGetter, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
     }
 }
