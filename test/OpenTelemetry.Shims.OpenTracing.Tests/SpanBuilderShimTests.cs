@@ -50,7 +50,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.Start();
 
             tracerMock.Verify(o => o.StartRootSpan("foo", 0,
-                default, It.Is<Func<IEnumerable<Link>>>(links => !links().Any())), Times.Once);
+                default, It.Is<Func<IEnumerable<Link>>>(links => links == null)), Times.Once);
         }
 
         [Fact]
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             shim.Start();
             tracerMock.Verify(o => o.StartSpan("foo", 0,
-                startTimestamp, It.Is<Func<IEnumerable<Link>>>(links => !links().Any())), Times.Once);
+                startTimestamp, It.Is<Func<IEnumerable<Link>>>(links => links == null)), Times.Once);
         }
 
         [Fact]
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.Start();
 
             tracerMock.Verify(o => o.StartSpan("foo", 0,
-                default, It.Is<Func<IEnumerable<Link>>>(links => !links().Any())), Times.Once);
+                default, It.Is<Func<IEnumerable<Link>>>(links => links == null)), Times.Once);
         }
 
         [Fact]
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.Start();
 
             tracerMock.Verify(o => o.StartSpan("foo", span.Span, 0,
-                default, It.Is<Func<IEnumerable<Link>>>(links => !links().Any())), Times.Once);
+                default, It.Is<Func<IEnumerable<Link>>>(links => links == null)), Times.Once);
         }
 
         [Fact]
@@ -115,13 +115,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
                 var shim = new SpanBuilderShim(tracerMock.Object, "foo", new List<string> { "foo" });
 
                 shim.Start();
-                tracerMock.Verify(o => o.StartSpanFromActivity("foo", activity, 0, It.Is<Func<IEnumerable<Link>>>(links => !links().Any())), Times.Once);
+                tracerMock.Verify(o => o.StartSpanFromActivity("foo", activity, 0, It.Is<Func<IEnumerable<Link>>>(links => links == null)), Times.Once);
 
                 // mis-matched root operation name
                 tracerMock = GetDefaultTracerMock();
                 shim = new SpanBuilderShim(tracerMock.Object, "foo", new List<string> { "bar" });
                 shim.Start();
-                tracerMock.Verify(o => o.StartSpan("foo", 0, default, It.Is<Func<IEnumerable<Link>>>(links => !links().Any())), Times.Once);
+                tracerMock.Verify(o => o.StartSpan("foo", 0, default, It.Is<Func<IEnumerable<Link>>>(links => links == null)), Times.Once);
             }
             finally
             {
@@ -162,7 +162,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             // should be no parent.
             tracerMock.Verify(o => o.StartSpan("foo", 0,
-                default, It.Is<Func<IEnumerable<Link>>>(links => !links().Any())), Times.Once);
+                default, It.Is<Func<IEnumerable<Link>>>(links => links() == null)), Times.Once);
         }
 
         [Fact]
@@ -179,7 +179,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.Start();
 
             tracerMock.Verify(o => o.StartSpan("foo", spanContext.SpanContext, 0,
-                default, It.Is<Func<IEnumerable<Link>>>(links => !links().Any())), Times.Once);
+                default, It.Is<Func<IEnumerable<Link>>>(links => links == null)), Times.Once);
         }
 
         [Fact]
@@ -216,7 +216,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // Not an attribute
             Assert.Empty(spanMock.Attributes);
 
-            tracerMock.Verify(o => o.StartSpan("foo", SpanKind.Client, default, It.Is<Func<IEnumerable<Link>>>(links => !links().Any())), Times.Once);
+            tracerMock.Verify(o => o.StartSpan("foo", SpanKind.Client, default, It.Is<Func<IEnumerable<Link>>>(links => links == null)), Times.Once);
         }
 
         [Fact]

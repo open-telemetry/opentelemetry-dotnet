@@ -721,10 +721,11 @@ namespace OpenTelemetry.Trace.Test
         {
             var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None);
+            var link = new Link(contextLink);
 
             var tracer = tracerFactory.GetTracer(null);
             var startTime = DateTimeOffset.UtcNow.AddSeconds(-1);
-            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Client, startTime, null);
+            var span = (Span)tracer.StartSpan(SpanName, SpanKind.Client, startTime, () => new [] {link});
 
             span.SetAttribute(
                 "MySingleStringAttributeKey",
@@ -740,8 +741,6 @@ namespace OpenTelemetry.Trace.Test
 
             var secondEventTime = PreciseTimestamp.GetUtcNow();
             span.AddEvent(EventDescription, attributes);
-
-            var link = new Link(contextLink);
 
             Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
             Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
@@ -783,9 +782,10 @@ namespace OpenTelemetry.Trace.Test
             var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None);
 
+            var link = new Link(contextLink);
             var tracer = tracerFactory.GetTracer(null);
             var startTime = DateTimeOffset.UtcNow.AddSeconds(-1);
-            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Client, startTime, null);
+            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Client, startTime, () => new [] {link});
             span.SetAttribute(
                 "MySingleStringAttributeKey",
                 "MySingleStringAttributeValue");
@@ -802,7 +802,6 @@ namespace OpenTelemetry.Trace.Test
             var secondEventTime = PreciseTimestamp.GetUtcNow();
             span.AddEvent(EventDescription, attributes);
 
-            var link = new Link(contextLink);
             span.Status = Status.Cancelled;
 
             var spanEndTime = PreciseTimestamp.GetUtcNow();
