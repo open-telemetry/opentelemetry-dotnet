@@ -60,21 +60,20 @@ namespace OpenTelemetry.Collector.Dependencies
                 }
             }
 
-            Func<IEnumerable<Link>> linksGetter = null;
+            List<Link> parentLinks = null;
             if (LinksPropertyFetcher.Fetch(valueValue) is IEnumerable<Activity> activityLinks)
             {
                 using (var enumerator = activityLinks.GetEnumerator())
                 {
                     if (enumerator.MoveNext())
                     {
-                        var links = new List<Link>();
-                        linksGetter = () => links;
+                        parentLinks = new List<Link>();
                         do
                         {
                             var link = enumerator.Current;
                             if (link != null)
                             {
-                                links.Add(new Link(new SpanContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
+                                parentLinks.Add(new Link(new SpanContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
                             }
                         }
                         while (enumerator.MoveNext());
@@ -82,7 +81,7 @@ namespace OpenTelemetry.Collector.Dependencies
                 }
             }
 
-            var span = this.Tracer.StartSpanFromActivity(operationName, Activity.Current, spanKind, linksGetter);
+            var span = this.Tracer.StartSpanFromActivity(operationName, Activity.Current, spanKind, parentLinks ?? Array.Empty<Link>() as IEnumerable<Link>);
 
             this.Tracer.WithSpan(span);
         }
