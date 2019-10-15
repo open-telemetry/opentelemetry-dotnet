@@ -51,7 +51,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         [Fact]
         public void UseApplicationInsights_BadArgs()
         {
-            Assert.Throws<ArgumentNullException>(() => TracerBuilderExtensions.UseApplicationInsights(null, _ => { }));
+            TracerBuilder builder = null;
+            Assert.Throws<ArgumentNullException>(() => builder.UseApplicationInsights(_ => { }));
             Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.UseApplicationInsights(null)));
         }
     }
