@@ -156,7 +156,12 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             Trace.ISpan span = null;
 
-            Func<IEnumerable<Trace.Link>> parentLinks = () => this.links;
+            Func<IEnumerable<Trace.Link>> parentLinks = null;
+            if (this.links != null && this.links.Count > 0)
+            {
+                parentLinks = () => this.links;
+            }
+
             // If specified, this takes precedence.
             if (this.ignoreActiveSpan)
             {
