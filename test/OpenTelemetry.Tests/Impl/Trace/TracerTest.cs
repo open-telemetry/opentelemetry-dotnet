@@ -24,6 +24,7 @@ using OpenTelemetry.Utils;
 using OpenTelemetry.Trace.Sampler;
 using Xunit;
 using System;
+using System.Collections.Generic;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 
@@ -257,12 +258,14 @@ namespace OpenTelemetry.Trace.Test
                     .SetTracerOptions(traceConfig))
                 .GetTracer(null);
 
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var overflowedLinks = new List<Link>();
             var link = new Link(contextLink);
             for (var i = 0; i < 2 * maxNumberOfLinks; i++)
             {
-                span.AddLink(link);
+                overflowedLinks.Add(link);
             }
+
+            var span = (Span)tracer.StartSpan(SpanName, SpanKind.Client, DateTimeOffset.Now, () => overflowedLinks);
 
             Assert.Equal(maxNumberOfLinks, span.Links.Count());
             foreach (var actualLink in span.Links)

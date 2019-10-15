@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace
             if (this.IsRecordingEvents)
             {
                 this.Activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-                
+
                 if (links != null)
                 {
                     this.links = new EvictingQueue<Link>(this.tracerConfiguration.MaxNumberOfLinks);

@@ -60,17 +60,18 @@ namespace OpenTelemetry.Collector.Dependencies
                 }
             }
 
-            List<Link> links = null;
+            Func<IEnumerable<Link>> linksGetter = null;
             if (LinksPropertyFetcher.Fetch(valueValue) is IEnumerable<Activity> activityLinks)
             {
-                links = new List<Link>();
+                var links = new List<Link>();
+                linksGetter = () => links;
                 foreach (var link in activityLinks)
                 {
                     links.Add(new Link(new SpanContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
                 }
             }
 
-            var span = this.Tracer.StartSpanFromActivity(operationName, Activity.Current, spanKind, links);
+            var span = this.Tracer.StartSpanFromActivity(operationName, Activity.Current, spanKind, linksGetter);
 
             this.Tracer.WithSpan(span);
         }

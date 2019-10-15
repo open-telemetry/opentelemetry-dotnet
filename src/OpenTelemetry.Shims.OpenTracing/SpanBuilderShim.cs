@@ -156,18 +156,19 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             Trace.ISpan span = null;
 
+            Func<IEnumerable<Trace.Link>> parentLinks = () => this.links;
             // If specified, this takes precedence.
             if (this.ignoreActiveSpan)
             {
-                span = this.tracer.StartRootSpan(this.spanName, this.spanKind, this.explicitStartTime ?? default, this.links);
+                span = this.tracer.StartRootSpan(this.spanName, this.spanKind, this.explicitStartTime ?? default, parentLinks);
             }
             else if (this.parentSpan != null)
             {
-                span = this.tracer.StartSpan(this.spanName, this.parentSpan, this.spanKind, this.explicitStartTime ?? default, this.links);
+                span = this.tracer.StartSpan(this.spanName, this.parentSpan, this.spanKind, this.explicitStartTime ?? default, parentLinks);
             }
             else if (this.parentSpanContext != null && this.parentSpanContext.IsValid)
             {
-                span = this.tracer.StartSpan(this.spanName, this.parentSpanContext, this.spanKind, this.explicitStartTime ?? default, this.links);
+                span = this.tracer.StartSpan(this.spanName, this.parentSpanContext, this.spanKind, this.explicitStartTime ?? default, parentLinks);
             }
             else if (this.parentSpan == null && (this.parentSpanContext == null || !this.parentSpanContext.IsValid) && (this.tracer.CurrentSpan == null || this.tracer.CurrentSpan == Trace.BlankSpan.Instance))
             {
@@ -177,14 +178,14 @@ namespace OpenTelemetry.Shims.OpenTracing
                     var currentActivity = System.Diagnostics.Activity.Current;
                     if (this.rootOperationNamesForActivityBasedAutoCollectors.Contains(currentActivity.OperationName))
                     {
-                        span = this.tracer.StartSpanFromActivity(this.spanName, currentActivity, this.spanKind, this.links);
+                        span = this.tracer.StartSpanFromActivity(this.spanName, currentActivity, this.spanKind, parentLinks);
                     }
                 }
             }
             
             if (span == null)
             {
-                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.explicitStartTime ?? default, this.links);
+                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.explicitStartTime ?? default, parentLinks);
             }
 
             foreach (var kvp in this.attributes)

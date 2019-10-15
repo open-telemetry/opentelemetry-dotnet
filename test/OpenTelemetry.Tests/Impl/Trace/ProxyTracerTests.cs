@@ -120,7 +120,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
             var startTimestamp = DateTimeOffset.UtcNow.AddSeconds(-10);
-            var span = (Span)proxyTracer.StartRootSpan("foo", SpanKind.Server, startTimestamp, new[] { new Link(linkContext) });
+            var span = (Span)proxyTracer.StartRootSpan("foo", SpanKind.Server, startTimestamp, () => new[] { new Link(linkContext) });
 
             Assert.True(span.Context.IsValid);
             Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (Span)proxyTracer.StartSpan("child", parentSpan, SpanKind.Server, startTimestamp, new[] { new Link(linkContext) });
+            var span = (Span)proxyTracer.StartSpan("child", parentSpan, SpanKind.Server, startTimestamp, () => new[] { new Link(linkContext) });
 
             Assert.True(span.Context.IsValid);
             Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (Span)proxyTracer.StartSpan("child", parentSpanContext, SpanKind.Client, startTimestamp, new[] { new Link(linkContext) });
+            var span = (Span)proxyTracer.StartSpan("child", parentSpanContext, SpanKind.Client, startTimestamp, () => new[] { new Link(linkContext) });
 
             Assert.True(span.Context.IsValid);
             Assert.Equal(parentSpanContext.TraceId, span.Context.TraceId);
@@ -204,7 +204,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
 
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
-            var span = (Span)proxyTracer.StartSpanFromActivity("foo", activity, SpanKind.Server, new[] { new Link(linkContext) });
+            var span = (Span)proxyTracer.StartSpanFromActivity("foo", activity, SpanKind.Server, () => new[] { new Link(linkContext) });
 
             Assert.Equal(activity.TraceId, span.Context.TraceId);
             Assert.Equal(activity.SpanId, span.Context.SpanId);
@@ -233,7 +233,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
                 var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.Recorded);
                 var span = (Span)proxyTracer.StartSpan("child", SpanKind.Consumer, startTimestamp,
-                    new[] {new Link(linkContext)});
+                    () => new[] {new Link(linkContext)});
 
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
