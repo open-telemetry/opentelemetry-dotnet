@@ -25,14 +25,16 @@ namespace OpenTelemetry.Trace.Export
     /// </summary>
     public class SimpleSpanProcessor : SpanProcessor
     {
+        private readonly SpanExporter exporter;
         private bool disposed = false;
 
         /// <summary>
         /// Constructs simple processor.
         /// </summary>
         /// <param name="exporter">Span processor instance.</param>
-        public SimpleSpanProcessor(SpanExporter exporter) : base(exporter)
+        public SimpleSpanProcessor(SpanExporter exporter)
         {
+            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
         /// <inheritdoc />
@@ -47,7 +49,7 @@ namespace OpenTelemetry.Trace.Export
             {
                 // do not await, just start export
                 // it can still throw in synchronous part
-                _ = this.Exporter.ExportAsync(new[] { span }, CancellationToken.None);
+                _ = this.exporter.ExportAsync(new[] { span }, CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -61,7 +63,7 @@ namespace OpenTelemetry.Trace.Export
             if (!this.disposed)
             {
                 this.disposed = true;
-                return this.Exporter.ShutdownAsync(cancellationToken);
+                return this.exporter.ShutdownAsync(cancellationToken);
             }
 
             return Task.CompletedTask;

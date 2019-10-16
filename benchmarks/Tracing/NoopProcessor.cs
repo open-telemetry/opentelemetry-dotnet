@@ -24,7 +24,7 @@ namespace Benchmarks.Tracing
 {
     internal class NoopProcessor : SpanProcessor
     {
-        public NoopProcessor() : base(new NoopExporter())
+        public NoopProcessor()
         {
         }
 
@@ -39,19 +39,6 @@ namespace Benchmarks.Tracing
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
-        }
-
-        private class NoopExporter : SpanExporter
-        {
-            public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
-            {
-                return Task.FromResult(ExportResult.Success);
-            }
-
-            public override Task ShutdownAsync(CancellationToken cancellationToken)
-            {
-                return Task.CompletedTask;
-            }
         }
     }
 }
