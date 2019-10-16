@@ -45,15 +45,14 @@ namespace OpenTelemetry.Context.Propagation
             try
             {
                 var traceparentCollection = getter(carrier, "traceparent");
-                var tracestateCollection = getter(carrier, "tracestate");
 
-                if (traceparentCollection != null && traceparentCollection.Count() > 1)
+                // There must be a single traceparent
+                if (traceparentCollection == null || traceparentCollection.Count() != 1)
                 {
-                    // multiple traceparent are not allowed
                     return SpanContext.Blank;
                 }
 
-                var traceparent = traceparentCollection?.First();
+                var traceparent = traceparentCollection.First();
                 var traceparentParsed = this.TryExtractTraceparent(traceparent, out var traceId, out var spanId, out var traceoptions);
 
                 if (!traceparentParsed)
@@ -62,6 +61,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
 
                 List<KeyValuePair<string, string>> tracestate = null;
+                var tracestateCollection = getter(carrier, "tracestate");
                 if (tracestateCollection != null)
                 {
                     this.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
