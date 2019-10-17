@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Trace.Export
 {
-    internal class NoopSpanProcessor : SpanProcessor
+    internal sealed class NoopSpanProcessor : SpanProcessor
     {
         public override void OnStart(Span span)
         {
