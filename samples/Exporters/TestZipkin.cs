@@ -17,8 +17,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Exporters;
+using OpenTelemetry.Exporter.Zipkin;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 
 namespace Samples
 {
@@ -32,12 +35,16 @@ namespace Samples
                 {
                     o.ServiceName = "test-zipkin";
                     o.Endpoint = new Uri(zipkinUri);
-                })))
+                })
+                .UseApplicationInsights(
+                    o => o.InstrumentationKey = "e0fbfdfa-e302-49c8-9310-c3919b163c00", 
+                    p => p.AddProcessor(next => new FilteringSpanProcessor(next)))
+                .UseDebuggingProcessor()))
             {
                 var tracer = tracerFactory.GetTracer("zipkin-test");
 
                 // Create a scoped span. It will end automatically when using statement ends
-                using (tracer.WithSpan(tracer.StartSpan("Main")))
+                using (tracer.WithSpan(tracer.StartSpan("bad span")))
                 {
                     Console.WriteLine("About to do a busy work");
                     for (var i = 0; i < 10; i++)

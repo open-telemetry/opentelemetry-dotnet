@@ -1,4 +1,4 @@
-﻿// <copyright file="SpanExporterPipelineBuilder.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanProcessorPipelineBuilder.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,12 +20,12 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace.Configuration
 {
-    public class SpanExporterPipelineBuilder
+    public class SpanProcessorPipelineBuilder
     {
         private Func<SpanExporter, SpanProcessor> lastProcessorFactory;
         private List<Func<SpanProcessor, SpanProcessor>> processorChain;
 
-        internal SpanExporterPipelineBuilder()
+        internal SpanProcessorPipelineBuilder()
         {
         }
 
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal List<SpanProcessor> Processors { get; private set; }
 
-        public SpanExporterPipelineBuilder AddProcessor(Func<SpanProcessor, SpanProcessor> chain)
+        public SpanProcessorPipelineBuilder AddProcessor(Func<SpanProcessor, SpanProcessor> chain)
         {
             if (chain == null)
             {
@@ -50,13 +50,13 @@ namespace OpenTelemetry.Trace.Configuration
             return this;
         }
 
-        public SpanExporterPipelineBuilder SetExportingProcessor(Func<SpanExporter, SpanProcessor> export)
+        public SpanProcessorPipelineBuilder SetExportingProcessor(Func<SpanExporter, SpanProcessor> export)
         {
             this.lastProcessorFactory = export ?? throw new ArgumentNullException(nameof(export));
             return this;
         }
 
-        public SpanExporterPipelineBuilder SetExporter(SpanExporter exporter)
+        public SpanProcessorPipelineBuilder SetExporter(SpanExporter exporter)
         {
             this.Exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
             return this;
@@ -64,6 +64,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal SpanProcessor Build()
         {
+            this.Processors = new List<SpanProcessor>();
             SpanProcessor terminalProcessor = null;
             if (this.lastProcessorFactory != null)
             {

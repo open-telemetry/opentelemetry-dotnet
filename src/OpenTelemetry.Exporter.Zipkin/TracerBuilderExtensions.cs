@@ -36,26 +36,36 @@ namespace OpenTelemetry.Trace.Configuration
 
             var options = new ZipkinTraceExporterOptions();
             configure(options);
-            return builder.ConfigureExporterPipeline(b => b
+            return builder.AddProcessorPipeline(b => b
                 .SetExporter(new ZipkinTraceExporter(options))
                 .SetExportingProcessor(e => new BatchingSpanProcessor(e)));
         }
 
-        public static SpanExporterPipelineBuilder UseZipkin(this SpanExporterPipelineBuilder builder, Action<ZipkinTraceExporterOptions> configure)
+        public static TracerBuilder UseZipkin(this TracerBuilder builder, Action<ZipkinTraceExporterOptions> zipkinConfigure, Action<
+            SpanProcessorPipelineBuilder> processorConfigure)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            if (configure == null)
+            if (zipkinConfigure == null)
             {
-                throw new ArgumentNullException(nameof(configure));
+                throw new ArgumentNullException(nameof(zipkinConfigure));
+            }
+
+            if (processorConfigure == null)
+            {
+                throw new ArgumentNullException(nameof(processorConfigure));
             }
 
             var options = new ZipkinTraceExporterOptions();
-            configure(options);
-            return builder.SetExporter(new ZipkinTraceExporter(options));
+            zipkinConfigure(options);
+            return builder.AddProcessorPipeline(b =>
+            {
+                b.SetExporter(new ZipkinTraceExporter(options));
+                processorConfigure.Invoke(b);
+            });
         }
     }
 }
