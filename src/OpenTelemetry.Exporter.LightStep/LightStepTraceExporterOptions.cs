@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 
 namespace OpenTelemetry.Exporter.LightStep
 {
-    using System;
-
     public sealed class LightStepTraceExporterOptions
     {
         public Uri Satellite { get; set; } = new Uri("https://collector.lightstep.com:443/api/v2/reports");

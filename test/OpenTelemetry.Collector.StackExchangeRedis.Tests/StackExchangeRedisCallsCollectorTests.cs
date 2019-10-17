@@ -14,18 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Resources;
+using Moq;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
+using StackExchange.Redis.Profiling;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace OpenTelemetry.Collector.StackExchangeRedis
 {
-    using Moq;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Export;
-    using StackExchange.Redis.Profiling;
-    using System.Threading.Tasks;
-    using Xunit;
-
     public class StackExchangeRedisCallsCollectorTests
     {
         [Fact]

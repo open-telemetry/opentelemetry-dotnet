@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Diagnostics;
+using System.Threading;
 
 namespace OpenTelemetry.Collector
 {
-    using System;
-    using System.Diagnostics;
-    using System.Threading;
-
     public class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
     {
         private readonly ListenerHandler handler;

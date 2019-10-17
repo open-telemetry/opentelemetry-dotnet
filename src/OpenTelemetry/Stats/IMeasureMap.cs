@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Tags;
 
 namespace OpenTelemetry.Stats
 {
-    using OpenTelemetry.Stats.Measures;
-    using OpenTelemetry.Tags;
-
     /// <summary>
     /// Measure map. Holds the mapping of measures and values.
     /// </summary>

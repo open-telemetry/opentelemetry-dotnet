@@ -1,4 +1,4 @@
-﻿// <copyright file="DiagnosticSourceListener.cs" company="OpenTelemetry Authors">
+// <copyright file="DiagnosticSourceListener.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+
 namespace OpenTelemetry.Collector
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-
     internal class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>
     {
         private readonly ListenerHandler handler;

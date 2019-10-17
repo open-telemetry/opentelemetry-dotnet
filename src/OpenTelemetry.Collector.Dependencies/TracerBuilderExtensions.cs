@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Collector.Dependencies
-{
-    using System;
-    using OpenTelemetry.Trace.Configuration;
+using System;
+using OpenTelemetry.Collector.Dependencies;
 
+namespace OpenTelemetry.Trace.Configuration
+{
     public static class TracerBuilderExtensions
     {
         public static TracerBuilder AddDependencyCollector(this TracerBuilder builder)

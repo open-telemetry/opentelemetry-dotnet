@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using OpenTelemetry.Stats.Aggregations;
 
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using OpenTelemetry.Stats.Aggregations;
-
     public abstract class AggregationData : IAggregationData
     {
         public abstract T Match<T>(

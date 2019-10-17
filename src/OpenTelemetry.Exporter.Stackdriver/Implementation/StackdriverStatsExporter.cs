@@ -13,26 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using Google.Api;
+using Google.Api.Gax;
+using Google.Api.Gax.Grpc;
+using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Monitoring.V3;
+using Grpc.Auth;
+using Grpc.Core;
+using OpenTelemetry.Exporter.Stackdriver.Utils;
+using OpenTelemetry.Stats;
 
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Reflection;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Google.Api;
-    using Google.Api.Gax;
-    using Google.Api.Gax.Grpc;
-    using Google.Apis.Auth.OAuth2;
-    using Google.Cloud.Monitoring.V3;
-    using Grpc.Auth;
-    using Grpc.Core;
-    using OpenTelemetry.Exporter.Stackdriver.Utils;
-    using OpenTelemetry.Stats;
-
     internal class StackdriverStatsExporter
     {
         private readonly MonitoredResource monitoredResource;

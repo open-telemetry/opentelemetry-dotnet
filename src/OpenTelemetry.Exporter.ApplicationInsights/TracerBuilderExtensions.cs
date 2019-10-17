@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.ApplicationInsights
-{
-    using System;
-    using Microsoft.ApplicationInsights.Extensibility;
-    using OpenTelemetry.Trace.Configuration;
+using System;
+using Microsoft.ApplicationInsights.Extensibility;
+using OpenTelemetry.Exporter.ApplicationInsights;
 
+namespace OpenTelemetry.Trace.Configuration
+{
     public static class TracerBuilderExtensions
     {
         public static TracerBuilder UseApplicationInsights(this TracerBuilder builder, Action<TelemetryConfiguration> configure)

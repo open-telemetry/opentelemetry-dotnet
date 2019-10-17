@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace OpenTelemetry.Trace.Internal
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-
     internal class EvictingQueue<T> : IEnumerable<T>
     {
         private readonly int maxNumEvents;

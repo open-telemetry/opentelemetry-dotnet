@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Zipkin
-{
-    using System;
-    using OpenTelemetry.Trace.Configuration;
+using System;
+using OpenTelemetry.Exporter.Zipkin;
 
+namespace OpenTelemetry.Trace.Configuration
+{
     public static class TracerBuilderExtensions
     {
         public static TracerBuilder UseZipkin(this TracerBuilder builder, Action<ZipkinTraceExporterOptions> configure)

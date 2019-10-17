@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Stats.Aggregations;
+using OpenTelemetry.Tags;
 
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using System.Collections.Generic;
-    using OpenTelemetry.Stats.Aggregations;
-    using OpenTelemetry.Tags;
-
     internal abstract class MutableViewData
     {
         internal static readonly TagValue UnknownTagValue = null;

@@ -16,8 +16,6 @@
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-
     /// <summary>
     /// Indicates the data type of a Jaeger tag.
     /// </summary>

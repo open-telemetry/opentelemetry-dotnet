@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Metrics
 {
-    using OpenTelemetry.Metrics.Implementation;
-
     /// <summary>
     /// Counter metric, to report instantaneous measurement of a double value. Cumulative values can go
     /// up or stay the same, but can never go down.Cumulative values cannot be negative.

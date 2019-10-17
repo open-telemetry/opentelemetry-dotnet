@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
 
 namespace OpenTelemetry.Tags
 {
-    using System.Collections.Generic;
-
     /// <summary>
     /// Collection of tags representing the tags context.
     /// </summary>

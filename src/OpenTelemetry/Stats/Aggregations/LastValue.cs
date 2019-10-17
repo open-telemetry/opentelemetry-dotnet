@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Stats.Aggregations
 {
-    using System;
-    using System.Diagnostics;
-
     [DebuggerDisplay("{ToString(),nq}")]
     public sealed class LastValue : Aggregation, ILastValue
     {

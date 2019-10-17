@@ -16,20 +16,19 @@
 
 
 using OpenTelemetry.Trace.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
+using System.Reflection;
+using OpenTelemetry.Exporter.Jaeger.Implementation;
+using OpenTelemetry.Trace;
+using Thrift.Protocols;
+using Xunit;
+using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Threading;
-    using System.Reflection;
-    using OpenTelemetry.Exporter.Jaeger.Implementation;
-    using OpenTelemetry.Trace;
-    using Thrift.Protocols;
-    using Xunit;
-    using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
-
     public class JaegerThriftIntegrationTest
     {
         private readonly ITracer tracer;

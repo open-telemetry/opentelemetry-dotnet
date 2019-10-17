@@ -13,21 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using Google.Api.Gax.Grpc;
+using Google.Cloud.Trace.V2;
+using Grpc.Core;
+using OpenTelemetry.Exporter.Stackdriver.Implementation;
+using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Stackdriver
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Google.Api.Gax.Grpc;
-    using Google.Cloud.Trace.V2;
-    using Grpc.Core;
-    using OpenTelemetry.Exporter.Stackdriver.Implementation;
-    using OpenTelemetry.Trace.Export;
-
     /// <summary>
     /// Exports a group of spans to Stackdriver.
     /// </summary>

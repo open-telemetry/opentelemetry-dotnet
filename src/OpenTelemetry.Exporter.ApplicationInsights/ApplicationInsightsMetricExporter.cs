@@ -13,16 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.ApplicationInsights.Extensibility;
+using OpenTelemetry.Exporter.ApplicationInsights.Implementation;
+using OpenTelemetry.Stats;
 
 namespace OpenTelemetry.Exporter.ApplicationInsights
 {
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Microsoft.ApplicationInsights.Extensibility;
-    using OpenTelemetry.Exporter.ApplicationInsights.Implementation;
-    using OpenTelemetry.Stats;
-
     /// <summary>
     /// Exporter of OpenTelemetry spans and metrics to Azure Application Insights.
     /// </summary>

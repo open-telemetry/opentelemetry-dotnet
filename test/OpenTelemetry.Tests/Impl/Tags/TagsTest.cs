@@ -13,12 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using Xunit;
 
 namespace OpenTelemetry.Tags.Test
 {
-    using OpenTelemetry.Tags.Propagation;
-    using Xunit;
-
     public class TagsTest
     {
         public TagsTest()

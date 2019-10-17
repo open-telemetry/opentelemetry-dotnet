@@ -13,16 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Tags;
+using Xunit;
 
 namespace OpenTelemetry.Stats.Test
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using OpenTelemetry.Stats.Measures;
-    using OpenTelemetry.Tags;
-    using Xunit;
-
     public class NoopStatsTest
     {
         private static readonly Tag TAG = Tag.Create(TagKey.Create("key"), TagValue.Create("value"));
