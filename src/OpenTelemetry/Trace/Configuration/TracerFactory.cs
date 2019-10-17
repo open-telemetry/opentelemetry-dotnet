@@ -13,8 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Export;
@@ -26,11 +28,10 @@ namespace OpenTelemetry.Trace.Configuration
     {
         private readonly object lck = new object();
         private readonly Dictionary<TracerRegistryKey, ITracer> tracerRegistry = new Dictionary<TracerRegistryKey, ITracer>();
-        private readonly List<IDisposable> disposables = new List<IDisposable>();
+        private readonly List<object> keepThemAlive = new List<object>();
 
         private readonly ISampler sampler;
         private readonly TracerConfiguration configurationOptions;
-        private readonly SpanExporter exporter;
         private readonly SpanProcessor spanProcessor;
         private readonly IBinaryFormat binaryFormat;
         private readonly ITextFormat textFormat;
@@ -45,12 +46,39 @@ namespace OpenTelemetry.Trace.Configuration
             this.configurationOptions =
                 builder.TracerConfigurationOptions ?? new TracerConfiguration(this.sampler);
 
-            // TODO log warning (or throw?) if there is no exporter
-            this.exporter = builder.SpanExporter ?? new NoopSpanExporter();
+            if (builder.ProcessorFactories == null || !builder.ProcessorFactories.Any())
+            {
+                this.spanProcessor = new NoopSpanProcessor();
+            }
+            else if (builder.ProcessorFactories.Count == 1)
+            {
+                var processorFactory = builder.ProcessorFactories[0];
+                this.spanProcessor = processorFactory.Build();
 
-            this.spanProcessor = builder.ProcessorFactory != null ? 
-                builder.ProcessorFactory(this.exporter) :
-                new BatchingSpanProcessor(this.exporter);
+                foreach (var processor in processorFactory.Processors)
+                {
+                    this.KeepAlive(processor);
+                }
+
+                this.KeepAlive(processorFactory.Exporter);
+            }
+            else
+            {
+                var processors = new SpanProcessor[builder.ProcessorFactories.Count];
+
+                for (int i = 0; i < builder.ProcessorFactories.Count; i++)
+                {
+                    processors[i] = builder.ProcessorFactories[i].Build();
+                    foreach (var chainedProcessor in builder.ProcessorFactories[i].Processors)
+                    {
+                        this.KeepAlive(chainedProcessor);
+                    }
+
+                    this.KeepAlive(builder.ProcessorFactories[i].Exporter);
+                }
+
+                this.spanProcessor = new MultiProcessor(processors);
+            }
 
             this.binaryFormat = builder.BinaryFormat ?? new BinaryFormat();
             this.textFormat = builder.TextFormat ?? new TraceContextFormat();
@@ -80,11 +108,7 @@ namespace OpenTelemetry.Trace.Configuration
                 {
                     var tracer = factory.GetTracer(collector.Name, collector.Version);
 
-                    var collectorInstance = collector.Factory(tracer);
-                    if (collectorInstance is IDisposable disposableCollector)
-                    {
-                        factory.disposables.Add(disposableCollector);
-                    }
+                    factory.KeepAlive(collector.Factory(tracer));
                 }
             }
 
@@ -118,15 +142,15 @@ namespace OpenTelemetry.Trace.Configuration
 
         public void Dispose()
         {
-            if (this.spanProcessor is IDisposable disposableProcessor)
+            foreach (var item in this.keepThemAlive)
             {
-                disposableProcessor.Dispose();
+                if (item is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
             }
 
-            foreach (var disposable in this.disposables)
-            {
-                disposable.Dispose();
-            }
+            this.keepThemAlive.Clear();
         }
 
         private static IEnumerable<KeyValuePair<string, string>> CreateLibraryResourceLabels(string name, string version)
@@ -139,7 +163,12 @@ namespace OpenTelemetry.Trace.Configuration
 
             return labels;
         }
-        
+
+        private void KeepAlive(object item)
+        {
+            this.keepThemAlive.Add(item);
+        }
+
         private readonly struct TracerRegistryKey
         {
             private readonly string name;

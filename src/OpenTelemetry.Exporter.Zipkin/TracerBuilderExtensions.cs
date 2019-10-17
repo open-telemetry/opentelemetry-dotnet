@@ -16,12 +16,32 @@
 
 using System;
 using OpenTelemetry.Exporter.Zipkin;
+using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace.Configuration
 {
     public static class TracerBuilderExtensions
     {
         public static TracerBuilder UseZipkin(this TracerBuilder builder, Action<ZipkinTraceExporterOptions> configure)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            var options = new ZipkinTraceExporterOptions();
+            configure(options);
+            return builder.ConfigureExporterPipeline(b => b
+                .SetExporter(new ZipkinTraceExporter(options))
+                .SetExportingProcessor(e => new BatchingSpanProcessor(e)));
+        }
+
+        public static SpanExporterPipelineBuilder UseZipkin(this SpanExporterPipelineBuilder builder, Action<ZipkinTraceExporterOptions> configure)
         {
             if (builder == null)
             {

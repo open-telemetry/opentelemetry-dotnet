@@ -30,9 +30,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal ISampler Sampler { get; private set; }
 
-        internal Func<SpanExporter, SpanProcessor> ProcessorFactory { get; private set; }
-
-        internal SpanExporter SpanExporter { get; private set; }
+        internal List<SpanExporterPipelineBuilder> ProcessorFactories { get; private set; }
 
         internal IBinaryFormat BinaryFormat { get; private set; }
 
@@ -46,15 +44,16 @@ namespace OpenTelemetry.Trace.Configuration
             return this;
         }
 
-        public TracerBuilder SetExporter(SpanExporter spanExporter)
+        public TracerBuilder ConfigureExporterPipeline(Action<SpanExporterPipelineBuilder> configure)
         {
-            this.SpanExporter = spanExporter ?? throw new ArgumentNullException(nameof(spanExporter));
-            return this;
-        }
+            if (this.ProcessorFactories == null)
+            {
+                this.ProcessorFactories = new List<SpanExporterPipelineBuilder>();
+            }
 
-        public TracerBuilder SetProcessor(Func<SpanExporter, SpanProcessor> processorFactory)
-        {
-            this.ProcessorFactory = processorFactory ?? throw new ArgumentNullException(nameof(processorFactory));
+            var pipelineBuilder = new SpanExporterPipelineBuilder();
+            configure(pipelineBuilder);
+            this.ProcessorFactories.Add(pipelineBuilder);
             return this;
         }
 
