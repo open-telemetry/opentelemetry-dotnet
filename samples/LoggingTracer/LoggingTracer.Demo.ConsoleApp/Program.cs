@@ -13,31 +13,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Threading.Tasks;
-using OpenTelemetry.Trace;
 
 namespace LoggingTracer.Demo.ConsoleApp
 {
+    using System;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using OpenTelemetry.Trace;
+    using OpenTelemetry.Trace.Configuration;
+
     public class Program
     {
         public static async Task Main(string[] args)
         {
-            var tracerFactory = new LoggingTracerFactory();
-            var tracer = tracerFactory.GetTracer("ConsoleApp", "semver:1.0.0");
-
-            using (tracer.WithSpan(tracer.StartSpan("Main (span1)")))
+            await LogTracing();
+            
+            await LogExport();
+        }
+        
+        private static async Task LogTracing()
+        {
+            Logger.Log("*** LogTracing ***");
+            await Foo(new LoggingTracerFactory());
+        }
+        
+        private static async Task LogExport()
+        {
+            Logger.Log("*** LogExport ***");
+            var exporter = new LoggingExporter();
+            using (var tracerFactory = TracerFactory.Create(builder => builder.SetExporter(exporter)))
             {
-                await Task.Delay(100);
-                await Foo(tracer);
+                await Foo(tracerFactory);
             }
         }
 
-        private static async Task Foo(ITracer tracer)
+        private static async Task Foo(TracerFactoryBase tracerFactory)
         {
-            using (tracer.WithSpan(tracer.StartSpan("Foo (span2)")))
+            var tracer = tracerFactory.GetTracer("ConsoleApp", "semver:1.0.0");
+            using (tracer.WithSpan(tracer.StartSpan("Main")))
             {
-                tracer.CurrentSpan.SetAttribute("myattribute", "mvalue");
-                await Task.Delay(100);
+                using (tracer.WithSpan(tracer.StartSpan("Main (span1)")))
+                {
+                    await Task.Delay(100);
+                    using (tracer.WithSpan(tracer.StartSpan("Foo (span2)")))
+                    {
+                        tracer.CurrentSpan.SetAttribute("myattribute", "mvalue");
+                        await Task.Delay(100);
+                    }
+                }
             }
         }
     }
