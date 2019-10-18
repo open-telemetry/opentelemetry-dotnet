@@ -48,6 +48,7 @@ namespace OpenTelemetry.Collector.Dependencies
                 if (keyValuePair.Key == "http.url")
                 {
                     operationName = keyValuePair.Value;
+                    spanKind = SpanKind.Client;
                     break;
                 }
 
