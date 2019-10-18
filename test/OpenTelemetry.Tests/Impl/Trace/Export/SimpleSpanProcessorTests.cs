@@ -14,71 +14,49 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Resources;
+using System;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Testing.Export;
+using OpenTelemetry.Trace.Configuration;
+using Xunit;
 
 namespace OpenTelemetry.Trace.Export.Test
 {
-    using System;
-    using System.Diagnostics;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using OpenTelemetry.Testing.Export;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Utils;
-    using Xunit;
-
     public class SimpleSpanProcessorTest : IDisposable
     {
         private const string SpanName1 = "MySpanName/1";
         private const string SpanName2 = "MySpanName/2";
 
         private TestExporter spanExporter;
-        private SpanProcessor spanProcessor;
+        private ITracer tracer;
 
         public SimpleSpanProcessorTest()
         {
             spanExporter = new TestExporter(null);
-            spanProcessor = new SimpleSpanProcessor(spanExporter);
+            tracer = TracerFactory.Create(b => b
+                    .SetExporter(spanExporter)
+                    .SetProcessor(e => new SimpleSpanProcessor(e)))
+                .GetTracer(null);
         }
 
         private Span CreateSampledEndedSpan(string spanName)
         {
-            var sampledActivity = new Activity(spanName);
-            sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            sampledActivity.SetIdFormat(ActivityIdFormat.W3C);
-            sampledActivity.Start();
-            var span =
-                new Span(
-                    sampledActivity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    default,
-                    Resource.Empty);
+            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var span = (Span)tracer.StartSpan(spanName, context);
             span.End();
             return span;
         }
 
         private Span CreateNotSampledEndedSpan(string spanName)
         {
-            var notSampledActivity = new Activity(spanName);
-            notSampledActivity.SetIdFormat(ActivityIdFormat.W3C);
-            notSampledActivity.Start();
-            var span =
-                new Span(
-                    notSampledActivity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    false,
-                    Resource.Empty);
+            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+            var span = (Span)tracer.StartSpan(spanName, context);
             span.End();
             return span;
         }
+
 
         [Fact]
         public void ThrowsOnNullExporter()
@@ -90,22 +68,13 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ThrowsInExporter()
         {
             spanExporter = new TestExporter(_ => throw new ArgumentException("123"));
-            spanProcessor = new SimpleSpanProcessor(spanExporter);
+            tracer = TracerFactory.Create(b => b
+                    .SetExporter(spanExporter)
+                    .SetProcessor(e => new SimpleSpanProcessor(e)))
+                .GetTracer(null);
 
-            var sampledActivity = new Activity("foo");
-            sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            sampledActivity.SetIdFormat(ActivityIdFormat.W3C);
-            sampledActivity.Start();
-            var span =
-                new Span(
-                    sampledActivity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    default,
-                    Resource.Empty);
+            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var span = (Span)tracer.StartSpan("foo", context);
 
             // does not throw
             span.End();
@@ -115,23 +84,13 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ProcessorDoesNotBlockOnExporter()
         {
             spanExporter = new TestExporter( async _ => await Task.Delay(500));
+            tracer = TracerFactory.Create(b => b
+                    .SetExporter(spanExporter)
+                    .SetProcessor(e => new SimpleSpanProcessor(e)))
+                .GetTracer(null);
 
-            spanProcessor = new SimpleSpanProcessor(spanExporter);
-
-            var sampledActivity = new Activity("foo");
-            sampledActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            sampledActivity.SetIdFormat(ActivityIdFormat.W3C);
-            sampledActivity.Start();
-            var span =
-                new Span(
-                    sampledActivity,
-                    null,
-                    SpanKind.Internal,
-                    new TracerConfiguration(),
-                    spanProcessor,
-                    PreciseTimestamp.GetUtcNow(),
-                    default,
-                    Resource.Empty);
+            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var span = (Span)tracer.StartSpan("foo", context);
 
             // does not block
             var sw = Stopwatch.StartNew();
@@ -149,7 +108,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public async Task ShutdownTwice()
         {
-            spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
+            var spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
 
             await spanProcessor.ShutdownAsync(CancellationToken.None).ConfigureAwait(false);
 

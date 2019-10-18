@@ -13,25 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using OpenTelemetry.Collector.Dependencies.Implementation;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Collector.Dependencies
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Net.Http;
-    using OpenTelemetry.Collector.Dependencies.Implementation;
-    using OpenTelemetry.Trace;
-
-    internal class AzureSdkDiagnosticListener : ListenerHandler<HttpRequestMessage>
+    internal class AzureSdkDiagnosticListener : ListenerHandler
     {
         private static readonly PropertyFetcher LinksPropertyFetcher = new PropertyFetcher("Links");
-        private readonly ISampler sampler;
 
-        public AzureSdkDiagnosticListener(string sourceName, ITracer tracer, ISampler sampler)
-            : base(sourceName, tracer, null)
+        public AzureSdkDiagnosticListener(string sourceName, ITracer tracer)
+            : base(sourceName, tracer)
         {
-            this.sampler = sampler;
         }
 
         public void OnCompleted()
@@ -45,7 +41,7 @@ namespace OpenTelemetry.Collector.Dependencies
         public override void OnStartActivity(Activity current, object valueValue)
         {
             var operationName = current.OperationName;
-            SpanKind spanKind = SpanKind.Internal;
+            var spanKind = SpanKind.Internal;
 
             foreach (var keyValuePair in current.Tags)
             {
@@ -64,22 +60,17 @@ namespace OpenTelemetry.Collector.Dependencies
                 }
             }
 
-            var spanBuilder = this.Tracer.SpanBuilder(operationName)
-                .SetCreateChild(false)
-                .SetSampler(this.sampler);
-
-            var links = LinksPropertyFetcher.Fetch(valueValue) as IEnumerable<Activity> ?? Array.Empty<Activity>();
-
-            foreach (var link in links)
+            List<Link> links = null;
+            if (LinksPropertyFetcher.Fetch(valueValue) is IEnumerable<Activity> activityLinks)
             {
-                spanBuilder.AddLink(new Link(new SpanContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
+                links = new List<Link>();
+                foreach (var link in activityLinks)
+                {
+                    links.Add(new Link(new SpanContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
+                }
             }
 
-            spanBuilder.SetSpanKind(spanKind);
-
-            var span = spanBuilder.StartSpan();
-
-            span.Status = Status.Ok;
+            var span = this.Tracer.StartSpanFromActivity(operationName, Activity.Current, spanKind, links);
 
             this.Tracer.WithSpan(span);
         }

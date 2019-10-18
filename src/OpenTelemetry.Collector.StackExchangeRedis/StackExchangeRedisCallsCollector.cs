@@ -13,17 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Collector.StackExchangeRedis.Implementation;
+using OpenTelemetry.Trace;
+using StackExchange.Redis.Profiling;
 
 namespace OpenTelemetry.Collector.StackExchangeRedis
 {
-    using System;
-    using System.Collections.Concurrent;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using OpenTelemetry.Collector.StackExchangeRedis.Implementation;
-    using OpenTelemetry.Trace;
-    using StackExchange.Redis.Profiling;
-
     /// <summary>
     /// Redis calls collector.
     /// </summary>
@@ -102,7 +101,10 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
                 {
                     var span = entry.Key;
                     ProfilingSession session;
-                    if (span.HasEnded)
+
+                    // TODO expose end timestamp on ISpan (needed anyway) and use it as indicator that span has ended.
+                    // after that, Redis can depend on abstractions
+                    if (span is Span spanImpl && spanImpl.EndTimestamp != default)
                     {
                         this.cache.TryRemove(span, out session);
                     }

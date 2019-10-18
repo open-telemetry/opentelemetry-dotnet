@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Diagnostics;
+using Moq;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
-    using System.Diagnostics;
-    using Moq;
-    using OpenTelemetry.Trace;
-
     /// <summary>
     /// A set of static helper methods for creating some default test setup objects.
     /// </summary>

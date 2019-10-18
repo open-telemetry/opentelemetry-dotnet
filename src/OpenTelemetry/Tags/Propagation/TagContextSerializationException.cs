@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 
 namespace OpenTelemetry.Tags.Propagation
 {
-    using System;
-
     public sealed class TagContextSerializationException : Exception
     {
         public TagContextSerializationException(string message)

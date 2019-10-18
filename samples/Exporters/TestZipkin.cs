@@ -13,44 +13,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using OpenTelemetry.Exporter.Zipkin;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
 
 namespace Samples
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using OpenTelemetry.Exporter.Zipkin;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
-
     internal class TestZipkin
     {
         internal static object Run(string zipkinUri)
         {
             // Configure exporter to export traces to Zipkin
-            var exporter = new ZipkinTraceExporter(
-                new ZipkinTraceExporterOptions()
+            using (var tracerFactory = TracerFactory.Create(builder => builder
+                .UseZipkin(o =>
                 {
-                    Endpoint = new Uri(zipkinUri),
-                    ServiceName = "tracing-to-zipkin-service",
-                });
-
-            // Create a tracer. You may also need to register it as a global instance to make auto-collectors work..
-            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(exporter));
-            var tracer = tracerFactory.GetTracer(string.Empty);
-
-            // Create a scoped span. It will end automatically when using statement ends
-            using (tracer.WithSpan(tracer.SpanBuilder("Main").StartSpan()))
+                    o.ServiceName = "test-zipkin";
+                    o.Endpoint = new Uri(zipkinUri);
+                })))
             {
-                Console.WriteLine("About to do a busy work");
-                for (var i = 0; i < 10; i++)
+                var tracer = tracerFactory.GetTracer("zipkin-test");
+
+                // Create a scoped span. It will end automatically when using statement ends
+                using (tracer.WithSpan(tracer.StartSpan("Main")))
                 {
-                    DoWork(i, tracer);
+                    Console.WriteLine("About to do a busy work");
+                    for (var i = 0; i < 10; i++)
+                    {
+                        DoWork(i, tracer);
+                    }
                 }
             }
 
-            // Gracefully shutdown the exporter so it'll flush queued traces to Zipkin.
-            exporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
             return null;
         }
 
@@ -59,7 +55,7 @@ namespace Samples
             // Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be
             // a child span.
-            using (tracer.WithSpan(tracer.SpanBuilder("DoWork").StartSpan()))
+            using (tracer.WithSpan(tracer.StartSpan("DoWork")))
             {
                 // Simulate some work.
                 var span = tracer.CurrentSpan;

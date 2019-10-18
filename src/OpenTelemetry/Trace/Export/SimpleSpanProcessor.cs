@@ -13,15 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace.Export
 {
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using OpenTelemetry.Internal;
-    using OpenTelemetry.Trace;
-
     /// <summary>
     /// Implements simple span processor that exports spans in OnEnd call without batching.
     /// </summary>

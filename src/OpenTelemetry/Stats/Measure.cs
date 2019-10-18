@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using OpenTelemetry.Stats.Measures;
 
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using OpenTelemetry.Stats.Measures;
-
     public abstract class Measure : IMeasure
     {
         internal const int NameMaxLength = 255;

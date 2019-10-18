@@ -13,18 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Diagnostics;
+using System.Threading;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.Extensibility;
+using OpenTelemetry.Stats;
+using OpenTelemetry.Stats.Aggregations;
 
 namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
 {
-    using System;
-    using System.Diagnostics;
-    using System.Threading;
-    using Microsoft.ApplicationInsights;
-    using Microsoft.ApplicationInsights.DataContracts;
-    using Microsoft.ApplicationInsights.Extensibility;
-    using OpenTelemetry.Stats;
-    using OpenTelemetry.Stats.Aggregations;
-
     internal class MetricsExporterThread
     {
         private readonly IViewManager viewManager;

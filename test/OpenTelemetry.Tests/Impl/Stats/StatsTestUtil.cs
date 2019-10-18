@@ -13,16 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using OpenTelemetry.Stats.Aggregations;
+using OpenTelemetry.Tags;
+using Xunit;
 
 namespace OpenTelemetry.Stats.Test
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using OpenTelemetry.Stats.Aggregations;
-    using OpenTelemetry.Tags;
-    using Xunit;
-
     internal static class StatsTestUtil
     {
         internal static IAggregationData CreateAggregationData(IAggregation aggregation, IMeasure measure, params double[] values)

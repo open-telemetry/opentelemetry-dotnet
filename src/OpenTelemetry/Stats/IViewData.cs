@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Tags;
 
 namespace OpenTelemetry.Stats
 {
-    using System;
-    using System.Collections.Generic;
-    using OpenTelemetry.Tags;
-
     /// <summary>
     /// Result data of the view aggregation.
     /// </summary>

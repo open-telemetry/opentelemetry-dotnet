@@ -13,21 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using OpenTelemetry.Exporter.Stackdriver;
+using OpenTelemetry.Stats;
+using OpenTelemetry.Stats.Aggregations;
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Tags;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
 
 namespace Samples
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using OpenTelemetry.Exporter.Stackdriver;
-    using OpenTelemetry.Stats;
-    using OpenTelemetry.Stats.Aggregations;
-    using OpenTelemetry.Stats.Measures;
-    using OpenTelemetry.Tags;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Sampler;
-
     internal class TestStackdriver
     {
         private static readonly ITagger Tagger = Tags.Tagger;
@@ -56,43 +54,39 @@ namespace Samples
                 Stats.ViewManager);
             metricExporter.Start();
 
-            var tracerFactory = new TracerFactory(new BatchingSpanProcessor(spanExporter));
-            var tracer = tracerFactory.GetTracer(string.Empty);
-
-            var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
-
-            var spanBuilder = tracer
-                .SpanBuilder("incoming request")
-                .SetRecordEvents(true)
-                .SetSampler(Samplers.AlwaysSample);
-
-            Stats.ViewManager.RegisterView(VideoSizeView);
-
-            using (tagContextBuilder.BuildScoped())
+            using (var tracerFactory = TracerFactory.Create(builder => builder.SetExporter(spanExporter)))
             {
-                using (tracer.WithSpan(spanBuilder.StartSpan()))
+                var tracer = tracerFactory.GetTracer("stackdriver-test");
+
+                var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
+
+                Stats.ViewManager.RegisterView(VideoSizeView);
+
+                using (tagContextBuilder.BuildScoped())
                 {
-                    tracer.CurrentSpan.AddEvent("Processing video.");
-                    Thread.Sleep(TimeSpan.FromMilliseconds(10));
+                    using (tracer.WithSpan(tracer.StartSpan("incoming request")))
+                    {
+                        tracer.CurrentSpan.AddEvent("Processing video.");
+                        Thread.Sleep(TimeSpan.FromMilliseconds(10));
 
-                    StatsRecorder.NewMeasureMap()
-                        .Put(VideoSize, 25 * MiB)
-                        .Record();
+                        StatsRecorder.NewMeasureMap()
+                            .Put(VideoSize, 25 * MiB)
+                            .Record();
+                    }
                 }
+
+                Thread.Sleep(TimeSpan.FromMilliseconds(5100));
+
+                var viewData = Stats.ViewManager.GetView(VideoSizeViewName);
+
+                Console.WriteLine(viewData);
+
+                Console.WriteLine("Done... wait for events to arrive to backend!");
+                Console.ReadLine();
+
+                metricExporter.Stop();
+                return null;
             }
-
-            Thread.Sleep(TimeSpan.FromMilliseconds(5100));
-
-            var viewData = Stats.ViewManager.GetView(VideoSizeViewName);
-
-            Console.WriteLine(viewData);
-
-            Console.WriteLine("Done... wait for events to arrive to backend!");
-            Console.ReadLine();
-
-            spanExporter.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
-            metricExporter.Stop();
-            return null;
         }
     }
 }

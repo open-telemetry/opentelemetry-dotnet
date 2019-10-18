@@ -14,18 +14,18 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
+
 #if ABSTRACTIONS
 namespace OpenTelemetry.Abstractions.Context.Propagation
 #else
 namespace OpenTelemetry.Context.Propagation
 #endif
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Text;
-
     /// <summary>
     /// Extension methods to extract Tracestate from string.
     /// </summary>

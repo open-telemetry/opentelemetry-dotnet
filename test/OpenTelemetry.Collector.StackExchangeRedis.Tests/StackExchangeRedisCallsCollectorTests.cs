@@ -14,25 +14,24 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Resources;
+using Moq;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
+using StackExchange.Redis.Profiling;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace OpenTelemetry.Collector.StackExchangeRedis
 {
-    using Moq;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Export;
-    using StackExchange.Redis.Profiling;
-    using System.Threading.Tasks;
-    using Xunit;
-
     public class StackExchangeRedisCallsCollectorTests
     {
         [Fact]
         public async void ProfilerSessionUsesTheSameDefault()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracer = new Tracer(spanProcessor.Object, new TracerConfiguration(), Resource.Empty);
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor.Object))
+                .GetTracer(null);
 
             using (var collector = new StackExchangeRedisCallsCollector(tracer))
             {

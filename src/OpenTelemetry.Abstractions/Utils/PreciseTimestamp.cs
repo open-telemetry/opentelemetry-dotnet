@@ -14,19 +14,19 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Diagnostics;
+#if NET45 || NET46
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+#endif
+
 #if ABSTRACTIONS
 namespace OpenTelemetry.Abstractions.Utils
 #else
 namespace OpenTelemetry.Utils
 #endif
 {
-    using System;
-    using System.Diagnostics;
-#if NET45 || NET46
-    using System.Diagnostics.CodeAnalysis;
-    using System.Threading;
-#endif
-
     internal class PreciseTimestamp
     {
         /// <summary>

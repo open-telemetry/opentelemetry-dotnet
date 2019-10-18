@@ -1,4 +1,4 @@
-﻿// <copyright file="DiagnosticSourceListener.cs" company="OpenTelemetry Authors">
+// <copyright file="DiagnosticSourceListener.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,20 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+
 namespace OpenTelemetry.Collector
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-
-    internal class DiagnosticSourceListener<TInput> : IObserver<KeyValuePair<string, object>>, IDisposable
+    internal class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>
     {
-        private readonly ListenerHandler<TInput> handler;
+        private readonly ListenerHandler handler;
 
-        public DiagnosticSourceListener(ListenerHandler<TInput> handler)
+        public DiagnosticSourceListener(ListenerHandler handler)
         {
             this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
         }
-
-        public IDisposable Subscription { get; set; }
 
         public void OnCompleted()
         {
@@ -70,11 +68,6 @@ namespace OpenTelemetry.Collector
             {
                 CollectorEventSource.Log.UnknownErrorProcessingEvent(this.handler?.SourceName, value.Key, ex);
             }
-        }
-
-        public void Dispose()
-        {
-            this.Subscription?.Dispose();
         }
     }
 }

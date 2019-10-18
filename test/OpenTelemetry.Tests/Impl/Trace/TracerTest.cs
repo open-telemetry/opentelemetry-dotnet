@@ -14,61 +14,85 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
+using OpenTelemetry.Utils;
+using OpenTelemetry.Trace.Sampler;
+using Xunit;
+using System;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace.Test
 {
-    using System;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Sampler;
-
-    using Xunit;
-
     public class TracerTest
     {
         private const string SpanName = "MySpanName";
         private readonly SpanProcessor spanProcessor;
         private readonly TracerConfiguration tracerConfiguration;
         private readonly Tracer tracer;
-
+        private readonly TracerFactory tracerFactory;
 
         public TracerTest()
         {
             spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
             tracerConfiguration = new TracerConfiguration();
-            tracer = new Tracer(spanProcessor, tracerConfiguration, Resource.Empty);
-        }
-
-        [Fact]
-        public void CreateSpanBuilder()
-        {
-            var spanBuilder = tracer.SpanBuilder(SpanName);
-            Assert.IsType<SpanBuilder>(spanBuilder);
+            tracerFactory = TracerFactory.Create(b => b
+                    .SetExporter(new NoopSpanExporter())
+                    .SetProcessor(e => new SimpleSpanProcessor(e)));
+            tracer = (Tracer)tracerFactory.GetTracer(null);
         }
 
         [Fact]
         public void BadConstructorArgumentsThrow()
         {
             var noopProc = new SimpleSpanProcessor(new NoopSpanExporter());
-            Assert.Throws<ArgumentNullException>(() => new Tracer(null, new TracerConfiguration(), Resource.Empty));
             Assert.Throws<ArgumentNullException>(() => new Tracer(null, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, Resource.Empty));
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), null, new TraceContextFormat(), Resource.Empty));
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), new BinaryFormat(), null, Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), null));
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), null));
         }
 
         [Fact]
-        public void CreateSpanBuilderWithNullName()
+        public void Tracer_CreateSpan_BadArgs()
         {
-            Assert.Throws<ArgumentNullException>(() => tracer.SpanBuilder(null));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client, default, null));
+
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client, default, null));
+
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null));
+
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null));
+
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpanFromActivity(null, new Activity("foo").Start()));
+
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpanFromActivity("foo", null));
+
+            Assert.Throws<ArgumentException>(() => tracer.StartSpanFromActivity("foo", new Activity("foo")));
+
+            Assert.Throws<ArgumentException>(() => tracer.StartSpanFromActivity(
+                    "foo",
+                    new Activity("foo").SetIdFormat(ActivityIdFormat.Hierarchical).Start()));
         }
 
         [Fact]
@@ -80,12 +104,40 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetCurrentSpan()
         {
-            var span = tracer.SpanBuilder("foo").StartSpan();
+            var span = tracer.StartSpan("foo");
             using (tracer.WithSpan(span))
             {
                 Assert.Same(span, tracer.CurrentSpan);
             }
             Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+        }
+
+        [Fact]
+        public void CreateSpan_Sampled()
+        {
+            var span = tracer.StartSpan("foo");
+            Assert.True(span.IsRecordingEvents);
+        }
+
+        [Fact]
+        public void CreateSpan_NotSampled()
+        {
+            var tracer = TracerFactory.Create(b => b
+                    .SetSampler(Samplers.NeverSample)
+                    .SetProcessor(_ => spanProcessor))
+                .GetTracer(null);
+
+            var span = tracer.StartSpan("foo");
+            Assert.False(span.IsRecordingEvents);
+        }
+
+        [Fact]
+        public void CreateSpan_ByTracerWithResource()
+        {
+
+            var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.0.0");
+            var span = (Span)tracer.StartSpan("some span");
+            Assert.Equal(tracer.LibraryResource, span.LibraryResource);
         }
 
         [Fact]
@@ -107,21 +159,163 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void GetActiveConfig()
+        public void DroppingAndAddingAttributes()
         {
-            var config = new TracerConfiguration(Samplers.NeverSample);
-            var tracer = new Tracer(spanProcessor, config, Resource.Empty);
-            Assert.Equal(config, tracer.ActiveTracerConfiguration);
+            var maxNumberOfAttributes = 8;
+            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor)
+                    .SetTracerOptions(traceConfig))
+                .GetTracer(null);
+
+            var span = (Span)tracer.StartRootSpan(SpanName);
+
+            for (long i = 0; i < 2 * maxNumberOfAttributes; i++)
+            {
+                span.SetAttribute("MyStringAttributeKey" + i, i);
+            }
+
+            Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
+            for (long i = 0; i < maxNumberOfAttributes; i++)
+            {
+                Assert.Equal(
+                    i + maxNumberOfAttributes,
+                    span
+                        .Attributes
+                        .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes)));
+            }
+
+            for (long i = 0; i < maxNumberOfAttributes / 2; i++)
+            {
+                span.SetAttribute("MyStringAttributeKey" + i, i);
+            }
+
+            Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
+            // Test that we still have in the attributes map the latest maxNumberOfAttributes / 2 entries.
+            for (long i = 0; i < maxNumberOfAttributes / 2; i++)
+            {
+                Assert.Equal(
+                    i + maxNumberOfAttributes * 3 / 2,
+                    span
+                        .Attributes
+                        .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes * 3 / 2)));
+            }
+
+            // Test that we have the newest re-added initial entries.
+            for (long i = 0; i < maxNumberOfAttributes / 2; i++)
+            {
+                Assert.Equal(i,
+                    span.Attributes.GetValue("MyStringAttributeKey" + i));
+            }
         }
 
         [Fact]
-        public void SetActiveConfig()
+        public async Task DroppingEvents()
         {
-            var config = new TracerConfiguration(Samplers.NeverSample);
-            tracer.ActiveTracerConfiguration = config;
-            Assert.Equal(config, tracer.ActiveTracerConfiguration);
+            var maxNumberOfEvents = 8;
+            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, maxNumberOfEvents, 32);
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor)
+                    .SetTracerOptions(traceConfig))
+                .GetTracer(null);
+
+            var span = (Span)tracer.StartRootSpan(SpanName);
+
+            var eventTimestamps = new DateTimeOffset[2 * maxNumberOfEvents];
+
+            for (int i = 0; i < 2 * maxNumberOfEvents; i++)
+            {
+                eventTimestamps[i] = PreciseTimestamp.GetUtcNow();
+                span.AddEvent(new Event("foo", eventTimestamps[i]));
+                await Task.Delay(10);
+            }
+
+            Assert.Equal(maxNumberOfEvents, span.Events.Count());
+
+            var events = span.Events.ToArray();
+
+            for (int i = 0; i < maxNumberOfEvents; i++)
+            {
+                Assert.Equal(eventTimestamps[i + maxNumberOfEvents], events[i].Timestamp);
+            }
+
+            span.End();
+
+            Assert.Equal(maxNumberOfEvents, span.Events.Count());
         }
 
-        // TODO test for sampler
+        [Fact]
+        public void DroppingLinks()
+        {
+            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.None);
+
+            var maxNumberOfLinks = 8;
+            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, 128, maxNumberOfLinks);
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor)
+                    .SetTracerOptions(traceConfig))
+                .GetTracer(null);
+
+            var span = (Span)tracer.StartRootSpan(SpanName);
+            var link = new Link(contextLink);
+            for (var i = 0; i < 2 * maxNumberOfLinks; i++)
+            {
+                span.AddLink(link);
+            }
+
+            Assert.Equal(maxNumberOfLinks, span.Links.Count());
+            foreach (var actualLink in span.Links)
+            {
+                Assert.Equal(link, actualLink);
+            }
+
+            span.End();
+
+            Assert.Equal(maxNumberOfLinks, span.Links.Count());
+            foreach (var actualLink in span.Links)
+            {
+                Assert.Equal(link, actualLink);
+            }
+        }
+
+        [Fact]
+        public void DroppingAttributes()
+        {
+            var maxNumberOfAttributes = 8;
+            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
+            var tracer = TracerFactory.Create(b => b
+                    .SetProcessor(_ => spanProcessor)
+                    .SetTracerOptions(traceConfig))
+                .GetTracer(null);
+
+            var span = (Span)tracer.StartRootSpan(SpanName);
+            for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
+            {
+                span.SetAttribute("MyStringAttributeKey" + i, i);
+            }
+
+            Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
+            for (long i = 0; i < maxNumberOfAttributes; i++)
+            {
+                Assert.Equal(
+                    i + maxNumberOfAttributes,
+                    span
+                        .Attributes
+                        .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes)));
+            }
+
+            span.End();
+
+            Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
+            for (long i = 0; i < maxNumberOfAttributes; i++)
+            {
+                Assert.Equal(
+                    i + maxNumberOfAttributes,
+                    span
+                        .Attributes
+                        .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes)));
+            }
+        }
     }
 }

@@ -13,24 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Diagnostics;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Collector
 {
-    using System;
-    using System.Diagnostics;
-    using OpenTelemetry.Trace;
-
-    public abstract class ListenerHandler<TInput>
+    public abstract class ListenerHandler
     {
         protected readonly ITracer Tracer;
 
-        protected readonly Func<TInput, ISampler> SamplerFactory;
-
-        public ListenerHandler(string sourceName, ITracer tracer, Func<TInput, ISampler> samplerFactory)
+        public ListenerHandler(string sourceName, ITracer tracer)
         {
             this.SourceName = sourceName;
             this.Tracer = tracer;
-            this.SamplerFactory = samplerFactory;
         }
 
         public string SourceName { get; }

@@ -14,36 +14,27 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace.Internal;
+using OpenTelemetry.Utils;
+
 namespace OpenTelemetry.Trace
 {
-    using System;
-    using System.Diagnostics;
-    using OpenTelemetry.Context.Propagation;
-    using OpenTelemetry.Resources;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Internal;
-
-    /// <inheritdoc/>
-    public sealed class Tracer : ITracer
+    internal sealed class Tracer : ITracer
     {
         private readonly SpanProcessor spanProcessor;
+        private readonly TracerConfiguration tracerConfiguration;
 
         static Tracer()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
-        }
-
-        /// <summary>
-        /// Creates an instance of <see cref="ITracer"/>.
-        /// </summary>
-        /// <param name="spanProcessor">Span processor.</param>
-        /// <param name="tracerConfiguration">Trace configuration.</param>
-        /// <param name="libraryResource">Resource describing the instrumentation library.</param>
-        public Tracer(SpanProcessor spanProcessor, TracerConfiguration tracerConfiguration, Resource libraryResource) 
-            : this(spanProcessor, tracerConfiguration, new BinaryFormat(), new TraceContextFormat(), libraryResource)
-        {
         }
 
         /// <summary>
@@ -57,7 +48,7 @@ namespace OpenTelemetry.Trace
         internal Tracer(SpanProcessor spanProcessor, TracerConfiguration tracerConfiguration, IBinaryFormat binaryFormat, ITextFormat textFormat, Resource libraryResource)
         {
             this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
-            this.ActiveTracerConfiguration = tracerConfiguration ?? throw new ArgumentNullException(nameof(tracerConfiguration));
+            this.tracerConfiguration = tracerConfiguration ?? throw new ArgumentNullException(nameof(tracerConfiguration));
             this.BinaryFormat = binaryFormat ?? throw new ArgumentNullException(nameof(binaryFormat));
             this.TextFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
             this.LibraryResource = libraryResource ?? throw new ArgumentNullException(nameof(libraryResource));
@@ -74,14 +65,6 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ITextFormat TextFormat { get; }
 
-        public TracerConfiguration ActiveTracerConfiguration { get; set; }
-
-        /// <inheritdoc/>
-        public ISpanBuilder SpanBuilder(string spanName)
-        {
-            return new SpanBuilder(spanName, this.spanProcessor, this.ActiveTracerConfiguration, this.LibraryResource);
-        }
-
         public IDisposable WithSpan(ISpan span)
         {
             if (span == null)
@@ -90,6 +73,100 @@ namespace OpenTelemetry.Trace
             }
 
             return CurrentSpanUtils.WithSpan(span, true);
+        }
+
+        /// <inheritdoc/>
+        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (startTimestamp == default)
+            {
+                startTimestamp = PreciseTimestamp.GetUtcNow();
+            }
+
+            return Span.CreateRoot(operationName, kind, startTimestamp, links, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
+        }
+
+        /// <inheritdoc/>
+        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            return this.StartSpan(operationName, null, kind, startTimestamp, links);
+        }
+
+        /// <inheritdoc/>
+        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (parent == null)
+            {
+                parent = this.CurrentSpan;
+            }
+
+            if (startTimestamp == default)
+            {
+                startTimestamp = PreciseTimestamp.GetUtcNow();
+            }
+
+            return Span.CreateFromParentSpan(operationName, parent, kind, startTimestamp, links, this.tracerConfiguration,
+                    this.spanProcessor, this.LibraryResource);
+        }
+
+        /// <inheritdoc/>
+        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (startTimestamp == default)
+            {
+                startTimestamp = PreciseTimestamp.GetUtcNow();
+            }
+
+            if (parent != null)
+            {
+                return Span.CreateFromParentContext(operationName, parent, kind, startTimestamp, links, this.tracerConfiguration,
+                    this.spanProcessor, this.LibraryResource);
+            }
+
+            return Span.CreateRoot(operationName, kind, startTimestamp, links, this.tracerConfiguration,
+                this.spanProcessor, this.LibraryResource);
+        }
+
+        /// <inheritdoc/>
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (activity == null)
+            {
+                throw new ArgumentNullException(nameof(activity));
+            }
+
+            if (activity.IdFormat != ActivityIdFormat.W3C)
+            {
+                throw new ArgumentException("Current Activity is not in W3C format");
+            }
+
+            if (activity.StartTimeUtc == default || activity.Duration != default)
+            {
+                throw new ArgumentException(
+                    "Current Activity is not running: it has not been started or has been stopped");
+            }
+
+            return Span.CreateFromActivity(operationName, activity, kind, links, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
     }
 }

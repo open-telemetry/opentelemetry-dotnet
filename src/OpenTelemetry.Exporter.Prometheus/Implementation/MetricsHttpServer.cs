@@ -13,15 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.IO;
+using System.Net;
+using System.Threading;
+using OpenTelemetry.Stats;
 
 namespace OpenTelemetry.Exporter.Prometheus.Implementation
 {
-    using System;
-    using System.IO;
-    using System.Net;
-    using System.Threading;
-    using OpenTelemetry.Stats;
-
     internal class MetricsHttpServer
     {
         private readonly IViewManager viewManager;
@@ -77,7 +76,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                                 {
                                     var metricValueBuilder = builder.AddValue();
 
-                                    // TODO: This is not optimal. Need to refactor to split builder into separate functions
+                                    // TODO: This is not optimal. Need to refactor to split factory into separate functions
                                     metricValueBuilder = value.Value.Match<PrometheusMetricBuilder.PrometheusMetricValueBuilder>(
                                         metricValueBuilder.WithValue,
                                         metricValueBuilder.WithValue,

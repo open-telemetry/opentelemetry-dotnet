@@ -1,4 +1,4 @@
-// <copyright file="Int128.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Int128.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    using System;
-    using System.Diagnostics;
-
     public struct Int128
     {
         public static Int128 Empty = default;

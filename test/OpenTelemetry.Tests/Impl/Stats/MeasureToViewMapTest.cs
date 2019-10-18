@@ -13,15 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
+using OpenTelemetry.Stats.Aggregations;
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Tags;
+using Xunit;
 
 namespace OpenTelemetry.Stats.Test
 {
-    using System.Collections.Generic;
-    using OpenTelemetry.Stats.Aggregations;
-    using OpenTelemetry.Stats.Measures;
-    using OpenTelemetry.Tags;
-    using Xunit;
-
     public class MeasureToViewMapTest
     {
         private static readonly IMeasure MEASURE = MeasureDouble.Create("my measurement", "measurement description", "By");

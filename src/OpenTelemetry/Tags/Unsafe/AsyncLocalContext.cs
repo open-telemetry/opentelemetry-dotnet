@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
+using System.Threading;
 
 namespace OpenTelemetry.Tags.Unsafe
 {
-    using System.Collections.Generic;
-    using System.Threading;
-
     internal static class AsyncLocalContext
     {
         private static readonly ITagContext EmptyTagContextInstance = new EmptyTagContext();

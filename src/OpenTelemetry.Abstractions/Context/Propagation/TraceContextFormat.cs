@@ -13,16 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using OpenTelemetry.Abstractions.Context.Propagation;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Context.Propagation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using OpenTelemetry.Abstractions.Context.Propagation;
-    using OpenTelemetry.Trace;
-
     /// <summary>
     /// W3C trace context text wire protocol formatter. See https://github.com/w3c/distributed-tracing/.
     /// </summary>
@@ -46,15 +45,14 @@ namespace OpenTelemetry.Context.Propagation
             try
             {
                 var traceparentCollection = getter(carrier, "traceparent");
-                var tracestateCollection = getter(carrier, "tracestate");
 
-                if (traceparentCollection != null && traceparentCollection.Count() > 1)
+                // There must be a single traceparent
+                if (traceparentCollection == null || traceparentCollection.Count() != 1)
                 {
-                    // multiple traceparent are not allowed
                     return SpanContext.Blank;
                 }
 
-                var traceparent = traceparentCollection?.First();
+                var traceparent = traceparentCollection.First();
                 var traceparentParsed = this.TryExtractTraceparent(traceparent, out var traceId, out var spanId, out var traceoptions);
 
                 if (!traceparentParsed)
@@ -63,6 +61,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
 
                 List<KeyValuePair<string, string>> tracestate = null;
+                var tracestateCollection = getter(carrier, "tracestate");
                 if (tracestateCollection != null)
                 {
                     this.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);

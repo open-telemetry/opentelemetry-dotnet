@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Diagnostics;
+using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Utils;
 
 namespace OpenTelemetry.Stats.Measurements
 {
-    using System;
-    using System.Diagnostics;
-    using OpenTelemetry.Stats.Measures;
-    using OpenTelemetry.Utils;
-
     [DebuggerDisplay("{ToString(),nq}")]
     public sealed class MeasurementDouble : Measurement, IMeasurementDouble
     {

@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using Microsoft.ApplicationInsights.Channel;
+using System;
 
 namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 {
-    using Microsoft.ApplicationInsights.Channel;
-    using System;
-
     /// <summary>
     /// A stub of <see cref="ITelemetryChannel"/>.
     /// </summary>
@@ -29,9 +28,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         /// </summary>
         public StubTelemetryChannel()
         {
-            this.OnSend = telemetry => { };
-            this.OnFlush = () => { };
-            this.OnDispose = () => { };
+            OnSend = telemetry => { };
+            OnFlush = () => { };
+            OnDispose = () => { };
         }
 
         /// <summary>
@@ -69,12 +68,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         /// </summary>
         public void Send(ITelemetry item)
         {
-            if (this.ThrowError)
+            if (ThrowError)
             {
                 throw new Exception("test error");
             }
 
-            this.OnSend(item);
+            OnSend(item);
         }
 
         /// <summary>
@@ -82,7 +81,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         /// </summary>
         public void Dispose()
         {
-            this.OnDispose();
+            OnDispose();
         }
 
         /// <summary>
@@ -90,7 +89,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         /// </summary>
         public void Flush()
         {
-            this.OnFlush();
+            OnFlush();
         }
     }
 }

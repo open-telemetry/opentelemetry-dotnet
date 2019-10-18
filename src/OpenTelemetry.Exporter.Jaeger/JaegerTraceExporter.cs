@@ -13,18 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Exporter.Jaeger.Implementation;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using OpenTelemetry.Exporter.Jaeger.Implementation;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Export;
-
     public class JaegerTraceExporter : SpanExporter, IDisposable
     {
         public const string DefaultAgentUdpHost = "localhost";

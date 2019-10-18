@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    using System;
-    using System.Collections.Generic;
-
     /// <summary>
     /// Base interface for all metrics defined in this package.
     /// </summary>

@@ -14,23 +14,22 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Resources;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Sampler;
+using Xunit;
+using Microsoft.AspNetCore.Mvc.Testing;
+using TestApp.AspNetCore._2._0;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
+using Moq;
+using Microsoft.AspNetCore.TestHost;
+using System;
+using Microsoft.AspNetCore.Http;
 
 namespace OpenTelemetry.Collector.AspNetCore.Tests
 {
-    using Xunit;
-    using Microsoft.AspNetCore.Mvc.Testing;
-    using TestApp.AspNetCore._2._0;
-    using System.Threading.Tasks;
-    using Microsoft.Extensions.DependencyInjection;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Export;
-    using Moq;
-    using Microsoft.AspNetCore.TestHost;
-    using System;
-    using Microsoft.AspNetCore.Http;
-
     public class IncomingRequestsCollectionsIsAccordingToTheSpecTests
         : IClassFixture<WebApplicationFactory<Startup>>
     {
@@ -57,7 +56,6 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
             var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracerFactory = new TracerFactory(spanProcessor.Object);
 
             // Arrange
             using (var client = this.factory
@@ -65,7 +63,11 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl());
-                        services.AddSingleton<ITracerFactory>(tracerFactory);
+                        services.AddSingleton<TracerFactory>(_ =>
+                            TracerFactory.Create(b => b
+                                .SetSampler(Samplers.AlwaysSample)
+                                .SetProcessor(e => spanProcessor.Object)
+                                .AddRequestCollector()));
                     }))
                 .CreateClient())
             {

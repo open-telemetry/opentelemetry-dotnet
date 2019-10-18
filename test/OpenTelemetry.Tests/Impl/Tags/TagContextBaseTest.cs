@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
+using Xunit;
 
 namespace OpenTelemetry.Tags.Test
 {
-    using System.Collections.Generic;
-    using Xunit;
-
     public class TagContextBaseTest
     {
         private static readonly Tag TAG1 = Tag.Create(TagKey.Create("key"), TagValue.Create("val"));

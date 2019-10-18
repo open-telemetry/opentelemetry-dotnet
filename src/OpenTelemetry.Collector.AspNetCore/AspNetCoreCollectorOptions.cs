@@ -1,4 +1,4 @@
-﻿// <copyright file="ITracerFactory.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AspNetCoreCollectorOptions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,23 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Collector.AspNetCore
 {
-    using OpenTelemetry.Context;
-    using OpenTelemetry.Context.Propagation;
-
     /// <summary>
-    /// Creates Tracers for an instrumentation library.
+    /// Options for requests collector.
     /// </summary>
-    public abstract class ITracerFactory
+    public class AspNetCoreCollectorOptions
     {
         /// <summary>
-        /// Returns an ITracer for a given name and version.
+        /// Gets or sets a hook to exclude calls based on domain or other per-request criterion.
         /// </summary>
-        /// <param name="name">Name of the instrumentation library.</param>
-        /// <param name="version">Version of the instrumentation library (optional).</param>
-        /// <returns>Tracer for the given name and version information.</returns>
-        public abstract ITracer GetTracer(string name, string version = null);
+        internal Func<string, object, object, bool> EventFilter { get; set; } = DefaultFilter;
+
+        private static bool DefaultFilter(string activityName, object arg1, object unused)
+        {
+            return true;
+        }
     }
 }

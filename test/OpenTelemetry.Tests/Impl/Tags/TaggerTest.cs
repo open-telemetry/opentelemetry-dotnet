@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
+using OpenTelemetry.Tags.Unsafe;
+using Xunit;
 
 namespace OpenTelemetry.Tags.Test
 {
-    using System.Collections.Generic;
-    using OpenTelemetry.Tags.Unsafe;
-    using Xunit;
-
     public class TaggerTest
     {
         private readonly CurrentTaggingState state;
@@ -79,9 +78,9 @@ namespace OpenTelemetry.Tags.Test
         //    tagsComponent.setState(TaggingState.DISABLED);
         //    Assert.Equal(tagger.EmptyBuilder).isSameAs(NoopTagContextBuilder.Instance);
         //    tagsComponent.setState(TaggingState.ENABLED);
-        //    TagContextBuilder builder = tagger.EmptyBuilder;
-        //    Assert.Equal(builder).isInstanceOf(TagContextBuilder);
-        //    Assert.Equal(TagsTestUtil.TagContextToList(builder.put(K1, V1).Build())).containsExactly(Tag.Create(K1, V1));
+        //    TagContextBuilder factory = tagger.EmptyBuilder;
+        //    Assert.Equal(factory).isInstanceOf(TagContextBuilder);
+        //    Assert.Equal(TagsTestUtil.TagContextToList(factory.put(K1, V1).Build())).containsExactly(Tag.Create(K1, V1));
         // }
 
         [Fact]
@@ -134,9 +133,9 @@ namespace OpenTelemetry.Tags.Test
         //    tagsComponent.setState(TaggingState.DISABLED);
         //    Assert.Equal(getResultOfCurrentBuilder(tags)).isSameAs(NoopTagContextBuilder.Instance);
         //    tagsComponent.setState(TaggingState.ENABLED);
-        //    TagContextBuilder builder = getResultOfCurrentBuilder(tags);
-        //    Assert.Equal(builder).isInstanceOf(TagContextBuilder);
-        //    Assert.Equal(TagsTestUtil.TagContextToList(builder.Build())).containsExactly(TAG1);
+        //    TagContextBuilder factory = getResultOfCurrentBuilder(tags);
+        //    Assert.Equal(factory).isInstanceOf(TagContextBuilder);
+        //    Assert.Equal(TagsTestUtil.TagContextToList(factory.Build())).containsExactly(TAG1);
         // }
 
         private ITagContextBuilder GetResultOfCurrentBuilder(ITagContext tagsToSet)
@@ -195,9 +194,9 @@ namespace OpenTelemetry.Tags.Test
         //    tagsComponent.setState(TaggingState.DISABLED);
         //    Assert.Equal(tagger.ToBuilder(tags)).isSameAs(NoopTagContextBuilder.Instance);
         //    tagsComponent.setState(TaggingState.ENABLED);
-        //    TagContextBuilder builder = tagger.ToBuilder(tags);
-        //    Assert.Equal(builder).isInstanceOf(TagContextBuilder);
-        //    Assert.Equal(TagsTestUtil.TagContextToList(builder.Build())).containsExactly(TAG1);
+        //    TagContextBuilder factory = tagger.ToBuilder(tags);
+        //    Assert.Equal(factory).isInstanceOf(TagContextBuilder);
+        //    Assert.Equal(TagsTestUtil.TagContextToList(factory.Build())).containsExactly(TAG1);
         // }
 
         [Fact]

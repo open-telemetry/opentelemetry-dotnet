@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
+using OpenTelemetry.Trace;
+using StackExchange.Redis.Profiling;
 
 namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 {
-    using System.Collections.Generic;
-    using OpenTelemetry.Trace;
-    using StackExchange.Redis.Profiling;
-
     internal static class RedisProfilerEntryToSpanConverter
     {
         public static ISpan ProfilerCommandToSpan(ITracer tracer, ISpan parentSpan, IProfiledCommand command)
@@ -30,12 +29,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
                 name = "name";
             }
 
-            var span = tracer.SpanBuilder(name)
-                .SetParent(parentSpan)
-                .SetSpanKind(SpanKind.Client)
-                .SetStartTimestamp(command.CommandCreated)
-                .StartSpan();
-
+            var span = tracer.StartSpan(name, parentSpan, SpanKind.Client, command.CommandCreated);
             if (span.IsRecordingEvents)
             {
                 // use https://github.com/opentracing/specification/blob/master/semantic_conventions.md for now

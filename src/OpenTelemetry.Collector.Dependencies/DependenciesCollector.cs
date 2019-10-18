@@ -13,79 +13,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Collector.Dependencies
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Net.Http;
-    using System.Reflection;
-    using OpenTelemetry.Collector.Dependencies.Implementation;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Utils;
-
-    /// <summary>
-    /// Dependencies collector.
-    /// </summary>
     public class DependenciesCollector : IDisposable
     {
-        private readonly DiagnosticSourceSubscriber<HttpRequestMessage> diagnosticSourceSubscriber;
+        private readonly List<IDisposable> collectors = new List<IDisposable>();
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DependenciesCollector"/> class.
-        /// </summary>
-        /// <param name="options">Configuration options for dependencies collector.</param>
-        /// <param name="tracerFactory">TracerFactory to create a Tracer to record traced with.</param>
-        /// <param name="sampler">Sampler to use to sample dependency calls.</param>
-        public DependenciesCollector(DependenciesCollectorOptions options, ITracerFactory tracerFactory, ISampler sampler)
+        public DependenciesCollector(HttpClientCollectorOptions options, TracerFactoryBase tracerFactory)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber<HttpRequestMessage>(
-                new Dictionary<string, Func<ITracerFactory, Func<HttpRequestMessage, ISampler>, ListenerHandler<HttpRequestMessage>>>()
-                {
-                    {
-                        "HttpHandlerDiagnosticListener", (tf, s) =>
-                        {
-                            var tracer = tracerFactory.GetTracer("OpenTelemetry.Collector.Dependencies.HttpHandlerDiagnosticListener");
-                            return new HttpHandlerDiagnosticListener(tracer, s);
-                        }
-                    },
-                    {
-                        "Azure.Clients", (tf, s) =>
-                        {
-                            var tracer = tracerFactory.GetTracer("OpenTelemetry.Collector.Dependencies.Azure.Clients");
-                            return new AzureSdkDiagnosticListener("Azure.Clients", tracer, sampler);
-                        }
-                    },
-                    {
-                        "Azure.Pipeline", (tf, s) =>
-                        {
-                            var tracer = tracerFactory.GetTracer("OpenTelemetry.Collector.Dependencies.Azure.Pipeline");
-                            return new AzureSdkDiagnosticListener("Azure.Pipeline", tracer, sampler);
-                        }
-                    },
-                },
-                tracerFactory,
-                x =>
-                {
-                    ISampler s = null;
-                    try
-                    {
-                        s = options.CustomSampler(x);
-                    }
-                    catch (Exception e)
-                    {
-                        s = null;
-                        CollectorEventSource.Log.ExceptionInCustomSampler(e);
-                    }
+            var assemblyVersion = typeof(DependenciesCollector).Assembly.GetName().Version;
+            var httpClientListener = new HttpClientCollector(tracerFactory.GetTracer(nameof(HttpClientCollector), "semver:" + assemblyVersion), options);
+            var azureClientsListener = new AzureClientsCollector(tracerFactory.GetTracer(nameof(AzureClientsCollector), "semver:" + assemblyVersion));
+            var azurePipelineListener = new AzurePipelineCollector(tracerFactory.GetTracer(nameof(AzurePipelineCollector), "semver:" + assemblyVersion));
 
-                    return s ?? sampler;
-                    });
-            this.diagnosticSourceSubscriber.Subscribe();
+            this.collectors.Add(httpClientListener);
+            this.collectors.Add(azureClientsListener);
+            this.collectors.Add(azurePipelineListener);
         }
 
         public void Dispose()
         {
-            this.diagnosticSourceSubscriber?.Dispose();
+            foreach (var collector in this.collectors)
+            {
+                collector.Dispose();
+            }
         }
     }
 }

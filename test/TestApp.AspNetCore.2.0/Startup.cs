@@ -14,17 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Collector.AspNetCore;
-using OpenTelemetry.Collector.Dependencies;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
-using OpenTelemetry.Trace.Sampler;
-using System.Net.Http;
-using OpenTelemetry.Exporter.Zipkin;
 using OpenTelemetry.Trace.Configuration;
 
 namespace TestApp.AspNetCore._2._0
@@ -43,22 +37,12 @@ namespace TestApp.AspNetCore._2._0
         {
             services.AddMvc();
             services.AddSingleton<HttpClient>();
-
-            services.AddSingleton<ISampler>(Samplers.AlwaysSample);
-            services.AddSingleton<RequestsCollectorOptions>(new RequestsCollectorOptions());
-            services.AddSingleton<RequestsCollector>();
-            services.AddSingleton<DependenciesCollectorOptions>(new DependenciesCollectorOptions());
-            services.AddSingleton<DependenciesCollector>();
-            services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new CallbackMiddleware.CallbackMiddlewareImpl());
-            services.AddSingleton<ZipkinTraceExporterOptions>(new ZipkinTraceExporterOptions { ServiceName = "tracing-to-zipkin-service" });
-            services.AddSingleton<SpanExporter, ZipkinTraceExporter>();
-            services.AddSingleton<SpanProcessor, BatchingSpanProcessor>();
-            services.AddSingleton<TracerConfiguration>();
-            services.AddSingleton<ITracer, Tracer>();
+            services.AddSingleton(
+                new CallbackMiddleware.CallbackMiddlewareImpl());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, TracerFactory factory)
         {
             if (env.IsDevelopment())
             {
@@ -67,8 +51,6 @@ namespace TestApp.AspNetCore._2._0
 
             app.UseMiddleware<CallbackMiddleware>();
             app.UseMvc();
-            var collector = app.ApplicationServices.GetService<RequestsCollector>();
-            var depCollector = app.ApplicationServices.GetService<DependenciesCollector>();
         }
     }
 }

@@ -13,18 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Collector.AspNetCore.Implementation
 {
-    using System;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Text;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.AspNetCore.Http.Features;
-    using OpenTelemetry.Trace;
-
-    internal class HttpInListener : ListenerHandler<HttpRequest>
+    internal class HttpInListener : ListenerHandler
     {
         private static readonly string UnknownHostName = "UNKNOWN-HOST";
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
@@ -34,8 +32,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
         private readonly bool hostingSupportsW3C = false;
 
-        public HttpInListener(string name, ITracer tracer, Func<HttpRequest, ISampler> samplerFactory)
-            : base(name, tracer, samplerFactory)
+        public HttpInListener(string name, ITracer tracer)
+            : base(name, tracer)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
         }
@@ -53,31 +51,24 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
             var request = context.Request;
 
-            SpanContext ctx = null;
-            if (!this.hostingSupportsW3C)
-            {
-                ctx = this.Tracer.TextFormat.Extract<HttpRequest>(
-                    request,
-                    (r, name) => r.Headers[name]);
-            }
-
             // see the spec https://github.com/open-telemetry/OpenTelemetry-specs/blob/master/trace/HTTP.md
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
-            var spanBuilder = this.Tracer.SpanBuilder(path)
-                .SetSpanKind(SpanKind.Server)
-                .SetSampler(this.SamplerFactory(request));
+            ISpan span = null;
 
             if (this.hostingSupportsW3C)
             {
-                spanBuilder.SetCreateChild(false);
+                span = this.Tracer.StartSpanFromActivity(path, Activity.Current, SpanKind.Server);
             }
             else
             {
-                spanBuilder.SetParent(ctx);
+                var ctx = this.Tracer.TextFormat.Extract<HttpRequest>(
+                    request,
+                    (r, name) => r.Headers[name]);
+
+                span = this.Tracer.StartSpan(path, ctx, SpanKind.Server);
             }
 
-            var span = spanBuilder.StartSpan();
             this.Tracer.WithSpan(span);
 
             if (span.IsRecordingEvents)

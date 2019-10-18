@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
+    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
     <PackageReference Include="StackExchange.Redis" Version="2.0.519" />
   </ItemGroup>
 </Project>
