@@ -58,7 +58,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollectorInjectsHeadersAsync()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
             var tracer = TracerFactory.Create(b => b.SetProcessor(_ => spanProcessor.Object))
                 .GetTracer(null);
 
@@ -100,7 +100,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollector_AddViaFactory_HttpCollector_CollectsSpans()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             using (TracerFactory.Create(b => b
                 .SetProcessor(_ => spanProcessor.Object)
@@ -118,7 +118,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollector_AddViaFactory_DependencyCollector_CollectsSpans()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             using (TracerFactory.Create(b => b
                 .SetProcessor(_ => spanProcessor.Object)
@@ -136,7 +136,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
             var tracer = TracerFactory.Create(b => b
                     .SetProcessor(_ => spanProcessor.Object))
                 .GetTracer(null);
@@ -161,7 +161,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollectorFiltersOutRequests()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             var tracer = TracerFactory.Create(b => b
                     .SetProcessor(_ => spanProcessor.Object))
@@ -184,7 +184,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollectorFiltersOutRequestsToExporterEndpoints()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             var tracer = TracerFactory.Create(b => b
                     .SetProcessor(_ => spanProcessor.Object))

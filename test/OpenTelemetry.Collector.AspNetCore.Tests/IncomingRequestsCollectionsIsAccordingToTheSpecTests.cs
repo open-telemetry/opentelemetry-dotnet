@@ -55,7 +55,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         [Fact]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             // Arrange
             using (var client = this.factory

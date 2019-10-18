@@ -56,7 +56,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         [Fact]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         [Fact]
         public async Task SuccessfulTemplateControllerCallUsesParentContext()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 return true;
             }
 
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
