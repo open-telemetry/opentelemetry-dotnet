@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace
 
             var tracestate = activityAndTracestate.Tracestate;
 
-            this.IsRecordingEvents = MakeSamplingDecision(
+            this.IsRecording = MakeSamplingDecision(
                 parentSpanContext,
                 name,
                 null,
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace
                 this.Activity.SpanId,
                 this.tracerConfiguration);
 
-            if (this.IsRecordingEvents)
+            if (this.IsRecording)
             {
                 this.Activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
                 
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Trace
 
             set
             {
-                if (!this.IsRecordingEvents)
+                if (!this.IsRecording)
                 {
                     return;
                 }
@@ -128,7 +128,7 @@ namespace OpenTelemetry.Trace
         public ActivitySpanId ParentSpanId => this.Activity.ParentSpanId;
 
         /// <inheritdoc/>
-        public bool IsRecordingEvents { get; }
+        public bool IsRecording { get; }
 
         /// <summary>
         /// Gets attributes.
@@ -185,7 +185,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(keyValuePair));
             }
 
-            if (!this.IsRecordingEvents || this.hasEnded)
+            if (!this.IsRecording || this.hasEnded)
             {
                 return;
             }
@@ -209,7 +209,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(name));
             }
 
-            if (!this.IsRecordingEvents || this.hasEnded)
+            if (!this.IsRecording || this.hasEnded)
             {
                 return;
             }
@@ -239,7 +239,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(eventAttributes));
             }
 
-            if (!this.IsRecordingEvents || this.hasEnded)
+            if (!this.IsRecording || this.hasEnded)
             {
                 return;
             }
@@ -270,7 +270,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(addEvent));
             }
 
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
@@ -301,7 +301,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(link));
             }
 
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
@@ -344,7 +344,7 @@ namespace OpenTelemetry.Trace
                 this.Activity.Stop();
             }
 
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
@@ -365,7 +365,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(key));
             }
 
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
@@ -381,7 +381,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(key));
             }
 
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
@@ -397,7 +397,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(key));
             }
 
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
@@ -413,7 +413,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(key));
             }
 
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }

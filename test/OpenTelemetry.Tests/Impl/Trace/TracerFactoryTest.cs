@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.IsType<Span>(span);
 
             // default sampler is always sample
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(Resource.Empty, ((Span)span).LibraryResource);
         }
 
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Trace.Test
             span.End();
 
             // default sampler is always sample
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(1, exporterCalledCount);
             Assert.Single(((Span)span).LibraryResource.Labels);
             Assert.Single(((Span)span).LibraryResource.Labels.Where(kvp => kvp.Key == "name" && kvp.Value == "my-app"));
