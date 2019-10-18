@@ -66,7 +66,7 @@ namespace OpenTelemetry.Hosting
         }
 
         [Fact]
-        public async Task AddOpenTelemetry_HostBuilt_TracerFactoryRegisteredAsSingleton()
+        public void AddOpenTelemetry_HostBuilt_TracerFactoryRegisteredAsSingleton()
         {
             var builder = new HostBuilder().ConfigureServices(services =>
             {
@@ -84,6 +84,30 @@ namespace OpenTelemetry.Hosting
             var tracerFactory2 = host.Services.GetRequiredService<TracerFactory>();
 
             Assert.Same(tracerFactory1, tracerFactory2);
+        }
+
+        [Fact]
+        public void AddOpenTelemetry_ServiceProviderArgument_ServicesRegistered()
+        {
+            var testCollector = new TestCollector();
+
+            var services = new ServiceCollection();
+            services.AddSingleton(testCollector);
+            services.AddOpenTelemetry((provider, builder) =>
+            {
+                builder.AddCollector<TestCollector>(tracer => provider.GetRequiredService<TestCollector>());
+            });
+
+            var serviceProvider = services.BuildServiceProvider();
+
+            var tracerFactory = serviceProvider.GetRequiredService<TracerFactory>();
+            Assert.NotNull(tracerFactory);
+
+            Assert.False(testCollector.Disposed);
+
+            serviceProvider.Dispose();
+
+            Assert.True(testCollector.Disposed);
         }
 
         internal class TestCollector : IDisposable

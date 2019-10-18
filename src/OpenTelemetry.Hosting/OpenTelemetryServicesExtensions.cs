@@ -17,26 +17,34 @@
 namespace Microsoft.Extensions.DependencyInjection
 {
     using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
     using Microsoft.Extensions.DependencyInjection.Extensions;
     using Microsoft.Extensions.Hosting;
-    using OpenTelemetry.Hosting;
     using OpenTelemetry.Hosting.Implementation;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Configuration;
-    using OpenTelemetry.Trace.Export;
-    using OpenTelemetry.Trace.Sampler;
 
+    /// <summary>
+    /// Extension methods for setting up OpenTelemetry services in an <see cref="IServiceCollection" />.
+    /// </summary>
     public static class OpenTelemetryServicesExtensions
     {
+        /// <summary>
+        /// Adds OpenTelemetry services to the specified <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetry(this IServiceCollection services)
         {
             services.AddOpenTelemetry(builder => { });
             return services;
         }
 
+        /// <summary>
+        /// Adds OpenTelemetry services to the specified <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <param name="configure">The <see cref="TracerBuilder"/> configuration delegate.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<TracerBuilder> configure)
         {
             services.AddOpenTelemetry(() => TracerFactory.Create(configure));
@@ -45,6 +53,12 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
+        /// <summary>
+        /// Adds OpenTelemetry services to the specified <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <param name="configure">The <see cref="TracerBuilder"/> configuration delegate.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<IServiceProvider, TracerBuilder> configure)
         {
             services.AddOpenTelemetry(s => TracerFactory.Create(builder => configure(s, builder)));
@@ -53,6 +67,12 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
+        /// <summary>
+        /// Adds OpenTelemetry services to the specified <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <param name="createFactory">A delegate that provides the factory to be registered.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Func<TracerFactoryBase> createFactory)
         {
             if (services is null)
@@ -71,6 +91,12 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
+        /// <summary>
+        /// Adds OpenTelemetry services to the specified <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <param name="createFactory">A delegate that provides the factory to be registered.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Func<IServiceProvider, TracerFactoryBase> createFactory)
         {
             if (services is null)
