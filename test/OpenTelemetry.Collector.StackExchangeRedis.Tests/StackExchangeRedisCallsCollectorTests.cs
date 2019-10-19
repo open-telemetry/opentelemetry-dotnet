@@ -30,7 +30,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         {
             var spanProcessor = new Mock<SpanProcessor>();
             var tracer = TracerFactory.Create(b => b
-                    .SetProcessor(_ => spanProcessor.Object))
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
             using (var collector = new StackExchangeRedisCallsCollector(tracer))

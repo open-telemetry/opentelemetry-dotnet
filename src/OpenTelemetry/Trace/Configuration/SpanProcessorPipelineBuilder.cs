@@ -20,6 +20,9 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace.Configuration
 {
+    /// <summary>
+    /// Configures exporting pipeline with chains of processors and exporter.
+    /// </summary>
     public class SpanProcessorPipelineBuilder
     {
         private Func<SpanExporter, SpanProcessor> lastProcessorFactory;
@@ -33,11 +36,15 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal List<SpanProcessor> Processors { get; private set; }
 
-        public SpanProcessorPipelineBuilder AddProcessor(Func<SpanProcessor, SpanProcessor> chain)
+        /// <summary>
+        /// Adds chained processor to the pipeline. Processors are executed in the order they were added.
+        /// </summary>
+        /// <param name="processorFactory">Function that creates processor from the next one.</param>
+        public SpanProcessorPipelineBuilder AddProcessor(Func<SpanProcessor, SpanProcessor> processorFactory)
         {
-            if (chain == null)
+            if (processorFactory == null)
             {
-                throw new ArgumentNullException(nameof(chain));
+                throw new ArgumentNullException(nameof(processorFactory));
             }
 
             if (this.processorChain == null)
@@ -45,17 +52,25 @@ namespace OpenTelemetry.Trace.Configuration
                 this.processorChain = new List<Func<SpanProcessor, SpanProcessor>>();
             }
 
-            this.processorChain.Add(chain);
+            this.processorChain.Add(processorFactory);
 
             return this;
         }
 
-        public SpanProcessorPipelineBuilder SetExportingProcessor(Func<SpanExporter, SpanProcessor> export)
+        /// <summary>
+        /// Configures last processor that invokes exporter. When not set, <see cref="BatchingSpanProcessor"/> is used. 
+        /// </summary>
+        /// <param name="processorFactory">Factory that creates exporting processor from the exporter.</param>
+        public SpanProcessorPipelineBuilder SetExportingProcessor(Func<SpanExporter, SpanProcessor> processorFactory)
         {
-            this.lastProcessorFactory = export ?? throw new ArgumentNullException(nameof(export));
+            this.lastProcessorFactory = processorFactory ?? throw new ArgumentNullException(nameof(processorFactory));
             return this;
         }
 
+        /// <summary>
+        /// Configures exporter.
+        /// </summary>
+        /// <param name="exporter">Exporter instance.</param>
         public SpanProcessorPipelineBuilder SetExporter(SpanExporter exporter)
         {
             this.Exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
@@ -65,31 +80,37 @@ namespace OpenTelemetry.Trace.Configuration
         internal SpanProcessor Build()
         {
             this.Processors = new List<SpanProcessor>();
-            SpanProcessor terminalProcessor = null;
+            
+            SpanProcessor exportingProcessor = null;
+            
+            // build or create default exporting processor
             if (this.lastProcessorFactory != null)
             {
-                terminalProcessor = this.lastProcessorFactory.Invoke(this.Exporter);
-                this.Processors.Add(terminalProcessor);
+                exportingProcessor = this.lastProcessorFactory.Invoke(this.Exporter);
+                this.Processors.Add(exportingProcessor);
             }
             else if (this.Exporter != null)
             {
-                terminalProcessor = new BatchingSpanProcessor(this.Exporter);
-                this.Processors.Add(terminalProcessor);
+                exportingProcessor = new BatchingSpanProcessor(this.Exporter);
+                this.Processors.Add(exportingProcessor);
             }
 
+            // if there is no chain, return exporting processor.
             if (this.processorChain == null)
             {
-                return terminalProcessor ?? new NoopSpanProcessor();
+                return exportingProcessor ?? new NoopSpanProcessor();
             }
 
-            var next = terminalProcessor;
+            var next = exportingProcessor;
 
+            // build chain from the end to the beginning
             for (int i = this.processorChain.Count - 1; i >= 0; i--)
             {
                 next = this.processorChain[i].Invoke(next);
                 this.Processors.Add(next);
             }
 
+            // return the last processor in the chain - it will be called first
             return this.Processors[this.Processors.Count - 1];
         }
     }

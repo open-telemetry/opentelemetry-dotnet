@@ -71,12 +71,13 @@ namespace OpenTelemetry.Trace.Test
             TestCollector collector2 = null;
             TestProcessor processor = null;
             var tracerFactory = TracerFactory.Create(b => b
-                .SetExporter(testExporter)
-                .SetProcessor(e =>
-                {
-                    processor = new TestProcessor(e);
-                    return processor;
-                })
+                .AddProcessorPipeline(p => p
+                    .SetExporter(testExporter)
+                    .SetExportingProcessor(e =>
+                    {
+                        processor = new TestProcessor(e);
+                        return processor;
+                    }))
                 .AddCollector(t =>
                 {
                     collector1 = new TestCollector(t);

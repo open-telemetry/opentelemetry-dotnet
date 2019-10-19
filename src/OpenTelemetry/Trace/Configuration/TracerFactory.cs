@@ -17,9 +17,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace.Export.Internal;
 using OpenTelemetry.Trace.Sampler;
 
 namespace OpenTelemetry.Trace.Configuration
@@ -28,7 +30,7 @@ namespace OpenTelemetry.Trace.Configuration
     {
         private readonly object lck = new object();
         private readonly Dictionary<TracerRegistryKey, ITracer> tracerRegistry = new Dictionary<TracerRegistryKey, ITracer>();
-        private readonly List<object> keepThemAlive = new List<object>();
+        private readonly List<object> collectors = new List<object>();
 
         private readonly ISampler sampler;
         private readonly TracerConfiguration configurationOptions;
@@ -46,38 +48,29 @@ namespace OpenTelemetry.Trace.Configuration
             this.configurationOptions =
                 builder.TracerConfigurationOptions ?? new TracerConfiguration(this.sampler);
 
-            if (builder.ProcessorFactories == null || !builder.ProcessorFactories.Any())
+            if (builder.ProcessingPipelines == null || !builder.ProcessingPipelines.Any())
             {
+                // if there are no pipelines are configured, use noop processor
                 this.spanProcessor = new NoopSpanProcessor();
             }
-            else if (builder.ProcessorFactories.Count == 1)
+            else if (builder.ProcessingPipelines.Count == 1)
             {
-                var processorFactory = builder.ProcessorFactories[0];
+                // if there is only one pipeline - use it's outer processor as a 
+                // single processor on the tracer.
+                var processorFactory = builder.ProcessingPipelines[0];
                 this.spanProcessor = processorFactory.Build();
-
-                foreach (var processor in processorFactory.Processors)
-                {
-                    this.KeepAlive(processor);
-                }
-
-                this.KeepAlive(processorFactory.Exporter);
             }
             else
             {
-                var processors = new SpanProcessor[builder.ProcessorFactories.Count];
+                // if there are more pipelines, use processor that will broadcast to all pipelines
+                var processors = new SpanProcessor[builder.ProcessingPipelines.Count];
 
-                for (int i = 0; i < builder.ProcessorFactories.Count; i++)
+                for (int i = 0; i < builder.ProcessingPipelines.Count; i++)
                 {
-                    processors[i] = builder.ProcessorFactories[i].Build();
-                    foreach (var chainedProcessor in builder.ProcessorFactories[i].Processors)
-                    {
-                        this.KeepAlive(chainedProcessor);
-                    }
-
-                    this.KeepAlive(builder.ProcessorFactories[i].Exporter);
+                    processors[i] = builder.ProcessingPipelines[i].Build();
                 }
 
-                this.spanProcessor = new MultiProcessor(processors);
+                this.spanProcessor = new BroadcastProcessor(processors);
             }
 
             this.binaryFormat = builder.BinaryFormat ?? new BinaryFormat();
@@ -91,6 +84,10 @@ namespace OpenTelemetry.Trace.Configuration
                 Resource.Empty);
         }
 
+        /// <summary>
+        /// Creates tracer factory.
+        /// </summary>
+        /// <param name="configure">Function that configures tracer factory.</param>
         public static TracerFactory Create(Action<TracerBuilder> configure)
         {
             if (configure == null)
@@ -107,8 +104,7 @@ namespace OpenTelemetry.Trace.Configuration
                 foreach (var collector in builder.CollectorFactories)
                 {
                     var tracer = factory.GetTracer(collector.Name, collector.Version);
-
-                    factory.KeepAlive(collector.Factory(tracer));
+                    factory.collectors.Add(collector.Factory(tracer));
                 }
             }
 
@@ -142,7 +138,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         public void Dispose()
         {
-            foreach (var item in this.keepThemAlive)
+            foreach (var item in this.collectors)
             {
                 if (item is IDisposable disposable)
                 {
@@ -150,7 +146,12 @@ namespace OpenTelemetry.Trace.Configuration
                 }
             }
 
-            this.keepThemAlive.Clear();
+            this.collectors.Clear();
+
+            if (this.spanProcessor is IDisposable disposableProcessor)
+            {
+                disposableProcessor.Dispose();
+            }
         }
 
         private static IEnumerable<KeyValuePair<string, string>> CreateLibraryResourceLabels(string name, string version)
@@ -162,11 +163,6 @@ namespace OpenTelemetry.Trace.Configuration
             }
 
             return labels;
-        }
-
-        private void KeepAlive(object item)
-        {
-            this.keepThemAlive.Add(item);
         }
 
         private readonly struct TracerRegistryKey

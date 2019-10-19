@@ -1,4 +1,4 @@
-﻿// <copyright file="MultiProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="BroadcastProcessor.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,25 +16,44 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Trace.Export.Internal
 {
-    internal class MultiProcessor : SpanProcessor
+    internal class BroadcastProcessor : SpanProcessor, IDisposable
     {
         private readonly IEnumerable<SpanProcessor> processors;
 
-        public MultiProcessor(IEnumerable<SpanProcessor> processors)
+        public BroadcastProcessor(IEnumerable<SpanProcessor> processors)
         {
-            this.processors = processors ?? throw new ArgumentNullException(nameof(processors));
+            if (processors == null)
+            {
+                throw new ArgumentNullException(nameof(processors));
+            }
+
+            if (!processors.Any())
+            {
+                throw new ArgumentException($"{nameof(processors)} collection is empty");
+            }
+
+            this.processors = processors;
         }
 
         public override void OnEnd(Span span)
         {
             foreach (var processor in this.processors)
             {
-                processor.OnEnd(span);
+                try
+                {
+                    processor.OnEnd(span);
+                }
+                catch (Exception e)
+                {
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException("OnEnd", e);
+                }
             }
         }
 
@@ -42,7 +61,14 @@ namespace OpenTelemetry.Trace.Export
         {
             foreach (var processor in this.processors)
             {
-                processor.OnStart(span);
+                try
+                {
+                    processor.OnStart(span);
+                }
+                catch (Exception e)
+                {
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException("OnStart", e);
+                }
             }
         }
 
@@ -55,6 +81,11 @@ namespace OpenTelemetry.Trace.Export
             }
 
             return Task.WhenAll(tasks);
+        }
+
+        public void Dispose()
+        {
+            this.ShutdownAsync(default).GetAwaiter().GetResult();
         }
     }
 }
