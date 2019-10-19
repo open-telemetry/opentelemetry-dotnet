@@ -17,11 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Exporters;
-using OpenTelemetry.Exporter.Zipkin;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
 
 namespace Samples
 {
