@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -50,7 +51,7 @@ namespace OpenTelemetry.Trace.Internal
             return this.GetEnumerator();
         }
 
-        internal void AddEvent(T evnt)
+        internal void Add(T evnt)
         {
             if (evnt == null)
             {
