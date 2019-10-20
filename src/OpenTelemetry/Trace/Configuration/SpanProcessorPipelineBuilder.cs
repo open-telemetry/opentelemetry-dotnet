@@ -94,11 +94,17 @@ namespace OpenTelemetry.Trace.Configuration
                 exportingProcessor = new BatchingSpanProcessor(this.Exporter);
                 this.Processors.Add(exportingProcessor);
             }
-
-            // if there is no chain, return exporting processor.
+            
             if (this.processorChain == null)
             {
-                return exportingProcessor ?? new NoopSpanProcessor();
+                // if there is no chain, return exporting processor.
+                if (exportingProcessor == null)
+                {
+                    exportingProcessor = new NoopSpanProcessor();
+                    this.Processors.Add(exportingProcessor);
+                }
+
+                return exportingProcessor;
             }
 
             var next = exportingProcessor;

@@ -85,7 +85,20 @@ namespace OpenTelemetry.Trace.Export.Internal
 
         public void Dispose()
         {
-            this.ShutdownAsync(default).GetAwaiter().GetResult();
+            foreach (var processor in this.processors)
+            {
+                try
+                {
+                    if (processor is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                }
+                catch (Exception e)
+                {
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException("Dispose", e);
+                }
+            }
         }
     }
 }
