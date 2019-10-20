@@ -181,14 +181,14 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(keyValuePair.Value));
             }
 
-            if (this.hasEnded)
+            if (!this.IsRecordingEvents)
             {
-                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("UpdateName");
                 return;
             }
 
-            if (!this.IsRecordingEvents)
+            if (this.hasEnded)
             {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("SetAttribute");
                 return;
             }
 
@@ -203,14 +203,14 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void AddEvent(string name)
         {
-            if (this.hasEnded)
+            if (!this.IsRecordingEvents)
             {
-                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("AddEvent");
                 return;
             }
 
-            if (!this.IsRecordingEvents)
+            if (this.hasEnded)
             {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("AddEvent");
                 return;
             }
 
@@ -220,19 +220,14 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void AddEvent(string name, IDictionary<string, object> eventAttributes)
         {
-            if (eventAttributes == null)
+            if (!this.IsRecordingEvents)
             {
-                throw new ArgumentNullException(nameof(eventAttributes));
+                return;
             }
 
             if (this.hasEnded)
             {
                 OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("AddEvent");
-                return;
-            }
-
-            if (!this.IsRecordingEvents)
-            {
                 return;
             }
 
@@ -247,14 +242,14 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(addEvent));
             }
 
-            if (this.hasEnded)
+            if (!this.IsRecordingEvents)
             {
-                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("AddEvent");
                 return;
             }
 
-            if (!this.IsRecordingEvents)
+            if (this.hasEnded)
             {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("AddEvent");
                 return;
             }
 
@@ -275,14 +270,14 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(link));
             }
 
-            if (this.hasEnded)
+            if (!this.IsRecordingEvents)
             {
-                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("AddLink");
                 return;
             }
 
-            if (!this.IsRecordingEvents)
+            if (this.hasEnded)
             {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("AddLink");
                 return;
             }
 
@@ -327,14 +322,9 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void SetAttribute(string key, string value)
         {
-            if (key == null)
+            if (!this.IsRecordingEvents)
             {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
+                return;
             }
 
             this.SetAttribute(new KeyValuePair<string, object>(key, value));
@@ -343,9 +333,9 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void SetAttribute(string key, long value)
         {
-            if (key == null)
+            if (!this.IsRecordingEvents)
             {
-                throw new ArgumentNullException(nameof(key));
+                return;
             }
 
             this.SetAttribute(new KeyValuePair<string, object>(key, value));
@@ -354,9 +344,9 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void SetAttribute(string key, double value)
         {
-            if (key == null)
+            if (!this.IsRecordingEvents)
             {
-                throw new ArgumentNullException(nameof(key));
+                return;
             }
 
             this.SetAttribute(new KeyValuePair<string, object>(key, value));
@@ -365,9 +355,9 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void SetAttribute(string key, bool value)
         {
-            if (key == null)
+            if (!this.IsRecordingEvents)
             {
-                throw new ArgumentNullException(nameof(key));
+                return;
             }
 
             this.SetAttribute(new KeyValuePair<string, object>(key, value));
