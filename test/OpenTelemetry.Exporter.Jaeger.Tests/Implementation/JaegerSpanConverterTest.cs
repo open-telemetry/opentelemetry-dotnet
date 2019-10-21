@@ -67,7 +67,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000, jaegerSpan.Duration);
+            Assert.Equal((long)((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000), jaegerSpan.Duration);
 
             var tags = jaegerSpan.JaegerTags.ToArray();
             var tag = tags[0];
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000, jaegerSpan.Duration);
+            Assert.Equal((long)((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000), jaegerSpan.Duration);
 
             Assert.Empty(jaegerSpan.JaegerTags);
 
