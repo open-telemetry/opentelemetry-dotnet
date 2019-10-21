@@ -117,7 +117,7 @@ namespace OpenTelemetry.Trace.Test
         public void CreateSpan_Sampled()
         {
             var span = tracer.StartSpan("foo");
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
         }
 
         [Fact]
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Trace.Test
                 .GetTracer(null);
 
             var span = tracer.StartSpan("foo");
-            Assert.False(span.IsRecordingEvents);
+            Assert.False(span.IsRecording);
         }
 
         [Fact]

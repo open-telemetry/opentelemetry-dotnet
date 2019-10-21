@@ -41,7 +41,7 @@ namespace LoggingTracer
         public bool HasEnded { get; set; }
 
         /// <inheritdoc/>
-        public bool IsRecordingEvents => true;
+        public bool IsRecording => true;
 
         /// <inheritdoc/>
         public void AddEvent(string name)

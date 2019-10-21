@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
             Assert.Same(traceState, span.Context.Tracestate);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Internal, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
             Assert.Empty(span.Context.Tracestate);
 
-            Assert.False(span.IsRecordingEvents);
+            Assert.False(span.IsRecording);
             Assert.Equal(SpanKind.Internal, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -133,7 +133,7 @@ namespace OpenTelemetry.Trace.Test
             var startTimestamp = PreciseTimestamp.GetUtcNow();
             var span = (Span)tracer.StartSpan(SpanName, parentSpan, SpanKind.Client);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Client, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Trace.Test
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var span = (Span)tracer.StartSpan(SpanName, parentSpan, SpanKind.Server, startTimestamp);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -166,7 +166,7 @@ namespace OpenTelemetry.Trace.Test
             var startTimestamp = PreciseTimestamp.GetUtcNow();
             var span = (Span)tracer.StartSpan(SpanName, parentSpan, SpanKind.Server, default, new [] { new Link(linkContext) });
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Single(span.Links);
@@ -223,7 +223,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceOptions);
             Assert.Empty(span.Context.Tracestate);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Internal, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -237,7 +237,7 @@ namespace OpenTelemetry.Trace.Test
             var startTimestamp = PreciseTimestamp.GetUtcNow();
             var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Consumer);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Consumer, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -251,7 +251,7 @@ namespace OpenTelemetry.Trace.Test
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Client, startTimestamp);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Client, span.Kind);
             Assert.Equal(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -267,7 +267,7 @@ namespace OpenTelemetry.Trace.Test
             var startTimestamp = PreciseTimestamp.GetUtcNow();
             var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Server, startTimestamp, new[] { new Link(linkContext) });
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal(startTimestamp, span.StartTimestamp);
             Assert.Single(span.Links);
@@ -292,7 +292,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(parentContext.TraceOptions, span.Context.TraceOptions);
             Assert.Same(traceState, span.Context.Tracestate);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Internal, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -313,7 +313,7 @@ namespace OpenTelemetry.Trace.Test
 
             // always sample sampler
             Assert.Equal(ActivityTraceFlags.Recorded, span.Context.TraceOptions);
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
         }
 
         [Fact]
@@ -353,7 +353,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(parentContext.TraceOptions, span.Context.TraceOptions);
             Assert.Empty(span.Context.Tracestate);
 
-            Assert.False(span.IsRecordingEvents);
+            Assert.False(span.IsRecording);
             Assert.Equal(SpanKind.Internal, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -369,7 +369,7 @@ namespace OpenTelemetry.Trace.Test
             var startTimestamp = PreciseTimestamp.GetUtcNow();
             var span = (Span)tracer.StartSpan(SpanName, parentContext, SpanKind.Client);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Client, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -385,7 +385,7 @@ namespace OpenTelemetry.Trace.Test
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var span = (Span)tracer.StartSpan(SpanName, parentContext, SpanKind.Server, startTimestamp);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -402,7 +402,7 @@ namespace OpenTelemetry.Trace.Test
             var startTimestamp = PreciseTimestamp.GetUtcNow();
             var span = (Span)tracer.StartSpan(SpanName, parentContext, SpanKind.Server, default, new[] { new Link(linkContext) });
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Single(span.Links);
@@ -428,7 +428,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k1" && pair.Value == "v1");
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k2" && pair.Value == "v2");
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Internal, span.Kind);
             Assert.Equal(activity.StartTimeUtc, span.StartTimestamp.DateTime);
             Assert.Equal(activity, span.Activity);
@@ -474,7 +474,7 @@ namespace OpenTelemetry.Trace.Test
 
             // activity is not a parent and sampling decision is made 
             // based on sampler alone
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Internal, span.Kind);
             Assert.Equal(activity.StartTimeUtc, span.StartTimestamp.DateTime);
             Assert.Equal(activity, span.Activity);
@@ -491,7 +491,7 @@ namespace OpenTelemetry.Trace.Test
 
             var span = (Span)tracer.StartSpanFromActivity(SpanName, activity, SpanKind.Client);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Client, span.Kind);
             Assert.Equal(activity.StartTimeUtc, span.StartTimestamp.DateTime);
             Assert.Equal(activity, span.Activity);
@@ -510,7 +510,7 @@ namespace OpenTelemetry.Trace.Test
 
             var span = (Span)tracer.StartSpanFromActivity(SpanName, activity, SpanKind.Server, new[] { new Link(linkContext) });
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal(activity.StartTimeUtc, span.StartTimestamp.DateTime);
             Assert.Equal(activity, span.Activity);
@@ -538,7 +538,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
                 Assert.Same(traceState, span.Context.Tracestate);
 
-                Assert.True(span.IsRecordingEvents);
+                Assert.True(span.IsRecording);
                 Assert.Equal(SpanKind.Internal, span.Kind);
                 AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
                 Assert.Empty(span.Links);
@@ -566,7 +566,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k1" && pair.Value == "v1");
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k2" && pair.Value == "v2");
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Internal, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -595,7 +595,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k1" && pair.Value == "v1");
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k2" && pair.Value == "v2");
 
-            Assert.False(span.IsRecordingEvents);
+            Assert.False(span.IsRecording);
             Assert.Equal(SpanKind.Internal, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Empty(span.Links);
@@ -622,7 +622,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
                 Assert.Empty(span.Context.Tracestate);
 
-                Assert.False(span.IsRecordingEvents);
+                Assert.False(span.IsRecording);
                 Assert.Equal(SpanKind.Internal, span.Kind);
                 AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
                 Assert.Empty(span.Links);
@@ -639,7 +639,7 @@ namespace OpenTelemetry.Trace.Test
                 var startTimestamp = PreciseTimestamp.GetUtcNow();
                 var span = (Span)tracer.StartSpan(SpanName, SpanKind.Producer);
 
-                Assert.True(span.IsRecordingEvents);
+                Assert.True(span.IsRecording);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
                 Assert.Empty(span.Links);
@@ -656,7 +656,7 @@ namespace OpenTelemetry.Trace.Test
                 var startTimestamp = DateTimeOffset.UtcNow.AddSeconds(-10);
                 var span = (Span)tracer.StartSpan(SpanName, SpanKind.Server, startTimestamp);
 
-                Assert.True(span.IsRecordingEvents);
+                Assert.True(span.IsRecording);
                 Assert.Equal(SpanKind.Server, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Empty(span.Links);
@@ -676,7 +676,7 @@ namespace OpenTelemetry.Trace.Test
                 var startTimestamp = DateTimeOffset.UtcNow.AddSeconds(-10);
                 var span = (Span)tracer.StartSpan(SpanName, SpanKind.Server, startTimestamp, new[] {new Link(linkContext)});
 
-                Assert.True(span.IsRecordingEvents);
+                Assert.True(span.IsRecording);
                 Assert.Equal(SpanKind.Server, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
