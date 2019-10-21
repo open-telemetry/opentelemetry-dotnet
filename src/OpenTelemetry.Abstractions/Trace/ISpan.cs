@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets a value indicating whether this span will be recorded.
         /// </summary>
-        bool IsRecordingEvents { get; }
+        bool IsRecording { get; }
 
         /// <summary>
         /// Sets the status of the span execution.
