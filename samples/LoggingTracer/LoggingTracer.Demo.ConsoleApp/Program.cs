@@ -26,20 +26,24 @@ namespace LoggingTracer.Demo.ConsoleApp
     {
         public static async Task Main(string[] args)
         {
-            await LogTracing();
+            // Run the "Foo" scenario using a custom SDK implementation (Tracer, Span, ...) 
+            // that logs the received calls to the console.
+            await RunFooWithLogingTracer();
             
-            await LogExport();
+            // Run the "Foo" scenario using the default SDK with a custom exporter
+            // that logs exported span data to the console.
+            await RunFooWithLoggingExporter();
         }
         
-        private static async Task LogTracing()
+        private static async Task RunFooWithLogingTracer()
         {
-            Logger.Log("*** LogTracing ***");
+            Logger.Log("*** RunFooWithLogingTracer ***");
             await Foo(new LoggingTracerFactory());
         }
         
-        private static async Task LogExport()
+        private static async Task RunFooWithLoggingExporter()
         {
-            Logger.Log("*** LogExport ***");
+            Logger.Log("*** RunFooWithLoggingExporter ***");
             var exporter = new LoggingExporter();
             using (var tracerFactory = TracerFactory.Create(builder => builder.SetExporter(exporter)))
             {

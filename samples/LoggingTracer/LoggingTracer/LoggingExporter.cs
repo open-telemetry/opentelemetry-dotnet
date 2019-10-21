@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,11 +39,13 @@ namespace LoggingTracer
             sb.AppendLine("LoggingExporter.ExportAsync:");
             foreach (var span in batch)
             {
-                sb.AppendLine($"\t\t\t\tSpan('{span.Name}', {span.Kind}");
-                sb.AppendLine($"\t\t\t\t\tTracer: {StringifyResource(span.LibraryResource)}");
+                AppendIndentedLine(sb, 4, $"Span('{span.Name}', {span.Kind}");
+                AppendIndentedLine(sb, 5, $"SpanId: {span.Context.SpanId}");
+                AppendIndentedLine(sb, 5, $"ParentSpanId: {span.ParentSpanId}");
+                AppendIndentedLine(sb, 5, $"Tracer: {StringifyResource(span.LibraryResource)}");
                 foreach (var a in span.Attributes)
                 {
-                    sb.AppendLine($"\t\t\t\t\t{a.Key}' : {a.Value}");
+                    AppendIndentedLine(sb, 5, $"{a.Key}' : {a.Value}");
                 }
             }
             Logger.Log(sb.ToString());
@@ -59,6 +62,16 @@ namespace LoggingTracer
         private static string StringifyResource(Resource resource)
         {
             return string.Join(", ", resource.Labels.Select(l => l.Value));
+        }
+
+        private static void AppendIndentedLine(StringBuilder sb, int indentationLevel, string line)
+        {
+            for (int i = 0; i < indentationLevel; i++)
+            {
+                sb.Append('\t');
+            }
+
+            sb.AppendLine(line);
         }
     }
 }
