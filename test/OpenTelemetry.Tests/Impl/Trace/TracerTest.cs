@@ -24,6 +24,7 @@ using OpenTelemetry.Utils;
 using OpenTelemetry.Trace.Sampler;
 using Xunit;
 using System;
+using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 
@@ -39,7 +40,7 @@ namespace OpenTelemetry.Trace.Test
 
         public TracerTest()
         {
-            spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
+            spanProcessor = new SimpleSpanProcessor(new TestExporter(null));
             tracerConfiguration = new TracerConfiguration();
             tracerFactory = TracerFactory.Create(b => b
                     .SetExporter(new NoopSpanExporter())
@@ -50,7 +51,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void BadConstructorArgumentsThrow()
         {
-            var noopProc = new SimpleSpanProcessor(new NoopSpanExporter());
+            var noopProc = new SimpleSpanProcessor(new TestExporter(null));
             Assert.Throws<ArgumentNullException>(() => new Tracer(null, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));

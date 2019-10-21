@@ -181,10 +181,13 @@ namespace OpenTelemetry.Trace.Test
 
         private class TestProcessor : SpanProcessor, IDisposable
         {
+            private readonly SpanExporter exporter;
+
             public bool IsDisposed { get; private set; }
 
-            public TestProcessor(SpanExporter exporter) : base(exporter)
+            public TestProcessor(SpanExporter exporter)
             {
+                this.exporter = exporter;
             }
 
             public void Dispose()
@@ -198,7 +201,7 @@ namespace OpenTelemetry.Trace.Test
 
             public override void OnEnd(Span span)
             {
-                Exporter.ExportAsync(new[] {span}, default);
+                exporter.ExportAsync(new[] {span}, default);
             }
 
             public override Task ShutdownAsync(CancellationToken cancellationToken)

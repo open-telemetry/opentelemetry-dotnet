@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Test
 
         private readonly IDictionary<string, object> attributes = new Dictionary<string, object>();
         private readonly List<KeyValuePair<string, object>> expectedAttributes;
-        private readonly Mock<SpanProcessor> spanProcessorMock = new Mock<SpanProcessor>(new NoopSpanExporter());
+        private readonly Mock<SpanProcessor> spanProcessorMock = new Mock<SpanProcessor>();
         private readonly SpanProcessor spanProcessor;
         private readonly TracerFactory tracerFactory;
 

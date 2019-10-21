@@ -63,15 +63,15 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ThrowsOnInvalidArguments()
         {
             Assert.Throws<ArgumentNullException>(() => new BatchingSpanProcessor(null));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new NoopSpanExporter(), 0, TimeSpan.FromSeconds(5), 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new NoopSpanExporter(), 2048, TimeSpan.FromSeconds(5), 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new NoopSpanExporter(), 512, TimeSpan.FromSeconds(5), 513));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new TestExporter(null), 0, TimeSpan.FromSeconds(5), 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new TestExporter(null), 2048, TimeSpan.FromSeconds(5), 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new TestExporter(null), 512, TimeSpan.FromSeconds(5), 513));
         }
 
         [Fact]
         public async Task ShutdownTwice()
         {
-            using (var spanProcessor = new BatchingSpanProcessor(new NoopSpanExporter()))
+            using (var spanProcessor = new BatchingSpanProcessor(new TestExporter(null)))
             {
 
                 await spanProcessor.ShutdownAsync(CancellationToken.None);
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public async Task ShutdownWithHugeScheduleDelay()
         {
             using (var spanProcessor =
-                new BatchingSpanProcessor(new NoopSpanExporter(), 128, TimeSpan.FromMinutes(1), 32))
+                new BatchingSpanProcessor(new TestExporter(null), 128, TimeSpan.FromMinutes(1), 32))
             {
 
                 var sw = Stopwatch.StartNew();
