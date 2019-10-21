@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Utils;
@@ -50,22 +51,26 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null));
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null));
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance));
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank));
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Throws<ArgumentNullException>(() =>
                 proxyTracer.StartSpanFromActivity(null, new Activity("foo").Start()));
@@ -88,27 +93,32 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo"));
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo", SpanKind.Client));
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo", SpanKind.Client, default));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo", SpanKind.Client, default, null));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo", SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo", SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo"));
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanKind.Client));
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanKind.Client, default));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanKind.Client, default, null));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance));
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client));
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, default));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, default, null));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank));
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client));
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client, default));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client, default, null));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             var validActivity = new Activity("foo").SetIdFormat(ActivityIdFormat.W3C).Start();
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity));
             Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Consumer));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Client, null));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Client, null as IEnumerable<Link>));
+            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Client, null as Func<IEnumerable<Link>>));
         }
 
         [Fact]

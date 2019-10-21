@@ -69,22 +69,26 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null));
             Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpanFromActivity(null, new Activity("foo").Start()));
 
