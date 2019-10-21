@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.0.0");
 
             var traceState = new List<KeyValuePair<string, string>> {new KeyValuePair<string, string>("k1", "v1")};
-            var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, traceState);
+            var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, false, traceState);
             var parentSpan = (Span)tracer.StartSpan(SpanName, grandParentContext);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
@@ -280,7 +280,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var traceState = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("k1", "v1") };
-            var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, traceState);
+            var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, false, traceState);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
             var span = (Span)tracer.StartSpan(SpanName, parentContext);
@@ -523,7 +523,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracer = tracerFactory.GetTracer(null);
             var traceState = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("k1", "v1") };
-            var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, traceState);
+            var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, false, traceState);
             using (tracer.WithSpan(tracer.StartSpan(SpanName, grandParentContext)))
             {
                 var parentSpan = tracer.CurrentSpan;
