@@ -36,7 +36,8 @@ namespace OpenTelemetry.Trace
         private readonly TracerConfiguration tracerConfiguration;
         private readonly SpanProcessor spanProcessor;
         private readonly DateTimeOffset startTimestamp;
-        
+        private readonly object lck = new object();
+
         private EvictingQueue<KeyValuePair<string, object>> attributes;
         private EvictingQueue<Event> events;
         private EvictingQueue<Link> links;
@@ -193,12 +194,16 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            if (this.attributes == null)
+            lock (this.lck)
             {
-                this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
-            }
+                if (this.attributes == null)
+                {
+                    this.attributes =
+                        new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
+                }
 
-            this.attributes.Add(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
+                this.attributes.Add(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
+            }
         }
 
         /// <inheritdoc/>
@@ -254,13 +259,16 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            if (this.events == null)
+            lock (this.lck)
             {
-                this.events =
-                    new EvictingQueue<Event>(this.tracerConfiguration.MaxNumberOfEvents);
-            }
+                if (this.events == null)
+                {
+                    this.events =
+                        new EvictingQueue<Event>(this.tracerConfiguration.MaxNumberOfEvents);
+                }
 
-            this.events.Add(addEvent);
+                this.events.Add(addEvent);
+            }
         }
 
         /// <inheritdoc/>
@@ -282,12 +290,15 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            if (this.links == null)
+            lock (this.lck)
             {
-                this.links = new EvictingQueue<Link>(this.tracerConfiguration.MaxNumberOfLinks);
-            }
+                if (this.links == null)
+                {
+                    this.links = new EvictingQueue<Link>(this.tracerConfiguration.MaxNumberOfLinks);
+                }
 
-            this.links.Add(link);
+                this.links.Add(link);
+            }
         }
 
         /// <inheritdoc/>
