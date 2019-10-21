@@ -108,7 +108,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public async Task ShutdownTwice()
         {
-            var spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
+            var spanProcessor = new SimpleSpanProcessor(new TestExporter(null));
 
             await spanProcessor.ShutdownAsync(CancellationToken.None).ConfigureAwait(false);
 

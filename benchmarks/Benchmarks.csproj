@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp2.2;net462</TargetFrameworks>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup>
