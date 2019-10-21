@@ -183,7 +183,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(keyValuePair.Value));
             }
 
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
@@ -209,7 +209,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void AddEvent(string name)
         {
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
@@ -226,7 +226,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void AddEvent(string name, IDictionary<string, object> eventAttributes)
         {
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
@@ -334,7 +334,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void SetAttribute(string key, string value)
         {
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
@@ -345,7 +345,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void SetAttribute(string key, long value)
         {
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
@@ -356,7 +356,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void SetAttribute(string key, double value)
         {
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
@@ -367,7 +367,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void SetAttribute(string key, bool value)
         {
-            if (!this.IsRecordingEvents)
+            if (!this.IsRecording)
             {
                 return;
             }
