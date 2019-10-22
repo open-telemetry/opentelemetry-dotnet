@@ -312,9 +312,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("Event2", eventField.VStr);
         }
 
-        internal Span CreateTestSpan(bool setAttributes = true,
-    bool addEvents = true,
-    bool addLinks = true)
+        internal Span CreateTestSpan(
+            bool setAttributes = true,
+            bool addEvents = true,
+            bool addLinks = true)
         {
             var startTimestamp = DateTime.UtcNow;
             var endTimestamp = startTimestamp.AddSeconds(60);
