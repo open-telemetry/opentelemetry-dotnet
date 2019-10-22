@@ -13,11 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
@@ -34,7 +36,8 @@ namespace OpenTelemetry.Trace
         private readonly TracerConfiguration tracerConfiguration;
         private readonly SpanProcessor spanProcessor;
         private readonly DateTimeOffset startTimestamp;
-        private readonly object @lock = new object();
+        private readonly object lck = new object();
+
         private EvictingQueue<KeyValuePair<string, object>> attributes;
         private EvictingQueue<Event> events;
         private EvictingQueue<Link> links;
@@ -100,7 +103,7 @@ namespace OpenTelemetry.Trace
 
                     foreach (var link in links)
                     {
-                        this.links.AddEvent(link);
+                        this.links.Add(link);
                     }
                 }
 
@@ -122,26 +125,9 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public Status Status
         {
-            get
-            {
-                lock (this.@lock)
-                {
-                    return this.StatusWithDefault;
-                }
-            }
+            get => this.StatusWithDefault;
 
-            set
-            {
-                if (!this.IsRecording)
-                {
-                    return;
-                }
-
-                lock (this.@lock)
-                {
-                    this.status = value.IsValid ? value : throw new ArgumentException(nameof(value));
-                }
-            }
+            set => this.status = value.IsValid ? value : throw new ArgumentException(nameof(value));
         }
 
         public ActivitySpanId ParentSpanId => this.Activity.ParentSpanId;
@@ -193,92 +179,83 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public void UpdateName(string name)
         {
+            if (this.hasEnded)
+            {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("UpdateName");
+                return;
+            }
+
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
         }
 
         /// <inheritdoc/>
         public void SetAttribute(KeyValuePair<string, object> keyValuePair)
         {
-            if (keyValuePair.Key == null || keyValuePair.Value == null)
+            if (keyValuePair.Key == null)
             {
-                throw new ArgumentNullException(nameof(keyValuePair));
+                throw new ArgumentNullException(nameof(keyValuePair.Key));
             }
 
-            if (!this.IsRecording || this.hasEnded)
+            if (keyValuePair.Value == null)
+            {
+                throw new ArgumentNullException(nameof(keyValuePair.Value));
+            }
+
+            if (!this.IsRecording)
             {
                 return;
             }
 
-            lock (this.@lock)
+            if (this.hasEnded)
+            {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("SetAttribute");
+                return;
+            }
+
+            lock (this.lck)
             {
                 if (this.attributes == null)
                 {
-                    this.attributes = new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
+                    this.attributes =
+                        new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.AddEvent(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
+                this.attributes.Add(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
             }
         }
 
         /// <inheritdoc/>
         public void AddEvent(string name)
         {
-            if (name == null)
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
-
-            if (!this.IsRecording || this.hasEnded)
+            if (!this.IsRecording)
             {
                 return;
             }
 
-            lock (this.@lock)
+            if (this.hasEnded)
             {
-                if (this.events == null)
-                {
-                    this.events =
-                        new EvictingQueue<Event>(this.tracerConfiguration.MaxNumberOfEvents);
-                }
-
-                this.events.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow()));
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("AddEvent");
+                return;
             }
+
+            this.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow()));
         }
 
         /// <inheritdoc/>
         public void AddEvent(string name, IDictionary<string, object> eventAttributes)
         {
-            if (name == null)
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
-
-            if (eventAttributes == null)
-            {
-                throw new ArgumentNullException(nameof(eventAttributes));
-            }
-
-            if (!this.IsRecording || this.hasEnded)
+            if (!this.IsRecording)
             {
                 return;
             }
 
-            lock (this.@lock)
+            if (this.hasEnded)
             {
-                if (this.hasEnded)
-                {
-                    // logger.log(Level.FINE, "Calling AddEvent() on an ended Span.");
-                    return;
-                }
-
-                if (this.events == null)
-                {
-                    this.events =
-                        new EvictingQueue<Event>(this.tracerConfiguration.MaxNumberOfEvents);
-                }
-
-                this.events.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow(), eventAttributes));
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("AddEvent");
+                return;
             }
+
+            this.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow(), eventAttributes));
         }
 
         /// <inheritdoc/>
@@ -294,21 +271,21 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            lock (this.@lock)
+            if (this.hasEnded)
             {
-                if (this.hasEnded)
-                {
-                    // logger.log(Level.FINE, "Calling AddEvent() on an ended Span.");
-                    return;
-                }
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("AddEvent");
+                return;
+            }
 
+            lock (this.lck)
+            {
                 if (this.events == null)
                 {
                     this.events =
                         new EvictingQueue<Event>(this.tracerConfiguration.MaxNumberOfEvents);
                 }
 
-                this.events.AddEvent(addEvent);
+                this.events.Add(addEvent);
             }
         }
 
@@ -322,6 +299,7 @@ namespace OpenTelemetry.Trace
         {
             if (this.hasEnded)
             {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("End");
                 return;
             }
 
@@ -344,16 +322,6 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void SetAttribute(string key, string value)
         {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
             if (!this.IsRecording)
             {
                 return;
@@ -365,11 +333,6 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void SetAttribute(string key, long value)
         {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
             if (!this.IsRecording)
             {
                 return;
@@ -381,11 +344,6 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void SetAttribute(string key, double value)
         {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
             if (!this.IsRecording)
             {
                 return;
@@ -397,11 +355,6 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public void SetAttribute(string key, bool value)
         {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
             if (!this.IsRecording)
             {
                 return;
