@@ -54,7 +54,7 @@ namespace OpenTelemetry.Trace
             SpanProcessor spanProcessor,
             Resource libraryResource)
         : this(name, parentSpanContext, activityAndTracestate, ownsActivity, spanKind, startTimestamp,
-            linksGetter?.Invoke() ?? Array.Empty<Link>(), tracerConfiguration, spanProcessor, libraryResource)
+            linksGetter?.Invoke(), tracerConfiguration, spanProcessor, libraryResource)
         {
         }
 
