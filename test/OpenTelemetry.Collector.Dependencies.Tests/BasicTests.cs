@@ -58,8 +58,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollectorInjectsHeadersAsync()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
-            var tracer = TracerFactory.Create(b => b.SetProcessor(_ => spanProcessor.Object))
+            var spanProcessor = new Mock<SpanProcessor>();
+            var tracer = TracerFactory.Create(b => b.AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
             var request = new HttpRequestMessage
@@ -100,10 +100,10 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollector_AddViaFactory_HttpCollector_CollectsSpans()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             using (TracerFactory.Create(b => b
-                .SetProcessor(_ => spanProcessor.Object)
+                .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
                 .AddCollector(t => new HttpClientCollector(t))))
             {
                 using (var c = new HttpClient())
@@ -111,17 +111,19 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     await c.GetAsync(url);
                 }
             }
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+
+            Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnStart"));
+            Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnEnd"));
             Assert.IsType<Span>(spanProcessor.Invocations[1].Arguments[0]);
         }
 
         [Fact]
         public async Task HttpDependenciesCollector_AddViaFactory_DependencyCollector_CollectsSpans()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             using (TracerFactory.Create(b => b
-                .SetProcessor(_ => spanProcessor.Object)
+                .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
                 .AddDependencyCollector()))
             {
                 using (var c = new HttpClient())
@@ -129,16 +131,19 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     await c.GetAsync(url);
                 }
             }
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+
+
+            Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnStart"));
+            Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnEnd"));
             Assert.IsType<Span>(spanProcessor.Invocations[1].Arguments[0]);
         }
 
         [Fact]
         public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
             var tracer = TracerFactory.Create(b => b
-                    .SetProcessor(_ => spanProcessor.Object))
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
             var request = new HttpRequestMessage
@@ -161,10 +166,10 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollectorFiltersOutRequests()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             var tracer = TracerFactory.Create(b => b
-                    .SetProcessor(_ => spanProcessor.Object))
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
             var options = new HttpClientCollectorOptions((activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
@@ -184,10 +189,10 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollectorFiltersOutRequestsToExporterEndpoints()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             var tracer = TracerFactory.Create(b => b
-                    .SetProcessor(_ => spanProcessor.Object))
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
             var options = new HttpClientCollectorOptions();

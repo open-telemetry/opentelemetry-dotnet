@@ -86,7 +86,12 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
                 public override object Fetch(object obj)
                 {
-                    return this.propertyFetch((TObject)obj);
+                    if (obj is TObject o)
+                    {
+                        return this.propertyFetch(o);
+                    }
+
+                    return null;
                 }
             }
         }

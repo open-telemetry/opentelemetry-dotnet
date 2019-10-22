@@ -25,7 +25,6 @@ namespace OpenTelemetry.Trace.Test
 {
     public class CurrentSpanUtilsTest: IDisposable
     {
-        private readonly SpanProcessor spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
         private readonly ITracer tracer;
 
         public CurrentSpanUtilsTest()
@@ -33,10 +32,7 @@ namespace OpenTelemetry.Trace.Test
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
 
-            tracer = TracerFactory.Create(b => b
-                    .SetProcessor(_ => spanProcessor)
-                    .SetTracerOptions(new TracerConfiguration()))
-                .GetTracer(null);
+            tracer = TracerFactory.Create(b => { }).GetTracer(null);
         }
 
         [Fact]

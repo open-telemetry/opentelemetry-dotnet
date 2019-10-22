@@ -56,14 +56,14 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         [Fact]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
                 services.AddSingleton<TracerFactory>(_ =>
                     TracerFactory.Create(b => b
                         .SetSampler(Samplers.AlwaysSample)
-                        .SetProcessor(e => spanProcessor.Object)
+                        .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                         .AddRequestCollector()));
             }
             
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         [Fact]
         public async Task SuccessfulTemplateControllerCallUsesParentContext()
         {
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                             TracerFactory.Create(b => b
                                 .SetSampler(Samplers.AlwaysSample)
                                 .SetTextFormat(tf.Object)
-                                .SetProcessor(e => spanProcessor.Object)
+                                .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                                 .AddRequestCollector()));
                     }))
                 .CreateClient())
@@ -154,14 +154,14 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 return true;
             }
 
-            var spanProcessor = new Mock<SpanProcessor>(new NoopSpanExporter());
+            var spanProcessor = new Mock<SpanProcessor>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
                 services.AddSingleton<TracerFactory>(_ =>
                     TracerFactory.Create(b => b
                         .SetSampler(Samplers.AlwaysSample)
-                        .SetProcessor(e => spanProcessor.Object)
+                        .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                         .AddRequestCollector(o => o.EventFilter = Filter)));
             }
 

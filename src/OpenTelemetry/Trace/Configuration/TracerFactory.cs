@@ -13,11 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace.Export.Internal;
 using OpenTelemetry.Trace.Sampler;
 
 namespace OpenTelemetry.Trace.Configuration
@@ -26,11 +30,10 @@ namespace OpenTelemetry.Trace.Configuration
     {
         private readonly object lck = new object();
         private readonly Dictionary<TracerRegistryKey, ITracer> tracerRegistry = new Dictionary<TracerRegistryKey, ITracer>();
-        private readonly List<IDisposable> disposables = new List<IDisposable>();
+        private readonly List<object> collectors = new List<object>();
 
         private readonly ISampler sampler;
         private readonly TracerConfiguration configurationOptions;
-        private readonly SpanExporter exporter;
         private readonly SpanProcessor spanProcessor;
         private readonly IBinaryFormat binaryFormat;
         private readonly ITextFormat textFormat;
@@ -45,12 +48,30 @@ namespace OpenTelemetry.Trace.Configuration
             this.configurationOptions =
                 builder.TracerConfigurationOptions ?? new TracerConfiguration(this.sampler);
 
-            // TODO log warning (or throw?) if there is no exporter
-            this.exporter = builder.SpanExporter ?? new NoopSpanExporter();
+            if (builder.ProcessingPipelines == null || !builder.ProcessingPipelines.Any())
+            {
+                // if there are no pipelines are configured, use noop processor
+                this.spanProcessor = new NoopSpanProcessor();
+            }
+            else if (builder.ProcessingPipelines.Count == 1)
+            {
+                // if there is only one pipeline - use it's outer processor as a 
+                // single processor on the tracer.
+                var processorFactory = builder.ProcessingPipelines[0];
+                this.spanProcessor = processorFactory.Build();
+            }
+            else
+            {
+                // if there are more pipelines, use processor that will broadcast to all pipelines
+                var processors = new SpanProcessor[builder.ProcessingPipelines.Count];
 
-            this.spanProcessor = builder.ProcessorFactory != null ? 
-                builder.ProcessorFactory(this.exporter) :
-                new BatchingSpanProcessor(this.exporter);
+                for (int i = 0; i < builder.ProcessingPipelines.Count; i++)
+                {
+                    processors[i] = builder.ProcessingPipelines[i].Build();
+                }
+
+                this.spanProcessor = new BroadcastProcessor(processors);
+            }
 
             this.binaryFormat = builder.BinaryFormat ?? new BinaryFormat();
             this.textFormat = builder.TextFormat ?? new TraceContextFormat();
@@ -63,6 +84,10 @@ namespace OpenTelemetry.Trace.Configuration
                 Resource.Empty);
         }
 
+        /// <summary>
+        /// Creates tracer factory.
+        /// </summary>
+        /// <param name="configure">Function that configures tracer factory.</param>
         public static TracerFactory Create(Action<TracerBuilder> configure)
         {
             if (configure == null)
@@ -79,12 +104,7 @@ namespace OpenTelemetry.Trace.Configuration
                 foreach (var collector in builder.CollectorFactories)
                 {
                     var tracer = factory.GetTracer(collector.Name, collector.Version);
-
-                    var collectorInstance = collector.Factory(tracer);
-                    if (collectorInstance is IDisposable disposableCollector)
-                    {
-                        factory.disposables.Add(disposableCollector);
-                    }
+                    factory.collectors.Add(collector.Factory(tracer));
                 }
             }
 
@@ -118,14 +138,19 @@ namespace OpenTelemetry.Trace.Configuration
 
         public void Dispose()
         {
+            foreach (var item in this.collectors)
+            {
+                if (item is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+
+            this.collectors.Clear();
+
             if (this.spanProcessor is IDisposable disposableProcessor)
             {
                 disposableProcessor.Dispose();
-            }
-
-            foreach (var disposable in this.disposables)
-            {
-                disposable.Dispose();
             }
         }
 
@@ -139,7 +164,7 @@ namespace OpenTelemetry.Trace.Configuration
 
             return labels;
         }
-        
+
         private readonly struct TracerRegistryKey
         {
             private readonly string name;

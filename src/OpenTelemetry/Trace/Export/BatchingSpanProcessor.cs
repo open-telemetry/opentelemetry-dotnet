@@ -36,6 +36,7 @@ namespace OpenTelemetry.Trace.Export
         private readonly int maxExportBatchSize;
         private readonly TimeSpan scheduleDelay;
         private readonly Task worker;
+        private readonly SpanExporter exporter;
         private CancellationTokenSource cts;
         private volatile int currentQueueSize;
         private bool stopping = false;
@@ -57,6 +58,7 @@ namespace OpenTelemetry.Trace.Export
         /// <param name="exporter">Exporter instance.</param>
         public BatchingSpanProcessor(SpanExporter exporter) : this(exporter, DefaultMaxQueueSize, DefaultScheduleDelay, DefaultMaxExportBatchSize)
         {
+            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
         /// <summary>
@@ -66,7 +68,7 @@ namespace OpenTelemetry.Trace.Export
         /// <param name="maxQueueSize">Maximum queue size. After the size is reached spans are dropped by processor.</param>
         /// <param name="scheduleDelay">The delay between two consecutive exports.</param>
         /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize.</param>
-        public BatchingSpanProcessor(SpanExporter exporter, int maxQueueSize, TimeSpan scheduleDelay, int maxExportBatchSize) : base(exporter)
+        public BatchingSpanProcessor(SpanExporter exporter, int maxQueueSize, TimeSpan scheduleDelay, int maxExportBatchSize)
         {
             if (maxQueueSize <= 0)
             {
@@ -78,6 +80,7 @@ namespace OpenTelemetry.Trace.Export
                 throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize));
             }
 
+            this.exporter = exporter;
             this.maxQueueSize = maxQueueSize;
             this.scheduleDelay = scheduleDelay;
             this.maxExportBatchSize = maxExportBatchSize;
@@ -88,7 +91,7 @@ namespace OpenTelemetry.Trace.Export
             // worker task that will last for lifetime of processor.
             // No need to specify long running - it is useless if any async calls are made internally.
             // Threads are also useless as exporter tasks run in thread pool threads.
-            this.worker = Task.Run(() => this.Worker(this.cts.Token));
+            this.worker = Task.Factory.StartNew(s => this.Worker((CancellationToken)s), this.cts.Token);
         }
 
         public override void OnStart(Span span)
@@ -177,7 +180,7 @@ namespace OpenTelemetry.Trace.Export
                     batch.Add(nextSpan);
                 }
 
-                var result = await this.Exporter.ExportAsync(batch, cancellationToken).ConfigureAwait(false);
+                var result = await this.exporter.ExportAsync(batch, cancellationToken).ConfigureAwait(false);
                 if (result != SpanExporter.ExportResult.Success)
                 {
                     OpenTelemetrySdkEventSource.Log.ExporterErrorResult(result);
@@ -189,7 +192,7 @@ namespace OpenTelemetry.Trace.Export
             }
             catch (Exception ex)
             {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(ex);
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException("OnStart", ex);
             }
         }
 
