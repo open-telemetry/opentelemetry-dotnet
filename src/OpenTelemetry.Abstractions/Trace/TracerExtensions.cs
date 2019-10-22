@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Abstractions.Utils;
 
@@ -29,7 +30,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartRootSpan(this ITracer tracer, string operationName)
         {
-            return tracer.StartRootSpan(operationName, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+            return tracer.StartRootSpan(operationName, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -41,7 +42,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartRootSpan(this ITracer tracer, string operationName, SpanKind kind)
         {
-            return tracer.StartRootSpan(operationName, kind, PreciseTimestamp.GetUtcNow(), null);
+            return tracer.StartRootSpan(operationName, kind, PreciseTimestamp.GetUtcNow(), null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -54,7 +55,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartRootSpan(this ITracer tracer, string operationName, SpanKind kind, DateTimeOffset startTimestamp)
         {
-            return tracer.StartRootSpan(operationName, kind, startTimestamp, null);
+            return tracer.StartRootSpan(operationName, kind, startTimestamp, null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -65,7 +66,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpan(this ITracer tracer, string operationName)
         {
-            return tracer.StartSpan(operationName, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+            return tracer.StartSpan(operationName, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -77,7 +78,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpan(this ITracer tracer, string operationName, SpanKind kind)
         {
-            return tracer.StartSpan(operationName, kind, PreciseTimestamp.GetUtcNow(), null);
+            return tracer.StartSpan(operationName, kind, PreciseTimestamp.GetUtcNow(), null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -90,7 +91,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpan(this ITracer tracer, string operationName, SpanKind kind, DateTimeOffset startTimestamp)
         {
-            return tracer.StartSpan(operationName, kind, startTimestamp, null);
+            return tracer.StartSpan(operationName, kind, startTimestamp, null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -102,7 +103,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpan(this ITracer tracer, string operationName, ISpan parent)
         {
-            return tracer.StartSpan(operationName, parent, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+            return tracer.StartSpan(operationName, parent, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -115,7 +116,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpan(this ITracer tracer, string operationName, ISpan parent, SpanKind kind)
         {
-            return tracer.StartSpan(operationName, parent, kind, PreciseTimestamp.GetUtcNow(), null);
+            return tracer.StartSpan(operationName, parent, kind, PreciseTimestamp.GetUtcNow(), null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -129,7 +130,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpan(this ITracer tracer, string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp)
         {
-            return tracer.StartSpan(operationName, parent, kind, startTimestamp, null);
+            return tracer.StartSpan(operationName, parent, kind, startTimestamp, null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -141,7 +142,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpan(this ITracer tracer, string operationName, in SpanContext parent)
         {
-            return tracer.StartSpan(operationName, parent, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null);
+            return tracer.StartSpan(operationName, parent, SpanKind.Internal, PreciseTimestamp.GetUtcNow(), null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -154,7 +155,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpan(this ITracer tracer, string operationName, in SpanContext parent, SpanKind kind)
         {
-            return tracer.StartSpan(operationName, parent, kind, PreciseTimestamp.GetUtcNow(), null);
+            return tracer.StartSpan(operationName, parent, kind, PreciseTimestamp.GetUtcNow(), null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -168,7 +169,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpan(this ITracer tracer, string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp)
         {
-            return tracer.StartSpan(operationName, parent, kind, startTimestamp, null);
+            return tracer.StartSpan(operationName, parent, kind, startTimestamp, null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -180,7 +181,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpanFromActivity(this ITracer tracer, string operationName, Activity activity)
         {
-            return tracer.StartSpanFromActivity(operationName, activity, SpanKind.Internal, null);
+            return tracer.StartSpanFromActivity(operationName, activity, SpanKind.Internal, null as Func<IEnumerable<Link>>);
         }
 
         /// <summary>
@@ -193,7 +194,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpanFromActivity(this ITracer tracer, string operationName, Activity activity, SpanKind kind)
         {
-            return tracer.StartSpanFromActivity(operationName, activity, kind, null);
+            return tracer.StartSpanFromActivity(operationName, activity, kind, null as Func<IEnumerable<Link>>);
         }
     }
 }

@@ -67,7 +67,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000, jaegerSpan.Duration);
+            Assert.Equal((long)((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000), jaegerSpan.Duration);
 
             var tags = jaegerSpan.JaegerTags.ToArray();
             var tag = tags[0];
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000, jaegerSpan.Duration);
+            Assert.Equal((long)((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000), jaegerSpan.Duration);
 
             Assert.Empty(jaegerSpan.JaegerTags);
 
@@ -312,9 +312,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("Event2", eventField.VStr);
         }
 
-        internal Span CreateTestSpan(bool setAttributes = true,
-    bool addEvents = true,
-    bool addLinks = true)
+        internal Span CreateTestSpan(
+            bool setAttributes = true,
+            bool addEvents = true,
+            bool addLinks = true)
         {
             var startTimestamp = DateTime.UtcNow;
             var endTimestamp = startTimestamp.AddSeconds(60);
@@ -353,18 +354,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            var link = new Link(new SpanContext(
-                    traceId,
-                    linkedSpanId,
-                    ActivityTraceFlags.Recorded));
-
-            var span = (Span)tracer
-                .StartSpan("Name", new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded), SpanKind.Client, startTimestamp);
-
+            Func<IEnumerable<Link>> linkGetter = null;
             if (addLinks)
             {
-                span.AddLink(link);
+                linkGetter = () => new [] { new Link(new SpanContext(
+                    traceId,
+                    linkedSpanId,
+                    ActivityTraceFlags.Recorded)),
+                };
             }
+
+            var span = (Span)tracer
+                .StartSpan("Name", new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded), SpanKind.Client, startTimestamp.Date, linkGetter);
 
             if (setAttributes)
             {

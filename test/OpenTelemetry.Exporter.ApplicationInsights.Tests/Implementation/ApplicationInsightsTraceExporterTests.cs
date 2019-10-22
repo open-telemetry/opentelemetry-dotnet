@@ -1321,28 +1321,28 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var status, out var kind, out var endTimestamp);
             name = "spanName";
             kind = SpanKind.Client;
-            var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
-                tracestate, kind, status);
-            span.AddLink(
-                    new Link(
-                        new SpanContext(
-                            ActivityTraceId.CreateFromBytes(link0TraceIdBytes),
-                            ActivitySpanId.CreateFromBytes(link0SpanIdBytes),
-                            ActivityTraceFlags.None)));
 
-            span.AddLink(
+            var parentLinks = new[]
+            {
+                new Link(
+                    new SpanContext(
+                        ActivityTraceId.CreateFromBytes(link0TraceIdBytes),
+                        ActivitySpanId.CreateFromBytes(link0SpanIdBytes),
+                        ActivityTraceFlags.None)),
                 new Link(
                     new SpanContext(
                         ActivityTraceId.CreateFromBytes(link1TraceIdBytes),
                         ActivitySpanId.CreateFromBytes(link1SpanIdBytes),
-                        ActivityTraceFlags.Recorded)));
-
-            span.AddLink(
+                        ActivityTraceFlags.Recorded)),
                 new Link(
                     new SpanContext(
                         ActivityTraceId.CreateFromBytes(link2TraceIdBytes),
                         ActivitySpanId.CreateFromBytes(link2SpanIdBytes),
-                        ActivityTraceFlags.None)));
+                        ActivityTraceFlags.None)),
+            };
+
+            var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
+                tracestate, kind, status, () => parentLinks);
 
             var sentItems = ConvertSpan(span);
 
@@ -1371,20 +1371,19 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var status, out var kind, out var endTimestamp);
             name = "spanName";
             kind = SpanKind.Client;
-            var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
-                tracestate, kind, status);
 
-            span.AddLink(new Link(
-                        new SpanContext(
-                            ActivityTraceId.CreateFromBytes(GenerateRandomId(16).Item2),
-                            ActivitySpanId.CreateFromBytes(GenerateRandomId(8).Item2),
-                            ActivityTraceFlags.None),
-                        new Dictionary<string, object>()
-                        {
-                            { "some.str.attribute", "foo" },
-                            { "some.int.attribute", 1 },
-                            { "some.bool.attribute", true },
-                        }));
+            var parentLinks = new Link(
+                new SpanContext(
+                    ActivityTraceId.CreateFromBytes(GenerateRandomId(16).Item2),
+                    ActivitySpanId.CreateFromBytes(GenerateRandomId(8).Item2),
+                    ActivityTraceFlags.None),
+                new Dictionary<string, object>()
+                {
+                    {"some.str.attribute", "foo"}, {"some.int.attribute", 1}, {"some.bool.attribute", true},
+                });
+
+            var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
+                tracestate, kind, status, () => new [] {parentLinks});
 
             var sentItems = ConvertSpan(span);
 
@@ -1415,20 +1414,22 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var status, out var kind, out var endTimestamp);
             name = "spanName";
             kind = SpanKind.Server;
+
+            var parentLinks = new[]
+            {
+                new Link(
+                    new SpanContext(ActivityTraceId.CreateFromBytes(link0TraceIdBytes),
+                        ActivitySpanId.CreateFromBytes(link0SpanIdBytes), ActivityTraceFlags.None)),
+                new Link(
+                    new SpanContext(ActivityTraceId.CreateFromBytes(link1TraceIdBytes),
+                        ActivitySpanId.CreateFromBytes(link1SpanIdBytes), ActivityTraceFlags.None)),
+                new Link(
+                    new SpanContext(ActivityTraceId.CreateFromBytes(link2TraceIdBytes),
+                        ActivitySpanId.CreateFromBytes(link2SpanIdBytes), ActivityTraceFlags.None)),
+            };
+
             var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
-                tracestate, kind, status);
-
-            span.AddLink(new Link(
-                new SpanContext(ActivityTraceId.CreateFromBytes(link0TraceIdBytes),
-                    ActivitySpanId.CreateFromBytes(link0SpanIdBytes), ActivityTraceFlags.None)));
-
-            span.AddLink(new Link(
-                new SpanContext(ActivityTraceId.CreateFromBytes(link1TraceIdBytes),
-                    ActivitySpanId.CreateFromBytes(link1SpanIdBytes), ActivityTraceFlags.None)));
-
-            span.AddLink(new Link(
-                new SpanContext(ActivityTraceId.CreateFromBytes(link2TraceIdBytes),
-                    ActivitySpanId.CreateFromBytes(link2SpanIdBytes), ActivityTraceFlags.None)));
+                tracestate, kind, status, () => parentLinks);
 
             var sentItems = ConvertSpan(span);
 
@@ -1457,20 +1458,22 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var startTimestamp, out var attributes, out var events, out var links, out var status, out var kind, out var endTimestamp);
             name = "spanName";
             kind = SpanKind.Server;
-            var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
-                tracestate, kind, status);
 
-            span.AddLink(new Link(
-                        new SpanContext(
-                            ActivityTraceId.CreateFromBytes(GenerateRandomId(16).Item2),
-                            ActivitySpanId.CreateFromBytes(GenerateRandomId(8).Item2),
-                            ActivityTraceFlags.None),
-                        new Dictionary<string, object>()
-                        {
-                            { "some.str.attribute", "foo" },
-                            { "some.int.attribute", 1 },
-                            { "some.bool.attribute", true },
-                        }));
+            var parentLinks = new[]
+            {
+                new Link(
+                    new SpanContext(
+                        ActivityTraceId.CreateFromBytes(GenerateRandomId(16).Item2),
+                        ActivitySpanId.CreateFromBytes(GenerateRandomId(8).Item2),
+                        ActivityTraceFlags.None),
+                    new Dictionary<string, object>()
+                    {
+                        {"some.str.attribute", "foo"}, {"some.int.attribute", 1}, {"some.bool.attribute", true},
+                    }),
+            };
+
+            var span = CreateTestSpan(name, startTimestamp, traceId, parentSpanId, traceOptions,
+                tracestate, kind, status, () => parentLinks);
 
             var sentItems = ConvertSpan(span);
 
@@ -1642,11 +1645,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             ActivityTraceFlags traceOptions,
             List<KeyValuePair<string, string>> tracestate,
             SpanKind kind,
-            Status status)
+            Status status,
+            Func<IEnumerable<Link>> linkGetter = null)
         {
             var span = parentSpanId == default ? 
                 tracer.StartRootSpan(name, kind, startTimestamp) :
-                tracer.StartSpan(name, new SpanContext(traceId, parentSpanId, traceOptions, false, tracestate), kind, startTimestamp);
+                tracer.StartSpan(name, new SpanContext(traceId, parentSpanId, traceOptions, false, tracestate), kind, startTimestamp, linkGetter);
 
             if (status.IsValid)
             {

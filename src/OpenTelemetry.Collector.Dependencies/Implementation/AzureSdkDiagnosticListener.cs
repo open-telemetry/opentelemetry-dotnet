@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using OpenTelemetry.Collector.Dependencies.Implementation;
 using OpenTelemetry.Trace;
 
@@ -61,17 +62,23 @@ namespace OpenTelemetry.Collector.Dependencies
                 }
             }
 
-            List<Link> links = null;
+            List<Link> parentLinks = null;
             if (LinksPropertyFetcher.Fetch(valueValue) is IEnumerable<Activity> activityLinks)
             {
-                links = new List<Link>();
-                foreach (var link in activityLinks)
+                if (activityLinks.Any())
                 {
-                    links.Add(new Link(new SpanContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
+                    parentLinks = new List<Link>();
+                    foreach (var link in activityLinks)
+                    {
+                        if (link != null)
+                        {
+                            parentLinks.Add(new Link(new SpanContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
+                        }
+                    }
                 }
             }
 
-            var span = this.Tracer.StartSpanFromActivity(operationName, Activity.Current, spanKind, links);
+            var span = this.Tracer.StartSpanFromActivity(operationName, Activity.Current, spanKind, parentLinks);
 
             this.Tracer.WithSpan(span);
         }
