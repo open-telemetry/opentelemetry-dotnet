@@ -45,7 +45,7 @@ namespace LoggingTracer.Demo.ConsoleApp
         {
             Logger.Log("*** RunFooWithLoggingExporter ***");
             var exporter = new LoggingExporter();
-            using (var tracerFactory = TracerFactory.Create(builder => builder.SetExporter(exporter)))
+            using (var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(exporter))))
             {
                 await Foo(tracerFactory);
             }
