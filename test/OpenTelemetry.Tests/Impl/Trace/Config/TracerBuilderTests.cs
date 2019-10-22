@@ -33,8 +33,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         public void TracerBuilder_BadArgs()
         {
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetSampler(null));
-            Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetExporter(null));
-            Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetProcessor(null));
+            Assert.Throws<ArgumentNullException>(() => new TracerBuilder().AddProcessorPipeline(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetTracerOptions(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetBinaryFormat(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetTextFormat(null));
@@ -46,8 +45,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         {
             var builder = new TracerBuilder();
             Assert.Null(builder.Sampler);
-            Assert.Null(builder.SpanExporter);
-            Assert.Null(builder.ProcessorFactory);
+            Assert.Null(builder.ProcessingPipelines);
             Assert.Null(builder.BinaryFormat);
             Assert.Null(builder.TextFormat);
             Assert.Null(builder.TracerConfigurationOptions);
@@ -70,13 +68,14 @@ namespace OpenTelemetry.Tests.Impl.Trace
 
             builder
                 .SetSampler(sampler)
-                .SetExporter(exporter)
-                .SetProcessor(e =>
-                {
-                    processorFactoryCalled = true;
-                    Assert.Same(e, exporter);
-                    return new SimpleSpanProcessor(e);
-                })
+                .AddProcessorPipeline(p => p
+                    .SetExporter(exporter)
+                    .SetExportingProcessor(e =>
+                    {
+                        processorFactoryCalled = true;
+                        Assert.Same(e, exporter);
+                        return new SimpleSpanProcessor(e);
+                    }))
                 .SetTracerOptions(options)
                 .SetBinaryFormat(binaryFormat)
                 .SetTextFormat(textFormat)
@@ -87,10 +86,12 @@ namespace OpenTelemetry.Tests.Impl.Trace
                 });
 
             Assert.Same(sampler, builder.Sampler);
-            Assert.Same(exporter, builder.SpanExporter);
 
-            Assert.NotNull(builder.ProcessorFactory);
-            Assert.NotNull(builder.ProcessorFactory.Invoke(builder.SpanExporter));
+            Assert.NotNull(builder.ProcessingPipelines);
+            Assert.Single(builder.ProcessingPipelines);
+            Assert.Same(exporter, builder.ProcessingPipelines[0].Exporter);
+
+            Assert.NotNull(builder.ProcessingPipelines[0].Build());
             Assert.True(processorFactoryCalled);
 
             Assert.Same(options, builder.TracerConfigurationOptions);

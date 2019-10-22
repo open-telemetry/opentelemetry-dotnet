@@ -24,13 +24,6 @@ namespace OpenTelemetry.Trace.Export
     /// </summary>
     public abstract class SpanProcessor
     {
-        protected readonly SpanExporter Exporter;
-
-        protected SpanProcessor(SpanExporter exporter)
-        {
-            this.Exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
-        }
-
         /// <summary>
         /// Span start hook.
         /// </summary>

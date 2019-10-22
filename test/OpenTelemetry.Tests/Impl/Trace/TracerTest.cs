@@ -24,6 +24,8 @@ using OpenTelemetry.Utils;
 using OpenTelemetry.Trace.Sampler;
 using Xunit;
 using System;
+using System.Collections.Generic;
+using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 
@@ -39,18 +41,17 @@ namespace OpenTelemetry.Trace.Test
 
         public TracerTest()
         {
-            spanProcessor = new SimpleSpanProcessor(new NoopSpanExporter());
+            spanProcessor = new SimpleSpanProcessor(new TestExporter(null));
             tracerConfiguration = new TracerConfiguration();
             tracerFactory = TracerFactory.Create(b => b
-                    .SetExporter(new NoopSpanExporter())
-                    .SetProcessor(e => new SimpleSpanProcessor(e)));
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor)));
             tracer = (Tracer)tracerFactory.GetTracer(null);
         }
 
         [Fact]
         public void BadConstructorArgumentsThrow()
         {
-            var noopProc = new SimpleSpanProcessor(new NoopSpanExporter());
+            var noopProc = new SimpleSpanProcessor(new TestExporter(null));
             Assert.Throws<ArgumentNullException>(() => new Tracer(null, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
             Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
@@ -67,22 +68,26 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null));
             Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null as IEnumerable<Link>));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default, null as Func<IEnumerable<Link>>));
 
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpanFromActivity(null, new Activity("foo").Start()));
 
@@ -116,7 +121,7 @@ namespace OpenTelemetry.Trace.Test
         public void CreateSpan_Sampled()
         {
             var span = tracer.StartSpan("foo");
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
         }
 
         [Fact]
@@ -124,11 +129,11 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracer = TracerFactory.Create(b => b
                     .SetSampler(Samplers.NeverSample)
-                    .SetProcessor(_ => spanProcessor))
+                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor)))
                 .GetTracer(null);
 
             var span = tracer.StartSpan("foo");
-            Assert.False(span.IsRecordingEvents);
+            Assert.False(span.IsRecording);
         }
 
         [Fact]
@@ -164,7 +169,7 @@ namespace OpenTelemetry.Trace.Test
             var maxNumberOfAttributes = 8;
             var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
             var tracer = TracerFactory.Create(b => b
-                    .SetProcessor(_ => spanProcessor)
+                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
                     .SetTracerOptions(traceConfig))
                 .GetTracer(null);
 
@@ -215,7 +220,7 @@ namespace OpenTelemetry.Trace.Test
             var maxNumberOfEvents = 8;
             var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, maxNumberOfEvents, 32);
             var tracer = TracerFactory.Create(b => b
-                    .SetProcessor(_ => spanProcessor)
+                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
                     .SetTracerOptions(traceConfig))
                 .GetTracer(null);
 
@@ -253,16 +258,18 @@ namespace OpenTelemetry.Trace.Test
             var maxNumberOfLinks = 8;
             var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, 128, maxNumberOfLinks);
             var tracer = TracerFactory.Create(b => b
-                    .SetProcessor(_ => spanProcessor)
+                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
                     .SetTracerOptions(traceConfig))
                 .GetTracer(null);
 
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var overflowedLinks = new List<Link>();
             var link = new Link(contextLink);
             for (var i = 0; i < 2 * maxNumberOfLinks; i++)
             {
-                span.AddLink(link);
+                overflowedLinks.Add(link);
             }
+
+            var span = (Span)tracer.StartSpan(SpanName, SpanKind.Client, DateTimeOffset.Now, () => overflowedLinks);
 
             Assert.Equal(maxNumberOfLinks, span.Links.Count());
             foreach (var actualLink in span.Links)
@@ -285,7 +292,7 @@ namespace OpenTelemetry.Trace.Test
             var maxNumberOfAttributes = 8;
             var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
             var tracer = TracerFactory.Create(b => b
-                    .SetProcessor(_ => spanProcessor)
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => this.spanProcessor))
                     .SetTracerOptions(traceConfig))
                 .GetTracer(null);
 

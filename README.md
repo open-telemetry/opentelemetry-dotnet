@@ -52,6 +52,7 @@ Myget feeds:
 | Prometheus           | [![MyGet Nightly][OpenTelemetry-exporter-prom-myget-image]][OpenTelemetry-exporter-prom-myget-url]               | [![NuGet release][OpenTelemetry-exporter-prom-nuget-image]][OpenTelemetry-exporter-prom-nuget-url]               |
 | Application Insights | [![MyGet Nightly][OpenTelemetry-exporter-ai-myget-image]][OpenTelemetry-exporter-ai-myget-url]                   | [![NuGet release][OpenTelemetry-exporter-ai-nuget-image]][OpenTelemetry-exporter-ai-nuget-url]                   |
 | Stackdriver          | [![MyGet Nightly][OpenTelemetry-exporter-stackdriver-myget-image]][OpenTelemetry-exporter-stackdriver-myget-url] | [![NuGet release][OpenTelemetry-exporter-stackdriver-nuget-image]][OpenTelemetry-exporter-stackdriver-nuget-url] |
+| Jaeger               | [![MyGet Nightly][OpenTelemetry-exporter-jaeger-myget-image]][OpenTelemetry-exporter-jaeger-myget-url]           | [![NuGet release][OpenTelemetry-exporter-jaeger-nuget-image]][OpenTelemetry-exporter-jaeger-nuget-url]           |
 
 ## OpenTelemetry Tracing QuickStart: collecting data
 
@@ -355,8 +356,8 @@ var jaegerOptions = new JaegerExporterOptions()
     AgentHost = <jaeger server>
 };
 
-using (var tracerFactory = TracerFactory.Create(
-    builder => builder.SetExporter(new JaegerTraceExporter(jaegerOptions))))
+using (var tracerFactory = TracerFactory.Create(builder => builder
+    .AddProcessorPipeline(c => c.SetExporter(new JaegerTraceExporter(jaegerOptions)))))
 {
     var tracer = tracerFactory.GetTracer("jaeger-test");
     var span = tracer
@@ -434,11 +435,38 @@ There is also a constructor for specifying path to the service account credentia
 4. Instantiate a new instance of `StackdriverExporter` with your Google Cloud's ProjectId
 5. See [sample][stackdriver-sample] for example use.
 
+### Advanced configuration
+
+You may want to filter on enrich spans and send them to multiple destinations (e.g. for debugging or telemetry self-diagnostics purposes).
+You may configure multiple processing pipelines for each destination like shown in below example.
+
+In this example
+
+1. First pipeline sends all sampled in spans to Zipkin
+2. Second pipeline sends spans to ApplicationInsights, but filters them first with custom built `FilteringSpanProcessor`
+3. Third pipeline adds custom `DebuggingSpanProcessor` that simply logs all calls to debug output
+
+```csharp
+using (var tracerFactory = TracerFactory.Create(builder => builder
+    .UseZipkin(o =>
+    {
+        o.ServiceName = "test-zipkin";
+        o.Endpoint = new Uri(zipkinUri);
+    })
+    .UseApplicationInsights(
+        o => o.InstrumentationKey = "your-instrumentation-key",
+        p => p.AddProcessor(nextProcessor => new FilteringSpanProcessor(nextProcessor)))
+    .AddProcessorPipeline(pipelineBuilder => pipelineBuilder.AddProcessor(_ => new DebuggingSpanProcessor()))))
+{
+    // ...
+}
+```
+
 #### Traces
 
 ```csharp
-using (var tracerFactory = TracerFactory.Create(
-    builder => builder.SetExporter(new StackdriverTraceExporter("YOUR-GOOGLE-PROJECT-ID"))))
+using (var tracerFactory = TracerFactory.Create(builder => builder
+    .AddProcessorPipeline(c => c.SetExporter(new StackdriverTraceExporter("YOUR-GOOGLE-PROJECT-ID")))))
 {
     var tracer = tracerFactory.GetTracer("stackdriver-test");
     var span = tracer
@@ -512,12 +540,13 @@ class MyExporter : SpanExporter
 }
 ```
 
-Users may configure the exporter similarly to other exporters. You cay also provide additional methods to simplify configuration similarly to `UseZipkin` extension method.
+Users may configure the exporter similarly to other exporters.
+You should also provide additional methods to simplify configuration similarly to `UseZipkin` extension method.
 
 ```csharp
 var exporter = new MyExporter();
 using (var tracerFactory = TracerFactory.Create(
-    builder => builder.SetExporter(new MyExporter())))
+    builder => builder.AddProcessorPipeline(b => b.SetExporter(new MyExporter())))
 {
     // ...
 }
@@ -551,6 +580,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-abs-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Abstractions
 [OpenTelemetry-exporter-zipkin-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Zipkin.svg
 [OpenTelemetry-exporter-zipkin-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Zipkin
+[OpenTelemetry-exporter-jaeger-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Jaeger.svg
+[OpenTelemetry-exporter-jaeger-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Jaeger
 [OpenTelemetry-exporter-prom-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Prometheus.svg
 [OpenTelemetry-exporter-prom-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Prometheus
 [OpenTelemetry-exporter-ai-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.ApplicationInsights.svg
@@ -571,6 +602,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-abs-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Abstractions
 [OpenTelemetry-exporter-zipkin-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Zipkin.svg
 [OpenTelemetry-exporter-zipkin-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.Zipkin
+[OpenTelemetry-exporter-jaeger-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Jaeger.svg
+[OpenTelemetry-exporter-jaeger-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.Jaeger
 [OpenTelemetry-exporter-prom-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Prometheus.svg
 [OpenTelemetry-exporter-prom-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus
 [OpenTelemetry-exporter-ai-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.ApplicationInsights.svg

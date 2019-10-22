@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var tracer = TracerFactory.Create(b => b
                 .SetSampler(Samplers.AlwaysSample)
-                .SetProcessor(_ => spanProcessor)
+                .AddProcessorPipeline(p => p.AddProcessor(e => spanProcessor))
                 .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var span = (Span)tracer.StartSpan(spanName, context);
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var tracer = TracerFactory.Create(b => b
                 .SetSampler(Samplers.NeverSample)
-                .SetProcessor(_ => spanProcessor)
+                .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor))
                 .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
             var span = (Span)tracer.StartSpan(spanName, context);
@@ -63,15 +63,15 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ThrowsOnInvalidArguments()
         {
             Assert.Throws<ArgumentNullException>(() => new BatchingSpanProcessor(null));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new NoopSpanExporter(), 0, TimeSpan.FromSeconds(5), 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new NoopSpanExporter(), 2048, TimeSpan.FromSeconds(5), 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new NoopSpanExporter(), 512, TimeSpan.FromSeconds(5), 513));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new TestExporter(null), 0, TimeSpan.FromSeconds(5), 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new TestExporter(null), 2048, TimeSpan.FromSeconds(5), 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new TestExporter(null), 512, TimeSpan.FromSeconds(5), 513));
         }
 
         [Fact]
         public async Task ShutdownTwice()
         {
-            using (var spanProcessor = new BatchingSpanProcessor(new NoopSpanExporter()))
+            using (var spanProcessor = new BatchingSpanProcessor(new TestExporter(null)))
             {
 
                 await spanProcessor.ShutdownAsync(CancellationToken.None);
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public async Task ShutdownWithHugeScheduleDelay()
         {
             using (var spanProcessor =
-                new BatchingSpanProcessor(new NoopSpanExporter(), 128, TimeSpan.FromMinutes(1), 32))
+                new BatchingSpanProcessor(new TestExporter(null), 128, TimeSpan.FromMinutes(1), 32))
             {
 
                 var sw = Stopwatch.StartNew();
@@ -224,12 +224,13 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ProcessorDoesNotBlockOnExporter()
         {
-            var spanExporter = new TestExporter( _ => Thread.Sleep(500));
-            using (var spanProcessor = new BatchingSpanProcessor(spanExporter, 128, DefaultDelay, 128))
+            var spanExporter = new TestExporter(_ => Thread.Sleep(500));
+            using (var factory = TracerFactory.Create(b => b
+                .AddProcessorPipeline(p => p
+                    .SetExporter(spanExporter)
+                    .SetExportingProcessor(e => new BatchingSpanProcessor(e, 128, DefaultDelay, 128)))))
             {
-                var tracer = TracerFactory.Create(b => b
-                        .SetProcessor(e => spanProcessor))
-                    .GetTracer(null);
+                var tracer = factory.GetTracer(null);
 
                 var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
                 var span = (Span)tracer.StartSpan("foo", context);

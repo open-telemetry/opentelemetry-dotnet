@@ -16,10 +16,12 @@
 using System;
 using System.Collections.Generic;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace.Configuration
 {
+    /// <summary>
+    /// Build Tracers.
+    /// </summary>
     public class TracerBuilder
     {
         internal TracerBuilder()
@@ -30,9 +32,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal ISampler Sampler { get; private set; }
 
-        internal Func<SpanExporter, SpanProcessor> ProcessorFactory { get; private set; }
-
-        internal SpanExporter SpanExporter { get; private set; }
+        internal List<SpanProcessorPipelineBuilder> ProcessingPipelines { get; private set; }
 
         internal IBinaryFormat BinaryFormat { get; private set; }
 
@@ -40,24 +40,43 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal List<CollectorFactory> CollectorFactories { get; private set; }
 
+        /// <summary>
+        /// Configures sampler.
+        /// </summary>
+        /// <param name="sampler">Sampler instance.</param>
         public TracerBuilder SetSampler(ISampler sampler)
         {
             this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             return this;
         }
 
-        public TracerBuilder SetExporter(SpanExporter spanExporter)
+        /// <summary>
+        /// Adds processing and exporting pipeline. Pipelines are executed sequentially in the order they are added.
+        /// </summary>
+        /// <param name="configure">Function that configures pipeline.</param>
+        public TracerBuilder AddProcessorPipeline(Action<SpanProcessorPipelineBuilder> configure)
         {
-            this.SpanExporter = spanExporter ?? throw new ArgumentNullException(nameof(spanExporter));
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            if (this.ProcessingPipelines == null)
+            {
+                this.ProcessingPipelines = new List<SpanProcessorPipelineBuilder>();
+            }
+
+            var pipelineBuilder = new SpanProcessorPipelineBuilder();
+            configure(pipelineBuilder);
+            this.ProcessingPipelines.Add(pipelineBuilder);
             return this;
         }
 
-        public TracerBuilder SetProcessor(Func<SpanExporter, SpanProcessor> processorFactory)
-        {
-            this.ProcessorFactory = processorFactory ?? throw new ArgumentNullException(nameof(processorFactory));
-            return this;
-        }
-
+        /// <summary>
+        /// Adds auto-collectors for spans.
+        /// </summary>
+        /// <typeparam name="TCollector">Type of collector class.</typeparam>
+        /// <param name="collectorFactory">Function that builds collector from <see cref="ITracer"/>.</param>
         public TracerBuilder AddCollector<TCollector>(
             Func<ITracer, TCollector> collectorFactory)
             where TCollector : class
@@ -72,23 +91,39 @@ namespace OpenTelemetry.Trace.Configuration
                 this.CollectorFactories = new List<CollectorFactory>();
             }
 
-            this.CollectorFactories.Add(new CollectorFactory(typeof(TCollector).Name, "semver:" + typeof(TCollector).Assembly.GetName().Version, collectorFactory));
+            this.CollectorFactories.Add(
+                new CollectorFactory(
+                    typeof(TCollector).Name, 
+                    "semver:" + typeof(TCollector).Assembly.GetName().Version,
+                    collectorFactory));
 
             return this;
         }
 
+        /// <summary>
+        /// Configures tracing options.
+        /// </summary>
+        /// <param name="options">Instance of <see cref="TracerConfiguration"/>.</param>
         public TracerBuilder SetTracerOptions(TracerConfiguration options)
         {
             this.TracerConfigurationOptions = options ?? throw new ArgumentNullException(nameof(options));
             return this;
         }
 
+        /// <summary>
+        /// Configures <see cref="ITextFormat"/> on the tracer.
+        /// </summary>
+        /// <param name="textFormat"><see cref="ITextFormat"/> implementation class instance.</param>
         public TracerBuilder SetTextFormat(ITextFormat textFormat)
         {
             this.TextFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
             return this;
         }
 
+        /// <summary>
+        /// Configures <see cref="IBinaryFormat"/> on the tracer.
+        /// </summary>
+        /// <param name="binaryFormat"><see cref="IBinaryFormat"/> implementation class instance.</param>
         public TracerBuilder SetBinaryFormat(IBinaryFormat binaryFormat)
         {
             this.BinaryFormat = binaryFormat ?? throw new ArgumentNullException(nameof(binaryFormat));

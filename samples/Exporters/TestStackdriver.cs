@@ -54,7 +54,7 @@ namespace Samples
                 Stats.ViewManager);
             metricExporter.Start();
 
-            using (var tracerFactory = TracerFactory.Create(builder => builder.SetExporter(spanExporter)))
+            using (var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(spanExporter))))
             {
                 var tracer = tracerFactory.GetTracer("stackdriver-test");
 
