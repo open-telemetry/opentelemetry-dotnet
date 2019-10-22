@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
     <ProjectReference Include="..\LoggingTracer\LoggingTracer.csproj" />
   </ItemGroup>
 
