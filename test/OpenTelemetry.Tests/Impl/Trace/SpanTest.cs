@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace.Test
             Activity.ForceDefaultIdFormat = true;
 
             spanProcessor = spanProcessorMock.Object;
-            tracerFactory = TracerFactory.Create(b => b.SetProcessor(e => spanProcessor));
+            tracerFactory = TracerFactory.Create(b => b.AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor)));
             attributes.Add("MyStringAttributeKey", "MyStringAttributeValue");
             attributes.Add("MyLongAttributeKey", 123L);
             attributes.Add("MyBooleanAttributeKey", false);

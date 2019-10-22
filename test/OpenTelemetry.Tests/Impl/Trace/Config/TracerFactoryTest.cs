@@ -71,12 +71,13 @@ namespace OpenTelemetry.Trace.Test
             TestCollector collector2 = null;
             TestProcessor processor = null;
             var tracerFactory = TracerFactory.Create(b => b
-                .SetExporter(testExporter)
-                .SetProcessor(e =>
-                {
-                    processor = new TestProcessor(e);
-                    return processor;
-                })
+                .AddProcessorPipeline(p => p
+                    .SetExporter(testExporter)
+                    .SetExportingProcessor(e =>
+                    {
+                        processor = new TestProcessor(e);
+                        return processor;
+                    }))
                 .AddCollector(t =>
                 {
                     collector1 = new TestCollector(t);
@@ -121,6 +122,47 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(processor.IsDisposed);
         }
 
+
+        [Fact]
+        public void CreateFactory_BuilderWithMultiplePipelines()
+        {
+            var exporterCalledCount = 0;
+
+            var testExporter = new TestExporter(spans =>
+            {
+                exporterCalledCount++;
+                Assert.Single(spans);
+                Assert.IsType<Span>(spans.Single());
+            });
+
+            var processCalledCount = 0;
+
+            TestProcessor testProcessor1 = null;
+            var testProcessor2 = new TestProcessor(_ => processCalledCount ++);
+            
+            var tracerFactory = TracerFactory.Create(b => b
+                .AddProcessorPipeline(p => p
+                    .SetExporter(testExporter)
+                    .SetExportingProcessor(e =>
+                    {
+                        testProcessor1 = new TestProcessor(e);
+                        return testProcessor1;
+                    }))
+                .AddProcessorPipeline(p => p
+                    .AddProcessor(_ => testProcessor2)));
+
+            var tracer = tracerFactory.GetTracer("my-app");
+            var span = tracer.StartSpan("foo");
+            span.End();
+
+            Assert.Equal(1, exporterCalledCount);
+            Assert.Equal(1, processCalledCount);
+
+            tracerFactory.Dispose();
+            Assert.True(testProcessor1.IsDisposed);
+            Assert.True(testProcessor2.IsDisposed);
+        }
+        
         [Fact]
         public void GetTracer_NoName_NoVersion()
         {
@@ -182,12 +224,20 @@ namespace OpenTelemetry.Trace.Test
         private class TestProcessor : SpanProcessor, IDisposable
         {
             private readonly SpanExporter exporter;
+            private readonly Action<Span> onEnd;
 
             public bool IsDisposed { get; private set; }
+
+            public TestProcessor(Action<Span> onEnd)
+            {
+                this.exporter = null;
+                this.onEnd = onEnd;
+            }
 
             public TestProcessor(SpanExporter exporter)
             {
                 this.exporter = exporter;
+                this.onEnd = null;
             }
 
             public void Dispose()
@@ -201,7 +251,8 @@ namespace OpenTelemetry.Trace.Test
 
             public override void OnEnd(Span span)
             {
-                exporter.ExportAsync(new[] {span}, default);
+                this.onEnd?.Invoke(span);
+                exporter?.ExportAsync(new[] {span}, default);
             }
 
             public override Task ShutdownAsync(CancellationToken cancellationToken)

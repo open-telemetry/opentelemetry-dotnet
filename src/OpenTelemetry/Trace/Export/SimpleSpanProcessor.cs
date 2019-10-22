@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace.Export
             }
             catch (Exception ex)
             {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(ex);
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException("OnEnd", ex);
             }
         }
 
