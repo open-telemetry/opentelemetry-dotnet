@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Diagnostics.Tracing;
 using System.Globalization;
@@ -30,11 +31,11 @@ namespace OpenTelemetry.Internal
         public static OpenTelemetrySdkEventSource Log = new OpenTelemetrySdkEventSource();
 
         [NonEvent]
-        public void SpanProcessorException(Exception ex)
+        public void SpanProcessorException(string evnt, Exception ex)
         {
             if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
-                this.SpanProcessorException(ToInvariantString(ex));
+                this.SpanProcessorException(evnt, ToInvariantString(ex));
             }
         }
 
@@ -56,10 +57,10 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(3, exportResult.ToString());
         }
 
-        [Event(4, Message = "Unknown error in SpanProcessor: '{0}'.", Level = EventLevel.Warning)]
-        public void SpanProcessorException(string ex)
+        [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Warning)]
+        public void SpanProcessorException(string evnt, string ex)
         {
-            this.WriteEvent(4, ex);
+            this.WriteEvent(4, evnt, ex);
         }
 
         [Event(5, Message = "Calling '{0}' on ended span.", Level = EventLevel.Warning)]

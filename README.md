@@ -356,8 +356,8 @@ var jaegerOptions = new JaegerExporterOptions()
     AgentHost = <jaeger server>
 };
 
-using (var tracerFactory = TracerFactory.Create(
-    builder => builder.SetExporter(new JaegerTraceExporter(jaegerOptions))))
+using (var tracerFactory = TracerFactory.Create(builder => builder
+    .AddProcessorPipeline(c => c.SetExporter(new JaegerTraceExporter(jaegerOptions)))))
 {
     var tracer = tracerFactory.GetTracer("jaeger-test");
     var span = tracer
@@ -435,11 +435,38 @@ There is also a constructor for specifying path to the service account credentia
 4. Instantiate a new instance of `StackdriverExporter` with your Google Cloud's ProjectId
 5. See [sample][stackdriver-sample] for example use.
 
+### Advanced configuration
+
+You may want to filter on enrich spans and send them to multiple destinations (e.g. for debugging or telemetry self-diagnostics purposes).
+You may configure multiple processing pipelines for each destination like shown in below example.
+
+In this example
+
+1. First pipeline sends all sampled in spans to Zipkin
+2. Second pipeline sends spans to ApplicationInsights, but filters them first with custom built `FilteringSpanProcessor`
+3. Third pipeline adds custom `DebuggingSpanProcessor` that simply logs all calls to debug output
+
+```csharp
+using (var tracerFactory = TracerFactory.Create(builder => builder
+    .UseZipkin(o =>
+    {
+        o.ServiceName = "test-zipkin";
+        o.Endpoint = new Uri(zipkinUri);
+    })
+    .UseApplicationInsights(
+        o => o.InstrumentationKey = "your-instrumentation-key",
+        p => p.AddProcessor(nextProcessor => new FilteringSpanProcessor(nextProcessor)))
+    .AddProcessorPipeline(pipelineBuilder => pipelineBuilder.AddProcessor(_ => new DebuggingSpanProcessor()))))
+{
+    // ...
+}
+```
+
 #### Traces
 
 ```csharp
-using (var tracerFactory = TracerFactory.Create(
-    builder => builder.SetExporter(new StackdriverTraceExporter("YOUR-GOOGLE-PROJECT-ID"))))
+using (var tracerFactory = TracerFactory.Create(builder => builder
+    .AddProcessorPipeline(c => c.SetExporter(new StackdriverTraceExporter("YOUR-GOOGLE-PROJECT-ID")))))
 {
     var tracer = tracerFactory.GetTracer("stackdriver-test");
     var span = tracer
@@ -513,12 +540,13 @@ class MyExporter : SpanExporter
 }
 ```
 
-Users may configure the exporter similarly to other exporters. You cay also provide additional methods to simplify configuration similarly to `UseZipkin` extension method.
+Users may configure the exporter similarly to other exporters.
+You should also provide additional methods to simplify configuration similarly to `UseZipkin` extension method.
 
 ```csharp
 var exporter = new MyExporter();
 using (var tracerFactory = TracerFactory.Create(
-    builder => builder.SetExporter(new MyExporter())))
+    builder => builder.AddProcessorPipeline(b => b.SetExporter(new MyExporter())))
 {
     // ...
 }
