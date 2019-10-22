@@ -75,7 +75,9 @@ namespace OpenTelemetry.Trace
         {
             this.Name = name;
             this.LibraryResource = libraryResource;
-            this.startTimestamp = startTimestamp;
+
+            this.startTimestamp = startTimestamp == default ? PreciseTimestamp.GetUtcNow() : startTimestamp;
+
             this.tracerConfiguration = tracerConfiguration;
             this.spanProcessor = spanProcessor;
             this.Kind = spanKind;
