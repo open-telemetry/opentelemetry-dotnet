@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using OpenTelemetry.Collector.Dependencies.Implementation;
 using OpenTelemetry.Trace;
 
@@ -64,20 +65,15 @@ namespace OpenTelemetry.Collector.Dependencies
             List<Link> parentLinks = null;
             if (LinksPropertyFetcher.Fetch(valueValue) is IEnumerable<Activity> activityLinks)
             {
-                using (var enumerator = activityLinks.GetEnumerator())
+                if (activityLinks.Any())
                 {
-                    if (enumerator.MoveNext())
+                    parentLinks = new List<Link>();
+                    foreach (var link in activityLinks)
                     {
-                        parentLinks = new List<Link>();
-                        do
+                        if (link != null)
                         {
-                            var link = enumerator.Current;
-                            if (link != null)
-                            {
-                                parentLinks.Add(new Link(new SpanContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
-                            }
+                            parentLinks.Add(new Link(new SpanContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
                         }
-                        while (enumerator.MoveNext());
                     }
                 }
             }
