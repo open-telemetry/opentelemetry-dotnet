@@ -54,7 +54,7 @@ namespace OpenTelemetry.Trace.Test
             BlankSpan.Instance.AddEvent(new Event("MyEvent"));
 
             Assert.False(BlankSpan.Instance.Context.IsValid);
-            Assert.False(BlankSpan.Instance.IsRecordingEvents);
+            Assert.False(BlankSpan.Instance.IsRecording);
             Assert.Equal(Status.Ok, BlankSpan.Instance.Status);
             BlankSpan.Instance.Status = Status.Ok;
             BlankSpan.Instance.End();

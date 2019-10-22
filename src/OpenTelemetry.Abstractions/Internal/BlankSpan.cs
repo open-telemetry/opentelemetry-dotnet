@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
         public SpanContext Context => SpanContext.Blank;
 
         /// <inheritdoc />
-        public bool IsRecordingEvents => false;
+        public bool IsRecording => false;
 
         /// <inheritdoc />
         public Status Status

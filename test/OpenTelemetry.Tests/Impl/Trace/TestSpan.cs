@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace.Test
         }
 
         public SpanContext Context { get; }
-        public bool IsRecordingEvents { get; }
+        public bool IsRecording { get; }
         public Status Status { get; set; }
         public bool HasEnded { get; }
         public void UpdateName(string name)

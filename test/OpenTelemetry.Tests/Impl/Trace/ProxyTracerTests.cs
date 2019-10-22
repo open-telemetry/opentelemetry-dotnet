@@ -139,7 +139,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceOptions);
             Assert.Empty(span.Context.Tracestate);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
 
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal(startTimestamp, span.StartTimestamp);
@@ -166,7 +166,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
             Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
 
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal(startTimestamp, span.StartTimestamp);
@@ -193,7 +193,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal(parentSpanContext.SpanId, span.ParentSpanId);
             Assert.Equal(parentSpanContext.TraceOptions, span.Context.TraceOptions);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
 
             Assert.Equal(SpanKind.Client, span.Kind);
             Assert.Equal(startTimestamp, span.StartTimestamp);
@@ -221,7 +221,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
             Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
 
-            Assert.True(span.IsRecordingEvents);
+            Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal(activity.StartTimeUtc, span.StartTimestamp.DateTime);
             Assert.Equal(activity, span.Activity);
@@ -251,7 +251,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
                 Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
                 Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
 
-                Assert.True(span.IsRecordingEvents);
+                Assert.True(span.IsRecording);
 
                 Assert.Equal(SpanKind.Consumer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
