@@ -62,6 +62,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(4, ex);
         }
 
+        [Event(5, Message = "Calling '{0}' on ended span.", Level = EventLevel.Warning)]
+        public void UnexpectedCallOnEndedSpan(string methodName)
+        {
+            this.WriteEvent(5, methodName);
+        }
+
         /// <summary>
         /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
         /// appropriate for diagnostics tracing.
