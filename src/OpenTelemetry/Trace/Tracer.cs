@@ -83,11 +83,6 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            if (startTimestamp == default)
-            {
-                startTimestamp = PreciseTimestamp.GetUtcNow();
-            }
-
             return Span.CreateRoot(operationName, kind, startTimestamp, linksGetter, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
 
@@ -97,11 +92,6 @@ namespace OpenTelemetry.Trace
             if (operationName == null)
             {
                 throw new ArgumentNullException(nameof(operationName));
-            }
-
-            if (startTimestamp == default)
-            {
-                startTimestamp = PreciseTimestamp.GetUtcNow();
             }
 
             return Span.CreateRoot(operationName, kind, startTimestamp, links, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
@@ -132,11 +122,6 @@ namespace OpenTelemetry.Trace
                 parent = this.CurrentSpan;
             }
 
-            if (startTimestamp == default)
-            {
-                startTimestamp = PreciseTimestamp.GetUtcNow();
-            }
-
             return Span.CreateFromParentSpan(operationName, parent, kind, startTimestamp, linksGetter, this.tracerConfiguration,
                 this.spanProcessor, this.LibraryResource);
         }
@@ -154,11 +139,6 @@ namespace OpenTelemetry.Trace
                 parent = this.CurrentSpan;
             }
 
-            if (startTimestamp == default)
-            {
-                startTimestamp = PreciseTimestamp.GetUtcNow();
-            }
-
             return Span.CreateFromParentSpan(operationName, parent, kind, startTimestamp, links, this.tracerConfiguration,
                 this.spanProcessor, this.LibraryResource);
         }
@@ -169,11 +149,6 @@ namespace OpenTelemetry.Trace
             if (operationName == null)
             {
                 throw new ArgumentNullException(nameof(operationName));
-            }
-
-            if (startTimestamp == default)
-            {
-                startTimestamp = PreciseTimestamp.GetUtcNow();
             }
 
             if (parent != null)
@@ -192,11 +167,6 @@ namespace OpenTelemetry.Trace
             if (operationName == null)
             {
                 throw new ArgumentNullException(nameof(operationName));
-            }
-
-            if (startTimestamp == default)
-            {
-                startTimestamp = PreciseTimestamp.GetUtcNow();
             }
 
             if (parent != null)
