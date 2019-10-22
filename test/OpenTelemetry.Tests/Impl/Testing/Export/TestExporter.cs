@@ -34,6 +34,8 @@ namespace OpenTelemetry.Testing.Export
 
         public Span[] ExportedSpans => spanDataList.ToArray();
 
+        public bool WasShutDown { get; private set; } = false;
+
         public override Task<ExportResult> ExportAsync(IEnumerable<Span> data, CancellationToken cancellationToken)
         {
             this.onExport?.Invoke(data);
@@ -48,11 +50,7 @@ namespace OpenTelemetry.Testing.Export
 
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            while (spanDataList.TryDequeue(out var _))
-            {
-
-            }
-
+            this.WasShutDown = true;
             return Task.CompletedTask;
         }
     }
