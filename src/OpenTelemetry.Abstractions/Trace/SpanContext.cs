@@ -36,13 +36,16 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="traceId">The <see cref="ActivityTraceId"/> to associate with the <see cref="SpanContext"/>.</param>
         /// <param name="spanId">The <see cref="ActivitySpanId"/> to associate with the <see cref="SpanContext"/>.</param>
-        /// <param name="traceOptions">The <see cref="TraceOptions"/> to associate with the <see cref="SpanContext"/>.</param>
+        /// <param name="traceOptions">The <see cref="TraceOptions"/> to
+        /// associate with the <see cref="SpanContext"/>.</param>
+        /// <param name="isRemote">The value indicating whether this <see cref="SpanContext"/> was propagated from the remote parent.</param>
         /// <param name="tracestate">The tracestate to associate with the <see cref="SpanContext"/>.</param>
-        public SpanContext(ActivityTraceId traceId, ActivitySpanId spanId, ActivityTraceFlags traceOptions, IEnumerable<KeyValuePair<string, string>> tracestate = null)
+        public SpanContext(ActivityTraceId traceId, ActivitySpanId spanId, ActivityTraceFlags traceOptions, bool isRemote = false, IEnumerable<KeyValuePair<string, string>> tracestate = null)
         {
             this.TraceId = traceId;
             this.SpanId = spanId;
             this.TraceOptions = traceOptions;
+            this.IsRemote = isRemote;
             this.Tracestate = tracestate ?? Enumerable.Empty<KeyValuePair<string, string>>();
         }
 
@@ -57,9 +60,15 @@ namespace OpenTelemetry.Trace
         public ActivitySpanId SpanId { get; }
 
         /// <summary>
-        /// Gets the <see cref="TraceOptions"/> associated with this <see cref="SpanContext"/>.
+        /// Gets the <see cref="ActivityTraceFlags"/> associated with this <see cref="SpanContext"/>.
         /// </summary>
         public ActivityTraceFlags TraceOptions { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="SpanContext" />
+        /// was propagated from a remote parent.
+        /// </summary>
+        public bool IsRemote { get; }
 
         /// <summary>
         /// Gets a value indicating whether this <see cref="SpanContext"/> is valid.

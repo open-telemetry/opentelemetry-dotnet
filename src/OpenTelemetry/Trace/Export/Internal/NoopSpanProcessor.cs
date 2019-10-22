@@ -1,4 +1,4 @@
-﻿// <copyright file="NoopProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopSpanProcessor.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,20 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 
-namespace Benchmarks.Tracing
+namespace OpenTelemetry.Trace.Export
 {
-    internal class NoopProcessor : SpanProcessor
+    internal sealed class NoopSpanProcessor : SpanProcessor
     {
-        public NoopProcessor()
-        {
-        }
-
         public override void OnStart(Span span)
         {
         }

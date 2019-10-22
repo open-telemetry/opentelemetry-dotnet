@@ -39,8 +39,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             };
 
             var tracer = TracerFactory.Create(b => b
-                    .SetProcessor(e => new SimpleSpanProcessor(e))
-                    .UseApplicationInsights(o => o.TelemetryChannel = channel))
+                    .UseApplicationInsights(
+                        o => o.TelemetryChannel = channel,
+                        p => p.SetExportingProcessor(e => new SimpleSpanProcessor(e))))
                 .GetTracer(null);
 
             tracer.StartSpan("foo").End();

@@ -45,7 +45,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
         public SpanContext Context { get; private set; }
 
-        public bool IsRecordingEvents { get; private set; }
+        public bool IsRecording { get; private set; }
 
         public Status Status { get; set; }
 

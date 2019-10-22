@@ -36,8 +36,9 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             spanExporter = new TestExporter(null);
             tracer = TracerFactory.Create(b => b
-                    .SetExporter(spanExporter)
-                    .SetProcessor(e => new SimpleSpanProcessor(e)))
+                    .AddProcessorPipeline(p => p
+                        .SetExporter(spanExporter)
+                        .SetExportingProcessor(e => new SimpleSpanProcessor(e))))
                 .GetTracer(null);
         }
 
@@ -69,8 +70,9 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             spanExporter = new TestExporter(_ => throw new ArgumentException("123"));
             tracer = TracerFactory.Create(b => b
-                    .SetExporter(spanExporter)
-                    .SetProcessor(e => new SimpleSpanProcessor(e)))
+                    .AddProcessorPipeline(p => p
+                        .SetExporter(spanExporter)
+                        .SetExportingProcessor(e => new SimpleSpanProcessor(e))))
                 .GetTracer(null);
 
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
@@ -85,8 +87,9 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             spanExporter = new TestExporter( async _ => await Task.Delay(500));
             tracer = TracerFactory.Create(b => b
-                    .SetExporter(spanExporter)
-                    .SetProcessor(e => new SimpleSpanProcessor(e)))
+                    .AddProcessorPipeline(p => p
+                        .SetExporter(spanExporter)
+                        .SetExportingProcessor(e => new SimpleSpanProcessor(e))))
                 .GetTracer(null);
 
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);

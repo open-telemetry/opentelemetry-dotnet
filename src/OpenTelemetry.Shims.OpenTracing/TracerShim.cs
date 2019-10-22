@@ -30,8 +30,10 @@ namespace OpenTelemetry.Shims.OpenTracing
             this.ScopeManager = new ScopeManagerShim(this.tracer);
         }
 
+        /// <inheritdoc/>
         public global::OpenTracing.IScopeManager ScopeManager { get; private set; }
 
+        /// <inheritdoc/>
         public global::OpenTracing.ISpan ActiveSpan => this.ScopeManager.Active?.Span;
 
         public static global::OpenTracing.ITracer Create(Trace.ITracer tracer)
@@ -39,11 +41,13 @@ namespace OpenTelemetry.Shims.OpenTracing
             return new TracerShim(tracer);
         }
 
+        /// <inheritdoc/>
         public global::OpenTracing.ISpanBuilder BuildSpan(string operationName)
         {
             return new SpanBuilderShim(this.tracer, operationName);
         }
 
+        /// <inheritdoc/>
         public global::OpenTracing.ISpanContext Extract<TCarrier>(global::OpenTracing.Propagation.IFormat<TCarrier> format, TCarrier carrier)
         {
             if (format is null)
@@ -58,13 +62,11 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             Trace.SpanContext spanContext = null;
 
-            // TODO Add binary support post OpenTracing vNext.
-            if (format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders)
+            if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
-                // We know carrier is of Type ITextMap because we made it in here.
                 var carrierMap = new Dictionary<string, IEnumerable<string>>();
 
-                foreach (var entry in (ITextMap)carrier)
+                foreach (var entry in textMapCarrier)
                 {
                     carrierMap.Add(entry.Key, new[] { entry.Value });
                 }
@@ -81,10 +83,19 @@ namespace OpenTelemetry.Shims.OpenTracing
 
                 spanContext = this.tracer.TextFormat?.Extract(carrierMap, GetCarrierKeyValue);
             }
+            else if (format == BuiltinFormats.Binary && carrier is IBinary binaryCarrier)
+            {
+                var ms = binaryCarrier.Get();
+                if (ms != null)
+                {
+                    spanContext = this.tracer.BinaryFormat?.FromByteArray(ms.ToArray());
+                }
+            }
 
             return (spanContext == null || !spanContext.IsValid) ? null : new SpanContextShim(spanContext);
         }
 
+        /// <inheritdoc/>
         public void Inject<TCarrier>(
             global::OpenTracing.ISpanContext spanContext,
             global::OpenTracing.Propagation.IFormat<TCarrier> format,
@@ -110,11 +121,17 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(carrier));
             }
 
-            // TODO Add binary support post OpenTracing vNext.
-            if (format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders)
+            if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
-                // We know carrier is of Type ITextMap because we made it in here.
-                this.tracer.TextFormat?.Inject(shim.SpanContext, (ITextMap)carrier, (adapter, key, value) => adapter.Set(key, value));
+                this.tracer.TextFormat?.Inject(shim.SpanContext, textMapCarrier, (adapter, key, value) => adapter.Set(key, value));
+            }
+            else if (format == BuiltinFormats.Binary && carrier is IBinary binaryCarrier)
+            {
+                var bytes = this.tracer.BinaryFormat?.ToByteArray(shim.SpanContext);
+                if (bytes != null)
+                {
+                    binaryCarrier.Set(new System.IO.MemoryStream(bytes));
+                }
             }
         }
     }
