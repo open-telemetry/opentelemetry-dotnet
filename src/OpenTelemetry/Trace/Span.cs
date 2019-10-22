@@ -102,7 +102,7 @@ namespace OpenTelemetry.Trace
                     this.links = new List<Link>(this.tracerConfiguration.MaxNumberOfLinks);
 
                     var parentLinks = links.ToList();
-                    if (parentLinks.Count < this.tracerConfiguration.MaxNumberOfLinks)
+                    if (parentLinks.Count <= this.tracerConfiguration.MaxNumberOfLinks)
                     {
                         this.links = parentLinks; // common case - no allocations
                     }
