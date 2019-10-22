@@ -101,9 +101,11 @@ namespace OpenTelemetry.Trace
                 {
                     this.links = new List<Link>(this.tracerConfiguration.MaxNumberOfLinks);
 
-                    foreach (var link in links.Reverse().Take(this.tracerConfiguration.MaxNumberOfLinks))
+                    var parentLinks = links.ToList();
+                    var takeCount = Math.Min(this.tracerConfiguration.MaxNumberOfLinks, parentLinks.Count);
+                    for (int i = parentLinks.Count; i < takeCount; i--)
                     {
-                        this.links.Insert(0, link);
+                        this.links.Add(parentLinks[i]);
                     }
                 }
 
