@@ -36,7 +36,7 @@ namespace LoggingTracer
                 }
             }
 
-            return new LoggingTracer();
+            return new LoggingTracer($"{name}:{version}");
         }
     }
 }

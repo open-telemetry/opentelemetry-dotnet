@@ -31,8 +31,9 @@ namespace LoggingTracer
         /// <summary>
         /// Initializes a new instance of the <see cref="LoggingTracer"/> class.
         /// </summary>
-        internal LoggingTracer()
+        internal LoggingTracer(string prefix)
         {
+            this.prefix = $"Tracer({prefix})";
             Logger.Log("Tracer.ctor()");
         }
 
