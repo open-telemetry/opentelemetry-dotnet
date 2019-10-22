@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace
 
         private EvictingQueue<KeyValuePair<string, object>> attributes;
         private EvictingQueue<Event> events;
-        private EvictingQueue<Link> links;
+        private List<Link> links;
         private Status status;
         private DateTimeOffset endTimestamp;
         private bool hasEnded;
@@ -99,11 +99,11 @@ namespace OpenTelemetry.Trace
 
                 if (links != null)
                 {
-                    this.links = new EvictingQueue<Link>(this.tracerConfiguration.MaxNumberOfLinks);
+                    this.links = new List<Link>(this.tracerConfiguration.MaxNumberOfLinks);
 
-                    foreach (var link in links)
+                    foreach (var link in links.Reverse().Take(this.tracerConfiguration.MaxNumberOfLinks))
                     {
-                        this.links.Add(link);
+                        this.links.Insert(0, link);
                     }
                 }
 
