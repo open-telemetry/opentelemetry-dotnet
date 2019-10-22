@@ -136,6 +136,8 @@ namespace OpenTelemetry.Trace.Export
                     await this.ExportBatchAsync(cancellationToken).ConfigureAwait(false);
                 }
 
+                await this.exporter.ShutdownAsync(cancellationToken);
+
                 // there is no point in waiting for a worker task if cancellation happens
                 // it's dead already or will die on the next iteration on its own
 
