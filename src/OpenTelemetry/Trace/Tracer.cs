@@ -91,6 +91,7 @@ namespace OpenTelemetry.Trace
             return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration, this.spanProcessor, this.LibraryResource, false);
         }
 
+        /// <inheritdoc/>
         public IDisposable StartActiveRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
             if (operationName == null)
@@ -99,17 +100,6 @@ namespace OpenTelemetry.Trace
             }
 
             return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration, this.spanProcessor, this.LibraryResource, true);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, SpanKind kind, SpanCreationOptions options)
-        {
-            return this.StartSpan(operationName, null, kind, options);
-        }
-
-        public IDisposable StartActiveSpan(string operationName, SpanKind kind, SpanCreationOptions options)
-        {
-            return this.StartActiveSpan(operationName, null, kind, options);
         }
 
         /// <inheritdoc/>
@@ -129,6 +119,7 @@ namespace OpenTelemetry.Trace
                 this.spanProcessor, this.LibraryResource, false);
         }
 
+        /// <inheritdoc/>
         public IDisposable StartActiveSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
         {
             if (operationName == null)
@@ -163,6 +154,7 @@ namespace OpenTelemetry.Trace
                 this.spanProcessor, this.LibraryResource, false);
         }
 
+        /// <inheritdoc/>
         public IDisposable StartActiveSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
             if (operationName == null)

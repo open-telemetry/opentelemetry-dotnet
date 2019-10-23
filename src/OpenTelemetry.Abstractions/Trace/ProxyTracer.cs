@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     internal sealed class ProxyTracer : ITracer
     {
-        private static readonly IDisposable NoopScope = new NoopDisposable();
+        internal static readonly IDisposable NoopScope = new NoopDisposable();
         private readonly IBinaryFormat binaryFormat = new BinaryFormat();
         private readonly ITextFormat textFormat = new TraceContextFormat();
 
@@ -66,26 +66,6 @@ namespace OpenTelemetry.Trace
             }
 
             return this.realTracer != null ? this.realTracer.StartActiveRootSpan(operationName, kind, options) : NoopScope;
-        }
-
-        public ISpan StartSpan(string operationName, SpanKind kind, SpanCreationOptions options)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return this.realTracer != null ? this.realTracer.StartSpan(operationName, kind, options) : BlankSpan.Instance;
-        }
-
-        public IDisposable StartActiveSpan(string operationName, SpanKind kind, SpanCreationOptions options)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return this.realTracer != null ? this.realTracer.StartActiveSpan(operationName, kind, options) : NoopScope;
         }
 
         public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)

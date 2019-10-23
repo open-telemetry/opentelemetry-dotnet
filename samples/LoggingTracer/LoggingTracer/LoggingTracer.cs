@@ -60,19 +60,21 @@ namespace LoggingTracer
             return new LoggingSpan(operationName, kind);
         }
 
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, SpanKind kind, SpanCreationOptions options)
+        public IDisposable StartActiveRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
-            Logger.Log($"{this.prefix}.StartSpan({operationName}, {kind}, {options.StartTimestamp:o}, {options.LinksFactory}, {options.Links})");
-            return new LoggingSpan(operationName, kind);
+            return new CurrentSpanUtils.LoggingScope(this.StartRootSpan(operationName, kind, options));
         }
-
 
         /// <inheritdoc/>
         public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
         {
             Logger.Log($"{this.prefix}.StartSpan({operationName}, {parent.GetType().Name}, {kind}, {options.StartTimestamp:o}, {options.LinksFactory}, {options.Links})");
             return new LoggingSpan(operationName, kind);
+        }
+
+        public IDisposable StartActiveSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
+        {
+            return new CurrentSpanUtils.LoggingScope(this.StartSpan(operationName, parent, kind, options));
         }
 
         /// <inheritdoc/>
@@ -82,11 +84,16 @@ namespace LoggingTracer
             return new LoggingSpan(operationName, kind);
         }
 
+        public IDisposable StartActiveSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
+        {
+            return new CurrentSpanUtils.LoggingScope(this.StartSpan(operationName, parent, kind, options));
+        }
+
         /// <inheritdoc/>
-        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public IDisposable StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
             Logger.Log($"{this.prefix}.StartSpanFromActivity({operationName}, {activity.OperationName}, {kind}, {links})");
-            return new LoggingSpan(operationName, kind);
+            return new CurrentSpanUtils.LoggingScope(new LoggingSpan(operationName, kind));
         }
     }
 }

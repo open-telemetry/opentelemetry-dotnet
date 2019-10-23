@@ -59,6 +59,9 @@ namespace Benchmarks
         public ISpan CreateSpan_Active_Sampled() => SpanCreationScenarios.CreateSpan_Active(this.alwaysSampleTracer);
 
         [Benchmark]
+        public ISpan CreateSpan_Active_GetCurrent_Sampled() => SpanCreationScenarios.CreateSpan_Active_GetCurrent(this.alwaysSampleTracer);
+
+        [Benchmark]
         public void CreateSpan_Attributes_NotSampled() => SpanCreationScenarios.CreateSpan_Attributes(this.neverSampleTracer);
 
         [Benchmark(Baseline = true)]

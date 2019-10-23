@@ -321,7 +321,7 @@ namespace OpenTelemetry.Trace
 
             this.hasEnded = true;
             this.endTimestamp = endTimestamp;
-            if (this.OwnsActivity && this.Activity == Activity.Current)
+            if (this.active && this.OwnsActivity && this.Activity == Activity.Current)
             {
                 // TODO log if current is not span activity
                 this.Activity.Stop();
@@ -381,7 +381,7 @@ namespace OpenTelemetry.Trace
 
         public void Dispose()
         {
-            if (this.Activity == Activity.Current && this.active)
+            if (this.active && this.Activity == Activity.Current)
             {
                 ActivitySpanTable.Remove(this.Activity);
             }
@@ -524,7 +524,8 @@ namespace OpenTelemetry.Trace
         {
             if (this.active)
             {
-                throw new InvalidOperationException("Span is already active");
+                OpenTelemetrySdkEventSource.Log.AttemptToActivateActiveSpan(this.Name);
+                return NoopDisposable.Instance;
             }
 
             return new ScopeInSpan(this);
@@ -735,10 +736,7 @@ namespace OpenTelemetry.Trace
                 this.span = span;
                 this.originalActivity = Activity.Current;
 
-                if (span.OwnsActivity)
-                {
-                    Activity.Current = span.Activity;
-                }
+                Activity.Current = span.Activity;
 
                 if (ActivitySpanTable.TryGetValue(span.Activity, out _))
                 {
@@ -759,7 +757,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    // log warning -attempt to stop in wrong context
+                    OpenTelemetrySdkEventSource.Log.AttemptToDisposeScopeWhichIsNotCurrent(this.span.Name);
                 }
             }
         }
