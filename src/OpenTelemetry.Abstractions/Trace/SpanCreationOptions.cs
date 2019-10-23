@@ -19,12 +19,26 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Trace
 {
+    /// <summary>
+    /// Span creation options for advanced scenarios.
+    /// </summary>
     public class SpanCreationOptions
     {
+        /// <summary>
+        /// Gets or sets explicit span start timestamp.
+        /// Use it when span has started in the past and created later.
+        /// </summary>
         public DateTimeOffset StartTimestamp { get; set; }
 
+        /// <summary>
+        /// Gets or sets list of <see cref="Link"/>.
+        /// </summary>
         public IEnumerable<Link> Links { get; set; }
 
+        /// <summary>
+        /// Gets or sets Links factory. Use it to deserialize list of <see cref="Link"/> lazily
+        /// when application configures OpenTelemetry implementation that supports links.
+        /// </summary>
         public Func<IEnumerable<Link>> LinksFactory { get; set; }
     }
 }
