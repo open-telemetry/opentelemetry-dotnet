@@ -18,11 +18,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tags;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
-using OpenTelemetry.Trace.Internal;
-using OpenTelemetry.Utils;
 
 namespace OpenTelemetry.Trace
 {
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace
         public Resource LibraryResource { get; }
 
         /// <inheritdoc/>
-        public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
+        public ISpan CurrentSpan => (ISpan)Span.Current ?? BlankSpan.Instance;
 
         /// <inheritdoc/>
         public IBinaryFormat BinaryFormat { get; }
@@ -72,7 +72,12 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(span));
             }
 
-            return CurrentSpanUtils.WithSpan(span, true);
+            if (span is Span spanImpl)
+            {
+                return spanImpl.Activate();
+            }
+
+            return NoopDisposable.Instance;
         }
 
         /// <inheritdoc/>
@@ -83,13 +88,28 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
+            return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration, this.spanProcessor, this.LibraryResource, false);
+        }
+
+        public IDisposable StartActiveRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration, this.spanProcessor, this.LibraryResource, true);
         }
 
         /// <inheritdoc/>
         public ISpan StartSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
             return this.StartSpan(operationName, null, kind, options);
+        }
+
+        public IDisposable StartActiveSpan(string operationName, SpanKind kind, SpanCreationOptions options)
+        {
+            return this.StartActiveSpan(operationName, null, kind, options);
         }
 
         /// <inheritdoc/>
@@ -106,7 +126,23 @@ namespace OpenTelemetry.Trace
             }
 
             return Span.CreateFromParentSpan(operationName, parent, kind, options, this.tracerConfiguration,
-                this.spanProcessor, this.LibraryResource);
+                this.spanProcessor, this.LibraryResource, false);
+        }
+
+        public IDisposable StartActiveSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (parent == null)
+            {
+                parent = this.CurrentSpan;
+            }
+
+            return Span.CreateFromParentSpan(operationName, parent, kind, options, this.tracerConfiguration,
+                this.spanProcessor, this.LibraryResource, true);
         }
 
         /// <inheritdoc/>
@@ -120,15 +156,32 @@ namespace OpenTelemetry.Trace
             if (parent != null)
             {
                 return Span.CreateFromParentContext(operationName, parent, kind, options, this.tracerConfiguration,
-                    this.spanProcessor, this.LibraryResource);
+                    this.spanProcessor, this.LibraryResource, false);
             }
 
             return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration,
-                this.spanProcessor, this.LibraryResource);
+                this.spanProcessor, this.LibraryResource, false);
+        }
+
+        public IDisposable StartActiveSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
+        {
+            if (operationName == null)
+            {
+                throw new ArgumentNullException(nameof(operationName));
+            }
+
+            if (parent != null)
+            {
+                return Span.CreateFromParentContext(operationName, parent, kind, options, this.tracerConfiguration,
+                    this.spanProcessor, this.LibraryResource, true);
+            }
+
+            return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration,
+                this.spanProcessor, this.LibraryResource, true);
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public IDisposable StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
             if (operationName == null)
             {

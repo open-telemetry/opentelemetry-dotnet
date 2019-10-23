@@ -47,5 +47,13 @@ namespace Benchmarks.Tracing
 
             return span;
         }
+
+        public static ISpan CreateSpan_Active(ITracer tracer)
+        {
+            using (tracer.StartActiveSpan("span"))
+            {
+                return tracer.CurrentSpan;
+            }
+        }
     }
 }

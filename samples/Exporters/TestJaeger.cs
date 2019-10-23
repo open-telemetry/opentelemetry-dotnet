@@ -41,7 +41,7 @@ namespace Samples
                 var tracer = tracerFactory.GetTracer("jaeger-test");
 
                 // Create a scoped span. It will end automatically when using statement ends
-                using (tracer.WithSpan(tracer.StartSpan("Main")))
+                using (tracer.StartActiveSpan("Main"))
                 {
                     tracer.CurrentSpan.SetAttribute("custom-attribute", 55);
                     Console.WriteLine("About to do a busy work");

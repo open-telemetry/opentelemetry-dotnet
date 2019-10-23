@@ -65,9 +65,9 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 return;
             }
 
-            var span = this.Tracer.StartSpanFromActivity(request.RequestUri.AbsolutePath, Activity.Current, SpanKind.Client);
+            this.Tracer.StartSpanFromActivity(request.RequestUri.AbsolutePath, activity, SpanKind.Client);
 
-            this.Tracer.WithSpan(span);
+            var span = this.Tracer.CurrentSpan;
 
             if (span.IsRecording)
             {
@@ -98,7 +98,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
             if (!span.IsRecording)
             {
-                span.End();
+                this.DisposeOrEndSpan(span);
                 return;
             }
 
@@ -120,7 +120,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             if (!(this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response))
             {
                 // response could be null for DNS issues, timeouts, etc...
-                span.End();
+                this.DisposeOrEndSpan(span);
                 return;
             }
 
@@ -164,6 +164,18 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 {
                     span.Status = Status.Unknown.WithDescription(exc.Message);
                 }
+            }
+        }
+
+        private void DisposeOrEndSpan(ISpan span)
+        {
+            if (span is IDisposable disposableSpan)
+            {
+                disposableSpan.Dispose();
+            }
+            else
+            {
+                span.End();
             }
         }
     }

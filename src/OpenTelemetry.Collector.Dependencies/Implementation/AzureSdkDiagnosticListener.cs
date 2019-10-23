@@ -78,14 +78,19 @@ namespace OpenTelemetry.Collector.Dependencies
                 }
             }
 
-            var span = this.Tracer.StartSpanFromActivity(operationName, current, spanKind, parentLinks);
-
-            this.Tracer.WithSpan(span);
+            this.Tracer.StartSpanFromActivity(operationName, current, spanKind, parentLinks);
         }
 
         public override void OnStopActivity(Activity current, object valueValue)
         {
             var span = this.Tracer.CurrentSpan;
+
+            if (span == null || span == BlankSpan.Instance)
+            {
+                CollectorEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnStopActivity");
+                return;
+            }
+
             foreach (var keyValuePair in current.Tags)
             {
                 span.SetAttribute(keyValuePair.Key, keyValuePair.Value);
