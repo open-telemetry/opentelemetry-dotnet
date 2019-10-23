@@ -6,6 +6,21 @@ Community Channel: [![Gitter chat][main-gitter-image]][main-gitter-url]
 
 We hold regular meetings. See details at [community page](https://github.com/open-telemetry/community#net-sdk).
 
+Approvers ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
+
+- [Liudmila Molkova](https://github.com/lmolkova), Microsoft
+- [Christoph Neumueller](https://github.com/discostu105), Dynatrace
+- [Bruno Garcia](https://github.com/bruno-garcia), Sentry
+
+*Find more about the approver role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).*
+
+Maintainers ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers))::
+
+- [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Microsoft
+- [Austin Parker](https://github.com/austinlparker), LightStep
+
+*Find more about the maintainer role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
+
 [![Build Status](https://dev.azure.com/opentelemetry/pipelines/_apis/build/status/open-telemetry.opentelemetry-dotnet-myget-update?branchName=master)](https://dev.azure.com/opentelemetry/pipelines/_build/latest?definitionId=2&branchName=master)
 
 OpenTelemetry is a toolkit for collecting application performance and behavior
