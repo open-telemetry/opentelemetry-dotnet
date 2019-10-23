@@ -15,6 +15,9 @@
 // </copyright>
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Name value pairs of metric labels.
+    /// </summary>
     public class LabelSet
     {
     }

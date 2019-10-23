@@ -16,6 +16,9 @@
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Handle to the counter with the defined <see cref="LabelSet"/>.
+    /// </summary>
     public interface ICounterHandle
     {
         /// <summary>

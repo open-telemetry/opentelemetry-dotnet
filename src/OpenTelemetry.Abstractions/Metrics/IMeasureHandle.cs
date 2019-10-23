@@ -16,6 +16,9 @@
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Handle to the measure with the defined <see cref="LabelSet"/>.
+    /// </summary>
     public interface IMeasureHandle
     {
         /// <summary>

@@ -16,6 +16,9 @@
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Gauge instrument.
+    /// </summary>
     public interface IGuage
     {
         /// <summary>

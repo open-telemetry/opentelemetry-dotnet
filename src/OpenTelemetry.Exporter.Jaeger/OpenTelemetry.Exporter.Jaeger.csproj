@@ -8,6 +8,10 @@
     <PackageTags>Tracing;OpenTelemetry;Management;Monitoring;Jaeger;distributed-tracing</PackageTags>
   </PropertyGroup>
 
+    <PropertyGroup>
+      <NoWarn>$(NoWarn),1591</NoWarn>
+    </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
     <ProjectReference Include="..\..\lib\Thrift\Thrift.csproj" PrivateAssets="All" />

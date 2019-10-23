@@ -18,6 +18,9 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Main interface to obtain metric instruments.
+    /// </summary>
     public interface IMeter
     {
         /// <summary>

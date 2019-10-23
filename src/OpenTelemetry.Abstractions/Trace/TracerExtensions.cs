@@ -18,6 +18,9 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
 {
+    /// <summary>
+    /// Extension methods for the <see cref="ITracer"/>.
+    /// </summary>
     public static class TracerExtensions
     {
         /// <summary>

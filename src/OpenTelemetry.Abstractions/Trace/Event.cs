@@ -29,16 +29,31 @@ namespace OpenTelemetry.Trace
         private static readonly ReadOnlyDictionary<string, object> EmptyAttributes =
                 new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Event"/> class.
+        /// </summary>
+        /// <param name="name">Event name.</param>
         public Event(string name)
             : this(name, PreciseTimestamp.GetUtcNow(), EmptyAttributes)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Event"/> class.
+        /// </summary>
+        /// <param name="name">Event name.</param>
+        /// <param name="timestamp">Event timestamp. Timestamp MUST only be used for the events that happened in the past, not at the moment of this call.</param>
         public Event(string name, DateTimeOffset timestamp)
             : this(name, timestamp, EmptyAttributes)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Event"/> class.
+        /// </summary>
+        /// <param name="name">Event name.</param>
+        /// <param name="timestamp">Event timestamp. Timestamp MUST only be used for the events that happened in the past, not at the moment of this call.</param>
+        /// <param name="attributes">Event attributes.</param>
         public Event(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
         {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));

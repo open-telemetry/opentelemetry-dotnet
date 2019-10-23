@@ -43,4 +43,10 @@
     <Exclude>[xunit*]*,[*.Tests]*</Exclude>
     <DebugType>pdbonly</DebugType> <!-- Coverlet needs full debug symbols -->
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" Condition="'$(SkipAnalysis)'!='true'">
+      <PrivateAssets>All</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
 </Project>
