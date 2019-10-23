@@ -56,9 +56,11 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             // see the spec https://github.com/open-telemetry/OpenTelemetry-specs/blob/master/trace/HTTP.md
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
+            ISpan span;
             if (this.hostingSupportsW3C)
             {
                 this.Tracer.StartSpanFromActivity(path, Activity.Current, SpanKind.Server);
+                span = this.Tracer.CurrentSpan;
             }
             else
             {
@@ -66,10 +68,9 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                     request,
                     (r, name) => r.Headers[name]);
 
-                this.Tracer.StartActiveSpan(path, ctx, SpanKind.Server);
+                this.Tracer.StartActiveSpan(path, ctx, SpanKind.Server, out span);
             }
 
-            var span = this.Tracer.CurrentSpan;
             if (span.IsRecording)
             {
                 // Note, route is missing at this stage. It will be available later

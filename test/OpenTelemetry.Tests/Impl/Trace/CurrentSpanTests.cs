@@ -158,10 +158,11 @@ namespace OpenTelemetry.Trace.Test
         public void StartActiveSpan_OwningActivity()
         {
             Span span = null;
-            using (var scope = tracer.StartActiveSpan("foo"))
+            using (var scope = tracer.StartActiveSpan("foo", out var ispan))
             {
                 Assert.IsType<Span>(scope);
                 span = (Span)scope;
+                Assert.Same(ispan, span);
                 Assert.Same(span, this.tracer.CurrentSpan);
                 Assert.Same(span.Activity, Activity.Current);
             }
@@ -176,10 +177,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_WithSpan()
         {
-            using (tracer.StartActiveSpan("foo"))
+            using (tracer.StartActiveSpan("foo", out var span))
             {
-                var span = this.tracer.CurrentSpan;
-
                 Assert.Same(NoopDisposable.Instance, this.tracer.WithSpan(span));
             }
 

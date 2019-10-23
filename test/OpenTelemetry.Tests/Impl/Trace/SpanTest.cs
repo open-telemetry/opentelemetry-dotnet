@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracer = tracerFactory.GetTracer(null);
 
-            using (tracer.StartActiveSpan("outer"))
+            using (tracer.StartActiveSpan("outer", out _))
             {
                 var parentSpan = (Span)tracer.StartRootSpan(SpanName);
 
@@ -1007,11 +1007,12 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var parentSpan = (Span)tracer.StartSpan(SpanName);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentSpan))
+            using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, out var ispan))
             {
                 Assert.NotNull(scope);
 
                 var span = tracer.CurrentSpan;
+                Assert.Same(ispan, span);
                 Assert.NotNull(span);
                 Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.True(span.Context.IsValid);
@@ -1027,12 +1028,12 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var parentSpan = (Span)tracer.StartSpan(SpanName);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer))
+            using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer, out var ispan))
             {
                 Assert.NotNull(scope);
 
                 var span = (Span)tracer.CurrentSpan;
-
+                Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.NotNull(span);
                 Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
@@ -1051,11 +1052,13 @@ namespace OpenTelemetry.Trace.Test
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var parentSpan = (Span)tracer.StartSpan(SpanName);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp }))
+            using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp }, 
+                out var ispan))
             {
                 Assert.NotNull(scope);
 
                 var span = (Span)tracer.CurrentSpan;
+                Assert.Same(ispan, span);
                 Assert.NotNull(span);
                 Assert.True(span.Context.IsValid);
                 Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
@@ -1075,12 +1078,14 @@ namespace OpenTelemetry.Trace.Test
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var parentSpan = (Span)tracer.StartSpan(SpanName);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }))
+            using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer,
+                new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan))
             {
                 Assert.NotNull(scope);
 
                 var span = (Span)tracer.CurrentSpan;
                 Assert.NotNull(span);
+                Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.Equal(SpanKind.Producer, span.Kind);
@@ -1098,12 +1103,13 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentContext))
+            using (var scope = tracer.StartActiveSpan(SpanName, parentContext, out var ispan))
             {
                 Assert.NotNull(scope);
 
                 var span = tracer.CurrentSpan;
                 Assert.NotNull(span);
+                Assert.Same(ispan, span);
                 Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(parentContext.SpanId, ((Span)span).ParentSpanId);
@@ -1118,13 +1124,14 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentContext, SpanKind.Producer))
+            using (var scope = tracer.StartActiveSpan(SpanName, parentContext, SpanKind.Producer, out var ispan))
             {
                 Assert.NotNull(scope);
 
                 var span = (Span)tracer.CurrentSpan;
 
                 Assert.True(span.Context.IsValid);
+                Assert.Same(ispan, span);
                 Assert.NotNull(span);
                 Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.Equal(SpanKind.Producer, span.Kind);
@@ -1142,12 +1149,14 @@ namespace OpenTelemetry.Trace.Test
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentContext, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp }))
+            using (var scope = tracer.StartActiveSpan(SpanName, parentContext, SpanKind.Producer,
+                new SpanCreationOptions { StartTimestamp = startTimestamp }, out var ispan))
             {
                 Assert.NotNull(scope);
 
                 var span = (Span)tracer.CurrentSpan;
                 Assert.NotNull(span);
+                Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.Equal(SpanKind.Producer, span.Kind);
@@ -1166,12 +1175,14 @@ namespace OpenTelemetry.Trace.Test
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentContext, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }))
+            using (var scope = tracer.StartActiveSpan(SpanName, parentContext, SpanKind.Producer, 
+                new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan))
             {
                 Assert.NotNull(scope);
 
                 var span = (Span)tracer.CurrentSpan;
                 Assert.NotNull(span);
+                Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.Equal(SpanKind.Producer, span.Kind);
@@ -1188,12 +1199,13 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracer = tracerFactory.GetTracer(null);
 
-            using (var parentScope = tracer.StartActiveSpan(SpanName))
-            using (var scope = tracer.StartActiveSpan(SpanName))
+            using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentSpan))
+            using (var scope = tracer.StartActiveSpan(SpanName, out var childSpan))
             {
                 Assert.NotNull(scope);
 
                 var span = tracer.CurrentSpan;
+                Assert.Same(childSpan, span);
                 Assert.NotNull(span);
                 Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.True(span.Context.IsValid);
@@ -1208,8 +1220,8 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracer = tracerFactory.GetTracer(null);
 
-            using (var parentScope = tracer.StartActiveSpan(SpanName))
-            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer))
+            using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentSpan))
+            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer, out var childSpan))
             {
                 Assert.NotNull(scope);
 
@@ -1217,6 +1229,7 @@ namespace OpenTelemetry.Trace.Test
 
                 Assert.True(span.Context.IsValid);
                 Assert.NotNull(span);
+                Assert.Same(childSpan, span);
                 Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.NotEqual(default, ((Span)span).ParentSpanId);
@@ -1232,13 +1245,15 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
-            using (var parentScope = tracer.StartActiveSpan(SpanName))
-            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp }))
+            using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentspan))
+            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer, 
+                new SpanCreationOptions { StartTimestamp = startTimestamp }, out var childSpan))
             {
                 Assert.NotNull(scope);
 
                 var span = (Span)tracer.CurrentSpan;
                 Assert.NotNull(span);
+                Assert.Same(childSpan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.Equal(SpanKind.Producer, span.Kind);
@@ -1256,13 +1271,15 @@ namespace OpenTelemetry.Trace.Test
 
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
-            using (var parentScope = tracer.StartActiveSpan(SpanName))
-            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }))
+            using (var parentScope = tracer.StartActiveSpan(SpanName, out _))
+            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer, 
+                new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan))
             {
                 Assert.NotNull(scope);
 
                 var span = (Span)tracer.CurrentSpan;
                 Assert.NotNull(span);
+                Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.Equal(SpanKind.Producer, span.Kind);

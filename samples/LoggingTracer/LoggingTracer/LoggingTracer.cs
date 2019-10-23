@@ -47,9 +47,9 @@ namespace LoggingTracer
         public ITextFormat TextFormat => new LoggingTextFormat();
 
         /// <inheritdoc/>
-        public IDisposable WithSpan(ISpan span)
+        public IDisposable WithSpan(ISpan span, bool endOnDispose)
         {
-            Logger.Log($"{this.prefix}.WithSpan");
+            Logger.Log($"{this.prefix}.WithSpan {endOnDispose}");
             return new CurrentSpanUtils.LoggingScope(span);
         }
 
@@ -60,11 +60,6 @@ namespace LoggingTracer
             return new LoggingSpan(operationName, kind);
         }
 
-        public IDisposable StartActiveRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
-        {
-            return new CurrentSpanUtils.LoggingScope(this.StartRootSpan(operationName, kind, options));
-        }
-
         /// <inheritdoc/>
         public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
         {
@@ -72,21 +67,11 @@ namespace LoggingTracer
             return new LoggingSpan(operationName, kind);
         }
 
-        public IDisposable StartActiveSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
-        {
-            return new CurrentSpanUtils.LoggingScope(this.StartSpan(operationName, parent, kind, options));
-        }
-
         /// <inheritdoc/>
         public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
             Logger.Log($"{this.prefix}.StartSpan({operationName}, {parent.GetType().Name}, {kind}, {options.StartTimestamp:o}, {options.LinksFactory}, {options.Links})");
             return new LoggingSpan(operationName, kind);
-        }
-
-        public IDisposable StartActiveSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
-        {
-            return new CurrentSpanUtils.LoggingScope(this.StartSpan(operationName, parent, kind, options));
         }
 
         /// <inheritdoc/>

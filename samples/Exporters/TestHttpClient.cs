@@ -34,7 +34,7 @@ namespace Samples
             {
                 var tracer = tracerFactory.GetTracer("http-client-test");
 
-                using (tracer.StartActiveSpan("incoming request"))
+                using (tracer.StartActiveSpan("incoming request", out _))
                 {
                     using (var client = new HttpClient())
                     {

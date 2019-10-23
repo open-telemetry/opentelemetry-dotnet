@@ -64,12 +64,12 @@ namespace Samples
                 Stats.ViewManager.RegisterView(VideoSizeView);
 
                 using (tagContextBuilder.BuildScoped())
-                using (tracer.StartActiveSpan("incoming request"))
+                using (tracer.StartActiveSpan("incoming request", out var span))
                 {
-                    tracer.CurrentSpan.AddEvent("Start processing video.");
+                    span.AddEvent("Start processing video.");
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));
                     StatsRecorder.NewMeasureMap().Put(VideoSize, 25 * MiB).Record();
-                    tracer.CurrentSpan.AddEvent("Finished processing video.");
+                    span.AddEvent("Finished processing video.");
                 }
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(5100));

@@ -42,11 +42,12 @@ namespace OpenTelemetry.Trace
         ITextFormat TextFormat { get; }
 
         /// <summary>
-        /// Associates the span with the current context.
+        /// Activates the span on the current context.
         /// </summary>
         /// <param name="span">Span to associate with the current context.</param>
+        /// <param name="endSpanOnDispose">Flag indicating if span should end when scope is disposed.</param>
         /// <returns>Disposable object to control span to current context association.</returns>
-        IDisposable WithSpan(ISpan span);
+        IDisposable WithSpan(ISpan span, bool endSpanOnDispose);
 
         // TODO: add sampling hints
 
@@ -69,17 +70,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options);
 
-        /// <summary>
-        /// Starts active span.
-        /// </summary>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="parent">Parent for new span.</param>
-        /// <param name="kind">Kind.</param>
-        /// <param name="options">Advanced span creation options.</param>
-        /// <returns>Span instance.</returns>
-        IDisposable StartActiveSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options);
-
-        /// <summary>
+       /// <summary>
         /// Starts span.
         /// </summary>
         /// <param name="operationName">Span name.</param>
@@ -88,16 +79,6 @@ namespace OpenTelemetry.Trace
         /// <param name="options">Advanced span creation options.</param>
         /// <returns>Span instance.</returns>
         ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options);
-
-        /// <summary>
-        /// Starts active span.
-        /// </summary>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="parent">Parent for new span.</param>
-        /// <param name="kind">Kind.</param>
-        /// <param name="options">Advanced span creation options.</param>
-        /// <returns>Span scope instance.</returns>
-        IDisposable StartActiveSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options);
 
         /// <summary>
         /// Starts span from auto-collected <see cref="Activity"/>.

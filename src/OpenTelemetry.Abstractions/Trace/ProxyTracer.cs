@@ -43,9 +43,9 @@ namespace OpenTelemetry.Trace
         public ITextFormat TextFormat => this.realTracer?.TextFormat ?? this.textFormat;
 
         /// <inheritdoc/>
-        public IDisposable WithSpan(ISpan span)
+        public IDisposable WithSpan(ISpan span, bool endOnDispose)
         {
-            return this.realTracer != null ? this.realTracer.WithSpan(span) : NoopScope;
+            return this.realTracer != null ? this.realTracer.WithSpan(span, endOnDispose) : NoopScope;
         }
 
         public ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
@@ -68,16 +68,6 @@ namespace OpenTelemetry.Trace
             return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
         }
 
-        public IDisposable StartActiveSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return this.realTracer != null ? this.realTracer.StartActiveSpan(operationName, parent, kind, options) : NoopScope;
-        }
-
         public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
             if (operationName == null)
@@ -86,16 +76,6 @@ namespace OpenTelemetry.Trace
             }
 
             return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
-        }
-
-        public IDisposable StartActiveSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return this.realTracer != null ? this.realTracer.StartActiveSpan(operationName, parent, kind, options) : NoopScope;
         }
 
         public IDisposable StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)

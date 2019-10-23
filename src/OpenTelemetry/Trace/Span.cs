@@ -39,7 +39,6 @@ namespace OpenTelemetry.Trace
         private readonly TracerConfiguration tracerConfiguration;
         private readonly SpanProcessor spanProcessor;
         private readonly object lck = new object();
-        private readonly bool active;
 
         private EvictingQueue<KeyValuePair<string, object>> attributes;
         private EvictingQueue<Event> events;
@@ -49,6 +48,7 @@ namespace OpenTelemetry.Trace
         private DateTimeOffset startTimestamp;
         private DateTimeOffset endTimestamp;
         private bool hasEnded;
+        private bool endOnDispose = false;
 
         private Span(
             string name,
@@ -59,8 +59,7 @@ namespace OpenTelemetry.Trace
             SpanCreationOptions spanCreationOptions,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
-            Resource libraryResource,
-            bool activate)
+            Resource libraryResource)
         { 
             this.Name = name;
             this.LibraryResource = libraryResource;
@@ -83,7 +82,6 @@ namespace OpenTelemetry.Trace
             this.OwnsActivity = ownsActivity;
             this.Activity = activityAndTracestate.Activity;
             var tracestate = activityAndTracestate.Tracestate;
-            this.active = activate;
 
             this.IsRecording = MakeSamplingDecision(
                 parentSpanContext,
@@ -108,11 +106,6 @@ namespace OpenTelemetry.Trace
 
             // this context is definitely not remote, setting isRemote to false
             this.Context = new SpanContext(this.Activity.TraceId, this.Activity.SpanId, this.Activity.ActivityTraceFlags, false, tracestate);
-
-            if (this.active)
-            {
-                ActivitySpanTable.Add(this.Activity, this);
-            }
         }
 
         public SpanContext Context { get; private set; }
@@ -321,9 +314,9 @@ namespace OpenTelemetry.Trace
 
             this.hasEnded = true;
             this.endTimestamp = endTimestamp;
-            if (this.active && this.OwnsActivity && this.Activity == Activity.Current)
+            if (this.endOnDispose && this.OwnsActivity && this.Activity == Activity.Current)
             {
-                // TODO log if current is not span activity
+                OpenTelemetrySdkEventSource.Log.AttemptToDisposeScopeWhichIsNotCurrent(this.Name);
                 this.Activity.Stop();
             }
 
@@ -332,7 +325,10 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            this.spanProcessor.OnEnd(this);
+            if (this.endOnDispose)
+            {
+                this.spanProcessor.OnEnd(this);
+            }
         }
 
         /// <inheritdoc/>
@@ -381,12 +377,15 @@ namespace OpenTelemetry.Trace
 
         public void Dispose()
         {
-            if (this.active && this.Activity == Activity.Current)
+            if (this.Activity == Activity.Current)
             {
                 ActivitySpanTable.Remove(this.Activity);
             }
 
-            this.End();
+            if (this.endOnDispose)
+            {
+                this.End();
+            }
         }
 
         internal static Span CreateFromParentSpan(
@@ -396,22 +395,20 @@ namespace OpenTelemetry.Trace
             SpanCreationOptions spanCreationOptions,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
-            Resource libraryResource,
-            bool activate)
+            Resource libraryResource)
         {
             if (parentSpan.Context.IsValid)
             {
                 return new Span(
                     name,
                     parentSpan.Context,
-                    FromParentSpan(name, parentSpan, activate),
+                    FromParentSpan(name, parentSpan),
                     true,
                     spanKind,
                     spanCreationOptions,
                     tracerConfiguration,
                     spanProcessor,
-                    libraryResource,
-                    activate);
+                    libraryResource);
             }
 
             var currentActivity = Activity.Current;
@@ -420,14 +417,13 @@ namespace OpenTelemetry.Trace
                 return new Span(
                     name,
                     SpanContext.Blank,
-                    CreateRoot(name, activate),
+                    CreateRoot(name),
                     true,
                     spanKind,
                     spanCreationOptions,
                     tracerConfiguration,
                     spanProcessor,
-                    libraryResource,
-                    activate);
+                    libraryResource);
             }
 
             return new Span(
@@ -436,14 +432,13 @@ namespace OpenTelemetry.Trace
                     currentActivity.TraceId,
                     currentActivity.SpanId,
                     currentActivity.ActivityTraceFlags),
-                FromCurrentParentActivity(name, currentActivity, activate),
+                FromCurrentParentActivity(name, currentActivity),
                 true,
                 spanKind,
                 spanCreationOptions,
                 tracerConfiguration,
                 spanProcessor,
-                libraryResource,
-                activate);
+                libraryResource);
         }
 
         internal static Span CreateFromParentContext(
@@ -453,20 +448,18 @@ namespace OpenTelemetry.Trace
             SpanCreationOptions spanCreationOptions,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
-            Resource libraryResource,
-            bool activate)
+            Resource libraryResource)
         {
             return new Span(
                 name,
                 parentContext,
-                FromParentSpanContext(name, parentContext, activate),
+                FromParentSpanContext(name, parentContext),
                 true,
                 spanKind,
                 spanCreationOptions,
                 tracerConfiguration,
                 spanProcessor,
-                libraryResource,
-                activate);
+                libraryResource);
         }
 
         internal static Span CreateRoot(
@@ -475,20 +468,18 @@ namespace OpenTelemetry.Trace
             SpanCreationOptions spanCreationOptions,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
-            Resource libraryResource,
-            bool activate)
+            Resource libraryResource)
         {
             return new Span(
                 name,
                 SpanContext.Blank,
-                CreateRoot(name, activate),
+                CreateRoot(name),
                 true,
                 spanKind,
                 spanCreationOptions,
                 tracerConfiguration,
                 spanProcessor,
-                libraryResource,
-                activate);
+                libraryResource);
         }
 
         internal static Span CreateFromActivity(
@@ -509,8 +500,7 @@ namespace OpenTelemetry.Trace
                 null,
                 tracerConfiguration,
                 spanProcessor,
-                libraryResource,
-                true)
+                libraryResource)
             {
                 startTimestamp = new DateTimeOffset(activity.StartTimeUtc),
             };
@@ -520,12 +510,18 @@ namespace OpenTelemetry.Trace
             return span;
         }
 
-        internal IDisposable Activate()
+        internal IDisposable Activate(bool endOnDispose)
         {
-            if (this.active)
+            if (this.endOnDispose)
             {
                 OpenTelemetrySdkEventSource.Log.AttemptToActivateActiveSpan(this.Name);
                 return NoopDisposable.Instance;
+            }
+
+            if (endOnDispose)
+            {
+                this.endOnDispose = true;
+                return this;
             }
 
             return new ScopeInSpan(this);
@@ -575,17 +571,13 @@ namespace OpenTelemetry.Trace
             return false;
         }
 
-        private static ActivityAndTracestate FromCurrentParentActivity(string spanName, Activity current, bool activate)
+        private static ActivityAndTracestate FromCurrentParentActivity(string spanName, Activity current)
         {
             var activity = new Activity(spanName);
             activity.SetIdFormat(ActivityIdFormat.W3C);
 
             activity.Start();
-
-            if (!activate)
-            {
-                Activity.Current = current;
-            }
+            Activity.Current = current;
 
             List<KeyValuePair<string, string>> tracestate = null;
             if (activity.TraceStateString != null)
@@ -597,7 +589,7 @@ namespace OpenTelemetry.Trace
             return new ActivityAndTracestate(activity, tracestate);
         }
 
-        private static ActivityAndTracestate FromParentSpan(string spanName, ISpan parentSpan, bool activate)
+        private static ActivityAndTracestate FromParentSpan(string spanName, ISpan parentSpan)
         {
             if (parentSpan is Span parentSpanImpl && parentSpanImpl.Activity == Activity.Current)
             {
@@ -608,18 +600,15 @@ namespace OpenTelemetry.Trace
                 var originalActivity = Activity.Current;
                 activity.Start();
 
-                if (!activate)
-                {
-                    Activity.Current = originalActivity;
-                }
+                Activity.Current = originalActivity;
 
                 return new ActivityAndTracestate(activity, parentSpan.Context.Tracestate);
             }
 
-            return FromParentSpanContext(spanName, parentSpan.Context, activate);
+            return FromParentSpanContext(spanName, parentSpan.Context);
         }
 
-        private static ActivityAndTracestate FromParentSpanContext(string spanName, SpanContext parentContext, bool activate)
+        private static ActivityAndTracestate FromParentSpanContext(string spanName, SpanContext parentContext)
         {
             var activity = new Activity(spanName);
 
@@ -640,15 +629,12 @@ namespace OpenTelemetry.Trace
 
             var originalActivity = Activity.Current;
             activity.Start();
-            if (!activate)
-            {
-                Activity.Current = originalActivity;
-            }
+            Activity.Current = originalActivity;
 
             return new ActivityAndTracestate(activity, tracestate);
         }
 
-        private static ActivityAndTracestate CreateRoot(string spanName, bool activate)
+        private static ActivityAndTracestate CreateRoot(string spanName)
         {
             var activity = new Activity(spanName);
             activity.SetIdFormat(ActivityIdFormat.W3C);
@@ -661,10 +647,7 @@ namespace OpenTelemetry.Trace
 
             activity.Start();
 
-            if (!activate)
-            {
-                Activity.Current = originalActivity;
-            }
+            Activity.Current = originalActivity;
 
             return new ActivityAndTracestate(activity, null);
         }

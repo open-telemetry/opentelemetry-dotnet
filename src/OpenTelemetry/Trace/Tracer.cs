@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ITextFormat TextFormat { get; }
 
-        public IDisposable WithSpan(ISpan span)
+        public IDisposable WithSpan(ISpan span, bool endOnDispose)
         {
             if (span == null)
             {
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace
 
             if (span is Span spanImpl)
             {
-                return spanImpl.Activate();
+                return spanImpl.Activate(endOnDispose);
             }
 
             return NoopDisposable.Instance;
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration, this.spanProcessor, this.LibraryResource, false);
+            return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
@@ -105,24 +105,7 @@ namespace OpenTelemetry.Trace
             }
 
             return Span.CreateFromParentSpan(operationName, parent, kind, options, this.tracerConfiguration,
-                this.spanProcessor, this.LibraryResource, false);
-        }
-
-        /// <inheritdoc/>
-        public IDisposable StartActiveSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            if (parent == null)
-            {
-                parent = this.CurrentSpan;
-            }
-
-            return Span.CreateFromParentSpan(operationName, parent, kind, options, this.tracerConfiguration,
-                this.spanProcessor, this.LibraryResource, true);
+                this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
@@ -136,29 +119,11 @@ namespace OpenTelemetry.Trace
             if (parent != null)
             {
                 return Span.CreateFromParentContext(operationName, parent, kind, options, this.tracerConfiguration,
-                    this.spanProcessor, this.LibraryResource, false);
+                    this.spanProcessor, this.LibraryResource);
             }
 
             return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration,
-                this.spanProcessor, this.LibraryResource, false);
-        }
-
-        /// <inheritdoc/>
-        public IDisposable StartActiveSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            if (parent != null)
-            {
-                return Span.CreateFromParentContext(operationName, parent, kind, options, this.tracerConfiguration,
-                    this.spanProcessor, this.LibraryResource, true);
-            }
-
-            return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration,
-                this.spanProcessor, this.LibraryResource, true);
+                this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>

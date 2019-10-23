@@ -51,9 +51,9 @@ namespace Benchmarks.Tracing
 
         public static ISpan CreateSpan_Active(ITracer tracer)
         {
-            using (var span = tracer.StartActiveSpan("span"))
+            using (tracer.StartActiveSpan("span", out var span))
             {
-                return (ISpan)span;
+                return span;
             }
         }
 
@@ -61,7 +61,7 @@ namespace Benchmarks.Tracing
         {
             ISpan span;
             
-            using (tracer.StartActiveSpan("span"))
+            using (tracer.StartActiveSpan("span", out _))
             {
                 span = tracer.CurrentSpan;
             }

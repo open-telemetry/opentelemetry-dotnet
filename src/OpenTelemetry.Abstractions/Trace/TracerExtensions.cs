@@ -59,17 +59,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Starts active span. If there is active current span, it becomes a parent for returned span.
-        /// </summary>
-        /// <param name="tracer">Tracer instance.</param>
-        /// <param name="operationName">Span name.</param>
-        /// <returns>Span instance.</returns>
-        public static IDisposable StartActiveSpan(this ITracer tracer, string operationName)
-        {
-            return tracer.StartActiveSpan(operationName, null, SpanKind.Internal, null);
-        }
-
-        /// <summary>
         /// Starts span. If there is active current span, it becomes a parent for returned span.
         /// </summary>
         /// <param name="tracer">Tracer instance.</param>
@@ -95,31 +84,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Starts active span. If there is active current span, it becomes a parent for returned span.
-        /// </summary>
-        /// <param name="tracer">Tracer instance.</param>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="kind">Kind.</param>
-        /// <param name="options">Advanced span creation options.</param>
-        /// <returns>Span instance.</returns>
-        public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, SpanKind kind, SpanCreationOptions options)
-        {
-            return tracer.StartActiveSpan(operationName, null, kind, options);
-        }
-
-        /// <summary>
-        /// Starts active span. If there is active current span, it becomes a parent for returned span.
-        /// </summary>
-        /// <param name="tracer">Tracer instance.</param>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="kind">Kind.</param>
-        /// <returns>Span instance.</returns>
-        public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, SpanKind kind)
-        {
-            return tracer.StartActiveSpan(operationName, null, kind, null);
-        }
-
-        /// <summary>
         /// Starts span.
         /// </summary>
         /// <param name="tracer">Tracer instance.</param>
@@ -129,18 +93,6 @@ namespace OpenTelemetry.Trace
         public static ISpan StartSpan(this ITracer tracer, string operationName, ISpan parent)
         {
             return tracer.StartSpan(operationName, parent, SpanKind.Internal, null);
-        }
-
-        /// <summary>
-        /// Starts active span.
-        /// </summary>
-        /// <param name="tracer">Tracer instance.</param>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="parent">Parent for new span.</param>
-        /// <returns>Span instance.</returns>
-        public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, ISpan parent)
-        {
-            return tracer.StartActiveSpan(operationName, parent, SpanKind.Internal, null);
         }
 
         /// <summary>
@@ -157,19 +109,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Starts active span.
-        /// </summary>
-        /// <param name="tracer">Tracer instance.</param>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="parent">Parent for new span.</param>
-        /// <param name="kind">Kind.</param>
-        /// <returns>Span instance.</returns>
-        public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, ISpan parent, SpanKind kind)
-        {
-            return tracer.StartActiveSpan(operationName, parent, kind, null);
-        }
-
-        /// <summary>
         /// Starts span.
         /// </summary>
         /// <param name="tracer">Tracer instance.</param>
@@ -179,18 +118,6 @@ namespace OpenTelemetry.Trace
         public static ISpan StartSpan(this ITracer tracer, string operationName, in SpanContext parent)
         {
             return tracer.StartSpan(operationName, parent, SpanKind.Internal, null);
-        }
-
-        /// <summary>
-        /// Starts active span.
-        /// </summary>
-        /// <param name="tracer">Tracer instance.</param>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="parent">Parent for new span.</param>
-        /// <returns>Span instance.</returns>
-        public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, in SpanContext parent)
-        {
-            return tracer.StartActiveSpan(operationName, parent, SpanKind.Internal, null);
         }
 
         /// <summary>
@@ -204,19 +131,6 @@ namespace OpenTelemetry.Trace
         public static ISpan StartSpan(this ITracer tracer, string operationName, in SpanContext parent, SpanKind kind)
         {
             return tracer.StartSpan(operationName, parent, kind, null);
-        }
-
-        /// <summary>
-        /// Starts active span.
-        /// </summary>
-        /// <param name="tracer">Tracer instance.</param>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="parent">Parent for new span.</param>
-        /// <param name="kind">Kind.</param>
-        /// <returns>Span instance.</returns>
-        public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, in SpanContext parent, SpanKind kind)
-        {
-            return tracer.StartActiveSpan(operationName, parent, kind, null);
         }
 
         /// <summary>
