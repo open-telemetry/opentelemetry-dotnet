@@ -308,76 +308,37 @@ namespace OpenTelemetry.Trace.Test
                 this.provider = provider;
             }
 
-            /// <inheritdoc/>
-            public ISpan CurrentSpan => provider.CurrentSpan;
+            public ISpan CurrentSpan => this.provider.CurrentSpan;
 
-            /// <inheritdoc/>
-            public IBinaryFormat BinaryFormat => provider.BinaryFormat;
+            public IBinaryFormat BinaryFormat => this.provider.BinaryFormat;
 
-            /// <inheritdoc/>
-            public ITextFormat TextFormat => provider.TextFormat;
+            public ITextFormat TextFormat => this.provider.TextFormat;
 
-            /// <inheritdoc/>
-            public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, Func<IEnumerable<Link>> linksGetter)
+            public ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
             {
-                return this.provider.StartRootSpan(operationName, kind, startTimestamp, linksGetter);
+                return this.provider.StartRootSpan(operationName, kind, options);
             }
 
-            /// <inheritdoc/>
-            public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+            public ISpan StartSpan(string operationName, SpanKind kind, SpanCreationOptions options)
             {
-                return this.provider.StartRootSpan(operationName, kind, startTimestamp, links);
+                return this.provider.StartSpan(operationName, kind, options);
             }
 
-            /// <inheritdoc/>
-            public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, Func<IEnumerable<Link>> linksGetter)
+            public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
             {
-                return this.provider.StartSpan(operationName, kind, startTimestamp, linksGetter);
+                return this.provider.StartSpan(operationName, parent, kind, options);
             }
 
-            /// <inheritdoc/>
-            public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+            public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
             {
-                return this.provider.StartSpan(operationName, kind, startTimestamp, links);
+                return this.provider.StartSpan(operationName, parent, kind, options);
             }
 
-            /// <inheritdoc/>
-            public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, Func<IEnumerable<Link>> linksGetter)
-            {
-                return this.provider.StartSpan(operationName, parent, kind, startTimestamp, linksGetter);
-            }
-
-            /// <inheritdoc/>
-            public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
-            {
-                return this.provider.StartSpan(operationName, parent, kind, startTimestamp, links);
-            }
-
-            /// <inheritdoc/>
-            public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, Func<IEnumerable<Link>> linksGetter)
-            {
-                return this.provider.StartSpan(operationName, parent, kind, startTimestamp, linksGetter);
-            }
-
-            /// <inheritdoc/>
-            public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
-            {
-                return this.provider.StartSpan(operationName, parent, kind, startTimestamp, links);
-            }
-
-            /// <inheritdoc/>
-            public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, Func<IEnumerable<Link>> linksGetter)
-            {
-                return this.provider.StartSpanFromActivity(operationName, activity, kind, linksGetter);
-            }
-
-            /// <inheritdoc/>
             public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
             {
                 return this.provider.StartSpanFromActivity(operationName, activity, kind, links);
             }
 
-            /// <inheritdoc/>
             public IDisposable WithSpan(ISpan span)
             {
                 return this.provider.WithSpan(span);
