@@ -73,7 +73,12 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
                 traceId, linkedSpanId, ActivityTraceFlags.Recorded));
 
             var span = (Span)tracer
-                .StartSpan("Test", new Trace.SpanContext(traceId, parentId, ActivityTraceFlags.Recorded), SpanKind.Client, startTs, () => new [] {link});
+                .StartSpan("Test", new Trace.SpanContext(traceId, parentId, ActivityTraceFlags.Recorded), SpanKind.Client,
+                    new SpanCreationOptions
+                    {
+                        StartTimestamp = startTs,
+                        Links = new[] { link },
+                    });
 
             var spanIdInt = span.Context.SpanId.ToLSSpanId();
 
