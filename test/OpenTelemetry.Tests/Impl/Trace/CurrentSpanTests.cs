@@ -69,6 +69,35 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(default, span.EndTimestamp);
         }
 
+
+        [Fact]
+        public void WithSpan_AttachAndDetach()
+        {
+            var span = (Span)tracer.StartSpan("foo");
+
+            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            using (this.tracer.WithSpan(span))
+            {
+                Assert.Same(span.Activity, Activity.Current);
+                Assert.Same(span, this.tracer.CurrentSpan);
+            }
+
+            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.Null(Activity.Current);
+
+            using (this.tracer.WithSpan(span))
+            {
+                Assert.Same(span.Activity, Activity.Current);
+                Assert.Same(span, this.tracer.CurrentSpan);
+            }
+
+            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.Null(Activity.Current);
+
+            // span not ended
+            Assert.Equal(default, span.EndTimestamp);
+        }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
