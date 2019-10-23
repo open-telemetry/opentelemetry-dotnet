@@ -16,6 +16,9 @@
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Measure instrument.
+    /// </summary>
     public interface IMeasure
     {
         /// <summary>

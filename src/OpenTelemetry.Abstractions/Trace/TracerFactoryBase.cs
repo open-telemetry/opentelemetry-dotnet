@@ -26,6 +26,9 @@ namespace OpenTelemetry.Trace
         private static bool isInitialized;
         private static TracerFactoryBase defaultFactory = new TracerFactoryBase();
 
+        /// <summary>
+        /// Gets or sets the default instance of <see cref="TracerFactoryBase"/>.
+        /// </summary>
         public static TracerFactoryBase Default
         {
             get => defaultFactory;

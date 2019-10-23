@@ -80,7 +80,11 @@ namespace OpenTelemetry.Trace
         /// <param name="value">Attribute value.</param>
         void SetAttribute(string key, bool value);
 
-        void SetAttribute(KeyValuePair<string, object> keyValuePair);
+        /// <summary>
+        /// Puts a new attribute to the span.
+        /// </summary>
+        /// <param name="attribute">Attribute as a <see cref="KeyValuePair{TKey, TValue}"/>.</param>
+        void SetAttribute(KeyValuePair<string, object> attribute);
 
         /// <summary>
         /// Adds a single <see cref="Event"/> to the <see cref="ISpan"/>.

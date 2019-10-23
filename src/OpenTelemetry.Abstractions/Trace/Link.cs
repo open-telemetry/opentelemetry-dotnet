@@ -26,11 +26,20 @@ namespace OpenTelemetry.Trace
     {
         private static readonly IDictionary<string, object> EmptyAttributes = new Dictionary<string, object>();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Link"/> class.
+        /// </summary>
+        /// <param name="spanContext">Span context of a linked span.</param>
         public Link(SpanContext spanContext)
             : this(spanContext, EmptyAttributes)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Link"/> class.
+        /// </summary>
+        /// <param name="spanContext">Span context of a linked span.</param>
+        /// <param name="attributes">Link attributes.</param>
         public Link(SpanContext spanContext, IDictionary<string, object> attributes)
         {
             if (spanContext == null)

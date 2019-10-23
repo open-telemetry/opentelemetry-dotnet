@@ -16,6 +16,9 @@
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Counter instrument.
+    /// </summary>
     public interface ICounter
     {
         /// <summary>

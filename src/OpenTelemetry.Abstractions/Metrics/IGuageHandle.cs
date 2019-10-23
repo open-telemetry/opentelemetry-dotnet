@@ -16,6 +16,9 @@
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Handle to the gauge with the defined <see cref="LabelSet"/>.
+    /// </summary>
     public interface IGuageHandle
     {
         /// <summary>
