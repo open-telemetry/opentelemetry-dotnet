@@ -1414,7 +1414,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var span = CreateTestSpan(name, traceId, parentSpanId, traceOptions,
                 tracestate, kind, status);
 
-            var now = DateTimeOffset.UtcNow;
+            var now = DateTimeOffset.UtcNow.AddSeconds(-1);
             span.AddEvent(new Event("test message1", now));
             span.AddEvent(new Event("test message2", DateTime.UtcNow, new Dictionary<string, object>()
                         {
@@ -1466,7 +1466,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var span = CreateTestSpan(name, traceId, parentSpanId, traceOptions,
                 tracestate, kind, status);
 
-            var now = DateTimeOffset.UtcNow;
+            var now = DateTimeOffset.UtcNow.AddSeconds(-1);
 
             span.AddEvent(new Event("test message1", now));
             span.AddEvent("test message2", new Dictionary<string, object>()
