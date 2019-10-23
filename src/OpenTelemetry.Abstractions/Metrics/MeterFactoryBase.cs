@@ -22,6 +22,9 @@ namespace OpenTelemetry.Metrics
     {
         private static MeterFactoryBase defaultFactory = new MeterFactoryBase();
 
+        /// <summary>
+        /// Gets the dafult instance of a <see cref="MeterFactoryBase"/>.
+        /// </summary>
         public static MeterFactoryBase Default
         {
             get => defaultFactory;
