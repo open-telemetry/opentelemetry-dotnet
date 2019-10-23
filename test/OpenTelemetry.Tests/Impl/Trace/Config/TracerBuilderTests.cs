@@ -38,6 +38,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetBinaryFormat(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetTextFormat(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().AddCollector<object>(null));
+            Assert.Throws<ArgumentNullException>(() => new TracerBuilder().TracerConstructionInterceptor(null));
         }
 
         [Fact]
@@ -50,6 +51,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Null(builder.TextFormat);
             Assert.Null(builder.TracerConfigurationOptions);
             Assert.Null(builder.CollectorFactories);
+            Assert.Null(builder.TracerConstructionInterceptor);
         }
 
         [Fact]
@@ -65,6 +67,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             var options = new TracerConfiguration(sampler, 1, 1, 1);
             var binaryFormat = new BinaryFormat();
             var textFormat = new TraceContextFormat();
+            Func<ITracer, ITracer> tracerInterceptionFunc = t => t;
 
             builder
                 .SetSampler(sampler)
@@ -79,6 +82,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
                 .SetTracerOptions(options)
                 .SetBinaryFormat(binaryFormat)
                 .SetTextFormat(textFormat)
+                .SetTracerConstructionInterceptor(tracerInterceptionFunc)
                 .AddCollector(t =>
                 {
                     Assert.NotNull(t);
@@ -97,6 +101,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Same(options, builder.TracerConfigurationOptions);
             Assert.Same(binaryFormat, builder.BinaryFormat);
             Assert.Same(textFormat, builder.TextFormat);
+            Assert.Same(tracerInterceptionFunc, builder.TracerConstructionInterceptor);
             Assert.Single(builder.CollectorFactories);
 
             var collectorFactory = builder.CollectorFactories.Single();

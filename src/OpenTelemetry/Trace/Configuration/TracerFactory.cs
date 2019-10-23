@@ -37,6 +37,7 @@ namespace OpenTelemetry.Trace.Configuration
         private readonly SpanProcessor spanProcessor;
         private readonly IBinaryFormat binaryFormat;
         private readonly ITextFormat textFormat;
+        private readonly Func<ITracer, ITracer> tracerInterceptionFunc;
 
         private ITracer defaultTracer;
 
@@ -75,13 +76,14 @@ namespace OpenTelemetry.Trace.Configuration
 
             this.binaryFormat = builder.BinaryFormat ?? new BinaryFormat();
             this.textFormat = builder.TextFormat ?? new TraceContextFormat();
+            this.tracerInterceptionFunc = builder.TracerConstructionInterceptor ?? DefaultTracerInterceptionFunc;
 
-            this.defaultTracer = new Tracer(
+            this.defaultTracer = this.tracerInterceptionFunc(new Tracer(
                 this.spanProcessor,
                 this.configurationOptions,
                 this.binaryFormat,
                 this.textFormat,
-                Resource.Empty);
+                Resource.Empty));
         }
 
         /// <summary>
@@ -123,12 +125,12 @@ namespace OpenTelemetry.Trace.Configuration
                 var key = new TracerRegistryKey(name, version);
                 if (!this.tracerRegistry.TryGetValue(key, out var tracer))
                 {
-                    tracer = this.defaultTracer = new Tracer(
+                    tracer = this.defaultTracer = this.tracerInterceptionFunc(new Tracer(
                         this.spanProcessor,
                         this.configurationOptions,
                         this.binaryFormat,
                         this.textFormat,
-                        new Resource(CreateLibraryResourceLabels(name, version)));
+                        new Resource(CreateLibraryResourceLabels(name, version))));
                     this.tracerRegistry.Add(key, tracer);
                 }
 
@@ -164,6 +166,8 @@ namespace OpenTelemetry.Trace.Configuration
 
             return labels;
         }
+
+        private static ITracer DefaultTracerInterceptionFunc(ITracer tracer) => tracer;
 
         private readonly struct TracerRegistryKey
         {

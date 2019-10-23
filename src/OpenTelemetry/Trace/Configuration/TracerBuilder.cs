@@ -40,10 +40,13 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal List<CollectorFactory> CollectorFactories { get; private set; }
 
+        internal Func<ITracer, ITracer> TracerConstructionInterceptor { get; private set; }
+
         /// <summary>
         /// Configures sampler.
         /// </summary>
         /// <param name="sampler">Sampler instance.</param>
+        /// <returns>The current class instance for chaining.</returns>
         public TracerBuilder SetSampler(ISampler sampler)
         {
             this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
@@ -54,6 +57,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Adds processing and exporting pipeline. Pipelines are executed sequentially in the order they are added.
         /// </summary>
         /// <param name="configure">Function that configures pipeline.</param>
+        /// <returns>The current class instance for chaining.</returns>
         public TracerBuilder AddProcessorPipeline(Action<SpanProcessorPipelineBuilder> configure)
         {
             if (configure == null)
@@ -77,6 +81,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <typeparam name="TCollector">Type of collector class.</typeparam>
         /// <param name="collectorFactory">Function that builds collector from <see cref="ITracer"/>.</param>
+        /// <returns>The current class instance for chaining.</returns>
         public TracerBuilder AddCollector<TCollector>(
             Func<ITracer, TCollector> collectorFactory)
             where TCollector : class
@@ -104,6 +109,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Configures tracing options.
         /// </summary>
         /// <param name="options">Instance of <see cref="TracerConfiguration"/>.</param>
+        /// <returns>The current class instance for chaining.</returns>
         public TracerBuilder SetTracerOptions(TracerConfiguration options)
         {
             this.TracerConfigurationOptions = options ?? throw new ArgumentNullException(nameof(options));
@@ -114,6 +120,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Configures <see cref="ITextFormat"/> on the tracer.
         /// </summary>
         /// <param name="textFormat"><see cref="ITextFormat"/> implementation class instance.</param>
+        /// <returns>The current class instance for chaining.</returns>
         public TracerBuilder SetTextFormat(ITextFormat textFormat)
         {
             this.TextFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
@@ -124,9 +131,21 @@ namespace OpenTelemetry.Trace.Configuration
         /// Configures <see cref="IBinaryFormat"/> on the tracer.
         /// </summary>
         /// <param name="binaryFormat"><see cref="IBinaryFormat"/> implementation class instance.</param>
+        /// <returns>The current class instance for chaining.</returns>
         public TracerBuilder SetBinaryFormat(IBinaryFormat binaryFormat)
         {
             this.BinaryFormat = binaryFormat ?? throw new ArgumentNullException(nameof(binaryFormat));
+            return this;
+        }
+
+        /// <summary>
+        /// Configures an interceptor Func that executes when an implementation of ITracer is created.
+        /// </summary>
+        /// <param name="interceptor">The interceptor function.</param>
+        /// <returns>The current class instance for chaining.</returns>
+        public TracerBuilder SetTracerConstructionInterceptor(Func<ITracer, ITracer> interceptor)
+        {
+            this.TracerConstructionInterceptor = interceptor ?? throw new ArgumentNullException(nameof(interceptor));
             return this;
         }
 
