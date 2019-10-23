@@ -14,28 +14,22 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace.Export;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using global::OpenTracing;
+using global::OpenTracing.Propagation;
+using Moq;
+using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Trace;
+using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
-    using System;
-    using System.Collections.Generic;
-    using global::OpenTracing;
-    using global::OpenTracing.Propagation;
-    using Moq;
-    using OpenTelemetry.Context.Propagation;
-    using OpenTelemetry.Trace.Configuration;
-    using Xunit;
-
     public class TracerShimTests
     {
-        private readonly Trace.ITracer tracer;
-
-        public TracerShimTests()
-        {
-            tracer = TracerFactory.Create(b => b.SetProcessor(e => new SimpleSpanProcessor(e))).GetTracer(null);
-        }
-
         [Fact]
         public void CtorArgumentValidation()
         {
@@ -45,7 +39,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void ScopeManager_NotNull()
         {
-            var shim = TracerShim.Create(tracer);
+            var tracerMock = new Mock<Trace.ITracer>();
+            var shim = TracerShim.Create(tracerMock.Object);
 
             // Internals of the ScopeManagerShim tested elsewhere
             Assert.NotNull(shim.ScopeManager as ScopeManagerShim);
@@ -54,7 +49,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void BuildSpan_NotNull()
         {
-            var shim = TracerShim.Create(tracer);
+            var tracerMock = new Mock<Trace.ITracer>();
+            var shim = TracerShim.Create(tracerMock.Object);
 
             // Internals of the SpanBuilderShim tested elsewhere
             Assert.NotNull(shim.BuildSpan("foo") as SpanBuilderShim);
@@ -63,7 +59,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Inject_ArgumentValidation()
         {
-            var shim = TracerShim.Create(tracer);
+            var tracerMock = new Mock<Trace.ITracer>();
+            var shim = TracerShim.Create(tracerMock.Object);
 
             var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
             var mockFormat = new Mock<IFormat<ITextMap>>();
@@ -78,7 +75,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Inject_UnknownFormatIgnored()
         {
-            var shim = TracerShim.Create(tracer);
+            var tracerMock = new Mock<Trace.ITracer>();
+            var shim = TracerShim.Create(tracerMock.Object);
 
             var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
 
@@ -91,23 +89,10 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         }
 
         [Fact]
-        public void Inject_Ok()
-        {
-            var shim = TracerShim.Create(tracer);
-
-            var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
-
-            var mockCarrier = new Mock<ITextMap>();
-            shim.Inject(spanContextShim, BuiltinFormats.TextMap, mockCarrier.Object);
-
-            // Verify that the carrier mock was invoked at least one time.
-            mockCarrier.Verify(x => x.Set(It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce);
-        }
-
-        [Fact]
         public void Extract_ArgumentValidation()
         {
-            var shim = TracerShim.Create(tracer);
+            var tracerMock = new Mock<Trace.ITracer>();
+            var shim = TracerShim.Create(tracerMock.Object);
 
             Assert.Throws<ArgumentNullException>(() => shim.Extract(null, new Mock<ITextMap>().Object));
             Assert.Throws<ArgumentNullException>(() => shim.Extract(new Mock<IFormat<ITextMap>>().Object, null));
@@ -116,7 +101,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Extract_UnknownFormatIgnored()
         {
-            var shim = TracerShim.Create(tracer);
+            var tracerMock = new Mock<Trace.ITracer>();
+            var shim = TracerShim.Create(tracerMock.Object);
 
             var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
 
@@ -131,7 +117,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Extract_InvalidTraceParent()
         {
-            var shim = TracerShim.Create(tracer);
+            var tracerMock = new Mock<Trace.ITracer>();
+            var shim = TracerShim.Create(tracerMock.Object);
 
             var mockCarrier = new Mock<ITextMap>();
 
@@ -152,33 +139,98 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         }
 
         [Fact]
-        public void Extract_Ok()
+        public void InjectExtract_TextMap_Ok()
         {
-            var shim = TracerShim.Create(tracer);
+            var tracerMock = new Mock<Trace.ITracer>();
 
-            var mockCarrier = new Mock<ITextMap>();
+            var carrier = new TextMapCarrier();
 
-            // The ProxyTracer uses OpenTelemetry.Context.Propagation.TraceContextFormat, so we need to satisfy that.
-            var traceContextFormat = new TraceContextFormat();
-            var spanContext = Defaults.GetOpenTelemetrySpanContext();
+            var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
 
-            var carrierMap = new Dictionary<string, string>();
+            var format = new TraceContextFormat();
+            tracerMock.Setup(x => x.TextFormat).Returns(format);
 
-            // inject the SpanContext into the carrier map
-            traceContextFormat.Inject<Dictionary<string, string>>(spanContext, carrierMap, (map, key, value) => map.Add(key, value));
+            var shim = TracerShim.Create(tracerMock.Object);
 
-            // send the populated carrier map to the extract method.
-            mockCarrier.Setup(x => x.GetEnumerator()).Returns(carrierMap.GetEnumerator());
-            var spanContextShim = shim.Extract(BuiltinFormats.TextMap, mockCarrier.Object) as SpanContextShim;
+            // first inject
+            shim.Inject(spanContextShim, BuiltinFormats.TextMap, carrier);
 
-            // Verify that the carrier was called
-            mockCarrier.Verify(x => x.GetEnumerator(), Times.Once);
+            // then extract
+            var extractedSpanContext = shim.Extract(BuiltinFormats.TextMap, carrier);
 
-            Assert.Equal(spanContext, spanContextShim.SpanContext);
+            AssertOpenTracerSpanContextEqual(spanContextShim, extractedSpanContext);
         }
 
+        [Fact]
+        public void InjectExtract_Binary_Ok()
+        {
+            var tracerMock = new Mock<Trace.ITracer>();
+
+            var carrier = new BinaryCarrier();
+
+            var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
+
+            var format = new BinaryFormat();
+            tracerMock.Setup(x => x.BinaryFormat).Returns(format);
+
+            var shim = TracerShim.Create(tracerMock.Object);
+
+            // first inject
+            shim.Inject(spanContextShim, BuiltinFormats.Binary, carrier);
+
+            // then extract
+            var extractedSpanContext = shim.Extract(BuiltinFormats.Binary, carrier);
+
+            AssertOpenTracerSpanContextEqual(spanContextShim, extractedSpanContext);
+        }
+
+        private static void AssertOpenTracerSpanContextEqual(ISpanContext source, ISpanContext target)
+        {
+            Assert.Equal(source.TraceId, target.TraceId);
+            Assert.Equal(source.SpanId, target.SpanId);
+
+            // TODO BaggageItems are not implemented yet.
+        }
 
         public interface UnsupportedCarrierType
         { }
+
+        /// <summary>
+        /// Simple ITextMap implementation used for the inject/extract tests
+        /// </summary>
+        /// <seealso cref="OpenTracing.Propagation.ITextMap" />
+        private class TextMapCarrier : ITextMap
+        {
+            private readonly Dictionary<string, string> map = new Dictionary<string, string>();
+
+            public IDictionary<string, string> Map => this.map;
+
+            public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => this.map.GetEnumerator();
+
+            public void Set(string key, string value)
+            {
+                this.map[key] = value;
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => this.map.GetEnumerator();
+        }
+
+        /// <summary>
+        /// Simple IBinary implementation used for the inject/extract tests
+        /// </summary>
+        /// <seealso cref="OpenTracing.Propagation.IBinary" />
+        private class BinaryCarrier : IBinary
+        {
+            private readonly MemoryStream carrierStream = new MemoryStream();
+
+            public MemoryStream Get() => this.carrierStream;
+
+            public void Set(MemoryStream stream)
+            {
+                this.carrierStream.SetLength(stream.Length);
+                this.carrierStream.Seek(0, SeekOrigin.Begin);
+                stream.CopyTo(this.carrierStream, (int)this.carrierStream.Length);
+            }
+        }
     }
 }

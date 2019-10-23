@@ -14,7 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -169,7 +170,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             var tracerMock = GetDefaultTracerMock();
             var shim = new SpanBuilderShim(tracerMock.Object, "foo");
-            
+
             // Add a parent
             var spanContext = SpanContextShimTests.GetSpanContextShim();
             shim.AsChildOf(spanContext);
@@ -196,7 +197,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             shim.Start();
 
-            tracerMock.Verify(o => o.StartSpan("foo", spanContext1.SpanContext, 0, 
+            tracerMock.Verify(o => o.StartSpan("foo", spanContext1.SpanContext, 0,
                 default, It.Is<IEnumerable<Link>>(links => links.Single().Context.Equals(spanContext2.SpanContext))), Times.Once);
         }
 

@@ -17,6 +17,7 @@
 using System;
 using Microsoft.ApplicationInsights.Extensibility;
 using OpenTelemetry.Exporter.ApplicationInsights;
+using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace.Configuration
 {
@@ -36,7 +37,36 @@ namespace OpenTelemetry.Trace.Configuration
 
             var configuration = new TelemetryConfiguration();
             configure(configuration);
-            return builder.SetExporter(new ApplicationInsightsTraceExporter(configuration));
+            return builder.AddProcessorPipeline(b => b
+                .SetExporter(new ApplicationInsightsTraceExporter(configuration))
+                .SetExportingProcessor(e => new BatchingSpanProcessor(e)));
+        }
+
+        public static TracerBuilder UseApplicationInsights(this TracerBuilder builder, Action<TelemetryConfiguration> applicationInsightsConfigure, Action<
+            SpanProcessorPipelineBuilder> processorConfigure)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            if (applicationInsightsConfigure == null)
+            {
+                throw new ArgumentNullException(nameof(applicationInsightsConfigure));
+            }
+
+            if (processorConfigure == null)
+            {
+                throw new ArgumentNullException(nameof(processorConfigure));
+            }
+
+            var options = new TelemetryConfiguration();
+            applicationInsightsConfigure(options);
+            return builder.AddProcessorPipeline(b =>
+            {
+                b.SetExporter(new ApplicationInsightsTraceExporter(options));
+                processorConfigure.Invoke(b);
+            });
         }
     }
 }

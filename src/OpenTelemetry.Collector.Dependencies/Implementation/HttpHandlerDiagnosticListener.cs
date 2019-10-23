@@ -69,7 +69,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
             this.Tracer.WithSpan(span);
 
-            if (span.IsRecordingEvents)
+            if (span.IsRecording)
             {
                 span.PutHttpMethodAttribute(request.Method.ToString());
                 span.PutHttpHostAttribute(request.RequestUri.Host, request.RequestUri.Port);
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 return;
             }
 
-            if (!span.IsRecordingEvents)
+            if (!span.IsRecording)
             {
                 span.End();
                 return;
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 return;
             }
 
-            if (!span.IsRecordingEvents)
+            if (!span.IsRecording)
             {
                 span.End();
                 return;

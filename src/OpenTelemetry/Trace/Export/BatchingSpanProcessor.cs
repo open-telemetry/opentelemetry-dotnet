@@ -91,7 +91,7 @@ namespace OpenTelemetry.Trace.Export
             // worker task that will last for lifetime of processor.
             // No need to specify long running - it is useless if any async calls are made internally.
             // Threads are also useless as exporter tasks run in thread pool threads.
-            this.worker = Task.Run(() => this.Worker(this.cts.Token));
+            this.worker = Task.Factory.StartNew(s => this.Worker((CancellationToken)s), this.cts.Token);
         }
 
         public override void OnStart(Span span)
@@ -135,6 +135,8 @@ namespace OpenTelemetry.Trace.Export
                 {
                     await this.ExportBatchAsync(cancellationToken).ConfigureAwait(false);
                 }
+
+                await this.exporter.ShutdownAsync(cancellationToken);
 
                 // there is no point in waiting for a worker task if cancellation happens
                 // it's dead already or will die on the next iteration on its own
@@ -192,7 +194,7 @@ namespace OpenTelemetry.Trace.Export
             }
             catch (Exception ex)
             {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(ex);
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException("OnStart", ex);
             }
         }
 

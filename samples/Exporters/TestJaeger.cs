@@ -35,7 +35,8 @@ namespace Samples
             };
 
             // Create a tracer. 
-            using (var tracerFactory = TracerFactory.Create(builder => builder.SetExporter(new JaegerTraceExporter(jaegerOptions))))
+            using (var tracerFactory = TracerFactory.Create(builder => builder
+                .AddProcessorPipeline(c => c.SetExporter(new JaegerTraceExporter(jaegerOptions)))))
             {
                 var tracer = tracerFactory.GetTracer("jaeger-test");
 

@@ -71,7 +71,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
             this.Tracer.WithSpan(span);
 
-            if (span.IsRecordingEvents)
+            if (span.IsRecording)
             {
                 // Note, route is missing at this stage. It will be available later
                 span.PutHttpHostAttribute(request.Host.Host, request.Host.Port ?? 80);
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                 return;
             }
 
-            if (!span.IsRecordingEvents)
+            if (!span.IsRecording)
             {
                 span.End();
                 return;
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                     return;
                 }
 
-                if (span.IsRecordingEvents)
+                if (span.IsRecording)
                 {
                     // See https://github.com/aspnet/Mvc/blob/2414db256f32a047770326d14d8b0e2afd49ba49/src/Microsoft.AspNetCore.Mvc.Core/MvcCoreDiagnosticSourceExtensions.cs#L36-L44
                     // Reflection accessing: ActionDescriptor.AttributeRouteInfo.Template
