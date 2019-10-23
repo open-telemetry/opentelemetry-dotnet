@@ -29,7 +29,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
                 name = "name";
             }
 
-            var span = tracer.StartSpan(name, parentSpan, SpanKind.Client, command.CommandCreated);
+            var span = tracer.StartSpan(name, parentSpan, SpanKind.Client, new SpanCreationOptions { StartTimestamp = command.CommandCreated });
             if (span.IsRecording)
             {
                 // use https://github.com/opentracing/specification/blob/master/semantic_conventions.md for now
