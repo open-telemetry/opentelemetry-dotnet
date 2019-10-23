@@ -19,8 +19,16 @@ using OpenTelemetry.Collector.Dependencies;
 
 namespace OpenTelemetry.Trace.Configuration
 {
+    /// <summary>
+    /// Extension methods to simplify registering of data collection.
+    /// </summary>
     public static class TracerBuilderExtensions
     {
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection.
+        /// </summary>
+        /// <param name="builder">Trace builder to use.</param>
+        /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
         public static TracerBuilder AddDependencyCollector(this TracerBuilder builder)
         {
             if (builder == null)
@@ -34,6 +42,12 @@ namespace OpenTelemetry.Trace.Configuration
                 .AddCollector((t) => new HttpClientCollector(t));
         }
 
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection.
+        /// </summary>
+        /// <param name="builder">Trace builder to use.</param>
+        /// <param name="configure">Configuration options.</param>
+        /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
         public static TracerBuilder AddDependencyCollector(this TracerBuilder builder, Action<HttpClientCollectorOptions> configure)
         {
             if (builder == null)

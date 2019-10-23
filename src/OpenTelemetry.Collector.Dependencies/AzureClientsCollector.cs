@@ -35,6 +35,7 @@ namespace OpenTelemetry.Collector.Dependencies
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             this.diagnosticSourceSubscriber?.Dispose();

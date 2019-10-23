@@ -19,10 +19,18 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Collector.Dependencies
 {
+    /// <summary>
+    /// Instrumentation adaptor that automatically collect calls to http and Azure SDK.
+    /// </summary>
     public class DependenciesCollector : IDisposable
     {
         private readonly List<IDisposable> collectors = new List<IDisposable>();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DependenciesCollector"/> class.
+        /// </summary>
+        /// <param name="options">Configuraiton options.</param>
+        /// <param name="tracerFactory">Tracer factory to get a tracer from.</param>
         public DependenciesCollector(HttpClientCollectorOptions options, TracerFactoryBase tracerFactory)
         {
             var assemblyVersion = typeof(DependenciesCollector).Assembly.GetName().Version;
@@ -35,6 +43,7 @@ namespace OpenTelemetry.Collector.Dependencies
             this.collectors.Add(azurePipelineListener);
         }
 
+        /// <inheritdoc />
         public void Dispose()
         {
             foreach (var collector in this.collectors)

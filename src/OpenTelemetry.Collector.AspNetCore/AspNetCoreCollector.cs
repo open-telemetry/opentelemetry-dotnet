@@ -46,6 +46,7 @@ namespace OpenTelemetry.Collector.AspNetCore
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             this.diagnosticSourceSubscriber?.Dispose();

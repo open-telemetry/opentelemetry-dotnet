@@ -19,8 +19,16 @@ using OpenTelemetry.Collector.AspNetCore;
 
 namespace OpenTelemetry.Trace.Configuration
 {
+    /// <summary>
+    /// Extension methods to simplify registering of data collection.
+    /// </summary>
     public static class TracerBuilderExtensions
     {
+        /// <summary>
+        /// Enables the incoming requests automatic data collection.
+        /// </summary>
+        /// <param name="builder">Trace builder to use.</param>
+        /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
         public static TracerBuilder AddRequestCollector(this TracerBuilder builder)
         {
             if (builder == null)
@@ -31,6 +39,12 @@ namespace OpenTelemetry.Trace.Configuration
             return builder.AddCollector(t => new AspNetCoreCollector(t));
         }
 
+        /// <summary>
+        /// Enables the incoming requests automatic data collection.
+        /// </summary>
+        /// <param name="builder">Trace builder to use.</param>
+        /// <param name="configure">Configuration options.</param>
+        /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
         public static TracerBuilder AddRequestCollector(this TracerBuilder builder, Action<AspNetCoreCollectorOptions> configure)
         {
             if (builder == null)
