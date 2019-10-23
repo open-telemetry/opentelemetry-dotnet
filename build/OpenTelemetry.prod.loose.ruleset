@@ -168,6 +168,6 @@
     <Rule Id="SA1649" Action="Warning" />
     <Rule Id="SA1651" Action="Warning" />
     <Rule Id="SA1652" Action="Warning" />
-    <Rule Id="CS1591" Action="None" />
+    <Rule Id="CS1591" Action="Warning" />
   </Rules>
 </RuleSet>

@@ -17,13 +17,25 @@ using System;
 
 namespace OpenTelemetry.Context.Propagation
 {
+    /// <summary>
+    /// Exception that is raised on Trace Context parsing.
+    /// </summary>
     public class SpanContextParseException : Exception
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SpanContextParseException"/> class.
+        /// </summary>
+        /// <param name="message">Exception message.</param>
         public SpanContextParseException(string message)
             : base(message)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SpanContextParseException"/> class.
+        /// </summary>
+        /// <param name="message">Exception message.</param>
+        /// <param name="cause">Exception that caused parsing error.</param>
         public SpanContextParseException(string message, Exception cause)
             : base(message, cause)
         {

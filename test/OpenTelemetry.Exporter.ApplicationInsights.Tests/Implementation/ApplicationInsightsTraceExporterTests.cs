@@ -430,7 +430,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             // Assert.Equal("lf_unspecified-oc:0.0.0", dependency.Context.GetInternalContext().SdkVersion);
         }
 
- [Fact]
+        [Fact]
         public void OpenTelemetryTelemetryConverterTests_TracksDependencyWithParent()
         {
             // ARRANGE

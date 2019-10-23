@@ -5,6 +5,9 @@
     <PackageTags>$(PackageTags);distributed-tracing;OpenTracing</PackageTags>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
+    <PropertyGroup>
+      <NoWarn>$(NoWarn),1591</NoWarn>
+    </PropertyGroup>
 
   <PropertyGroup>
     <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))/build/OpenTelemetry.prod.loose.ruleset</CodeAnalysisRuleSet>

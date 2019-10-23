@@ -5,6 +5,9 @@
     <IncludeSymbols>True</IncludeSymbols>
     <PackageTags>$(PackageTags);Stackdriver;Google;GCP;distributed-tracing</PackageTags>
   </PropertyGroup>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn),1591</NoWarn>
+  </PropertyGroup>
 
   <PropertyGroup>
     <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))/build/OpenTelemetry.prod.loose.ruleset</CodeAnalysisRuleSet>

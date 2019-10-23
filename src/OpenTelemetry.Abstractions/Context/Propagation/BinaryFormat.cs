@@ -19,6 +19,9 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Context.Propagation
 {
+    /// <summary>
+    /// Binary format propagator.
+    /// </summary>
     public class BinaryFormat : IBinaryFormat
     {
         private const byte VersionId = 0;
@@ -40,6 +43,7 @@ namespace OpenTelemetry.Context.Propagation
         private const int TraceOptionOffset = TraceOptionFieldIdOffset + IdSize;
         private const int FormatLength = (4 * IdSize) + TraceIdSize + SpanIdSize + TraceOptionsSize;
 
+        /// <inheritdoc />
         public SpanContext FromByteArray(byte[] bytes)
         {
             if (bytes == null)
@@ -85,6 +89,7 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
+        /// <inheritdoc />
         public byte[] ToByteArray(SpanContext spanContext)
         {
             if (spanContext == null)

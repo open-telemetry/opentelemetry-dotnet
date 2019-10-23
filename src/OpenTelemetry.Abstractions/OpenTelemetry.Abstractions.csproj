@@ -11,6 +11,13 @@
     <None Remove="Trace\Internal\**" />
   </ItemGroup>
 
+  <!--
+  Uncomment for development. This will disable the verification that every public method needs to be documented.
+  
+  <PropertyGroup>
+    <NoWarn>$(NoWarn),1591</NoWarn>
+  </PropertyGroup>
+  -->
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.6.0" />
   </ItemGroup>

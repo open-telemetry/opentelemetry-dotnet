@@ -4,6 +4,10 @@
         <TargetFramework>netstandard2.0</TargetFramework>
     </PropertyGroup>
 
+    <PropertyGroup>
+      <NoWarn>$(NoWarn),1591</NoWarn>
+    </PropertyGroup>
+
     <ItemGroup>
       <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
     </ItemGroup>
