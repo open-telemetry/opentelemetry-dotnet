@@ -14,8 +14,4 @@
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.6.0" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Metrics\" />
-  </ItemGroup>
 </Project>
