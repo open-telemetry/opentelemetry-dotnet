@@ -78,7 +78,7 @@ namespace OpenTelemetry.Collector.Dependencies
                 }
             }
 
-            var span = this.Tracer.StartSpanFromActivity(operationName, Activity.Current, spanKind, parentLinks);
+            var span = this.Tracer.StartSpanFromActivity(operationName, current, spanKind, parentLinks);
 
             this.Tracer.WithSpan(span);
         }

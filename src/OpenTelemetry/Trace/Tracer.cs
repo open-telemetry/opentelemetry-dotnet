@@ -76,41 +76,24 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, Func<IEnumerable<Link>> linksGetter)
+        public ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
             if (operationName == null)
             {
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            return Span.CreateRoot(operationName, kind, startTimestamp, linksGetter, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
+            return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
-        public ISpan StartRootSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
+        public ISpan StartSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return Span.CreateRoot(operationName, kind, startTimestamp, links, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
+            return this.StartSpan(operationName, null, kind, options);
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, Func<IEnumerable<Link>> linksGetter)
-        {
-            return this.StartSpan(operationName, null, kind, startTimestamp, linksGetter);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
-        {
-            return this.StartSpan(operationName, null, kind, startTimestamp, links);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, Func<IEnumerable<Link>> linksGetter)
+        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
         {
             if (operationName == null)
             {
@@ -122,29 +105,12 @@ namespace OpenTelemetry.Trace
                 parent = this.CurrentSpan;
             }
 
-            return Span.CreateFromParentSpan(operationName, parent, kind, startTimestamp, linksGetter, this.tracerConfiguration,
+            return Span.CreateFromParentSpan(operationName, parent, kind, options, this.tracerConfiguration,
                 this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            if (parent == null)
-            {
-                parent = this.CurrentSpan;
-            }
-
-            return Span.CreateFromParentSpan(operationName, parent, kind, startTimestamp, links, this.tracerConfiguration,
-                this.spanProcessor, this.LibraryResource);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, Func<IEnumerable<Link>> linksGetter)
+        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
             if (operationName == null)
             {
@@ -153,57 +119,12 @@ namespace OpenTelemetry.Trace
 
             if (parent != null)
             {
-                return Span.CreateFromParentContext(operationName, parent, kind, startTimestamp, linksGetter, this.tracerConfiguration,
+                return Span.CreateFromParentContext(operationName, parent, kind, options, this.tracerConfiguration,
                     this.spanProcessor, this.LibraryResource);
             }
 
-            return Span.CreateRoot(operationName, kind, startTimestamp, linksGetter, this.tracerConfiguration,
+            return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration,
                 this.spanProcessor, this.LibraryResource);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, DateTimeOffset startTimestamp, IEnumerable<Link> links)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            if (parent != null)
-            {
-                return Span.CreateFromParentContext(operationName, parent, kind, startTimestamp, links, this.tracerConfiguration,
-                    this.spanProcessor, this.LibraryResource);
-            }
-
-            return Span.CreateRoot(operationName, kind, startTimestamp, links, this.tracerConfiguration,
-                this.spanProcessor, this.LibraryResource);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, Func<IEnumerable<Link>> linksGetter)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            if (activity == null)
-            {
-                throw new ArgumentNullException(nameof(activity));
-            }
-
-            if (activity.IdFormat != ActivityIdFormat.W3C)
-            {
-                throw new ArgumentException("Current Activity is not in W3C format");
-            }
-
-            if (activity.StartTimeUtc == default || activity.Duration != default)
-            {
-                throw new ArgumentException(
-                    "Current Activity is not running: it has not been started or has been stopped");
-            }
-
-            return Span.CreateFromActivity(operationName, activity, kind, linksGetter, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
