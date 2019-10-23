@@ -36,17 +36,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Starts active root span.
-        /// </summary>
-        /// <param name="tracer">Tracer instance.</param>
-        /// <param name="operationName">Span name.</param>
-        /// <returns>Span instance.</returns>
-        public static IDisposable StartActiveRootSpan(this ITracer tracer, string operationName)
-        {
-            return tracer.StartActiveRootSpan(operationName, SpanKind.Internal, null);
-        }
-
-        /// <summary>
         /// Starts root span.
         /// </summary>
         /// <param name="tracer">Tracer instance.</param>
@@ -56,18 +45,6 @@ namespace OpenTelemetry.Trace
         public static ISpan StartRootSpan(this ITracer tracer, string operationName, SpanKind kind)
         {
             return tracer.StartRootSpan(operationName, kind, null);
-        }
-
-        /// <summary>
-        /// Starts active root span.
-        /// </summary>
-        /// <param name="tracer">Tracer instance.</param>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="kind">Kind.</param>
-        /// <returns>Span instance.</returns>
-        public static IDisposable StartActiveRootSpan(this ITracer tracer, string operationName, SpanKind kind)
-        {
-            return tracer.StartActiveRootSpan(operationName, kind, null);
         }
 
         /// <summary>

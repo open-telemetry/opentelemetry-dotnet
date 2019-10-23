@@ -92,17 +92,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public IDisposable StartActiveRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration, this.spanProcessor, this.LibraryResource, true);
-        }
-
-        /// <inheritdoc/>
         public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
         {
             if (operationName == null)

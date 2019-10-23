@@ -60,15 +60,6 @@ namespace OpenTelemetry.Trace
         ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options);
 
         /// <summary>
-        /// Starts activate root span.
-        /// </summary>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="kind">Kind.</param>
-        /// <param name="options">Advanced span creation options.</param>
-        /// <returns>Span instance.</returns>
-        IDisposable StartActiveRootSpan(string operationName, SpanKind kind, SpanCreationOptions options);
-
-        /// <summary>
         /// Starts span.
         /// </summary>
         /// <param name="operationName">Span name.</param>

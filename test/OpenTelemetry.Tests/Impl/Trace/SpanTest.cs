@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracer = tracerFactory.GetTracer(null);
 
-            using (tracer.StartActiveRootSpan("outer"))
+            using (tracer.StartActiveSpan("outer"))
             {
                 var parentSpan = (Span)tracer.StartRootSpan(SpanName);
 
@@ -999,90 +999,6 @@ namespace OpenTelemetry.Trace.Test
             span.End();
 
             Assert.Same(anotherActivity, Activity.Current);
-        }
-
-        [Fact]
-        public void StartRootActiveSpan()
-        {
-            var tracer = tracerFactory.GetTracer(null);
-
-            using (var scope = tracer.StartActiveRootSpan(SpanName))
-            {
-                Assert.NotNull(scope);
-
-                var span = tracer.CurrentSpan;
-                Assert.NotNull(span);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
-                Assert.True(span.Context.IsValid);
-            }
-
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
-        }
-
-        [Fact]
-        public void StartRootActiveSpan_Kind()
-        {
-            var tracer = tracerFactory.GetTracer(null);
-
-            using (var scope = tracer.StartActiveRootSpan(SpanName, SpanKind.Producer))
-            {
-                Assert.NotNull(scope);
-
-                var span = (Span)tracer.CurrentSpan;
-
-                Assert.True(span.Context.IsValid);
-                Assert.NotNull(span);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
-                Assert.Equal(SpanKind.Producer, span.Kind);
-            }
-
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
-        }
-
-
-        [Fact]
-        public void StartRootActiveSpan_Kind_Timestamp()
-        {
-            var tracer = tracerFactory.GetTracer(null);
-
-            var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
-            using (var scope = tracer.StartActiveRootSpan(SpanName, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp }))
-            {
-                Assert.NotNull(scope);
-
-                var span = (Span)tracer.CurrentSpan;
-                Assert.NotNull(span);
-                Assert.True(span.Context.IsValid);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
-                Assert.Equal(SpanKind.Producer, span.Kind);
-                Assert.Equal(startTimestamp, span.StartTimestamp);
-            }
-
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
-        }
-
-        [Fact]
-        public void StartRootActiveSpan_Kind_Timestamp_Links()
-        {
-            var tracer = tracerFactory.GetTracer(null);
-
-            var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
-
-            using (var scope = tracer.StartActiveRootSpan(SpanName, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }))
-            {
-                Assert.NotNull(scope);
-
-                var span = (Span)tracer.CurrentSpan;
-                Assert.NotNull(span);
-                Assert.True(span.Context.IsValid);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
-                Assert.Equal(SpanKind.Producer, span.Kind);
-                Assert.Equal(startTimestamp, span.StartTimestamp);
-                Assert.Single(span.Links);
-            }
-
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
         }
 
         [Fact]

@@ -58,16 +58,6 @@ namespace OpenTelemetry.Trace
             return this.realTracer != null ? this.realTracer.StartRootSpan(operationName, kind, options) : BlankSpan.Instance;
         }
 
-        public IDisposable StartActiveRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return this.realTracer != null ? this.realTracer.StartActiveRootSpan(operationName, kind, options) : NoopScope;
-        }
-
         public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
         {
             if (operationName == null)
