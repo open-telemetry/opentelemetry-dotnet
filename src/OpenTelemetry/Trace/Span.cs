@@ -92,7 +92,7 @@ namespace OpenTelemetry.Trace
             this.Activity.ActivityTraceFlags =
                 this.IsRecording
                 ? this.Activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded
-                : this.Activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                : this.Activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
 
             // this context is definitely not remote, setting isRemote to false
             this.Context = new SpanContext(this.Activity.TraceId, this.Activity.SpanId, this.Activity.ActivityTraceFlags, false, tracestate);
