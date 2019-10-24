@@ -70,7 +70,7 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(6, Message = "Attempting to dispose scope '{0}' that is not current", Level = EventLevel.Warning)]
-        public void AttemptToDisposeScopeWhichIsNotCurrent(string spanName)
+        public void AttemptToEndScopeWhichIsNotCurrent(string spanName)
         {
             this.WriteEvent(6, spanName);
         }

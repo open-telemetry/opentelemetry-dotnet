@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace
         public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, SpanKind kind, out ISpan span)
         {
             span = tracer.StartSpan(operationName, kind, null);
-            return tracer.WithSpan(span);
+            return tracer.WithSpan(span, true);
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace
         public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, SpanKind kind, SpanCreationOptions options, out ISpan span)
         {
             span = tracer.StartSpan(operationName, kind, options);
-            return tracer.WithSpan(span);
+            return tracer.WithSpan(span, true);
         }
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace OpenTelemetry.Trace
         public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, SpanContext parent, out ISpan span)
         {
             span = tracer.StartSpan(operationName, parent, SpanKind.Internal, null);
-            return tracer.WithSpan(span);
+            return tracer.WithSpan(span, true);
         }
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Trace
         public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, SpanContext parent, SpanKind kind, out ISpan span)
         {
             span = tracer.StartSpan(operationName, parent, kind, null);
-            return tracer.WithSpan(span);
+            return tracer.WithSpan(span, true);
         }
 
         /// <summary>
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Trace
         public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, SpanContext parent, SpanKind kind, SpanCreationOptions options, out ISpan span)
         {
             span = tracer.StartSpan(operationName, parent, kind, options);
-            return tracer.WithSpan(span);
+            return tracer.WithSpan(span, true);
         }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Trace
         public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, ISpan parent, out ISpan span)
         {
             span = tracer.StartSpan(operationName, parent, SpanKind.Internal, null);
-            return tracer.WithSpan(span);
+            return tracer.WithSpan(span, true);
         }
 
         /// <summary>
@@ -144,7 +144,7 @@ namespace OpenTelemetry.Trace
         public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, ISpan parent, SpanKind kind, out ISpan span)
         {
             span = tracer.StartSpan(operationName, parent, kind, null);
-            return tracer.WithSpan(span);
+            return tracer.WithSpan(span, true);
         }
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Trace
         public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options, out ISpan span)
         {
             span = tracer.StartSpan(operationName, parent, kind, options);
-            return tracer.WithSpan(span);
+            return tracer.WithSpan(span, true);
         }
     }
 }

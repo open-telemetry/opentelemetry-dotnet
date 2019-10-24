@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ITextFormat TextFormat { get; }
 
-        public IDisposable WithSpan(ISpan span, bool endOnDispose)
+        public IDisposable WithSpan(ISpan span, bool endSpanOnDispose)
         {
             if (span == null)
             {
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace
 
             if (span is Span spanImpl)
             {
-                return spanImpl.Activate(endOnDispose);
+                return spanImpl.BeginScope(endSpanOnDispose);
             }
 
             return NoopDisposable.Instance;

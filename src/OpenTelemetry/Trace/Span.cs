@@ -49,6 +49,7 @@ namespace OpenTelemetry.Trace
         private DateTimeOffset endTimestamp;
         private bool hasEnded;
         private bool endOnDispose = false;
+        // private Activity originalActivity;
 
         private Span(
             string name,
@@ -82,6 +83,7 @@ namespace OpenTelemetry.Trace
             this.OwnsActivity = ownsActivity;
             this.Activity = activityAndTracestate.Activity;
             var tracestate = activityAndTracestate.Tracestate;
+            // this.originalActivity = Activity.Current;
 
             this.IsRecording = MakeSamplingDecision(
                 parentSpanContext,
@@ -314,21 +316,13 @@ namespace OpenTelemetry.Trace
 
             this.hasEnded = true;
             this.endTimestamp = endTimestamp;
-            if (this.endOnDispose && this.OwnsActivity && this.Activity == Activity.Current)
-            {
-                OpenTelemetrySdkEventSource.Log.AttemptToDisposeScopeWhichIsNotCurrent(this.Name);
-                this.Activity.Stop();
-            }
 
             if (!this.IsRecording)
             {
                 return;
             }
 
-            if (this.endOnDispose)
-            {
-                this.spanProcessor.OnEnd(this);
-            }
+            this.spanProcessor.OnEnd(this);
         }
 
         /// <inheritdoc/>
@@ -377,10 +371,7 @@ namespace OpenTelemetry.Trace
 
         public void Dispose()
         {
-            if (this.Activity == Activity.Current)
-            {
-                ActivitySpanTable.Remove(this.Activity);
-            }
+            this.EndScope();
 
             if (this.endOnDispose)
             {
@@ -506,21 +497,24 @@ namespace OpenTelemetry.Trace
             };
 
             span.SetLinks(links);
-
+            span.BeginScope(true);
             return span;
         }
 
-        internal IDisposable Activate(bool endOnDispose)
+        internal IDisposable BeginScope(bool endOnDispose)
         {
-            if (this.endOnDispose)
+            if (ActivitySpanTable.TryGetValue(this.Activity, out _))
             {
                 OpenTelemetrySdkEventSource.Log.AttemptToActivateActiveSpan(this.Name);
                 return NoopDisposable.Instance;
             }
 
-            if (endOnDispose)
+            ActivitySpanTable.Add(this.Activity, this);
+            Activity.Current = this.Activity;
+
+            this.endOnDispose = endOnDispose;
+            if (this.endOnDispose)
             {
-                this.endOnDispose = true;
                 return this;
             }
 
@@ -697,6 +691,29 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        private void EndScope()
+        {
+            if (this.Activity == Activity.Current)
+            {
+                ActivitySpanTable.Remove(this.Activity);
+                if (this.OwnsActivity)
+                {
+                    if (this.endOnDispose)
+                    {
+                        this.Activity.Stop();
+                    }
+                    else
+                    {
+                        Activity.Current = this.Activity.Parent;
+                    }
+                }
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.AttemptToEndScopeWhichIsNotCurrent(this.Name);
+            }
+        }
+
         private readonly struct ActivityAndTracestate
         {
             public readonly Activity Activity;
@@ -712,36 +729,15 @@ namespace OpenTelemetry.Trace
         private sealed class ScopeInSpan : IDisposable
         {
             private readonly Span span;
-            private readonly Activity originalActivity;
 
             public ScopeInSpan(Span span)
             {
                 this.span = span;
-                this.originalActivity = Activity.Current;
-
-                Activity.Current = span.Activity;
-
-                if (ActivitySpanTable.TryGetValue(span.Activity, out _))
-                {
-                    // log warning
-                    return;
-                }
-
-                ActivitySpanTable.Add(span.Activity, span);
             }
 
             public void Dispose()
             {
-                if (this.span.Activity == Activity.Current)
-                {
-                    ActivitySpanTable.Remove(this.span.Activity);
-
-                    Activity.Current = this.originalActivity;
-                }
-                else
-                {
-                    OpenTelemetrySdkEventSource.Log.AttemptToDisposeScopeWhichIsNotCurrent(this.span.Name);
-                }
+                this.span.EndScope();
             }
         }
     }

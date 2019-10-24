@@ -97,7 +97,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
 
             if (!span.IsRecording)
             {
-                this.DisposeOrEndSpan(span);
+                this.EndAndDispose(span);
                 return;
             }
 
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             var response = context.Response;
 
             span.PutHttpStatusCode(response.StatusCode, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
-            this.DisposeOrEndSpan(span);
+            this.EndAndDispose(span);
         }
 
         public override void OnCustom(string name, Activity activity, object payload)
@@ -186,15 +186,12 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             return builder.ToString();
         }
 
-        private void DisposeOrEndSpan(ISpan span)
+        private void EndAndDispose(ISpan span)
         {
+            span.End();
             if (span is IDisposable disposableSpan)
             {
                 disposableSpan.Dispose();
-            }
-            else
-            {
-                span.End();
             }
         }
     }

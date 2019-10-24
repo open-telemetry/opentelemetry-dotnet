@@ -91,12 +91,15 @@ namespace OpenTelemetry.Collector.Dependencies
                 return;
             }
 
-            foreach (var keyValuePair in current.Tags)
+            if (span.IsRecording)
             {
-                span.SetAttribute(keyValuePair.Key, keyValuePair.Value);
+                foreach (var keyValuePair in current.Tags)
+                {
+                    span.SetAttribute(keyValuePair.Key, keyValuePair.Value);
+                }
             }
 
-            this.Tracer.CurrentSpan.End();
+            this.EndAndDispose(span);
         }
 
         public override void OnException(Activity current, object valueValue)
@@ -104,6 +107,16 @@ namespace OpenTelemetry.Collector.Dependencies
             var span = this.Tracer.CurrentSpan;
 
             span.Status = Status.Unknown.WithDescription(valueValue?.ToString());
+        }
+
+        private void EndAndDispose(ISpan span)
+        {
+            span.End();
+
+            if (span is IDisposable disposableSpan)
+            {
+                disposableSpan.Dispose();
+            }
         }
     }
 }

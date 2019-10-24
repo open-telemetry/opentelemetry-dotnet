@@ -96,37 +96,31 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 return;
             }
 
-            if (!span.IsRecording)
+            if (span.IsRecording)
             {
-                this.DisposeOrEndSpan(span);
-                return;
-            }
+                var requestTaskStatus = this.stopRequestStatusFetcher.Fetch(payload) as TaskStatus?;
 
-            var requestTaskStatus = this.stopRequestStatusFetcher.Fetch(payload) as TaskStatus?;
-
-            if (requestTaskStatus.HasValue)
-            {
-                if (requestTaskStatus != TaskStatus.RanToCompletion)
+                if (requestTaskStatus.HasValue)
                 {
-                    span.Status = Status.Unknown;
-
-                    if (requestTaskStatus == TaskStatus.Canceled)
+                    if (requestTaskStatus != TaskStatus.RanToCompletion)
                     {
-                        span.Status = Status.Cancelled;
+                        span.Status = Status.Unknown;
+
+                        if (requestTaskStatus == TaskStatus.Canceled)
+                        {
+                            span.Status = Status.Cancelled;
+                        }
                     }
+                }
+
+                if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
+                {
+                    // response could be null for DNS issues, timeouts, etc...
+                    span.PutHttpStatusCode((int)response.StatusCode, response.ReasonPhrase);
                 }
             }
 
-            if (!(this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response))
-            {
-                // response could be null for DNS issues, timeouts, etc...
-                this.DisposeOrEndSpan(span);
-                return;
-            }
-
-            span.PutHttpStatusCode((int)response.StatusCode, response.ReasonPhrase);
-
-            span.End();
+            this.EndAndDispose(span);
         }
 
         public override void OnException(Activity activity, object payload)
@@ -140,42 +134,37 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 return;
             }
 
-            if (!span.IsRecording)
+            if (span.IsRecording)
             {
-                span.End();
-                return;
-            }
-
-            if (!(this.stopExceptionFetcher.Fetch(payload) is Exception exc))
-            {
-                CollectorEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
-                return;
-            }
-
-            if (exc is HttpRequestException)
-            {
-                // TODO: on netstandard this will be System.Net.Http.WinHttpException: The server name or address could not be resolved
-                if (exc.InnerException is WebException exception &&
-                    exception.Status == WebExceptionStatus.NameResolutionFailure)
+                if (!(this.stopExceptionFetcher.Fetch(payload) is Exception exc))
                 {
-                    span.Status = Status.InvalidArgument;
+                    CollectorEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
+                    return;
                 }
-                else if (exc.InnerException != null)
+
+                if (exc is HttpRequestException)
                 {
-                    span.Status = Status.Unknown.WithDescription(exc.Message);
+                    // TODO: on netstandard this will be System.Net.Http.WinHttpException: The server name or address could not be resolved
+                    if (exc.InnerException is WebException exception &&
+                        exception.Status == WebExceptionStatus.NameResolutionFailure)
+                    {
+                        span.Status = Status.InvalidArgument;
+                    }
+                    else if (exc.InnerException != null)
+                    {
+                        span.Status = Status.Unknown.WithDescription(exc.Message);
+                    }
                 }
             }
         }
 
-        private void DisposeOrEndSpan(ISpan span)
+        private void EndAndDispose(ISpan span)
         {
+            span.End();
+
             if (span is IDisposable disposableSpan)
             {
                 disposableSpan.Dispose();
-            }
-            else
-            {
-                span.End();
             }
         }
     }
