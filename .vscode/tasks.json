@@ -13,6 +13,7 @@
             },
             "args": [
                 "build",
+                "${workspaceFolder}/OpenTelemetry.sln",
                 "/property:GenerateFullPaths=true"
             ],
             "problemMatcher": "$msCompile"
