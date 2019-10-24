@@ -20,6 +20,9 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
 {
+    /// <summary>
+    /// Tracer extension methods to start active spans.
+    /// </summary>
     public static class TracerActiveSpanExtensions
     {
         /// <summary>
