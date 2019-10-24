@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
 {
@@ -160,6 +162,51 @@ namespace OpenTelemetry.Trace
         public static IDisposable StartActiveSpan(this ITracer tracer, string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options, out ISpan span)
         {
             span = tracer.StartSpan(operationName, parent, kind, options);
+            return tracer.WithSpan(span, true);
+        }
+
+        /// <summary>
+        /// Starts active span.
+        /// </summary>
+        /// <param name="tracer">Tracer instance.</param>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="activity">Parent for new span.</param>
+        /// <param name="span">Created span.</param>
+        /// <returns>Scope.</returns>
+        public static IDisposable StartActiveSpanFromActivity(this ITracer tracer, string operationName, Activity activity, out ISpan span)
+        {
+            span = tracer.StartSpanFromActivity(operationName, activity, SpanKind.Internal, null);
+            return tracer.WithSpan(span, true);
+        }
+
+        /// <summary>
+        /// Starts active span.
+        /// </summary>
+        /// <param name="tracer">Tracer instance.</param>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="activity">Parent for new span.</param>
+        /// <param name="kind">Kind.</param>
+        /// <param name="span">Created span.</param>
+        /// <returns>Scope.</returns>
+        public static IDisposable StartActiveSpanFromActivity(this ITracer tracer, string operationName, Activity activity, SpanKind kind, out ISpan span)
+        {
+            span = tracer.StartSpanFromActivity(operationName, activity, kind, null);
+            return tracer.WithSpan(span, true);
+        }
+
+        /// <summary>
+        /// Starts active span.
+        /// </summary>
+        /// <param name="tracer">Tracer instance.</param>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="activity">Parent for new span.</param>
+        /// <param name="kind">Kind.</param>
+        /// <param name="links">Links collection.</param>
+        /// <param name="span">Created span.</param>
+        /// <returns>Scope.</returns>
+        public static IDisposable StartActiveSpanFromActivity(this ITracer tracer, string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links, out ISpan span)
+        {
+            span = tracer.StartSpanFromActivity(operationName, activity, kind, links);
             return tracer.WithSpan(span, true);
         }
     }

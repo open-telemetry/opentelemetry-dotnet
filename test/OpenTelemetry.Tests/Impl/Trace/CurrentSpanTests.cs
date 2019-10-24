@@ -138,20 +138,20 @@ namespace OpenTelemetry.Trace.Test
 
             activity.Start();
 
-            Span span = null;
-            using (var scope = tracer.StartSpanFromActivity("foo", activity))
+            ISpan span;
+            using (var scope = tracer.StartActiveSpanFromActivity("foo", activity, out span))
             {
                 Assert.IsType<Span>(scope);
-                span = (Span)scope;
+                Assert.Same(scope, span);
                 Assert.Same(span, this.tracer.CurrentSpan);
-                Assert.Same(span.Activity, Activity.Current);
+                Assert.Same(((Span)span).Activity, Activity.Current);
             }
 
             Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
             Assert.Equal(activity, Activity.Current);
 
             // span ended
-            Assert.NotEqual(default, span.EndTimestamp);
+            Assert.NotEqual(default, ((Span)span).EndTimestamp);
         }
 
         [Fact]
@@ -177,9 +177,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_WithSpan()
         {
-            using (tracer.StartActiveSpan("foo", out var span))
+            using (var scope = tracer.StartActiveSpan("foo", out var span))
             {
-                Assert.Same(NoopDisposable.Instance, this.tracer.WithSpan(span));
+                Assert.Same(scope, this.tracer.WithSpan(span));
             }
 
             Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
@@ -241,9 +241,11 @@ namespace OpenTelemetry.Trace.Test
         {
             var span = (Span)tracer.StartRootSpan("foo");
 
-            using(this.tracer.WithSpan(span))
-            using(this.tracer.WithSpan(span))
+            using(var scope1 = this.tracer.WithSpan(span))
+            using(var scope2 = this.tracer.WithSpan(span))
             {
+                Assert.IsNotType<NoopDisposable>(scope1);
+                Assert.IsType<NoopDisposable>(scope2);
                 Assert.Same(span.Activity, Activity.Current);
                 Assert.Same(span, this.tracer.CurrentSpan);
             }

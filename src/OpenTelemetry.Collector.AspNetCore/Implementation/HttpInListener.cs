@@ -59,8 +59,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             ISpan span;
             if (this.hostingSupportsW3C)
             {
-                this.Tracer.StartSpanFromActivity(path, Activity.Current, SpanKind.Server);
-                span = this.Tracer.CurrentSpan;
+                this.Tracer.StartActiveSpanFromActivity(path, Activity.Current, SpanKind.Server, out span);
             }
             else
             {

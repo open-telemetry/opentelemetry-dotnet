@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     internal sealed class ProxyTracer : ITracer
     {
-        internal static readonly IDisposable NoopScope = new NoopDisposable();
+        private static readonly IDisposable NoopScope = new NoopDisposable();
         private readonly IBinaryFormat binaryFormat = new BinaryFormat();
         private readonly ITextFormat textFormat = new TraceContextFormat();
 
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace
             return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
         }
 
-        public IDisposable StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
             if (operationName == null)
             {
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentException("Current Activity is not in W3C format");
             }
 
-            return this.realTracer != null ? this.realTracer.StartSpanFromActivity(operationName, activity, kind, links) : NoopScope;
+            return this.realTracer != null ? this.realTracer.StartSpanFromActivity(operationName, activity, kind, links) : BlankSpan.Instance;
         }
 
         public void UpdateTracer(ITracer realTracer)

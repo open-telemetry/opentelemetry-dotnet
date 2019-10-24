@@ -106,6 +106,12 @@ namespace OpenTelemetry.Collector.Dependencies
         {
             var span = this.Tracer.CurrentSpan;
 
+            if (span == null || span == BlankSpan.Instance)
+            {
+                CollectorEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnException");
+                return;
+            }
+
             span.Status = Status.Unknown.WithDescription(valueValue?.ToString());
         }
 

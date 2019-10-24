@@ -88,6 +88,6 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="links">Links collection.</param>
         /// <returns>Span scope instance.</returns>
-        IDisposable StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links);
+        ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links);
     }
 }

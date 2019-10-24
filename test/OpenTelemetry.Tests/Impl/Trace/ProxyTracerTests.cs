@@ -103,9 +103,9 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client, null));
 
             var validActivity = new Activity("foo").SetIdFormat(ActivityIdFormat.W3C).Start();
-            Assert.Same(ProxyTracer.NoopScope, proxyTracer.StartSpanFromActivity("foo", validActivity));
-            Assert.Same(ProxyTracer.NoopScope, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Consumer));
-            Assert.Same(ProxyTracer.NoopScope, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Client, null));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Consumer));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Client, null));
         }
 
         [Fact]

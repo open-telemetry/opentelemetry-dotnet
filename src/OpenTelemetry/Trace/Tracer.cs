@@ -127,7 +127,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public IDisposable StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
             if (operationName == null)
             {

@@ -949,6 +949,8 @@ namespace OpenTelemetry.Trace.Test
             var span = (Span)tracer.StartSpan(SpanName);
             span.End();
 
+            // activity is stopped
+            Assert.NotEqual(default, span.Activity.Duration);
             Assert.Same(parentActivity, Activity.Current);
         }
 

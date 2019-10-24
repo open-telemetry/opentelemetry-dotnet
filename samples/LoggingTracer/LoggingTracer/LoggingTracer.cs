@@ -75,10 +75,10 @@ namespace LoggingTracer
         }
 
         /// <inheritdoc/>
-        public IDisposable StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
             Logger.Log($"{this.prefix}.StartSpanFromActivity({operationName}, {activity.OperationName}, {kind}, {links})");
-            return new CurrentSpanUtils.LoggingScope(new LoggingSpan(operationName, kind));
+            return new LoggingSpan(operationName, kind);
         }
     }
 }

@@ -140,7 +140,7 @@ namespace OpenTelemetry.Trace
         /// <param name="operationName">Span name.</param>
         /// <param name="activity">Activity instance to create span from.</param>
         /// <returns>Span scope instance.</returns>
-        public static IDisposable StartSpanFromActivity(this ITracer tracer, string operationName, Activity activity)
+        public static ISpan StartSpanFromActivity(this ITracer tracer, string operationName, Activity activity)
         {
             return tracer.StartSpanFromActivity(operationName, activity, SpanKind.Internal, null);
         }
@@ -153,7 +153,7 @@ namespace OpenTelemetry.Trace
         /// <param name="activity">Activity instance to create span from.</param>
         /// <param name="kind">Kind.</param>
         /// <returns>Span scope instance.</returns>
-        public static IDisposable StartSpanFromActivity(this ITracer tracer, string operationName, Activity activity, SpanKind kind)
+        public static ISpan StartSpanFromActivity(this ITracer tracer, string operationName, Activity activity, SpanKind kind)
         {
             return tracer.StartSpanFromActivity(operationName, activity, kind, null);
         }

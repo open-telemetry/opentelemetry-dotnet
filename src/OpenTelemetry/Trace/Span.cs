@@ -48,14 +48,14 @@ namespace OpenTelemetry.Trace
         private DateTimeOffset startTimestamp;
         private DateTimeOffset endTimestamp;
         private bool hasEnded;
-        private bool endOnDispose = false;
-        // private Activity originalActivity;
+        private bool endOnDispose;
+        private bool createdFromActivity;
 
         private Span(
             string name,
             SpanContext parentSpanContext,
             ActivityAndTracestate activityAndTracestate,
-            bool ownsActivity,
+            bool createdFromActivity,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
             TracerConfiguration tracerConfiguration,
@@ -80,10 +80,9 @@ namespace OpenTelemetry.Trace
             this.tracerConfiguration = tracerConfiguration;
             this.spanProcessor = spanProcessor;
             this.Kind = spanKind;
-            this.OwnsActivity = ownsActivity;
+            this.createdFromActivity = createdFromActivity;
             this.Activity = activityAndTracestate.Activity;
             var tracestate = activityAndTracestate.Tracestate;
-            // this.originalActivity = Activity.Current;
 
             this.IsRecording = MakeSamplingDecision(
                 parentSpanContext,
@@ -180,8 +179,6 @@ namespace OpenTelemetry.Trace
                 return null;
             }
         }
-
-        internal bool OwnsActivity { get; }
 
         internal Activity Activity { get; }
 
@@ -317,6 +314,11 @@ namespace OpenTelemetry.Trace
             this.hasEnded = true;
             this.endTimestamp = endTimestamp;
 
+            if (!this.createdFromActivity)
+            {
+                this.Activity.SetEndTime(endTimestamp.UtcDateTime);
+            }
+
             if (!this.IsRecording)
             {
                 return;
@@ -394,7 +396,7 @@ namespace OpenTelemetry.Trace
                     name,
                     parentSpan.Context,
                     FromParentSpan(name, parentSpan),
-                    true,
+                    false,
                     spanKind,
                     spanCreationOptions,
                     tracerConfiguration,
@@ -409,7 +411,7 @@ namespace OpenTelemetry.Trace
                     name,
                     SpanContext.Blank,
                     CreateRoot(name),
-                    true,
+                    false,
                     spanKind,
                     spanCreationOptions,
                     tracerConfiguration,
@@ -424,7 +426,7 @@ namespace OpenTelemetry.Trace
                     currentActivity.SpanId,
                     currentActivity.ActivityTraceFlags),
                 FromCurrentParentActivity(name, currentActivity),
-                true,
+                false,
                 spanKind,
                 spanCreationOptions,
                 tracerConfiguration,
@@ -445,7 +447,7 @@ namespace OpenTelemetry.Trace
                 name,
                 parentContext,
                 FromParentSpanContext(name, parentContext),
-                true,
+                false,
                 spanKind,
                 spanCreationOptions,
                 tracerConfiguration,
@@ -465,7 +467,7 @@ namespace OpenTelemetry.Trace
                 name,
                 SpanContext.Blank,
                 CreateRoot(name),
-                true,
+                false,
                 spanKind,
                 spanCreationOptions,
                 tracerConfiguration,
@@ -486,7 +488,7 @@ namespace OpenTelemetry.Trace
                 name,
                 ParentContextFromActivity(activity),
                 FromActivity(activity),
-                false,
+                true,
                 spanKind,
                 null,
                 tracerConfiguration,
@@ -506,7 +508,7 @@ namespace OpenTelemetry.Trace
             if (ActivitySpanTable.TryGetValue(this.Activity, out _))
             {
                 OpenTelemetrySdkEventSource.Log.AttemptToActivateActiveSpan(this.Name);
-                return NoopDisposable.Instance;
+                return this.endOnDispose ? this : NoopDisposable.Instance;
             }
 
             ActivitySpanTable.Add(this.Activity, this);
@@ -696,16 +698,12 @@ namespace OpenTelemetry.Trace
             if (this.Activity == Activity.Current)
             {
                 ActivitySpanTable.Remove(this.Activity);
-                if (this.OwnsActivity)
+
+                // spans created from Activity do not control
+                // Activity lifetime and should not change Current activity
+                if (!this.createdFromActivity)
                 {
-                    if (this.endOnDispose)
-                    {
-                        this.Activity.Stop();
-                    }
-                    else
-                    {
-                        Activity.Current = this.Activity.Parent;
-                    }
+                    Activity.Current = this.Activity.Parent;
                 }
             }
             else
