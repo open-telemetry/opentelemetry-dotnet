@@ -115,7 +115,7 @@ parentSpan.End();
 
 // calling StartActiveSpan starts a span and puts parentSpan into the ambient context
 // that flows in async calls.   When child is created, it implicitly becomes child of current span
-using (var parentSpan = tracer.StartActiveSpan("parent span"))
+using (tracer.StartActiveSpan("parent span", out _))
 {
     var childSpan = tracer.StartSpan("child span");
 
@@ -159,9 +159,8 @@ span.End();
 Events are timed text (with optional attributes) annotations on the span. Events can be added to current span (or any running span).
 
 ```csharp
-using (tracer.StartActiveSpan("incoming HTTP request", SpanKind.Server))
+using (tracer.StartActiveSpan("incoming HTTP request", SpanKind.Server, out var span))
 {
-    var span = tracer.CurrentSpan;
     span.AddEvent("routes resolved");
 }
 
@@ -220,6 +219,8 @@ void StartActivity()
 void StopActivity()
 {
     var span = tracer.CurrentSpan;
+	
+	span.End();
     if (span is IDisposable disposableSpan)
     {
         disposableSpan.Dispose();
