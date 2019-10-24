@@ -93,7 +93,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Null(Activity.Current);
 
             // span not ended
-            Assert.NotEqual(default, span.EndTimestamp);
+            Assert.Equal(default, span.EndTimestamp);
         }
 
         [Fact]
@@ -264,11 +264,11 @@ namespace OpenTelemetry.Trace.Test
 
             if (endSpan)
             {
-                Assert.NotEqual(default, parentSpan.EndTimestamp);
+                Assert.NotEqual(default, childSpan.EndTimestamp);
             }
             else
             {
-                Assert.Equal(default, parentSpan.EndTimestamp);
+                Assert.Equal(default, childSpan.EndTimestamp);
             }
         }
 
