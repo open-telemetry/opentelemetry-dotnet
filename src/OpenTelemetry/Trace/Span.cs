@@ -39,6 +39,7 @@ namespace OpenTelemetry.Trace
         private readonly TracerConfiguration tracerConfiguration;
         private readonly SpanProcessor spanProcessor;
         private readonly object lck = new object();
+        private readonly bool createdFromActivity;
 
         private EvictingQueue<KeyValuePair<string, object>> attributes;
         private EvictingQueue<Event> events;
@@ -49,7 +50,6 @@ namespace OpenTelemetry.Trace
         private DateTimeOffset endTimestamp;
         private bool hasEnded;
         private bool endOnDispose;
-        private bool createdFromActivity;
 
         private Span(
             string name,

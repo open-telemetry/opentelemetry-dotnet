@@ -48,12 +48,39 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void WithSpan_CloseDetaches(bool recordEvents)
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(false, false)]
+        public void WithSpan_CloseDetaches(bool endSpan, bool recordEvents)
         {
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
             var span = (Span)tracer.StartSpan("foo", spanContext);
+
+            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            using (this.tracer.WithSpan(span, endSpan))
+            {
+                Assert.Same(span.Activity, Activity.Current);
+                Assert.Same(span, this.tracer.CurrentSpan);
+            }
+
+            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.Null(Activity.Current);
+
+            if (endSpan)
+            {
+                Assert.NotEqual(default, span.EndTimestamp);
+            }
+            else
+            {
+                Assert.Equal(default, span.EndTimestamp);
+            }
+        }
+
+        [Fact]
+        public void WithSpan_NoFlag_DoesNotEndSpan()
+        {
+            var span = (Span)tracer.StartSpan("foo");
 
             Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
             using (this.tracer.WithSpan(span))
@@ -66,9 +93,8 @@ namespace OpenTelemetry.Trace.Test
             Assert.Null(Activity.Current);
 
             // span not ended
-            Assert.Equal(default, span.EndTimestamp);
+            Assert.NotEqual(default, span.EndTimestamp);
         }
-
 
         [Fact]
         public void WithSpan_AttachAndDetach()
@@ -99,15 +125,17 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void WithSpan_EndDoesNotDetach(bool recordEvents)
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(false, false)]
+        public void WithSpan_EndDoesNotDetach(bool endSpan, bool recordEvents)
         {
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
             var span = (Span)tracer.StartSpan("foo", spanContext);
 
             Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
-            using (this.tracer.WithSpan(span))
+            using (this.tracer.WithSpan(span, endSpan))
             {
                 Assert.Same(span.Activity, Activity.Current);
                 Assert.Same(span, this.tracer.CurrentSpan);
@@ -213,9 +241,11 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void WithSpan_RestoresParentScope(bool recordEvents)
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(false, false)]
+        public void WithSpan_RestoresParentScope(bool endSpan, bool recordEvents)
         {
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
 
@@ -225,15 +255,21 @@ namespace OpenTelemetry.Trace.Test
 
             var childSpan = (Span)tracer.StartSpan("child");
             Assert.Same(parentSpan, this.tracer.CurrentSpan);
-            using (this.tracer.WithSpan(childSpan))
+            using (this.tracer.WithSpan(childSpan, endSpan))
             {
             }
 
             Assert.Same(parentSpan, this.tracer.CurrentSpan);
             Assert.Equal(parentActivity, Activity.Current);
 
-            // span not ended
-            Assert.Equal(default, parentSpan.EndTimestamp);
+            if (endSpan)
+            {
+                Assert.NotEqual(default, parentSpan.EndTimestamp);
+            }
+            else
+            {
+                Assert.Equal(default, parentSpan.EndTimestamp);
+            }
         }
 
         [Fact]

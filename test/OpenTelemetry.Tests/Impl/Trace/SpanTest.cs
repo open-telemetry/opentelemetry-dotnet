@@ -1293,6 +1293,76 @@ namespace OpenTelemetry.Trace.Test
             Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
         }
 
+        [Fact]
+        public void StartActiveSpan_FromActivity()
+        {
+            var tracer = tracerFactory.GetTracer(null);
+
+            var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
+            using (var scope = tracer.StartActiveSpanFromActivity(SpanName, activity, out var ispan))
+            {
+                Assert.NotNull(scope);
+
+                var span = tracer.CurrentSpan;
+                Assert.NotNull(span);
+                Assert.Same(ispan, span);
+                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
+                Assert.True(span.Context.IsValid);
+                Assert.Equal(activity.SpanId, span.Context.SpanId);
+                Assert.Equal(SpanKind.Internal, ((Span)span).Kind);
+                Assert.Empty(((Span)span).Links);
+            }
+
+            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+        }
+
+        [Fact]
+        public void StartActiveSpan_FromActivity_Kind()
+        {
+            var tracer = tracerFactory.GetTracer(null);
+
+            var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
+            using (var scope = tracer.StartActiveSpanFromActivity(SpanName, activity, SpanKind.Consumer, out var ispan))
+            {
+                Assert.NotNull(scope);
+
+                var span = tracer.CurrentSpan;
+                Assert.NotNull(span);
+                Assert.Same(ispan, span);
+                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
+                Assert.True(span.Context.IsValid);
+                Assert.Equal(activity.SpanId, span.Context.SpanId);
+                Assert.Equal(SpanKind.Consumer, ((Span)span).Kind);
+                Assert.Empty(((Span)span).Links);
+            }
+
+            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+        }
+
+        [Fact]
+        public void StartActiveSpan_FromActivity_Kind_Links()
+        {
+            var tracer = tracerFactory.GetTracer(null);
+
+            var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
+            using (var scope = tracer.StartActiveSpanFromActivity(SpanName, activity, SpanKind.Consumer, new [] { new Link(linkContext),  }, out var ispan))
+            {
+                Assert.NotNull(scope);
+
+                var span = tracer.CurrentSpan;
+                Assert.NotNull(span);
+                Assert.Same(ispan, span);
+                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
+                Assert.True(span.Context.IsValid);
+                Assert.Equal(activity.SpanId, span.Context.SpanId);
+                Assert.Equal(SpanKind.Consumer, ((Span)span).Kind);
+                Assert.Single(((Span)span).Links);
+            }
+
+            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+        }
+
         private void AssertApproxSameTimestamp(DateTimeOffset one, DateTimeOffset two)
         {
             var timeShift = Math.Abs((one - two).TotalMilliseconds);
