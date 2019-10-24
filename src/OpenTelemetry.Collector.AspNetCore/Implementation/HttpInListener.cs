@@ -94,22 +94,20 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                 return;
             }
 
-            if (!span.IsRecording)
+            if (span.IsRecording)
             {
-                this.EndAndDispose(span);
-                return;
+                if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
+                {
+                    CollectorEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
+                    return;
+                }
+
+                var response = context.Response;
+
+                span.PutHttpStatusCode(response.StatusCode, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
             }
 
-            if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
-            {
-                CollectorEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
-                return;
-            }
-
-            var response = context.Response;
-
-            span.PutHttpStatusCode(response.StatusCode, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
-            this.EndAndDispose(span);
+            span.End();
         }
 
         public override void OnCustom(string name, Activity activity, object payload)
@@ -183,15 +181,6 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             }
 
             return builder.ToString();
-        }
-
-        private void EndAndDispose(ISpan span)
-        {
-            span.End();
-            if (span is IDisposable disposableSpan)
-            {
-                disposableSpan.Dispose();
-            }
         }
     }
 }

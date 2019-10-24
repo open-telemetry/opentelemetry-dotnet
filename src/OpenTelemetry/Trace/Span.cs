@@ -319,12 +319,15 @@ namespace OpenTelemetry.Trace
                 this.Activity.SetEndTime(endTimestamp.UtcDateTime);
             }
 
-            if (!this.IsRecording)
+            if (this.endOnDispose)
             {
-                return;
+                this.EndScope();
             }
 
-            this.spanProcessor.OnEnd(this);
+            if (this.IsRecording)
+            {
+                this.spanProcessor.OnEnd(this);
+            }
         }
 
         /// <inheritdoc/>
@@ -373,12 +376,7 @@ namespace OpenTelemetry.Trace
 
         public void Dispose()
         {
-            this.EndScope();
-
-            if (this.endOnDispose)
-            {
-                this.End();
-            }
+            this.End();
         }
 
         internal static Span CreateFromParentSpan(

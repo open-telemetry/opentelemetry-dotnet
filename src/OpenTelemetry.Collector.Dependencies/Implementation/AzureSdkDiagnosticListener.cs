@@ -99,7 +99,7 @@ namespace OpenTelemetry.Collector.Dependencies
                 }
             }
 
-            this.EndAndDispose(span);
+            span.End();
         }
 
         public override void OnException(Activity current, object valueValue)
@@ -113,16 +113,6 @@ namespace OpenTelemetry.Collector.Dependencies
             }
 
             span.Status = Status.Unknown.WithDescription(valueValue?.ToString());
-        }
-
-        private void EndAndDispose(ISpan span)
-        {
-            span.End();
-
-            if (span is IDisposable disposableSpan)
-            {
-                disposableSpan.Dispose();
-            }
         }
     }
 }

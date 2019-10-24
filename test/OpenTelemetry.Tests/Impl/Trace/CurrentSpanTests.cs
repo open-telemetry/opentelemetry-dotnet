@@ -145,8 +145,16 @@ namespace OpenTelemetry.Trace.Test
                 // span ended
                 Assert.NotEqual(default, span.EndTimestamp);
 
-                Assert.Same(span.Activity, Activity.Current);
-                Assert.Same(span, this.tracer.CurrentSpan);
+                if (endSpan)
+                {
+                    Assert.Null(Activity.Current);
+                    Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+                }
+                else
+                {
+                    Assert.Same(span.Activity, Activity.Current);
+                    Assert.Same(span, this.tracer.CurrentSpan);
+                }
             }
 
             Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
