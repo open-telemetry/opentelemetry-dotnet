@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -54,11 +56,10 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             // see the spec https://github.com/open-telemetry/OpenTelemetry-specs/blob/master/trace/HTTP.md
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
-            ISpan span = null;
-
+            ISpan span;
             if (this.hostingSupportsW3C)
             {
-                span = this.Tracer.StartSpanFromActivity(path, Activity.Current, SpanKind.Server);
+                this.Tracer.StartActiveSpanFromActivity(path, Activity.Current, SpanKind.Server, out span);
             }
             else
             {
@@ -66,10 +67,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                     request,
                     (r, name) => r.Headers[name]);
 
-                span = this.Tracer.StartSpan(path, ctx, SpanKind.Server);
+                this.Tracer.StartActiveSpan(path, ctx, SpanKind.Server, out span);
             }
-
-            this.Tracer.WithSpan(span);
 
             if (span.IsRecording)
             {
@@ -95,21 +94,19 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                 return;
             }
 
-            if (!span.IsRecording)
+            if (span.IsRecording)
             {
-                span.End();
-                return;
+                if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
+                {
+                    CollectorEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
+                    return;
+                }
+
+                var response = context.Response;
+
+                span.PutHttpStatusCode(response.StatusCode, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
             }
 
-            if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
-            {
-                CollectorEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
-                return;
-            }
-
-            var response = context.Response;
-
-            span.PutHttpStatusCode(response.StatusCode, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
             span.End();
         }
 

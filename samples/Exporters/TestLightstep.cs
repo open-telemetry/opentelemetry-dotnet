@@ -26,9 +26,9 @@ namespace Samples
             using (var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(exporter))))
             {
                 var tracer = tracerFactory.GetTracer("lightstep-test");
-                using (tracer.WithSpan(tracer.StartSpan("Main")))
+                using (tracer.StartActiveSpan("Main", out var span))
                 {
-                    tracer.CurrentSpan.SetAttribute("custom-attribute", 55);
+                    span.SetAttribute("custom-attribute", 55);
                     Console.WriteLine("About to do a busy work");
                     for (int i = 0; i < 10; i++)
                     {

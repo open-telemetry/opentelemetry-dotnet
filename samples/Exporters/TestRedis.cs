@@ -51,7 +51,7 @@ namespace Samples
                 var db = connection.GetDatabase();
 
                 // Create a scoped span. It will end automatically when using statement ends
-                using (tracer.WithSpan(tracer.StartSpan("Main")))
+                using (tracer.StartActiveSpan("Main", out _))
                 {
                     Console.WriteLine("About to do a busy work");
                     for (var i = 0; i < 10; i++)

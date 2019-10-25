@@ -15,7 +15,7 @@
 // </copyright>
 using System;
 
-namespace OpenTelemetry.Tags
+namespace OpenTelemetry.Internal
 {
     internal class NoopDisposable : IDisposable
     {

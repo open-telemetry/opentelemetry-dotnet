@@ -18,11 +18,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tags;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
-using OpenTelemetry.Trace.Internal;
-using OpenTelemetry.Utils;
 
 namespace OpenTelemetry.Trace
 {
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace
         public Resource LibraryResource { get; }
 
         /// <inheritdoc/>
-        public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
+        public ISpan CurrentSpan => (ISpan)Span.Current ?? BlankSpan.Instance;
 
         /// <inheritdoc/>
         public IBinaryFormat BinaryFormat { get; }
@@ -65,14 +65,19 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ITextFormat TextFormat { get; }
 
-        public IDisposable WithSpan(ISpan span)
+        public IDisposable WithSpan(ISpan span, bool endSpanOnDispose)
         {
             if (span == null)
             {
                 throw new ArgumentNullException(nameof(span));
             }
 
-            return CurrentSpanUtils.WithSpan(span, true);
+            if (span is Span spanImpl)
+            {
+                return spanImpl.BeginScope(endSpanOnDispose);
+            }
+
+            return NoopDisposable.Instance;
         }
 
         /// <inheritdoc/>
@@ -84,12 +89,6 @@ namespace OpenTelemetry.Trace
             }
 
             return Span.CreateRoot(operationName, kind, options, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
-        }
-
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, SpanKind kind, SpanCreationOptions options)
-        {
-            return this.StartSpan(operationName, null, kind, options);
         }
 
         /// <inheritdoc/>

@@ -47,9 +47,9 @@ namespace LoggingTracer
         public ITextFormat TextFormat => new LoggingTextFormat();
 
         /// <inheritdoc/>
-        public IDisposable WithSpan(ISpan span)
+        public IDisposable WithSpan(ISpan span, bool endOnDispose)
         {
-            Logger.Log($"{this.prefix}.WithSpan");
+            Logger.Log($"{this.prefix}.WithSpan {endOnDispose}");
             return new CurrentSpanUtils.LoggingScope(span);
         }
 
@@ -59,14 +59,6 @@ namespace LoggingTracer
             Logger.Log($"{this.prefix}.StartRootSpan({operationName}, {kind}, {options.StartTimestamp:o}, {options.LinksFactory}, {options.Links})");
             return new LoggingSpan(operationName, kind);
         }
-
-        /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, SpanKind kind, SpanCreationOptions options)
-        {
-            Logger.Log($"{this.prefix}.StartSpan({operationName}, {kind}, {options.StartTimestamp:o}, {options.LinksFactory}, {options.Links})");
-            return new LoggingSpan(operationName, kind);
-        }
-
 
         /// <inheritdoc/>
         public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)

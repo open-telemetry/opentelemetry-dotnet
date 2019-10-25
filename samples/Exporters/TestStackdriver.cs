@@ -64,9 +64,9 @@ namespace Samples
 
                 using (tagContextBuilder.BuildScoped())
                 {
-                    using (tracer.WithSpan(tracer.StartSpan("incoming request")))
+                    using (tracer.StartActiveSpan("incoming request", out var span))
                     {
-                        tracer.CurrentSpan.AddEvent("Processing video.");
+                        span.AddEvent("Processing video.");
                         Thread.Sleep(TimeSpan.FromMilliseconds(10));
 
                         StatsRecorder.NewMeasureMap()

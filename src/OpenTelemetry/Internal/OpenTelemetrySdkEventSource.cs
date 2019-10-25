@@ -69,6 +69,18 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(5, methodName);
         }
 
+        [Event(6, Message = "Attempting to dispose scope '{0}' that is not current", Level = EventLevel.Warning)]
+        public void AttemptToEndScopeWhichIsNotCurrent(string spanName)
+        {
+            this.WriteEvent(6, spanName);
+        }
+
+        [Event(7, Message = "Attempting to activate active span '{0}'", Level = EventLevel.Warning)]
+        public void AttemptToActivateActiveSpan(string spanName)
+        {
+            this.WriteEvent(7, spanName);
+        }
+
         /// <summary>
         /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
         /// appropriate for diagnostics tracing.
