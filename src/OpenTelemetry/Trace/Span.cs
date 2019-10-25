@@ -89,20 +89,19 @@ namespace OpenTelemetry.Trace
                 this.Activity.SpanId,
                 this.tracerConfiguration);
 
-            if (this.IsRecording)
-            {
-                this.Activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-
-                this.SetLinks(links);
-                this.spanProcessor.OnStart(this);
-            }
-            else
-            {
-                this.Activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
-            }
+            this.Activity.ActivityTraceFlags =
+                this.IsRecording
+                ? this.Activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded
+                : this.Activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
 
             // this context is definitely not remote, setting isRemote to false
             this.Context = new SpanContext(this.Activity.TraceId, this.Activity.SpanId, this.Activity.ActivityTraceFlags, false, tracestate);
+
+            if (this.IsRecording)
+            {
+                this.SetLinks(links);
+                this.spanProcessor.OnStart(this);
+            }
         }
 
         public SpanContext Context { get; private set; }
