@@ -790,6 +790,15 @@ namespace OpenTelemetry.Trace.Test
 
             var tracer = tracerFactory.GetTracer(null);
             var startTime = DateTimeOffset.UtcNow.AddSeconds(-1);
+            var spanPassedToSpanProcessorHasSpanContext = false;
+
+            spanProcessorMock
+                .Setup(s => s.OnStart(It.IsAny<Span>()))
+                .Callback<Span>(s =>
+                {
+                    spanPassedToSpanProcessorHasSpanContext = s.Context != null;
+                });
+
             var span = (Span)tracer.StartSpan(SpanName, SpanKind.Client, new SpanCreationOptions { StartTimestamp = startTime, LinksFactory = () => new[] { link } });
 
             span.SetAttribute(
@@ -838,6 +847,7 @@ namespace OpenTelemetry.Trace.Test
             var startEndMock = Mock.Get(spanProcessor);
 
             spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
+            Assert.True(spanPassedToSpanProcessorHasSpanContext);
             startEndMock.Verify(s => s.OnEnd(span), Times.Never);
         }
 
