@@ -86,26 +86,26 @@ namespace OpenTelemetry.Tests.Impl.Trace
         public void ProxyTracer_CreateSpan_ValidArgs()
         {
             var proxyTracer = new ProxyTracer();
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo"));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo", SpanKind.Client));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartRootSpan("foo", SpanKind.Client, null));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartRootSpan("foo"));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartRootSpan("foo", SpanKind.Client));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartRootSpan("foo", SpanKind.Client, null));
 
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo"));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanKind.Client));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanKind.Client, null));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo"));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanKind.Client));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanKind.Client, null));
 
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, null));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, null));
 
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client, null));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client, null));
 
             var validActivity = new Activity("foo").SetIdFormat(ActivityIdFormat.W3C).Start();
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Consumer));
-            Assert.Equal(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Client, null));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Consumer));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity, SpanKind.Client, null));
         }
 
         [Fact]

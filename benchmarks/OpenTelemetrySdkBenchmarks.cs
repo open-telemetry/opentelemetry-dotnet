@@ -53,7 +53,13 @@ namespace Benchmarks
         public ISpan CreateSpan_Attributes_Sampled() => SpanCreationScenarios.CreateSpan_Attributes(this.alwaysSampleTracer);
 
         [Benchmark]
-        public ISpan CreateSpan_Propagate_Sampled() => SpanCreationScenarios.CreateSpan_Propagate(this.alwaysSampleTracer);
+        public ISpan CreateSpan_WithSpan() => SpanCreationScenarios.CreateSpan_Propagate(this.alwaysSampleTracer);
+
+        [Benchmark]
+        public ISpan CreateSpan_Active() => SpanCreationScenarios.CreateSpan_Active(this.alwaysSampleTracer);
+
+        [Benchmark]
+        public ISpan CreateSpan_Active_GetCurrent() => SpanCreationScenarios.CreateSpan_Active_GetCurrent(this.alwaysSampleTracer);
 
         [Benchmark]
         public void CreateSpan_Attributes_NotSampled() => SpanCreationScenarios.CreateSpan_Attributes(this.neverSampleTracer);

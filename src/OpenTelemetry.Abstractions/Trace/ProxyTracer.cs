@@ -43,9 +43,9 @@ namespace OpenTelemetry.Trace
         public ITextFormat TextFormat => this.realTracer?.TextFormat ?? this.textFormat;
 
         /// <inheritdoc/>
-        public IDisposable WithSpan(ISpan span)
+        public IDisposable WithSpan(ISpan span, bool endOnDispose)
         {
-            return this.realTracer != null ? this.realTracer.WithSpan(span) : NoopScope;
+            return this.realTracer != null ? this.realTracer.WithSpan(span, endOnDispose) : NoopScope;
         }
 
         public ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
@@ -56,16 +56,6 @@ namespace OpenTelemetry.Trace
             }
 
             return this.realTracer != null ? this.realTracer.StartRootSpan(operationName, kind, options) : BlankSpan.Instance;
-        }
-
-        public ISpan StartSpan(string operationName, SpanKind kind, SpanCreationOptions options)
-        {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            return this.realTracer != null ? this.realTracer.StartSpan(operationName, kind, options) : BlankSpan.Instance;
         }
 
         public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
