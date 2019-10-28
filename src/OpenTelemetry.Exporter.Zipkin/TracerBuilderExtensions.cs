@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <param name="builder">Trace builder to use.</param>
         /// <param name="zipkinConfigure">Configuration options.</param>
-        /// <param name="processorConfigure">Span processor configuraiton.</param>
+        /// <param name="processorConfigure">Span processor configuration.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
         public static TracerBuilder UseZipkin(this TracerBuilder builder, Action<ZipkinTraceExporterOptions> zipkinConfigure, Action<
             SpanProcessorPipelineBuilder> processorConfigure)
