@@ -17,7 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Abstractions.Context.Propagation;
+using OpenTelemetry.Api.Context.Propagation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Context.Propagation
