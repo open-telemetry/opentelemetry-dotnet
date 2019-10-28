@@ -60,6 +60,10 @@ namespace OpenTelemetry.Exporter.Stackdriver
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="StackdriverTraceExporter"/> class.
+        /// </summary>
+        /// <param name="projectId">Project ID to send telemetry to.</param>
         public StackdriverTraceExporter(string projectId)
         {
             this.googleCloudProjectId = new Google.Api.Gax.ResourceNames.ProjectName(projectId);
@@ -71,6 +75,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
             this.traceServiceSettings.CallSettings = callSettings;
         }
 
+        /// <inheritdoc/>
         public override async Task<ExportResult> ExportAsync(IEnumerable<Trace.Span> spanDataList, CancellationToken cancellationToken)
         {
             var traceWriter = TraceServiceClient.Create(settings: this.traceServiceSettings);
@@ -89,6 +94,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
             return ExportResult.Success;
         }
 
+        /// <inheritdoc/>
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;

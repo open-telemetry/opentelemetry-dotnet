@@ -29,6 +29,9 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Zipkin
 {
+    /// <summary>
+    /// Zipkin exporter.
+    /// </summary>
     public class ZipkinTraceExporter : SpanExporter
     {
         private const long MillisPerSecond = 1000L;
@@ -43,6 +46,11 @@ namespace OpenTelemetry.Exporter.Zipkin
         private readonly HttpClient httpClient;
         private readonly string serviceEndpoint;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ZipkinTraceExporter"/> class.
+        /// </summary>
+        /// <param name="options">Configuration options.</param>
+        /// <param name="client">Http client to use to upload telemetry.</param>
         public ZipkinTraceExporter(ZipkinTraceExporterOptions options, HttpClient client = null)
         {
             this.options = options;
@@ -51,6 +59,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             this.serviceEndpoint = options.Endpoint?.ToString();
         }
 
+        /// <inheritdoc/>
         public override async Task<ExportResult> ExportAsync(IEnumerable<Span> otelSpanList, CancellationToken cancellationToken)
         {
             var zipkinSpans = new List<ZipkinSpan>();
@@ -96,6 +105,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             }
         }
 
+        /// <inheritdoc/>
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
