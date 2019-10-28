@@ -30,11 +30,18 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.ApplicationInsights
 {
+    /// <summary>
+    /// Applicaiton Insights trace exporter.
+    /// </summary>
     public class ApplicationInsightsTraceExporter : SpanExporter, IDisposable
     {
         private readonly TelemetryClient telemetryClient;
         private readonly string serviceEndpoint;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ApplicationInsightsTraceExporter"/> class.
+        /// </summary>
+        /// <param name="telemetryConfiguration">Telemetry configuration to use.</param>
         public ApplicationInsightsTraceExporter(TelemetryConfiguration telemetryConfiguration)
         {
             this.telemetryClient = new TelemetryClient(telemetryConfiguration);
@@ -42,6 +49,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             this.serviceEndpoint = telemetryConfiguration.TelemetryChannel.EndpointAddress;
         }
 
+        /// <inheritdoc/>
         public override Task<ExportResult> ExportAsync(IEnumerable<Span> spanDataList, CancellationToken cancellationToken)
         {
             foreach (var span in spanDataList)
@@ -289,6 +297,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             return Task.FromResult(ExportResult.Success);
         }
 
+        /// <inheritdoc/>
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             // TODO cancellation support
@@ -296,6 +305,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             return Task.CompletedTask;
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             this.ShutdownAsync(CancellationToken.None).ContinueWith(_ => { }).Wait();
