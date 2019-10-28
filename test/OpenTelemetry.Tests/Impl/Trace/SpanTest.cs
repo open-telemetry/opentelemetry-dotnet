@@ -21,7 +21,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
-using OpenTelemetry.Abstractions.Utils;
+using OpenTelemetry.Api.Utils;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace.Export;
 using Xunit;

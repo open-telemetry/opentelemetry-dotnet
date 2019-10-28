@@ -19,13 +19,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\OpenTelemetry.Abstractions\Context\Propagation\TracestateUtils.cs" Link="Utils\TracestateUtils.cs" />
-    <Compile Include="..\OpenTelemetry.Abstractions\Utils\PreciseTimestamp.cs" Link="Utils\PreciseTimestamp.cs" />
+    <Compile Include="..\OpenTelemetry.Api\Context\Propagation\TracestateUtils.cs" Link="Utils\TracestateUtils.cs" />
+    <Compile Include="..\OpenTelemetry.Api\Utils\PreciseTimestamp.cs" Link="Utils\PreciseTimestamp.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
     <PackageReference Include="System.Collections.Immutable" Version="1.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
   </ItemGroup>
 
 </Project>

@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
