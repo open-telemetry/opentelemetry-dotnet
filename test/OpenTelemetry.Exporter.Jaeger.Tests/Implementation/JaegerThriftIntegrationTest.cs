@@ -41,7 +41,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public async void JaegerThriftIntegrationTest_TAbstractBaseGeneratesConsistentThriftPayload()
         {
-            var validJaegerThriftPayload = Convert.FromBase64String("goEBCWVtaXRCYXRjaBwcGAx0ZXN0IHByb2Nlc3MZHBgQdGVzdF9wcm9jZXNzX3RhZxUAGAp0ZXN0X3ZhbHVlAAAZHBbdlZjkk/C0+ZoBFtCr96fz8ZbpnQEW1KXb/ciQz6OBARaY3JDShc6hzrIBGAROYW1lGRwVABbdlZjkk/C0+ZoBFtCr96fz8ZbpnQEWkKas4ZbKtZyDAQAVAhaAgLPexpa/BRaAnJw5GWwYCXN0cmluZ0tleRUAGAV2YWx1ZQAYB2xvbmdLZXkVBkYCABgIbG9uZ0tleTIVBkYCABgJZG91YmxlS2V5FQInAAAAAAAA8D8AGApkb3VibGVLZXkyFQInAAAAAAAA8D8AGAdib29sS2V5FQQxABksFoCAs97Glr8FGSwYA2tleRUAGAV2YWx1ZQAYC2Rlc2NyaXB0aW9uFQAYBkV2ZW50MQAAFoCAs97Glr8FGSwYA2tleRUAGAV2YWx1ZQAYC2Rlc2NyaXB0aW9uFQAYBkV2ZW50MgAAAAAA");
+            var validJaegerThriftPayload = Convert.FromBase64String("goEBCWVtaXRCYXRjaBwcGAx0ZXN0IHByb2Nlc3MZHBgQdGVzdF9wcm9jZXNzX3RhZxUAGAp0ZXN0X3ZhbHVlAAAZHBab5cuG2OehhdwBFuPakI2n2cCVLhbUpdv9yJDPo4EBFpjckNKFzqHOsgEYBE5hbWUZHBUAFpvly4bY56GF3AEW49qQjafZwJUuFpCmrOGWyrWcgwEAFQIWgICz3saWvwUWgJycORlsGAlzdHJpbmdLZXkVABgFdmFsdWUAGAdsb25nS2V5FQZGAgAYCGxvbmdLZXkyFQZGAgAYCWRvdWJsZUtleRUCJwAAAAAAAPA/ABgKZG91YmxlS2V5MhUCJwAAAAAAAPA/ABgHYm9vbEtleRUEMQAZLBaAgLPexpa/BRksGANrZXkVABgFdmFsdWUAGAtkZXNjcmlwdGlvbhUAGAZFdmVudDEAABaAgLPexpa/BRksGANrZXkVABgFdmFsdWUAGAtkZXNjcmlwdGlvbhUAGAZFdmVudDIAAAAAAA==");
+            
             using (var memoryTransport = new InMemoryTransport())
             {
                 var protocolFactory = new TCompactProtocol.Factory();
