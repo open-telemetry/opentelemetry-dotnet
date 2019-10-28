@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
-    <Description>OpenTelemetry .NET API abstractions</Description>
+    <Description>OpenTelemetry .NET instrumentation API</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
-    <DefineConstants>$(DefineConstants);ABSTRACTIONS</DefineConstants>
+    <DefineConstants>$(DefineConstants);API</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Trace\Internal\**" />

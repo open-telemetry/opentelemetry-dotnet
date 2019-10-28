@@ -21,8 +21,17 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace.Configuration
 {
+    /// <summary>
+    /// Extension methods to simplify registering of Application Insights exporter.
+    /// </summary>
     public static class TracerBuilderExtensions
     {
+        /// <summary>
+        /// Enables Application Insights exporter.
+        /// </summary>
+        /// <param name="builder">Trace builder to use.</param>
+        /// <param name="configure">Configuration options.</param>
+        /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
         public static TracerBuilder UseApplicationInsights(this TracerBuilder builder, Action<TelemetryConfiguration> configure)
         {
             if (builder == null)
@@ -42,6 +51,13 @@ namespace OpenTelemetry.Trace.Configuration
                 .SetExportingProcessor(e => new BatchingSpanProcessor(e)));
         }
 
+        /// <summary>
+        /// Enables Application Insights exporter.
+        /// </summary>
+        /// <param name="builder">Trace builder to use.</param>
+        /// <param name="applicationInsightsConfigure">Configuration options.</param>
+        /// <param name="processorConfigure">Span processor configuration.</param>
+        /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
         public static TracerBuilder UseApplicationInsights(this TracerBuilder builder, Action<TelemetryConfiguration> applicationInsightsConfigure, Action<
             SpanProcessorPipelineBuilder> processorConfigure)
         {

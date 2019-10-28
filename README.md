@@ -49,7 +49,7 @@ Myget feeds:
 | Package                    | MyGet (CI)                                                                     | NuGet (releases)                                                               |
 | -------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | OpenTelemetry              | [![MyGet Nightly][OpenTelemetry-myget-image]][OpenTelemetry-myget-url]         | [![NuGet Release][OpenTelemetry-nuget-image]][OpenTelemetry-nuget-url]         |
-| OpenTelemetry.Abstractions | [![MyGet Nightly][OpenTelemetry-abs-myget-image]][OpenTelemetry-abs-myget-url] | [![NuGet Release][OpenTelemetry-abs-nuget-image]][OpenTelemetry-abs-nuget-url] |
+| OpenTelemetry.Api | [![MyGet Nightly][OpenTelemetry-abs-myget-image]][OpenTelemetry-abs-myget-url] | [![NuGet Release][OpenTelemetry-abs-nuget-image]][OpenTelemetry-abs-nuget-url] |
 
 ### Data Collectors
 
@@ -590,8 +590,8 @@ deprecate it for 18 months before removing it, if possible.
 [dotnet-gitter-url]:https://gitter.im/open-telemetry/opentelemetry-dotnet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 [OpenTelemetry-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.svg
 [OpenTelemetry-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry
-[OpenTelemetry-abs-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Abstractions.svg
-[OpenTelemetry-abs-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Abstractions
+[OpenTelemetry-abs-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Api.svg
+[OpenTelemetry-abs-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Api
 [OpenTelemetry-exporter-zipkin-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Zipkin.svg
 [OpenTelemetry-exporter-zipkin-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Zipkin
 [OpenTelemetry-exporter-jaeger-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Jaeger.svg
@@ -612,8 +612,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-nuget-url]:https://www.nuget.org/packages/OpenTelemetry
 [OpenTelemetry-hosting-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Hosting.svg
 [OpenTelemetry-hosting-nuget-url]:https://www.nuget.org/packages/OpenTelemetry.Hosting
-[OpenTelemetry-abs-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Abstractions.svg
-[OpenTelemetry-abs-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Abstractions
+[OpenTelemetry-abs-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Api.svg
+[OpenTelemetry-abs-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Api
 [OpenTelemetry-exporter-zipkin-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Zipkin.svg
 [OpenTelemetry-exporter-zipkin-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.Zipkin
 [OpenTelemetry-exporter-jaeger-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Jaeger.svg

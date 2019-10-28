@@ -24,9 +24,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
     <ProjectReference Include="..\..\lib\Thrift\Thrift.csproj" />
-    <ProjectReference Include="..\..\src\OpenTelemetry.Abstractions\OpenTelemetry.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

@@ -21,8 +21,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 #endif
 
-#if ABSTRACTIONS
-namespace OpenTelemetry.Abstractions.Utils
+#if API
+namespace OpenTelemetry.Api.Utils
 #else
 namespace OpenTelemetry.Utils
 #endif

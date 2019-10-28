@@ -4,9 +4,6 @@
     <Description>Application Insights exporter for Open Telemetry.</Description>
     <PackageTags>$(PackageTags);application-insights;azure;distributed-tracing</PackageTags>
   </PropertyGroup>
-  <PropertyGroup>
-    <NoWarn>$(NoWarn),1591</NoWarn>
-  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
