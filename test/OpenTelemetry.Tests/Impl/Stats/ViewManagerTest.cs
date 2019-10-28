@@ -16,7 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using OpenTelemetry.Abstractions.Utils;
+using OpenTelemetry.Api.Utils;
 using OpenTelemetry.Stats.Aggregations;
 using OpenTelemetry.Stats.Measures;
 using OpenTelemetry.Tags;
