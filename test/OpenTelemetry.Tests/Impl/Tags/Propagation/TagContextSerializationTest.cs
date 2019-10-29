@@ -26,15 +26,15 @@ namespace OpenTelemetry.Tags.Propagation.Test
 {
     public class TagContextSerializationTest
     {
-        private static readonly TagKey K1 = TagKey.Create("k1");
-        private static readonly TagKey K2 = TagKey.Create("k2");
-        private static readonly TagKey K3 = TagKey.Create("k3");
-        private static readonly TagKey K4 = TagKey.Create("k4");
+        private static readonly string K1 = "k1";
+        private static readonly string K2 = "k2";
+        private static readonly string K3 = "k3";
+        private static readonly string K4 = "k4";
 
-        private static readonly TagValue V1 = TagValue.Create("v1");
-        private static readonly TagValue V2 = TagValue.Create("v2");
-        private static readonly TagValue V3 = TagValue.Create("v3");
-        private static readonly TagValue V4 = TagValue.Create("v4");
+        private static readonly string V1 = "v1";
+        private static readonly string V2 = "v2";
+        private static readonly string V3 = "v3";
+        private static readonly string V4 = "v4";
 
         private static readonly Tag T1 = Tag.Create(K1, V1);
         private static readonly Tag T2 = Tag.Create(K2, V2);
@@ -93,11 +93,11 @@ namespace OpenTelemetry.Tags.Propagation.Test
                 {
                     str = i.ToString();
                 }
-                builder.Put(TagKey.Create(str), TagValue.Create(str));
+                builder.Put(str, str);
             }
             // The last tag will be of size 9, so the total size of the TagContext (8193) will be one byte
             // more than limit.
-            builder.Put(TagKey.Create("last"), TagValue.Create("last1"));
+            builder.Put("last", "last1");
 
             var tagContext = builder.Build();
 
@@ -121,8 +121,8 @@ namespace OpenTelemetry.Tags.Propagation.Test
                 expected.WriteByte(SerializationUtils.VersionId);
                 foreach (var tag in list) {
                     expected.WriteByte(SerializationUtils.TagFieldId);
-                    EncodeString(tag.Key.Name, expected);
-                    EncodeString(tag.Value.AsString, expected);
+                    EncodeString(tag.Key, expected);
+                    EncodeString(tag.Value, expected);
                 }
                 var bytes = expected.ToArray();
                 possibleOutPuts.Add(Encoding.UTF8.GetString(bytes));

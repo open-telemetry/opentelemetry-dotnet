@@ -25,7 +25,7 @@ namespace OpenTelemetry.Stats.Test
     public class NoopViewManagerTest
     {
         private static readonly IMeasureDouble Measure = MeasureDouble.Create("my measure", "description", "s");
-        private static readonly TagKey Key = TagKey.Create("KEY");
+        private static readonly string Key = "KEY";
         private static readonly IViewName ViewName = OpenTelemetry.Stats.ViewName.Create("my view");
         private static readonly String ViewDescription = "view description";
         private static readonly ISum Aggregation = Sum.Create();
@@ -40,10 +40,10 @@ namespace OpenTelemetry.Stats.Test
         {
             var view1 =
                 View.Create(
-                    ViewName, "description 1", Measure, Aggregation, new List<TagKey> { Key });
+                    ViewName, "description 1", Measure, Aggregation, new List<string> { Key });
             var view2 =
                 View.Create(
-                    ViewName, "description 2", Measure, Aggregation, new List<TagKey> { Key });
+                    ViewName, "description 2", Measure, Aggregation, new List<string> { Key });
             var viewManager = NoopStats.NewNoopViewManager();
             viewManager.RegisterView(view1);
 
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Stats.Test
         {
             var view =
                 View.Create(
-                    ViewName, ViewDescription, Measure, Aggregation, new List<TagKey> { Key });
+                    ViewName, ViewDescription, Measure, Aggregation, new List<string> { Key });
             var viewManager = NoopStats.NewNoopViewManager();
             viewManager.RegisterView(view);
             viewManager.RegisterView(view);
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Stats.Test
         {
             var view =
                 View.Create(
-                    ViewName, ViewDescription, Measure, Aggregation, new List<TagKey> { Key });
+                    ViewName, ViewDescription, Measure, Aggregation, new List<string> { Key });
             var viewManager = NoopStats.NewNoopViewManager();
             viewManager.RegisterView(view);
 
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Stats.Test
         {
             var view =
                 View.Create(
-                    ViewName, ViewDescription, Measure, Aggregation, new List<TagKey> { Key });
+                    ViewName, ViewDescription, Measure, Aggregation, new List<string> { Key });
             var viewManager = NoopStats.NewNoopViewManager();
             viewManager.RegisterView(view);
 
@@ -134,14 +134,14 @@ namespace OpenTelemetry.Stats.Test
                     ViewDescription,
                     Measure,
                     Aggregation,
-                    new List<TagKey> { Key });
+                    new List<string> { Key });
             var cumulativeView2 =
                 View.Create(
                     OpenTelemetry.Stats.ViewName.Create("View 2"),
                     ViewDescription,
                     Measure,
                     Aggregation,
-                    new List<TagKey> { Key });
+                    new List<string> { Key });
 
 
             viewManager.RegisterView(cumulativeView1);
@@ -159,13 +159,13 @@ namespace OpenTelemetry.Stats.Test
             var viewManager = NoopStats.NewNoopViewManager();
             var view1 =
                 View.Create(
-                    OpenTelemetry.Stats.ViewName.Create("View 1"), ViewDescription, Measure, Aggregation, new List<TagKey> { Key });
+                    OpenTelemetry.Stats.ViewName.Create("View 1"), ViewDescription, Measure, Aggregation, new List<string> { Key });
             viewManager.RegisterView(view1);
             var exported = viewManager.AllExportedViews;
 
             var view2 =
                 View.Create(
-                    OpenTelemetry.Stats.ViewName.Create("View 2"), ViewDescription, Measure, Aggregation, new List<TagKey> { Key });
+                    OpenTelemetry.Stats.ViewName.Create("View 2"), ViewDescription, Measure, Aggregation, new List<string> { Key });
             Assert.Throws<NotSupportedException>(() => exported.Add(view2));
         }
     }

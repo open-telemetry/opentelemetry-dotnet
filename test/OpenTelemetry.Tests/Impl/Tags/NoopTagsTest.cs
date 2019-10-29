@@ -24,8 +24,8 @@ namespace OpenTelemetry.Tags.Test
 {
     public class NoopTagsTest
     {
-        private static readonly TagKey KEY = TagKey.Create("key");
-        private static readonly TagValue VALUE = TagValue.Create("value");
+        private static readonly string KEY = "key";
+        private static readonly string VALUE = "value";
 
         private static readonly ITagContext TAG_CONTEXT = new TestTagContext();
 

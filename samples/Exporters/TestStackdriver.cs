@@ -32,7 +32,7 @@ namespace Samples
 
         private static readonly IStatsRecorder StatsRecorder = Stats.StatsRecorder;
         private static readonly IMeasureDouble VideoSize = MeasureDouble.Create("my_org/measure/video_size", "size of processed videos", "MiB");
-        private static readonly TagKey FrontendKey = TagKey.Create("my_org/keys/frontend");
+        private static readonly string FrontendKey = "my_org/keys/frontend";
 
         private static readonly long MiB = 1 << 20;
 
@@ -43,7 +43,7 @@ namespace Samples
             description: "processed video size over time",
             measure: VideoSize,
             aggregation: Sum.Create(),
-            columns: new List<TagKey>() { FrontendKey });
+            columns: new List<string>() { FrontendKey });
 
         internal static object Run(string projectId)
         {
@@ -58,7 +58,7 @@ namespace Samples
             {
                 var tracer = tracerFactory.GetTracer("stackdriver-test");
 
-                var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
+                var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, "mobile-ios9.3.5");
 
                 Stats.ViewManager.RegisterView(VideoSizeView);
 

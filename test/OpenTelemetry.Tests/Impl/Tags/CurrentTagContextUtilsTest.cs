@@ -21,7 +21,7 @@ namespace OpenTelemetry.Tags.Test
 {
     public class CurrentTagContextUtilsTest
     {
-        private static readonly Tag TAG = Tag.Create(TagKey.Create("key"), TagValue.Create("value"));
+        private static readonly Tag TAG = Tag.Create("key", "value");
 
         private readonly ITagContext tagContext = new TestTagContext();
 

@@ -20,8 +20,8 @@ namespace OpenTelemetry.Tags.Test
 {
     public class TagContextBaseTest
     {
-        private static readonly Tag TAG1 = Tag.Create(TagKey.Create("key"), TagValue.Create("val"));
-        private static readonly Tag TAG2 = Tag.Create(TagKey.Create("key2"), TagValue.Create("val"));
+        private static readonly Tag TAG1 = Tag.Create("key", "val");
+        private static readonly Tag TAG2 = Tag.Create("key2", "val");
 
         [Fact]
         public void Equals_IgnoresTagOrderAndTagContextClass()

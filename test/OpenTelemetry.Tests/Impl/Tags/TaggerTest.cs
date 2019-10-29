@@ -24,13 +24,13 @@ namespace OpenTelemetry.Tags.Test
         private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
 
-        private static readonly TagKey K1 = TagKey.Create("k1");
-        private static readonly TagKey K2 = TagKey.Create("k2");
-        private static readonly TagKey K3 = TagKey.Create("k3");
+        private static readonly string K1 = "k1";
+        private static readonly string K2 = "k2";
+        private static readonly string K3 = "k3";
 
-        private static readonly TagValue V1 = TagValue.Create("v1");
-        private static readonly TagValue V2 = TagValue.Create("v2");
-        private static readonly TagValue V3 = TagValue.Create("v3");
+        private static readonly string V1 = "v1";
+        private static readonly string V2 = "v2";
+        private static readonly string V3 = "v3";
 
         private static readonly Tag TAG1 = Tag.Create(K1, V1);
         private static readonly Tag TAG2 = Tag.Create(K2, V2);

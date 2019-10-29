@@ -22,16 +22,16 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void TestGetKey()
         {
-            Assert.Equal(TagKey.Create("k"), Tag.Create(TagKey.Create("k"), TagValue.Create("v")).Key);
+            Assert.Equal("k", Tag.Create("k", "v").Key);
         }
 
         [Fact]
         public void TestTagEquals()
         {
-            var tag1 = Tag.Create(TagKey.Create("Key"), TagValue.Create("foo"));
-            var tag2 = Tag.Create(TagKey.Create("Key"), TagValue.Create("foo"));
-            var tag3 = Tag.Create(TagKey.Create("Key"), TagValue.Create("bar"));
-            var tag4 = Tag.Create(TagKey.Create("Key2"), TagValue.Create("foo"));
+            var tag1 = Tag.Create("Key", "foo");
+            var tag2 = Tag.Create("Key", "foo");
+            var tag3 = Tag.Create("Key", "bar");
+            var tag4 = Tag.Create("Key2", "foo");
             Assert.Equal(tag1, tag2);
             Assert.NotEqual(tag1, tag3);
             Assert.NotEqual(tag1, tag4);

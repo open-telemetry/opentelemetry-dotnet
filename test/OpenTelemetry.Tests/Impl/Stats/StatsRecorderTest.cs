@@ -26,9 +26,9 @@ namespace OpenTelemetry.Stats.Test
 {
     public class StatsRecorderTest
     {
-        private static readonly TagKey KEY = TagKey.Create("KEY");
-        private static readonly TagValue VALUE = TagValue.Create("VALUE");
-        private static readonly TagValue VALUE_2 = TagValue.Create("VALUE_2");
+        private static readonly string KEY = "KEY";
+        private static readonly string VALUE = "VALUE";
+        private static readonly string VALUE_2 = "VALUE_2";
         private static readonly IMeasureDouble MEASURE_DOUBLE = MeasureDouble.Create("my measurement", "description", "us");
         private static readonly IMeasureDouble MEASURE_DOUBLE_NO_VIEW_1 = MeasureDouble.Create("my measurement no view 1", "description", "us");
         private static readonly IMeasureDouble MEASURE_DOUBLE_NO_VIEW_2 = MeasureDouble.Create("my measurement no view 2", "description", "us");
@@ -55,13 +55,13 @@ namespace OpenTelemetry.Stats.Test
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
-                    new List<TagKey>() { KEY });
+                    new List<string>() { KEY });
             viewManager.RegisterView(view);
             statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 1.0).Record();
             IViewData viewData = viewManager.GetView(viewName);
 
             // record() should have used the default TagContext, so the tag value should be null.
-            ICollection<TagValues> expected = new List<TagValues>() { TagValues.Create(new List<TagValue>() { null }) };
+            ICollection<TagValues> expected = new List<TagValues>() { TagValues.Create(new List<string>() { null }) };
             ICollection<TagValues> actual = viewData.AggregationMap.Keys.ToList();
 
             Assert.Equal(expected, actual);
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Stats.Test
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
-                    new List<TagKey>() { KEY });
+                    new List<string>() { KEY });
             viewManager.RegisterView(view);
             var orig = AsyncLocalContext.CurrentTagContext;
             AsyncLocalContext.CurrentTagContext = new SimpleTagContext(Tag.Create(KEY, VALUE));
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Stats.Test
             IViewData viewData = viewManager.GetView(viewName);
 
             // record() should have used the given TagContext.
-            ICollection<TagValues> expected = new List<TagValues>() { TagValues.Create(new List<TagValue>() { VALUE }) };
+            ICollection<TagValues> expected = new List<TagValues>() { TagValues.Create(new List<string>() { VALUE }) };
             ICollection<TagValues> actual = viewData.AggregationMap.Keys.ToList();
 
             Assert.Equal(expected, actual);
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Stats.Test
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
-                    new List<TagKey>() { KEY });
+                    new List<string>() { KEY });
             viewManager.RegisterView(view);
             statsRecorder
                 .NewMeasureMap()
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Stats.Test
             IViewData viewData = viewManager.GetView(viewName);
 
             // There should be one entry.
-            var tv = TagValues.Create(new List<TagValue>() { VALUE });
+            var tv = TagValues.Create(new List<string>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>() {{ tv, StatsTestUtil.CreateAggregationData(Sum.Create(), MEASURE_DOUBLE, 2.0) }},
@@ -147,7 +147,7 @@ namespace OpenTelemetry.Stats.Test
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
-                    new List<TagKey>() { KEY });
+                    new List<string>() { KEY });
 
             viewManager.RegisterView(view);
             IMeasureMap statsRecord = statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 1.0);
@@ -156,8 +156,8 @@ namespace OpenTelemetry.Stats.Test
             IViewData viewData = viewManager.GetView(viewName);
 
             // There should be two entries.
-            var tv = TagValues.Create(new List<TagValue>() { VALUE });
-            var tv2 = TagValues.Create(new List<TagValue>() { VALUE_2 });
+            var tv = TagValues.Create(new List<string>() { VALUE });
+            var tv2 = TagValues.Create(new List<string>() { VALUE_2 });
 
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
@@ -178,7 +178,7 @@ namespace OpenTelemetry.Stats.Test
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
-                    new List<TagKey>() { KEY });
+                    new List<string>() { KEY });
 
             viewManager.RegisterView(view);
             Stats.State = StatsCollectionState.DISABLED;
@@ -198,7 +198,7 @@ namespace OpenTelemetry.Stats.Test
                     "description",
                     MEASURE_DOUBLE,
                     Sum.Create(),
-                    new List<TagKey>() { KEY });
+                    new List<string>() { KEY });
 
             viewManager.RegisterView(view);
 
@@ -217,7 +217,7 @@ namespace OpenTelemetry.Stats.Test
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 4.0)
                 .Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
-            TagValues tv = TagValues.Create(new List<TagValue>() { VALUE });
+            TagValues tv = TagValues.Create(new List<string>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewManager.GetView(VIEW_NAME).AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()

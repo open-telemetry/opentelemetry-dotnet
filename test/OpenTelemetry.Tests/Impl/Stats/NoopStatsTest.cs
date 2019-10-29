@@ -24,7 +24,7 @@ namespace OpenTelemetry.Stats.Test
 {
     public class NoopStatsTest
     {
-        private static readonly Tag TAG = Tag.Create(TagKey.Create("key"), TagValue.Create("value"));
+        private static readonly Tag TAG = Tag.Create("key", "value");
         private static readonly IMeasureDouble MEASURE =  MeasureDouble.Create("my measure", "description", "s");
 
         private readonly ITagContext tagContext = new TestTagContext();

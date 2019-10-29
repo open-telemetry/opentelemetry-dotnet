@@ -36,7 +36,7 @@ namespace Samples
         private static readonly IMeasureLong VideoSize =
             MeasureLong.Create("my.org/measure/video_size", "size of processed videos", "By");
 
-        private static readonly TagKey FrontendKey = TagKey.Create("my.org/keys/frontend");
+        private static readonly string FrontendKey = "my.org/keys/frontend";
 
         private static readonly long MiB = 1 << 20;
 
@@ -47,14 +47,14 @@ namespace Samples
             "processed video size over time",
             VideoSize,
             Distribution.Create(BucketBoundaries.Create(new List<double>() { 0.0, 16.0 * MiB, 256.0 * MiB })),
-            new List<TagKey>() { FrontendKey });
+            new List<string>() { FrontendKey });
 
         internal static object Run()
         {
             var metricExporter = new ApplicationInsightsMetricExporter(Stats.ViewManager, new TelemetryConfiguration("instrumentation-key"));
             metricExporter.Start();
 
-            var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
+            var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, "mobile-ios9.3.5");
 
             using (var tracerFactory = TracerFactory.Create(builder => builder
                 .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key")))

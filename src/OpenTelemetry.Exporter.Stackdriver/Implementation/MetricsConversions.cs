@@ -77,11 +77,11 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             return ValueType.Unspecified;
         }
 
-        public static LabelDescriptor ToLabelDescriptor(this TagKey tagKey)
+        public static LabelDescriptor ToLabelDescriptor(this string tagKey)
         {
             var labelDescriptor = new LabelDescriptor();
             
-            labelDescriptor.Key = GetStackdriverLabelKey(tagKey.Name);
+            labelDescriptor.Key = GetStackdriverLabelKey(tagKey);
             labelDescriptor.Description = Constants.LabelDescription;
 
             // TODO - zeltser - Now we only support string tags
@@ -174,13 +174,13 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
         /// Generate Stackdriver Metric from OpenTelemetry View.
         /// </summary>
         /// <param name="view">A <see cref="IView"/>.</param>
-        /// <param name="tagValues">A list of <see cref="TagValue"/>.</param>
+        /// <param name="tagValues">A list of <see cref="string"/>.</param>
         /// <param name="metricDescriptor">Stackdriver Metric Descriptor.</param>
         /// <param name="domain">The domain.</param>
         /// <returns><see cref="Metric"/>.</returns>
         public static Metric GetMetric(
             IView view,
-            IReadOnlyList<TagValue> tagValues,
+            IReadOnlyList<string> tagValues,
             MetricDescriptor metricDescriptor,
             string domain)
         {
@@ -199,8 +199,8 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                     continue;
                 }
 
-                var labelKey = GetStackdriverLabelKey(key.Name);
-                metric.Labels.Add(labelKey, value.AsString);
+                var labelKey = GetStackdriverLabelKey(key);
+                metric.Labels.Add(labelKey, value);
             }
 
             metric.Labels.Add(Constants.OpenTelemetryTask, Constants.OpenTelemetryTaskValueDefault);
