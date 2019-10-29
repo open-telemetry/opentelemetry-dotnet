@@ -20,19 +20,19 @@ namespace OpenTelemetry.Tags
 {
     internal sealed class TagContextBuilder : TagContextBuilderBase
     {
-        internal TagContextBuilder(IDictionary<string, TagValue> tags)
+        internal TagContextBuilder(IDictionary<string, string> tags)
         {
-            this.Tags = new Dictionary<string, TagValue>(tags);
+            this.Tags = new Dictionary<string, string>(tags);
         }
 
         internal TagContextBuilder()
         {
-            this.Tags = new Dictionary<string, TagValue>();
+            this.Tags = new Dictionary<string, string>();
         }
 
-        internal IDictionary<string, TagValue> Tags { get; }
+        internal IDictionary<string, string> Tags { get; }
 
-        public override ITagContextBuilder Put(string key, TagValue value)
+        public override ITagContextBuilder Put(string key, string value)
         {
             if (key == null)
             {

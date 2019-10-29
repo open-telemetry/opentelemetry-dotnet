@@ -26,7 +26,7 @@ namespace OpenTelemetry.Tags
         {
         }
 
-        public override ITagContextBuilder Put(string key, TagValue value)
+        public override ITagContextBuilder Put(string key, string value)
         {
             if (key == null)
             {

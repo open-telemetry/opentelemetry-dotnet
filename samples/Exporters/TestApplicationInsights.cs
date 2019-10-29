@@ -54,7 +54,7 @@ namespace Samples
             var metricExporter = new ApplicationInsightsMetricExporter(Stats.ViewManager, new TelemetryConfiguration("instrumentation-key"));
             metricExporter.Start();
 
-            var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
+            var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, "mobile-ios9.3.5");
 
             using (var tracerFactory = TracerFactory.Create(builder => builder
                 .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key")))

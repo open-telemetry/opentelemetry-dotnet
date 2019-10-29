@@ -36,12 +36,12 @@ namespace OpenTelemetry.Stats
             return true;
         }
 
-        public static IAggregationData SumWithTags(this IViewData viewData, IEnumerable<TagValue> values = null)
+        public static IAggregationData SumWithTags(this IViewData viewData, IEnumerable<string> values = null)
         {
             return viewData.AggregationMap.WithTags(values).Sum(viewData.View);
         }
 
-        public static IDictionary<TagValues, IAggregationData> WithTags(this IDictionary<TagValues, IAggregationData> aggMap, IEnumerable<TagValue> values)
+        public static IDictionary<TagValues, IAggregationData> WithTags(this IDictionary<TagValues, IAggregationData> aggMap, IEnumerable<string> values)
         {
             var results = new Dictionary<TagValues, IAggregationData>();
 
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Stats
             return MutableViewData.CreateAggregationData(sum, view.Measure);
         }
 
-        private static bool TagValuesMatch(IEnumerable<TagValue> aggValues, IEnumerable<TagValue> values)
+        private static bool TagValuesMatch(IEnumerable<string> aggValues, IEnumerable<string> values)
         {
             if (values == null)
             {

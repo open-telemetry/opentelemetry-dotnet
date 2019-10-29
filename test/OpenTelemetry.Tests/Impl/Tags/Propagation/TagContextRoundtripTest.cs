@@ -25,10 +25,10 @@ namespace OpenTelemetry.Tags.Propagation.Test
         private static readonly string K2 = "k2";
         private static readonly string K3 = "k3";
 
-        private static readonly TagValue V_EMPTY = TagValue.Create("");
-        private static readonly TagValue V1 = TagValue.Create("v1");
-        private static readonly TagValue V2 = TagValue.Create("v2");
-        private static readonly TagValue V3 = TagValue.Create("v3");
+        private static readonly string V_EMPTY = "";
+        private static readonly string V1 = "v1";
+        private static readonly string V2 = "v2";
+        private static readonly string V3 = "v3";
 
         private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
                 {
                     str = "" + i;
                 }
-                builder.Put(str, TagValue.Create(str));
+                builder.Put(str, str);
             }
             TestRoundtripSerialization(builder.Build());
         }

@@ -89,7 +89,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Implementation
                     for (var i = 0; i < value.Key.Values.Count; i++)
                     {
                         var name = data.View.Columns[i];
-                        var val = value.Key.Values[i].AsString;
+                        var val = value.Key.Values[i];
                         metricTelemetry.Properties.Add(name, val);
                     }
 

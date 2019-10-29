@@ -27,8 +27,8 @@ namespace OpenTelemetry.Stats.Test
     public class ViewManagerTest
     {
         private static readonly string Key = "Key";
-        private static readonly TagValue Value = TagValue.Create("Value");
-        private static readonly TagValue Value2 = TagValue.Create("Value2");
+        private static readonly string Value = "Value";
+        private static readonly string Value2 = "Value2";
         private static readonly String MeasureUnit = "us";
         private static readonly String MeasureDescription = "measure description";
         private static readonly IMeasureDouble MeasureDouble = CreateRandomMeasureDouble();
@@ -276,7 +276,7 @@ namespace OpenTelemetry.Stats.Test
 
             Assert.Equal(view, viewData.View);
 
-            var tv = TagValues.Create(new List<TagValue>() { Value });
+            var tv = TagValues.Create(new List<string>() { Value });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -295,7 +295,7 @@ namespace OpenTelemetry.Stats.Test
             ITagContext tags = tagger.EmptyBuilder.Put(Key, Value).Build();
             statsRecorder.NewMeasureMap().Put(MeasureDouble, 0.1).Record(tags);
             IViewData viewData1 = viewManager.GetView(view.Name);
-            var tv = TagValues.Create(new List<TagValue>() { Value });
+            var tv = TagValues.Create(new List<string>() { Value });
 
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData1.AggregationMap,
@@ -338,8 +338,8 @@ namespace OpenTelemetry.Stats.Test
                 .Put(MeasureDouble, 50.0)
                 .Record(tagger.EmptyBuilder.Put(Key, Value2).Build());
             IViewData viewData = viewManager.GetView(view.Name);
-            var tv = TagValues.Create(new List<TagValue>() { Value });
-            var tv2 = TagValues.Create(new List<TagValue>() { Value2 });
+            var tv = TagValues.Create(new List<string>() { Value });
+            var tv2 = TagValues.Create(new List<string>() { Value2 });
 
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
@@ -373,7 +373,7 @@ namespace OpenTelemetry.Stats.Test
             // DEFAULT doesn't have tags, but the view has tag key "Key".
             statsRecorder.NewMeasureMap().Put(MeasureDouble, 10.0).Record(tagger.Empty);
             IViewData viewData = viewManager.GetView(view.Name);
-            var tv = TagValues.Create(new List<TagValue>() { MutableViewData.UnknownTagValue });
+            var tv = TagValues.Create(new List<string>() { MutableViewData.UnknownTagValue });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -434,7 +434,7 @@ namespace OpenTelemetry.Stats.Test
                 .Put(MeasureDouble, 50.0)
                 .Record(tagger.EmptyBuilder.Put("another wrong key", Value).Build());
             IViewData viewData = viewManager.GetView(view.Name);
-            var tv = TagValues.Create(new List<TagValue>() { MutableViewData.UnknownTagValue });
+            var tv = TagValues.Create(new List<string>() { MutableViewData.UnknownTagValue });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -462,8 +462,8 @@ namespace OpenTelemetry.Stats.Test
                 .Record(
                     tagger
                         .EmptyBuilder
-                        .Put(key1, TagValue.Create("v1"))
-                        .Put(key2, TagValue.Create("v10"))
+                        .Put(key1, "v1")
+                        .Put(key2, "v10")
                         .Build());
             statsRecorder
                 .NewMeasureMap()
@@ -471,8 +471,8 @@ namespace OpenTelemetry.Stats.Test
                 .Record(
                     tagger
                         .EmptyBuilder
-                        .Put(key1, TagValue.Create("v1"))
-                        .Put(key2, TagValue.Create("v20"))
+                        .Put(key1, "v1")
+                        .Put(key2, "v20")
                         .Build());
             statsRecorder
                 .NewMeasureMap()
@@ -480,8 +480,8 @@ namespace OpenTelemetry.Stats.Test
                 .Record(
                     tagger
                         .EmptyBuilder
-                        .Put(key1, TagValue.Create("v2"))
-                        .Put(key2, TagValue.Create("v10"))
+                        .Put(key1, "v2")
+                        .Put(key2, "v10")
                         .Build());
             statsRecorder
                 .NewMeasureMap()
@@ -489,13 +489,13 @@ namespace OpenTelemetry.Stats.Test
                 .Record(
                     tagger
                         .EmptyBuilder
-                        .Put(key1, TagValue.Create("v1"))
-                        .Put(key2, TagValue.Create("v10"))
+                        .Put(key1, "v1")
+                        .Put(key2, "v10")
                         .Build());
             IViewData viewData = viewManager.GetView(view.Name);
-            var tv1 = TagValues.Create(new List<TagValue>() { TagValue.Create("v1"), TagValue.Create("v10") });
-            var tv2 = TagValues.Create(new List<TagValue>() { TagValue.Create("v1"), TagValue.Create("v20") });
-            var tv3 = TagValues.Create(new List<TagValue>() { TagValue.Create("v2"), TagValue.Create("v10") });
+            var tv1 = TagValues.Create(new List<string>() { "v1", "v10" });
+            var tv2 = TagValues.Create(new List<string>() { "v1", "v20" });
+            var tv3 = TagValues.Create(new List<string>() { "v2", "v10" });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -522,7 +522,7 @@ namespace OpenTelemetry.Stats.Test
                 .Record(tagger.EmptyBuilder.Put(Key, Value).Build());
             IViewData viewData1 = viewManager.GetView(view1.Name);
             IViewData viewData2 = viewManager.GetView(view2.Name);
-            var tv = TagValues.Create(new List<TagValue>() { Value });
+            var tv = TagValues.Create(new List<string>() { Value });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData1.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -573,7 +573,7 @@ namespace OpenTelemetry.Stats.Test
             measureMap.Record(tags);
             IViewData viewData1 = viewManager.GetView(view1.Name);
             IViewData viewData2 = viewManager.GetView(view2.Name);
-            var tv = TagValues.Create(new List<TagValue>() { Value });
+            var tv = TagValues.Create(new List<string>() { Value });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData1.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -603,7 +603,7 @@ namespace OpenTelemetry.Stats.Test
                 .Put(MeasureDouble, 1.1)
                 .Record(tagger.EmptyBuilder.Put(Key, Value).Build());
             IViewData viewData = viewManager.GetView(view.Name);
-            var tv = TagValues.Create(new List<TagValue>() { Value });
+            var tv = TagValues.Create(new List<string>() { Value });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -623,7 +623,7 @@ namespace OpenTelemetry.Stats.Test
                 .Put(MeasureDouble, 1.1)
                 .Record(tagger.EmptyBuilder.Put(Key, Value).Build());
             IViewData viewData = viewManager.GetView(view.Name);
-            var tv = TagValues.Create(new List<TagValue>() { Value });
+            var tv = TagValues.Create(new List<string>() { Value });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -657,7 +657,7 @@ namespace OpenTelemetry.Stats.Test
                 .NewMeasureMap()
                 .Put(MeasureDouble, 1.1)
                 .Record(tagger.EmptyBuilder.Put(Key, Value).Build());
-            TagValues tv = TagValues.Create(new List<TagValue>() { Value });
+            TagValues tv = TagValues.Create(new List<string>() { Value });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewManager.GetView(view.Name).AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -679,7 +679,7 @@ namespace OpenTelemetry.Stats.Test
                 .NewMeasureMap()
                 .Put(MeasureDouble, 1.1)
                 .Record(tagger.EmptyBuilder.Put(Key, Value).Build());
-            TagValues tv = TagValues.Create(new List<TagValue>() { Value });
+            TagValues tv = TagValues.Create(new List<string>() { Value });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewManager.GetView(view.Name).AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
@@ -744,7 +744,7 @@ namespace OpenTelemetry.Stats.Test
                 .NewMeasureMap()
                 .Put(MeasureDouble, 1.1)
                 .Record(tagger.EmptyBuilder.Put(Key, Value).Build());
-            TagValues tv = TagValues.Create(new List<TagValue>() { Value });
+            TagValues tv = TagValues.Create(new List<string>() { Value });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewManager.GetView(view.Name).AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()

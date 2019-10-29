@@ -30,8 +30,8 @@ namespace OpenTelemetry.Stats.Test
         private static readonly string ORIGINATOR = "originator";
         private static readonly string CALLER = "caller";
         private static readonly string METHOD = "method";
-        private static readonly TagValue CALLER_V = TagValue.Create("some caller");
-        private static readonly TagValue METHOD_V = TagValue.Create("some method");
+        private static readonly string CALLER_V = "some caller";
+        private static readonly string METHOD_V = "some method";
         private static readonly IMeasureDouble MEASURE_DOUBLE = MeasureDouble.Create("measure1", "description", "1");
         private static readonly IMeasureLong MEASURE_LONG = MeasureLong.Create("measure2", "description", "1");
 
@@ -45,9 +45,9 @@ namespace OpenTelemetry.Stats.Test
         public void TestGetTagValues()
         {
             IReadOnlyList<string> columns = new List<string>() { CALLER, METHOD, ORIGINATOR };
-            IDictionary<string, TagValue> tags = new Dictionary<string, TagValue>() { { CALLER, CALLER_V }, { METHOD, METHOD_V } };
+            IDictionary<string, string> tags = new Dictionary<string, string>() { { CALLER, CALLER_V }, { METHOD, METHOD_V } };
 
-            Assert.Equal(new List<TagValue>() { CALLER_V, METHOD_V, MutableViewData.UnknownTagValue },
+            Assert.Equal(new List<string>() { CALLER_V, METHOD_V, MutableViewData.UnknownTagValue },
                 MutableViewData.GetTagValues(tags, columns));
 
         }

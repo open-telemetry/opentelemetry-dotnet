@@ -87,11 +87,11 @@ namespace OpenTelemetry.Stats.Test
 
             ITagContext context1 = tagger
                 .EmptyBuilder
-                .Put(FRONTEND_KEY, TagValue.Create("front1"))
+                .Put(FRONTEND_KEY, "front1")
                 .Build();
             ITagContext context2 = tagger
                 .EmptyBuilder
-                .Put(FRONTEND_KEY, TagValue.Create("front2"))
+                .Put(FRONTEND_KEY, "front2")
                 .Build();
 
             long sum = 0;
@@ -153,13 +153,13 @@ namespace OpenTelemetry.Stats.Test
 
             ITagContext context1 = tagger
                 .EmptyBuilder
-                .Put(FRONTEND_KEY, TagValue.Create("front1"))
-                .Put(FRONTEND_OS_KEY, TagValue.Create("windows"))
+                .Put(FRONTEND_KEY, "front1")
+                .Put(FRONTEND_OS_KEY, "windows")
                 .Build();
             ITagContext context2 = tagger
                 .EmptyBuilder
-                .Put(FRONTEND_KEY, TagValue.Create("front2"))
-                .Put(FRONTEND_OS_VERSION_KEY, TagValue.Create("1.1.1"))
+                .Put(FRONTEND_KEY, "front2")
+                .Put(FRONTEND_OS_VERSION_KEY, "1.1.1")
                 .Build();
 
             long sum = 0;
@@ -184,7 +184,7 @@ namespace OpenTelemetry.Stats.Test
                 output.WriteLine(view.Columns[i] + "=" + GetTagValues(i, viewDataAggMap));
             }
 
-            var keys = new List<TagValue>() { TagValue.Create("1.1.1") };
+            var keys = new List<string>() { "1.1.1" };
 
             var results = videoSizeView.AggregationMap.Where((kvp) =>
             {
@@ -211,7 +211,7 @@ namespace OpenTelemetry.Stats.Test
                 var val = kvp.Key.Values[i];
                 if (val != null)
                 {
-                    result += val.AsString;
+                    result += val;
                 }
             }
             return result;

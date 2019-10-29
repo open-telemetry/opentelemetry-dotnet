@@ -42,7 +42,7 @@ namespace OpenTelemetry.Tags.Propagation
             foreach (var tag in tags)
             {
                 totalChars += tag.Key.Length;
-                totalChars += tag.Value.AsString.Length;
+                totalChars += tag.Value.Length;
                 EncodeTag(tag, byteArrayDataOutput);
             }
 
@@ -90,9 +90,9 @@ namespace OpenTelemetry.Tags.Propagation
             }
         }
 
-        internal static IDictionary<string, TagValue> ParseTags(MemoryStream buffer)
+        internal static IDictionary<string, string> ParseTags(MemoryStream buffer)
         {
-            IDictionary<string, TagValue> tags = new Dictionary<string, TagValue>();
+            IDictionary<string, string> tags = new Dictionary<string, string>();
             var limit = buffer.Length;
             var totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
             while (buffer.Position < limit)
@@ -103,7 +103,7 @@ namespace OpenTelemetry.Tags.Propagation
                     var key = CreateTagKey(DecodeString(buffer));
                     var val = CreateTagValue(key, DecodeString(buffer));
                     totalChars += key.Length;
-                    totalChars += val.AsString.Length;
+                    totalChars += val.Length;
                     tags[key] = val;
                 }
 else
@@ -138,13 +138,13 @@ else
             }
         }
 
-        // TODO(sebright): Consider exposing a TagValue validation method to avoid needing to catch
+        // TODO(sebright): Consider exposing a string validation method to avoid needing to catch
         // an IllegalArgumentException here.
-        private static TagValue CreateTagValue(string key, string value)
+        private static string CreateTagValue(string key, string value)
         {
             try
             {
-                return TagValue.Create(value);
+                return value;
             }
             catch (Exception e)
             {
@@ -157,7 +157,7 @@ else
         {
             byteArrayDataOutput.WriteByte(TagFieldId);
             EncodeString(tag.Key, byteArrayDataOutput);
-            EncodeString(tag.Value.AsString, byteArrayDataOutput);
+            EncodeString(tag.Value, byteArrayDataOutput);
         }
 
         private static void EncodeString(string input, MemoryStream byteArrayDataOutput)

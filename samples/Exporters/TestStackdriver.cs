@@ -58,7 +58,7 @@ namespace Samples
             {
                 var tracer = tracerFactory.GetTracer("stackdriver-test");
 
-                var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, TagValue.Create("mobile-ios9.3.5"));
+                var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, "mobile-ios9.3.5");
 
                 Stats.ViewManager.RegisterView(VideoSizeView);
 
