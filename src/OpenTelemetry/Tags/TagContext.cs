@@ -21,14 +21,14 @@ namespace OpenTelemetry.Tags
 {
     public sealed class TagContext : TagContextBase
     {
-        public static readonly ITagContext Empty = new TagContext(new Dictionary<TagKey, TagValue>());
+        public static readonly ITagContext Empty = new TagContext(new Dictionary<string, TagValue>());
 
-        public TagContext(IDictionary<TagKey, TagValue> tags)
+        public TagContext(IDictionary<string, TagValue> tags)
         {
-            this.Tags = new ReadOnlyDictionary<TagKey, TagValue>(new Dictionary<TagKey, TagValue>(tags));
+            this.Tags = new ReadOnlyDictionary<string, TagValue>(new Dictionary<string, TagValue>(tags));
         }
 
-        public IDictionary<TagKey, TagValue> Tags { get; }
+        public IDictionary<string, TagValue> Tags { get; }
 
         public override IEnumerator<Tag> GetEnumerator()
         {

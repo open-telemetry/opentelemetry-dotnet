@@ -22,7 +22,7 @@ namespace OpenTelemetry.Stats
 {
     public static class StatsExtensions
     {
-        public static bool ContainsKeys(this IView view, IEnumerable<TagKey> keys)
+        public static bool ContainsKeys(this IView view, IEnumerable<string> keys)
         {
             var columns = view.Columns;
             foreach (var key in keys)

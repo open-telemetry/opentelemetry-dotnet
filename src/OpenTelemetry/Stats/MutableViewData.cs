@@ -67,7 +67,7 @@ namespace OpenTelemetry.Stats
                 boxedBucketCounts);
         };
 
-        internal static IDictionary<TagKey, TagValue> GetTagMap(ITagContext ctx)
+        internal static IDictionary<string, TagValue> GetTagMap(ITagContext ctx)
         {
             if (ctx is TagContext)
             {
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Stats
             }
             else
             {
-                IDictionary<TagKey, TagValue> tags = new Dictionary<TagKey, TagValue>();
+                IDictionary<string, TagValue> tags = new Dictionary<string, TagValue>();
                 foreach (var tag in ctx)
                 {
                     tags.Add(tag.Key, tag.Value);
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Stats
             }
         }
 
-        internal static IReadOnlyList<TagValue> GetTagValues(IDictionary<TagKey, TagValue> tags, IReadOnlyList<TagKey> columns)
+        internal static IReadOnlyList<TagValue> GetTagValues(IDictionary<string, TagValue> tags, IReadOnlyList<string> columns)
         {
             var tagValues = new List<TagValue>(columns.Count);
 

@@ -46,6 +46,6 @@ namespace OpenTelemetry.Stats
         /// <summary>
         /// Gets the columns (dimensions) recorded by this view.
         /// </summary>
-        IReadOnlyList<TagKey> Columns { get; }
+        IReadOnlyList<string> Columns { get; }
     }
 }

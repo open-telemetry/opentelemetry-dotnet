@@ -77,11 +77,11 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
             return ValueType.Unspecified;
         }
 
-        public static LabelDescriptor ToLabelDescriptor(this TagKey tagKey)
+        public static LabelDescriptor ToLabelDescriptor(this string tagKey)
         {
             var labelDescriptor = new LabelDescriptor();
             
-            labelDescriptor.Key = GetStackdriverLabelKey(tagKey.Name);
+            labelDescriptor.Key = GetStackdriverLabelKey(tagKey);
             labelDescriptor.Description = Constants.LabelDescription;
 
             // TODO - zeltser - Now we only support string tags
@@ -199,7 +199,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                     continue;
                 }
 
-                var labelKey = GetStackdriverLabelKey(key.Name);
+                var labelKey = GetStackdriverLabelKey(key);
                 metric.Labels.Add(labelKey, value.AsString);
             }
 

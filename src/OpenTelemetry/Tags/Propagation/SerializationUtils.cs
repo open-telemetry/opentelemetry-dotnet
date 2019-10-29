@@ -41,7 +41,7 @@ namespace OpenTelemetry.Tags.Propagation
             var totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
             foreach (var tag in tags)
             {
-                totalChars += tag.Key.Name.Length;
+                totalChars += tag.Key.Length;
                 totalChars += tag.Value.AsString.Length;
                 EncodeTag(tag, byteArrayDataOutput);
             }
@@ -90,9 +90,9 @@ namespace OpenTelemetry.Tags.Propagation
             }
         }
 
-        internal static IDictionary<TagKey, TagValue> ParseTags(MemoryStream buffer)
+        internal static IDictionary<string, TagValue> ParseTags(MemoryStream buffer)
         {
-            IDictionary<TagKey, TagValue> tags = new Dictionary<TagKey, TagValue>();
+            IDictionary<string, TagValue> tags = new Dictionary<string, TagValue>();
             var limit = buffer.Length;
             var totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
             while (buffer.Position < limit)
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Tags.Propagation
                 {
                     var key = CreateTagKey(DecodeString(buffer));
                     var val = CreateTagValue(key, DecodeString(buffer));
-                    totalChars += key.Name.Length;
+                    totalChars += key.Length;
                     totalChars += val.AsString.Length;
                     tags[key] = val;
                 }
@@ -124,13 +124,13 @@ else
             return tags;
         }
 
-        // TODO(sebright): Consider exposing a TagKey name validation method to avoid needing to catch an
+        // TODO(sebright): Consider exposing a string name validation method to avoid needing to catch an
         // IllegalArgumentException here.
-        private static TagKey CreateTagKey(string name)
+        private static string CreateTagKey(string name)
         {
             try
             {
-                return TagKey.Create(name);
+                return name;
             }
             catch (Exception e)
             {
@@ -140,7 +140,7 @@ else
 
         // TODO(sebright): Consider exposing a TagValue validation method to avoid needing to catch
         // an IllegalArgumentException here.
-        private static TagValue CreateTagValue(TagKey key, string value)
+        private static TagValue CreateTagValue(string key, string value)
         {
             try
             {
@@ -156,7 +156,7 @@ else
         private static void EncodeTag(Tag tag, MemoryStream byteArrayDataOutput)
         {
             byteArrayDataOutput.WriteByte(TagFieldId);
-            EncodeString(tag.Key.Name, byteArrayDataOutput);
+            EncodeString(tag.Key, byteArrayDataOutput);
             EncodeString(tag.Value.AsString, byteArrayDataOutput);
         }
 

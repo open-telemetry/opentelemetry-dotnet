@@ -21,9 +21,9 @@ namespace OpenTelemetry.Tags.Propagation.Test
     public class TagContextRoundtripTest
     {
 
-        private static readonly TagKey K1 = TagKey.Create("k1");
-        private static readonly TagKey K2 = TagKey.Create("k2");
-        private static readonly TagKey K3 = TagKey.Create("k3");
+        private static readonly string K1 = "k1";
+        private static readonly string K2 = "k2";
+        private static readonly string K3 = "k3";
 
         private static readonly TagValue V_EMPTY = TagValue.Create("");
         private static readonly TagValue V1 = TagValue.Create("v1");
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
                 {
                     str = "" + i;
                 }
-                builder.Put(TagKey.Create(str), TagValue.Create(str));
+                builder.Put(str, TagValue.Create(str));
             }
             TestRoundtripSerialization(builder.Build());
         }

@@ -16,14 +16,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using OpenTelemetry.Tags;
 
 namespace OpenTelemetry.Stats
 {
     public sealed class View : IView
     {
         internal View(IViewName name, string description, IMeasure measure, IAggregation aggregation,
-            IReadOnlyList<TagKey> columns)
+            IReadOnlyList<string> columns)
         {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.Description = description ?? throw new ArgumentNullException(nameof(description));
@@ -40,12 +39,12 @@ namespace OpenTelemetry.Stats
 
         public IAggregation Aggregation { get; }
 
-        public IReadOnlyList<TagKey> Columns { get; }
+        public IReadOnlyList<string> Columns { get; }
 
         public static IView Create(IViewName name, string description, IMeasure measure, IAggregation aggregation,
-            IReadOnlyList<TagKey> columns)
+            IReadOnlyList<string> columns)
         {
-            var set = new HashSet<TagKey>(columns);
+            var set = new HashSet<string>(columns);
             if (set.Count != columns.Count)
             {
                 throw new ArgumentException("Columns have duplicate.");
@@ -56,7 +55,7 @@ namespace OpenTelemetry.Stats
                 description,
                 measure,
                 aggregation,
-                new List<TagKey>(columns).AsReadOnly());
+                new List<string>(columns).AsReadOnly());
         }
 
         /// <inheritdoc/>

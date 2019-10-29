@@ -27,7 +27,7 @@ namespace OpenTelemetry.Tags
         /// </summary>
         /// <param name="key">Key name for the tag.</param>
         /// <param name="value">Value associated with the key name.</param>
-        internal Tag(TagKey key, TagValue value)
+        internal Tag(string key, TagValue value)
         {
             this.Key = key ?? throw new ArgumentNullException(nameof(key));
             this.Value = value ?? throw new ArgumentNullException(nameof(value));
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Tags
         /// <summary>
         /// Gets the tag key.
         /// </summary>
-        public TagKey Key { get; }
+        public string Key { get; }
 
         /// <summary>
         /// Gets the tag value.
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Tags
         /// <param name="key">The tag's key.</param>
         /// <param name="value">The tag's value.</param>
         /// <returns><see cref="Tag"/>.</returns>
-        public static Tag Create(TagKey key, TagValue value)
+        public static Tag Create(string key, TagValue value)
         {
             return new Tag(key, value);
         }

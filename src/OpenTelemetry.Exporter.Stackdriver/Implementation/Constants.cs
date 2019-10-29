@@ -21,7 +21,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
     {
         public static readonly string PackagVersionUndefined = "undefined";
 
-        public static readonly string LabelDescription = "OpenTelemetry TagKey";
+        public static readonly string LabelDescription = "OpenTelemetry string";
         public static readonly string OpenTelemetryTask = "OpenTelemetry_task";
         public static readonly string OpenTelemetryTaskDescription = "OpenTelemetry task identifier";
 

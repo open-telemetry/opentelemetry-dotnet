@@ -20,8 +20,8 @@ namespace OpenTelemetry.Tags.Test
 {
     public class ScopedTagContextsTest
     {
-        private static readonly TagKey KEY_1 = TagKey.Create("key 1");
-        private static readonly TagKey KEY_2 = TagKey.Create("key 2");
+        private static readonly string KEY_1 = "key 1";
+        private static readonly string KEY_2 = "key 2";
 
         private static readonly TagValue VALUE_1 = TagValue.Create("value 1");
         private static readonly TagValue VALUE_2 = TagValue.Create("value 2");

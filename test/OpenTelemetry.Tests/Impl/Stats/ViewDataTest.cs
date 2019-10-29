@@ -25,9 +25,9 @@ namespace OpenTelemetry.Stats.Test
     public class ViewDataTest
     {
         // tag keys
-        private static readonly TagKey K1 = TagKey.Create("k1");
-        private static readonly TagKey K2 = TagKey.Create("k2");
-        private static readonly IReadOnlyList<TagKey> TAG_KEYS = new List<TagKey>() { K1, K2 };
+        private static readonly string K1 = "k1";
+        private static readonly string K2 = "k2";
+        private static readonly IReadOnlyList<string> TAG_KEYS = new List<string>() { K1, K2 };
 
         // tag values
         private static readonly TagValue V1 = TagValue.Create("v1");
