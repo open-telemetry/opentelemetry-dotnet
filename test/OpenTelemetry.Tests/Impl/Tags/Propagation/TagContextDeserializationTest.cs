@@ -130,34 +130,6 @@ namespace OpenTelemetry.Tags.Propagation.Test
         }
 
         [Fact]
-        public void TestDeserializeInvalidTagKey()
-        {
-            var output = new MemoryStream();
-            output.WriteByte(SerializationUtils.VersionId);
-
-            // Encode an invalid tag key and a valid tag value:
-            EncodeTagToOutPut("\u0002key", "value", output);
-            var bytes = output.ToArray();
-
-
-            Assert.Throws<TagContextDeserializationException>(() => serializer.FromByteArray(bytes));
-        }
-
-        [Fact]
-        public void TestDeserializeInvalidTagValue()
-        {
-            var output = new MemoryStream();
-            output.WriteByte(SerializationUtils.VersionId);
-
-            // Encode a valid tag key and an invalid tag value:
-            EncodeTagToOutPut("my key", "val\u0003", output);
-            var bytes = output.ToArray();
-
-
-            Assert.Throws<TagContextDeserializationException>(() => serializer.FromByteArray(bytes));
-        }
-
-        [Fact]
         public void TestDeserializeOneTag()
         {
             var output = new MemoryStream();
