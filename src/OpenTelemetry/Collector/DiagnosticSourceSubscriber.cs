@@ -92,6 +92,7 @@ namespace OpenTelemetry.Collector
                 {
                     listenerSubscription?.Dispose();
                 }
+                this.listenerSubscriptions.Clear();
             }
 
             this.allSourcesSubscription?.Dispose();
