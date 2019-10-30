@@ -79,9 +79,9 @@ namespace OpenTelemetry.Tags.Propagation.Test
 
             }
 
-            public override IEnumerator<Tag> GetEnumerator()
+            public override IEnumerator<DistributedContextEntry> GetEnumerator()
             {
-                return new List<Tag>() { Tag.Create("key", "value") }.GetEnumerator();
+                return new List<DistributedContextEntry>() { new DistributedContextEntry("key", "value") }.GetEnumerator();
             }
         }
     }

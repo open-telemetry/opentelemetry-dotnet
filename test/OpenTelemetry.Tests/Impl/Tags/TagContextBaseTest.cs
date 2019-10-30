@@ -20,8 +20,8 @@ namespace OpenTelemetry.Tags.Test
 {
     public class TagContextBaseTest
     {
-        private static readonly Tag TAG1 = Tag.Create("key", "val");
-        private static readonly Tag TAG2 = Tag.Create("key2", "val");
+        private static readonly DistributedContextEntry TAG1 = new DistributedContextEntry("key", "val");
+        private static readonly DistributedContextEntry TAG2 = new DistributedContextEntry("key2", "val");
 
         [Fact]
         public void Equals_IgnoresTagOrderAndTagContextClass()
@@ -42,8 +42,8 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void Equals_HandlesNullIterator()
         {
-            var ctx1 = new SimpleTagContext((IEnumerable<Tag>)null);
-            var ctx2 = new SimpleTagContext((IEnumerable<Tag>)null);
+            var ctx1 = new SimpleTagContext((IEnumerable<DistributedContextEntry>)null);
+            var ctx2 = new SimpleTagContext((IEnumerable<DistributedContextEntry>)null);
             var ctx3 = new SimpleTagContext();
             Assert.True(ctx1.Equals(ctx2));
             Assert.True(ctx1.Equals(ctx3));
@@ -85,30 +85,30 @@ namespace OpenTelemetry.Tags.Test
 
         class TestTagContext : TagContextBase
         {
-            public override IEnumerator<Tag> GetEnumerator()
+            public override IEnumerator<DistributedContextEntry> GetEnumerator()
             {
-                var l = new List<Tag>() { TAG1, TAG2 };
+                var l = new List<DistributedContextEntry>() { TAG1, TAG2 };
                 return l.GetEnumerator();
             }
         }
 
         class SimpleTagContext : TagContextBase
         {
-            private readonly IEnumerable<Tag> tags;
+            private readonly IEnumerable<DistributedContextEntry> tags;
 
             // This Error Prone warning doesn't seem correct, because the constructor is just calling
             // another constructor.
-            public SimpleTagContext(params Tag[] tags)
-                : this(new List<Tag>(tags))
+            public SimpleTagContext(params DistributedContextEntry[] tags)
+                : this(new List<DistributedContextEntry>(tags))
             {
             }
 
-            public SimpleTagContext(IEnumerable<Tag> tags)
+            public SimpleTagContext(IEnumerable<DistributedContextEntry> tags)
             {
-                this.tags = tags == null ? null : new List<Tag>(tags);
+                this.tags = tags == null ? null : new List<DistributedContextEntry>(tags);
             }
 
-            public override IEnumerator<Tag> GetEnumerator()
+            public override IEnumerator<DistributedContextEntry> GetEnumerator()
             {
                 return tags == null ? null : tags.GetEnumerator();
             }

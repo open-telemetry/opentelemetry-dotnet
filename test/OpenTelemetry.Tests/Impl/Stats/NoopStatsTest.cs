@@ -24,7 +24,7 @@ namespace OpenTelemetry.Stats.Test
 {
     public class NoopStatsTest
     {
-        private static readonly Tag TAG = Tag.Create("key", "value");
+        private static readonly DistributedContextEntry TAG = new DistributedContextEntry("key", "value");
         private static readonly IMeasureDouble MEASURE =  MeasureDouble.Create("my measure", "description", "s");
 
         private readonly ITagContext tagContext = new TestTagContext();
@@ -54,9 +54,9 @@ namespace OpenTelemetry.Stats.Test
 
         class TestTagContext : ITagContext
         {
-            public IEnumerator<Tag> GetEnumerator()
+            public IEnumerator<DistributedContextEntry> GetEnumerator()
             {
-                var l =  new List<Tag>() { TAG };
+                var l =  new List<DistributedContextEntry>() { TAG };
                 return l.GetEnumerator();
             }
 

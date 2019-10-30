@@ -20,7 +20,7 @@ namespace OpenTelemetry.Tags.Test
 {
     internal static class TagsTestUtil
     {
-        public static ICollection<Tag> TagContextToList(ITagContext tags)
+        public static ICollection<DistributedContextEntry> TagContextToList(ITagContext tags)
         {
             return tags.ToList();
         }

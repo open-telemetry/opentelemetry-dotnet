@@ -108,7 +108,7 @@ namespace OpenTelemetry.Tags.Test
             Assert.True(i.MoveNext());
             var tag2 = i.Current;
             Assert.False(i.MoveNext());
-            Assert.Equal(new List<Tag>() { Tag.Create(K1, V1), Tag.Create(K2, V2)}, new List<Tag>() { tag1, tag2 });
+            Assert.Equal(new List<DistributedContextEntry>() { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2)}, new List<DistributedContextEntry>() { tag1, tag2 });
 
         }
 
@@ -144,9 +144,9 @@ namespace OpenTelemetry.Tags.Test
 
         class TestTagContext : TagContextBase
         {
-            public override IEnumerator<Tag> GetEnumerator()
+            public override IEnumerator<DistributedContextEntry> GetEnumerator()
             {
-                return new List<Tag>() { Tag.Create(K1, V1), Tag.Create(K2, V2) }.GetEnumerator();
+                return new List<DistributedContextEntry>() { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2) }.GetEnumerator();
             }
         }
     }

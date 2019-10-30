@@ -21,7 +21,7 @@ namespace OpenTelemetry.Tags.Test
 {
     public class CurrentTagContextUtilsTest
     {
-        private static readonly Tag TAG = Tag.Create("key", "value");
+        private static readonly DistributedContextEntry TAG = new DistributedContextEntry("key", "value");
 
         private readonly ITagContext tagContext = new TestTagContext();
 
@@ -101,9 +101,9 @@ namespace OpenTelemetry.Tags.Test
 
             }
 
-            public override IEnumerator<Tag> GetEnumerator()
+            public override IEnumerator<DistributedContextEntry> GetEnumerator()
             {
-                return new List<Tag>() { TAG }.GetEnumerator();
+                return new List<DistributedContextEntry>() { TAG }.GetEnumerator();
             }
         }
     }

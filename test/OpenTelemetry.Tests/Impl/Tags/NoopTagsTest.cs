@@ -127,9 +127,9 @@ namespace OpenTelemetry.Tags.Test
 
         class TestTagContext : ITagContext
         {
-            public IEnumerator<Tag> GetEnumerator()
+            public IEnumerator<DistributedContextEntry> GetEnumerator()
             {
-                var list = new List<Tag>() { Tag.Create(KEY, VALUE) };
+                var list = new List<DistributedContextEntry>() { new DistributedContextEntry(KEY, VALUE) };
                 return list.GetEnumerator();
             }
 

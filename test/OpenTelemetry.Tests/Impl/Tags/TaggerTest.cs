@@ -32,9 +32,9 @@ namespace OpenTelemetry.Tags.Test
         private static readonly string V2 = "v2";
         private static readonly string V3 = "v3";
 
-        private static readonly Tag TAG1 = Tag.Create(K1, V1);
-        private static readonly Tag TAG2 = Tag.Create(K2, V2);
-        private static readonly Tag TAG3 = Tag.Create(K3, V3);
+        private static readonly DistributedContextEntry TAG1 = new DistributedContextEntry(K1, V1);
+        private static readonly DistributedContextEntry TAG2 = new DistributedContextEntry(K2, V2);
+        private static readonly DistributedContextEntry TAG3 = new DistributedContextEntry(K3, V3);
 
         public TaggerTest()
         {
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Tags.Test
             ITagContext tags = new SimpleTagContext(TAG1, TAG2, TAG3);
             var result = GetResultOfCurrentBuilder(tags);
             Assert.IsType<TagContextBuilder>(result);
-            Assert.Equal(new List<Tag>() { TAG1, TAG2, TAG3 }, TagsTestUtil.TagContextToList(result.Build()));
+            Assert.Equal(new List<DistributedContextEntry>() { TAG1, TAG2, TAG3 }, TagsTestUtil.TagContextToList(result.Build()));
         }
 
         [Fact]
@@ -103,11 +103,11 @@ namespace OpenTelemetry.Tags.Test
         [Fact]
         public void CurrentBuilder_RemoveDuplicateTags()
         {
-            var tag1 = Tag.Create(K1, V1);
-            var tag2 = Tag.Create(K1, V2);
+            var tag1 = new DistributedContextEntry(K1, V1);
+            var tag2 = new DistributedContextEntry(K1, V2);
             ITagContext tagContextWithDuplicateTags = new SimpleTagContext(tag1, tag2);
             var result = GetResultOfCurrentBuilder(tagContextWithDuplicateTags);
-            Assert.Equal(new List<Tag>() { tag2 }, TagsTestUtil.TagContextToList(result.Build()));
+            Assert.Equal(new List<DistributedContextEntry>() { tag2 }, TagsTestUtil.TagContextToList(result.Build()));
         }
 
         [Fact]
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Tags.Test
         {
             ITagContext tagContextWithNullTag = new SimpleTagContext(TAG1, null, TAG2);
             var result = GetResultOfCurrentBuilder(tagContextWithNullTag);
-            Assert.Equal(new List<Tag>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(result.Build()));
+            Assert.Equal(new List<DistributedContextEntry>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(result.Build()));
         }
 
         // [Fact]
@@ -157,18 +157,18 @@ namespace OpenTelemetry.Tags.Test
         {
             ITagContext unknownTagContext = new SimpleTagContext(TAG1, TAG2, TAG3);
             var newTagContext = tagger.ToBuilder(unknownTagContext).Build();
-            Assert.Equal(new List<Tag>() { TAG1, TAG2, TAG3 }, TagsTestUtil.TagContextToList(newTagContext));
+            Assert.Equal(new List<DistributedContextEntry>() { TAG1, TAG2, TAG3 }, TagsTestUtil.TagContextToList(newTagContext));
             Assert.IsType<TagContext>(newTagContext);
         }
 
         [Fact]
         public void ToBuilder_RemoveDuplicatesFromUnknownTagContext()
         {
-            var tag1 = Tag.Create(K1, V1);
-            var tag2 = Tag.Create(K1, V2);
+            var tag1 = new DistributedContextEntry(K1, V1);
+            var tag2 = new DistributedContextEntry(K1, V2);
             ITagContext tagContextWithDuplicateTags = new SimpleTagContext(tag1, tag2);
             var newTagContext = tagger.ToBuilder(tagContextWithDuplicateTags).Build();
-            Assert.Equal(new List<Tag>() { tag2 }, TagsTestUtil.TagContextToList(newTagContext));
+            Assert.Equal(new List<DistributedContextEntry>() { tag2 }, TagsTestUtil.TagContextToList(newTagContext));
         }
 
         [Fact]
@@ -176,7 +176,7 @@ namespace OpenTelemetry.Tags.Test
         {
             ITagContext tagContextWithNullTag = new SimpleTagContext(TAG1, null, TAG2);
             var newTagContext = tagger.ToBuilder(tagContextWithNullTag).Build();
-            Assert.Equal(new List<Tag>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(newTagContext));
+            Assert.Equal(new List<DistributedContextEntry>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(newTagContext));
         }
 
         // [Fact]
@@ -213,17 +213,17 @@ namespace OpenTelemetry.Tags.Test
             ITagContext unknownTagContext = new SimpleTagContext(TAG1, TAG2, TAG3);
             var result = GetResultOfGetCurrentTagContext(unknownTagContext);
             Assert.IsType<TagContext>(result);
-            Assert.Equal(new List<Tag>() { TAG1, TAG2, TAG3 }, TagsTestUtil.TagContextToList(result));
+            Assert.Equal(new List<DistributedContextEntry>() { TAG1, TAG2, TAG3 }, TagsTestUtil.TagContextToList(result));
         }
 
         [Fact]
         public void GetCurrentTagContext_RemoveDuplicatesFromUnknownTagContext()
         {
-            var tag1 = Tag.Create(K1, V1);
-            var tag2 = Tag.Create(K1, V2);
+            var tag1 = new DistributedContextEntry(K1, V1);
+            var tag2 = new DistributedContextEntry(K1, V2);
             ITagContext tagContextWithDuplicateTags = new SimpleTagContext(tag1, tag2);
             var result = GetResultOfGetCurrentTagContext(tagContextWithDuplicateTags);
-            Assert.Equal(new List<Tag>() { tag2 }, TagsTestUtil.TagContextToList(result));
+            Assert.Equal(new List<DistributedContextEntry>() { tag2 }, TagsTestUtil.TagContextToList(result));
         }
 
         [Fact]
@@ -231,7 +231,7 @@ namespace OpenTelemetry.Tags.Test
         {
             ITagContext tagContextWithNullTag = new SimpleTagContext(TAG1, null, TAG2);
             var result = GetResultOfGetCurrentTagContext(tagContextWithNullTag);
-            Assert.Equal(new List<Tag>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(result));
+            Assert.Equal(new List<DistributedContextEntry>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(result));
         }
 
         // [Fact]
@@ -273,17 +273,17 @@ namespace OpenTelemetry.Tags.Test
             ITagContext unknownTagContext = new SimpleTagContext(TAG1, TAG2, TAG3);
             var result = GetResultOfWithTagContext(unknownTagContext);
             Assert.IsType<TagContext>(result);
-            Assert.Equal(new List<Tag>() { TAG1, TAG2, TAG3 }, TagsTestUtil.TagContextToList(result));
+            Assert.Equal(new List<DistributedContextEntry>() { TAG1, TAG2, TAG3 }, TagsTestUtil.TagContextToList(result));
         }
 
         [Fact]
         public void WithTagContext_RemoveDuplicatesFromUnknownTagContext()
         {
-            var tag1 = Tag.Create(K1, V1);
-            var tag2 = Tag.Create(K1, V2);
+            var tag1 = new DistributedContextEntry(K1, V1);
+            var tag2 = new DistributedContextEntry(K1, V2);
             ITagContext tagContextWithDuplicateTags = new SimpleTagContext(tag1, tag2);
             var result = GetResultOfWithTagContext(tagContextWithDuplicateTags);
-            Assert.Equal(new List<Tag>() { tag2 }, TagsTestUtil.TagContextToList(result));
+            Assert.Equal(new List<DistributedContextEntry>() { tag2 }, TagsTestUtil.TagContextToList(result));
         }
 
         [Fact]
@@ -291,7 +291,7 @@ namespace OpenTelemetry.Tags.Test
         {
             ITagContext tagContextWithNullTag = new SimpleTagContext(TAG1, null, TAG2);
             var result = GetResultOfWithTagContext(tagContextWithNullTag);
-            Assert.Equal(new List<Tag>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(result));
+            Assert.Equal(new List<DistributedContextEntry>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(result));
         }
 
         // [Fact]
@@ -333,14 +333,14 @@ namespace OpenTelemetry.Tags.Test
 
         class SimpleTagContext : TagContextBase
         {
-            private readonly List<Tag> tags;
+            private readonly List<DistributedContextEntry> tags;
 
-            public SimpleTagContext(params Tag[] tags)
+            public SimpleTagContext(params DistributedContextEntry[] tags)
             {
-                this.tags = new List<Tag>(tags);
+                this.tags = new List<DistributedContextEntry>(tags);
             }
 
-            public override IEnumerator<Tag> GetEnumerator()
+            public override IEnumerator<DistributedContextEntry> GetEnumerator()
             {
                 return tags.GetEnumerator();
             }
