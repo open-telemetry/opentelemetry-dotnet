@@ -25,7 +25,7 @@ namespace OpenTelemetry.Tags
         /// <summary>
         /// Initializes a new instance of the <see cref="DistributedContextEntry"/> class with the key and value.
         /// </summary>
-        /// <param name="key">Key name for the tag.</param>
+         /// <param name="key">Key name for the entry.</param>
         /// <param name="value">Value associated with the key name.</param>
         public DistributedContextEntry(string key, string value)
             : this(key, value, new EntryMetadata(EntryMetadata.NoPropagation))
