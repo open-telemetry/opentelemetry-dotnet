@@ -66,7 +66,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                         .AddRequestCollector()));
             }
-            
+
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
@@ -105,7 +105,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 ActivityTraceFlags.Recorded));
 
             // Arrange
-            using (var client = this.factory
+            using (var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
@@ -115,10 +115,9 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                                 .SetTextFormat(tf.Object)
                                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                                 .AddRequestCollector()));
-                    }))
-                .CreateClient())
+                    })))
+            using (var client = testFactory.CreateClient())
             {
-
                 // Act
                 var response = await client.GetAsync("/api/values/2");
 
@@ -166,10 +165,10 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             }
 
             // Arrange
-            using (var client = this.factory
+            using (var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
-                .CreateClient())
+                    builder.ConfigureTestServices(ConfigureTestServices)))
+            using (var client = testFactory.CreateClient())
             {
 
                 // Act
@@ -194,7 +193,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         private static void WaitForProcessorInvocations(Mock<SpanProcessor> spanProcessor, int invocationCount)
         {
             // We need to let End callback execute as it is executed AFTER response was returned.
-            // In unit tests environment there may be a lot of parallel unit tests executed, so 
+            // In unit tests environment there may be a lot of parallel unit tests executed, so
             // giving some breezing room for the End callback to complete
             Assert.True(SpinWait.SpinUntil(() =>
                 {
