@@ -30,9 +30,9 @@ namespace OpenTelemetry.Tags
 
         public IDictionary<string, string> Tags { get; }
 
-        public override IEnumerator<Tag> GetEnumerator()
+        public override IEnumerator<DistributedContextEntry> GetEnumerator()
         {
-            var result = this.Tags.Select((kvp) => Tag.Create(kvp.Key, kvp.Value));
+            var result = this.Tags.Select((kvp) => new DistributedContextEntry(kvp.Key, kvp.Value));
             return result.ToList().GetEnumerator();
         }
     }

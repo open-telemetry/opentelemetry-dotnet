@@ -153,7 +153,7 @@ else
             }
         }
 
-        private static void EncodeTag(Tag tag, MemoryStream byteArrayDataOutput)
+        private static void EncodeTag(DistributedContextEntry tag, MemoryStream byteArrayDataOutput)
         {
             byteArrayDataOutput.WriteByte(TagFieldId);
             EncodeString(tag.Key, byteArrayDataOutput);

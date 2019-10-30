@@ -61,7 +61,7 @@ namespace OpenTelemetry.Tags.Test
             try
             {
                 var newTags = tagger.CurrentBuilder.Put(KEY_2, VALUE_2).Build();
-                Assert.Equal(new List<Tag>() { Tag.Create(KEY_1, VALUE_1), Tag.Create(KEY_2, VALUE_2) },
+                Assert.Equal(new List<DistributedContextEntry>() { new DistributedContextEntry(KEY_1, VALUE_1), new DistributedContextEntry(KEY_2, VALUE_2) },
                     TagsTestUtil.TagContextToList(newTags));
                 Assert.Same(scopedTags, tagger.CurrentTagContext);
             }
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Tags.Test
             var scope = tagger.EmptyBuilder.Put(KEY_1, VALUE_1).BuildScoped();
             try
             {
-                Assert.Equal(new List<Tag>() { Tag.Create(KEY_1, VALUE_1) }, TagsTestUtil.TagContextToList(tagger.CurrentTagContext));
+                Assert.Equal(new List<DistributedContextEntry>() { new DistributedContextEntry(KEY_1, VALUE_1) }, TagsTestUtil.TagContextToList(tagger.CurrentTagContext));
             }
             finally
             {
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Tags.Test
                 var scope2 = tagger.CurrentBuilder.Put(KEY_2, VALUE_2).BuildScoped();
                 try
                 {
-                    Assert.Equal(new List<Tag>() { Tag.Create(KEY_1, VALUE_1), Tag.Create(KEY_2, VALUE_2) },
+                    Assert.Equal(new List<DistributedContextEntry>() { new DistributedContextEntry(KEY_1, VALUE_1), new DistributedContextEntry(KEY_2, VALUE_2) },
                         TagsTestUtil.TagContextToList(tagger.CurrentTagContext));
                 }
                 finally

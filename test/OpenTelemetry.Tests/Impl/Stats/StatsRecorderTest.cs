@@ -83,7 +83,7 @@ namespace OpenTelemetry.Stats.Test
                     new List<string>() { KEY });
             viewManager.RegisterView(view);
             var orig = AsyncLocalContext.CurrentTagContext;
-            AsyncLocalContext.CurrentTagContext = new SimpleTagContext(Tag.Create(KEY, VALUE));
+            AsyncLocalContext.CurrentTagContext = new SimpleTagContext(new DistributedContextEntry(KEY, VALUE));
  
             try
             {
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Stats.Test
                 .Put(MEASURE_DOUBLE_NO_VIEW_1, 1.0)
                 .Put(MEASURE_DOUBLE, 2.0)
                 .Put(MEASURE_DOUBLE_NO_VIEW_2, 3.0)
-                .Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
+                .Record(new SimpleTagContext(new DistributedContextEntry(KEY, VALUE)));
 
             IViewData viewData = viewManager.GetView(viewName);
 
@@ -151,8 +151,8 @@ namespace OpenTelemetry.Stats.Test
 
             viewManager.RegisterView(view);
             IMeasureMap statsRecord = statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 1.0);
-            statsRecord.Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
-            statsRecord.Record(new SimpleTagContext(Tag.Create(KEY, VALUE_2)));
+            statsRecord.Record(new SimpleTagContext(new DistributedContextEntry(KEY, VALUE)));
+            statsRecord.Record(new SimpleTagContext(new DistributedContextEntry(KEY, VALUE_2)));
             IViewData viewData = viewManager.GetView(viewName);
 
             // There should be two entries.
@@ -185,7 +185,7 @@ namespace OpenTelemetry.Stats.Test
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.0)
-                .Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
+                .Record(new SimpleTagContext(new DistributedContextEntry(KEY, VALUE)));
             Assert.Equal(CreateEmptyViewData(view), viewManager.GetView(VIEW_NAME));
         }
 
@@ -206,7 +206,7 @@ namespace OpenTelemetry.Stats.Test
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 1.0)
-                .Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
+                .Record(new SimpleTagContext(new DistributedContextEntry(KEY, VALUE)));
             Assert.Equal(CreateEmptyViewData(view), viewManager.GetView(VIEW_NAME));
 
             Stats.State = StatsCollectionState.ENABLED;
@@ -216,7 +216,7 @@ namespace OpenTelemetry.Stats.Test
             statsRecorder
                 .NewMeasureMap()
                 .Put(MEASURE_DOUBLE, 4.0)
-                .Record(new SimpleTagContext(Tag.Create(KEY, VALUE)));
+                .Record(new SimpleTagContext(new DistributedContextEntry(KEY, VALUE)));
             TagValues tv = TagValues.Create(new List<string>() { VALUE });
             StatsTestUtil.AssertAggregationMapEquals(
                 viewManager.GetView(VIEW_NAME).AggregationMap,
@@ -251,14 +251,14 @@ namespace OpenTelemetry.Stats.Test
 
         class SimpleTagContext : TagContextBase
         {
-            private readonly IEnumerable<Tag> tags;
+            private readonly IEnumerable<DistributedContextEntry> tags;
 
-            public SimpleTagContext(params Tag[] tags)
+            public SimpleTagContext(params DistributedContextEntry[] tags)
             {
-                this.tags = new List<Tag>(tags);
+                this.tags = new List<DistributedContextEntry>(tags);
             }
 
-            public override IEnumerator<Tag> GetEnumerator()
+            public override IEnumerator<DistributedContextEntry> GetEnumerator()
             {
                 return tags.GetEnumerator();
             }

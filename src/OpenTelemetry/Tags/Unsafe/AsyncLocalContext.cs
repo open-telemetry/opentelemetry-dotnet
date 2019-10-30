@@ -51,9 +51,9 @@ namespace OpenTelemetry.Tags.Unsafe
 
         internal sealed class EmptyTagContext : TagContextBase
         {
-            public override IEnumerator<Tag> GetEnumerator()
+            public override IEnumerator<DistributedContextEntry> GetEnumerator()
             {
-                return new List<Tag>().GetEnumerator();
+                return new List<DistributedContextEntry>().GetEnumerator();
             }
         }
     }
