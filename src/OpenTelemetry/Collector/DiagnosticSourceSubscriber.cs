@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 
@@ -22,16 +23,26 @@ namespace OpenTelemetry.Collector
     public class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
     {
         private readonly ListenerHandler handler;
+        private readonly Func<DiagnosticListener, bool> diagnosticSourceFilter;
         private readonly Func<string, object, object, bool> filter;
         private long disposed;
         private IDisposable allSourcesSubscription;
-        private IDisposable listenerSubscription;
+        private List<IDisposable> listenerSubscriptions;
 
         public DiagnosticSourceSubscriber(
-            ListenerHandler handler, 
+            ListenerHandler handler,
+            Func<string, object, object, bool> filter) : this(handler, value => handler.SourceName == value.Name, filter)
+        {
+        }
+
+        public DiagnosticSourceSubscriber(
+            ListenerHandler handler,
+            Func<DiagnosticListener, bool> diagnosticSourceFilter,
             Func<string, object, object, bool> filter)
         {
+            this.listenerSubscriptions = new List<IDisposable>();
             this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
+            this.diagnosticSourceFilter = diagnosticSourceFilter;
             this.filter = filter;
         }
 
@@ -45,14 +56,18 @@ namespace OpenTelemetry.Collector
 
         public void OnNext(DiagnosticListener value)
         {
-            if ((Interlocked.Read(ref this.disposed) == 0) && 
-                this.listenerSubscription == null && 
-                this.handler.SourceName == value.Name)
+            if ((Interlocked.Read(ref this.disposed) == 0) &&
+                this.diagnosticSourceFilter(value))
             {
                 var listener = new DiagnosticSourceListener(this.handler);
-                this.listenerSubscription = this.filter == null ?
-                    value.Subscribe(listener) : 
+                var subscription = this.filter == null ?
+                    value.Subscribe(listener) :
                     value.Subscribe(listener, this.filter);
+
+                lock (this.listenerSubscriptions)
+                {
+                    this.listenerSubscriptions.Add(subscription);
+                }
             }
         }
 
@@ -71,8 +86,15 @@ namespace OpenTelemetry.Collector
                 return;
             }
 
-            this.listenerSubscription?.Dispose();
-            this.listenerSubscription = null;
+            lock (this.listenerSubscriptions)
+            {
+                foreach (var listenerSubscription in this.listenerSubscriptions)
+                {
+                    listenerSubscription?.Dispose();
+                }
+
+                this.listenerSubscriptions.Clear();
+            }
 
             this.allSourcesSubscription?.Dispose();
             this.allSourcesSubscription = null;

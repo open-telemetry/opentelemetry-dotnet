@@ -31,7 +31,10 @@ namespace OpenTelemetry.Collector.Dependencies
         /// <param name="tracer">Tracer to record traced with.</param>
         public AzureClientsCollector(ITracer tracer)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new AzureSdkDiagnosticListener("Azure.Clients", tracer), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
+                new AzureSdkDiagnosticListener("Azure", tracer),
+                listener => listener.Name.StartsWith("Azure."),
+                null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
