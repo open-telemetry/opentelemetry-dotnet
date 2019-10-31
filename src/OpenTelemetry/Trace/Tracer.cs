@@ -20,7 +20,6 @@ using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Tags;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 

@@ -16,7 +16,7 @@
 using System;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Tags
+namespace OpenTelemetry.DistributedContext
 {
     internal sealed class NoopTagContextBuilder : TagContextBuilderBase
     {

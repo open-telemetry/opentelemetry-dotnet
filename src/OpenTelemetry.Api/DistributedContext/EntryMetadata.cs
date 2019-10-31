@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Tags
+namespace OpenTelemetry.DistributedContext
 {
     /// <summary>
     /// Metadata associated with the Distributed Context entry.

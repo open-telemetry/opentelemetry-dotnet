@@ -15,8 +15,6 @@
 // </copyright>
 using System;
 using System.Net.Http;
-using OpenTelemetry.Collector.Dependencies;
-using OpenTelemetry.Exporter.Zipkin;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 

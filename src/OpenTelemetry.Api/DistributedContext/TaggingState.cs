@@ -1,4 +1,4 @@
-﻿// <copyright file="TagsTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TaggingState.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,21 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using Xunit;
 
-namespace OpenTelemetry.Tags.Test
+namespace OpenTelemetry.DistributedContext
 {
-    public class TagsTest
+    /// <summary>
+    /// State of tagging API.
+    /// </summary>
+    public enum TaggingState
     {
-        public TagsTest()
-        {
-            Tags.Initialize();
-        }
+        /// <summary>
+        /// Tagging enabled.
+        /// </summary>
+        ENABLED,
 
-        [Fact]
-        public void GetTagger()
-        {
-            Assert.Equal(typeof(Tagger), Tags.Tagger.GetType());
-        }
+        /// <summary>
+        /// Tagging disabled.
+        /// </summary>
+        DISABLED,
     }
 }

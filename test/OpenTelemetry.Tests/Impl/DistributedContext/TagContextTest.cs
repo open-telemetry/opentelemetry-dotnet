@@ -17,7 +17,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 
-namespace OpenTelemetry.Tags.Test
+namespace OpenTelemetry.DistributedContext.Test
 {
     public class TagContextTest
     {

@@ -19,7 +19,7 @@ using System.Linq;
 using OpenTelemetry.Api.Utils;
 using OpenTelemetry.Stats.Aggregations;
 using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Tags;
+using OpenTelemetry.DistributedContext;
 using Xunit;
 
 namespace OpenTelemetry.Stats.Test

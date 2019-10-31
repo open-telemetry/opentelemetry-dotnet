@@ -16,7 +16,7 @@
 using System.Collections.Generic;
 using System.Threading;
 
-namespace OpenTelemetry.Tags.Unsafe
+namespace OpenTelemetry.DistributedContext.Unsafe
 {
     internal static class AsyncLocalContext
     {

@@ -16,7 +16,7 @@
 using System;
 using Xunit;
 
-namespace OpenTelemetry.Tags.Test
+namespace OpenTelemetry.DistributedContext.Test
 {
     public class CurrentTaggingStateTest
     {
