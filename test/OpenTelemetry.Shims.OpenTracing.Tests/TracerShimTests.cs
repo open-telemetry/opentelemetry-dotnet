@@ -18,12 +18,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using global::OpenTracing;
 using global::OpenTracing.Propagation;
 using Moq;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests

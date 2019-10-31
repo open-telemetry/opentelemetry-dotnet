@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace OpenTelemetry.Tags
+namespace OpenTelemetry.DistributedContext
 {
     public sealed class TagContext : TagContextBase
     {

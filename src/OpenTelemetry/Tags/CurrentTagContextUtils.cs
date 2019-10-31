@@ -14,9 +14,9 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.Tags.Unsafe;
+using OpenTelemetry.DistributedContext.Unsafe;
 
-namespace OpenTelemetry.Tags
+namespace OpenTelemetry.DistributedContext
 {
     internal static class CurrentTagContextUtils
     {

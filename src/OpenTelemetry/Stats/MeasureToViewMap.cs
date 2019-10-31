@@ -17,7 +17,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using OpenTelemetry.Tags;
+using OpenTelemetry.DistributedContext;
 
 namespace OpenTelemetry.Stats
 {

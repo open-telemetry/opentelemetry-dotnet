@@ -13,10 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
 
-namespace OpenTelemetry.Tags
+namespace OpenTelemetry.DistributedContext
 {
+    using System;
+
     /// <summary>
     /// Distributed Context entry with the key, value and metadata.
     /// </summary>

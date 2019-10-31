@@ -1,4 +1,4 @@
-﻿// <copyright file="TaggingState.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ITagContext.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,22 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
 
-namespace OpenTelemetry.Tags
+namespace OpenTelemetry.DistributedContext
 {
     /// <summary>
-    /// State of tagging API.
+    /// Collection of tags representing the tags context.
     /// </summary>
-    public enum TaggingState
+    public interface ITagContext : IEnumerable<DistributedContextEntry>
     {
-        /// <summary>
-        /// Tagging enabled.
-        /// </summary>
-        ENABLED,
-
-        /// <summary>
-        /// Tagging disabled.
-        /// </summary>
-        DISABLED,
     }
 }

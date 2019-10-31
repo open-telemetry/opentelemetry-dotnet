@@ -15,7 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
-using OpenTelemetry.Tags;
+using OpenTelemetry.DistributedContext;
 
 namespace OpenTelemetry.Stats
 {

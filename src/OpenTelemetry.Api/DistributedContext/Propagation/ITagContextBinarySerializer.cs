@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Tags.Propagation
+namespace OpenTelemetry.DistributedContext.Propagation
 {
     /// <summary>
     /// Binary serializer and deserializer of tags.

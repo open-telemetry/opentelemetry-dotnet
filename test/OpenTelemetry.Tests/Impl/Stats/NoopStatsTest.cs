@@ -17,7 +17,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Tags;
+using OpenTelemetry.DistributedContext;
 using Xunit;
 
 namespace OpenTelemetry.Stats.Test

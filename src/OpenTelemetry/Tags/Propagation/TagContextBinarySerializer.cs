@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Tags.Propagation
+namespace OpenTelemetry.DistributedContext.Propagation
 {
     internal sealed class TagContextBinarySerializer : TagContextBinarySerializerBase
     {

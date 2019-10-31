@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Stats.Aggregations;
 using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Tags;
+using OpenTelemetry.DistributedContext;
 using Xunit;
 using Xunit.Abstractions;
 

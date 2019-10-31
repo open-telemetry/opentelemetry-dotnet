@@ -20,7 +20,6 @@ using Google.Protobuf.WellKnownTypes;
 using OpenTelemetry.Stats;
 using OpenTelemetry.Stats.Aggregations;
 using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Tags;
 using static Google.Api.Distribution.Types;
 using static Google.Api.MetricDescriptor.Types;
 

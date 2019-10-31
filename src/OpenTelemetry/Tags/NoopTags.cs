@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using OpenTelemetry.Tags.Propagation;
+using OpenTelemetry.DistributedContext.Propagation;
 
-namespace OpenTelemetry.Tags
+namespace OpenTelemetry.DistributedContext
 {
     internal sealed class NoopTags
     {
@@ -23,7 +23,7 @@ namespace OpenTelemetry.Tags
         {
             get
             {
-                return OpenTelemetry.Tags.NoopTagger.Instance;
+                return OpenTelemetry.DistributedContext.NoopTagger.Instance;
             }
         }
 
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Tags
         {
             get
             {
-                return OpenTelemetry.Tags.NoopTagContextBuilder.Instance;
+                return OpenTelemetry.DistributedContext.NoopTagContextBuilder.Instance;
             }
         }
 
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Tags
         {
             get
             {
-                return OpenTelemetry.Tags.NoopTagContext.Instance;
+                return OpenTelemetry.DistributedContext.NoopTagContext.Instance;
             }
         }
 
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Tags
         {
             get
             {
-                return OpenTelemetry.Tags.NoopTagContextBinarySerializer.Instance;
+                return OpenTelemetry.DistributedContext.NoopTagContextBinarySerializer.Instance;
             }
         }
     }

@@ -22,7 +22,7 @@ using System.Text;
 using OpenTelemetry.Internal;
 using Xunit;
 
-namespace OpenTelemetry.Tags.Propagation.Test
+namespace OpenTelemetry.DistributedContext.Propagation.Test
 {
     public class TagContextSerializationTest
     {

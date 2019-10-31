@@ -16,8 +16,6 @@
 
 namespace LoggingTracer.Demo.ConsoleApp
 {
-    using System;
-    using System.Threading;
     using System.Threading.Tasks;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Configuration;

@@ -19,7 +19,7 @@ using System.IO;
 using System.Text;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Tags.Propagation
+namespace OpenTelemetry.DistributedContext.Propagation
 {
     internal static class SerializationUtils
     {

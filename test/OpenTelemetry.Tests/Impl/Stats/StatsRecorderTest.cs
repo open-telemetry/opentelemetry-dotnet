@@ -18,8 +18,8 @@ using System.Linq;
 using System.Collections.Generic;
 using OpenTelemetry.Stats.Aggregations;
 using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Tags;
-using OpenTelemetry.Tags.Unsafe;
+using OpenTelemetry.DistributedContext;
+using OpenTelemetry.DistributedContext.Unsafe;
 using Xunit;
 
 namespace OpenTelemetry.Stats.Test

@@ -14,8 +14,8 @@
 // limitations under the License.
 // </copyright>
 using System;
+using OpenTelemetry.DistributedContext;
 using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.Tags;
 
 namespace OpenTelemetry.Stats
 {

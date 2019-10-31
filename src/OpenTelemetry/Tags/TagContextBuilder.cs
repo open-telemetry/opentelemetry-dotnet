@@ -16,7 +16,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace OpenTelemetry.Tags
+namespace OpenTelemetry.DistributedContext
 {
     internal sealed class TagContextBuilder : TagContextBuilderBase
     {
