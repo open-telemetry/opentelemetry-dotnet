@@ -14,7 +14,7 @@ Approvers ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telem
 
 *Find more about the approver role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).*
 
-Maintainers ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers))::
+Maintainers ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
 - [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Microsoft
 - [Austin Parker](https://github.com/austinlparker), LightStep
@@ -49,7 +49,7 @@ Myget feeds:
 | Package                    | MyGet (CI)                                                                     | NuGet (releases)                                                               |
 | -------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | OpenTelemetry              | [![MyGet Nightly][OpenTelemetry-myget-image]][OpenTelemetry-myget-url]         | [![NuGet Release][OpenTelemetry-nuget-image]][OpenTelemetry-nuget-url]         |
-| OpenTelemetry.Abstractions | [![MyGet Nightly][OpenTelemetry-abs-myget-image]][OpenTelemetry-abs-myget-url] | [![NuGet Release][OpenTelemetry-abs-nuget-image]][OpenTelemetry-abs-nuget-url] |
+| OpenTelemetry.Api | [![MyGet Nightly][OpenTelemetry-abs-myget-image]][OpenTelemetry-abs-myget-url] | [![NuGet Release][OpenTelemetry-abs-nuget-image]][OpenTelemetry-abs-nuget-url] |
 
 ### Data Collectors
 
@@ -112,19 +112,17 @@ parentSpan.End();
 #### Implicit parent propagation and assignment
 
 ```csharp
-var parentSpan = tracer.StartSpan("parent span");
 
-// calling WithSpan puts parentSpan into the ambient context
-// that flows in async calls.   When child is created, it
-// implicitly becomes child of current span
-using (tracer.WithSpan(parentSpan))
+// calling StartActiveSpan starts a span and puts parentSpan into the ambient context
+// that flows in async calls.   When child is created, it implicitly becomes child of current span
+using (tracer.StartActiveSpan("parent span", out _))
 {
     var childSpan = tracer.StartSpan("child span");
 
     childSpan.End();
 }
 
-// parent span is ended when WithSpan result is disposed
+// parent span is ended when StartActiveSpan result is disposed
 ```
 
 ### Span with attributes
@@ -161,14 +159,12 @@ span.End();
 Events are timed text (with optional attributes) annotations on the span. Events can be added to current span (or any running span).
 
 ```csharp
-var span = tracer.StartSpan("incoming HTTP request", SpanKind.Server);
-
-using (tracer.WithSpan(span))
+using (tracer.StartActiveSpan("incoming HTTP request", SpanKind.Server, out var span))
 {
     span.AddEvent("routes resolved");
 }
 
-// span is ended when WithSpan result is disposed
+// span is ended when StartActiveSpan result is disposed
 ```
 
 ### Context propagation out of process
@@ -218,14 +214,17 @@ void StartActivity()
 
     // extract other things from Activity and set them on span (tags to attributes)
     // ...
-
-    tracer.WithSpan(span); // we drop scope here as we cannot propagate it all the way to stop event
 }
 
 void StopActivity()
 {
     var span = tracer.CurrentSpan;
-    span.End();
+	
+	span.End();
+    if (span is IDisposable disposableSpan)
+    {
+        disposableSpan.Dispose();
+    }
 }
 ```
 
@@ -591,8 +590,8 @@ deprecate it for 18 months before removing it, if possible.
 [dotnet-gitter-url]:https://gitter.im/open-telemetry/opentelemetry-dotnet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 [OpenTelemetry-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.svg
 [OpenTelemetry-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry
-[OpenTelemetry-abs-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Abstractions.svg
-[OpenTelemetry-abs-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Abstractions
+[OpenTelemetry-abs-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Api.svg
+[OpenTelemetry-abs-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Api
 [OpenTelemetry-exporter-zipkin-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Zipkin.svg
 [OpenTelemetry-exporter-zipkin-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Zipkin
 [OpenTelemetry-exporter-jaeger-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Jaeger.svg
@@ -613,8 +612,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-nuget-url]:https://www.nuget.org/packages/OpenTelemetry
 [OpenTelemetry-hosting-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Hosting.svg
 [OpenTelemetry-hosting-nuget-url]:https://www.nuget.org/packages/OpenTelemetry.Hosting
-[OpenTelemetry-abs-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Abstractions.svg
-[OpenTelemetry-abs-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Abstractions
+[OpenTelemetry-abs-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Api.svg
+[OpenTelemetry-abs-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Api
 [OpenTelemetry-exporter-zipkin-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Zipkin.svg
 [OpenTelemetry-exporter-zipkin-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.Zipkin
 [OpenTelemetry-exporter-jaeger-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Jaeger.svg

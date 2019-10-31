@@ -24,8 +24,8 @@ namespace OpenTelemetry.Tags.Test
 {
     public class NoopTagsTest
     {
-        private static readonly TagKey KEY = TagKey.Create("key");
-        private static readonly TagValue VALUE = TagValue.Create("value");
+        private static readonly string KEY = "key";
+        private static readonly string VALUE = "value";
 
         private static readonly ITagContext TAG_CONTEXT = new TestTagContext();
 
@@ -127,9 +127,9 @@ namespace OpenTelemetry.Tags.Test
 
         class TestTagContext : ITagContext
         {
-            public IEnumerator<Tag> GetEnumerator()
+            public IEnumerator<DistributedContextEntry> GetEnumerator()
             {
-                var list = new List<Tag>() { Tag.Create(KEY, VALUE) };
+                var list = new List<DistributedContextEntry>() { new DistributedContextEntry(KEY, VALUE) };
                 return list.GetEnumerator();
             }
 

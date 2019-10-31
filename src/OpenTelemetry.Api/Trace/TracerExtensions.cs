@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
@@ -54,7 +55,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpan(this ITracer tracer, string operationName)
         {
-            return tracer.StartSpan(operationName, SpanKind.Internal, null);
+            return tracer.StartSpan(operationName, null, SpanKind.Internal, null);
         }
 
         /// <summary>
@@ -66,7 +67,20 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         public static ISpan StartSpan(this ITracer tracer, string operationName, SpanKind kind)
         {
-            return tracer.StartSpan(operationName, kind, null);
+            return tracer.StartSpan(operationName, null, kind, null);
+        }
+
+        /// <summary>
+        /// Starts span. If there is active current span, it becomes a parent for returned span.
+        /// </summary>
+        /// <param name="tracer">Tracer instance.</param>
+        /// <param name="operationName">Span name.</param>
+        /// <param name="kind">Kind.</param>
+        /// <param name="options">Advanced span creation options.</param>
+        /// <returns>Span instance.</returns>
+        public static ISpan StartSpan(this ITracer tracer, string operationName, SpanKind kind, SpanCreationOptions options)
+        {
+            return tracer.StartSpan(operationName, null, kind, options);
         }
 
         /// <summary>
@@ -120,25 +134,25 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Starts span from auto-collected <see cref="Activity"/>.
+        /// Starts active span from auto-collected <see cref="Activity"/>.
         /// </summary>
         /// <param name="tracer">Tracer instance.</param>
         /// <param name="operationName">Span name.</param>
         /// <param name="activity">Activity instance to create span from.</param>
-        /// <returns>Span instance.</returns>
+        /// <returns>Span scope instance.</returns>
         public static ISpan StartSpanFromActivity(this ITracer tracer, string operationName, Activity activity)
         {
             return tracer.StartSpanFromActivity(operationName, activity, SpanKind.Internal, null);
         }
 
         /// <summary>
-        /// Starts span from auto-collected <see cref="Activity"/>.
+        /// Starts active span from auto-collected <see cref="Activity"/>.
         /// </summary>
         /// <param name="tracer">Tracer instance.</param>
         /// <param name="operationName">Span name.</param>
         /// <param name="activity">Activity instance to create span from.</param>
         /// <param name="kind">Kind.</param>
-        /// <returns>Span instance.</returns>
+        /// <returns>Span scope instance.</returns>
         public static ISpan StartSpanFromActivity(this ITracer tracer, string operationName, Activity activity, SpanKind kind)
         {
             return tracer.StartSpanFromActivity(operationName, activity, kind, null);

@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Tags
 {
@@ -25,7 +26,7 @@ namespace OpenTelemetry.Tags
         {
         }
 
-        public override ITagContextBuilder Put(TagKey key, TagValue value)
+        public override ITagContextBuilder Put(string key, string value)
         {
             if (key == null)
             {
@@ -40,7 +41,7 @@ namespace OpenTelemetry.Tags
             return this;
         }
 
-        public override ITagContextBuilder Remove(TagKey key)
+        public override ITagContextBuilder Remove(string key)
         {
             if (key == null)
             {

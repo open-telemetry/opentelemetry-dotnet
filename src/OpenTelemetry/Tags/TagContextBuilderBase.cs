@@ -23,8 +23,8 @@ namespace OpenTelemetry.Tags
 
         public abstract IDisposable BuildScoped();
 
-        public abstract ITagContextBuilder Put(TagKey key, TagValue value);
+        public abstract ITagContextBuilder Put(string key, string value);
 
-        public abstract ITagContextBuilder Remove(TagKey key);
+        public abstract ITagContextBuilder Remove(string key);
     }
 }

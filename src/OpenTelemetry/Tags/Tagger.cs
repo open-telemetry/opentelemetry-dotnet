@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Tags
 {

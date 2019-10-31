@@ -188,14 +188,15 @@ namespace OpenTelemetry.Shims.OpenTracing
                     var currentActivity = System.Diagnostics.Activity.Current;
                     if (this.rootOperationNamesForActivityBasedAutoCollectors.Contains(currentActivity.OperationName))
                     {
-                        span = this.tracer.StartSpanFromActivity(this.spanName, currentActivity, this.spanKind, this.links);
+                        this.tracer.StartSpanFromActivity(this.spanName, currentActivity, this.spanKind, this.links);
+                        span = this.tracer.CurrentSpan;
                     }
                 }
             }
             
             if (span == null)
             {
-                span = this.tracer.StartSpan(this.spanName, this.spanKind, options);
+                span = this.tracer.StartSpan(this.spanName, null, this.spanKind, options);
             }
 
             foreach (var kvp in this.attributes)

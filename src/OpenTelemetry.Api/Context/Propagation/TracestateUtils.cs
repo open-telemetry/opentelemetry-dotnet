@@ -20,8 +20,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-#if ABSTRACTIONS
-namespace OpenTelemetry.Abstractions.Context.Propagation
+#if API
+namespace OpenTelemetry.Api.Context.Propagation
 #else
 namespace OpenTelemetry.Context.Propagation
 #endif

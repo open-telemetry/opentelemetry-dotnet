@@ -35,7 +35,7 @@ namespace OpenTelemetry.Stats.Test
                 "view description",
                 MEASURE,
                 Mean.Create(),
-                new List<TagKey>() { TagKey.Create("my key") });
+                new List<string>() { "my key" });
 
         [Fact]
         public void TestRegisterAndGetView()

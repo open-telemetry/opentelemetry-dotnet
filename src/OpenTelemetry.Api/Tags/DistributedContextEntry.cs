@@ -1,4 +1,4 @@
-﻿// <copyright file="Tag.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DistributedContextEntry.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,46 +18,52 @@ using System;
 namespace OpenTelemetry.Tags
 {
     /// <summary>
-    /// Tag with the key and value.
+    /// Distributed Context entry with the key, value and metadata.
     /// </summary>
-    public sealed class Tag
+    public sealed class DistributedContextEntry
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Tag"/> class with the key and value.
+        /// Initializes a new instance of the <see cref="DistributedContextEntry"/> class with the key and value.
         /// </summary>
-        /// <param name="key">Key name for the tag.</param>
+         /// <param name="key">Key name for the entry.</param>
         /// <param name="value">Value associated with the key name.</param>
-        internal Tag(TagKey key, TagValue value)
+        public DistributedContextEntry(string key, string value)
+            : this(key, value, new EntryMetadata(EntryMetadata.NoPropagation))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DistributedContextEntry"/> class with the key and value.
+        /// </summary>
+        /// <param name="key">Key name for the entry.</param>
+        /// <param name="value">Value associated with the key name.</param>
+        /// <param name="metadata">Entry metadata.</param>
+        public DistributedContextEntry(string key, string value, in EntryMetadata metadata)
         {
             this.Key = key ?? throw new ArgumentNullException(nameof(key));
             this.Value = value ?? throw new ArgumentNullException(nameof(value));
+            this.Metadata = metadata;
         }
 
         /// <summary>
         /// Gets the tag key.
         /// </summary>
-        public TagKey Key { get; }
+        public string Key { get; }
 
         /// <summary>
         /// Gets the tag value.
         /// </summary>
-        public TagValue Value { get; }
+        public string Value { get; }
 
         /// <summary>
-        /// Creates a new <see cref="Tag"/> from the given key and value.
+        /// Gets the metadata associated with this entry.
         /// </summary>
-        /// <param name="key">The tag's key.</param>
-        /// <param name="value">The tag's value.</param>
-        /// <returns><see cref="Tag"/>.</returns>
-        public static Tag Create(TagKey key, TagValue value)
-        {
-            return new Tag(key, value);
-        }
+        public EntryMetadata Metadata { get; }
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            return nameof(Tag)
+            return nameof(DistributedContextEntry)
                 + "{"
                 + nameof(this.Key) + "=" + this.Key + ", "
                 + nameof(this.Value) + "=" + this.Value
@@ -72,7 +78,7 @@ namespace OpenTelemetry.Tags
                 return true;
             }
 
-            if (o is Tag that)
+            if (o is DistributedContextEntry that)
             {
                 return this.Key.Equals(that.Key)
                      && this.Value.Equals(that.Value);

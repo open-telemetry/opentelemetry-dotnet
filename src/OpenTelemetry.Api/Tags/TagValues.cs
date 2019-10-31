@@ -22,7 +22,7 @@ namespace OpenTelemetry.Tags
     /// </summary>
     public sealed class TagValues
     {
-        private TagValues(IReadOnlyList<TagValue> values)
+        private TagValues(IReadOnlyList<string> values)
         {
             this.Values = values;
         }
@@ -30,14 +30,14 @@ namespace OpenTelemetry.Tags
         /// <summary>
         /// Gets the collection of tag values.
         /// </summary>
-        public IReadOnlyList<TagValue> Values { get; }
+        public IReadOnlyList<string> Values { get; }
 
         /// <summary>
         /// Create tag values out of list of tags.
         /// </summary>
         /// <param name="values">Values to create tag values from.</param>
         /// <returns>Resulting tag values collection.</returns>
-        public static TagValues Create(IReadOnlyList<TagValue> values)
+        public static TagValues Create(IReadOnlyList<string> values)
         {
             return new TagValues(values);
         }

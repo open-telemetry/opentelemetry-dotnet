@@ -22,7 +22,7 @@ namespace OpenTelemetry.Stats
 {
     internal abstract class MutableViewData
     {
-        internal static readonly TagValue UnknownTagValue = null;
+        internal static readonly string UnknownTagValue = null;
 
         private const long MillisPerSecond = 1000L;
         private const long NanosPerMilli = 1000 * 1000;
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Stats
                 boxedBucketCounts);
         };
 
-        internal static IDictionary<TagKey, TagValue> GetTagMap(ITagContext ctx)
+        internal static IDictionary<string, string> GetTagMap(ITagContext ctx)
         {
             if (ctx is TagContext)
             {
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Stats
             }
             else
             {
-                IDictionary<TagKey, TagValue> tags = new Dictionary<TagKey, TagValue>();
+                IDictionary<string, string> tags = new Dictionary<string, string>();
                 foreach (var tag in ctx)
                 {
                     tags.Add(tag.Key, tag.Value);
@@ -85,9 +85,9 @@ namespace OpenTelemetry.Stats
             }
         }
 
-        internal static IReadOnlyList<TagValue> GetTagValues(IDictionary<TagKey, TagValue> tags, IReadOnlyList<TagKey> columns)
+        internal static IReadOnlyList<string> GetTagValues(IDictionary<string, string> tags, IReadOnlyList<string> columns)
         {
-            var tagValues = new List<TagValue>(columns.Count);
+            var tagValues = new List<string>(columns.Count);
 
             // Record all the measures in a "Greedy" way.
             // Every view aggregates every measure. This is similar to doing a GROUPBY view’s keys.

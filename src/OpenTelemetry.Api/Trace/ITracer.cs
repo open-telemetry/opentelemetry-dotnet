@@ -42,11 +42,12 @@ namespace OpenTelemetry.Trace
         ITextFormat TextFormat { get; }
 
         /// <summary>
-        /// Associates the span with the current context.
+        /// Activates the span on the current context.
         /// </summary>
         /// <param name="span">Span to associate with the current context.</param>
+        /// <param name="endSpanOnDispose">Flag indicating if span should end when scope is disposed.</param>
         /// <returns>Disposable object to control span to current context association.</returns>
-        IDisposable WithSpan(ISpan span);
+        IDisposable WithSpan(ISpan span, bool endSpanOnDispose);
 
         // TODO: add sampling hints
 
@@ -60,15 +61,6 @@ namespace OpenTelemetry.Trace
         ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options);
 
         /// <summary>
-        /// Starts span. If there is active current span, it becomes a parent for returned span.
-        /// </summary>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="kind">Kind.</param>
-        /// <param name="options">Advanced span creation options.</param>
-        /// <returns>Span instance.</returns>
-        ISpan StartSpan(string operationName, SpanKind kind, SpanCreationOptions options);
-
-        /// <summary>
         /// Starts span.
         /// </summary>
         /// <param name="operationName">Span name.</param>
@@ -78,7 +70,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Span instance.</returns>
         ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options);
 
-        /// <summary>
+       /// <summary>
         /// Starts span.
         /// </summary>
         /// <param name="operationName">Span name.</param>
@@ -95,7 +87,7 @@ namespace OpenTelemetry.Trace
         /// <param name="activity">Activity instance to create span from.</param>
         /// <param name="kind">Kind.</param>
         /// <param name="links">Links collection.</param>
-        /// <returns>Span instance.</returns>
+        /// <returns>Span scope instance.</returns>
         ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links);
     }
 }

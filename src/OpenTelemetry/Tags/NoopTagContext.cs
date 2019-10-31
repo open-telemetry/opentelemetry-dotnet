@@ -21,9 +21,9 @@ namespace OpenTelemetry.Tags
     {
         internal static readonly ITagContext Instance = new NoopTagContext();
 
-        public override IEnumerator<Tag> GetEnumerator()
+        public override IEnumerator<DistributedContextEntry> GetEnumerator()
         {
-            return new List<Tag>().GetEnumerator();
+            return new List<DistributedContextEntry>().GetEnumerator();
         }
     }
 }

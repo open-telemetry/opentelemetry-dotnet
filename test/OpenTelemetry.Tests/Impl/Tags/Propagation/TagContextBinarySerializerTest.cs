@@ -28,7 +28,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
         //      @Override
         //  public Iterator<Tag> getIterator()
         //      {
-        //          return ImmutableSet.< Tag > of(Tag.create(TagKey.create("key"), TagValue.create("value")))
+        //          return ImmutableSet.< Tag > of(Tag.create(string.create("key"), string.create("value")))
         //              .iterator();
         //      }
         //  };
@@ -79,9 +79,9 @@ namespace OpenTelemetry.Tags.Propagation.Test
 
             }
 
-            public override IEnumerator<Tag> GetEnumerator()
+            public override IEnumerator<DistributedContextEntry> GetEnumerator()
             {
-                return new List<Tag>() { Tag.Create(TagKey.Create("key"), TagValue.Create("value")) }.GetEnumerator();
+                return new List<DistributedContextEntry>() { new DistributedContextEntry("key", "value") }.GetEnumerator();
             }
         }
     }

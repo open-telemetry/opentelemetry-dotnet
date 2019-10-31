@@ -29,9 +29,9 @@ namespace OpenTelemetry.Stats.Test
         private static readonly IMeasure Measure =
             MeasureDouble.Create("measure", "measure description", "1");
 
-        private static readonly TagKey Foo = TagKey.Create("foo");
-        private static readonly TagKey Bar = TagKey.Create("bar");
-        private static readonly List<TagKey> keys = new List<TagKey>() { Foo, Bar };
+        private static readonly string Foo = "foo";
+        private static readonly string Bar = "bar";
+        private static readonly List<string> keys = new List<string>() { Foo, Bar };
         private static readonly IMean Mean = Aggregations.Mean.Create();
         private static readonly TimeSpan Minute = TimeSpan.FromMinutes(1);
         private static readonly TimeSpan TwoMinutes = TimeSpan.FromMinutes(2);
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Stats.Test
                 Description,
                 Measure,
                 Mean,
-                new List<TagKey>() { TagKey.Create("duplicate"), TagKey.Create("duplicate") }));
+                new List<string>() { "duplicate", "duplicate" }));
         }
 
         [Fact]

@@ -41,8 +41,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             traceId.CopyTo(bytes);
 
-            this.High = BitConverter.ToInt64(bytes, 0);
-            this.Low = BitConverter.ToInt64(bytes, 8);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+                this.High = BitConverter.ToInt64(bytes, 8);
+                this.Low = BitConverter.ToInt64(bytes, 0);
+            }
+            else
+            {
+                this.High = BitConverter.ToInt64(bytes, 0);
+                this.Low = BitConverter.ToInt64(bytes, 8);
+            }
         }
 
         public long High { get; set; }

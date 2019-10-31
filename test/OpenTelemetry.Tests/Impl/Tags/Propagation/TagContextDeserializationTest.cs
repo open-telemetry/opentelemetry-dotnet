@@ -130,40 +130,12 @@ namespace OpenTelemetry.Tags.Propagation.Test
         }
 
         [Fact]
-        public void TestDeserializeInvalidTagKey()
-        {
-            var output = new MemoryStream();
-            output.WriteByte(SerializationUtils.VersionId);
-
-            // Encode an invalid tag key and a valid tag value:
-            EncodeTagToOutPut("\u0002key", "value", output);
-            var bytes = output.ToArray();
-
-
-            Assert.Throws<TagContextDeserializationException>(() => serializer.FromByteArray(bytes));
-        }
-
-        [Fact]
-        public void TestDeserializeInvalidTagValue()
-        {
-            var output = new MemoryStream();
-            output.WriteByte(SerializationUtils.VersionId);
-
-            // Encode a valid tag key and an invalid tag value:
-            EncodeTagToOutPut("my key", "val\u0003", output);
-            var bytes = output.ToArray();
-
-
-            Assert.Throws<TagContextDeserializationException>(() => serializer.FromByteArray(bytes));
-        }
-
-        [Fact]
         public void TestDeserializeOneTag()
         {
             var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
             EncodeTagToOutPut("Key", "Value", output);
-            var expected = tagger.EmptyBuilder.Put(TagKey.Create("Key"), TagValue.Create("Value")).Build();
+            var expected = tagger.EmptyBuilder.Put("Key", "Value").Build();
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
 
@@ -177,8 +149,8 @@ namespace OpenTelemetry.Tags.Propagation.Test
             var expected =
                     tagger
                     .EmptyBuilder
-                    .Put(TagKey.Create("Key1"), TagValue.Create("Value1"))
-                    .Put(TagKey.Create("Key2"), TagValue.Create("Value2"))
+                    .Put("Key1", "Value1")
+                    .Put("Key2", "Value2")
                     .Build();
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
@@ -191,7 +163,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key1", "Value2", output);
             var expected =
-                tagger.EmptyBuilder.Put(TagKey.Create("Key1"), TagValue.Create("Value2")).Build();
+                tagger.EmptyBuilder.Put("Key1", "Value2").Build();
 
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
@@ -209,9 +181,9 @@ namespace OpenTelemetry.Tags.Propagation.Test
             var expected =
                 tagger
                     .EmptyBuilder
-                    .Put(TagKey.Create("Key1"), TagValue.Create("Value4"))
-                    .Put(TagKey.Create("Key2"), TagValue.Create("Value5"))
-                    .Put(TagKey.Create("Key3"), TagValue.Create("Value3"))
+                    .Put("Key1", "Value4")
+                    .Put("Key2", "Value5")
+                    .Put("Key3", "Value3")
                     .Build();
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
@@ -224,7 +196,7 @@ namespace OpenTelemetry.Tags.Propagation.Test
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key1", "Value1", output);
             var expected =
-                tagger.EmptyBuilder.Put(TagKey.Create("Key1"), TagValue.Create("Value1")).Build();
+                tagger.EmptyBuilder.Put("Key1", "Value1").Build();
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
 
@@ -241,9 +213,9 @@ namespace OpenTelemetry.Tags.Propagation.Test
             var expected =
                 tagger
                     .EmptyBuilder
-                    .Put(TagKey.Create("Key1"), TagValue.Create("Value1"))
-                    .Put(TagKey.Create("Key2"), TagValue.Create("Value2"))
-                    .Put(TagKey.Create("Key3"), TagValue.Create("Value3"))
+                    .Put("Key1", "Value1")
+                    .Put("Key2", "Value2")
+                    .Put("Key3", "Value3")
                     .Build();
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
@@ -266,8 +238,8 @@ namespace OpenTelemetry.Tags.Propagation.Test
             var expected =
                 tagger
                     .EmptyBuilder
-                    .Put(TagKey.Create("Key1"), TagValue.Create("Value1"))
-                    .Put(TagKey.Create("Key2"), TagValue.Create("Value2"))
+                    .Put("Key1", "Value1")
+                    .Put("Key2", "Value2")
                     .Build();
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }

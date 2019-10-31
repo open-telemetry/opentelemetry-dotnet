@@ -23,7 +23,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
     /// <summary>
     /// A mock ISpan implementation for unit tests. Sometimes an actual Mock is just easier to deal with than objects created with Moq.
     /// </summary>
-    internal class SpanMock : Trace.ISpan
+    internal class SpanMock : Trace.ISpan, IDisposable
     {
         private static readonly ReadOnlyDictionary<string, object> EmptyAttributes = new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
 
@@ -114,6 +114,10 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         private void SetAttribute<TValue>(string key, TValue value)
         {
             this.SetAttribute(new KeyValuePair<string, object>(key, value));
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

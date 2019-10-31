@@ -1,4 +1,4 @@
-﻿// <copyright file="IView.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="EntryMetadata.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,39 +13,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections.Generic;
-using OpenTelemetry.Tags;
 
-namespace OpenTelemetry.Stats
+namespace OpenTelemetry.Tags
 {
     /// <summary>
-    /// Stats recording view.
+    /// Metadata associated with the Distributed Context entry.
     /// </summary>
-    public interface IView
+    public readonly struct EntryMetadata
     {
         /// <summary>
-        /// Gets the name of the view.
+        /// TTL indicating in-process only propagation of an entry.
         /// </summary>
-        IViewName Name { get; }
+        public const int NoPropagation = 0;
 
         /// <summary>
-        /// Gets the description of the view.
+        /// TTL indicating unlimited propagation of an entry.
         /// </summary>
-        string Description { get; }
+        public const int UnlimitedPropagation = -1;
 
         /// <summary>
-        /// Gets the measure this view record values for.
+        /// Initializes a new instance of the <see cref="EntryMetadata"/> struct.
         /// </summary>
-        IMeasure Measure { get; }
+        /// <param name="entryTTL">TTL for the distributed context entry.</param>
+        public EntryMetadata(int entryTTL)
+        {
+            this.EntryTTL = EntryMetadata.NoPropagation;
+        }
 
         /// <summary>
-        /// Gets the aggregation is used by this view.
+        /// Gets the EntryTTL is either NO_PROPAGATION (0) or UNLIMITED_PROPAGATION (-1).
         /// </summary>
-        IAggregation Aggregation { get; }
-
-        /// <summary>
-        /// Gets the columns (dimensions) recorded by this view.
-        /// </summary>
-        IReadOnlyList<string> Columns { get; }
+        public int EntryTTL { get; }
     }
 }
