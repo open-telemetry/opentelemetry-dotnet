@@ -21,7 +21,7 @@ namespace OpenTelemetry.DistributedContext.Test
 {
     public class TagContextTest
     {
-        private readonly ITagger tagger = new Tagger(new CurrentTaggingState());
+        private readonly ITagger tagger = new Tagger();
 
         private static readonly string K1 = "k1";
         private static readonly string K2 = "k2";

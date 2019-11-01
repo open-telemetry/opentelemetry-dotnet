@@ -21,7 +21,6 @@ namespace OpenTelemetry.DistributedContext.Test
 {
     public class TaggerTest
     {
-        private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
 
         private static readonly string K1 = "k1";
@@ -38,8 +37,7 @@ namespace OpenTelemetry.DistributedContext.Test
 
         public TaggerTest()
         {
-            state = new CurrentTaggingState();
-            tagger = new Tagger(state);
+            tagger = new Tagger();
         }
 
         [Fact]
@@ -49,14 +47,6 @@ namespace OpenTelemetry.DistributedContext.Test
             Assert.IsType<TagContext>(tagger.Empty);
         }
 
-        // [Fact]
-        // public void Empty_TaggingDisabled()
-        // {
-        //    tagsComponent.State =TaggingState.DISABLED);
-        //    Assert.Empty(TagsTestUtil.TagContextToList(tagger.Empty)).isEmpty();
-        //    Assert.IsType<TagContext>(tagger.Empty);
-        // }
-
         [Fact]
         public void EmptyBuilder()
         {
@@ -64,24 +54,6 @@ namespace OpenTelemetry.DistributedContext.Test
             Assert.IsType<TagContextBuilder>(builder);
             Assert.Empty(TagsTestUtil.TagContextToList(builder.Build()));
         }
-
-        // [Fact]
-        // public void EmptyBuilder_TaggingDisabled()
-        // {
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    Assert.Equal(tagger.EmptyBuilder).isSameAs(NoopTagContextBuilder.Instance);
-        // }
-
-        // [Fact]
-        // public void EmptyBuilder_TaggingReenabled()
-        // {
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    Assert.Equal(tagger.EmptyBuilder).isSameAs(NoopTagContextBuilder.Instance);
-        //    tagsComponent.setState(TaggingState.ENABLED);
-        //    TagContextBuilder factory = tagger.EmptyBuilder;
-        //    Assert.Equal(factory).isInstanceOf(TagContextBuilder);
-        //    Assert.Equal(TagsTestUtil.TagContextToList(factory.put(K1, V1).Build())).containsExactly(Tag.Create(K1, V1));
-        // }
 
         [Fact]
         public void CurrentBuilder()
@@ -117,26 +89,6 @@ namespace OpenTelemetry.DistributedContext.Test
             var result = GetResultOfCurrentBuilder(tagContextWithNullTag);
             Assert.Equal(new List<DistributedContextEntry>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(result.Build()));
         }
-
-        // [Fact]
-        // public void CurrentBuilder_TaggingDisabled()
-        // {
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    Assert.Equal(getResultOfCurrentBuilder(new SimpleTagContext(TAG1)))
-        //        .isSameAs(NoopTagContextBuilder.Instance);
-        // }
-
-        // [Fact]
-        // public void currentBuilder_TaggingReenabled()
-        // {
-        //    TagContext tags = new SimpleTagContext(TAG1);
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    Assert.Equal(getResultOfCurrentBuilder(tags)).isSameAs(NoopTagContextBuilder.Instance);
-        //    tagsComponent.setState(TaggingState.ENABLED);
-        //    TagContextBuilder factory = getResultOfCurrentBuilder(tags);
-        //    Assert.Equal(factory).isInstanceOf(TagContextBuilder);
-        //    Assert.Equal(TagsTestUtil.TagContextToList(factory.Build())).containsExactly(TAG1);
-        // }
 
         private ITagContextBuilder GetResultOfCurrentBuilder(ITagContext tagsToSet)
         {
@@ -179,26 +131,6 @@ namespace OpenTelemetry.DistributedContext.Test
             Assert.Equal(new List<DistributedContextEntry>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(newTagContext));
         }
 
-        // [Fact]
-        // public void ToBuilder_TaggingDisabled()
-        // {
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    Assert.Equal(tagger.ToBuilder(new SimpleTagContext(TAG1)))
-        //        .isSameAs(NoopTagContextBuilder.Instance);
-        // }
-
-        // [Fact]
-        // public void ToBuilder_TaggingReenabled()
-        // {
-        //    TagContext tags = new SimpleTagContext(TAG1);
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    Assert.Equal(tagger.ToBuilder(tags)).isSameAs(NoopTagContextBuilder.Instance);
-        //    tagsComponent.setState(TaggingState.ENABLED);
-        //    TagContextBuilder factory = tagger.ToBuilder(tags);
-        //    Assert.Equal(factory).isInstanceOf(TagContextBuilder);
-        //    Assert.Equal(TagsTestUtil.TagContextToList(factory.Build())).containsExactly(TAG1);
-        // }
-
         [Fact]
         public void GetCurrentTagContext_DefaultIsEmptyTagContext()
         {
@@ -233,24 +165,6 @@ namespace OpenTelemetry.DistributedContext.Test
             var result = GetResultOfGetCurrentTagContext(tagContextWithNullTag);
             Assert.Equal(new List<DistributedContextEntry>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(result));
         }
-
-        // [Fact]
-        // public void GetCurrentTagContext_TaggingDisabled()
-        // {
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    Assert.Equal(TagsTestUtil.TagContextToList(getResultOfGetCurrentTagContext(new SimpleTagContext(TAG1))))
-        //        .isEmpty();
-        // }
-
-        // [Fact]
-        // public void getCurrentTagContext_TaggingReenabled()
-        // {
-        //    TagContext tags = new SimpleTagContext(TAG1);
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    Assert.Equal(TagsTestUtil.TagContextToList(getResultOfGetCurrentTagContext(tags))).isEmpty();
-        //    tagsComponent.setState(TaggingState.ENABLED);
-        //    Assert.Equal(TagsTestUtil.TagContextToList(getResultOfGetCurrentTagContext(tags))).containsExactly(TAG1);
-        // }
 
         private ITagContext GetResultOfGetCurrentTagContext(ITagContext tagsToSet)
         {
@@ -293,30 +207,6 @@ namespace OpenTelemetry.DistributedContext.Test
             var result = GetResultOfWithTagContext(tagContextWithNullTag);
             Assert.Equal(new List<DistributedContextEntry>() { TAG1, TAG2 }, TagsTestUtil.TagContextToList(result));
         }
-
-        // [Fact]
-        // public void WithTagContext_ReturnsNoopScopeWhenTaggingIsDisabled()
-        // {
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    Assert.Equal(tagger.withTagContext(new SimpleTagContext(TAG1))).isSameAs(NoopScope.getInstance());
-        // }
-
-        // [Fact]
-        // public void withTagContext_TaggingDisabled()
-        // {
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    Assert.Equal(TagsTestUtil.TagContextToList(getResultOfWithTagContext(new SimpleTagContext(TAG1)))).isEmpty();
-        // }
-
-        // [Fact]
-        // public void WithTagContext_TaggingReenabled()
-        // {
-        //    ITagContext tags = new SimpleTagContext(TAG1);
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    Assert.Equal(TagsTestUtil.TagContextToList(getResultOfWithTagContext(tags))).isEmpty();
-        //    tagsComponent.setState(TaggingState.ENABLED);
-        //    Assert.Equal(TagsTestUtil.TagContextToList(getResultOfWithTagContext(tags))).containsExactly(TAG1);
-        // }
 
         private ITagContext GetResultOfWithTagContext(ITagContext tagsToSet)
         {
