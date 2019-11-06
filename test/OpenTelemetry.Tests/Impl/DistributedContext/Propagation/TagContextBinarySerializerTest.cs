@@ -19,59 +19,15 @@ namespace OpenTelemetry.DistributedContext.Propagation.Test
 {
     public class TagContextBinarySerializerTest
     {
-        private readonly CurrentTaggingState state;
         private readonly ITagContextBinarySerializer serializer;
 
         private readonly ITagContext tagContext = new TestTagContext();
-        // new TagContext()
-        //  {
-        //      @Override
-        //  public Iterator<Tag> getIterator()
-        //      {
-        //          return ImmutableSet.< Tag > of(Tag.create(string.create("key"), string.create("value")))
-        //              .iterator();
-        //      }
-        //  };
 
         public TagContextBinarySerializerTest()
         {
-            state = new CurrentTaggingState();
-            serializer = new TagContextBinarySerializer(state);
+            serializer = new TagContextBinarySerializer();
         }
-        // [Fact]
-        // public void ToByteArray_TaggingDisabled()
-        // {
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    assertThat(serializer.toByteArray(tagContext)).isEmpty();
-        // }
 
-        // [Fact]
-        // public void ToByteArray_TaggingReenabled()
-        // {
-        //    byte[] serialized = serializer.ToByteArray(tagContext);
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    assertThat(serializer.toByteArray(tagContext)).isEmpty();
-        //    tagsComponent.setState(TaggingState.ENABLED);
-        //    assertThat(serializer.toByteArray(tagContext)).isEqualTo(serialized);
-        // }
-
-        // [Fact]
-        // public void FromByteArray_TaggingDisabled()
-        // {
-        //    byte[] serialized = serializer.toByteArray(tagContext);
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    assertThat(TagsTestUtil.tagContextToList(serializer.fromByteArray(serialized))).isEmpty();
-        // }
-
-        // [Fact]
-        // public void FromByteArray_TaggingReenabled()
-        // {
-        //    byte[] serialized = serializer.toByteArray(tagContext);
-        //    tagsComponent.setState(TaggingState.DISABLED);
-        //    assertThat(TagsTestUtil.tagContextToList(serializer.fromByteArray(serialized))).isEmpty();
-        //    tagsComponent.setState(TaggingState.ENABLED);
-        //    assertThat(serializer.fromByteArray(serialized)).isEqualTo(tagContext);
-        // }
         class TestTagContext : TagContextBase
         {
             public TestTagContext()

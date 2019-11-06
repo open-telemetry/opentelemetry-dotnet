@@ -20,19 +20,6 @@ namespace OpenTelemetry.DistributedContext.Test
     public class TagsDefaultTest
     {
         [Fact(Skip = "Fix statics usage")]
-        public void TestState()
-        {
-            // Test that setState ignores its input.
-            // Tags.setState(TaggingState.ENABLED);
-            Assert.Equal(TaggingState.DISABLED, Tags.State);
-
-            // Test that setState cannot be called after getState.
-            // thrown.expect(IllegalStateException);
-            // thrown.expectMessage("State was already read, cannot set state.");
-            // Tags.setState(TaggingState.ENABLED);
-        }
-
-        [Fact(Skip = "Fix statics usage")]
         public void DefaultTagger()
         {
             Assert.Equal(NoopTags.NoopTagger, Tags.Tagger);

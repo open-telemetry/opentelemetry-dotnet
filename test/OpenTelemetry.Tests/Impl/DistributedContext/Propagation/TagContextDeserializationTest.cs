@@ -23,15 +23,13 @@ namespace OpenTelemetry.DistributedContext.Propagation.Test
 {
     public class TagContextDeserializationTest
     {
-        private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
         private readonly ITagContextBinarySerializer serializer;
 
         public TagContextDeserializationTest()
         {
-            state = new CurrentTaggingState();
-            tagger = new Tagger(state);
-            serializer = new TagContextBinarySerializer(state);
+            tagger = new Tagger();
+            serializer = new TagContextBinarySerializer();
         }
 
         [Fact]

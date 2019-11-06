@@ -41,15 +41,13 @@ namespace OpenTelemetry.DistributedContext.Propagation.Test
         private static readonly DistributedContextEntry T3 = new DistributedContextEntry(K3, V3);
         private static readonly DistributedContextEntry T4 = new DistributedContextEntry(K4, V4);
 
-        private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
         private readonly ITagContextBinarySerializer serializer;
 
         public TagContextSerializationTest()
         {
-            state = new CurrentTaggingState();
-            tagger = new Tagger(state);
-            serializer = new TagContextBinarySerializer(state);
+            tagger = new Tagger();
+            serializer = new TagContextBinarySerializer();
         }
 
         [Fact]

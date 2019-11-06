@@ -26,7 +26,7 @@ namespace OpenTelemetry.DistributedContext.Test
         private static readonly string VALUE_1 = "value 1";
         private static readonly string VALUE_2 = "value 2";
 
-        private readonly ITagger tagger = new Tagger(new CurrentTaggingState());
+        private readonly ITagger tagger = new Tagger();
 
         [Fact]
         public void DefaultTagContext()
