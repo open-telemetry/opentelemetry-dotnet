@@ -56,6 +56,22 @@ namespace OpenTelemetry.Metrics
         public abstract Guage<double> CreateDoubleGauge(string name, bool monotonic = false);
 
         /// <summary>
+        /// Creates a measure for long with given name.
+        /// </summary>
+        /// <param name="name">The name of the measure.</param>
+        /// <param name="absolute">indicates if only positive values are expected.</param>
+        /// <returns>The measure instance.</returns>
+        public abstract Measure<long> CreateLongMeasure(string name, bool absolute = true);
+
+        /// <summary>
+        /// Creates a measure for long with given name.
+        /// </summary>
+        /// <param name="name">The name of the measure.</param>
+        /// <param name="absolute">indicates if only positive values are expected.</param>
+        /// <returns>The measure instance.</returns>
+        public abstract Measure<double> CreateDoubleMeasure(string name, bool absolute = true);
+
+        /// <summary>
         /// Constructs or retrieves the <see cref="LabelSet"/> from the given label key-value pairs.
         /// </summary>
         /// <param name="labels">Label key value pairs.</param>
