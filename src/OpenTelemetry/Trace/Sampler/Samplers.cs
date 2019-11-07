@@ -30,5 +30,10 @@ namespace OpenTelemetry.Trace.Sampler
         /// Gets the sampler than never samples.
         /// </summary>
         public static ISampler NeverSample { get; } = new Internal.NeverSampleSampler();
+
+        /// <summary>
+        /// Gets the sampler than never samples.
+        /// </summary>
+        public static ISampler AlwaysParentSampler { get; } = new Internal.AlwaysParentSampler();
     }
 }

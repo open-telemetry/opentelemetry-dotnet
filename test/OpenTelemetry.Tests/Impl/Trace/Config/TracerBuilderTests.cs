@@ -62,7 +62,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
 
             var sampler = ProbabilitySampler.Create(0.1);
             var exporter = new TestExporter(_ => { });
-            var options = new TracerConfiguration(sampler, 1, 1, 1);
+            var options = new TracerConfiguration(1, 1, 1);
             var binaryFormat = new BinaryFormat();
             var textFormat = new TraceContextFormat();
 
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal("semver:" + typeof(TestCollector).Assembly.GetName().Version, collectorFactory.Version);
 
             Assert.NotNull(collectorFactory.Factory);
-            collectorFactory.Factory(new Tracer(new SimpleSpanProcessor(exporter), options, binaryFormat, textFormat,
+            collectorFactory.Factory(new Tracer(new SimpleSpanProcessor(exporter), Samplers.AlwaysSample, options, binaryFormat, textFormat,
                 Resource.Empty));
 
             Assert.True(collectorFactoryCalled);
