@@ -1,4 +1,4 @@
-﻿// <copyright file="IGuage.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ICounterHandle.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,25 +14,24 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Gauge instrument.
+    /// Handle to the counter with the defined <see cref="LabelSet"/>.
     /// </summary>
-    public interface IGuage
+    /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
+    public struct CounterHandle<T>
+        where T : struct
     {
         /// <summary>
-        /// Sets the value of the guague.
+        /// Adds or Increments the value of the counter handle.
         /// </summary>
-        /// <param name="value">value by which the counter should be incremented.</param>
-        /// <param name="labelset">The labelset associated with this value.</param>
-        void Set(int value, LabelSet labelset);
-
-        /// <summary>
-        /// Gets the handle with given labelset.
-        /// </summary>
-        /// <param name="labelset">The labelset from which handle should be constructed.</param>
-        /// <returns>The <see cref="IGuageHandle" /> with label.</returns>
-        IGuageHandle GetHandle(LabelSet labelset);
+        /// <param name="context">the associated span context.</param>
+        /// <param name="value">value by which the counter handle should be incremented.</param>
+        public void Add(in SpanContext context, T value)
+        {
+        }
     }
 }
