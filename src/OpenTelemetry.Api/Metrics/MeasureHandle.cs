@@ -1,4 +1,4 @@
-﻿// <copyright file="ICounterHandle.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MeasureHandle.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,27 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Handle to the counter with the defined <see cref="LabelSet"/>.
+    /// Handle to the measure with the defined <see cref="LabelSet"/>.
     /// </summary>
-    public interface ICounterHandle
+    /// <typeparam name="T">The type of the Measure. Only long and double are supported now.</typeparam>
+    public struct MeasureHandle<T>
+        where T : struct
     {
         /// <summary>
-        /// Adds or Increments the value of the counter handle.
+        /// Records a measure.
         /// </summary>
-        /// <param name="value">value by which the counter handle should be incremented.</param>
-        void Add(int value);
+        /// <summary>
+        /// Sets the value of the guague handle.
+        /// </summary>
+        /// <param name="context">the associated span context.</param>
+        /// <param name="value">value to record.</param>
+        public void Record(in SpanContext context, T value)
+        {
+        }
     }
 }
