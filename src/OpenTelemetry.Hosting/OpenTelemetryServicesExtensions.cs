@@ -17,9 +17,11 @@
 namespace Microsoft.Extensions.DependencyInjection
 {
     using System;
+    using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.DependencyInjection.Extensions;
     using Microsoft.Extensions.Hosting;
     using OpenTelemetry.Hosting.Implementation;
+    using OpenTelemetry.Implementation;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Configuration;
 
@@ -110,6 +112,9 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.AddSingleton<TracerFactoryBase>(s => createFactory(s));
+
+            // Using startup filter to instantiate TracerFactory
+            services.AddSingleton<IStartupFilter, OpenTelemetryStartupFilter>();
             AddOpenTelemetryCore(services);
 
             return services;
