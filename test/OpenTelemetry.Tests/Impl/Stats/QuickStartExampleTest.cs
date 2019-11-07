@@ -38,8 +38,7 @@ namespace OpenTelemetry.Stats.Test
             var viewManager = Stats.ViewManager;
             var statsRecorder = Stats.StatsRecorder;
 
-            var state = new CurrentTaggingState();
-            var tagger = new Tagger(state);
+            var tagger = new Tagger();
 
             string FRONTEND_KEY = "my.org/keys/frontend";
             string FRONTEND_OS_KEY = "my.org/keys/frontend/os";
@@ -132,8 +131,7 @@ namespace OpenTelemetry.Stats.Test
             var viewManager = Stats.ViewManager;
             var statsRecorder = Stats.StatsRecorder;
 
-            var state = new CurrentTaggingState();
-            var tagger = new Tagger(state);
+            var tagger = new Tagger();
 
             string FRONTEND_KEY = "my.org/keys/frontend";
             string FRONTEND_OS_KEY = "my.org/keys/frontend/os";

@@ -20,11 +20,8 @@ namespace OpenTelemetry.DistributedContext
 {
     public sealed class Tagger : TaggerBase
     {
-        private readonly CurrentTaggingState state;
-
-        internal Tagger(CurrentTaggingState state)
+        internal Tagger()
         {
-            this.state = state;
         }
 
         public override ITagContext Empty
@@ -36,9 +33,7 @@ namespace OpenTelemetry.DistributedContext
         {
             get
             {
-                return this.state.Internal == TaggingState.DISABLED
-                    ? TagContext.Empty
-                    : ToTagContext(CurrentTagContextUtils.CurrentTagContext);
+                return ToTagContext(CurrentTagContextUtils.CurrentTagContext);
             }
         }
 
@@ -46,9 +41,7 @@ namespace OpenTelemetry.DistributedContext
         {
             get
             {
-                return this.state.Internal == TaggingState.DISABLED
-                    ? NoopTagContextBuilder.Instance
-                    : new TagContextBuilder();
+                return new TagContextBuilder();
             }
         }
 
@@ -56,24 +49,18 @@ namespace OpenTelemetry.DistributedContext
         {
             get
             {
-                return this.state.Internal == TaggingState.DISABLED
-                    ? NoopTagContextBuilder.Instance
-                    : this.ToBuilder(CurrentTagContextUtils.CurrentTagContext);
+                return this.ToBuilder(CurrentTagContextUtils.CurrentTagContext);
             }
         }
 
         public override ITagContextBuilder ToBuilder(ITagContext tags)
         {
-            return this.state.Internal == TaggingState.DISABLED
-                ? NoopTagContextBuilder.Instance
-                : ToTagContextBuilder(tags);
+            return ToTagContextBuilder(tags);
         }
 
         public override IDisposable WithTagContext(ITagContext tags)
         {
-            return this.state.Internal == TaggingState.DISABLED
-                ? NoopDisposable.Instance
-                : CurrentTagContextUtils.WithTagContext(ToTagContext(tags));
+            return CurrentTagContextUtils.WithTagContext(ToTagContext(tags));
         }
 
         private static ITagContext ToTagContext(ITagContext tags)
@@ -82,7 +69,7 @@ namespace OpenTelemetry.DistributedContext
             {
                 return tags;
             }
-else
+            else
             {
                 var builder = new TagContextBuilder();
                 foreach (var tag in tags)
@@ -104,7 +91,7 @@ else
             {
                 return new TagContextBuilder(((TagContext)tags).Tags);
             }
-else
+            else
             {
                 var builder = new TagContextBuilder();
                 foreach (var tag in tags)

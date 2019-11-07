@@ -30,15 +30,13 @@ namespace OpenTelemetry.DistributedContext.Propagation.Test
         private static readonly string V2 = "v2";
         private static readonly string V3 = "v3";
 
-        private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
         private readonly ITagContextBinarySerializer serializer;
 
         public TagContextRoundtripTest()
         {
-            state = new CurrentTaggingState();
-            tagger = new Tagger(state);
-            serializer = new TagContextBinarySerializer(state);
+            tagger = new Tagger();
+            serializer = new TagContextBinarySerializer();
         }
 
         [Fact]
