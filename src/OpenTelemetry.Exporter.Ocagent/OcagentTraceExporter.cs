@@ -34,6 +34,9 @@ namespace OpenTelemetry.Exporter.Ocagent
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
+    /// <summary>
+    /// The trace exporter to otelcol.
+    /// </summary>
     // TODO support async exporting and results
     public class OcagentTraceExporter : SpanExporter, IDisposable
     {
@@ -46,6 +49,14 @@ namespace OpenTelemetry.Exporter.Ocagent
         private CancellationTokenSource cts;
         private Task runTask;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OcagentTraceExporter"/> class.
+        /// </summary>
+        /// <param name="agentEndpoint">The agent endpoint.</param>
+        /// <param name="hostName">Name of the host.</param>
+        /// <param name="serviceName">Name of the service.</param>
+        /// <param name="credentials">The credentials.</param>
+        /// <param name="spanBatchSize">Size of the span batch.</param>
         public OcagentTraceExporter(string agentEndpoint, string hostName, string serviceName, ChannelCredentials credentials = null, uint spanBatchSize = MaxSpanBatchSize)
         {
             this.channel = new Channel(agentEndpoint, credentials ?? ChannelCredentials.Insecure);
@@ -75,6 +86,7 @@ namespace OpenTelemetry.Exporter.Ocagent
             this.Start();
         }
 
+        /// <inheritdoc/>
         public override async Task<ExportResult> ExportAsync(IEnumerable<Span> spanDataList, CancellationToken cancellationToken)
         {
             await Task.Run(
@@ -94,6 +106,7 @@ namespace OpenTelemetry.Exporter.Ocagent
             return ExportResult.Success;
         }
 
+        /// <inheritdoc/>
         public override async Task ShutdownAsync(CancellationToken cancellationToken)
         {
             // TODO support cancellation based on cancellationToken
@@ -110,6 +123,7 @@ namespace OpenTelemetry.Exporter.Ocagent
             }
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             this.ShutdownAsync(CancellationToken.None).Wait();

@@ -122,9 +122,9 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             }
         }
 
-        private static Proto.Trace.V1.Span.Types.TimeEvents FromITimeEvents(IEnumerable<IEvent> events)
+        private static Proto.Trace.V1.Span.Types.TimeEvents FromITimeEvents(IEnumerable<Event> events)
         {
-            var eventArray = events as IEvent[] ?? events.ToArray();
+            var eventArray = events as Event[] ?? events.ToArray();
             var timedEvents = new Proto.Trace.V1.Span.Types.TimeEvents
             {
                 TimeEvent = { eventArray.Select(FromITimeEvent), },
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             return timedEvents;
         }
 
-        private static Proto.Trace.V1.Span.Types.Link FromILink(ILink source)
+        private static Proto.Trace.V1.Span.Types.Link FromILink(Link source)
         {
             // protobuf doesn't understand Span<T> yet: https://github.com/protocolbuffers/protobuf/issues/3431
             Span<byte> traceIdBytes = stackalloc byte[16];
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             return result;
         }
 
-        private static Proto.Trace.V1.Span.Types.TimeEvent FromITimeEvent(IEvent source)
+        private static Proto.Trace.V1.Span.Types.TimeEvent FromITimeEvent(Event source)
         {
             return new Proto.Trace.V1.Span.Types.TimeEvent
             {
