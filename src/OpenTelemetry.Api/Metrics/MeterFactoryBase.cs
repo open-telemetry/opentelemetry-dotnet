@@ -20,6 +20,7 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public class MeterFactoryBase
     {
+        private static NoOpMeter noOpMeter = new NoOpMeter();
         private static MeterFactoryBase defaultFactory = new MeterFactoryBase();
 
         /// <summary>
@@ -33,11 +34,12 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Returns an IMeter for a given name and version.
         /// </summary>
-        /// <param name="componentName">Name of the instrumentation library or component this Metric is meant for.</param>
-        /// <returns>Meter with the given component name.</returns>
-        public virtual IMeter GetMeter(string componentName)
+        /// <param name="name">Name of the instrumentation library.</param>
+        /// <param name="version">Version of the instrumentation library (optional).</param>
+        /// <returns>Meter with the given component name and version.</returns>
+        public virtual Meter GetMeter(string name, string version = null)
         {
-            return defaultFactory.GetMeter(componentName);
+            return noOpMeter;
         }
     }
 }
