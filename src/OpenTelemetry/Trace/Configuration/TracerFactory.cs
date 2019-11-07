@@ -43,7 +43,6 @@ namespace OpenTelemetry.Trace.Configuration
         {
             this.sampler = builder.Sampler ?? Samplers.AlwaysSample;
 
-            // TODO separate sampler from options
             this.configurationOptions =
                 builder.TracerConfigurationOptions ?? new TracerConfiguration();
 
