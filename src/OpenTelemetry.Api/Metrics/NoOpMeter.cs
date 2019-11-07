@@ -35,6 +35,11 @@ namespace OpenTelemetry.Metrics
             throw new System.NotImplementedException();
         }
 
+        public override Measure<double> CreateDoubleMeasure(string name, bool absolute = true)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public override Counter<long> CreateLongCounter(string name, bool monotonic = true)
         {
             // return no op
@@ -44,6 +49,11 @@ namespace OpenTelemetry.Metrics
         public override Guage<long> CreateLongGauge(string name, bool monotonic = false)
         {
             // return no op
+            throw new System.NotImplementedException();
+        }
+
+        public override Measure<long> CreateLongMeasure(string name, bool absolute = true)
+        {
             throw new System.NotImplementedException();
         }
 
