@@ -36,6 +36,7 @@ namespace OpenTelemetry.Trace
     {
         private static readonly ConditionalWeakTable<Activity, Span> ActivitySpanTable = new ConditionalWeakTable<Activity, Span>();
 
+        private readonly ISampler sampler;
         private readonly TracerConfiguration tracerConfiguration;
         private readonly SpanProcessor spanProcessor;
         private readonly object lck = new object();
@@ -58,6 +59,7 @@ namespace OpenTelemetry.Trace
             bool createdFromActivity,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
+            ISampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -77,6 +79,7 @@ namespace OpenTelemetry.Trace
                 this.startTimestamp = PreciseTimestamp.GetUtcNow();
             }
 
+            this.sampler = sampler;
             this.tracerConfiguration = tracerConfiguration;
             this.spanProcessor = spanProcessor;
             this.Kind = spanKind;
@@ -87,11 +90,10 @@ namespace OpenTelemetry.Trace
             this.IsRecording = MakeSamplingDecision(
                 parentSpanContext,
                 name,
-                null,
                 links, // we'll enumerate again, but double enumeration over small collection is cheaper than allocation
                 this.Activity.TraceId,
                 this.Activity.SpanId,
-                this.tracerConfiguration);
+                this.sampler);
 
             this.Activity.ActivityTraceFlags =
                 this.IsRecording
@@ -383,6 +385,7 @@ namespace OpenTelemetry.Trace
             ISpan parentSpan,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
+            ISampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -396,6 +399,7 @@ namespace OpenTelemetry.Trace
                     false,
                     spanKind,
                     spanCreationOptions,
+                    sampler,
                     tracerConfiguration,
                     spanProcessor,
                     libraryResource);
@@ -411,6 +415,7 @@ namespace OpenTelemetry.Trace
                     false,
                     spanKind,
                     spanCreationOptions,
+                    sampler,
                     tracerConfiguration,
                     spanProcessor,
                     libraryResource);
@@ -426,6 +431,7 @@ namespace OpenTelemetry.Trace
                 false,
                 spanKind,
                 spanCreationOptions,
+                sampler,
                 tracerConfiguration,
                 spanProcessor,
                 libraryResource);
@@ -436,6 +442,7 @@ namespace OpenTelemetry.Trace
             SpanContext parentContext,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
+            ISampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -447,6 +454,7 @@ namespace OpenTelemetry.Trace
                 false,
                 spanKind,
                 spanCreationOptions,
+                sampler,
                 tracerConfiguration,
                 spanProcessor,
                 libraryResource);
@@ -456,6 +464,7 @@ namespace OpenTelemetry.Trace
             string name,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
+            ISampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -467,6 +476,7 @@ namespace OpenTelemetry.Trace
                 false,
                 spanKind,
                 spanCreationOptions,
+                sampler,
                 tracerConfiguration,
                 spanProcessor,
                 libraryResource);
@@ -477,6 +487,7 @@ namespace OpenTelemetry.Trace
             Activity activity,
             SpanKind spanKind,
             IEnumerable<Link> links,
+            ISampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -488,6 +499,7 @@ namespace OpenTelemetry.Trace
                 true,
                 spanKind,
                 null,
+                sampler,
                 tracerConfiguration,
                 spanProcessor,
                 libraryResource)
@@ -523,45 +535,12 @@ namespace OpenTelemetry.Trace
         private static bool MakeSamplingDecision(
             SpanContext parent,
             string name,
-            ISampler sampler,
             IEnumerable<Link> parentLinks,
             ActivityTraceId traceId,
             ActivitySpanId spanId,
-            TracerConfiguration tracerConfiguration)
+            ISampler sampler)
         {
-            // If users set a specific sampler in the SpanBuilder, use it.
-            if (sampler != null)
-            {
-                return sampler.ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
-            }
-
-            // Use the default sampler if this is a root Span or this is an entry point Span (has remote
-            // parent).
-            if (parent == null || !parent.IsValid)
-            {
-                return tracerConfiguration
-                    .Sampler
-                    .ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
-            }
-
-            // Parent is always different than null because otherwise we use the default sampler.
-            return (parent.TraceOptions & ActivityTraceFlags.Recorded) != 0 || IsAnyParentLinkSampled(parentLinks);
-        }
-
-        private static bool IsAnyParentLinkSampled(IEnumerable<Link> parentLinks)
-        {
-            if (parentLinks != null)
-            {
-                foreach (var parentLink in parentLinks)
-                {
-                    if ((parentLink.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return sampler.ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
         }
 
         private static ActivityAndTracestate FromCurrentParentActivity(string spanName, Activity current)

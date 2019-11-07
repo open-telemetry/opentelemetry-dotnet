@@ -52,14 +52,14 @@ namespace OpenTelemetry.Trace.Test
         public void BadConstructorArgumentsThrow()
         {
             var noopProc = new SimpleSpanProcessor(new TestExporter(null));
-            Assert.Throws<ArgumentNullException>(() => new Tracer(null, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(null, Samplers.AlwaysSample, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, null, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, Samplers.AlwaysSample, null, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), null, new TraceContextFormat(), Resource.Empty));
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), new BinaryFormat(), null, Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, Samplers.AlwaysSample, new TracerConfiguration(), null, new TraceContextFormat(), Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, Samplers.AlwaysSample, new TracerConfiguration(), new BinaryFormat(), null, Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), null));
+            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, Samplers.AlwaysSample, new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), null));
         }
 
         [Fact]
@@ -159,10 +159,11 @@ namespace OpenTelemetry.Trace.Test
         public void DroppingAndAddingAttributes()
         {
             var maxNumberOfAttributes = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
+            var traceConfig = new TracerConfiguration(maxNumberOfAttributes, 128, 32);
             var tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
-                    .SetTracerOptions(traceConfig))
+                    .SetTracerOptions(traceConfig)
+                    .SetSampler(Samplers.AlwaysSample))
                 .GetTracer(null);
 
             var span = (Span)tracer.StartRootSpan(SpanName);
@@ -210,10 +211,11 @@ namespace OpenTelemetry.Trace.Test
         public async Task DroppingEvents()
         {
             var maxNumberOfEvents = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, maxNumberOfEvents, 32);
+            var traceConfig = new TracerConfiguration(32, maxNumberOfEvents, 32);
             var tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
-                    .SetTracerOptions(traceConfig))
+                    .SetTracerOptions(traceConfig)
+                    .SetSampler(Samplers.AlwaysSample))
                 .GetTracer(null);
 
             var span = (Span)tracer.StartRootSpan(SpanName);
@@ -248,10 +250,11 @@ namespace OpenTelemetry.Trace.Test
                 ActivityTraceFlags.None);
 
             var maxNumberOfLinks = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, 128, maxNumberOfLinks);
+            var traceConfig = new TracerConfiguration(32, 128, maxNumberOfLinks);
             var tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
-                    .SetTracerOptions(traceConfig))
+                    .SetTracerOptions(traceConfig)
+                    .SetSampler(Samplers.AlwaysSample))
                 .GetTracer(null);
 
             var overflowedLinks = new List<Link>();
@@ -289,10 +292,11 @@ namespace OpenTelemetry.Trace.Test
                 ActivityTraceFlags.None);
 
             var maxNumberOfLinks = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, 32, 128, maxNumberOfLinks);
+            var traceConfig = new TracerConfiguration(32, 128, maxNumberOfLinks);
             var tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
-                    .SetTracerOptions(traceConfig))
+                    .SetTracerOptions(traceConfig)
+                    .SetSampler(Samplers.AlwaysSample))
                 .GetTracer(null);
 
             var overflowedLinks = new List<Link>();
@@ -327,10 +331,11 @@ namespace OpenTelemetry.Trace.Test
         public void DroppingAttributes()
         {
             var maxNumberOfAttributes = 8;
-            var traceConfig = new TracerConfiguration(Samplers.AlwaysSample, maxNumberOfAttributes, 128, 32);
+            var traceConfig = new TracerConfiguration(maxNumberOfAttributes, 128, 32);
             var tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(_ => this.spanProcessor))
-                    .SetTracerOptions(traceConfig))
+                    .SetTracerOptions(traceConfig)
+                    .SetSampler(Samplers.AlwaysSample))
                 .GetTracer(null);
 
             var span = (Span)tracer.StartRootSpan(SpanName);

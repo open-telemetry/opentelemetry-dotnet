@@ -43,9 +43,8 @@ namespace OpenTelemetry.Trace.Configuration
         {
             this.sampler = builder.Sampler ?? Samplers.AlwaysSample;
 
-            // TODO separate sampler from options
             this.configurationOptions =
-                builder.TracerConfigurationOptions ?? new TracerConfiguration(this.sampler);
+                builder.TracerConfigurationOptions ?? new TracerConfiguration();
 
             if (builder.ProcessingPipelines == null || !builder.ProcessingPipelines.Any())
             {
@@ -77,6 +76,7 @@ namespace OpenTelemetry.Trace.Configuration
 
             this.defaultTracer = new Tracer(
                 this.spanProcessor,
+                this.sampler,
                 this.configurationOptions,
                 this.binaryFormat,
                 this.textFormat,
@@ -124,6 +124,7 @@ namespace OpenTelemetry.Trace.Configuration
                 {
                     tracer = this.defaultTracer = new Tracer(
                         this.spanProcessor,
+                        this.sampler,
                         this.configurationOptions,
                         this.binaryFormat,
                         this.textFormat,

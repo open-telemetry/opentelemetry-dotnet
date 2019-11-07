@@ -28,16 +28,11 @@ namespace OpenTelemetry.Trace.Configuration
         private const int DefaultSpanMaxNumLinks = 32;
 
         public TracerConfiguration()
-            : this(Samplers.AlwaysSample, DefaultSpanMaxNumAttributes, DefaultSpanMaxNumEvents, DefaultSpanMaxNumLinks)
+            : this(DefaultSpanMaxNumAttributes, DefaultSpanMaxNumEvents, DefaultSpanMaxNumLinks)
         {
         }
 
-        public TracerConfiguration(ISampler sampler)
-            : this(sampler, DefaultSpanMaxNumAttributes, DefaultSpanMaxNumEvents, DefaultSpanMaxNumLinks)
-        {
-        }
-
-        public TracerConfiguration(ISampler sampler, int maxNumberOfAttributes, int maxNumberOfEvents, int maxNumberOfLinks)
+        public TracerConfiguration(int maxNumberOfAttributes, int maxNumberOfEvents, int maxNumberOfLinks)
         {
             if (maxNumberOfAttributes <= 0)
             {
@@ -54,16 +49,10 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentOutOfRangeException(nameof(maxNumberOfLinks));
             }
 
-            this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             this.MaxNumberOfAttributes = maxNumberOfAttributes;
             this.MaxNumberOfEvents = maxNumberOfEvents;
             this.MaxNumberOfLinks = maxNumberOfLinks;
         }
-
-        /// <summary>
-        /// Gets the sampler.
-        /// </summary>
-        public ISampler Sampler { get; }
 
         /// <summary>
         /// Gets the maximum number of attributes on span.

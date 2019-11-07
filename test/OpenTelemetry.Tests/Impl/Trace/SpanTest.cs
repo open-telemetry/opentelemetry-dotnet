@@ -100,30 +100,6 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void StartSpanFrom_NotRecorded_ParentSpan()
-        {
-            var tracer = tracerFactory.GetTracer(null);
-
-            var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-            var parentSpan = (Span)tracer.StartSpan(SpanName, grandParentContext);
-
-            var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartSpan(SpanName, parentSpan);
-
-            Assert.True(span.Context.IsValid);
-            Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
-            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
-            Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
-            Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
-            Assert.Empty(span.Context.Tracestate);
-
-            Assert.False(span.IsRecording);
-            Assert.Equal(SpanKind.Internal, span.Kind);
-            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
-            Assert.Empty(span.Links);
-        }
-
-        [Fact]
         public void StartSpanFrom_Recorded_ParentSpan_Kind()
         {
             var tracer = tracerFactory.GetTracer(null);
@@ -359,45 +335,6 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void StartSpanFrom_NotRecorded_ParentContext()
-        {
-            var tracer = tracerFactory.GetTracer(null);
-
-            var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-
-            var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartSpan(SpanName, parentContext);
-
-            Assert.True(span.Context.IsValid);
-            Assert.Equal(parentContext.TraceId, span.Context.TraceId);
-            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
-            Assert.Equal(parentContext.SpanId, span.ParentSpanId);
-            Assert.Equal(parentContext.TraceOptions, span.Context.TraceOptions);
-            Assert.Empty(span.Context.Tracestate);
-
-            Assert.False(span.IsRecording);
-            Assert.Equal(SpanKind.Internal, span.Kind);
-            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
-            Assert.Empty(span.Links);
-        }
-
-        [Fact]
-        public void StartSpanFrom_Recorded_ParentContext_Kind()
-        {
-            var tracer = tracerFactory.GetTracer(null);
-
-            var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-
-            var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartSpan(SpanName, parentContext, SpanKind.Client);
-
-            Assert.True(span.IsRecording);
-            Assert.Equal(SpanKind.Client, span.Kind);
-            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
-            Assert.Empty(span.Links);
-        }
-
-        [Fact]
         public void StartSpanFrom_Recorded_ParentContext_Kind_Timestamp()
         {
             var tracer = tracerFactory.GetTracer(null);
@@ -616,61 +553,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.Empty(span.Links);
             
             parentActivity.Stop();
-        }
-
-        [Fact]
-        public void StartSpanFrom_NotRecorded_ImplicitParentActivity()
-        {
-            var tracer = tracerFactory.GetTracer(null);
-
-            var parentActivity = new Activity("foo").SetIdFormat(ActivityIdFormat.W3C).Start();
-            parentActivity.TraceStateString = "k1=v1,k2=v2";
-            parentActivity.ActivityTraceFlags = ActivityTraceFlags.None;
-
-            var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartSpan(SpanName);
-
-            Assert.True(span.Context.IsValid);
-            Assert.Equal(parentActivity.TraceId, span.Context.TraceId);
-            Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
-            Assert.Equal(parentActivity.SpanId, span.ParentSpanId);
-            Assert.Equal(parentActivity.ActivityTraceFlags, span.Context.TraceOptions);
-            Assert.Equal(2, span.Context.Tracestate.Count());
-            Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k1" && pair.Value == "v1");
-            Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k2" && pair.Value == "v2");
-
-            Assert.False(span.IsRecording);
-            Assert.Equal(SpanKind.Internal, span.Kind);
-            AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
-            Assert.Empty(span.Links);
-
-            parentActivity.Stop();
-        }
-
-        [Fact]
-        public void StartSpanFrom_NotRecorded_ImplicitParentSpan()
-        {
-            var tracer = tracerFactory.GetTracer(null);
-            var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-            using (tracer.WithSpan(tracer.StartSpan(SpanName, grandParentContext)))
-            {
-                var parentSpan = tracer.CurrentSpan;
-
-                var startTimestamp = PreciseTimestamp.GetUtcNow();
-                var span = (Span)tracer.StartSpan(SpanName);
-
-                Assert.True(span.Context.IsValid);
-                Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
-                Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
-                Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
-                Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
-                Assert.Empty(span.Context.Tracestate);
-
-                Assert.False(span.IsRecording);
-                Assert.Equal(SpanKind.Internal, span.Kind);
-                AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
-                Assert.Empty(span.Links);
-            }
         }
 
         [Fact]
