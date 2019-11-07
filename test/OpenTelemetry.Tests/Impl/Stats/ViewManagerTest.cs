@@ -55,12 +55,11 @@ namespace OpenTelemetry.Stats.Test
 
         private static readonly IViewManager viewManager = Stats.ViewManager;
         private static readonly IStatsRecorder statsRecorder = Stats.StatsRecorder;
-        private static readonly CurrentTaggingState state = new CurrentTaggingState();
         private readonly ITagger tagger;
 
         public ViewManagerTest()
         {
-            tagger = new Tagger(state);
+            tagger = new Tagger();
         }
 
         private static IView CreateCumulativeView()

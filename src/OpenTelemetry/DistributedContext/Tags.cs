@@ -23,15 +23,13 @@ namespace OpenTelemetry.DistributedContext
 
         private static Tags tags;
 
-        private readonly CurrentTaggingState state;
         private readonly ITagger tagger;
         private readonly ITagContextBinarySerializer tagContextBinarySerializer;
 
         internal Tags()
         {
-            this.state = new CurrentTaggingState();
-            this.tagger = new Tagger(this.state);
-            this.tagContextBinarySerializer = new TagContextBinarySerializer(this.state);
+            this.tagger = new Tagger();
+            this.tagContextBinarySerializer = new TagContextBinarySerializer();
         }
 
         public static ITagger Tagger
@@ -40,15 +38,6 @@ namespace OpenTelemetry.DistributedContext
             {
                 Initialize();
                 return tags.tagger;
-            }
-        }
-
-        public static TaggingState State
-        {
-            get
-            {
-                Initialize();
-                return tags.state.Value;
             }
         }
 

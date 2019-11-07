@@ -20,25 +20,18 @@ namespace OpenTelemetry.DistributedContext.Propagation
     {
         private static readonly byte[] EmptyByteArray = { };
 
-        private readonly CurrentTaggingState state;
-
-        internal TagContextBinarySerializer(CurrentTaggingState state)
+        internal TagContextBinarySerializer()
         {
-            this.state = state;
         }
 
         public override byte[] ToByteArray(ITagContext tags)
         {
-            return this.state.Internal == TaggingState.DISABLED
-                ? EmptyByteArray
-                : SerializationUtils.SerializeBinary(tags);
+            return SerializationUtils.SerializeBinary(tags);
         }
 
         public override ITagContext FromByteArray(byte[] bytes)
         {
-            return this.state.Internal == TaggingState.DISABLED
-                ? TagContext.Empty
-                : SerializationUtils.DeserializeBinary(bytes);
+            return SerializationUtils.DeserializeBinary(bytes);
         }
     }
 }
