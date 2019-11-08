@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Ocagent.Implementation
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     using System;
     using System.Collections.Generic;
@@ -84,7 +84,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                 // This type of error processing is very aggressive and doesn't follow the
                 // error handling practices when smart defaults should be used when possible.
                 // See: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/docs/error-handling.md
-                ExporterOcagentEventSource.Log.FailedToConvertToProtoDefinitionError(e);
+                ExporterEventSource.Log.FailedToConvertToProtoDefinitionError(e);
             }
 
             return null;

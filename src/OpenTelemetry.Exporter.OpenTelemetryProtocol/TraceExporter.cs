@@ -1,4 +1,4 @@
-﻿// <copyright file="OcagentTraceExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TraceExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Ocagent
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 {
     using System;
     using System.Collections.Concurrent;
@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter.Ocagent
 
     using Grpc.Core;
 
-    using OpenTelemetry.Exporter.Ocagent.Implementation;
+    using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
 
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.Ocagent
     /// The trace exporter to otelcol.
     /// </summary>
     // TODO support async exporting and results
-    public class OcagentTraceExporter : SpanExporter, IDisposable
+    public class TraceExporter : SpanExporter, IDisposable
     {
         private const uint MaxSpanBatchSize = 32;
         private readonly Channel channel;
@@ -50,14 +50,14 @@ namespace OpenTelemetry.Exporter.Ocagent
         private Task runTask;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OcagentTraceExporter"/> class.
+        /// Initializes a new instance of the <see cref="TraceExporter"/> class.
         /// </summary>
         /// <param name="agentEndpoint">The agent endpoint.</param>
         /// <param name="hostName">Name of the host.</param>
         /// <param name="serviceName">Name of the service.</param>
         /// <param name="credentials">The credentials.</param>
         /// <param name="spanBatchSize">Size of the span batch.</param>
-        public OcagentTraceExporter(string agentEndpoint, string hostName, string serviceName, ChannelCredentials credentials = null, uint spanBatchSize = MaxSpanBatchSize)
+        public TraceExporter(string agentEndpoint, string hostName, string serviceName, ChannelCredentials credentials = null, uint spanBatchSize = MaxSpanBatchSize)
         {
             this.channel = new Channel(agentEndpoint, credentials ?? ChannelCredentials.Insecure);
             this.traceClient = new Proto.Agent.Trace.V1.TraceService.TraceServiceClient(this.channel);
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Exporter.Ocagent
                 {
                     Language = Proto.Agent.Common.V1.LibraryInfo.Types.Language.CSharp,
                     CoreLibraryVersion = GetAssemblyVersion(typeof(Span).Assembly),
-                    ExporterVersion = GetAssemblyVersion(typeof(OcagentTraceExporter).Assembly),
+                    ExporterVersion = GetAssemblyVersion(typeof(TraceExporter).Assembly),
                 },
                 ServiceInfo = new Proto.Agent.Common.V1.ServiceInfo
                 {
