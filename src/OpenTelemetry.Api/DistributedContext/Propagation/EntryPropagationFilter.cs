@@ -16,7 +16,7 @@
 
 using System;
 
-namespace OpenTelemetry.DistributedContext.Propagation
+namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
     /// Filter defining propagation rules for <see cref="DistributedContextEntry"/>.

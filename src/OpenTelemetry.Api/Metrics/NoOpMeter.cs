@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
             throw new System.NotImplementedException();
         }
 
-        public override Guage<double> CreateDoubleGauge(string name, bool monotonic = false)
+        public override Gauge<double> CreateDoubleGauge(string name, bool monotonic = false)
         {
             // return no op
             throw new System.NotImplementedException();
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Metrics
             throw new System.NotImplementedException();
         }
 
-        public override Guage<long> CreateLongGauge(string name, bool monotonic = false)
+        public override Gauge<long> CreateLongGauge(string name, bool monotonic = false)
         {
             // return no op
             throw new System.NotImplementedException();

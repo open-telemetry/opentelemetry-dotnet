@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using OpenTelemetry.DistributedContext;
-using OpenTelemetry.DistributedContext.Unsafe;
+using OpenTelemetry.Context;
+using OpenTelemetry.Context.Unsafe;
 using OpenTelemetry.Stats.Measures;
 
 namespace OpenTelemetry.Stats

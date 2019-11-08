@@ -16,7 +16,7 @@
 using System;
 using Xunit;
 
-namespace OpenTelemetry.DistributedContext.Propagation.Test
+namespace OpenTelemetry.Context.Propagation.Test
 {
     public class TagContextRoundtripTest
     {

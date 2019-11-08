@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace OpenTelemetry.DistributedContext
+namespace OpenTelemetry.Context
 {
     /// <summary>
     /// Distributed context.

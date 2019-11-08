@@ -15,7 +15,7 @@
 // </copyright>
 using System;
 
-namespace OpenTelemetry.DistributedContext.Propagation
+namespace OpenTelemetry.Context.Propagation
 {
     public sealed class TagContextSerializationException : Exception
     {

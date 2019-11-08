@@ -15,7 +15,7 @@
 // </copyright>
 using System.Collections.Generic;
 
-namespace OpenTelemetry.DistributedContext.Propagation.Test
+namespace OpenTelemetry.Context.Propagation.Test
 {
     public class TagContextBinarySerializerTest
     {

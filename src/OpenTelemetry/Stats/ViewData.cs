@@ -17,7 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using OpenTelemetry.DistributedContext;
+using OpenTelemetry.Context;
 using OpenTelemetry.Stats.Aggregations;
 
 namespace OpenTelemetry.Stats

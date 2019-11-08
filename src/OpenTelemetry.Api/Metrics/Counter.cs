@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
@@ -43,17 +44,33 @@ namespace OpenTelemetry.Metrics
         public abstract void Add(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels);
 
         /// <summary>
+        /// Adds or Increments the counter.
+        /// </summary>
+        /// <param name="context">the associated distributed context.</param>
+        /// <param name="value">value by which the counter should be incremented.</param>
+        /// <param name="labelset">The labelset associated with this value.</param>
+        public abstract void Add(in DistributedContext context, T value, LabelSet labelset);
+
+        /// <summary>
+        /// Adds or Increments the counter.
+        /// </summary>
+        /// <param name="context">the associated distributed context.</param>
+        /// <param name="value">value by which the counter should be incremented.</param>
+        /// <param name="labels">The labels or dimensions associated with this value.</param>
+        public abstract void Add(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels);
+
+        /// <summary>
         /// Gets the handle with given labelset.
         /// </summary>
         /// <param name="labelset">The labelset from which handle should be constructed.</param>
         /// <returns>The handle.</returns>
-        public abstract CounterHandle<T> GetHandle(LabelSet labelset);
+        public abstract MetricsHandle<T> GetHandle(LabelSet labelset);
 
         /// <summary>
         /// Gets the handle with given labels.
         /// </summary>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
         /// <returns>The handle.</returns>
-        public abstract CounterHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels);
+        public abstract MetricsHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels);
     }
 }

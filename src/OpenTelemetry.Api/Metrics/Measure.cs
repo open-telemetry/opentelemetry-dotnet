@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
@@ -43,17 +44,33 @@ namespace OpenTelemetry.Metrics
         public abstract void Record(in SpanContext context, int value, IEnumerable<KeyValuePair<string, string>> labels);
 
         /// <summary>
+        /// Records a measure.
+        /// </summary>
+        /// <param name="context">the associated distributed context.</param>
+        /// <param name="value">value to record.</param>
+        /// <param name="labelset">The labelset associated with this value.</param>
+        public abstract void Record(in DistributedContext context, T value, LabelSet labelset);
+
+        /// <summary>
+        /// Records a measure.
+        /// </summary>
+        /// <param name="context">the associated distributed context.</param>
+        /// <param name="value">value to record.</param>
+        /// <param name="labels">The labels or dimensions associated with this value.</param>
+        public abstract void Record(in DistributedContext context, int value, IEnumerable<KeyValuePair<string, string>> labels);
+
+        /// <summary>
         /// Gets the handle with given labelset.
         /// </summary>
         /// <param name="labelset">The labelset from which handle should be constructed.</param>
         /// <returns>The handle.</returns>
-        public abstract MeasureHandle<T> GetHandle(LabelSet labelset);
+        public abstract MetricsHandle<T> GetHandle(LabelSet labelset);
 
         /// <summary>
         /// Gets the handle with given labelset.
         /// </summary>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
         /// <returns>The handle.</returns>
-        public abstract MeasureHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels);
+        public abstract MetricsHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels);
     }
 }

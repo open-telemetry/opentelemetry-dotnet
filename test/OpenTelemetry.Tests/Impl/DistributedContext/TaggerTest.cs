@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 using System.Collections.Generic;
-using OpenTelemetry.DistributedContext.Unsafe;
+using OpenTelemetry.Context.Unsafe;
 using Xunit;
 
-namespace OpenTelemetry.DistributedContext.Test
+namespace OpenTelemetry.Context.Test
 {
     public class TaggerTest
     {
