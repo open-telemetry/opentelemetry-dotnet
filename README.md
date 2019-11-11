@@ -270,17 +270,6 @@ Configuration is done by user application: it should configure exporter and may 
     });
     ```
 
-3. Start auto-collectors
-
-   To start collection or just to create tracers to creates spans manually, `TracerFactory` needs to be resolved.
-
-    ```csharp
-    public void Configure(IApplicationBuilder app, TracerFactory factory)
-    {
-        // ...
-    }
-    ```
-
 ### Using StackExchange.Redis collector
 
 Outgoing http calls to Redis made using StackExchange.Redis library can be automatically tracked.
@@ -308,7 +297,7 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
     }
     ```
 
-You can combine it with dependency injection as shown in previous example, in this case, do not forget to resolve `TracerFactory`.
+You can combine it with dependency injection as shown in previous example.
 
 ### Custom samplers
 
