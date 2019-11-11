@@ -410,7 +410,7 @@ namespace OpenTelemetry.Trace
             {
                 return new Span(
                     name,
-                    SpanContext.Blank,
+                    SpanContext.BlankLocal,
                     CreateRoot(name),
                     false,
                     spanKind,
@@ -471,7 +471,7 @@ namespace OpenTelemetry.Trace
         {
             return new Span(
                 name,
-                SpanContext.Blank,
+                SpanContext.BlankLocal,
                 CreateRoot(name),
                 false,
                 spanKind,

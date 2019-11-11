@@ -52,6 +52,8 @@ namespace OpenTelemetry.Impl.Trace.Propagation
 
             Assert.Equal(ActivityTraceId.CreateFromString("0af7651916cd43dd8448eb211c80319c".AsSpan()), ctx.TraceId);
             Assert.Equal(ActivitySpanId.CreateFromString("b9c7c989f97918e1".AsSpan()), ctx.SpanId);
+            Assert.True(ctx.IsRemote);
+            Assert.True(ctx.IsValid);
             Assert.True((ctx.TraceOptions & ActivityTraceFlags.Recorded) != 0);
 
             Assert.Equal(2, ctx.Tracestate.Count());
@@ -81,6 +83,8 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             Assert.Equal(ActivityTraceId.CreateFromString("0af7651916cd43dd8448eb211c80319c".AsSpan()), ctx.TraceId);
             Assert.Equal(ActivitySpanId.CreateFromString("b9c7c989f97918e1".AsSpan()), ctx.SpanId);
             Assert.True((ctx.TraceOptions & ActivityTraceFlags.Recorded) == 0);
+            Assert.True(ctx.IsRemote);
+            Assert.True(ctx.IsValid);
         }
 
         [Fact]
@@ -92,6 +96,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var ctx = f.Extract(headers, getter);
 
             Assert.False(ctx.IsValid);
+            Assert.True(ctx.IsRemote);
         }
 
         [Fact]
@@ -106,6 +111,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var ctx = f.Extract(headers, getter);
 
             Assert.False(ctx.IsValid);
+            Assert.True(ctx.IsRemote);
         }
 
         [Fact]

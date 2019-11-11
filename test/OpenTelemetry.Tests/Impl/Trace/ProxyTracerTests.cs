@@ -62,10 +62,10 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default));
             Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, null));
 
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, null));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.BlankLocal));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client, default));
+            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client, null));
 
             Assert.Throws<ArgumentNullException>(() =>
                 proxyTracer.StartSpanFromActivity(null, new Activity("foo").Start()));
@@ -97,9 +97,9 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client));
             Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", BlankSpan.Instance, SpanKind.Client, null));
 
-            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank));
-            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client));
-            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.Blank, SpanKind.Client, null));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.BlankLocal));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.BlankLocal, SpanKind.Client));
+            Assert.Same(BlankSpan.Instance, proxyTracer.StartSpan("foo", SpanContext.BlankLocal, SpanKind.Client, null));
 
             var validActivity = new Activity("foo").SetIdFormat(ActivityIdFormat.W3C).Start();
             Assert.Same(BlankSpan.Instance, proxyTracer.StartSpanFromActivity("foo", validActivity));

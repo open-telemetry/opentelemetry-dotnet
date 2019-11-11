@@ -64,7 +64,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         {
             Assert.Equal(
                 new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0},
-                binaryFormat.ToByteArray(SpanContext.Blank));
+                binaryFormat.ToByteArray(SpanContext.BlankLocal));
 
         }
 

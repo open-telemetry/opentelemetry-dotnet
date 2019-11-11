@@ -77,9 +77,9 @@ namespace OpenTelemetry.Trace.Test
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client));
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, null));
 
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.Blank, SpanKind.Client, null));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.BlankLocal));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client, null));
 
             Assert.Throws<ArgumentNullException>(() => tracer.StartSpanFromActivity(null, new Activity("foo").Start()));
 
