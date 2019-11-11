@@ -111,7 +111,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             return Task.CompletedTask;
         }
 
-        internal ZipkinSpan GenerateSpan(Span otelSpan, ZipkinEndpoint localEndpoint)
+        internal ZipkinSpan GenerateSpan(Span otelSpan, ZipkinEndpoint defaultLocalEndpoint)
         {
             var context = otelSpan.Context;
             var startTimestamp = this.ToEpochMicroseconds(otelSpan.StartTimestamp);
@@ -119,13 +119,12 @@ namespace OpenTelemetry.Exporter.Zipkin
 
             var spanBuilder =
                 ZipkinSpan.NewBuilder()
-                    .ActivityTraceId(this.EncodeTraceId(context.TraceId))
+                    .TraceId(this.EncodeTraceId(context.TraceId))
                     .Id(this.EncodeSpanId(context.SpanId))
                     .Kind(this.ToSpanKind(otelSpan))
                     .Name(otelSpan.Name)
                     .Timestamp(this.ToEpochMicroseconds(otelSpan.StartTimestamp))
-                    .Duration(endTimestamp - startTimestamp)
-                    .LocalEndpoint(localEndpoint);
+                    .Duration(endTimestamp - startTimestamp);
 
             if (otelSpan.ParentSpanId != default)
             {
@@ -136,6 +135,29 @@ namespace OpenTelemetry.Exporter.Zipkin
             {
                 spanBuilder.PutTag(label.Key, label.Value.ToString());
             }
+
+            string serviceName = string.Empty;
+            //https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md
+            foreach (var label in otelSpan.LibraryResource.Labels)
+            {
+                string key = label.Key;
+                string val = label.Value;
+
+                if (key == "service.name")
+                {
+                    serviceName = serviceName + "." + val;
+                }
+                else if (key == "service.namespace")
+                {
+
+                }
+                else
+                {
+                    spanBuilder.PutTag(key, val);
+                }
+            }
+
+            spanBuilder.LocalEndpoint(defaultLocalEndpoint);
 
             var status = otelSpan.Status;
 
