@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace
         public static readonly SpanContext Blank = new SpanContext(default, default, ActivityTraceFlags.None);
 
         /// <summary>
-        /// A blank <see cref="SpanContext"/> that can be used for no-op operations.
+        /// A blank <see cref="SpanContext"/> that can be used for remote no-op operations.
         /// </summary>
         public static readonly SpanContext RemoteBlank = new SpanContext(default, default, ActivityTraceFlags.None, true);
 
