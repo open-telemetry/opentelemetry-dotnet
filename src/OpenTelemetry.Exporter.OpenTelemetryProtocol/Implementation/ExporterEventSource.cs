@@ -1,4 +1,4 @@
-﻿// <copyright file="ExporterOcagentEventSource.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ExporterEventSource.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Ocagent.Implementation
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     using System;
     using System.Diagnostics.Tracing;
     using System.Globalization;
     using System.Threading;
 
-    [EventSource(Name = "OpenTelemetry-Exporter-Ocagent")]
-    internal class ExporterOcagentEventSource : EventSource
+    [EventSource(Name = "OpenTelemetry-Exporter-OpenTelemetryProtocol")]
+    internal class ExporterEventSource : EventSource
     {
-        public static readonly ExporterOcagentEventSource Log = new ExporterOcagentEventSource();
+        public static readonly ExporterEventSource Log = new ExporterEventSource();
 
         [NonEvent]
         public void FailedToConvertToProtoDefinitionError(Exception ex)

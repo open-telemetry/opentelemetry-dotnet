@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public SpanContext Context => SpanContext.Blank;
+        public SpanContext Context => SpanContext.BlankLocal;
 
         /// <inheritdoc />
         public bool IsRecording => false;

@@ -204,7 +204,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     });
             Assert.False(
                     defaultProbability.ShouldSample(
-                        SpanContext.Blank, 
+                        SpanContext.BlankLocal, 
                         notSampledtraceId,
                         ActivitySpanId.CreateRandom(),
                         SPAN_NAME,
