@@ -43,15 +43,15 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void InvalidSpanContext()
         {
-            Assert.Equal(default, SpanContext.Blank.TraceId);
-            Assert.Equal(default, SpanContext.Blank.SpanId);
-            Assert.Equal(ActivityTraceFlags.None, SpanContext.Blank.TraceOptions);
+            Assert.Equal(default, SpanContext.BlankLocal.TraceId);
+            Assert.Equal(default, SpanContext.BlankLocal.SpanId);
+            Assert.Equal(ActivityTraceFlags.None, SpanContext.BlankLocal.TraceOptions);
         }
 
         [Fact]
         public void IsValid()
         {
-            Assert.False(SpanContext.Blank.IsValid);
+            Assert.False(SpanContext.BlankLocal.IsValid);
             Assert.False(
                     new SpanContext(
                             ActivityTraceId.CreateFromBytes(firstTraceIdBytes), default, ActivityTraceFlags.None)
