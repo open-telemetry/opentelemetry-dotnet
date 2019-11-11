@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace.Configuration
 {
@@ -32,6 +33,8 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal ISampler Sampler { get; private set; }
 
+        internal Resource Resource { get; private set; } = Resource.Empty;
+
         internal List<SpanProcessorPipelineBuilder> ProcessingPipelines { get; private set; }
 
         internal IBinaryFormat BinaryFormat { get; private set; }
@@ -47,6 +50,29 @@ namespace OpenTelemetry.Trace.Configuration
         public TracerBuilder SetSampler(ISampler sampler)
         {
             this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="Resource"/> describing the app associated with all traces. Overwrites currently set resource. 
+        /// Please use <see cref="MergeResource(Resource)" /> to add additional labels to the currently set resource.
+        /// </summary>
+        /// <param name="resource">Resource to be associate with all traces.</param>
+        /// <returns>Trace builder for chaining.</returns>
+        public TracerBuilder SetResource(Resource resource)
+        {
+            this.Resource = resource ?? Resource.Empty;
+            return this;
+        }
+
+        /// <summary>
+        /// Merge the provided <see cref="Resource"/> with one currently set by builder.
+        /// </summary>
+        /// <param name="resource">Resource to associate with all traces.</param>
+        /// <returns>Trace builder for chaining.</returns>
+        public TracerBuilder MergeResource(Resource resource)
+        {
+            this.Resource = this.Resource.Merge(resource);
             return this;
         }
 

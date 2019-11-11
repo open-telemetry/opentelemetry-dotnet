@@ -136,8 +136,10 @@ namespace OpenTelemetry.Exporter.Zipkin
                 spanBuilder.PutTag(label.Key, label.Value.ToString());
             }
 
+            // See https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md
             string serviceName = string.Empty;
-            //https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md
+            string serviceNamespace = string.Empty;
+
             foreach (var label in otelSpan.LibraryResource.Labels)
             {
                 string key = label.Key;
@@ -145,11 +147,11 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 if (key == "service.name")
                 {
-                    serviceName = serviceName + "." + val;
+                    serviceName = val;
                 }
                 else if (key == "service.namespace")
                 {
-
+                    serviceNamespace = val;
                 }
                 else
                 {
@@ -157,7 +159,27 @@ namespace OpenTelemetry.Exporter.Zipkin
                 }
             }
 
-            spanBuilder.LocalEndpoint(defaultLocalEndpoint);
+            if (serviceNamespace != string.Empty)
+            {
+                serviceName = serviceNamespace + "." + serviceName;
+            }
+
+            var endpoint = defaultLocalEndpoint;
+
+            // override default service name
+            // TODO: add caching
+            if (serviceName != string.Empty)
+            {
+                endpoint = new ZipkinEndpoint()
+                {
+                    Ipv4 = defaultLocalEndpoint.Ipv4,
+                    Ipv6 = defaultLocalEndpoint.Ipv6,
+                    Port = defaultLocalEndpoint.Port,
+                    ServiceName = serviceName,
+                };
+            }
+
+            spanBuilder.LocalEndpoint(endpoint);
 
             var status = otelSpan.Status;
 
