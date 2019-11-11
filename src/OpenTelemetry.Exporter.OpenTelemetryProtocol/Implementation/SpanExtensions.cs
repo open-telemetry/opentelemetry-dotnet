@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Ocagent.Implementation
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     using System;
     using System.Collections.Generic;
@@ -23,8 +23,8 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
     using Google.Protobuf;
     using Google.Protobuf.WellKnownTypes;
 
-    using OpenTelemetry.Proto.Trace.V1;
     using OpenTelemetry.Trace;
+    using Proto = Opentelemetry.Proto;
 
     internal static class SpanExtensions
     {
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
                 return new Proto.Trace.V1.Span
                 {
-                    Name = new TruncatableString { Value = otelSpan.Name },
+                    Name = otelSpan.Name,
 
                     // TODO: Utilize new Span.Types.SpanKind below when updated protos are incorporated, also confirm default for SpanKind.Internal
                     Kind = otelSpan.Kind == SpanKind.Client || otelSpan.Kind == SpanKind.Producer ?
@@ -64,12 +64,11 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                     EndTime = otelSpan.EndTimestamp.ToTimestamp(),
                     Status = !otelSpan.Status.IsValid
                         ? null
-                        : new OpenTelemetry.Proto.Trace.V1.Status
+                        : new Opentelemetry.Proto.Trace.V1.Status
                         {
                             Code = (int)otelSpan.Status.CanonicalCode,
                             Message = otelSpan.Status.Description ?? string.Empty,
                         },
-                    SameProcessAsParentSpan = otelSpan.ParentSpanId != default,
                     ChildSpanCount = null,
                     Attributes = FromAttributes(otelSpan.Attributes),
                     TimeEvents = FromITimeEvents(otelSpan.Events),
@@ -85,7 +84,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
                 // This type of error processing is very aggressive and doesn't follow the
                 // error handling practices when smart defaults should be used when possible.
                 // See: https://github.com/open-telemetry/OpenTelemetry-dotnet/blob/master/docs/error-handling.md
-                ExporterOcagentEventSource.Log.FailedToConvertToProtoDefinitionError(e);
+                ExporterEventSource.Log.FailedToConvertToProtoDefinitionError(e);
             }
 
             return null;
@@ -93,7 +92,7 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
 
         private static Proto.Trace.V1.Span.Types.Attributes FromAttributes(IEnumerable<KeyValuePair<string, object>> source)
         {
-            var attributes = new Proto.Trace.V1.Span.Types.Attributes();
+            var attributes = new Opentelemetry.Proto.Trace.V1.Span.Types.Attributes();
 
             attributes.AttributeMap.Add(source.ToDictionary(
                 kvp => kvp.Key,
@@ -102,35 +101,35 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             return attributes;
         }
 
-        private static OpenTelemetry.Proto.Trace.V1.AttributeValue FromAttribute(object value)
+        private static Proto.Trace.V1.AttributeValue FromAttribute(object value)
         {
             switch (value)
             {
                 case string s:
-                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue { StringValue = new TruncatableString() { Value = s } };
+                    return new Proto.Trace.V1.AttributeValue { StringValue = s };
                 case bool b:
-                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue { BoolValue = b };
+                    return new Proto.Trace.V1.AttributeValue { BoolValue = b };
                 case long l:
-                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue { IntValue = l };
+                    return new Proto.Trace.V1.AttributeValue { IntValue = l };
                 case double d:
-                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue { DoubleValue = d };
+                    return new Proto.Trace.V1.AttributeValue { DoubleValue = d };
                 default:
-                    return new OpenTelemetry.Proto.Trace.V1.AttributeValue
+                    return new Proto.Trace.V1.AttributeValue
                     {
-                        StringValue = new TruncatableString() { Value = value?.ToString() },
+                        StringValue = value?.ToString(),
                     };
             }
         }
 
-        private static Proto.Trace.V1.Span.Types.TimeEvents FromITimeEvents(IEnumerable<Event> events)
+        private static Proto.Trace.V1.Span.Types.TimedEvents FromITimeEvents(IEnumerable<Event> events)
         {
             var eventArray = events as Event[] ?? events.ToArray();
-            var timedEvents = new Proto.Trace.V1.Span.Types.TimeEvents
+            var timedEvents = new Proto.Trace.V1.Span.Types.TimedEvents
             {
-                TimeEvent = { eventArray.Select(FromITimeEvent), },
+                TimedEvent = { eventArray.Select(FromITimeEvent), },
             };
 
-            timedEvents.TimeEvent.AddRange(eventArray.Select(FromITimeEvent));
+            timedEvents.TimedEvent.AddRange(eventArray.Select(FromITimeEvent));
 
             return timedEvents;
         }
@@ -154,14 +153,14 @@ namespace OpenTelemetry.Exporter.Ocagent.Implementation
             return result;
         }
 
-        private static Proto.Trace.V1.Span.Types.TimeEvent FromITimeEvent(Event source)
+        private static Proto.Trace.V1.Span.Types.TimedEvent FromITimeEvent(Event source)
         {
-            return new Proto.Trace.V1.Span.Types.TimeEvent
+            return new Proto.Trace.V1.Span.Types.TimedEvent
             {
                 Time = source.Timestamp.ToTimestamp(),
-                Annotation = new Proto.Trace.V1.Span.Types.TimeEvent.Types.Annotation
+                Event = new Proto.Trace.V1.Span.Types.TimedEvent.Types.Event
                 {
-                    Description = new TruncatableString { Value = source.Name },
+                    Name = source.Name,
                     Attributes = FromIAttributeMap(source.Attributes),
                 },
             };

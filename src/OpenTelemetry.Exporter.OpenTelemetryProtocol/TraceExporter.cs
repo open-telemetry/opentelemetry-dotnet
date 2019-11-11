@@ -1,4 +1,4 @@
-﻿// <copyright file="OcagentTraceExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TraceExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Ocagent
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 {
     using System;
     using System.Collections.Concurrent;
@@ -28,56 +28,56 @@ namespace OpenTelemetry.Exporter.Ocagent
 
     using Grpc.Core;
 
-    using OpenTelemetry.Exporter.Ocagent.Implementation;
-    using OpenTelemetry.Proto.Agent.Common.V1;
-    using OpenTelemetry.Proto.Agent.Trace.V1;
+    using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Export;
+
+    using Proto = Opentelemetry.Proto;
 
     /// <summary>
     /// The trace exporter to otelcol.
     /// </summary>
     // TODO support async exporting and results
-    public class OcagentTraceExporter : SpanExporter, IDisposable
+    public class TraceExporter : SpanExporter, IDisposable
     {
         private const uint MaxSpanBatchSize = 32;
         private readonly Channel channel;
-        private readonly OpenTelemetry.Proto.Agent.Trace.V1.TraceService.TraceServiceClient traceClient;
+        private readonly Proto.Agent.Trace.V1.TraceService.TraceServiceClient traceClient;
         private readonly ConcurrentQueue<Span> spans = new ConcurrentQueue<Span>();
-        private readonly Node node;
+        private readonly Proto.Agent.Common.V1.Node node;
         private readonly uint spanBatchSize;
         private CancellationTokenSource cts;
         private Task runTask;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OcagentTraceExporter"/> class.
+        /// Initializes a new instance of the <see cref="TraceExporter"/> class.
         /// </summary>
         /// <param name="agentEndpoint">The agent endpoint.</param>
         /// <param name="hostName">Name of the host.</param>
         /// <param name="serviceName">Name of the service.</param>
         /// <param name="credentials">The credentials.</param>
         /// <param name="spanBatchSize">Size of the span batch.</param>
-        public OcagentTraceExporter(string agentEndpoint, string hostName, string serviceName, ChannelCredentials credentials = null, uint spanBatchSize = MaxSpanBatchSize)
+        public TraceExporter(string agentEndpoint, string hostName, string serviceName, ChannelCredentials credentials = null, uint spanBatchSize = MaxSpanBatchSize)
         {
             this.channel = new Channel(agentEndpoint, credentials ?? ChannelCredentials.Insecure);
-            this.traceClient = new TraceService.TraceServiceClient(this.channel);
+            this.traceClient = new Proto.Agent.Trace.V1.TraceService.TraceServiceClient(this.channel);
             this.spanBatchSize = spanBatchSize;
 
-            this.node = new Node
+            this.node = new Proto.Agent.Common.V1.Node
             {
-                Identifier = new ProcessIdentifier
+                Identifier = new Proto.Agent.Common.V1.ProcessIdentifier
                 {
                     HostName = hostName,
                     Pid = (uint)Process.GetCurrentProcess().Id,
                     StartTimestamp = Timestamp.FromDateTime(DateTime.UtcNow),
                 },
-                LibraryInfo = new LibraryInfo
+                LibraryInfo = new Proto.Agent.Common.V1.LibraryInfo
                 {
-                    Language = LibraryInfo.Types.Language.CSharp,
+                    Language = Proto.Agent.Common.V1.LibraryInfo.Types.Language.CSharp,
                     CoreLibraryVersion = GetAssemblyVersion(typeof(Span).Assembly),
-                    ExporterVersion = GetAssemblyVersion(typeof(OcagentTraceExporter).Assembly),
+                    ExporterVersion = GetAssemblyVersion(typeof(TraceExporter).Assembly),
                 },
-                ServiceInfo = new ServiceInfo
+                ServiceInfo = new Proto.Agent.Common.V1.ServiceInfo
                 {
                     Name = serviceName,
                 },
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Exporter.Ocagent
                 var firstRequest = true;
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    var spanExportRequest = new ExportTraceServiceRequest();
+                    var spanExportRequest = new Proto.Agent.Trace.V1.ExportTraceServiceRequest();
                     if (firstRequest)
                     {
                         spanExportRequest.Node = this.node;

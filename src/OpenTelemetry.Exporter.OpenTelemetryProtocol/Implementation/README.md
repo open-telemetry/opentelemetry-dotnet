@@ -1,0 +1,1 @@
+﻿.proto files under Implementation\ forked from https://github.com/open-telemetry/opentelemetry-proto/commit/4b6ff88e525739a2b1d2cbed619301076c6687e7
