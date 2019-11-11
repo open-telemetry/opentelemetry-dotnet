@@ -300,7 +300,7 @@ namespace OpenTelemetry.Trace.Test
         public void StartSpanFrom_InvalidContext()
         {
             var tracer = tracerFactory.GetTracer(null);
-            var parentContext = SpanContext.Blank;
+            var parentContext = SpanContext.BlankLocal;
 
             var span = (Span)tracer.StartSpan(SpanName, parentContext);
 

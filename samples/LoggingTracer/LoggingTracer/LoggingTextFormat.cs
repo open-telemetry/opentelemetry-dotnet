@@ -29,7 +29,7 @@ namespace LoggingTracer
         public SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             Logger.Log("LoggingTextFormat.Extract(...)");
-            return SpanContext.Blank;
+            return SpanContext.BlankLocal;
         }
 
         /// <inheritdoc/>

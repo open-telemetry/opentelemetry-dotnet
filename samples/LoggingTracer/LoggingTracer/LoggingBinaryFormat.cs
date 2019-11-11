@@ -27,14 +27,14 @@ namespace LoggingTracer
         public SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             Logger.Log("LoggingBinaryFormat.Extract(...)");
-            return SpanContext.Blank;
+            return SpanContext.BlankLocal;
         }
 
         /// <inheritdoc/>
         public SpanContext FromByteArray(byte[] bytes)
         {
             Logger.Log("LoggingBinaryFormat.FromByteArray(...)");
-            return SpanContext.Blank;
+            return SpanContext.BlankLocal;
         }
 
         public void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
