@@ -17,7 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Stats.Aggregations;
-using OpenTelemetry.DistributedContext;
+using OpenTelemetry.Context;
 using Xunit;
 
 namespace OpenTelemetry.Stats.Test
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Stats.Test
             IDistributionData actual,
             double tolerance)
         {
-            
+
             Assert.InRange(actual.Mean, expected.Mean - tolerance, expected.Mean + tolerance);
             Assert.Equal(expected.Count, actual.Count);
             Assert.InRange(actual.SumOfSquaredDeviations, expected.SumOfSquaredDeviations - tolerance, expected.SumOfSquaredDeviations + tolerance);

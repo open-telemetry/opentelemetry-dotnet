@@ -17,7 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Microsoft.ApplicationInsights.Extensibility;
-using OpenTelemetry.DistributedContext;
+using OpenTelemetry.Context;
 using OpenTelemetry.Exporter.ApplicationInsights;
 using OpenTelemetry.Stats;
 using OpenTelemetry.Stats.Aggregations;

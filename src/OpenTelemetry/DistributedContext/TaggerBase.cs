@@ -15,7 +15,7 @@
 // </copyright>
 using System;
 
-namespace OpenTelemetry.DistributedContext
+namespace OpenTelemetry.Context
 {
     public abstract class TaggerBase : ITagger
     {

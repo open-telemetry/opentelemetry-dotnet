@@ -14,9 +14,9 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.DistributedContext.Propagation;
+using OpenTelemetry.Context.Propagation;
 
-namespace OpenTelemetry.DistributedContext
+namespace OpenTelemetry.Context
 {
     public class NoopTagContextBinarySerializer : TagContextBinarySerializerBase
     {

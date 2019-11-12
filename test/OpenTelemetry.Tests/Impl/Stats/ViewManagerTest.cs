@@ -19,7 +19,7 @@ using System.Linq;
 using OpenTelemetry.Api.Utils;
 using OpenTelemetry.Stats.Aggregations;
 using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.DistributedContext;
+using OpenTelemetry.Context;
 using Xunit;
 
 namespace OpenTelemetry.Stats.Test
@@ -437,7 +437,7 @@ namespace OpenTelemetry.Stats.Test
             StatsTestUtil.AssertAggregationMapEquals(
                 viewData.AggregationMap,
                 new Dictionary<TagValues, IAggregationData>()
-                { 
+                {
                     // Won't Record the unregistered tag key, for missing registered keys will use default
                     // tag value : "unknown/not set".
                     { tv,

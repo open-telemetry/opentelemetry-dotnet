@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using OpenTelemetry.DistributedContext.Propagation;
+using OpenTelemetry.Context.Propagation;
 
-namespace OpenTelemetry.DistributedContext
+namespace OpenTelemetry.Context
 {
     public sealed class Tags
     {

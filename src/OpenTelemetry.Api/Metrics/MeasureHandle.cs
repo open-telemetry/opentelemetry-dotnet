@@ -14,27 +14,30 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Handle to the measure with the defined <see cref="LabelSet"/>.
+    /// Handle to the metrics Measure with the defined <see cref="LabelSet"/>.
     /// </summary>
-    /// <typeparam name="T">The type of the Measure. Only long and double are supported now.</typeparam>
-    public struct MeasureHandle<T>
+    /// <typeparam name="T">The type of Measure. Only long and double are supported now.</typeparam>
+    public abstract class MeasureHandle<T>
         where T : struct
     {
         /// <summary>
-        /// Records a measure.
+        /// Record the value of the Measure handle.
         /// </summary>
+        /// <param name="context">the associated span context.</param>
+        /// <param name="value">value by which the Measure handle should be Recorded.</param>
+        public abstract void Record(in SpanContext context, T value);
+
         /// <summary>
         /// Sets the value of the guague handle.
         /// </summary>
-        /// <param name="context">the associated span context.</param>
-        /// <param name="value">value to record.</param>
-        public void Record(in SpanContext context, T value)
-        {
-        }
+        /// <param name="context">the associated distributed context.</param>
+        /// <param name="value">value by which the Measure handle should be Recorded.</param>
+        public abstract void Record(in DistributedContext context, T value);
     }
 }

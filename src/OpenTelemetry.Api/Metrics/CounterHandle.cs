@@ -14,24 +14,30 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Handle to the counter with the defined <see cref="LabelSet"/>.
+    /// Handle to the metrics counter with the defined <see cref="LabelSet"/>.
     /// </summary>
     /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
-    public struct CounterHandle<T>
+    public abstract class CounterHandle<T>
         where T : struct
     {
         /// <summary>
-        /// Adds or Increments the value of the counter handle.
+        /// Add, Set or Record the value of the counter handle.
         /// </summary>
         /// <param name="context">the associated span context.</param>
-        /// <param name="value">value by which the counter handle should be incremented.</param>
-        public void Add(in SpanContext context, T value)
-        {
-        }
+        /// <param name="value">value by which the counter handle should be added.</param>
+        public abstract void Add(in SpanContext context, T value);
+
+        /// <summary>
+        /// Add, Set or Record the value of the counter handle.
+        /// </summary>
+        /// <param name="context">the associated distributed context.</param>
+        /// <param name="value">value by which the counter handle should be added.</param>
+        public abstract void Add(in DistributedContext context, T value);
     }
 }

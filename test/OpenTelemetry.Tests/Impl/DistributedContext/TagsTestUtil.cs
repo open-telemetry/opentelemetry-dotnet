@@ -16,7 +16,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace OpenTelemetry.DistributedContext.Test
+namespace OpenTelemetry.Context.Test
 {
     internal static class TagsTestUtil
     {

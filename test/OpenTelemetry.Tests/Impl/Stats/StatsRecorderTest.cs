@@ -18,8 +18,8 @@ using System.Linq;
 using System.Collections.Generic;
 using OpenTelemetry.Stats.Aggregations;
 using OpenTelemetry.Stats.Measures;
-using OpenTelemetry.DistributedContext;
-using OpenTelemetry.DistributedContext.Unsafe;
+using OpenTelemetry.Context;
+using OpenTelemetry.Context.Unsafe;
 using Xunit;
 
 namespace OpenTelemetry.Stats.Test
@@ -84,7 +84,7 @@ namespace OpenTelemetry.Stats.Test
             viewManager.RegisterView(view);
             var orig = AsyncLocalContext.CurrentTagContext;
             AsyncLocalContext.CurrentTagContext = new SimpleTagContext(new DistributedContextEntry(KEY, VALUE));
- 
+
             try
             {
                 statsRecorder.NewMeasureMap().Put(MEASURE_DOUBLE, 1.0).Record();

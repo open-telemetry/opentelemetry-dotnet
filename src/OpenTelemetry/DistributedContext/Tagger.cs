@@ -16,7 +16,7 @@
 using System;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.DistributedContext
+namespace OpenTelemetry.Context
 {
     public sealed class Tagger : TaggerBase
     {

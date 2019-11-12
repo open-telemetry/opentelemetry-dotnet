@@ -15,7 +15,7 @@
 // </copyright>
 using System.Collections.Generic;
 
-namespace OpenTelemetry.DistributedContext
+namespace OpenTelemetry.Context
 {
     public sealed class NoopTagContext : TagContextBase
     {

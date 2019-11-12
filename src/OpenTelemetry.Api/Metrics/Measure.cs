@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
@@ -32,7 +33,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="context">the associated span context.</param>
         /// <param name="value">value to record.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public abstract void Record(in SpanContext context, T value, LabelSet labelset);
+        public void Record(in SpanContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Record(context, value);
 
         /// <summary>
         /// Records a measure.
@@ -40,7 +41,23 @@ namespace OpenTelemetry.Metrics
         /// <param name="context">the associated span context.</param>
         /// <param name="value">value to record.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public abstract void Record(in SpanContext context, int value, IEnumerable<KeyValuePair<string, string>> labels);
+        public void Record(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Record(context, value);
+
+        /// <summary>
+        /// Records a measure.
+        /// </summary>
+        /// <param name="context">the associated distributed context.</param>
+        /// <param name="value">value to record.</param>
+        /// <param name="labelset">The labelset associated with this value.</param>
+        public void Record(in DistributedContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Record(context, value);
+
+        /// <summary>
+        /// Records a measure.
+        /// </summary>
+        /// <param name="context">the associated distributed context.</param>
+        /// <param name="value">value to record.</param>
+        /// <param name="labels">The labels or dimensions associated with this value.</param>
+        public void Record(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Record(context, value);
 
         /// <summary>
         /// Gets the handle with given labelset.
