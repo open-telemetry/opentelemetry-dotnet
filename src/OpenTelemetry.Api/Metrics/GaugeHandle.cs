@@ -27,7 +27,7 @@ namespace OpenTelemetry.Metrics
         where T : struct
     {
         /// <summary>
-        /// Add, Set or Record the value of the counter handle.
+        /// Sets the value of the guague.
         /// </summary>
         /// <param name="context">the associated span context.</param>
         /// <param name="value">value by which the gauge handle should be set.</param>
