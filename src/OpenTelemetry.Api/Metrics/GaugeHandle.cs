@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
         public abstract void Set(in SpanContext context, T value);
 
         /// <summary>
-        /// Add, Set or Record the value of the counter handle.
+        /// Sets the value of the guague handle.
         /// </summary>
         /// <param name="context">the associated distributed context.</param>
         /// <param name="value">value by which the gauge handle should be set.</param>
