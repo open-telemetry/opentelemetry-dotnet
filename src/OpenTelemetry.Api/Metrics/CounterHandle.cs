@@ -1,4 +1,4 @@
-﻿// <copyright file="MetricsHandle.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CounterHandle.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,28 +20,24 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Handle to the metrics instrument (Counter, Gauge, and Measure) with the defined <see cref="LabelSet"/>.
+    /// Handle to the metrics counter with the defined <see cref="LabelSet"/>.
     /// </summary>
     /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
-    public abstract class MetricsHandle<T>
+    public abstract class CounterHandle<T>
         where T : struct
     {
         /// <summary>
         /// Add, Set or Record the value of the counter handle.
         /// </summary>
         /// <param name="context">the associated span context.</param>
-        /// <param name="value">value by which the metrics instrument handle should be updated.</param>
-        public void Update(in SpanContext context, T value)
-        {
-        }
+        /// <param name="value">value by which the counter handle should be added.</param>
+        public abstract void Add(in SpanContext context, T value);
 
         /// <summary>
         /// Add, Set or Record the value of the counter handle.
         /// </summary>
-        /// <param name="context">the associated span context.</param>
-        /// <param name="value">value by which the metrics instrument handle should be updated.</param>
-        public void Update(in DistributedContext context, T value)
-        {
-        }
+        /// <param name="context">the associated distributed context.</param>
+        /// <param name="value">value by which the counter handle should be added.</param>
+        public abstract void Add(in DistributedContext context, T value);
     }
 }
