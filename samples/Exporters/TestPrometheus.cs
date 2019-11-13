@@ -17,7 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.DistributedContext;
+using OpenTelemetry.Context;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Stats;
 using OpenTelemetry.Stats.Aggregations;

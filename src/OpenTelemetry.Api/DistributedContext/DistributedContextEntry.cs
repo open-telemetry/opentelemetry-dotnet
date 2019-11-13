@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.DistributedContext
+namespace OpenTelemetry.Context
 {
     using System;
 

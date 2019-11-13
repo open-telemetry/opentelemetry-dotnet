@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
@@ -32,7 +33,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="context">the associated span context.</param>
         /// <param name="value">value by which the counter should be incremented.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public abstract void Add(in SpanContext context, T value, LabelSet labelset);
+        public void Add(in SpanContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Add(context, value);
 
         /// <summary>
         /// Adds or Increments the counter.
@@ -40,7 +41,23 @@ namespace OpenTelemetry.Metrics
         /// <param name="context">the associated span context.</param>
         /// <param name="value">value by which the counter should be incremented.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public abstract void Add(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels);
+        public void Add(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Add(context, value);
+
+        /// <summary>
+        /// Adds or Increments the counter.
+        /// </summary>
+        /// <param name="context">the associated distributed context.</param>
+        /// <param name="value">value by which the counter should be incremented.</param>
+        /// <param name="labelset">The labelset associated with this value.</param>
+        public void Add(in DistributedContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Add(context, value);
+
+        /// <summary>
+        /// Adds or Increments the counter.
+        /// </summary>
+        /// <param name="context">the associated distributed context.</param>
+        /// <param name="value">value by which the counter should be incremented.</param>
+        /// <param name="labels">The labels or dimensions associated with this value.</param>
+        public void Add(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Add(context, value);
 
         /// <summary>
         /// Gets the handle with given labelset.

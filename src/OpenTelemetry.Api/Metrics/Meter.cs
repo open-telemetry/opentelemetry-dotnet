@@ -40,20 +40,20 @@ namespace OpenTelemetry.Metrics
         public abstract Counter<double> CreateDoubleCounter(string name, bool monotonic = true);
 
         /// <summary>
-        /// Creates a guage for long with given name.
+        /// Creates a Gauge for long with given name.
         /// </summary>
         /// <param name="name">The name of the counter.</param>
         /// <param name="monotonic">indicates if only positive values are expected.</param>
-        /// <returns>The guage instance.</returns>
-        public abstract Guage<long> CreateLongGauge(string name, bool monotonic = false);
+        /// <returns>The Gauge instance.</returns>
+        public abstract Gauge<long> CreateLongGauge(string name, bool monotonic = false);
 
         /// <summary>
-        /// Creates a guage for long with given name.
+        /// Creates a Gauge for long with given name.
         /// </summary>
         /// <param name="name">The name of the counter.</param>
         /// <param name="monotonic">indicates if only positive values are expected.</param>
-        /// <returns>The guage instance.</returns>
-        public abstract Guage<double> CreateDoubleGauge(string name, bool monotonic = false);
+        /// <returns>The Gauge instance.</returns>
+        public abstract Gauge<double> CreateDoubleGauge(string name, bool monotonic = false);
 
         /// <summary>
         /// Creates a measure for long with given name.

@@ -16,7 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using OpenTelemetry.DistributedContext;
+using OpenTelemetry.Context;
 using OpenTelemetry.Exporter.Stackdriver;
 using OpenTelemetry.Stats;
 using OpenTelemetry.Stats.Aggregations;

@@ -16,7 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using OpenTelemetry.DistributedContext;
+using OpenTelemetry.Context;
 
 namespace OpenTelemetry.Stats
 {
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Stats
             while (first.MoveNext())
             {
                 second.MoveNext();
-                
+
                 // Null matches any aggValue
                 if (second.Current == null)
                 {

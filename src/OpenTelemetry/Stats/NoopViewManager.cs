@@ -16,7 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using OpenTelemetry.DistributedContext;
+using OpenTelemetry.Context;
 
 namespace OpenTelemetry.Stats
 {
