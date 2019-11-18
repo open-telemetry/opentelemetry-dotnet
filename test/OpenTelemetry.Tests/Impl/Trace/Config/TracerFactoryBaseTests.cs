@@ -44,7 +44,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
         public void TraceFactory_SetDefault()
         {
             var factory = TracerFactory.Create(b => { });
-            TracerFactoryBase.Default = factory;
+            TracerFactoryBase.SetDefault(factory);
 
             var defaultTracer = TracerFactoryBase.Default.GetTracer("");
             Assert.NotNull(defaultTracer);
@@ -59,14 +59,14 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
         [Fact]
         public void TraceFactory_SetDefaultNull()
         {
-            Assert.Throws<ArgumentNullException>(() => TracerFactoryBase.Default = null);
+            Assert.Throws<ArgumentNullException>(() => TracerFactoryBase.SetDefault(null));
         }
 
         [Fact]
         public void TraceFactory_SetDefaultTwice_Throws()
         {
-            TracerFactoryBase.Default = TracerFactory.Create(b => { });
-            Assert.Throws<InvalidOperationException>(() => TracerFactoryBase.Default = TracerFactory.Create(b => { }));
+            TracerFactoryBase.SetDefault(TracerFactory.Create(b => { }));
+            Assert.Throws<InvalidOperationException>(() => TracerFactoryBase.SetDefault(TracerFactory.Create(b => { })));
         }
 
         [Fact]
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             var noopSpan = defaultTracer.StartSpan("foo");
             Assert.IsType<BlankSpan>(noopSpan);
 
-            TracerFactoryBase.Default = TracerFactory.Create(b => { });
+            TracerFactoryBase.SetDefault(TracerFactory.Create(b => { }));
             var span = defaultTracer.StartSpan("foo");
             Assert.IsType<Span>(span);
 

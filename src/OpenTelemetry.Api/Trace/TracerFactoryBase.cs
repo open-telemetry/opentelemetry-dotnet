@@ -27,30 +27,39 @@ namespace OpenTelemetry.Trace
         private static TracerFactoryBase defaultFactory = new TracerFactoryBase();
 
         /// <summary>
-        /// Gets or sets the default instance of <see cref="TracerFactoryBase"/>.
+        /// Gets the default instance of <see cref="TracerFactoryBase"/>.
         /// </summary>
         public static TracerFactoryBase Default
         {
             get => defaultFactory;
-            set
+        }
+
+        /// <summary>
+        /// Sets the default instance of <see cref="TracerFactoryBase"/>.
+        /// </summary>
+        /// <param name="tracerFactory">Instance of <see cref="TracerFactoryBase"/>.</param>
+        /// <remarks>
+        /// This method can only be called once. Calling it multiple times will throw an <see cref="System.InvalidOperationException"/>.
+        /// </remarks>
+        /// <exception cref="System.InvalidOperationException">Thrown when called multiple times.</exception>
+        public static void SetDefault(TracerFactoryBase tracerFactory)
+        {
+            if (isInitialized)
             {
-                if (isInitialized)
-                {
-                    throw new InvalidOperationException("Default factory is already set");
-                }
-
-                defaultFactory = value ?? throw new ArgumentNullException(nameof(value));
-
-                // some libraries might have already used and cached ProxyTracer.
-                // let's update it to real one and forward all calls.
-
-                // resource assignment is not possible for libraries that cache tracer before SDK is initialized.
-                // SDK (Tracer) must be at least partially initialized before any collection starts to capture resources.
-                // we might be able to work this around with events.
-                proxy.UpdateTracer(defaultFactory.GetTracer(null));
-
-                isInitialized = true;
+                throw new InvalidOperationException("Default factory is already set");
             }
+
+            defaultFactory = tracerFactory ?? throw new ArgumentNullException(nameof(tracerFactory));
+
+            // some libraries might have already used and cached ProxyTracer.
+            // let's update it to real one and forward all calls.
+
+            // resource assignment is not possible for libraries that cache tracer before SDK is initialized.
+            // SDK (Tracer) must be at least partially initialized before any collection starts to capture resources.
+            // we might be able to work this around with events.
+            proxy.UpdateTracer(defaultFactory.GetTracer(null));
+
+            isInitialized = true;
         }
 
         /// <summary>
