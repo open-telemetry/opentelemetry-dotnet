@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -197,6 +198,26 @@ namespace OpenTelemetry.Trace.Test
             var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("foo", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "name").Value);
             Assert.Equal("semver:1.2.3", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "version").Value);
+        }
+
+        [Fact]
+        public void GetTracerReturnsTracerWithResourceAfterSetResource()
+        {
+            var tracerFactory = TracerFactory.Create(b => { b.SetResource(new Resource(new Dictionary<string, string>() { { "a", "b" } })); });
+            var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
+            Assert.Equal("b", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "a").Value);
+            Assert.Equal("foo", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "name").Value);
+            Assert.Equal("semver:1.2.3", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "version").Value);
+        }
+
+        [Fact]
+        public void GetTracerReturnsTracerWithResourceOverriddenBySetResource()
+        {
+            var tracerFactory = TracerFactory.Create(b => { 
+                b.SetResource(new Resource(new Dictionary<string, string>() { { "a", "b" } }))
+                .SetResource(new Resource(new Dictionary<string, string>() { { "a", "c" } })); });
+            var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
+            Assert.Equal("c", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "a").Value);
         }
 
         [Fact]
