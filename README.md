@@ -324,7 +324,7 @@ class MySampler : ISampler
     public string Description { get; } = "my custom sampler";
 
     public Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name,
-        IEnumerable<ILink> links)
+        IEnumerable<Link> links)
     {
         bool sampledIn;
         if (parentContext != null && parentContext.IsValid)
