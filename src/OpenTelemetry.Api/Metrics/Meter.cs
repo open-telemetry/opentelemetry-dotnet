@@ -24,7 +24,7 @@ namespace OpenTelemetry.Metrics
     public abstract class Meter
     {
         /// <summary>
-        /// Creates a counter for Int64 with given name.
+        /// Creates Int64 counter with given name.
         /// </summary>
         /// <param name="name">The name of the counter.</param>
         /// <param name="monotonic">indicates if only positive values are expected.</param>
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
         public Counter<long> CreateInt64Counter(string name, bool monotonic = true) => this.CreateCounter<long>(name, monotonic);
 
         /// <summary>
-        /// Creates a counter for double with given name.
+        /// Creates double counter with given name.
         /// </summary>
         /// <param name="name">indicates if only positive values are expected.</param>
         /// <param name="monotonic">The name of the counter.</param>
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Metrics
         public Counter<double> CreateDoubleCounter(string name, bool monotonic = true) => this.CreateCounter<double>(name, monotonic);
 
         /// <summary>
-        /// Creates a Gauge for Int64 with given name.
+        /// Creates Int64 Gauge with given name.
         /// </summary>
         /// <param name="name">The name of the counter.</param>
         /// <param name="monotonic">indicates if only positive values are expected.</param>
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Metrics
         public Gauge<long> CreateInt64Gauge(string name, bool monotonic = false) => this.CreateGauge<long>(name, monotonic);
 
         /// <summary>
-        /// Creates a measure for Int64 with given name.
+        /// Creates Int64 Measure with given name.
         /// </summary>
         /// <param name="name">The name of the measure.</param>
         /// <param name="absolute">indicates if only positive values are expected.</param>
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Metrics
         public Measure<long> CreateInt64Measure(string name, bool absolute = true) => this.CreateMeasure<long>(name, absolute);
 
         /// <summary>
-        /// Creates a measure for double type with given name.
+        /// Creates double Measure with given name.
         /// </summary>
         /// <param name="name">The name of the measure.</param>
         /// <param name="absolute">indicates if only positive values are expected.</param>
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Metrics
         public Measure<double> CreateDoubleMeasure(string name, bool absolute = true) => this.CreateMeasure<double>(name, absolute);
 
         /// <summary>
-        /// Creates a Gauge for double with given name.
+        /// Creates double Gauge with given name.
         /// </summary>
         /// <param name="name">The name of the counter.</param>
         /// <param name="monotonic">indicates if only positive values are expected.</param>
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Metrics
         public abstract LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels);
 
         /// <summary>
-        /// Creates a counter for double or Int64 type with given name.
+        /// Creates double or Int64 counter with given name.
         /// </summary>
         /// <param name="name">indicates if only positive values are expected.</param>
         /// <param name="monotonic">The name of the counter.</param>
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Metrics
             where T : struct;
 
         /// <summary>
-        /// Creates a Gauge for Int64 or double type with given name.
+        /// Creates double or Int64 Gauge with given name.
         /// </summary>
         /// <param name="name">The name of the counter.</param>
         /// <param name="monotonic">indicates if only positive values are expected.</param>
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Metrics
             where T : struct;
 
         /// <summary>
-        /// Creates a measure for Int64 or double type with given name.
+        /// Creates double or Int64 Measure with given name.
         /// </summary>
         /// <param name="name">The name of the measure.</param>
         /// <param name="absolute">indicates if only positive values are expected.</param>

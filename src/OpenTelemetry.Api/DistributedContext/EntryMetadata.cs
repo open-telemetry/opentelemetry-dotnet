@@ -35,10 +35,7 @@ namespace OpenTelemetry.Context
         /// Initializes a new instance of the <see cref="EntryMetadata"/> struct.
         /// </summary>
         /// <param name="timeToLive">TTL for the distributed context entry.</param>
-        public EntryMetadata(int timeToLive)
-        {
-            this.TimeToLive = EntryMetadata.NoPropagation;
-        }
+        private EntryMetadata(int timeToLive) => this.TimeToLive = timeToLive;
 
         /// <summary>
         /// Gets a new instance of the <see cref="EntryMetadata"/> struct with NoPropagation value.
@@ -51,7 +48,7 @@ namespace OpenTelemetry.Context
         public static EntryMetadata UnlimitedPropagationEntry => new EntryMetadata(UnlimitedPropagation);
 
         /// <summary>
-        /// Gets the TimeToLive is either NO_PROPAGATION (0) or UNLIMITED_PROPAGATION (-1).
+        /// Gets the TimeToLive which is either NO_PROPAGATION (0) or UNLIMITED_PROPAGATION (-1).
         /// </summary>
         public int TimeToLive { get; }
     }
