@@ -243,7 +243,7 @@ Configuration is done by user application: it should configure exporter and may 
     ```csharp
     using (TracerFactory.Create(builder => builder
             .UseZipkin()
-            .MergeResource(new Resource(new Dictionary<string, string>() { { "service.name", "http-client-test" } })))
+            .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "http-client-test" } })))
     {
         // ...
     }
@@ -268,7 +268,7 @@ Configuration is done by user application: it should configure exporter and may 
             // you may also configure request and dependencies collectors
             .AddRequestCollector()
             .AddDependencyCollector()
-            .MergeResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } }))
+            .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } }))
     });
     ```
 
@@ -288,7 +288,7 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
     using (TracerFactory.Create(b => b
                 .SetSampler(Samplers.AlwaysSample)
                 .UseZipkin()
-                .MergeResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } }))
+                .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } }))
                 .AddCollector(t =>
                 {
                     var collector = new StackExchangeRedisCallsCollector(t);
@@ -310,7 +310,7 @@ You may configure sampler of your choice
  using (TracerFactory.Create(b => b
             .SetSampler(ProbabilitySampler.Create(0.1))
             .UseZipkin()
-            .MergeResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } })))
+            .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } })))
 {
 
 }
@@ -463,7 +463,7 @@ using (var tracerFactory = TracerFactory.Create(builder => builder
         o => o.InstrumentationKey = "your-instrumentation-key",
         p => p.AddProcessor(nextProcessor => new FilteringSpanProcessor(nextProcessor)))
     .AddProcessorPipeline(pipelineBuilder => pipelineBuilder.AddProcessor(_ => new DebuggingSpanProcessor()))))
-    .MergeResource(new Resource(new Dictionary<string, string>() { { "service.name", "test-zipkin" } }))
+    .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "test-zipkin" } }))
 
 {
     // ...

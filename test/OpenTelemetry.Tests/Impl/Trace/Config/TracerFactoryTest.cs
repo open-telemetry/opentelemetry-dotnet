@@ -201,16 +201,6 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void GetTracerReturnsTracerWithResourceAfterMergeResource()
-        {
-            var tracerFactory = TracerFactory.Create(b => { b.MergeResource(new Resource(new Dictionary<string, string>() { { "a", "b" } })); });
-            var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
-            Assert.Equal("b", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "a").Value);
-            Assert.Equal("foo", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "name").Value);
-            Assert.Equal("semver:1.2.3", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "version").Value);
-        }
-
-        [Fact]
         public void GetTracerReturnsTracerWithResourceAfterSetResource()
         {
             var tracerFactory = TracerFactory.Create(b => { b.SetResource(new Resource(new Dictionary<string, string>() { { "a", "b" } })); });
