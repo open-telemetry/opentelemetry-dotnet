@@ -42,7 +42,7 @@ We encourage contributions. Use tags [up-for-grabs][up-for-grabs-issues] and
 Myget feeds:
 
 - NuGet V3 feed: https://www.myget.org/F/opentelemetry/api/v3/index.json
-- NuGet V2 feed: https://www.myget.org/F/opentelemetry/api/v2 
+- NuGet V2 feed: https://www.myget.org/F/opentelemetry/api/v2
 
 ### API and implementation
 
@@ -219,7 +219,7 @@ void StartActivity()
 void StopActivity()
 {
     var span = tracer.CurrentSpan;
-	
+
 	span.End();
     if (span is IDisposable disposableSpan)
     {
@@ -518,6 +518,32 @@ using (var tracerFactory = TracerFactory.Create(builder => builder
 }
 ```
 
+### Using LightStep exporter
+
+Configure LightStep exporter to see traces in [LightStep](https://lightstep.com/).
+
+1. Setup LightStep using [getting started](lightstep-getting-started) guide
+2. Configure `LightStepTraceExporter` (see below)
+3. See [sample](lightstep-sample) for example use
+
+```csharp
+using (var tracerFactory = TracerFactory.Create(
+    builder => builder.UseLightStep(o =>
+        {
+            o.ServiceName = "my-service"
+            o.AccessToken = "access-token";
+        })))
+{
+    var tracer = tracerFactory.GetTracer("lightstep-test");
+    var span = tracer
+        .SpanBuilder("incoming request")
+        .StartSpan();
+
+    await Task.Delay(1000);
+    span.End();
+}
+```
+
 ### Implementing your own exporter
 
 #### Tracing
@@ -561,15 +587,15 @@ using (var tracerFactory = TracerFactory.Create(
 ```
 
 ## Versioning
-  
+
 This library follows [Semantic Versioning][semver].
-  
+
 **GA**: Libraries defined at a GA quality level are stable, and will not
 introduce backwards-incompatible changes in any minor or patch releases. We
 will address issues and requests with the highest priority. If we were to make
 a backwards-incompatible changes on an API, we will first mark the existing API
 as deprecated and keep it for 18 months before removing it.
-  
+
 **Beta**: Libraries defined at a Beta quality level are expected to be mostly
 stable and we're working towards their release candidate. We will address
 issues and requests with a higher priority. There may be backwards incompatible
@@ -641,4 +667,6 @@ deprecate it for 18 months before removing it, if possible.
 [jaeger-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestJaeger.cs
 [prometheus-get-started]: https://prometheus.io/docs/introduction/first_steps/
 [prometheus-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestPrometheus.cs
+[lightstep-getting-started]: https://docs.lightstep.com/docs/welcome-to-lightstep
+[lightstep-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestLightstep.cs
 
