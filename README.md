@@ -518,6 +518,32 @@ using (var tracerFactory = TracerFactory.Create(builder => builder
 }
 ```
 
+### Using LightStep exporter
+
+Configure LightStep exporter to see traces in [LightStep](https://lightstep.com/).
+
+1. Setup LightStep using [getting started](lightstep-getting-started) guide
+2. Configure `LightStepTraceExporter` (see below)
+3. See [sample](lightstep-sample) for example use
+
+```csharp
+using (var tracerFactory = TracerFactory.Create(
+    builder => builder.UseLightStep(o =>
+        {
+            o.ServiceName = "my-service"
+            o.AccessToken = "access-token";
+        })))
+{
+    var tracer = tracerFactory.GetTracer("lightstep-test");
+    var span = tracer
+        .SpanBuilder("incoming request")
+        .StartSpan();
+
+    await Task.Delay(1000);
+    span.End();
+}
+```
+
 ### Implementing your own exporter
 
 #### Tracing
@@ -641,4 +667,6 @@ deprecate it for 18 months before removing it, if possible.
 [jaeger-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestJaeger.cs
 [prometheus-get-started]: https://prometheus.io/docs/introduction/first_steps/
 [prometheus-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestPrometheus.cs
+[lightstep-getting-started]: https://docs.lightstep.com/docs/welcome-to-lightstep
+[lightstep-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestLightstep.cs
 
