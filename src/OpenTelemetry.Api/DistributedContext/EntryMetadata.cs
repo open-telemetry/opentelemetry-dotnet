@@ -22,27 +22,34 @@ namespace OpenTelemetry.Context
     public readonly struct EntryMetadata
     {
         /// <summary>
-        /// TTL indicating in-process only propagation of an entry.
+        /// TimeToLive (TTL) indicating in-process only propagation of an entry.
         /// </summary>
         public const int NoPropagation = 0;
 
         /// <summary>
-        /// TTL indicating unlimited propagation of an entry.
+        /// TimeToLive (TTL) indicating unlimited propagation of an entry.
         /// </summary>
         public const int UnlimitedPropagation = -1;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EntryMetadata"/> struct.
         /// </summary>
-        /// <param name="entryTTL">TTL for the distributed context entry.</param>
-        public EntryMetadata(int entryTTL)
-        {
-            this.EntryTTL = EntryMetadata.NoPropagation;
-        }
+        /// <param name="timeToLive">TTL for the distributed context entry.</param>
+        private EntryMetadata(int timeToLive) => this.TimeToLive = timeToLive;
 
         /// <summary>
-        /// Gets the EntryTTL is either NO_PROPAGATION (0) or UNLIMITED_PROPAGATION (-1).
+        /// Gets a new instance of the <see cref="EntryMetadata"/> struct with NoPropagation value.
         /// </summary>
-        public int EntryTTL { get; }
+        public static EntryMetadata NoPropagationEntry => new EntryMetadata(NoPropagation);
+
+        /// <summary>
+        /// Gets a new instance of the <see cref="EntryMetadata"/> struct with UnlimitedPropagation value.
+        /// </summary>
+        public static EntryMetadata UnlimitedPropagationEntry => new EntryMetadata(UnlimitedPropagation);
+
+        /// <summary>
+        /// Gets the TimeToLive which is either NO_PROPAGATION (0) or UNLIMITED_PROPAGATION (-1).
+        /// </summary>
+        public int TimeToLive { get; }
     }
 }

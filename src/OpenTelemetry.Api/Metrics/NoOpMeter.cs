@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
@@ -23,42 +24,41 @@ namespace OpenTelemetry.Metrics
         {
         }
 
-        public override Counter<double> CreateDoubleCounter(string name, bool monotonic = true)
-        {
-            // return no op
-            throw new System.NotImplementedException();
-        }
-
-        public override Gauge<double> CreateDoubleGauge(string name, bool monotonic = false)
-        {
-            // return no op
-            throw new System.NotImplementedException();
-        }
-
-        public override Measure<double> CreateDoubleMeasure(string name, bool absolute = true)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override Counter<long> CreateLongCounter(string name, bool monotonic = true)
-        {
-            // return no op
-            throw new System.NotImplementedException();
-        }
-
-        public override Gauge<long> CreateLongGauge(string name, bool monotonic = false)
-        {
-            // return no op
-            throw new System.NotImplementedException();
-        }
-
-        public override Measure<long> CreateLongMeasure(string name, bool absolute = true)
-        {
-            throw new System.NotImplementedException();
-        }
-
         public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)
         {
+            // return no op
+            throw new System.NotImplementedException();
+        }
+
+        protected override Counter<T> CreateCounter<T>(string name, bool monotonic = true)
+        {
+            if (typeof(T) != typeof(long) || typeof(T) != typeof(double))
+            {
+                throw new InvalidOperationException();
+            }
+
+            // return no op
+            throw new System.NotImplementedException();
+        }
+
+        protected override Gauge<T> CreateGauge<T>(string name, bool monotonic = true)
+        {
+            if (typeof(T) != typeof(long) || typeof(T) != typeof(double))
+            {
+                throw new InvalidOperationException();
+            }
+
+            // return no op
+            throw new System.NotImplementedException();
+        }
+
+        protected override Measure<T> CreateMeasure<T>(string name, bool monotonic = true)
+        {
+            if (typeof(T) != typeof(long) || typeof(T) != typeof(double))
+            {
+                throw new InvalidOperationException();
+            }
+
             // return no op
             throw new System.NotImplementedException();
         }
