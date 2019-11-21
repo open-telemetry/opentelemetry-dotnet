@@ -530,17 +530,16 @@ Configure LightStep exporter to see traces in [LightStep](https://lightstep.com/
 using (var tracerFactory = TracerFactory.Create(
     builder => builder.UseLightStep(o =>
         {
-            o.ServiceName = "my-service"
-            o.AccessToken = "access-token";
+            o.ServiceName = "lightstep-test";
+            o.AccessToken = "<access-token>";
         })))
 {
     var tracer = tracerFactory.GetTracer("lightstep-test");
-    var span = tracer
-        .SpanBuilder("incoming request")
-        .StartSpan();
-
-    await Task.Delay(1000);
-    span.End();
+    using (tracer.StartActiveSpan("incoming request", out var span))
+    {
+        span.SetAttribute("custom-attribute", 55);
+        await Task.Delay(1000);
+    }
 }
 ```
 
