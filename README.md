@@ -530,8 +530,8 @@ Configure LightStep exporter to see traces in [LightStep](https://lightstep.com/
 using (var tracerFactory = TracerFactory.Create(
     builder => builder.UseLightStep(o =>
         {
-            o.ServiceName = "lightstep-test";
             o.AccessToken = "<access-token>";
+            o.ServiceName = "lightstep-test";
         })))
 {
     var tracer = tracerFactory.GetTracer("lightstep-test");
