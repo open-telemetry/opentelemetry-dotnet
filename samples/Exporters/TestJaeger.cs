@@ -26,17 +26,14 @@ namespace Samples
     {
         internal static object Run(string host, int port)
         {
-            // Configure exporter to export traces to Jaeger
-            var jaegerOptions = new JaegerExporterOptions()
-            {
-                ServiceName = "jaeger-test",
-                AgentHost = host,
-                AgentPort = port,
-            };
-
-            // Create a tracer. 
-            using (var tracerFactory = TracerFactory.Create(builder => builder
-                .AddProcessorPipeline(c => c.SetExporter(new JaegerTraceExporter(jaegerOptions)))))
+            // Create a tracer.
+            using (var tracerFactory = TracerFactory.Create(
+                builder => builder.UseJaeger(o =>
+                {
+                    o.ServiceName = "jaeger-test";
+                    o.AgentHost = host;
+                    o.AgentPort = port;
+                })))
             {
                 var tracer = tracerFactory.GetTracer("jaeger-test");
 
