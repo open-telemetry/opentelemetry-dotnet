@@ -24,7 +24,8 @@ namespace OpenTelemetry.Collector.Dependencies
 {
     internal class AzureSdkDiagnosticListener : ListenerHandler
     {
-        private static readonly PropertyFetcher LinksPropertyFetcher = new PropertyFetcher("Links");
+        // all fetchers must not be reused between DiagnosticSources.
+        private readonly PropertyFetcher linksPropertyFetcher = new PropertyFetcher("Links");
 
         public AzureSdkDiagnosticListener(string sourceName, ITracer tracer)
             : base(sourceName, tracer)
@@ -63,7 +64,7 @@ namespace OpenTelemetry.Collector.Dependencies
             }
 
             List<Link> parentLinks = null;
-            if (LinksPropertyFetcher.Fetch(valueValue) is IEnumerable<Activity> activityLinks)
+            if (this.linksPropertyFetcher.Fetch(valueValue) is IEnumerable<Activity> activityLinks)
             {
                 if (activityLinks.Any())
                 {
