@@ -233,6 +233,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                         linksJson.Append("},");
                     }
 
+                    // trim last comma, json does not support it
+                    if (linksJson.Length > 0)
+                    {
+                        linksJson.Remove(linksJson.Length - 1, 1);
+                    }
+
                     linksJson.Append("]");
                     result.Properties["_MS.links"] = linksJson.ToString();
                 }

@@ -1279,6 +1279,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal($"|{link0TraceId}.{link0SpanId}.", actualLinks[0].id);
             Assert.Equal($"|{link1TraceId}.{link1SpanId}.", actualLinks[1].id);
             Assert.Equal($"|{link2TraceId}.{link2SpanId}.", actualLinks[2].id);
+            
+            Assert.Equal($"[{{\"operation_Id\":\"{link0TraceId}\",\"id\":\"|{link0TraceId}.{link0SpanId}.\"}},{{\"operation_Id\":\"{link1TraceId}\",\"id\":\"|{link1TraceId}.{link1SpanId}.\"}},{{\"operation_Id\":\"{link2TraceId}\",\"id\":\"|{link2TraceId}.{link2SpanId}.\"}}]", linksStr);
         }
 
         [Fact]
