@@ -68,6 +68,7 @@ Myget feeds:
 | Application Insights | [![MyGet Nightly][OpenTelemetry-exporter-ai-myget-image]][OpenTelemetry-exporter-ai-myget-url]                   | [![NuGet release][OpenTelemetry-exporter-ai-nuget-image]][OpenTelemetry-exporter-ai-nuget-url]                   |
 | Stackdriver          | [![MyGet Nightly][OpenTelemetry-exporter-stackdriver-myget-image]][OpenTelemetry-exporter-stackdriver-myget-url] | [![NuGet release][OpenTelemetry-exporter-stackdriver-nuget-image]][OpenTelemetry-exporter-stackdriver-nuget-url] |
 | Jaeger               | [![MyGet Nightly][OpenTelemetry-exporter-jaeger-myget-image]][OpenTelemetry-exporter-jaeger-myget-url]           | [![NuGet release][OpenTelemetry-exporter-jaeger-nuget-image]][OpenTelemetry-exporter-jaeger-nuget-url]           |
+| LightStep            | [![MyGet Nightly][OpenTelemetry-exporter-lightstep-myget-image]][OpenTelemetry-exporter-lightstep-myget-url]     | [![NuGet release][OpenTelemetry-exporter-lightstep-nuget-image]][OpenTelemetry-exporter-lightstep-nuget-url]     |
 
 ## OpenTelemetry Tracing QuickStart: collecting data
 
@@ -618,6 +619,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-exporter-ai-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.ApplicationInsights
 [OpenTelemetry-exporter-stackdriver-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Stackdriver.svg
 [OpenTelemetry-exporter-stackdriver-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Stackdriver
+[OpenTelemetry-exporter-lightstep-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.LightStep.svg
+[OpenTelemetry-exporter-lightstep-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.LightStep
 [OpenTelemetry-collect-aspnetcore-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.AspNetCore.svg
 [OpenTelemetry-collect-aspnetcore-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Collector.AspNetCore
 [OpenTelemetry-collect-deps-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.Dependencies.svg
@@ -640,6 +643,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-exporter-ai-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.ApplicationInsights
 [OpenTelemetry-exporter-stackdriver-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Stackdriver.svg
 [OpenTelemetry-exporter-stackdriver-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.Stackdriver
+[OpenTelemetry-exporter-lightstep-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.LightStep.svg
+[OpenTelemetry-exporter-lightstep-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.Lightstep
 [OpenTelemetry-collect-aspnetcore-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Collector.AspNetCore.svg
 [OpenTelemetry-collect-aspnetcore-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Collector.AspNetCore
 [OpenTelemetry-collect-deps-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Collector.Dependencies.svg
