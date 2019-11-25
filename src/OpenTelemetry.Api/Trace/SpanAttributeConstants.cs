@@ -27,5 +27,9 @@ namespace OpenTelemetry.Trace
         public static readonly string HttpRequestSizeKey = "http.request.size";
         public static readonly string HttpResponseSizeKey = "http.response.size";
         public static readonly string HttpRouteKey = "http.route";
+
+        public static readonly string DatabaseType = "db.type";
+        public static readonly string DatabaseInstance = "db.instance";
+        public static readonly string DatabaseStatement = "db.statement";
     }
 }

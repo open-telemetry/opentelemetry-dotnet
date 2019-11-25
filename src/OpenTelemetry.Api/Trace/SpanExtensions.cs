@@ -222,5 +222,44 @@ namespace OpenTelemetry.Trace
 
             return span;
         }
+
+        /// <summary>
+        /// Helper method that populates database type
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-database.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="type">Database type.</param>
+        /// <returns>Span with populated request size properties.</returns>
+        public static ISpan PutDatabaseTypeAttribute(this ISpan span, string type)
+        {
+            span.SetAttribute(SpanAttributeConstants.DatabaseType, type);
+            return span;
+        }
+
+        /// <summary>
+        /// Helper method that populates database type
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-database.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="instance">Database instance.</param>
+        /// <returns>Span with populated request size properties.</returns>
+        public static ISpan PutDatabaseInstanceAttribute(this ISpan span, string instance)
+        {
+            span.SetAttribute(SpanAttributeConstants.DatabaseInstance, instance);
+            return span;
+        }
+
+        /// <summary>
+        /// Helper method that populates database statement
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-database.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="statement">Database type.</param>
+        /// <returns>Span with populated request size properties.</returns>
+        public static ISpan PutDatabaseStatementAttribute(this ISpan span, string statement)
+        {
+            span.SetAttribute(SpanAttributeConstants.DatabaseStatement, statement);
+            return span;
+        }
     }
 }
