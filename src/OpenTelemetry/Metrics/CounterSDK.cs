@@ -25,7 +25,8 @@ namespace OpenTelemetry.Metrics
 {
     public class CounterSDK<T> : Counter<T>
         where T : struct
-    {
+    {        
+        private readonly MetricProcessor<T> metricProcessor;
         private string metricName;
 
         public CounterSDK()
@@ -36,19 +37,20 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public CounterSDK(string name) : this()
+        public CounterSDK(string name, MetricProcessor<T> metricProcessor) : this()
         {
             this.metricName = name;
+            this.metricProcessor = metricProcessor;
         }
 
         public override CounterHandle<T> GetHandle(LabelSet labelset)
         {
-            return new CounterHandleSDK<T>(this.metricName, labelset);
+            return new CounterHandleSDK<T>(this.metricName, labelset, this.metricProcessor);
         }
 
         public override CounterHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            return new CounterHandleSDK<T>(this.metricName, new LabelSet(labels));
+            return new CounterHandleSDK<T>(this.metricName, new LabelSet(labels), this.metricProcessor);
         }
     }
 }

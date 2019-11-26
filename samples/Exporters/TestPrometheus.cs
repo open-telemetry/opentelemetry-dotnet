@@ -42,7 +42,7 @@ namespace Samples
                 metric.GetOrCreateMetricTimeSeries(labelSet1).Add(100);
                 Task.Delay(30000).Wait();
                 metric.GetOrCreateMetricTimeSeries(labelSet1).Add(200);
-                Console.WriteLine("Look at metrics in Prometetheus console!");
+                Console.WriteLine("Look at metrics in Prometheus console!");
                 Console.ReadLine();
             }
             finally

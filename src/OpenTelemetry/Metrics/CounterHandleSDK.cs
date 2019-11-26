@@ -39,9 +39,9 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public CounterHandleSDK(string metricName, LabelSet labelset) : this()
+        public CounterHandleSDK(string metricName, LabelSet labelset, MetricProcessor<T> metricProcessor) : this()
         {
-            this.metricProcessor = new AggregatingMetricProcessor<T>(metricName, new NoopMetricExporter<T>());
+            this.metricProcessor = metricProcessor;
             this.labelset = labelset;
         }
 
