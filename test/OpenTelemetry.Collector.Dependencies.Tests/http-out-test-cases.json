@@ -7,11 +7,15 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "example.com",
+      "http.url": "https://example.com/",
+      "http.scheme": "https",
+      "http.flavor": "2.0",
       "http.status_code": "200",
-      "http.url": "https://example.com/"
+      "http.status_text": "OK" 
     }
   },
   {
@@ -22,11 +26,15 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "POST",
       "http.host": "example.com",
+      "http.url": "https://example.com/",
+      "http.scheme": "https",
+      "http.flavor": "2.0",
       "http.status_code": "200",
-      "http.url": "https://example.com/"
+      "http.status_text": "OK"
     }
   },
   {
@@ -38,11 +46,15 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/path/to/resource/",
+      "component": "http",
+      "http.target": "/path/to/resource/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/path/to/resource/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "200",
-      "http.url": "http://{host}:{port}/path/to/resource/"
+      "http.status_text": "OK"
     }
   },
   {
@@ -53,10 +65,13 @@
     "spanStatus": "UNKNOWN",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",
-      "http.url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/"
+      "http.url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/",
+      "http.scheme": "https",
+      "http.flavor": "2.0"
     }
   },
   {
@@ -68,11 +83,15 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "200",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": "OK"
     }
   },
   {
@@ -84,11 +103,15 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "200",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": "OK"
     }
   },
   {
@@ -100,11 +123,15 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "399",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": ""
     }
   },
   {
@@ -116,11 +143,15 @@
     "spanStatus": "INVALID_ARGUMENT",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "400",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": "Bad Request"
     }
   },
   {
@@ -132,11 +163,15 @@
     "spanStatus": "UNAUTHENTICATED",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "401",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": "Unauthorized"
     }
   },
   {
@@ -148,11 +183,15 @@
     "spanStatus": "PERMISSION_DENIED",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "403",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": "Forbidden"
     }
   },
   {
@@ -164,11 +203,15 @@
     "spanStatus": "NOT_FOUND",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "404",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": "Not Found"
     }
   },
   {
@@ -180,11 +223,15 @@
     "spanStatus": "RESOURCE_EXHAUSTED",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "429",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": "Too Many Requests"
     }
   },
   {
@@ -196,11 +243,15 @@
     "spanStatus": "UNIMPLEMENTED",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "501",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": "Not Implemented"
     }
   },
   {
@@ -212,11 +263,15 @@
     "spanStatus": "UNAVAILABLE",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "503",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": "Service Unavailable"
     }
   },
   {
@@ -228,11 +283,15 @@
     "spanStatus": "DEADLINE_EXCEEDED",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "504",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": "Gateway Timeout"
     }
   },
   {
@@ -244,11 +303,15 @@
     "spanStatus": "UNKNOWN",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "600",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": ""
     }
   },
   {
@@ -263,12 +326,15 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "http.path": "/",
+      "component": "http",
+      "http.target": "/",
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.url": "http://{host}:{port}/",
+      "http.scheme": "http",
+      "http.flavor": "2.0",
       "http.status_code": "200",
-      "http.user_agent": "test-user-agent",
-      "http.url": "http://{host}:{port}/"
+      "http.status_text": "OK"
     }
   }
 ]

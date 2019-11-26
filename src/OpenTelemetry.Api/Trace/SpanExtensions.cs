@@ -22,6 +22,19 @@ namespace OpenTelemetry.Trace
     public static class SpanExtensions
     {
         /// <summary>
+        /// Helper method that populates span properties from component
+        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="component">Http method.</param>
+        /// <returns>Span with populated http method properties.</returns>
+        public static ISpan PutComponentAttribute(this ISpan span, string component)
+        {
+            span.SetAttribute(SpanAttributeConstants.ComponentKey, component);
+            return span;
+        }
+
+        /// <summary>
         /// Helper method that populates span properties from http method according
         /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
         /// </summary>
@@ -134,32 +147,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Helper method that populates span properties from size according
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
-        /// </summary>
-        /// <param name="span">Span to fill out.</param>
-        /// <param name="size">Response size.</param>
-        /// <returns>Span with populated response size properties.</returns>
-        public static ISpan PutHttpResponseSizeAttribute(this ISpan span, long size)
-        {
-            span.SetAttribute(SpanAttributeConstants.HttpResponseSizeKey, size);
-            return span;
-        }
-
-        /// <summary>
-        /// Helper method that populates span properties from request size according
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
-        /// </summary>
-        /// <param name="span">Span to fill out.</param>
-        /// <param name="size">Request size.</param>
-        /// <returns>Span with populated request size properties.</returns>
-        public static ISpan PutHttpRequestSizeAttribute(this ISpan span, long size)
-        {
-            span.SetAttribute(SpanAttributeConstants.HttpRequestSizeKey, size);
-            return span;
-        }
-
-        /// <summary>
         /// Helper method that populates span properties from http status code according
         /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
         /// </summary>
@@ -170,6 +157,10 @@ namespace OpenTelemetry.Trace
         public static ISpan PutHttpStatusCode(this ISpan span, int statusCode, string reasonPhrase)
         {
             span.PutHttpStatusCodeAttribute(statusCode);
+            if (!string.IsNullOrEmpty(reasonPhrase))
+            {
+                span.SetAttribute(SpanAttributeConstants.HttpStatusTextKey, reasonPhrase);
+            }
 
             var newStatus = Status.Ok;
 
@@ -220,6 +211,45 @@ namespace OpenTelemetry.Trace
 
             span.Status = newStatus.WithDescription(reasonPhrase);
 
+            return span;
+        }
+
+        /// <summary>
+        /// Helper method that populates span properties from request target according
+        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="target">Request target.</param>
+        /// <returns>Span with populated request size properties.</returns>
+        public static ISpan PutHttpTargetAttribute(this ISpan span, string target)
+        {
+            span.SetAttribute(SpanAttributeConstants.HttpTargetKey, target);
+            return span;
+        }
+
+        /// <summary>
+        /// Helper method that populates span properties from request scheme according
+        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="scheme">Request scheme.</param>
+        /// <returns>Span with populated request size properties.</returns>
+        public static ISpan PutHttpSchemeAttribute(this ISpan span, string scheme)
+        {
+            span.SetAttribute(SpanAttributeConstants.HttpSchemeKey, scheme);
+            return span;
+        }
+
+        /// <summary>
+        /// Helper method that populates span properties from request version according
+        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="flavor">HTTP version.</param>
+        /// <returns>Span with populated request size properties.</returns>
+        public static ISpan PutHttpFlavorAttribute(this ISpan span, string flavor)
+        {
+            span.SetAttribute(SpanAttributeConstants.HttpFlavorKey, flavor);
             return span;
         }
     }

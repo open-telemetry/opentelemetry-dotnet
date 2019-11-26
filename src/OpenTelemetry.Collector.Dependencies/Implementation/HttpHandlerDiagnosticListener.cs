@@ -69,12 +69,13 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
             if (span.IsRecording)
             {
+                span.PutComponentAttribute("http");
+                span.PutHttpTargetAttribute(request.RequestUri.PathAndQuery);
                 span.PutHttpMethodAttribute(request.Method.ToString());
                 span.PutHttpHostAttribute(request.RequestUri.Host, request.RequestUri.Port);
-                span.PutHttpPathAttribute(request.RequestUri.AbsolutePath);
-                request.Headers.TryGetValues("User-Agent", out var userAgents);
-                span.PutHttpUserAgentAttribute(userAgents?.FirstOrDefault());
                 span.PutHttpRawUrlAttribute(request.RequestUri.OriginalString);
+                span.PutHttpSchemeAttribute(request.RequestUri.Scheme);
+                span.PutHttpFlavorAttribute(request.Version.ToString());
             }
 
             if (!this.httpClientSupportsW3C)

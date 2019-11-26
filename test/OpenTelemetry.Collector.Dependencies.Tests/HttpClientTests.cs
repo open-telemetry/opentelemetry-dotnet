@@ -170,18 +170,22 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 [   {
     ""name"": ""Response code 404"",
     ""method"": ""GET"",
-    ""url"": ""http://{host}:{port}/"",
+    ""url"": ""http://{host}:{port}/path/12314/?q=ddds#123"",
     ""responseCode"": 404,
-    ""spanName"": ""/"",
+    ""spanName"": ""/path/12314/"",
     ""spanStatus"": ""NOT_FOUND"",
     ""spanKind"": ""Client"",
     ""spanAttributes"": {
-      ""http.path"": ""/"",
+      ""component"": ""http"",
       ""http.method"": ""GET"",
+      ""http.url"": ""http://{host}:{port}/path/12314/?q=ddds#123"",
+      ""http.target"": ""/path/12314/?q=ddds"",
       ""http.host"": ""{host}:{port}"",
+      ""http.scheme"": ""http"",
+      ""http.flavor"": ""2.0"",
       ""http.status_code"": ""404"",
-      ""http.url"": ""http://{host}:{port}/""
-}
+      ""http.status_text"": ""Not Found""
+    }
         }
 ]
 ")));
