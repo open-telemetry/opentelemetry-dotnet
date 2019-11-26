@@ -19,9 +19,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Context;
 using OpenTelemetry.Exporter.Prometheus;
-using OpenTelemetry.Stats;
-using OpenTelemetry.Stats.Aggregations;
-using OpenTelemetry.Stats.Measures;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Metrics.Implementation;
 
 namespace Samples
 {
@@ -29,61 +28,26 @@ namespace Samples
     {
         private static readonly ITagger Tagger = Tags.Tagger;
 
-        private static readonly IStatsRecorder StatsRecorder = Stats.StatsRecorder;
-        private static readonly IMeasureLong VideoSize = MeasureLong.Create("my.org/measure/video_size", "size of processed videos", "By");
-        private static readonly string FrontendKey = "my.org/keys/frontend";
-
-        private static readonly long MiB = 1 << 20;
-
-        private static readonly IViewName VideoSizeViewName = ViewName.Create("my.org/views/video_size");
-
-        private static readonly IView VideoSizeView = View.Create(
-            VideoSizeViewName,
-            "processed video size over time",
-            VideoSize,
-            Distribution.Create(BucketBoundaries.Create(new List<double>() { 0.0, 16.0 * MiB, 256.0 * MiB })),
-            new List<string>() { FrontendKey });
-
         internal static object Run()
         {
-            var exporter = new PrometheusExporter(
-                new PrometheusExporterOptions()
-                {
-                    Url = "http://+:9184/metrics/",  // "+" is a wildcard used to listen to all hostnames
-                },
-                Stats.ViewManager);
-
-            exporter.Start();
-
+            var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
+            Metric<long> metric = new Metric<long>("sample");
+            var promExporter = new PrometheusExporter<long>(promOptions, metric);
             try
-            {
-                var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, "mobile-ios9.3.5");
-
-                Stats.ViewManager.RegisterView(VideoSizeView);
-
-                var t = new Task(() =>
-                {
-                    var r = new Random();
-                    var values = new byte[1];
-
-                    while (true)
-                    {
-                        using (var scopedTags = tagContextBuilder.BuildScoped())
-                        {
-                            r.NextBytes(values);
-                            StatsRecorder.NewMeasureMap().Put(VideoSize, values[0] * MiB).Record();
-                            Thread.Sleep(TimeSpan.FromSeconds(1));
-                        }
-                    }
-                });
-                t.Start();
-
+            {                                
+                promExporter.Start();
+                List<KeyValuePair<string, string>> label1 = new List<KeyValuePair<string, string>>();
+                label1.Add(new KeyValuePair<string, string>("dim1", "value1"));
+                var labelSet1 = new LabelSet(label1);
+                metric.GetOrCreateMetricTimeSeries(labelSet1).Add(100);
+                Task.Delay(30000).Wait();
+                metric.GetOrCreateMetricTimeSeries(labelSet1).Add(200);
                 Console.WriteLine("Look at metrics in Prometetheus console!");
                 Console.ReadLine();
             }
             finally
             {
-                exporter.Stop();
+                promExporter.Stop();
             }
 
             return null;

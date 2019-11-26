@@ -1,4 +1,4 @@
-﻿// <copyright file="LabelSet.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MetricProcessor.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,27 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections.Generic;
 
-namespace OpenTelemetry.Metrics
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace OpenTelemetry.Metrics.Export
 {
-    /// <summary>
-    /// Normalized name value pairs of metric labels.
-    /// </summary>
-    public class LabelSet
+    public abstract class MetricProcessor<T> where T : struct
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="LabelSet"/> class.
+        /// Process the counter metric.
         /// </summary>
-        /// <param name="labels">labels from which labelset should be constructed.</param>
-        public LabelSet(IEnumerable<KeyValuePair<string, string>> labels)
-        {
-            this.Labels = labels;
-        }
-
-        /// <summary>
-        /// Gets or sets the labels for this LabelSet.
-        /// </summary>
-        public IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
+        /// <param name="labelSet">the labelSet associated with counter value.</param>
+        /// <param name="value">the counter value.</param>
+        public abstract void AddCounter(LabelSet labelSet, T value);
     }
 }
