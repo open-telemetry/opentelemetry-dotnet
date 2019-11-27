@@ -130,8 +130,7 @@
       "http.url": "http://{host}:{port}/",
       "http.scheme": "http",
       "http.flavor": "2.0",
-      "http.status_code": "399",
-      "http.status_text": ""
+      "http.status_code": "399"
     }
   },
   {
@@ -310,8 +309,7 @@
       "http.url": "http://{host}:{port}/",
       "http.scheme": "http",
       "http.flavor": "2.0",
-      "http.status_code": "600",
-      "http.status_text": ""
+      "http.status_code": "600"
     }
   },
   {
