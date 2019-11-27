@@ -23,7 +23,7 @@ using OpenTelemetry.Metrics.Implementation;
 namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
-    /// Exporter of Open Telemetry traces and metrics to Prometheus.
+    /// Exporter of Open Telemetry metrics to Prometheus.
     /// </summary>
     /// <typeparam name="T">The type of metric. Only long and double are supported now.</typeparam>
     public class PrometheusExporter<T> : MetricExporter<T>

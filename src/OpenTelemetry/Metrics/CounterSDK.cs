@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics
     public class CounterSDK<T> : Counter<T>
         where T : struct
     {        
-        private readonly MetricProcessor<T> metricProcessor;
+        private readonly MetricProcessor metricProcessor;
         private string metricName;
 
         public CounterSDK()
@@ -37,7 +37,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public CounterSDK(string name, MetricProcessor<T> metricProcessor) : this()
+        public CounterSDK(string name, MetricProcessor metricProcessor) : this()
         {
             this.metricName = name;
             this.metricProcessor = metricProcessor;

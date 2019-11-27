@@ -22,13 +22,22 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics.Export
 {
-    public abstract class MetricProcessor<T> where T : struct
+    public abstract class MetricProcessor
     {
         /// <summary>
         /// Process the counter metric.
         /// </summary>
+        /// <param name="metricName">the name of the counter.</param>
         /// <param name="labelSet">the labelSet associated with counter value.</param>
         /// <param name="value">the counter value.</param>
-        public abstract void AddCounter(LabelSet labelSet, T value);
+        public abstract void AddCounter(string metricName, LabelSet labelSet, long value);
+
+        /// <summary>
+        /// Process the counter metric.
+        /// </summary>
+        /// <param name="metricName">the name of the counter.</param>
+        /// <param name="labelSet">the labelSet associated with counter value.</param>
+        /// <param name="value">the counter value.</param>
+        public abstract void AddCounter(string metricName, LabelSet labelSet, double value);
     }
 }

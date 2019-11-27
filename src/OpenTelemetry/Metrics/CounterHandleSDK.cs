@@ -28,8 +28,9 @@ namespace OpenTelemetry.Metrics
     public class CounterHandleSDK<T> : CounterHandle<T>
         where T : struct
     {
-        private readonly MetricProcessor<T> metricProcessor;
+        private readonly MetricProcessor metricProcessor;
         private LabelSet labelset;
+        private string metricName;
 
         public CounterHandleSDK()
         {
@@ -39,20 +40,35 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public CounterHandleSDK(string metricName, LabelSet labelset, MetricProcessor<T> metricProcessor) : this()
+        public CounterHandleSDK(string metricName, LabelSet labelset, MetricProcessor metricProcessor) : this()
         {
             this.metricProcessor = metricProcessor;
             this.labelset = labelset;
+            this.metricName = metricName;
         }
 
         public override void Add(in SpanContext context, T value)
         {
-            this.metricProcessor.AddCounter(this.labelset, value);
+            if (typeof(T) == typeof(double))
+            {
+                this.metricProcessor.AddCounter(this.metricName, this.labelset, (double)(object)value);
+            }
+            else
+            {
+                this.metricProcessor.AddCounter(this.metricName, this.labelset, (long)(object)value);
+            }                
         }
 
         public override void Add(in DistributedContext context, T value)
         {
-            this.metricProcessor.AddCounter(this.labelset, value);
+            if (typeof(T) == typeof(double))
+            {
+                this.metricProcessor.AddCounter(this.metricName, this.labelset, (double)(object)value);
+            }
+            else
+            {
+                this.metricProcessor.AddCounter(this.metricName, this.labelset, (long)(object)value);
+            }
         }
     }
 }

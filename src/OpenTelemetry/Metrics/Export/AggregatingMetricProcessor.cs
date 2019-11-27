@@ -15,7 +15,9 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -24,29 +26,85 @@ using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Metrics.Export
 {
-    public class AggregatingMetricProcessor<T> : MetricProcessor<T> 
-        where T : struct
+    public class AggregatingMetricProcessor : MetricProcessor
     {
-        private readonly MetricExporter<T> exporter;
-        private Metric<T> metric;
+        private readonly MetricExporter exporter;
+        private readonly Task worker;
+        private readonly TimeSpan aggregationInterval;
+        private CancellationTokenSource cts;
+        private IDictionary<string, Metric<long>> metricsLong = new ConcurrentDictionary<string, Metric<long>>();
+        private IDictionary<string, Metric<double>> metricsDouble = new ConcurrentDictionary<string, Metric<double>>();
 
         /// <summary>
         /// Constructs aggregating processor.
         /// </summary>
-        /// <param name="metricName">Name of metric.</param>
         /// <param name="exporter">Metric exporter instance.</param>
-        public AggregatingMetricProcessor(string metricName, MetricExporter<T> exporter)
+        /// <param name="aggregationInterval">Interval at which metrics are aggregated.</param>
+        public AggregatingMetricProcessor(MetricExporter exporter, TimeSpan aggregationInterval)
         {
-            this.metric = new Metric<T>(metricName);
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+            this.aggregationInterval = aggregationInterval;
+            this.cts = new CancellationTokenSource();
+            this.worker = Task.Factory.StartNew(s => this.Worker((CancellationToken)s), this.cts.Token);
         }
 
-        public override void AddCounter(LabelSet labelSet, T value)
+        public override void AddCounter(string metricName, LabelSet labelSet, long value)
         {
-            var metricSeries = this.metric.GetOrCreateMetricTimeSeries(labelSet);
-            metricSeries.Add(value);
+            if (!this.metricsLong.TryGetValue(metricName, out var metric))
+            {
+                this.metricsLong.Add(metricName, new Metric<long>(metricName));
+            }
 
-            // this.exporter.ExportAsync(counter, CancellationToken.None);
+            var metricSeries = metric.GetOrCreateMetricTimeSeries(labelSet);
+            metricSeries.Add(value);
+        }
+
+        public override void AddCounter(string metricName, LabelSet labelSet, double value)
+        {
+            if (!this.metricsDouble.TryGetValue(metricName, out var metric))
+            {
+                this.metricsDouble.Add(metricName, new Metric<double>(metricName));
+            }
+
+            var metricSeries = metric.GetOrCreateMetricTimeSeries(labelSet);
+            metricSeries.Add(value);
+        }
+
+        private async Task ExportBatchAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var metricLongs = new List<Metric<long>>();
+                foreach (var keyValuePair in this.metricsLong)
+                {
+                    metricLongs.Add(keyValuePair.Value);
+                }
+
+                await this.exporter.ExportAsync(metricLongs, cancellationToken);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private async Task Worker(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var sw = Stopwatch.StartNew();
+                await this.ExportBatchAsync(cancellationToken).ConfigureAwait(false);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                var remainingWait = this.aggregationInterval - sw.Elapsed;
+                if (remainingWait > TimeSpan.Zero)
+                {
+                    await Task.Delay(remainingWait, cancellationToken).ConfigureAwait(false);
+                }
+            }
         }
     }
 }

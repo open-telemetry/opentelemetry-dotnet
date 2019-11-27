@@ -20,6 +20,8 @@ using System.Threading.Tasks;
 using OpenTelemetry.Context;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Metrics.Configuration;
+using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Metrics.Implementation;
 
 namespace Samples
@@ -33,6 +35,16 @@ namespace Samples
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
             Metric<long> metric = new Metric<long>("sample");
             var promExporter = new PrometheusExporter<long>(promOptions, metric);
+
+            var metricProcessor = new AggregatingMetricProcessor(promExporter);
+
+            List<KeyValuePair<string, string>> label1 = new List<KeyValuePair<string, string>>();
+            label1.Add(new KeyValuePair<string, string>("dim1", "value1"));
+            var meterFactory = MeterFactory.Create(metricProcessor);
+            var meter = meterFactory.GetMeter("TestMeter");
+            var testCounter = meter.CreateInt64Counter("TestCounter");
+            testCounter.Add(null, 100, label1);
+            
             try
             {                                
                 promExporter.Start();
