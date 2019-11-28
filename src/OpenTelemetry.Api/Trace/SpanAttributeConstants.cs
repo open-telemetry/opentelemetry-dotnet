@@ -22,7 +22,6 @@ namespace OpenTelemetry.Trace
 
         public static readonly string HttpMethodKey = "http.method";
         public static readonly string HttpStatusCodeKey = "http.status_code";
-        public static readonly string HttpStatusTextKey = "http.status_text";
         public static readonly string HttpUserAgentKey = "http.user_agent";
         public static readonly string HttpPathKey = "http.path";
         public static readonly string HttpHostKey = "http.host";
