@@ -10,10 +10,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "example.com",
-      "http.url": "https://example.com/",
       "http.flavor": "2.0",
       "http.status_code": "200",
-      "http.status_text": "OK" 
+      "http.status_text": "OK",
+      "http.url": "https://example.com/"
     }
   },
   {
@@ -27,10 +27,10 @@
       "component": "http",
       "http.method": "POST",
       "http.host": "example.com",
-      "http.url": "https://example.com/",
       "http.flavor": "2.0",
       "http.status_code": "200",
-      "http.status_text": "OK"
+      "http.status_text": "OK",
+      "http.url": "https://example.com/"
     }
   },
   {
@@ -45,10 +45,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/path/to/resource/",
       "http.flavor": "2.0",
       "http.status_code": "200",
-      "http.status_text": "OK"
+      "http.status_text": "OK",
+      "http.url": "http://{host}:{port}/path/to/resource/"
     }
   },
   {
@@ -78,10 +78,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
       "http.status_code": "200",
-      "http.status_text": "OK"
+      "http.status_text": "OK",
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
@@ -96,10 +96,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
       "http.status_code": "200",
-      "http.status_text": "OK"
+      "http.status_text": "OK",
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
@@ -114,9 +114,9 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
-      "http.status_code": "399"
+      "http.status_code": "399",
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
@@ -131,10 +131,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
       "http.status_code": "400",
-      "http.status_text": "Bad Request"
+      "http.status_text": "Bad Request",
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
@@ -149,10 +149,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
       "http.status_code": "401",
-      "http.status_text": "Unauthorized"
+      "http.status_text": "Unauthorized",
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
@@ -167,10 +167,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
       "http.status_code": "403",
-      "http.status_text": "Forbidden"
+      "http.status_text": "Forbidden",
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
@@ -185,10 +185,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
       "http.status_code": "404",
-      "http.status_text": "Not Found"
+      "http.status_text": "Not Found",
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
@@ -203,10 +203,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
       "http.status_code": "429",
-      "http.status_text": "Too Many Requests"
+      "http.status_text": "Too Many Requests",
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
@@ -221,10 +221,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
       "http.status_code": "501",
-      "http.status_text": "Not Implemented"
+      "http.status_text": "Not Implemented",
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
@@ -239,10 +239,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
       "http.status_code": "503",
-      "http.status_text": "Service Unavailable"
+      "http.status_text": "Service Unavailable",
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
@@ -257,10 +257,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
       "http.status_code": "504",
-      "http.status_text": "Gateway Timeout"
+      "http.status_text": "Gateway Timeout",
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
@@ -275,9 +275,9 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
-      "http.status_code": "600"
+      "http.status_code": "600",
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
@@ -295,10 +295,10 @@
       "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.url": "http://{host}:{port}/",
       "http.flavor": "2.0",
       "http.status_code": "200",
-      "http.status_text": "OK"
+      "http.status_text": "OK",
+      "http.url": "http://{host}:{port}/"
     }
   }
 ]

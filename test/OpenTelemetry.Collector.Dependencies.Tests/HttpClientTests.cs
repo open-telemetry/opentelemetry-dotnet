@@ -178,12 +178,12 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
     ""spanAttributes"": {
       ""component"": ""http"",
       ""http.method"": ""GET"",
-      ""http.url"": ""http://{host}:{port}/path/12314/?q=ddds#123"",
       ""http.host"": ""{host}:{port}"",
       ""http.flavor"": ""2.0"",
       ""http.status_code"": ""404"",
-      ""http.status_text"": ""Not Found""
-    }
+      ""http.status_text"": ""Not Found"",
+      ""http.url"": ""http://{host}:{port}/path/12314/?q=ddds#123""
+}
         }
 ]
 ")));
