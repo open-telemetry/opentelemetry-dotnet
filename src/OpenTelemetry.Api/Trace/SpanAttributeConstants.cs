@@ -27,9 +27,7 @@ namespace OpenTelemetry.Trace
         public static readonly string HttpPathKey = "http.path";
         public static readonly string HttpHostKey = "http.host";
         public static readonly string HttpUrlKey = "http.url";
-        public static readonly string HttpTargetKey = "http.target";
         public static readonly string HttpRouteKey = "http.route";
-        public static readonly string HttpSchemeKey = "http.scheme";
         public static readonly string HttpFlavorKey = "http.flavor";
     }
 }

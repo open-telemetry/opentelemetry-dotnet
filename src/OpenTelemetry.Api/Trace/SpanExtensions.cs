@@ -215,32 +215,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Helper method that populates span properties from request target according
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
-        /// </summary>
-        /// <param name="span">Span to fill out.</param>
-        /// <param name="target">Request target.</param>
-        /// <returns>Span with populated request size properties.</returns>
-        public static ISpan PutHttpTargetAttribute(this ISpan span, string target)
-        {
-            span.SetAttribute(SpanAttributeConstants.HttpTargetKey, target);
-            return span;
-        }
-
-        /// <summary>
-        /// Helper method that populates span properties from request scheme according
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
-        /// </summary>
-        /// <param name="span">Span to fill out.</param>
-        /// <param name="scheme">Request scheme.</param>
-        /// <returns>Span with populated request size properties.</returns>
-        public static ISpan PutHttpSchemeAttribute(this ISpan span, string scheme)
-        {
-            span.SetAttribute(SpanAttributeConstants.HttpSchemeKey, scheme);
-            return span;
-        }
-
-        /// <summary>
         /// Helper method that populates span properties from request version according
         /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
         /// </summary>

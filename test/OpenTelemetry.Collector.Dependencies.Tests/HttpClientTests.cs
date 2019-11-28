@@ -179,9 +179,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
       ""component"": ""http"",
       ""http.method"": ""GET"",
       ""http.url"": ""http://{host}:{port}/path/12314/?q=ddds#123"",
-      ""http.target"": ""/path/12314/?q=ddds"",
       ""http.host"": ""{host}:{port}"",
-      ""http.scheme"": ""http"",
       ""http.flavor"": ""2.0"",
       ""http.status_code"": ""404"",
       ""http.status_text"": ""Not Found""
