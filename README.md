@@ -290,7 +290,7 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
                 .SetSampler(Samplers.AlwaysSample)
                 .UseZipkin()
                 .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } }))
-                .AddCollector(t =>
+                .AddAdapter(t =>
                 {
                     var collector = new StackExchangeRedisCallsCollector(t);
                     connection.RegisterProfiler(collector.GetProfilerSessionsFactory());

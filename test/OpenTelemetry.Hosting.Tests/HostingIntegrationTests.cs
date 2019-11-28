@@ -36,7 +36,7 @@ namespace OpenTelemetry.Hosting
             {
                 services.AddOpenTelemetry(telemetry =>
                 {
-                    telemetry.AddCollector(t =>
+                    telemetry.AddAdapter(t =>
                     {
                         callbackRun = true;
                         return testCollector;
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Hosting
             services.AddSingleton(testCollector);
             services.AddOpenTelemetry((provider, builder) =>
             {
-                builder.AddCollector<TestCollector>(tracer => provider.GetRequiredService<TestCollector>());
+                builder.AddAdapter<TestCollector>(tracer => provider.GetRequiredService<TestCollector>());
             });
 
             var serviceProvider = services.BuildServiceProvider();

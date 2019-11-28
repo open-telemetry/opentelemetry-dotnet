@@ -104,7 +104,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             using (TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
-                .AddCollector(t => new HttpClientCollector(t))))
+                .AddAdapter(t => new HttpClientCollector(t))))
             {
                 using (var c = new HttpClient())
                 {

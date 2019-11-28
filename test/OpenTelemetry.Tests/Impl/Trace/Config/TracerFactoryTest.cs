@@ -79,12 +79,12 @@ namespace OpenTelemetry.Trace.Test
                         processor = new TestProcessor(e);
                         return processor;
                     }))
-                .AddCollector(t =>
+                .AddAdapter(t =>
                 {
                     collector1 = new TestCollector(t);
                     return collector1;
                 })
-                .AddCollector(t =>
+                .AddAdapter(t =>
                 {
                     collector2 = new TestCollector(t);
                     return collector2;

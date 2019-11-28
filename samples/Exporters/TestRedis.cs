@@ -37,7 +37,7 @@ namespace Samples
                     o.ServiceName = "redis-test";
                     o.Endpoint = new Uri(zipkinUri);
                 })
-                .AddCollector(t =>
+                .AddAdapter(t =>
                 {
                     var collector = new StackExchangeRedisCallsCollector(t);
                     connection.RegisterProfiler(collector.GetProfilerSessionsFactory());

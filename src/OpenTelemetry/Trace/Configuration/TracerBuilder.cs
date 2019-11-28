@@ -91,7 +91,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <typeparam name="TCollector">Type of collector class.</typeparam>
         /// <param name="collectorFactory">Function that builds collector from <see cref="ITracer"/>.</param>
-        public TracerBuilder AddCollector<TCollector>(
+        public TracerBuilder AddAdapter<TCollector>(
             Func<ITracer, TCollector> collectorFactory)
             where TCollector : class
         {

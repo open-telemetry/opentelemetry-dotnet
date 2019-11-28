@@ -37,7 +37,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetTracerOptions(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetBinaryFormat(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetTextFormat(null));
-            Assert.Throws<ArgumentNullException>(() => new TracerBuilder().AddCollector<object>(null));
+            Assert.Throws<ArgumentNullException>(() => new TracerBuilder().AddAdapter<object>(null));
         }
 
         [Fact]
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
                 .SetTracerOptions(options)
                 .SetBinaryFormat(binaryFormat)
                 .SetTextFormat(textFormat)
-                .AddCollector(t =>
+                .AddAdapter(t =>
                 {
                     Assert.NotNull(t);
                     return new TestCollector(t);

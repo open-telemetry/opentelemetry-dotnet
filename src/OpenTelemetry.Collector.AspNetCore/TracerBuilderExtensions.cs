@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            return builder.AddCollector(t => new AspNetCoreCollector(t));
+            return builder.AddAdapter(t => new AspNetCoreCollector(t));
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Trace.Configuration
             var options = new AspNetCoreCollectorOptions();
             configure(options);
 
-            return builder.AddCollector(t => new AspNetCoreCollector(t, options));
+            return builder.AddAdapter(t => new AspNetCoreCollector(t, options));
         }
     }
 }
