@@ -157,10 +157,6 @@ namespace OpenTelemetry.Trace
         public static ISpan PutHttpStatusCode(this ISpan span, int statusCode, string reasonPhrase)
         {
             span.PutHttpStatusCodeAttribute(statusCode);
-            if (!string.IsNullOrEmpty(reasonPhrase))
-            {
-                span.SetAttribute(SpanAttributeConstants.HttpStatusTextKey, reasonPhrase);
-            }
 
             var newStatus = Status.Ok;
 

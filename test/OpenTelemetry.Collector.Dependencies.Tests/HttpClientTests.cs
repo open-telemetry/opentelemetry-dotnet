@@ -50,6 +50,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             public string SpanStatus { get; set; }
 
             public Dictionary<string, string> SpanAttributes { get; set; }
+
+            public bool SetHttpFlavor { get; set; }
         }
 
         private static IEnumerable<object[]> ReadTestCases()
@@ -98,7 +100,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             using (serverLifeTime)
 
-            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
+            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions() { SetHttpFlavor = tc.SetHttpFlavor }))
             {
                 try
                 {
@@ -179,9 +181,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
       ""component"": ""http"",
       ""http.method"": ""GET"",
       ""http.host"": ""{host}:{port}"",
-      ""http.flavor"": ""2.0"",
       ""http.status_code"": ""404"",
-      ""http.status_text"": ""Not Found"",
       ""http.url"": ""http://{host}:{port}/path/12314/?q=ddds#123""
 }
         }
