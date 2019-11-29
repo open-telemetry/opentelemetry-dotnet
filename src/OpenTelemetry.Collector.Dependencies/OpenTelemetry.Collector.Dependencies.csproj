@@ -9,10 +9,6 @@
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
-  <ItemGroup >
-    <PackageReference Include="System.Data.SqlClient" Version="4.7.0" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
     <Reference Include="System.Net.Http" />
   </ItemGroup>

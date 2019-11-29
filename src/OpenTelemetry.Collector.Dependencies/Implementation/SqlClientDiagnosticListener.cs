@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Data.SqlClient;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
 
@@ -23,6 +22,10 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
     internal class SqlClientDiagnosticListener : ListenerHandler
     {
         private readonly PropertyFetcher commandFetcher = new PropertyFetcher("Command");
+        private readonly PropertyFetcher connectionFetcher = new PropertyFetcher("Connection");
+        private readonly PropertyFetcher dataSourceFetcher = new PropertyFetcher("DataSource");
+        private readonly PropertyFetcher databaseFetcher = new PropertyFetcher("Database");
+        private readonly PropertyFetcher commandTextFetcher = new PropertyFetcher("CommandText");
         private readonly PropertyFetcher exceptionFetcher = new PropertyFetcher("Exception");
 
         public SqlClientDiagnosticListener(string sourceName, ITracer tracer)
@@ -47,32 +50,71 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             switch (name)
             {
                 case "System.Data.SqlClient.WriteCommandBefore":
+                case "Microsoft.Data.SqlClient.WriteCommandBefore":
                     {
-                        this.Tracer.StartActiveSpan("Execute SQL", SpanKind.Client, out var span);
+                        var command = this.commandFetcher.Fetch(payload);
 
-                        if (this.commandFetcher.Fetch(payload) is SqlCommand command && span.IsRecording)
+                        const string EventNameSuffix = ".OnStartActivity";
+                        if (command == null)
                         {
-                            span.PutDatabaseTypeAttribute("sql");
-                            span.PutDatabaseInstanceAttribute(command.Connection.Database);
-                            span.PutDatabaseStatementAttribute(command.CommandText);
-                        }
-                    }
-
-                    break;
-                case "System.Data.SqlClient.WriteCommandError":
-                    {
-                        if (this.exceptionFetcher.Fetch(payload) is Exception exception)
-                        {
-                            this.Tracer.CurrentSpan.SetAttribute("error", exception.Message);
+                            CollectorEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener) + EventNameSuffix);
+                            return;
                         }
 
-                        this.Tracer.CurrentSpan.End();
+                        var connection = this.connectionFetcher.Fetch(command);
+                        var dataSource = this.dataSourceFetcher.Fetch(connection);
+                        var database = this.databaseFetcher.Fetch(connection);
+                        var commandText = this.commandTextFetcher.Fetch(command);
+
+                        this.Tracer.StartActiveSpan(database.ToString(), SpanKind.Client, out var span);
+
+                        span.PutComponentAttribute("SQL Server");
+
+                        span.PutDatabaseTypeAttribute("sql");
+                        span.PutDatabaseInstanceAttribute(database.ToString());
+                        span.PutDatabaseStatementAttribute(commandText.ToString());
+                        span.SetAttribute("peer.address", dataSource.ToString());
                     }
 
                     break;
                 case "System.Data.SqlClient.WriteCommandAfter":
+                case "Microsoft.Data.SqlClient.WriteCommandAfter":
                     {
-                        this.Tracer.CurrentSpan.End();
+                        const string EventNameSuffix = ".OnStopActivity";
+                        var span = this.Tracer.CurrentSpan;
+
+                        if (span == null || span == BlankSpan.Instance)
+                        {
+                            CollectorEventSource.Log.NullOrBlankSpan(nameof(SqlClientDiagnosticListener) + EventNameSuffix);
+                            return;
+                        }
+
+                        span.End();
+                    }
+
+                    break;
+                case "System.Data.SqlClient.WriteCommandError":
+                case "Microsoft.Data.SqlClient.WriteCommandError":
+                    {
+                        const string EventNameSuffix = ".OnException";
+                        var span = this.Tracer.CurrentSpan;
+
+                        if (span == null || span == BlankSpan.Instance)
+                        {
+                            CollectorEventSource.Log.NullOrBlankSpan(nameof(SqlClientDiagnosticListener) + EventNameSuffix);
+                            return;
+                        }
+
+                        if (span.IsRecording)
+                        {
+                            if (!(this.exceptionFetcher.Fetch(payload) is Exception exception))
+                            {
+                                CollectorEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener) + EventNameSuffix);
+                                return;
+                            }
+
+                            span.Status = Status.Unknown.WithDescription(exception.Message);
+                        }
                     }
 
                     break;
