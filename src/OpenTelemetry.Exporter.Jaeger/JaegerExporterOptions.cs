@@ -19,13 +19,15 @@ namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerExporterOptions
     {
+        internal const int DefaultMaxPacketSize = 65000;
+
         public string ServiceName { get; set; }
 
-        public string AgentHost { get; set; }
+        public string AgentHost { get; set; } = "localhost";
 
-        public int? AgentPort { get; set; }
+        public int AgentPort { get; set; } = 6831;
 
-        public int? MaxPacketSize { get; set; }
+        public int? MaxPacketSize { get; set; } = DefaultMaxPacketSize;
 
         public Dictionary<string, object> ProcessTags { get; set; }
     }
