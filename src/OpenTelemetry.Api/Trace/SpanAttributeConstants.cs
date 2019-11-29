@@ -27,10 +27,10 @@ namespace OpenTelemetry.Trace
         public static readonly string HttpHostKey = "http.host";
         public static readonly string HttpUrlKey = "http.url";
         public static readonly string HttpRouteKey = "http.route";
+        public static readonly string HttpFlavorKey = "http.flavor";
 
         public static readonly string DatabaseType = "db.type";
         public static readonly string DatabaseInstance = "db.instance";
         public static readonly string DatabaseStatement = "db.statement";
-        public static readonly string HttpFlavorKey = "http.flavor";
     }
 }
