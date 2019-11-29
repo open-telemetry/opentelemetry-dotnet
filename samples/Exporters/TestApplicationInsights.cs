@@ -19,9 +19,6 @@ using System.Threading;
 using Microsoft.ApplicationInsights.Extensibility;
 using OpenTelemetry.Context;
 using OpenTelemetry.Exporter.ApplicationInsights;
-using OpenTelemetry.Stats;
-using OpenTelemetry.Stats.Aggregations;
-using OpenTelemetry.Stats.Measures;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
@@ -31,29 +28,10 @@ namespace Samples
     {
         private static readonly ITagger Tagger = Tags.Tagger;
 
-        private static readonly IStatsRecorder StatsRecorder = Stats.StatsRecorder;
-
-        private static readonly IMeasureLong VideoSize =
-            MeasureLong.Create("my.org/measure/video_size", "size of processed videos", "By");
-
         private static readonly string FrontendKey = "my.org/keys/frontend";
-
-        private static readonly long MiB = 1 << 20;
-
-        private static readonly IViewName VideoSizeViewName = ViewName.Create("my.org/views/video_size");
-
-        private static readonly IView VideoSizeView = View.Create(
-            VideoSizeViewName,
-            "processed video size over time",
-            VideoSize,
-            Distribution.Create(BucketBoundaries.Create(new List<double>() { 0.0, 16.0 * MiB, 256.0 * MiB })),
-            new List<string>() { FrontendKey });
 
         internal static object Run()
         {
-            var metricExporter = new ApplicationInsightsMetricExporter(Stats.ViewManager, new TelemetryConfiguration("instrumentation-key"));
-            metricExporter.Start();
-
             var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, "mobile-ios9.3.5");
 
             using (var tracerFactory = TracerFactory.Create(builder => builder
@@ -61,27 +39,18 @@ namespace Samples
             {
                 var tracer = tracerFactory.GetTracer("application-insights-test");
 
-                Stats.ViewManager.RegisterView(VideoSizeView);
-
                 using (tagContextBuilder.BuildScoped())
                 using (tracer.StartActiveSpan("incoming request", out var span))
                 {
                     span.AddEvent("Start processing video.");
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));
-                    StatsRecorder.NewMeasureMap().Put(VideoSize, 25 * MiB).Record();
                     span.AddEvent("Finished processing video.");
                 }
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(5100));
 
-                var viewData = Stats.ViewManager.GetView(VideoSizeViewName);
-
-                Console.WriteLine(viewData);
-
                 Console.WriteLine("Done... wait for events to arrive to backend!");
                 Console.ReadLine();
-
-                metricExporter.Stop();
 
                 return null;
             }
