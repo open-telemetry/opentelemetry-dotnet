@@ -89,11 +89,11 @@ namespace OpenTelemetry.Trace.Configuration
         /// <summary>
         /// Adds auto-collectors for spans.
         /// </summary>
-        /// <typeparam name="TCollector">Type of collector class.</typeparam>
+        /// <typeparam name="TAdapter">Type of collector class.</typeparam>
         /// <param name="collectorFactory">Function that builds collector from <see cref="ITracer"/>.</param>
-        public TracerBuilder AddAdapter<TCollector>(
-            Func<ITracer, TCollector> collectorFactory)
-            where TCollector : class
+        public TracerBuilder AddAdapter<TAdapter>(
+            Func<ITracer, TAdapter> collectorFactory)
+            where TAdapter : class
         {
             if (collectorFactory == null)
             {
@@ -107,8 +107,8 @@ namespace OpenTelemetry.Trace.Configuration
 
             this.CollectorFactories.Add(
                 new CollectorFactory(
-                    typeof(TCollector).Name, 
-                    "semver:" + typeof(TCollector).Assembly.GetName().Version,
+                    typeof(TAdapter).Name, 
+                    "semver:" + typeof(TAdapter).Assembly.GetName().Version,
                     collectorFactory));
 
             return this;
