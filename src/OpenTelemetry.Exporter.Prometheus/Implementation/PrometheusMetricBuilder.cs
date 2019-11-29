@@ -18,8 +18,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using OpenTelemetry.Stats;
-using OpenTelemetry.Stats.Aggregations;
 
 namespace OpenTelemetry.Exporter.Prometheus.Implementation
 {
@@ -338,45 +336,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 return this;
             }
 
-            public PrometheusMetricValueBuilder WithValue(IAggregationData metric)
+            public PrometheusMetricValueBuilder WithValue(long metricValue)
             {
-                // TODO: review conversions
-                // counter, gauge, histogram, summary, or untyped
-                if (metric is ISumDataDouble doubleSum)
-                {
-                    this.Value = doubleSum.Sum;
-                }
-                else if (metric is ISumDataLong longSum)
-                {
-                    this.Value = longSum.Sum;
-                }
-                else if (metric is ICountData count)
-                {
-                    this.Value = count.Count;
-                }
-                else if (metric is IMeanData mean)
-                {
-                    // TODO: do more with this
-                    this.Value = mean.Mean;
-                }
-                else if (metric is IDistributionData dist)
-                {
-                    // TODO: do more with this
-                    this.Value = dist.Mean;
-                }
-                else if (metric is ILastValueDataDouble lastDoubleValue)
-                {
-                    this.Value = lastDoubleValue.LastValue;
-                }
-                else if (metric is ILastValueDataLong lastLongValue)
-                {
-                    this.Value = lastLongValue.LastValue;
-                }
-                else if (metric is IAggregationData aggregationData)
-                {
-                    // TODO: report an error
-                }
-
+                this.Value = metricValue;
                 return this;
             }
         }
