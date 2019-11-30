@@ -39,9 +39,9 @@ namespace Samples
                 })
                 .AddAdapter(t =>
                 {
-                    var collector = new StackExchangeRedisCallsAdapter(t);
-                    connection.RegisterProfiler(collector.GetProfilerSessionsFactory());
-                    return collector;
+                    var adapter = new StackExchangeRedisCallsAdapter(t);
+                    connection.RegisterProfiler(adapter.GetProfilerSessionsFactory());
+                    return adapter;
                 })))
             {
                 var tracer = tracerFactory.GetTracer("redis-test");

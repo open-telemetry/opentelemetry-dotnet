@@ -28,7 +28,7 @@ namespace Samples
 
             using (var tracerFactory = TracerFactory.Create(builder => builder
                 .UseZipkin(o => o.ServiceName = "http-client-test")
-                .AddDependencyCollector()))
+                .AddDependencyAdapter()))
             {
                 var tracer = tracerFactory.GetTracer("http-client-test");
 

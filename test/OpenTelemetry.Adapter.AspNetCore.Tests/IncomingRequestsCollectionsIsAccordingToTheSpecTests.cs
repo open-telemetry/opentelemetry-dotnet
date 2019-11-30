@@ -67,7 +67,7 @@ namespace OpenTelemetry.Adapter.AspNetCore.Tests
                             TracerFactory.Create(b => b
                                 .SetSampler(Samplers.AlwaysSample)
                                 .AddProcessorPipeline(p => p.AddProcessor(e => spanProcessor.Object))
-                                .AddRequestCollector()));
+                                .AddRequestAdapter()));
                     }))
                 .CreateClient())
             {

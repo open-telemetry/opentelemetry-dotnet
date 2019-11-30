@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <param name="builder">Trace builder to use.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder AddDependencyCollector(this TracerBuilder builder)
+        public static TracerBuilder AddDependencyAdapter(this TracerBuilder builder)
         {
             if (builder == null)
             {
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// <param name="builder">Trace builder to use.</param>
         /// <param name="configure">Configuration options.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder AddDependencyCollector(this TracerBuilder builder, Action<HttpClientAdapterOptions> configure)
+        public static TracerBuilder AddDependencyAdapter(this TracerBuilder builder, Action<HttpClientAdapterOptions> configure)
         {
             if (builder == null)
             {

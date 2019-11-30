@@ -24,7 +24,7 @@ namespace OpenTelemetry.Adapter.Dependencies
     /// </summary>
     public class DependenciesAdapter : IDisposable
     {
-        private readonly List<IDisposable> collectors = new List<IDisposable>();
+        private readonly List<IDisposable> adapters = new List<IDisposable>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DependenciesAdapter"/> class.
@@ -38,17 +38,17 @@ namespace OpenTelemetry.Adapter.Dependencies
             var azureClientsListener = new AzureClientsAdapter(tracerFactory.GetTracer(nameof(AzureClientsAdapter), "semver:" + assemblyVersion));
             var azurePipelineListener = new AzurePipelineAdapter(tracerFactory.GetTracer(nameof(AzurePipelineAdapter), "semver:" + assemblyVersion));
 
-            this.collectors.Add(httpClientListener);
-            this.collectors.Add(azureClientsListener);
-            this.collectors.Add(azurePipelineListener);
+            this.adapters.Add(httpClientListener);
+            this.adapters.Add(azureClientsListener);
+            this.adapters.Add(azurePipelineListener);
         }
 
         /// <inheritdoc />
         public void Dispose()
         {
-            foreach (var collector in this.collectors)
+            foreach (var adapter in this.adapters)
             {
-                collector.Dispose();
+                adapter.Dispose();
             }
         }
     }

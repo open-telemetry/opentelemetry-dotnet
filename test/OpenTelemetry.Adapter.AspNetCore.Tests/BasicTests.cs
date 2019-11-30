@@ -46,11 +46,11 @@ namespace OpenTelemetry.Adapter.AspNetCore.Tests
         }
 
         [Fact]
-        public void AddRequestCollector_BadArgs()
+        public void AddRequestAdapter_BadArgs()
         {
             TracerBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.AddRequestCollector());
-            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddRequestCollector(null)));
+            Assert.Throws<ArgumentNullException>(() => builder.AddRequestAdapter());
+            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddRequestAdapter(null)));
         }
 
         [Fact]
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Adapter.AspNetCore.Tests
                     TracerFactory.Create(b => b
                         .SetSampler(Samplers.AlwaysSample)
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
-                        .AddRequestCollector()));
+                        .AddRequestAdapter()));
             }
 
             // Arrange
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Adapter.AspNetCore.Tests
                                 .SetSampler(Samplers.AlwaysSample)
                                 .SetTextFormat(tf.Object)
                                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
-                                .AddRequestCollector()));
+                                .AddRequestAdapter()));
                     })))
             using (var client = testFactory.CreateClient())
             {
@@ -162,7 +162,7 @@ namespace OpenTelemetry.Adapter.AspNetCore.Tests
                     TracerFactory.Create(b => b
                         .SetSampler(Samplers.AlwaysSample)
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
-                        .AddRequestCollector(o => o.EventFilter = Filter)));
+                        .AddRequestAdapter(o => o.EventFilter = Filter)));
             }
 
             // Arrange

@@ -40,7 +40,7 @@ namespace OpenTelemetry.Adapter.Dependencies
         /// Initializes a new instance of the <see cref="HttpClientAdapter"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        /// <param name="options">Configuration options for dependencies collector.</param>
+        /// <param name="options">Configuration options for dependencies adapter.</param>
         public HttpClientAdapter(ITracer tracer, HttpClientAdapterOptions options)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(tracer, options), options.EventFilter);

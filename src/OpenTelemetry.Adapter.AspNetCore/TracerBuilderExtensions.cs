@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <param name="builder">Trace builder to use.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder AddRequestCollector(this TracerBuilder builder)
+        public static TracerBuilder AddRequestAdapter(this TracerBuilder builder)
         {
             if (builder == null)
             {
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// <param name="builder">Trace builder to use.</param>
         /// <param name="configure">Configuration options.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder AddRequestCollector(this TracerBuilder builder, Action<AspNetCoreAdapterOptions> configure)
+        public static TracerBuilder AddRequestAdapter(this TracerBuilder builder, Action<AspNetCoreAdapterOptions> configure)
         {
             if (builder == null)
             {

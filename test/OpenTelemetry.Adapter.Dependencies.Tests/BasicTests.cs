@@ -48,15 +48,15 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
 
 
         [Fact]
-        public void AddDependencyCollector_BadArgs()
+        public void AddDependencyAdapter_BadArgs()
         {
             TracerBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.AddDependencyCollector());
-            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddDependencyCollector(null)));
+            Assert.Throws<ArgumentNullException>(() => builder.AddDependencyAdapter());
+            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddDependencyAdapter(null)));
         }
 
         [Fact]
-        public async Task HttpDependenciesCollectorInjectsHeadersAsync()
+        public async Task HttpDependenciesAdapterInjectsHeadersAsync()
         {
             var spanProcessor = new Mock<SpanProcessor>();
             var tracer = TracerFactory.Create(b => b.AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
@@ -98,7 +98,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesCollector_AddViaFactory_HttpCollector_CollectsSpans()
+        public async Task HttpDependenciesAdapter_AddViaFactory_HttpAdapter_CollectsSpans()
         {
             var spanProcessor = new Mock<SpanProcessor>();
 
@@ -118,13 +118,13 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesCollector_AddViaFactory_DependencyCollector_CollectsSpans()
+        public async Task HttpDependenciesAdapter_AddViaFactory_DependencyAdapter_CollectsSpans()
         {
             var spanProcessor = new Mock<SpanProcessor>();
 
             using (TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
-                .AddDependencyCollector()))
+                .AddDependencyAdapter()))
             {
                 using (var c = new HttpClient())
                 {
@@ -139,7 +139,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
+        public async Task HttpDependenciesAdapterBacksOffIfAlreadyInstrumented()
         {
             var spanProcessor = new Mock<SpanProcessor>();
             var tracer = TracerFactory.Create(b => b
@@ -164,7 +164,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesCollectorFiltersOutRequests()
+        public async Task HttpDependenciesAdapterFiltersOutRequests()
         {
             var spanProcessor = new Mock<SpanProcessor>();
 
@@ -187,7 +187,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
 
 
         [Fact]
-        public async Task HttpDependenciesCollectorFiltersOutRequestsToExporterEndpoints()
+        public async Task HttpDependenciesAdapterFiltersOutRequestsToExporterEndpoints()
         {
             var spanProcessor = new Mock<SpanProcessor>();
 
