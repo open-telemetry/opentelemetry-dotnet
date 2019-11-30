@@ -15,7 +15,7 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Collector.AspNetCore;
+using OpenTelemetry.Adapter.AspNetCore;
 
 namespace OpenTelemetry.Trace.Configuration
 {
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            return builder.AddAdapter(t => new AspNetCoreCollector(t));
+            return builder.AddAdapter(t => new AspNetCoreAdapter(t));
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// <param name="builder">Trace builder to use.</param>
         /// <param name="configure">Configuration options.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder AddRequestCollector(this TracerBuilder builder, Action<AspNetCoreCollectorOptions> configure)
+        public static TracerBuilder AddRequestCollector(this TracerBuilder builder, Action<AspNetCoreAdapterOptions> configure)
         {
             if (builder == null)
             {
@@ -57,10 +57,10 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            var options = new AspNetCoreCollectorOptions();
+            var options = new AspNetCoreAdapterOptions();
             configure(options);
 
-            return builder.AddAdapter(t => new AspNetCoreCollector(t, options));
+            return builder.AddAdapter(t => new AspNetCoreAdapter(t, options));
         }
     }
 }

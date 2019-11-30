@@ -1,4 +1,4 @@
-﻿// <copyright file="AspNetCoreCollectorOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AspNetCoreAdapterOptions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,12 @@
 // </copyright>
 using System;
 
-namespace OpenTelemetry.Collector.AspNetCore
+namespace OpenTelemetry.Adapter.AspNetCore
 {
     /// <summary>
-    /// Options for requests collector.
+    /// Options for requests adapter.
     /// </summary>
-    public class AspNetCoreCollectorOptions
+    public class AspNetCoreAdapterOptions
     {
         /// <summary>
         /// Gets or sets a hook to exclude calls based on domain or other per-request criterion.

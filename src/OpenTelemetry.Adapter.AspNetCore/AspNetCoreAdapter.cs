@@ -1,4 +1,4 @@
-﻿// <copyright file="AspNetCoreCollector.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AspNetCoreAdapter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,33 +14,34 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.Collector.AspNetCore.Implementation;
+using OpenTelemetry.Adapter.AspNetCore.Implementation;
+using OpenTelemetry.Collector;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.AspNetCore
+namespace OpenTelemetry.Adapter.AspNetCore
 {
     /// <summary>
-    /// Requests collector.
+    /// Requests adapter.
     /// </summary>
-    public class AspNetCoreCollector : IDisposable
+    public class AspNetCoreAdapter : IDisposable
     {
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AspNetCoreCollector"/> class.
+        /// Initializes a new instance of the <see cref="AspNetCoreAdapter"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public AspNetCoreCollector(ITracer tracer)
-            : this(tracer, new AspNetCoreCollectorOptions())
+        public AspNetCoreAdapter(ITracer tracer)
+            : this(tracer, new AspNetCoreAdapterOptions())
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AspNetCoreCollector"/> class.
+        /// Initializes a new instance of the <see cref="AspNetCoreAdapter"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="options">Configuration options for dependencies collector.</param>
-        public AspNetCoreCollector(ITracer tracer, AspNetCoreCollectorOptions options)
+        public AspNetCoreAdapter(ITracer tracer, AspNetCoreAdapterOptions options)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInListener("Microsoft.AspNetCore", tracer), options.EventFilter);
             this.diagnosticSourceSubscriber.Subscribe();

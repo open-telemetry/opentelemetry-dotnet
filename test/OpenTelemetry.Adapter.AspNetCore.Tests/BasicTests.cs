@@ -32,7 +32,7 @@ using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace OpenTelemetry.Collector.AspNetCore.Tests
+namespace OpenTelemetry.Adapter.AspNetCore.Tests
 {
     // See https://github.com/aspnet/Docs/tree/master/aspnetcore/test/integration-tests/samples/2.x/IntegrationTestsSample
     public class BasicTests

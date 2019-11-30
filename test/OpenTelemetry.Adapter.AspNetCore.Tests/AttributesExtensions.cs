@@ -17,7 +17,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace OpenTelemetry.Collector.AspNetCore.Tests
+namespace OpenTelemetry.Adapter.AspNetCore.Tests
 {
     internal static class AttributesExtensions
     {
