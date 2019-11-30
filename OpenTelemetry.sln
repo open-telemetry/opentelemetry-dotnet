@@ -44,9 +44,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api", "src\Op
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus", "src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj", "{AD9B2B54-EC9C-448E-BD3C-EDCC3F7AD022}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.Dependencies", "src\OpenTelemetry.Collector.Dependencies\OpenTelemetry.Collector.Dependencies.csproj", "{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Adapter.Dependencies", "src\OpenTelemetry.Adapter.Dependencies\OpenTelemetry.Adapter.Dependencies.csproj", "{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.Dependencies.Tests", "test\OpenTelemetry.Collector.Dependencies.Tests\OpenTelemetry.Collector.Dependencies.Tests.csproj", "{56E2647A-B814-4BAC-B854-BEA0051B5F2E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Adapter.Dependencies.Tests", "test\OpenTelemetry.Adapter.Dependencies.Tests\OpenTelemetry.Adapter.Dependencies.Tests.csproj", "{56E2647A-B814-4BAC-B854-BEA0051B5F2E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Adapter.AspNetCore", "src\OpenTelemetry.Adapter.AspNetCore\OpenTelemetry.Adapter.AspNetCore.csproj", "{752D2182-A351-41D8-99EE-DD363D7D5B43}"
 EndProject

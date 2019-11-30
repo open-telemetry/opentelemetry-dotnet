@@ -17,7 +17,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 
-namespace OpenTelemetry.Collector.Dependencies.Implementation
+namespace OpenTelemetry.Adapter.Dependencies.Implementation
 {
     internal class PropertyFetcher
     {

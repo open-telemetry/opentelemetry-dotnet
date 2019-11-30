@@ -1,4 +1,4 @@
-﻿// <copyright file="DependenciesCollector.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DependenciesAdapter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,26 +17,26 @@ using System;
 using System.Collections.Generic;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.Dependencies
+namespace OpenTelemetry.Adapter.Dependencies
 {
     /// <summary>
     /// Instrumentation adaptor that automatically collect calls to http and Azure SDK.
     /// </summary>
-    public class DependenciesCollector : IDisposable
+    public class DependenciesAdapter : IDisposable
     {
         private readonly List<IDisposable> collectors = new List<IDisposable>();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DependenciesCollector"/> class.
+        /// Initializes a new instance of the <see cref="DependenciesAdapter"/> class.
         /// </summary>
         /// <param name="options">Configuraiton options.</param>
         /// <param name="tracerFactory">Tracer factory to get a tracer from.</param>
-        public DependenciesCollector(HttpClientCollectorOptions options, TracerFactoryBase tracerFactory)
+        public DependenciesAdapter(HttpClientAdapterOptions options, TracerFactoryBase tracerFactory)
         {
-            var assemblyVersion = typeof(DependenciesCollector).Assembly.GetName().Version;
-            var httpClientListener = new HttpClientCollector(tracerFactory.GetTracer(nameof(HttpClientCollector), "semver:" + assemblyVersion), options);
-            var azureClientsListener = new AzureClientsCollector(tracerFactory.GetTracer(nameof(AzureClientsCollector), "semver:" + assemblyVersion));
-            var azurePipelineListener = new AzurePipelineCollector(tracerFactory.GetTracer(nameof(AzurePipelineCollector), "semver:" + assemblyVersion));
+            var assemblyVersion = typeof(DependenciesAdapter).Assembly.GetName().Version;
+            var httpClientListener = new HttpClientAdapter(tracerFactory.GetTracer(nameof(HttpClientAdapter), "semver:" + assemblyVersion), options);
+            var azureClientsListener = new AzureClientsAdapter(tracerFactory.GetTracer(nameof(AzureClientsAdapter), "semver:" + assemblyVersion));
+            var azurePipelineListener = new AzurePipelineAdapter(tracerFactory.GetTracer(nameof(AzurePipelineAdapter), "semver:" + assemblyVersion));
 
             this.collectors.Add(httpClientListener);
             this.collectors.Add(azureClientsListener);

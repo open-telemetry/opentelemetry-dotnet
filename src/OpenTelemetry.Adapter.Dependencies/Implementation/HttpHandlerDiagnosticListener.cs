@@ -21,9 +21,10 @@ using System.Net.Http;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using OpenTelemetry.Collector;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.Dependencies.Implementation
+namespace OpenTelemetry.Adapter.Dependencies.Implementation
 {
     internal class HttpHandlerDiagnosticListener : ListenerHandler
     {

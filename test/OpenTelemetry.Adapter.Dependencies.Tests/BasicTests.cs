@@ -26,7 +26,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace OpenTelemetry.Collector.Dependencies.Tests
+namespace OpenTelemetry.Adapter.Dependencies.Tests
 {
     public partial class HttpClientTests : IDisposable
     {
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
+            using (new HttpClientAdapter(tracer, new HttpClientAdapterOptions()))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             using (TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
-                .AddAdapter(t => new HttpClientCollector(t))))
+                .AddAdapter(t => new HttpClientAdapter(t))))
             {
                 using (var c = new HttpClient())
                 {
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
+            using (new HttpClientAdapter(tracer, new HttpClientAdapterOptions()))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);
@@ -172,11 +172,11 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            var options = new HttpClientCollectorOptions((activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
+            var options = new HttpClientAdapterOptions((activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
                                                                                         arg1 is HttpRequestMessage request &&
                                                                                         request.RequestUri.OriginalString.Contains(url)));
 
-            using (new HttpClientCollector(tracer, options))
+            using (new HttpClientAdapter(tracer, options))
             using (var c = new HttpClient())
             {
                 await c.GetAsync(url);
@@ -195,9 +195,9 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            var options = new HttpClientCollectorOptions();
+            var options = new HttpClientAdapterOptions();
 
-            using (new HttpClientCollector(tracer, options))
+            using (new HttpClientAdapter(tracer, options))
             using (var c = new HttpClient())
             using (var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100)))
             {

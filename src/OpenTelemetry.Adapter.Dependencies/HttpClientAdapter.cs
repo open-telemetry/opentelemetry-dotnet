@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpClientCollector.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpClientAdapter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,33 +14,34 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.Collector.Dependencies.Implementation;
+using OpenTelemetry.Adapter.Dependencies.Implementation;
+using OpenTelemetry.Collector;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.Dependencies
+namespace OpenTelemetry.Adapter.Dependencies
 {
     /// <summary>
-    /// Dependencies collector.
+    /// Dependencies adapter.
     /// </summary>
-    public class HttpClientCollector : IDisposable
+    public class HttpClientAdapter : IDisposable
     {
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="HttpClientCollector"/> class.
+        /// Initializes a new instance of the <see cref="HttpClientAdapter"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public HttpClientCollector(ITracer tracer)
-            : this(tracer, new HttpClientCollectorOptions())
+        public HttpClientAdapter(ITracer tracer)
+            : this(tracer, new HttpClientAdapterOptions())
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="HttpClientCollector"/> class.
+        /// Initializes a new instance of the <see cref="HttpClientAdapter"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="options">Configuration options for dependencies collector.</param>
-        public HttpClientCollector(ITracer tracer, HttpClientCollectorOptions options)
+        public HttpClientAdapter(ITracer tracer, HttpClientAdapterOptions options)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(tracer, options), options.EventFilter);
             this.diagnosticSourceSubscriber.Subscribe();

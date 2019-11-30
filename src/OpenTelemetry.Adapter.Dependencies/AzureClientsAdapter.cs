@@ -1,4 +1,4 @@
-﻿// <copyright file="AzurePipelineCollector.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AzureClientsAdapter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +14,28 @@
 // limitations under the License.
 // </copyright>
 using System;
+using OpenTelemetry.Collector;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.Dependencies
+namespace OpenTelemetry.Adapter.Dependencies
 {
     /// <summary>
-    /// Dependencies collector.
+    /// Dependencies adapter.
     /// </summary>
-    public class AzurePipelineCollector : IDisposable
+    public class AzureClientsAdapter : IDisposable
     {
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AzurePipelineCollector"/> class.
+        /// Initializes a new instance of the <see cref="AzureClientsAdapter"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public AzurePipelineCollector(ITracer tracer)
+        public AzureClientsAdapter(ITracer tracer)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new AzureSdkDiagnosticListener("Azure.Pipeline", tracer), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
+                name => new AzureSdkDiagnosticListener(name, tracer),
+                listener => listener.Name.StartsWith("Azure."),
+                null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

@@ -27,7 +27,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace OpenTelemetry.Collector.Dependencies.Tests
+namespace OpenTelemetry.Adapter.Dependencies.Tests
 {
     public partial class HttpClientTests
     {
@@ -100,7 +100,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             using (serverLifeTime)
 
-            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions() { SetHttpFlavor = tc.SetHttpFlavor }))
+            using (new HttpClientAdapter(tracer, new HttpClientAdapterOptions() { SetHttpFlavor = tc.SetHttpFlavor }))
             {
                 try
                 {

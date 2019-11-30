@@ -15,7 +15,7 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Collector.Dependencies;
+using OpenTelemetry.Adapter.Dependencies;
 
 namespace OpenTelemetry.Trace.Configuration
 {
@@ -37,9 +37,9 @@ namespace OpenTelemetry.Trace.Configuration
             }
 
             return builder
-                .AddAdapter((t) => new AzureClientsCollector(t))
-                .AddAdapter((t) => new AzurePipelineCollector(t))
-                .AddAdapter((t) => new HttpClientCollector(t));
+                .AddAdapter((t) => new AzureClientsAdapter(t))
+                .AddAdapter((t) => new AzurePipelineAdapter(t))
+                .AddAdapter((t) => new HttpClientAdapter(t));
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// <param name="builder">Trace builder to use.</param>
         /// <param name="configure">Configuration options.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder AddDependencyCollector(this TracerBuilder builder, Action<HttpClientCollectorOptions> configure)
+        public static TracerBuilder AddDependencyCollector(this TracerBuilder builder, Action<HttpClientAdapterOptions> configure)
         {
             if (builder == null)
             {
@@ -60,13 +60,13 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            var options = new HttpClientCollectorOptions();
+            var options = new HttpClientAdapterOptions();
             configure(options);
 
             return builder
-                .AddAdapter((t) => new AzureClientsCollector(t))
-                .AddAdapter((t) => new AzurePipelineCollector(t))
-                .AddAdapter((t) => new HttpClientCollector(t, options));
+                .AddAdapter((t) => new AzureClientsAdapter(t))
+                .AddAdapter((t) => new AzurePipelineAdapter(t))
+                .AddAdapter((t) => new HttpClientAdapter(t, options));
         }
     }
 }
