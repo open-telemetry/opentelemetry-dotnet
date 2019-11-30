@@ -16,7 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using OpenTelemetry.Collector.StackExchangeRedis;
+using OpenTelemetry.Adapter.StackExchangeRedis;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using StackExchange.Redis;
@@ -39,7 +39,7 @@ namespace Samples
                 })
                 .AddAdapter(t =>
                 {
-                    var collector = new StackExchangeRedisCallsCollector(t);
+                    var collector = new StackExchangeRedisCallsAdapter(t);
                     connection.RegisterProfiler(collector.GetProfilerSessionsFactory());
                     return collector;
                 })))

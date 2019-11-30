@@ -1,4 +1,4 @@
-﻿// <copyright file="StackExchangeRedisCallsCollectorOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AttributesExtensions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Collector.StackExchangeRedis
+using System.Linq;
+using System.Collections.Generic;
+
+namespace OpenTelemetry.Adapter.StackExchangeRedis.Tests
 {
-    /// <summary>
-    /// Options for dependencies collector.
-    /// </summary>
-    public class StackExchangeRedisCallsCollectorOptions
+    internal static class AttributesExtensions
     {
+        public static object GetValue(this IEnumerable<KeyValuePair<string, object>> attributes, string key)
+        {
+            return attributes.FirstOrDefault(kvp => kvp.Key == key).Value;
+        }
     }
 }

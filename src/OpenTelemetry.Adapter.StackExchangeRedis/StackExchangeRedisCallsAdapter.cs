@@ -1,4 +1,4 @@
-﻿// <copyright file="StackExchangeRedisCallsCollector.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="StackExchangeRedisCallsAdapter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,16 +17,16 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Collector.StackExchangeRedis.Implementation;
+using OpenTelemetry.Adapter.StackExchangeRedis.Implementation;
 using OpenTelemetry.Trace;
 using StackExchange.Redis.Profiling;
 
-namespace OpenTelemetry.Collector.StackExchangeRedis
+namespace OpenTelemetry.Adapter.StackExchangeRedis
 {
     /// <summary>
-    /// Redis calls collector.
+    /// Redis calls adapter.
     /// </summary>
-    public class StackExchangeRedisCallsCollector : IDisposable
+    public class StackExchangeRedisCallsAdapter : IDisposable
     {
         private readonly ITracer tracer;
 
@@ -37,10 +37,10 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         private readonly ConcurrentDictionary<ISpan, ProfilingSession> cache = new ConcurrentDictionary<ISpan, ProfilingSession>();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="StackExchangeRedisCallsCollector"/> class.
+        /// Initializes a new instance of the <see cref="StackExchangeRedisCallsAdapter"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public StackExchangeRedisCallsCollector(ITracer tracer)
+        public StackExchangeRedisCallsAdapter(ITracer tracer)
         {
             this.tracer = tracer;
 

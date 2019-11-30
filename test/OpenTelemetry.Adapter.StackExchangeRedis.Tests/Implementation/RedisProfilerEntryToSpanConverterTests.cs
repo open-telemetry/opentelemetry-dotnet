@@ -17,13 +17,13 @@
 
 using System;
 using Moq;
-using OpenTelemetry.Collector.StackExchangeRedis.Tests;
+using OpenTelemetry.Adapter.StackExchangeRedis.Tests;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using StackExchange.Redis.Profiling;
 using Xunit;
 
-namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
+namespace OpenTelemetry.Adapter.StackExchangeRedis.Implementation
 {
     public class RedisProfilerEntryToSpanConverterTests
     {

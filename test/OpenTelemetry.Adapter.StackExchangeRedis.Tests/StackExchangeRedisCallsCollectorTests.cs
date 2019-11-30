@@ -21,9 +21,9 @@ using StackExchange.Redis.Profiling;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace OpenTelemetry.Collector.StackExchangeRedis
+namespace OpenTelemetry.Adapter.StackExchangeRedis
 {
-    public class StackExchangeRedisCallsCollectorTests
+    public class StackExchangeRedisCallsAdapterTests
     {
         [Fact]
         public async void ProfilerSessionUsesTheSameDefault()
@@ -33,9 +33,9 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            using (var collector = new StackExchangeRedisCallsCollector(tracer))
+            using (var adapter = new StackExchangeRedisCallsAdapter(tracer))
             {
-                var profilerFactory = collector.GetProfilerSessionsFactory();
+                var profilerFactory = adapter.GetProfilerSessionsFactory();
                 var first = profilerFactory();
                 var second = profilerFactory();
 

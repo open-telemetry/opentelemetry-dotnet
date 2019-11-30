@@ -5,7 +5,7 @@
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OpenTelemetry.Collector.StackExchangeRedis\OpenTelemetry.Collector.StackExchangeRedis.csproj" />
+    <ProjectReference Include="..\..\src\OpenTelemetry.Adapter.StackExchangeRedis\OpenTelemetry.Adapter.StackExchangeRedis.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
