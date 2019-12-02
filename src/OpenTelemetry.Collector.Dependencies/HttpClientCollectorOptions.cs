@@ -43,6 +43,11 @@ namespace OpenTelemetry.Collector.Dependencies
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether add HTTP version to a trace.
+        /// </summary>
+        public bool SetHttpFlavor { get; set; } = false;
+
+        /// <summary>
         /// Gets a hook to exclude calls based on domain or other per-request criterion.
         /// </summary>
         internal Func<string, object, object, bool> EventFilter { get; }

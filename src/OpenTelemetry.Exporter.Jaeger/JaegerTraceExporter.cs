@@ -26,30 +26,25 @@ namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerTraceExporter : SpanExporter, IDisposable
     {
-        public const string DefaultAgentUdpHost = "localhost";
-        public const int DefaultAgentUdpCompactPort = 6831;
-        public const int DefaultMaxPacketSize = 65000;
-
         private readonly IJaegerUdpBatcher jaegerAgentUdpBatcher;
         private bool disposedValue = false; // To detect redundant dispose calls
 
         public JaegerTraceExporter(JaegerExporterOptions options)
-            : this(options, new JaegerUdpBatcher(options))
-        {
-        }
-
-        public JaegerTraceExporter(JaegerExporterOptions options, IJaegerUdpBatcher jaegerAgentUdpBatcher)
         {
             this.ValidateOptions(options);
-            this.InitializeOptions(options);
+            this.jaegerAgentUdpBatcher = new JaegerUdpBatcher(options);
+        }
+
+        public JaegerTraceExporter(IJaegerUdpBatcher jaegerAgentUdpBatcher)
+        {
             this.jaegerAgentUdpBatcher = jaegerAgentUdpBatcher;
         }
 
         public override async Task<ExportResult> ExportAsync(IEnumerable<Span> otelSpanList, CancellationToken cancellationToken)
         {
-            var jaegerspans = otelSpanList.Select(sdl => sdl.ToJaegerSpan());
+            var jaegerSpans = otelSpanList.Select(sdl => sdl.ToJaegerSpan());
 
-            foreach (var s in jaegerspans)
+            foreach (var s in jaegerSpans)
             {
                 // avoid cancelling here: this is no return point: if we reached this point
                 // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
@@ -88,25 +83,7 @@ namespace OpenTelemetry.Exporter.Jaeger
         {
             if (string.IsNullOrWhiteSpace(options.ServiceName))
             {
-                throw new ArgumentException("ServiceName", "Service Name is required.");
-            }
-        }
-
-        private void InitializeOptions(JaegerExporterOptions options)
-        {
-            if (string.IsNullOrWhiteSpace(options.AgentHost))
-            {
-                options.AgentHost = DefaultAgentUdpHost;
-            }
-
-            if (!options.AgentPort.HasValue)
-            {
-                options.AgentPort = DefaultAgentUdpCompactPort;
-            }
-
-            if (!options.MaxPacketSize.HasValue)
-            {
-                options.MaxPacketSize = DefaultMaxPacketSize;
+                throw new ArgumentException("Service Name is required", nameof(options.ServiceName));
             }
         }
     }
