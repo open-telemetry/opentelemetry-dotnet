@@ -1,4 +1,4 @@
-﻿// <copyright file="TagContextRoundtripTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DistributedContextRoundtripTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,11 @@
 // </copyright>
 using System;
 using Xunit;
+using System.Collections.Generic;
 
 namespace OpenTelemetry.Context.Propagation.Test
 {
-    public class TagContextRoundtripTest
+    public class DistributedContextRoundtripTest
     {
 
         private static readonly string K1 = "k1";
@@ -30,28 +31,34 @@ namespace OpenTelemetry.Context.Propagation.Test
         private static readonly string V2 = "v2";
         private static readonly string V3 = "v3";
 
-        private readonly ITagger tagger;
-        private readonly ITagContextBinarySerializer serializer;
+        private readonly DistributedContextBinarySerializer serializer;
 
-        public TagContextRoundtripTest()
+        public DistributedContextRoundtripTest()
         {
-            tagger = new Tagger();
-            serializer = new TagContextBinarySerializer();
+            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
+            serializer = new DistributedContextBinarySerializer();
         }
 
         [Fact]
         public void TestRoundtripSerialization_NormalTagContext()
         {
-            TestRoundtripSerialization(tagger.Empty);
-            TestRoundtripSerialization(tagger.EmptyBuilder.Put(K1, V1).Build());
-            TestRoundtripSerialization(tagger.EmptyBuilder.Put(K1, V1).Put(K2, V2).Put(K3, V3).Build());
-            TestRoundtripSerialization(tagger.EmptyBuilder.Put(K1, V_EMPTY).Build());
+            TestRoundtripSerialization(DistributedContext.Empty);
+            TestRoundtripSerialization(new DistributedContext(K1, V1));
+
+            DistributedContext expected = new DistributedContext(new List<DistributedContextEntry>(3) {
+                                                                          new DistributedContextEntry(K1, V1),
+                                                                          new DistributedContextEntry(K2, V2),
+                                                                          new DistributedContextEntry(K3, V3),
+                                                                 });
+            TestRoundtripSerialization(expected);
+
+            TestRoundtripSerialization(new DistributedContext(K1, V_EMPTY));
         }
 
         [Fact]
         public void TestRoundtrip_TagContextWithMaximumSize()
         {
-            var builder = tagger.EmptyBuilder;
+            List<DistributedContextEntry> list = new List<DistributedContextEntry>();
             for (var i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8; i++)
             {
                 // Each tag will be with format {key : "0123", value : "0123"}, so the length of it is 8.
@@ -73,12 +80,14 @@ namespace OpenTelemetry.Context.Propagation.Test
                 {
                     str = "" + i;
                 }
-                builder.Put(str, str);
+
+                list.Add(new DistributedContextEntry(str, str));
             }
-            TestRoundtripSerialization(builder.Build());
+
+            TestRoundtripSerialization(new DistributedContext(list));
         }
 
-        private void TestRoundtripSerialization(ITagContext expected)
+        private void TestRoundtripSerialization(DistributedContext expected)
         {
             var bytes = serializer.ToByteArray(expected);
             var actual = serializer.FromByteArray(bytes);

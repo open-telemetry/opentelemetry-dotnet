@@ -26,20 +26,19 @@ namespace Samples
 {
     internal class TestApplicationInsights
     {
-        private static readonly ITagger Tagger = Tags.Tagger;
-
         private static readonly string FrontendKey = "my.org/keys/frontend";
 
         internal static object Run()
         {
-            var tagContextBuilder = Tagger.CurrentBuilder.Put(FrontendKey, "mobile-ios9.3.5");
+            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance; // Enable asynclocal carrier for the context
+            DistributedContext dc = new DistributedContext(FrontendKey, "mobile-ios9.3.5");
 
             using (var tracerFactory = TracerFactory.Create(builder => builder
                 .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key")))
             {
                 var tracer = tracerFactory.GetTracer("application-insights-test");
 
-                using (tagContextBuilder.BuildScoped())
+                using (DistributedContext.SetCurrent(dc))
                 using (tracer.StartActiveSpan("incoming request", out var span))
                 {
                     span.AddEvent("Start processing video.");

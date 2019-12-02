@@ -1,4 +1,4 @@
-﻿// <copyright file="TaggerBase.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DistributedContextDeserializationException.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,20 +15,18 @@
 // </copyright>
 using System;
 
-namespace OpenTelemetry.Context
+namespace OpenTelemetry.Context.Propagation
 {
-    public abstract class TaggerBase : ITagger
+    public sealed class DistributedContextDeserializationException : Exception
     {
-        public abstract ITagContext Empty { get; }
+        public DistributedContextDeserializationException(string message)
+            : base(message)
+        {
+        }
 
-        public abstract ITagContext CurrentTagContext { get; }
-
-        public abstract ITagContextBuilder EmptyBuilder { get; }
-
-        public abstract ITagContextBuilder CurrentBuilder { get; }
-
-        public abstract ITagContextBuilder ToBuilder(ITagContext tags);
-
-        public abstract IDisposable WithTagContext(ITagContext tags);
+        public DistributedContextDeserializationException(string message, Exception cause)
+            : base(message, cause)
+        {
+        }
     }
 }

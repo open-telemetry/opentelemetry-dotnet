@@ -1,4 +1,4 @@
-﻿// <copyright file="ITagContextBinarySerializer.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DistributedContextCarrier.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,25 +14,25 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Context.Propagation
+using System;
+
+namespace OpenTelemetry.Context
 {
     /// <summary>
-    /// Binary serializer and deserializer of tags.
+    /// Abstraction to the carrier of the DistributedContext current object.
     /// </summary>
-    public interface ITagContextBinarySerializer
+    public abstract class DistributedContextCarrier
     {
         /// <summary>
-        /// Converts tags into byte array.
+        /// Gets the current <see cref="DistributedContext"/>.
         /// </summary>
-        /// <param name="tags">Tags to serialize.</param>
-        /// <returns>Binary representation of tags.</returns>
-        byte[] ToByteArray(ITagContext tags);
+        public abstract DistributedContext Current { get; }
 
         /// <summary>
-        /// Deserialize tags from byte array.
+        /// Sets the current <see cref="DistributedContext"/>.
         /// </summary>
-        /// <param name="bytes">Bytes to deserialize.</param>
-        /// <returns>Tags deserialized from bytes.</returns>
-        ITagContext FromByteArray(byte[] bytes);
+        /// <param name="context">Context to set as current.</param>
+        /// <returns>Scope object. On disposal - original context will be restored.</returns>
+        public abstract IDisposable SetCurrent(in DistributedContext context);
     }
 }

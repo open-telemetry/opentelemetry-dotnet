@@ -21,12 +21,12 @@ namespace OpenTelemetry.Context
     /// <summary>
     /// Distributed Context entry with the key, value and metadata.
     /// </summary>
-    public sealed class DistributedContextEntry
+    public readonly struct DistributedContextEntry
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="DistributedContextEntry"/> class with the key and value.
+        /// Initializes a new instance of the <see cref="DistributedContextEntry"/> struct with the key and value.
         /// </summary>
-         /// <param name="key">Key name for the entry.</param>
+        /// <param name="key">Key name for the entry.</param>
         /// <param name="value">Value associated with the key name.</param>
         public DistributedContextEntry(string key, string value)
             : this(key, value, EntryMetadata.NoPropagationEntry)
@@ -34,7 +34,7 @@ namespace OpenTelemetry.Context
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DistributedContextEntry"/> class with the key and value.
+        /// Initializes a new instance of the <see cref="DistributedContextEntry"/> struct with the key, value, and metadata.
         /// </summary>
         /// <param name="key">Key name for the entry.</param>
         /// <param name="value">Value associated with the key name.</param>
@@ -61,36 +61,55 @@ namespace OpenTelemetry.Context
         /// </summary>
         public EntryMetadata Metadata { get; }
 
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return nameof(DistributedContextEntry)
-                + "{"
-                + nameof(this.Key) + "=" + this.Key + ", "
-                + nameof(this.Value) + "=" + this.Value
-                + "}";
-        }
+        /// <summary>
+        /// Compare two entries of <see cref="DistributedContextEntry"/> for equality.
+        /// </summary>
+        /// <param name="entry1">First Entry to compare.</param>
+        /// <param name="entry2">Second Entry to compare.</param>
+        public static bool operator ==(DistributedContextEntry entry1, DistributedContextEntry entry2) => entry1.Equals(entry2);
+
+        /// <summary>
+        /// Compare two entries of <see cref="DistributedContextEntry"/> for not equality.
+        /// </summary>
+        /// <param name="entry1">First Entry to compare.</param>
+        /// <param name="entry2">Second Entry to compare.</param>
+        public static bool operator !=(DistributedContextEntry entry1, DistributedContextEntry entry2) => !entry1.Equals(entry2);
 
         /// <inheritdoc/>
         public override bool Equals(object o)
         {
-            if (o == this)
-            {
-                return true;
-            }
-
             if (o is DistributedContextEntry that)
             {
-                return this.Key.Equals(that.Key)
-                     && this.Value.Equals(that.Value);
+                return this.Key == that.Key && this.Value == that.Value;
             }
 
             return false;
         }
 
         /// <inheritdoc/>
+        public override string ToString()
+        {
+            if (this.Key is null)
+            {
+                return "{}";
+            }
+
+            return nameof(DistributedContextEntry)
+            + "{"
+            + nameof(this.Key) + "=" + this.Key + ", "
+            + nameof(this.Value) + "=" + this.Value
+            + "}";
+        }
+
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
+            if (this.Key is null)
+            {
+                // Default instance
+                return 0;
+            }
+
             var h = 1;
             h *= 1000003;
             h ^= this.Key.GetHashCode();

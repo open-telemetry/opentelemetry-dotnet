@@ -29,9 +29,9 @@ namespace OpenTelemetry.Context.Propagation
         // This size limit only applies to the bytes representing tag keys and values.
         internal const int TagContextSerializedSizeLimit = 8192;
 
-        // Serializes a TagContext to the on-the-wire format.
+        // Serializes a DistributedContext to the on-the-wire format.
         // Encoded tags are of the form: <version_id><encoded_tags>
-        internal static byte[] SerializeBinary(ITagContext tags)
+        internal static byte[] SerializeBinary(DistributedContext dc)
         {
             // Use a ByteArrayDataOutput to avoid needing to handle IOExceptions.
             // ByteArrayDataOutput byteArrayDataOutput = ByteStreams.newDataOutput();
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Context.Propagation
 
             byteArrayDataOutput.WriteByte(VersionId);
             var totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
-            foreach (var tag in tags)
+            foreach (var tag in dc.Entries)
             {
                 totalChars += tag.Key.Length;
                 totalChars += tag.Value.Length;
@@ -54,45 +54,45 @@ namespace OpenTelemetry.Context.Propagation
             // }
             if (totalChars > TagContextSerializedSizeLimit)
             {
-                throw new TagContextSerializationException(
-                    "Size of TagContext exceeds the maximum serialized size "
+                throw new DistributedContextSerializationException(
+                    "Size of DistributedContext exceeds the maximum serialized size "
                         + TagContextSerializedSizeLimit);
             }
 
             return byteArrayDataOutput.ToArray();
         }
 
-        // Deserializes input to TagContext based on the binary format standard.
+        // Deserializes input to DistributedContext based on the binary format standard.
         // The encoded tags are of the form: <version_id><encoded_tags>
-        internal static ITagContext DeserializeBinary(byte[] bytes)
+        internal static DistributedContext DeserializeBinary(byte[] bytes)
         {
             try
             {
                 if (bytes.Length == 0)
                 {
                     // Does not allow empty byte array.
-                    throw new TagContextDeserializationException("Input byte[] can not be empty.");
+                    throw new DistributedContextDeserializationException("Input byte[] can not be empty.");
                 }
 
                 var buffer = new MemoryStream(bytes);
                 var versionId = buffer.ReadByte();
                 if (versionId > VersionId || versionId < 0)
                 {
-                    throw new TagContextDeserializationException(
+                    throw new DistributedContextDeserializationException(
                         "Wrong Version ID: " + versionId + ". Currently supports version up to: " + VersionId);
                 }
 
-                return new TagContext(ParseTags(buffer));
+                return new DistributedContext(ParseTags(buffer));
             }
             catch (Exception exn)
             {
-                throw new TagContextDeserializationException(exn.ToString()); // byte array format error.
+                throw new DistributedContextDeserializationException(exn.ToString()); // byte array format error.
             }
         }
 
-        internal static IDictionary<string, string> ParseTags(MemoryStream buffer)
+        internal static IEnumerable<DistributedContextEntry> ParseTags(MemoryStream buffer)
         {
-            IDictionary<string, string> tags = new Dictionary<string, string>();
+            List<DistributedContextEntry> tags = new List<DistributedContextEntry>();
             var limit = buffer.Length;
             var totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
             while (buffer.Position < limit)
@@ -104,9 +104,9 @@ namespace OpenTelemetry.Context.Propagation
                     var val = CreateTagValue(key, DecodeString(buffer));
                     totalChars += key.Length;
                     totalChars += val.Length;
-                    tags[key] = val;
+                    tags.Add(new DistributedContextEntry(key, val));
                 }
-else
+                else
                 {
                     // Stop parsing at the first unknown field ID, since there is no way to know its length.
                     // TODO(sebright): Consider storing the rest of the byte array in the TagContext.
@@ -116,7 +116,7 @@ else
 
             if (totalChars > TagContextSerializedSizeLimit)
             {
-                throw new TagContextDeserializationException(
+                throw new DistributedContextDeserializationException(
                     "Size of TagContext exceeds the maximum serialized size "
                         + TagContextSerializedSizeLimit);
             }
@@ -134,7 +134,7 @@ else
             }
             catch (Exception e)
             {
-                throw new TagContextDeserializationException("Invalid tag key: " + name, e);
+                throw new DistributedContextDeserializationException("Invalid tag key: " + name, e);
             }
         }
 
@@ -148,7 +148,7 @@ else
             }
             catch (Exception e)
             {
-                throw new TagContextDeserializationException(
+                throw new DistributedContextDeserializationException(
                     "Invalid tag value for key " + key + ": " + value, e);
             }
         }

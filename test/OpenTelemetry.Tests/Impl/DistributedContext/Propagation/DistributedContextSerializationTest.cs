@@ -1,4 +1,4 @@
-﻿// <copyright file="TagContextSerializationTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DistributedContextSerializationTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Test
 {
-    public class TagContextSerializationTest
+    public class DistributedContextSerializationTest
     {
         private static readonly string K1 = "k1";
         private static readonly string K2 = "k2";
@@ -41,13 +41,12 @@ namespace OpenTelemetry.Context.Propagation.Test
         private static readonly DistributedContextEntry T3 = new DistributedContextEntry(K3, V3);
         private static readonly DistributedContextEntry T4 = new DistributedContextEntry(K4, V4);
 
-        private readonly ITagger tagger;
-        private readonly ITagContextBinarySerializer serializer;
+        private readonly DistributedContextBinarySerializer serializer;
 
-        public TagContextSerializationTest()
+        public DistributedContextSerializationTest()
         {
-            tagger = new Tagger();
-            serializer = new TagContextBinarySerializer();
+            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
+            serializer = new DistributedContextBinarySerializer();
         }
 
         [Fact]
@@ -71,7 +70,8 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void TestSerializeTooLargeTagContext()
         {
-            var builder = tagger.EmptyBuilder;
+            List<DistributedContextEntry> list = new List<DistributedContextEntry>();
+
             for (var i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8 - 1; i++) {
                 // Each tag will be with format {key : "0123", value : "0123"}, so the length of it is 8.
                 String str;
@@ -91,33 +91,34 @@ namespace OpenTelemetry.Context.Propagation.Test
                 {
                     str = i.ToString();
                 }
-                builder.Put(str, str);
+                list.Add(new DistributedContextEntry(str, str));
             }
             // The last tag will be of size 9, so the total size of the TagContext (8193) will be one byte
             // more than limit.
-            builder.Put("last", "last1");
+            list.Add(new DistributedContextEntry("last", "last1"));
 
-            var tagContext = builder.Build();
+            DistributedContext dc = new DistributedContext(list);
 
-            Assert.Throws<TagContextSerializationException>(() => serializer.ToByteArray(tagContext));
+            Assert.Throws<DistributedContextSerializationException>(() => serializer.ToByteArray(dc));
         }
 
         private void TestSerialize(params DistributedContextEntry[] tags)
         {
-            var builder = tagger.EmptyBuilder;
+            List<DistributedContextEntry> list = new List<DistributedContextEntry>();
+
             foreach (var tag in tags)
             {
-                builder.Put(tag.Key, tag.Value);
+                list.Add(tag);
             }
 
-            var actual = serializer.ToByteArray(builder.Build());
+            var actual = serializer.ToByteArray(new DistributedContext(list));
             var tagsList = tags.ToList();
             var tagPermutation = Permutate(tagsList, tagsList.Count);
             ISet<String> possibleOutPuts = new HashSet<String>();
-            foreach (List<DistributedContextEntry> list in tagPermutation) {
+            foreach (List<DistributedContextEntry> l in tagPermutation) {
                 var expected = new MemoryStream();
                 expected.WriteByte(SerializationUtils.VersionId);
-                foreach (var tag in list) {
+                foreach (var tag in l) {
                     expected.WriteByte(SerializationUtils.TagFieldId);
                     EncodeString(tag.Key, expected);
                     EncodeString(tag.Value, expected);
@@ -136,14 +137,14 @@ namespace OpenTelemetry.Context.Propagation.Test
             byteArrayOutPutStream.Write(inpBytes, 0, inpBytes.Length);
         }
 
-        internal static void RotateRight(IList sequence, int count)
+        internal static void RotateRight(IList<DistributedContextEntry> sequence, int count)
         {
             var tmp = sequence[count - 1];
             sequence.RemoveAt(count - 1);
             sequence.Insert(0, tmp);
         }
 
-        internal static IEnumerable<IList> Permutate(IList sequence, int count)
+        internal static IEnumerable<IList<DistributedContextEntry>> Permutate(IList<DistributedContextEntry> sequence, int count)
         {
             if (count == 0)
             {
