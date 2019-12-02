@@ -34,7 +34,7 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions, ConsoleOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri),
@@ -44,6 +44,7 @@ namespace Samples
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (StackdriverOptions options) => TestStackdriver.Run(options.ProjectId),
                     (LightStepOptions options) => TestLightstep.Run(options.AccessToken),
+                    (ConsoleOptions options) => TestConsole.Run(options.PrettyPrinted),
                     errs => 1);
 
             Console.ReadLine();
@@ -103,6 +104,13 @@ namespace Samples
     {
         [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
         public string Uri { get; set; }
+    }
+
+    [Verb("console", HelpText = "Specify the options required to test Console exporter")]
+    internal class ConsoleOptions
+    {
+        [Option('p', "pretty", HelpText = "Please specify if the output should be pretty printed")]
+        public bool PrettyPrinted { get; set; }
     }
 
 #pragma warning restore SA1402 // File may only contain a single type
