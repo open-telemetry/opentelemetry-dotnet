@@ -27,6 +27,11 @@ namespace OpenTelemetry.Context.Test
         private static readonly string V1 = "v1";
         private static readonly string V2 = "v2";
 
+        public DistributedContextTest()
+        {
+            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
+        }
+
         [Fact]
         public void EmptyContext()
         {
