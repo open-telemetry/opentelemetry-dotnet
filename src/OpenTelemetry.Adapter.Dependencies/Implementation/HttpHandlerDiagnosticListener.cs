@@ -33,9 +33,9 @@ namespace OpenTelemetry.Adapter.Dependencies.Implementation
         private readonly PropertyFetcher stopExceptionFetcher = new PropertyFetcher("Exception");
         private readonly PropertyFetcher stopRequestStatusFetcher = new PropertyFetcher("RequestTaskStatus");
         private readonly bool httpClientSupportsW3C = false;
-        private readonly HttpClientCollectorOptions options;
+        private readonly HttpClientAdapterOptions options;
 
-        public HttpHandlerDiagnosticListener(ITracer tracer, HttpClientCollectorOptions options)
+        public HttpHandlerDiagnosticListener(ITracer tracer, HttpClientAdapterOptions options)
             : base("HttpHandlerDiagnosticListener", tracer)
         {
             var framework = Assembly
