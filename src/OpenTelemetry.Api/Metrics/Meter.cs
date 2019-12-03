@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="name">The name of the counter.</param>
         /// <param name="monotonic">indicates if only positive values are expected.</param>
         /// <returns>The counter instance.</returns>
-        public Counter<long> CreateInt64Counter(string name, bool monotonic = true) => this.CreateCounter<long>(name, monotonic);
+        public abstract Counter<long> CreateInt64Counter(string name, bool monotonic = true);
 
         /// <summary>
         /// Creates double counter with given name.
@@ -37,7 +37,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="name">indicates if only positive values are expected.</param>
         /// <param name="monotonic">The name of the counter.</param>
         /// <returns>The counter instance.</returns>
-        public Counter<double> CreateDoubleCounter(string name, bool monotonic = true) => this.CreateCounter<double>(name, monotonic);
+        public abstract Counter<double> CreateDoubleCounter(string name, bool monotonic = true);
 
         /// <summary>
         /// Creates Int64 Gauge with given name.
@@ -77,16 +77,6 @@ namespace OpenTelemetry.Metrics
         /// <param name="labels">Label key value pairs.</param>
         /// <returns>The <see cref="LabelSet"/> with given label key value pairs.</returns>
         public abstract LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels);
-
-        /// <summary>
-        /// Creates double or Int64 counter with given name.
-        /// </summary>
-        /// <param name="name">indicates if only positive values are expected.</param>
-        /// <param name="monotonic">The name of the counter.</param>
-        /// <typeparam name="T">The element type of the counter. Should be either long or double.</typeparam>
-        /// <returns>The counter instance.</returns>
-        protected abstract Counter<T> CreateCounter<T>(string name, bool monotonic = true)
-            where T : struct;
 
         /// <summary>
         /// Creates double or Int64 Gauge with given name.

@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SumAggregator.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,29 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics.Export
+using System;
+
+namespace OpenTelemetry.Metrics
 {
-    internal class NoOpMetricProcessor : MetricProcessor
+    public class SumAggregator<T> where T : struct
     {
-        public override void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator)
+        private T sum;
+
+        internal void Update(T value)
         {
-            throw new System.NotImplementedException();
+            if (typeof(T) == typeof(double))
+            {
+                this.sum = (T)(object)((double)(object)this.sum + (double)(object)value);
+            }
+            else
+            {
+                this.sum = (T)(object)((long)(object)this.sum + (long)(object)value);
+            }
         }
 
-        public override void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator)
+        internal T Sum()
         {
-            throw new System.NotImplementedException();
+            return this.sum;
         }
     }
 }

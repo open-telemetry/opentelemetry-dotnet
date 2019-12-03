@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using OpenTelemetry.Metrics.Export;
 
@@ -23,6 +24,8 @@ namespace OpenTelemetry.Metrics
     public class MeterSDK : Meter
     {
         private readonly MetricProcessor metricProcessor;
+        private readonly IDictionary<string, CounterSDK<long>> longCounters = new ConcurrentDictionary<string, CounterSDK<long>>();
+        private readonly IDictionary<string, CounterSDK<double>> doubleCounters = new ConcurrentDictionary<string, CounterSDK<double>>();
 
         internal MeterSDK(MetricProcessor metricProcessor)
         {
@@ -34,9 +37,45 @@ namespace OpenTelemetry.Metrics
             return new LabelSet(labels);
         }
 
-        protected override Counter<T> CreateCounter<T>(string name, bool monotonic = true)
+        public void Collect()
         {
-            return new CounterSDK<T>(name, this.metricProcessor);
+            // collect all pending metric updates and send to batcher.
+            // must sync to prevent multiple Collect occuring at same time.
+            foreach (var longCounter in this.longCounters)
+            {
+                var metricName = longCounter.Key;
+                var counterInstrument = longCounter.Value;
+                foreach (var handle in counterInstrument.GetAllHandles())
+                {
+                    var labelSet = handle.Key;
+                    var sumValue = handle.Value.GetSumAggregator();
+
+                    this.metricProcessor.ProcessCounter(metricName, labelSet, sumValue);
+                }
+            }
+        }
+
+        public override Counter<long> CreateInt64Counter(string name, bool monotonic = true)
+        {
+            if (!this.longCounters.TryGetValue(name, out var counter))
+            {
+                counter = new CounterSDK<long>(name);
+
+                this.longCounters.Add(name, counter);
+            }
+
+            return counter;
+        }
+
+        public override Counter<double> CreateDoubleCounter(string name, bool monotonic = true)
+        {
+            if (!this.doubleCounters.TryGetValue(name, out var counter))
+            {
+                counter = new CounterSDK<double>(name);
+                this.doubleCounters.Add(name, counter);
+            }
+
+            return counter;
         }
 
         protected override Gauge<T> CreateGauge<T>(string name, bool monotonic = false)

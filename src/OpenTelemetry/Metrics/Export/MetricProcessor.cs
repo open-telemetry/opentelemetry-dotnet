@@ -29,15 +29,15 @@ namespace OpenTelemetry.Metrics.Export
         /// </summary>
         /// <param name="metricName">the name of the counter.</param>
         /// <param name="labelSet">the labelSet associated with counter value.</param>
-        /// <param name="value">the counter value.</param>
-        public abstract void AddCounter(string metricName, LabelSet labelSet, long value);
+        /// <param name="sumAggregator">the aggregator from which sum can be obtained.</param>
+        public abstract void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator);
 
         /// <summary>
         /// Process the counter metric.
         /// </summary>
         /// <param name="metricName">the name of the counter.</param>
         /// <param name="labelSet">the labelSet associated with counter value.</param>
-        /// <param name="value">the counter value.</param>
-        public abstract void AddCounter(string metricName, LabelSet labelSet, double value);
+        /// <param name="sumAggregator">the aggregator from which sum can be obtained.</param>
+        public abstract void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator);
     }
 }

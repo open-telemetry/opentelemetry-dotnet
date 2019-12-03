@@ -15,12 +15,7 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTelemetry.Context;
-using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
@@ -28,11 +23,9 @@ namespace OpenTelemetry.Metrics
     public class CounterHandleSDK<T> : CounterHandle<T>
         where T : struct
     {
-        private readonly MetricProcessor metricProcessor;
-        private LabelSet labelset;
-        private string metricName;
+        private readonly SumAggregator<T> sumAggregator = new SumAggregator<T>();
 
-        public CounterHandleSDK()
+        internal CounterHandleSDK()
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {
@@ -40,35 +33,19 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public CounterHandleSDK(string metricName, LabelSet labelset, MetricProcessor metricProcessor) : this()
-        {
-            this.metricProcessor = metricProcessor;
-            this.labelset = labelset;
-            this.metricName = metricName;
-        }
-
         public override void Add(in SpanContext context, T value)
         {
-            if (typeof(T) == typeof(double))
-            {
-                this.metricProcessor.AddCounter(this.metricName, this.labelset, (double)(object)value);
-            }
-            else
-            {
-                this.metricProcessor.AddCounter(this.metricName, this.labelset, (long)(object)value);
-            }                
+            this.sumAggregator.Update(value);
         }
 
         public override void Add(in DistributedContext context, T value)
         {
-            if (typeof(T) == typeof(double))
-            {
-                this.metricProcessor.AddCounter(this.metricName, this.labelset, (double)(object)value);
-            }
-            else
-            {
-                this.metricProcessor.AddCounter(this.metricName, this.labelset, (long)(object)value);
-            }
+            this.sumAggregator.Update(value);
+        }
+
+        internal SumAggregator<T> GetSumAggregator()
+        {
+            return this.sumAggregator;
         }
     }
 }

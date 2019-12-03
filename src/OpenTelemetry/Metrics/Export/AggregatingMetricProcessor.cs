@@ -48,7 +48,7 @@ namespace OpenTelemetry.Metrics.Export
             this.worker = Task.Factory.StartNew(s => this.Worker((CancellationToken)s), this.cts.Token);
         }
 
-        public override void AddCounter(string metricName, LabelSet labelSet, long value)
+        public override void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator)
         {
             if (!this.metricsLong.TryGetValue(metricName, out var metric))
             {
@@ -56,10 +56,10 @@ namespace OpenTelemetry.Metrics.Export
             }
 
             var metricSeries = metric.GetOrCreateMetricTimeSeries(labelSet);
-            metricSeries.Add(value);
+            metricSeries.Add(sumAggregator.Sum());
         }
 
-        public override void AddCounter(string metricName, LabelSet labelSet, double value)
+        public override void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator)
         {
             if (!this.metricsDouble.TryGetValue(metricName, out var metric))
             {
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Metrics.Export
             }
 
             var metricSeries = metric.GetOrCreateMetricTimeSeries(labelSet);
-            metricSeries.Add(value);
+            metricSeries.Add(sumAggregator.Sum());
         }
 
         private async Task ExportBatchAsync(CancellationToken cancellationToken)

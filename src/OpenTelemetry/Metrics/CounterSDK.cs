@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,7 +27,7 @@ namespace OpenTelemetry.Metrics
     public class CounterSDK<T> : Counter<T>
         where T : struct
     {        
-        private readonly MetricProcessor metricProcessor;
+        private readonly IDictionary<LabelSet, CounterHandleSDK<T>> counterHandles = new ConcurrentDictionary<LabelSet, CounterHandleSDK<T>>();
         private string metricName;
 
         public CounterSDK()
@@ -37,20 +38,31 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public CounterSDK(string name, MetricProcessor metricProcessor) : this()
+        public CounterSDK(string name) : this()
         {
             this.metricName = name;
-            this.metricProcessor = metricProcessor;
         }
 
         public override CounterHandle<T> GetHandle(LabelSet labelset)
         {
-            return new CounterHandleSDK<T>(this.metricName, labelset, this.metricProcessor);
+            if (!this.counterHandles.TryGetValue(labelset, out var handle))
+            {
+                handle = new CounterHandleSDK<T>();
+
+                this.counterHandles.Add(labelset, handle);
+            }
+
+            return handle;
         }
 
         public override CounterHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            return new CounterHandleSDK<T>(this.metricName, new LabelSet(labels), this.metricProcessor);
+            return this.GetHandle(new LabelSet(labels));
+        }
+
+        internal IDictionary<LabelSet, CounterHandleSDK<T>> GetAllHandles()
+        {
+            return this.counterHandles;
         }
     }
 }
