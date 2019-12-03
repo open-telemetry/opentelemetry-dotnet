@@ -24,19 +24,18 @@ namespace OpenTelemetry.Metrics
         {
         }
 
-        public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)
+        public override Counter<double> CreateDoubleCounter(string name, bool monotonic = true)
         {
-            // return no op
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
-        protected override Counter<T> CreateCounter<T>(string name, bool monotonic = true)
+        public override Counter<long> CreateInt64Counter(string name, bool monotonic = true)
         {
-            if (typeof(T) != typeof(long) || typeof(T) != typeof(double))
-            {
-                throw new InvalidOperationException();
-            }
+            throw new NotImplementedException();
+        }
 
+        public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)
+        {
             // return no op
             throw new System.NotImplementedException();
         }
