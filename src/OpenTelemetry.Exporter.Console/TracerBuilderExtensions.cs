@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Span processor configuration.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder UseJaeger(this TracerBuilder builder, Action<ConsoleExporterOptions> configure, Action<SpanProcessorPipelineBuilder> processorConfigure)
+        public static TracerBuilder UseConsole(this TracerBuilder builder, Action<ConsoleExporterOptions> configure, Action<SpanProcessorPipelineBuilder> processorConfigure)
         {
             if (builder == null)
             {
