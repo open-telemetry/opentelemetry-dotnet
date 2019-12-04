@@ -71,7 +71,8 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void UseDefaultEntry()
         {
-            Assert.Throws<ArgumentException>(() => new DistributedContext(new List<DistributedContextEntry>(1) { default }));
+            Assert.Equal(DistributedContext.Empty, new DistributedContext(new List<DistributedContextEntry>(1) { default }));
+            Assert.Equal(DistributedContext.Empty, new DistributedContext(null));
         }
 
         [Fact]

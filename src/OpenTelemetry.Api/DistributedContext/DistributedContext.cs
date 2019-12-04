@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization.Formatters;
 
 namespace OpenTelemetry.Context
 {
@@ -35,54 +36,38 @@ namespace OpenTelemetry.Context
         /// <param name="entries">Entries for distributed context.</param>
         public DistributedContext(IEnumerable<DistributedContextEntry> entries)
         {
-            if (entries is null)
-            {
-                throw new ArgumentNullException(nameof(entries));
-            }
-
-            foreach (DistributedContextEntry entry in entries)
-            {
-                if (entry == default)
-                {
-                    throw new ArgumentException($"'{nameof(entries)}' contains entries with null key and value");
-                }
-            }
-
-            if (carrier is NoopDistributedContextCarrier || entries.Count() == 0)
+            if (carrier is NoopDistributedContextCarrier || entries is null || entries.Count() == 0)
             {
                 this.entries = emptyList;
             }
             else
             {
-                if (entries.Count() == 1)
+                // Filter the default and duplicate entries.
+                List<DistributedContextEntry> list = new List<DistributedContextEntry>(entries.Count());
+                for (int i = 0; i < entries.Count(); i++)
                 {
-                    this.entries = new List<DistributedContextEntry>(entries);
-                }
-                else
-                {
-                    List<DistributedContextEntry> list = new List<DistributedContextEntry>();
-
-                    // Remove the duplicates keys.
-                    foreach (DistributedContextEntry entry in entries)
+                    DistributedContextEntry entry = entries.ElementAt(i);
+                    if (entry == default)
                     {
-                        int i;
-                        for (i = 0; i < list.Count; i++)
-                        {
-                            if (entry.Key == list[i].Key)
-                            {
-                                list[i] = entry;
-                                break;
-                            }
-                        }
+                        continue;
+                    }
 
-                        if (i >= list.Count)
+                    int j;
+                    for (j = entries.Count() - 1; j > i; j--)
+                    {
+                        if (entry.Key == entries.ElementAt(j).Key)
                         {
-                            list.Add(entry);
+                            break;
                         }
                     }
 
-                    this.entries = list;
+                    if (j <= i)
+                    {
+                        list.Add(entry);
+                    }
                 }
+
+                this.entries = list;
             }
         }
 
@@ -107,12 +92,7 @@ namespace OpenTelemetry.Context
         /// <param name="entry">The distributed context entry.</param>
         public DistributedContext(DistributedContextEntry entry)
         {
-            if (entry.Key is null || entry.Value is null)
-            {
-                throw new ArgumentNullException(entry.Key is null ? nameof(entry.Key) : nameof(entry.Value));
-            }
-
-            this.entries = carrier is NoopDistributedContextCarrier ? emptyList : new List<DistributedContextEntry>(1) { entry };
+            this.entries = carrier is NoopDistributedContextCarrier || entry == default ? emptyList : new List<DistributedContextEntry>(1) { entry };
         }
 
         /// <summary>
@@ -160,7 +140,7 @@ namespace OpenTelemetry.Context
         /// </summary>
         /// <param name="key">Name of the <see cref="DistributedContextEntry"/> to get.</param>
         /// <returns>The <see cref="DistributedContextEntry"/> with the specified name. If not found - null.</returns>
-        public string GetEntryValue(string key) => this.entries.FirstOrDefault(x => x.Key == key).Value;
+        public string GetEntryValue(string key) => this.entries.LastOrDefault(x => x.Key == key).Value;
 
         /// <inheritdoc/>
         public bool Equals(DistributedContext other)

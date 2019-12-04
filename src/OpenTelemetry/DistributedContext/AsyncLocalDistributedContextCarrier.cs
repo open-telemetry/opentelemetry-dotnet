@@ -23,7 +23,7 @@ namespace OpenTelemetry.Context
     /// <summary>
     /// Distributed Context carrier using AsyncLocal.
     /// </summary>
-    public class AsyncLocalDistributedContextCarrier : DistributedContextCarrier
+    public sealed class AsyncLocalDistributedContextCarrier : DistributedContextCarrier
     {
         private static AsyncLocal<DistributedContext> carrier = new AsyncLocal<DistributedContext>();
 
