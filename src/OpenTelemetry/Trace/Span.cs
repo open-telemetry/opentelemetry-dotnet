@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
     {
         private static readonly ConditionalWeakTable<Activity, Span> ActivitySpanTable = new ConditionalWeakTable<Activity, Span>();
 
-        private readonly ISampler sampler;
+        private readonly Sampler sampler;
         private readonly TracerConfiguration tracerConfiguration;
         private readonly SpanProcessor spanProcessor;
         private readonly object lck = new object();
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace
             bool createdFromActivity,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
-            ISampler sampler,
+            Sampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -90,6 +90,7 @@ namespace OpenTelemetry.Trace
             this.IsRecording = MakeSamplingDecision(
                 parentSpanContext,
                 name,
+                spanCreationOptions?.Attributes,
                 links, // we'll enumerate again, but double enumeration over small collection is cheaper than allocation
                 this.Activity.TraceId,
                 this.Activity.SpanId,
@@ -106,6 +107,15 @@ namespace OpenTelemetry.Trace
             if (this.IsRecording)
             {
                 this.SetLinks(links);
+
+                if (spanCreationOptions?.Attributes != null)
+                {
+                    foreach (var attribute in spanCreationOptions.Attributes)
+                    {
+                        this.SetAttribute(attribute);
+                    }
+                }
+
                 this.spanProcessor.OnStart(this);
             }
         }
@@ -385,7 +395,7 @@ namespace OpenTelemetry.Trace
             ISpan parentSpan,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
-            ISampler sampler,
+            Sampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -442,7 +452,7 @@ namespace OpenTelemetry.Trace
             SpanContext parentContext,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
-            ISampler sampler,
+            Sampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -464,7 +474,7 @@ namespace OpenTelemetry.Trace
             string name,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
-            ISampler sampler,
+            Sampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -487,7 +497,7 @@ namespace OpenTelemetry.Trace
             Activity activity,
             SpanKind spanKind,
             IEnumerable<Link> links,
-            ISampler sampler,
+            Sampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -535,12 +545,13 @@ namespace OpenTelemetry.Trace
         private static bool MakeSamplingDecision(
             SpanContext parent,
             string name,
+            IDictionary<string, object> attributes,
             IEnumerable<Link> parentLinks,
             ActivityTraceId traceId,
             ActivitySpanId spanId,
-            ISampler sampler)
+            Sampler sampler)
         {
-            return sampler.ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
+            return sampler.ShouldSample(parent, traceId, spanId, name, attributes, parentLinks).IsSampled;
         }
 
         private static ActivityAndTracestate FromCurrentParentActivity(string spanName, Activity current)

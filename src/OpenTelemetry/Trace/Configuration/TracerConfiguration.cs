@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.Trace.Sampler;
 
 namespace OpenTelemetry.Trace.Configuration
 {
