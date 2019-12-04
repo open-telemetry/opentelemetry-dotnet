@@ -16,14 +16,13 @@
 using System;
 using System.Diagnostics;
 using System.Collections.Generic;
-using System.Globalization;
 using Xunit;
 
-namespace OpenTelemetry.Trace.Sampler.Test
+namespace OpenTelemetry.Trace.Samplers.Test
 {
     public class SamplersTest
     {
-        private static readonly String SPAN_NAME = "MySpanName";
+        private static readonly string SpanName = "MySpanName";
         private static readonly int NUM_SAMPLE_TRIES = 1000;
         private readonly ActivityTraceId traceId;
         private readonly ActivitySpanId parentSpanId;
@@ -47,30 +46,32 @@ namespace OpenTelemetry.Trace.Sampler.Test
         {
             // Sampled parent.
             Assert.True(
-                    Samplers.AlwaysSample
+                    new AlwaysSampleSampler()
                         .ShouldSample(
                             sampledSpanContext,
                             traceId,
                             spanId,
                             "Another name",
+                            null,
                             null).IsSampled);
 
             // Not sampled parent.
             Assert.True(
-                    Samplers.AlwaysSample
+                    new AlwaysSampleSampler()
                         .ShouldSample(
                             notSampledSpanContext,
                             traceId,
                             spanId,
                             "Yet another name",
+                            null,
                             null).IsSampled);
 
         }
 
         [Fact]
-        public void AlwaysSampleSampler_ToString()
+        public void AlwaysSampleSampler_GetDescription()
         {
-            Assert.Equal("AlwaysSampleSampler", Samplers.AlwaysSample.ToString());
+            Assert.Equal("AlwaysSampleSampler", new AlwaysSampleSampler().Description);
         }
 
         [Fact]
@@ -78,59 +79,61 @@ namespace OpenTelemetry.Trace.Sampler.Test
         {
             // Sampled parent.
             Assert.False(
-                    Samplers.NeverSample
+                    new NeverSampleSampler()
                         .ShouldSample(
                             sampledSpanContext,
                             traceId,
                             spanId,
                             "bar",
+                            null,
                             null).IsSampled);
             // Not sampled parent.
             Assert.False(
-                    Samplers.NeverSample
+                    new NeverSampleSampler()
                         .ShouldSample(
                             notSampledSpanContext,
                             traceId,
                             spanId,
                             "quux",
+                            null,
                             null).IsSampled);
         }
 
         [Fact]
-        public void NeverSampleSampler_ToString()
+        public void NeverSampleSampler_GetDescription()
         {
-            Assert.Equal("NeverSampleSampler", Samplers.NeverSample.ToString());
+            Assert.Equal("NeverSampleSampler", new NeverSampleSampler().Description);
         }
 
         [Fact]
         public void ProbabilitySampler_OutOfRangeHighProbability()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => ProbabilitySampler.Create(1.01));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilitySampler(1.01));
         }
 
         [Fact]
         public void ProbabilitySampler_OutOfRangeLowProbability()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => ProbabilitySampler.Create(-0.00001));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilitySampler(-0.00001));
         }
 
 
         [Fact]
         public void ProbabilitySampler_DifferentProbabilities_NotSampledParent()
         {
-            ISampler neverSample = ProbabilitySampler.Create(0.0);
+            Sampler neverSample = new ProbabilitySampler(0.0);
             AssertSamplerSamplesWithProbability(
                 neverSample, notSampledSpanContext, null, 0.0);
-            ISampler alwaysSample = ProbabilitySampler.Create(1.0);
+            Sampler alwaysSample = new ProbabilitySampler(1.0);
             AssertSamplerSamplesWithProbability(
                 alwaysSample, notSampledSpanContext, null, 1.0);
-            ISampler fiftyPercentSample = ProbabilitySampler.Create(0.5);
+            Sampler fiftyPercentSample = new ProbabilitySampler(0.5);
             AssertSamplerSamplesWithProbability(
                 fiftyPercentSample, notSampledSpanContext, null, 0.5);
-            ISampler twentyPercentSample = ProbabilitySampler.Create(0.2);
+            Sampler twentyPercentSample = new ProbabilitySampler(0.2);
             AssertSamplerSamplesWithProbability(
                 twentyPercentSample, notSampledSpanContext, null, 0.2);
-            ISampler twoThirdsSample = ProbabilitySampler.Create(2.0 / 3.0);
+            Sampler twoThirdsSample = new ProbabilitySampler(2.0 / 3.0);
             AssertSamplerSamplesWithProbability(
                 twoThirdsSample, notSampledSpanContext, null, 2.0 / 3.0);
         }
@@ -138,19 +141,19 @@ namespace OpenTelemetry.Trace.Sampler.Test
         [Fact]
         public void ProbabilitySampler_DifferentProbabilities_SampledParent()
         {
-            ISampler neverSample = ProbabilitySampler.Create(0.0);
+            Sampler neverSample = new ProbabilitySampler(0.0);
             AssertSamplerSamplesWithProbability(
                 neverSample, sampledSpanContext, null, 1.0);
-            ISampler alwaysSample = ProbabilitySampler.Create(1.0);
+            Sampler alwaysSample = new ProbabilitySampler(1.0);
             AssertSamplerSamplesWithProbability(
                 alwaysSample, sampledSpanContext, null, 1.0);
-            ISampler fiftyPercentSample = ProbabilitySampler.Create(0.5);
+            Sampler fiftyPercentSample = new ProbabilitySampler(0.5);
             AssertSamplerSamplesWithProbability(
                 fiftyPercentSample, sampledSpanContext, null, 1.0);
-            ISampler twentyPercentSample = ProbabilitySampler.Create(0.2);
+            Sampler twentyPercentSample = new ProbabilitySampler(0.2);
             AssertSamplerSamplesWithProbability(
                 twentyPercentSample, sampledSpanContext, null, 1.0);
-            ISampler twoThirdsSample = ProbabilitySampler.Create(2.0 / 3.0);
+            Sampler twoThirdsSample = new ProbabilitySampler(2.0 / 3.0);
             AssertSamplerSamplesWithProbability(
                 twoThirdsSample, sampledSpanContext, null, 1.0);
         }
@@ -158,19 +161,19 @@ namespace OpenTelemetry.Trace.Sampler.Test
         [Fact]
         public void ProbabilitySampler_DifferentProbabilities_SampledParentLink()
         {
-            ISampler neverSample = ProbabilitySampler.Create(0.0);
+            Sampler neverSample = new ProbabilitySampler(0.0);
             AssertSamplerSamplesWithProbability(
                 neverSample, notSampledSpanContext, new List<Link>() { sampledLink }, 1.0);
-            ISampler alwaysSample = ProbabilitySampler.Create(1.0);
+            Sampler alwaysSample = new ProbabilitySampler(1.0);
             AssertSamplerSamplesWithProbability(
                 alwaysSample, notSampledSpanContext, new List<Link>() { sampledLink }, 1.0);
-            ISampler fiftyPercentSample = ProbabilitySampler.Create(0.5);
+            Sampler fiftyPercentSample = new ProbabilitySampler(0.5);
             AssertSamplerSamplesWithProbability(
                 fiftyPercentSample, notSampledSpanContext, new List<Link>() { sampledLink }, 1.0);
-            ISampler twentyPercentSample = ProbabilitySampler.Create(0.2);
+            Sampler twentyPercentSample = new ProbabilitySampler(0.2);
             AssertSamplerSamplesWithProbability(
                 twentyPercentSample, notSampledSpanContext, new List<Link>() { sampledLink }, 1.0);
-            ISampler twoThirdsSample = ProbabilitySampler.Create(2.0 / 3.0);
+            Sampler twoThirdsSample = new ProbabilitySampler(2.0 / 3.0);
             AssertSamplerSamplesWithProbability(
                 twoThirdsSample, notSampledSpanContext, new List<Link>() { sampledLink }, 1.0);
         }
@@ -178,7 +181,7 @@ namespace OpenTelemetry.Trace.Sampler.Test
         [Fact]
         public void ProbabilitySampler_SampleBasedOnTraceId()
         {
-            ISampler defaultProbability = ProbabilitySampler.Create(0.0001);
+            Sampler defaultProbability = new ProbabilitySampler(0.0001);
             // This traceId will not be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is not less than probability * Long.MAX_VALUE;
             var notSampledtraceId =
@@ -207,7 +210,8 @@ namespace OpenTelemetry.Trace.Sampler.Test
                         SpanContext.BlankLocal, 
                         notSampledtraceId,
                         ActivitySpanId.CreateRandom(),
-                        SPAN_NAME,
+                        SpanName,
+                        null,
                         null).IsSampled);
             // This traceId will be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is less than probability * Long.MAX_VALUE;
@@ -237,26 +241,20 @@ namespace OpenTelemetry.Trace.Sampler.Test
                         null,
                         sampledtraceId,
                         ActivitySpanId.CreateRandom(),
-                        SPAN_NAME,
+                        SpanName,
+                        null,
                         null).IsSampled);
         }
 
         [Fact]
-        public void ProbabilitySampler_getDescription()
+        public void ProbabilitySampler_GetDescription()
         {
-            Assert.Equal($"ProbabilitySampler({0.5:F6})", ProbabilitySampler.Create(0.5).Description);
-        }
-
-        [Fact]
-        public void ProbabilitySampler_ToString()
-        {
-            var result = ProbabilitySampler.Create(0.5).ToString();
-            Assert.Contains($"0{CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator}5", result);
+            Assert.Equal($"ProbabilitySampler({0.5:F6})", new ProbabilitySampler(0.5).Description);
         }
 
         // Applies the given sampler to NUM_SAMPLE_TRIES random traceId/spanId pairs.
         private static void AssertSamplerSamplesWithProbability(
-            ISampler sampler, SpanContext parent, List<Link> links, double probability)
+            Sampler sampler, SpanContext parent, List<Link> links, double probability)
         {
             var count = 0; // Count of spans with sampling enabled
             for (var i = 0; i < NUM_SAMPLE_TRIES; i++)
@@ -265,7 +263,8 @@ namespace OpenTelemetry.Trace.Sampler.Test
                     parent,
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
-                    SPAN_NAME,
+                    SpanName,
+                    null,
                     links).IsSampled)
                 {
                     count++;

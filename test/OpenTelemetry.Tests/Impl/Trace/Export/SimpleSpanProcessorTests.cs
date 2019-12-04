@@ -20,7 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Sampler;
+using OpenTelemetry.Trace.Samplers;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Export.Test
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 .AddProcessorPipeline(p => p
                         .SetExporter(spanExporter)
                         .SetExportingProcessor(e => new SimpleSpanProcessor(e)))
-                .SetSampler(Samplers.AlwaysParentSampler))
+                .SetSampler(new AlwaysParentSampler()))
                 .GetTracer(null);
         }
 
