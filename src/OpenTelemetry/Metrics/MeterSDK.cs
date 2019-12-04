@@ -31,6 +31,7 @@ namespace OpenTelemetry.Metrics
         private readonly IDictionary<string, GaugeSDK<double>> doubleGauges = new ConcurrentDictionary<string, GaugeSDK<double>>();
         private readonly IDictionary<string, MeasureSDK<long>> longMeasures = new ConcurrentDictionary<string, MeasureSDK<long>>();
         private readonly IDictionary<string, MeasureSDK<double>> doubleMeasures = new ConcurrentDictionary<string, MeasureSDK<double>>();
+        private readonly object collectLock = new object();
 
         internal MeterSDK(string meterName, MetricProcessor metricProcessor)
         {
@@ -45,83 +46,86 @@ namespace OpenTelemetry.Metrics
 
         public void Collect()
         {
-            // collect all pending metric updates and send to batcher.
-            // must sync to prevent multiple Collect occuring at same time.
-            foreach (var longCounter in this.longCounters)
+            lock (this.collectLock)
             {
-                var metricName = longCounter.Key;
-                var counterInstrument = longCounter.Value;
-                foreach (var handle in counterInstrument.GetAllHandles())
+                // collect all pending metric updates and send to batcher.
+                // must sync to prevent multiple Collect occuring at same time.
+                foreach (var longCounter in this.longCounters)
                 {
-                    var labelSet = handle.Key;
-                    var aggregator = handle.Value.GetAggregator();
+                    var metricName = longCounter.Key;
+                    var counterInstrument = longCounter.Value;
+                    foreach (var handle in counterInstrument.GetAllHandles())
+                    {
+                        var labelSet = handle.Key;
+                        var aggregator = handle.Value.GetAggregator();
 
-                    this.metricProcessor.ProcessCounter(this.meterName, metricName, labelSet, aggregator);
+                        this.metricProcessor.ProcessCounter(this.meterName, metricName, labelSet, aggregator);
+                    }
                 }
-            }
 
-            foreach (var doubleCounter in this.doubleCounters)
-            {
-                var metricName = doubleCounter.Key;
-                var counterInstrument = doubleCounter.Value;
-                foreach (var handle in counterInstrument.GetAllHandles())
+                foreach (var doubleCounter in this.doubleCounters)
                 {
-                    var labelSet = handle.Key;
-                    var aggregator = handle.Value.GetAggregator();
+                    var metricName = doubleCounter.Key;
+                    var counterInstrument = doubleCounter.Value;
+                    foreach (var handle in counterInstrument.GetAllHandles())
+                    {
+                        var labelSet = handle.Key;
+                        var aggregator = handle.Value.GetAggregator();
 
-                    this.metricProcessor.ProcessCounter(this.meterName, metricName, labelSet, aggregator);
+                        this.metricProcessor.ProcessCounter(this.meterName, metricName, labelSet, aggregator);
+                    }
                 }
-            }
 
-            foreach (var longGauge in this.longGauges)
-            {
-                var metricName = longGauge.Key;
-                var gaugeInstrument = longGauge.Value;
-                foreach (var handle in gaugeInstrument.GetAllHandles())
+                foreach (var longGauge in this.longGauges)
                 {
-                    var labelSet = handle.Key;
-                    var aggregator = handle.Value.GetAggregator();
+                    var metricName = longGauge.Key;
+                    var gaugeInstrument = longGauge.Value;
+                    foreach (var handle in gaugeInstrument.GetAllHandles())
+                    {
+                        var labelSet = handle.Key;
+                        var aggregator = handle.Value.GetAggregator();
 
-                    this.metricProcessor.ProcessGauge(this.meterName, metricName, labelSet, aggregator);
+                        this.metricProcessor.ProcessGauge(this.meterName, metricName, labelSet, aggregator);
+                    }
                 }
-            }
 
-            foreach (var doubleGauge in this.doubleGauges)
-            {
-                var metricName = doubleGauge.Key;
-                var gaugeInstrument = doubleGauge.Value;
-                foreach (var handle in gaugeInstrument.GetAllHandles())
+                foreach (var doubleGauge in this.doubleGauges)
                 {
-                    var labelSet = handle.Key;
-                    var aggregator = handle.Value.GetAggregator();
+                    var metricName = doubleGauge.Key;
+                    var gaugeInstrument = doubleGauge.Value;
+                    foreach (var handle in gaugeInstrument.GetAllHandles())
+                    {
+                        var labelSet = handle.Key;
+                        var aggregator = handle.Value.GetAggregator();
 
-                    this.metricProcessor.ProcessGauge(this.meterName, metricName, labelSet, aggregator);
+                        this.metricProcessor.ProcessGauge(this.meterName, metricName, labelSet, aggregator);
+                    }
                 }
-            }
 
-            foreach (var longMeasure in this.longMeasures)
-            {
-                var metricName = longMeasure.Key;
-                var measureInstrument = longMeasure.Value;
-                foreach (var handle in measureInstrument.GetAllHandles())
+                foreach (var longMeasure in this.longMeasures)
                 {
-                    var labelSet = handle.Key;
-                    var aggregator = handle.Value.GetAggregator();
+                    var metricName = longMeasure.Key;
+                    var measureInstrument = longMeasure.Value;
+                    foreach (var handle in measureInstrument.GetAllHandles())
+                    {
+                        var labelSet = handle.Key;
+                        var aggregator = handle.Value.GetAggregator();
 
-                    this.metricProcessor.ProcessMeasure(this.meterName, metricName, labelSet, aggregator);
+                        this.metricProcessor.ProcessMeasure(this.meterName, metricName, labelSet, aggregator);
+                    }
                 }
-            }
 
-            foreach (var doubleMeasure in this.doubleMeasures)
-            {
-                var metricName = doubleMeasure.Key;
-                var measureInstrument = doubleMeasure.Value;
-                foreach (var handle in measureInstrument.GetAllHandles())
+                foreach (var doubleMeasure in this.doubleMeasures)
                 {
-                    var labelSet = handle.Key;
-                    var aggregator = handle.Value.GetAggregator();
+                    var metricName = doubleMeasure.Key;
+                    var measureInstrument = doubleMeasure.Value;
+                    foreach (var handle in measureInstrument.GetAllHandles())
+                    {
+                        var labelSet = handle.Key;
+                        var aggregator = handle.Value.GetAggregator();
 
-                    this.metricProcessor.ProcessMeasure(this.meterName, metricName, labelSet, aggregator);
+                        this.metricProcessor.ProcessMeasure(this.meterName, metricName, labelSet, aggregator);
+                    }
                 }
             }
         }
