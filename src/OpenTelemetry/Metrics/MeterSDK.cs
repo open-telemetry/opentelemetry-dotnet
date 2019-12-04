@@ -27,6 +27,9 @@ namespace OpenTelemetry.Metrics
         private readonly IDictionary<string, CounterSDK<long>> longCounters = new ConcurrentDictionary<string, CounterSDK<long>>();
         private readonly IDictionary<string, CounterSDK<double>> doubleCounters = new ConcurrentDictionary<string, CounterSDK<double>>();
 
+        private readonly IDictionary<string, GaugeSDK<long>> longGauges = new ConcurrentDictionary<string, GaugeSDK<long>>();
+        private readonly IDictionary<string, GaugeSDK<double>> doubleGauges = new ConcurrentDictionary<string, GaugeSDK<double>>();
+
         internal MeterSDK(MetricProcessor metricProcessor)
         {
             this.metricProcessor = metricProcessor;
@@ -45,6 +48,19 @@ namespace OpenTelemetry.Metrics
             {
                 var metricName = longCounter.Key;
                 var counterInstrument = longCounter.Value;
+                foreach (var handle in counterInstrument.GetAllHandles())
+                {
+                    var labelSet = handle.Key;
+                    var sumValue = handle.Value.GetSumAggregator();
+
+                    this.metricProcessor.ProcessCounter(metricName, labelSet, sumValue);
+                }
+            }
+
+            foreach (var doubleCounter in this.doubleCounters)
+            {
+                var metricName = doubleCounter.Key;
+                var counterInstrument = doubleCounter.Value;
                 foreach (var handle in counterInstrument.GetAllHandles())
                 {
                     var labelSet = handle.Key;
@@ -78,12 +94,36 @@ namespace OpenTelemetry.Metrics
             return counter;
         }
 
-        protected override Gauge<T> CreateGauge<T>(string name, bool monotonic = false)
+        public override Gauge<long> CreateInt64Gauge(string name, bool monotonic = true)
+        {
+            if (!this.longGauges.TryGetValue(name, out var gauge))
+            {
+                gauge = new GaugeSDK<long>(name);
+
+                this.longGauges.Add(name, gauge);
+            }
+
+            return gauge;
+        }
+
+        public override Gauge<double> CreateDoubleGauge(string name, bool monotonic = true)
+        {
+            if (!this.doubleGauges.TryGetValue(name, out var gauge))
+            {
+                gauge = new GaugeSDK<double>(name);
+
+                this.doubleGauges.Add(name, gauge);
+            }
+
+            return gauge;
+        }
+
+        public override Measure<double> CreateDoubleMeasure(string name, bool absolute = true)
         {
             throw new NotImplementedException();
         }
 
-        protected override Measure<T> CreateMeasure<T>(string name, bool absolute = true)
+        public override Measure<long> CreateInt64Measure(string name, bool absolute = true)
         {
             throw new NotImplementedException();
         }
