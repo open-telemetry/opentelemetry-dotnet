@@ -61,7 +61,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             // flush if current batch size plus new span size equals or exceeds max batch size
             if (this.batchByteSize + spanSize >= this.maxPacketSize)
             {
-                flushedSpanCount = await FlushAsync(cancellationToken).ConfigureAwait(false);
+                flushedSpanCount = await this.FlushAsync(cancellationToken).ConfigureAwait(false);
             }
 
             // add span to batch and wait for more spans
