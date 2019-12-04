@@ -26,20 +26,34 @@ namespace OpenTelemetry.Trace.Test
     public class MetricsTest
     {
         [Fact]
-        public void MetricE2ETest1()
+        public void MetricSDKCollectSendsMetricAggregatesToRegisteredProcessor()
         {
-            var meter = MeterFactory.Create(new NoOpMetricProcessor()).GetMeter("library1") as MeterSDK;
+            var testProcessor = new TestMetricProcessor();
+            var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSDK;
             var testCounter = meter.CreateInt64Counter("testCounter");
-            List<KeyValuePair<string, string>> labels = new List<KeyValuePair<string, string>>();
-            labels.Add(new KeyValuePair<string, string>("dim1", "value1"));
+            
+            var labels1 = new List<KeyValuePair<string, string>>();
+            labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
 
-            testCounter.Add(SpanContext.BlankLocal, 100, meter.GetLabelSet(labels));
-            testCounter.Add(SpanContext.BlankLocal, 100, meter.GetLabelSet(labels));
-            testCounter.Add(SpanContext.BlankLocal, 100, meter.GetLabelSet(labels));
+            var labels2 = new List<KeyValuePair<string, string>>();
+            labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
+
+            testCounter.Add(SpanContext.BlankLocal, 100, meter.GetLabelSet(labels1));
+            testCounter.Add(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels1));
+            testCounter.Add(SpanContext.BlankLocal, 200, meter.GetLabelSet(labels2));
+            testCounter.Add(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels2));
 
             meter.Collect();
 
-            //Task.Delay(1000000).Wait();
+            Assert.Equal(2, testProcessor.counters.Count);
+            Assert.Equal("testCounter", testProcessor.counters[0].Item1);
+            Assert.Equal("testCounter", testProcessor.counters[1].Item1);
+
+            Assert.Equal(meter.GetLabelSet(labels1), testProcessor.counters[0].Item2);
+            Assert.Equal(meter.GetLabelSet(labels2), testProcessor.counters[1].Item2);
+
+            Assert.Equal(110, testProcessor.counters[0].Item3);
+            Assert.Equal(210, testProcessor.counters[1].Item3);
         }
     }
 }

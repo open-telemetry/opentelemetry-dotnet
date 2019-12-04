@@ -70,6 +70,16 @@ namespace OpenTelemetry.Metrics.Export
             metricSeries.Add(sumAggregator.Sum());
         }
 
+        public override void ProcessGauge(string metricName, LabelSet labelSet, GaugeAggregator<long> gaugeAggregator)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ProcessGauge(string metricName, LabelSet labelSet, GaugeAggregator<double> gaugeAggregator)
+        {
+            throw new NotImplementedException();
+        }
+
         private async Task ExportBatchAsync(CancellationToken cancellationToken)
         {
             try

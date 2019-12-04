@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestMetricProcessor.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,18 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Metrics.Export
 {
-    internal class NoOpMetricProcessor : MetricProcessor
+    internal class TestMetricProcessor : MetricProcessor
     {
+        public List<Tuple<string, LabelSet, long>> counters = new List<Tuple<string, LabelSet, long>>();
+
         public override void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator)
         {
+            counters.Add(new Tuple<string, LabelSet, long>(metricName, labelSet, sumAggregator.Sum()));
         }
 
         public override void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator)
