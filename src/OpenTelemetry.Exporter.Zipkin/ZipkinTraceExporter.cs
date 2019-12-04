@@ -111,7 +111,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             return Task.CompletedTask;
         }
 
-        internal ZipkinSpan GenerateSpan(Span otelSpan, ZipkinEndpoint localEndpoint)
+        internal ZipkinSpan GenerateSpan(Span otelSpan, ZipkinEndpoint defaultLocalEndpoint)
         {
             var context = otelSpan.Context;
             var startTimestamp = this.ToEpochMicroseconds(otelSpan.StartTimestamp);
@@ -119,13 +119,12 @@ namespace OpenTelemetry.Exporter.Zipkin
 
             var spanBuilder =
                 ZipkinSpan.NewBuilder()
-                    .ActivityTraceId(this.EncodeTraceId(context.TraceId))
+                    .TraceId(this.EncodeTraceId(context.TraceId))
                     .Id(this.EncodeSpanId(context.SpanId))
                     .Kind(this.ToSpanKind(otelSpan))
                     .Name(otelSpan.Name)
                     .Timestamp(this.ToEpochMicroseconds(otelSpan.StartTimestamp))
-                    .Duration(endTimestamp - startTimestamp)
-                    .LocalEndpoint(localEndpoint);
+                    .Duration(endTimestamp - startTimestamp);
 
             if (otelSpan.ParentSpanId != default)
             {
@@ -136,6 +135,51 @@ namespace OpenTelemetry.Exporter.Zipkin
             {
                 spanBuilder.PutTag(label.Key, label.Value.ToString());
             }
+
+            // See https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md
+            string serviceName = string.Empty;
+            string serviceNamespace = string.Empty;
+
+            foreach (var label in otelSpan.LibraryResource.Labels)
+            {
+                string key = label.Key;
+                string val = label.Value;
+
+                if (key == "service.name")
+                {
+                    serviceName = val;
+                }
+                else if (key == "service.namespace")
+                {
+                    serviceNamespace = val;
+                }
+                else
+                {
+                    spanBuilder.PutTag(key, val);
+                }
+            }
+
+            if (serviceNamespace != string.Empty)
+            {
+                serviceName = serviceNamespace + "." + serviceName;
+            }
+
+            var endpoint = defaultLocalEndpoint;
+
+            // override default service name
+            // TODO: add caching
+            if (serviceName != string.Empty)
+            {
+                endpoint = new ZipkinEndpoint()
+                {
+                    Ipv4 = defaultLocalEndpoint.Ipv4,
+                    Ipv6 = defaultLocalEndpoint.Ipv6,
+                    Port = defaultLocalEndpoint.Port,
+                    ServiceName = serviceName,
+                };
+            }
+
+            spanBuilder.LocalEndpoint(endpoint);
 
             var status = otelSpan.Status;
 

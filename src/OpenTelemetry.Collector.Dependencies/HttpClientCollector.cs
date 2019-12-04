@@ -42,7 +42,7 @@ namespace OpenTelemetry.Collector.Dependencies
         /// <param name="options">Configuration options for dependencies collector.</param>
         public HttpClientCollector(ITracer tracer, HttpClientCollectorOptions options)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(tracer), options.EventFilter);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(tracer, options), options.EventFilter);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

@@ -68,6 +68,7 @@ Myget feeds:
 | Application Insights | [![MyGet Nightly][OpenTelemetry-exporter-ai-myget-image]][OpenTelemetry-exporter-ai-myget-url]                   | [![NuGet release][OpenTelemetry-exporter-ai-nuget-image]][OpenTelemetry-exporter-ai-nuget-url]                   |
 | Stackdriver          | [![MyGet Nightly][OpenTelemetry-exporter-stackdriver-myget-image]][OpenTelemetry-exporter-stackdriver-myget-url] | [![NuGet release][OpenTelemetry-exporter-stackdriver-nuget-image]][OpenTelemetry-exporter-stackdriver-nuget-url] |
 | Jaeger               | [![MyGet Nightly][OpenTelemetry-exporter-jaeger-myget-image]][OpenTelemetry-exporter-jaeger-myget-url]           | [![NuGet release][OpenTelemetry-exporter-jaeger-nuget-image]][OpenTelemetry-exporter-jaeger-nuget-url]           |
+| LightStep            | [![MyGet Nightly][OpenTelemetry-exporter-lightstep-myget-image]][OpenTelemetry-exporter-lightstep-myget-url]     | [![NuGet release][OpenTelemetry-exporter-lightstep-nuget-image]][OpenTelemetry-exporter-lightstep-nuget-url]     |
 
 ## OpenTelemetry Tracing QuickStart: collecting data
 
@@ -242,7 +243,8 @@ Configuration is done by user application: it should configure exporter and may 
 
     ```csharp
     using (TracerFactory.Create(builder => builder
-            .UseZipkin(o => o.ServiceName = "http-client-test"))
+            .UseZipkin()
+            .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "http-client-test" } })))
     {
         // ...
     }
@@ -262,11 +264,12 @@ Configuration is done by user application: it should configure exporter and may 
     {
         builder
             .SetSampler(Samplers.AlwaysSample)
-            .UseZipkin(o => o.ServiceName = "my-service")
+            .UseZipkin()
 
             // you may also configure request and dependencies collectors
             .AddRequestCollector()
-            .AddDependencyCollector())
+            .AddDependencyCollector()
+            .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } }))
     });
     ```
 
@@ -285,7 +288,8 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
 
     using (TracerFactory.Create(b => b
                 .SetSampler(Samplers.AlwaysSample)
-                .UseZipkin(o => o.ServiceName = "my-service")
+                .UseZipkin()
+                .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } }))
                 .AddCollector(t =>
                 {
                     var collector = new StackExchangeRedisCallsCollector(t);
@@ -306,7 +310,8 @@ You may configure sampler of your choice
 ```csharp
  using (TracerFactory.Create(b => b
             .SetSampler(ProbabilitySampler.Create(0.1))
-            .UseZipkin(o => o.ServiceName = "my-service")))
+            .UseZipkin()
+            .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } })))
 {
 
 }
@@ -320,7 +325,7 @@ class MySampler : ISampler
     public string Description { get; } = "my custom sampler";
 
     public Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name,
-        IEnumerable<ILink> links)
+        IEnumerable<Link> links)
     {
         bool sampledIn;
         if (parentContext != null && parentContext.IsValid)
@@ -353,22 +358,19 @@ the Compact Thrift API port. You can configure the Jaeger exporter by following 
 3. See the [sample][jaeger-sample] for an example of how to use the exporter.
 
 ```csharp
-var jaegerOptions = new JaegerExporterOptions()
-{
-    ServiceName = "jaeger-test",
-    AgentHost = <jaeger server>
-};
-
-using (var tracerFactory = TracerFactory.Create(builder => builder
-    .AddProcessorPipeline(c => c.SetExporter(new JaegerTraceExporter(jaegerOptions)))))
+using (var tracerFactory = TracerFactory.Create(
+    builder => builder.UseJaeger(o =>
+    {
+        o.ServiceName = "jaeger-test";
+        o.AgentHost = "<jaeger server>";
+    })))
 {
     var tracer = tracerFactory.GetTracer("jaeger-test");
-    var span = tracer
-        .SpanBuilder("incoming request")
-        .StartSpan();
-
-    await Task.Delay(1000);
-    span.End();
+    using (tracer.StartActiveSpan("incoming request", out var span))
+    {
+        span.SetAttribute("custom-attribute", 55);
+        await Task.Delay(1000);
+    }
 }
 ```
 
@@ -453,13 +455,14 @@ In this example
 using (var tracerFactory = TracerFactory.Create(builder => builder
     .UseZipkin(o =>
     {
-        o.ServiceName = "test-zipkin";
         o.Endpoint = new Uri(zipkinUri);
     })
     .UseApplicationInsights(
         o => o.InstrumentationKey = "your-instrumentation-key",
         p => p.AddProcessor(nextProcessor => new FilteringSpanProcessor(nextProcessor)))
     .AddProcessorPipeline(pipelineBuilder => pipelineBuilder.AddProcessor(_ => new DebuggingSpanProcessor()))))
+    .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "test-zipkin" } }))
+
 {
     // ...
 }
@@ -510,6 +513,31 @@ using (var tracerFactory = TracerFactory.Create(builder => builder
 
     await Task.Delay(1000);
     span.End();
+}
+```
+
+### Using LightStep exporter
+
+Configure LightStep exporter to see traces in [LightStep](https://lightstep.com/).
+
+1. Setup LightStep using [getting started](lightstep-getting-started) guide
+2. Configure `LightStepTraceExporter` (see below)
+3. See [sample](lightstep-sample) for example use
+
+```csharp
+using (var tracerFactory = TracerFactory.Create(
+    builder => builder.UseLightStep(o =>
+        {
+            o.AccessToken = "<access-token>";
+            o.ServiceName = "lightstep-test";
+        })))
+{
+    var tracer = tracerFactory.GetTracer("lightstep-test");
+    using (tracer.StartActiveSpan("incoming request", out var span))
+    {
+        span.SetAttribute("custom-attribute", 55);
+        await Task.Delay(1000);
+    }
 }
 ```
 
@@ -591,6 +619,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-exporter-ai-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.ApplicationInsights
 [OpenTelemetry-exporter-stackdriver-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Stackdriver.svg
 [OpenTelemetry-exporter-stackdriver-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Stackdriver
+[OpenTelemetry-exporter-lightstep-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.LightStep.svg
+[OpenTelemetry-exporter-lightstep-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.LightStep
 [OpenTelemetry-collect-aspnetcore-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.AspNetCore.svg
 [OpenTelemetry-collect-aspnetcore-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Collector.AspNetCore
 [OpenTelemetry-collect-deps-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.Dependencies.svg
@@ -613,6 +643,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-exporter-ai-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.ApplicationInsights
 [OpenTelemetry-exporter-stackdriver-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Stackdriver.svg
 [OpenTelemetry-exporter-stackdriver-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.Stackdriver
+[OpenTelemetry-exporter-lightstep-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.LightStep.svg
+[OpenTelemetry-exporter-lightstep-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.Lightstep
 [OpenTelemetry-collect-aspnetcore-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Collector.AspNetCore.svg
 [OpenTelemetry-collect-aspnetcore-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Collector.AspNetCore
 [OpenTelemetry-collect-deps-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Collector.Dependencies.svg
@@ -636,4 +668,6 @@ deprecate it for 18 months before removing it, if possible.
 [jaeger-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestJaeger.cs
 [prometheus-get-started]: https://prometheus.io/docs/introduction/first_steps/
 [prometheus-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestPrometheus.cs
+[lightstep-getting-started]: https://docs.lightstep.com/docs/welcome-to-lightstep
+[lightstep-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestLightstep.cs
 

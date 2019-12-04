@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerExporterOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MetricTimeSeries.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,22 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Collections.Generic;
 
-namespace OpenTelemetry.Exporter.Jaeger
+namespace OpenTelemetry.Metrics.Implementation
 {
-    public class JaegerExporterOptions
+    public class MetricTimeSeries<T>
     {
-        internal const int DefaultMaxPacketSize = 65000;
+        public LabelSet LabelSet;
+        public List<T> Points = new List<T>();
 
-        public string ServiceName { get; set; }
+        public MetricTimeSeries(LabelSet labelSet)
+        {
+            this.LabelSet = labelSet;
+        }
 
-        public string AgentHost { get; set; } = "localhost";
-
-        public int AgentPort { get; set; } = 6831;
-
-        public int? MaxPacketSize { get; set; } = DefaultMaxPacketSize;
-
-        public Dictionary<string, object> ProcessTags { get; set; }
+        public void Add(T value)
+        {
+            this.Points.Add(value);
+        }
     }
 }

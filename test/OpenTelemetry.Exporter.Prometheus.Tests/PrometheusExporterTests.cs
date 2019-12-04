@@ -1,4 +1,4 @@
-﻿// <copyright file="TestPrometheus.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="PrometheusExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,44 +13,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Context;
-using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Implementation;
+using Xunit;
 
-namespace Samples
+namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
-    internal class TestPrometheus
+    public class PrometheusExporterTests
     {
-        private static readonly ITagger Tagger = Tags.Tagger;
-
-        internal static object Run()
+        [Fact]
+        public void PrometheusExporterTest1()
         {
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
             Metric<long> metric = new Metric<long>("sample");
             var promExporter = new PrometheusExporter<long>(promOptions, metric);
             try
-            {                                
+            {
                 promExporter.Start();
                 List<KeyValuePair<string, string>> label1 = new List<KeyValuePair<string, string>>();
                 label1.Add(new KeyValuePair<string, string>("dim1", "value1"));
                 var labelSet1 = new LabelSet(label1);
                 metric.GetOrCreateMetricTimeSeries(labelSet1).Add(100);
-                Task.Delay(30000).Wait();
                 metric.GetOrCreateMetricTimeSeries(labelSet1).Add(200);
-                Console.WriteLine("Look at metrics in Prometheus console!");
-                Console.ReadLine();
             }
             finally
             {
+                Task.Delay(10000).Wait();
                 promExporter.Stop();
             }
-
-            return null;
         }
     }
 }

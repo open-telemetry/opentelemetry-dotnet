@@ -29,7 +29,7 @@ namespace OpenTelemetry.Context
          /// <param name="key">Key name for the entry.</param>
         /// <param name="value">Value associated with the key name.</param>
         public DistributedContextEntry(string key, string value)
-            : this(key, value, new EntryMetadata(EntryMetadata.NoPropagation))
+            : this(key, value, EntryMetadata.NoPropagationEntry)
         {
         }
 

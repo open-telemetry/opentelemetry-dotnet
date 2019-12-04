@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerExporterOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopMetricExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,22 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections.Generic;
 
-namespace OpenTelemetry.Exporter.Jaeger
+using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Metrics.Export;
+using OpenTelemetry.Metrics.Implementation;
+
+namespace OpenTelemetry.Metrics.Export
 {
-    public class JaegerExporterOptions
+    internal class NoopMetricExporter<T> : MetricExporter<T> where T : struct
     {
-        internal const int DefaultMaxPacketSize = 65000;
-
-        public string ServiceName { get; set; }
-
-        public string AgentHost { get; set; } = "localhost";
-
-        public int AgentPort { get; set; } = 6831;
-
-        public int? MaxPacketSize { get; set; } = DefaultMaxPacketSize;
-
-        public Dictionary<string, object> ProcessTags { get; set; }
+        public override Task<ExportResult> ExportAsync(Metric<T> metric, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(ExportResult.Success);
+        }
     }
 }

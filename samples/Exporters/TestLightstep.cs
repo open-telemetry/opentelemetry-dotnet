@@ -15,15 +15,13 @@ namespace Samples
     {
         internal static object Run(string accessToken)
         {
-            var exporter = new LightStepTraceExporter(
-                new LightStepTraceExporterOptions
+            // Create a tracer.
+            using (var tracerFactory = TracerFactory.Create(
+                builder => builder.UseLightStep(o =>
                 {
-                    AccessToken = accessToken,
-                    ServiceName = "lightstep-test",
-                });
-
-            // Create a tracer. 
-            using (var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(exporter))))
+                    o.AccessToken = accessToken;
+                    o.ServiceName = "lightstep-test";
+                })))
             {
                 var tracer = tracerFactory.GetTracer("lightstep-test");
                 using (tracer.StartActiveSpan("Main", out var span))
@@ -40,7 +38,7 @@ namespace Samples
                 return null;
             }
         }
-        
+
         private static void DoWork(int i, ITracer tracer)
         {
             using (tracer.WithSpan(tracer.StartSpan("DoWork")))

@@ -17,16 +17,19 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Prometheus.Implementation;
-using OpenTelemetry.Stats;
+using OpenTelemetry.Metrics.Export;
+using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
-    /// Exporter of Open Telemetry traces and metrics to Azure Application Insights.
+    /// Exporter of Open Telemetry traces and metrics to Prometheus.
     /// </summary>
-    public class PrometheusExporter
+    /// <typeparam name="T">The type of metric. Only long and double are supported now.</typeparam>
+    public class PrometheusExporter<T> : MetricExporter<T>
+        where T : struct
     {
-        private readonly IViewManager viewManager;
+        private readonly Metric<T> metric;
 
         private readonly PrometheusExporterOptions options;
 
@@ -37,14 +40,20 @@ namespace OpenTelemetry.Exporter.Prometheus
         private Task workerThread;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
+        /// Initializes a new instance of the <see cref="PrometheusExporter{T}"/> class.
         /// </summary>
         /// <param name="options">Options for the exporter.</param>
-        /// <param name="viewManager">View manager to get stats from.</param>
-        public PrometheusExporter(PrometheusExporterOptions options, IViewManager viewManager)
+        /// <param name="metric">The metric instance where metric values and labels can be read from.</param>
+        public PrometheusExporter(PrometheusExporterOptions options, Metric<T> metric)
         {
             this.options = options;
-            this.viewManager = viewManager;
+            this.metric = metric;
+        }
+
+        /// <inheritdoc/>
+        public override Task<ExportResult> ExportAsync(Metric<T> metric, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -63,7 +72,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                 var token = this.tokenSource.Token;
 
-                var metricsServer = new MetricsHttpServer(this.viewManager, this.options, token);
+                var metricsServer = new MetricsHttpServer<T>(this.metric, this.options, token);
                 this.workerThread = Task.Factory.StartNew((Action)metricsServer.WorkerThread, TaskCreationOptions.LongRunning);
             }
         }

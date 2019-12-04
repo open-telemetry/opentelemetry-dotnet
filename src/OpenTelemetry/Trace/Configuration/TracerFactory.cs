@@ -32,6 +32,7 @@ namespace OpenTelemetry.Trace.Configuration
         private readonly List<object> collectors = new List<object>();
 
         private readonly ISampler sampler;
+        private readonly Resource defaultResource;
         private readonly TracerConfiguration configurationOptions;
         private readonly SpanProcessor spanProcessor;
         private readonly IBinaryFormat binaryFormat;
@@ -42,6 +43,7 @@ namespace OpenTelemetry.Trace.Configuration
         private TracerFactory(TracerBuilder builder)
         {
             this.sampler = builder.Sampler ?? Samplers.AlwaysSample;
+            this.defaultResource = builder.Resource;
 
             this.configurationOptions =
                 builder.TracerConfigurationOptions ?? new TracerConfiguration();
@@ -80,7 +82,7 @@ namespace OpenTelemetry.Trace.Configuration
                 this.configurationOptions,
                 this.binaryFormat,
                 this.textFormat,
-                Resource.Empty);
+                this.defaultResource);
         }
 
         /// <summary>
@@ -128,7 +130,7 @@ namespace OpenTelemetry.Trace.Configuration
                         this.configurationOptions,
                         this.binaryFormat,
                         this.textFormat,
-                        new Resource(CreateLibraryResourceLabels(name, version)));
+                        this.defaultResource.Merge(new Resource(CreateLibraryResourceLabels(name, version))));
                     this.tracerRegistry.Add(key, tracer);
                 }
 

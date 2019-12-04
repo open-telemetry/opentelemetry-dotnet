@@ -23,7 +23,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public class JaegerUdpBatcher : IJaegerUdpBatcher
     {
-        private const int DefaultMaxPacketSize = 65000;
         private readonly int? maxPacketSize;
         private readonly ITProtocolFactory protocolFactory;
         private readonly JaegerThriftClientTransport clientTransport;
@@ -38,9 +37,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public JaegerUdpBatcher(JaegerExporterOptions options)
         {
-            this.maxPacketSize = (!options.MaxPacketSize.HasValue || options.MaxPacketSize == 0) ? DefaultMaxPacketSize : options.MaxPacketSize;
+            this.maxPacketSize = (!options.MaxPacketSize.HasValue || options.MaxPacketSize == 0) ? JaegerExporterOptions.DefaultMaxPacketSize : options.MaxPacketSize;
             this.protocolFactory = new TCompactProtocol.Factory();
-            this.clientTransport = new JaegerThriftClientTransport(options.AgentHost, options.AgentPort.Value);
+            this.clientTransport = new JaegerThriftClientTransport(options.AgentHost, options.AgentPort);
             this.thriftClient = new JaegerThriftClient(this.protocolFactory.GetProtocol(this.clientTransport));
             this.process = new Process(options.ServiceName, options.ProcessTags);
             this.processByteSize = this.GetSize(this.process);

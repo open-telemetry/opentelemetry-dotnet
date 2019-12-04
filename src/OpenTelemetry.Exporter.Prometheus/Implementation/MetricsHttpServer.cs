@@ -17,21 +17,21 @@ using System;
 using System.IO;
 using System.Net;
 using System.Threading;
-using OpenTelemetry.Stats;
+using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Exporter.Prometheus.Implementation
 {
-    internal class MetricsHttpServer
+    internal class MetricsHttpServer<T>
     {
-        private readonly IViewManager viewManager;
+        private readonly Metric<T> metric;
 
         private readonly CancellationToken token;
 
         private readonly HttpListener httpListener = new HttpListener();
 
-        public MetricsHttpServer(IViewManager viewManager, PrometheusExporterOptions options, CancellationToken token)
+        public MetricsHttpServer(Metric<T> metric, PrometheusExporterOptions options, CancellationToken token)
         {
-            this.viewManager = viewManager;
+            this.metric = metric;
             this.token = token;
             this.httpListener.Prefixes.Add(options.Url);
         }
@@ -56,41 +56,22 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                     {
                         using (var writer = new StreamWriter(output))
                         {
-                            foreach (var view in this.viewManager.AllExportedViews)
+                            foreach (var metricSeries in this.metric.TimeSeries)
                             {
-                                var data = this.viewManager.GetView(view.Name);
+                                var labels = metricSeries.Key.Labels;
+                                var values = metricSeries.Value.Points;
 
                                 var builder = new PrometheusMetricBuilder()
-                                    .WithName(data.View.Name.AsString)
-                                    .WithDescription(data.View.Description);
+                                    .WithName(this.metric.MetricName)
+                                    .WithDescription(this.metric.MetricDescription);
 
-                                builder = data.View.Aggregation.Match<PrometheusMetricBuilder>(
-                                    (agg) => { return builder.WithType("gauge"); }, // Func<ISum, M> p0
-                                    (agg) => { return builder.WithType("counter"); }, // Func< ICount, M > p1,
-                                    (agg) => { return builder.WithType("histogram"); }, // Func<IMean, M> p2,
-                                    (agg) => { return builder.WithType("histogram"); }, // Func< IDistribution, M > p3,
-                                    (agg) => { return builder.WithType("gauge"); }, // Func<ILastValue, M> p4,
-                                    (agg) => { return builder.WithType("gauge"); }); // Func< IAggregation, M > p6);
+                                builder = builder.WithType("counter");
 
-                                foreach (var value in data.AggregationMap)
+                                foreach (var label in labels)
                                 {
                                     var metricValueBuilder = builder.AddValue();
-
-                                    // TODO: This is not optimal. Need to refactor to split factory into separate functions
-                                    metricValueBuilder = value.Value.Match<PrometheusMetricBuilder.PrometheusMetricValueBuilder>(
-                                        metricValueBuilder.WithValue,
-                                        metricValueBuilder.WithValue,
-                                        metricValueBuilder.WithValue,
-                                        metricValueBuilder.WithValue,
-                                        metricValueBuilder.WithValue,
-                                        metricValueBuilder.WithValue,
-                                        metricValueBuilder.WithValue,
-                                        metricValueBuilder.WithValue);
-
-                                    for (var i = 0; i < value.Key.Values.Count; i++)
-                                    {
-                                        metricValueBuilder.WithLabel(data.View.Columns[i], value.Key.Values[i]);
-                                    }
+                                    metricValueBuilder = metricValueBuilder.WithValue((long)(object)values[0]);
+                                    metricValueBuilder.WithLabel(label.Key, label.Value);
                                 }
 
                                 builder.Write(writer);

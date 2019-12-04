@@ -10,6 +10,9 @@ indent_style = space
 indent_size = 4 
 insert_final_newline = true 
 charset = utf-8-bom 
+# maintain DOS/Windows style line endings in md files
+[*.md]
+end_of_line = crlf
 ############################### 
 # .NET Coding Conventions     # 
 ############################### 
