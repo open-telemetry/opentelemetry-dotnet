@@ -39,5 +39,21 @@ namespace OpenTelemetry.Metrics.Export
         /// <param name="labelSet">the labelSet associated with counter value.</param>
         /// <param name="sumAggregator">the aggregator from which sum can be obtained.</param>
         public abstract void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator);
+
+        /// <summary>
+        /// Process the gauge metric.
+        /// </summary>
+        /// <param name="metricName">the name of the counter.</param>
+        /// <param name="labelSet">the labelSet associated with counter value.</param>
+        /// <param name="gaugeAggregator">the aggregator from which current value can be obtained.</param>
+        public abstract void ProcessGauge(string metricName, LabelSet labelSet, GaugeAggregator<long> gaugeAggregator);
+
+        /// <summary>
+        /// Process the gauge metric.
+        /// </summary>
+        /// <param name="metricName">the name of the counter.</param>
+        /// <param name="labelSet">the labelSet associated with counter value.</param>
+        /// <param name="gaugeAggregator">the aggregator from which current value can be obtained.</param>
+        public abstract void ProcessGauge(string metricName, LabelSet labelSet, GaugeAggregator<double> gaugeAggregator);
     }
 }

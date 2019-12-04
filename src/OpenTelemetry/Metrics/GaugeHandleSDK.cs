@@ -43,7 +43,7 @@ namespace OpenTelemetry.Metrics
             this.gaugeAggregator.Update(value);
         }
 
-        internal GaugeAggregator<T> GetSumAggregator()
+        internal GaugeAggregator<T> GetAggregator()
         {
             return this.gaugeAggregator;
         }
