@@ -14,15 +14,17 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Metrics.Aggregators;
+
 namespace OpenTelemetry.Metrics.Export
 {
     internal class NoOpMetricProcessor : MetricProcessor
     {
-        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator)
+        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<long> sumAggregator)
         {
         }
 
-        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator)
+        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<double> sumAggregator)
         {
         }
 

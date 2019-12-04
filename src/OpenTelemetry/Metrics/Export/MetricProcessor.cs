@@ -14,11 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using OpenTelemetry.Metrics.Aggregators;
 
 namespace OpenTelemetry.Metrics.Export
 {
@@ -31,7 +27,7 @@ namespace OpenTelemetry.Metrics.Export
         /// <param name="metricName">the name of the counter.</param>
         /// <param name="labelSet">the labelSet associated with counter value.</param>
         /// <param name="sumAggregator">the aggregator from which sum can be obtained.</param>
-        public abstract void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator);
+        public abstract void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<long> sumAggregator);
 
         /// <summary>
         /// Process the counter metric.
@@ -40,7 +36,7 @@ namespace OpenTelemetry.Metrics.Export
         /// <param name="metricName">the name of the counter.</param>
         /// <param name="labelSet">the labelSet associated with counter value.</param>
         /// <param name="sumAggregator">the aggregator from which sum can be obtained.</param>
-        public abstract void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator);
+        public abstract void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<double> sumAggregator);
 
         /// <summary>
         /// Process the gauge metric.

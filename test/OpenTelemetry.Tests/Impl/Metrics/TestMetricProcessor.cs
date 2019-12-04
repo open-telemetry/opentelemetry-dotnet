@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Metrics.Aggregators;
 
 namespace OpenTelemetry.Metrics.Export
 {
@@ -23,12 +24,12 @@ namespace OpenTelemetry.Metrics.Export
     {
         public List<Tuple<string, LabelSet, long>> counters = new List<Tuple<string, LabelSet, long>>();
 
-        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator)
+        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<long> sumAggregator)
         {
             counters.Add(new Tuple<string, LabelSet, long>(metricName, labelSet, sumAggregator.Sum()));
         }
 
-        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator)
+        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<double> sumAggregator)
         {
         }
 

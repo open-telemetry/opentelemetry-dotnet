@@ -22,6 +22,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Metrics.Export
@@ -48,7 +49,7 @@ namespace OpenTelemetry.Metrics.Export
             this.worker = Task.Factory.StartNew(s => this.Worker((CancellationToken)s), this.cts.Token);
         }
 
-        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator)
+        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<long> sumAggregator)
         {
             if (!this.metricsLong.TryGetValue(metricName, out var metric))
             {
@@ -59,7 +60,7 @@ namespace OpenTelemetry.Metrics.Export
             metricSeries.Add(sumAggregator.Sum());
         }
 
-        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator)
+        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<double> sumAggregator)
         {
             if (!this.metricsDouble.TryGetValue(metricName, out var metric))
             {

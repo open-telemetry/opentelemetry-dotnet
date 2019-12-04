@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Context;
+using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics

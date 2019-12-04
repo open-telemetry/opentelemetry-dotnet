@@ -16,7 +16,7 @@
 
 using System;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics.Aggregators
 {
     public class GaugeAggregator<T> where T : struct
     {

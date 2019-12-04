@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Context;
+using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
@@ -23,7 +24,7 @@ namespace OpenTelemetry.Metrics
     public class CounterHandleSDK<T> : CounterHandle<T>
         where T : struct
     {
-        private readonly SumAggregator<T> sumAggregator = new SumAggregator<T>();
+        private readonly CounterSumAggregator<T> sumAggregator = new CounterSumAggregator<T>();
 
         internal CounterHandleSDK()
         {
@@ -43,7 +44,7 @@ namespace OpenTelemetry.Metrics
             this.sumAggregator.Update(value);
         }
 
-        internal SumAggregator<T> GetAggregator()
+        internal CounterSumAggregator<T> GetAggregator()
         {
             return this.sumAggregator;
         }

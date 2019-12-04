@@ -1,4 +1,4 @@
-﻿// <copyright file="SumAggregator.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CounterSumAggregator.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +16,9 @@
 
 using System;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics.Aggregators
 {
-    public class SumAggregator<T> where T : struct
+    public class CounterSumAggregator<T> where T : struct
     {
         private T sum;
 
