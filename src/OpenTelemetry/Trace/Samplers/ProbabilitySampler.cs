@@ -16,46 +16,45 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using OpenTelemetry.Utils;
 
 namespace OpenTelemetry.Trace.Samplers
 {
     /// <inheritdoc />
     public sealed class ProbabilitySampler : Sampler
     {
+        private readonly long idUpperBound;
+        private readonly double probability;
+
         public ProbabilitySampler(double probability)
         {
             if (probability < 0.0 || probability > 1.0)
             {
-                throw new ArgumentOutOfRangeException(nameof(probability), "probability must be in range [0.0, 1.0]");
+                throw new ArgumentOutOfRangeException(nameof(probability), "Probability must be in range [0.0, 1.0]");
             }
 
-            this.Probability = probability;
-            this.Description = $"ProbabilitySampler({this.Probability:F6})";
+            this.probability = probability;
+            this.Description = $"ProbabilitySampler({this.probability:F6})";
 
             // Special case the limits, to avoid any possible issues with lack of precision across
             // double/long boundaries. For probability == 0.0, we use Long.MIN_VALUE as this guarantees
             // that we will never sample a trace, even in the case where the id == Long.MIN_VALUE, since
             // Math.Abs(Long.MIN_VALUE) == Long.MIN_VALUE.
-            if (this.Probability == 0.0)
+            if (this.probability == 0.0)
             {
-                this.IdUpperBound = long.MinValue;
+                this.idUpperBound = long.MinValue;
             }
-            else if (this.Probability == 1.0)
+            else if (this.probability == 1.0)
             {
-                this.IdUpperBound = long.MaxValue;
+                this.idUpperBound = long.MaxValue;
             }
             else
             {
-                this.IdUpperBound = (long)(probability * long.MaxValue);
+                this.idUpperBound = (long)(probability * long.MaxValue);
             }
         }
 
+        /// <inheritdoc />
         public override string Description { get; }
-
-        public double Probability { get; }
-
-        public long IdUpperBound { get; }
 
         /// <inheritdoc />
         public override Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IDictionary<string, object> attributes, IEnumerable<Link> links)
@@ -89,10 +88,10 @@ namespace OpenTelemetry.Trace.Samplers
             // code is executed in-line for every Span creation).
             Span<byte> traceIdBytes = stackalloc byte[16];
             traceId.CopyTo(traceIdBytes);
-            return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.IdUpperBound ? new Decision(true) : new Decision(false);
+            return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.idUpperBound ? new Decision(true) : new Decision(false);
         }
 
-        public long GetLowerLong(ReadOnlySpan<byte> bytes)
+        private long GetLowerLong(ReadOnlySpan<byte> bytes)
         {
             long result = 0;
             for (var i = 0; i < 8; i++)
