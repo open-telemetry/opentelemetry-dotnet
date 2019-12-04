@@ -51,7 +51,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             int spanSize = this.GetSize(span);
 
-            if (spanSize > this.maxPacketSize + this.processByteSize)
+            if (spanSize + this.processByteSize > this.maxPacketSize)
             {
                 throw new JaegerExporterException($"ThriftSender received a span that was too large, size = {spanSize + this.processByteSize}, max = {this.maxPacketSize}", null);
             }
