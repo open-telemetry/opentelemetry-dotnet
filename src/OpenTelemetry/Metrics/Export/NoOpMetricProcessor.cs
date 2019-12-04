@@ -35,5 +35,13 @@ namespace OpenTelemetry.Metrics.Export
         public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<double> gaugeAggregator)
         {
         }
+
+        public override void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<long> measureAggregator)
+        {
+        }
+
+        public override void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<double> measureAggregator)
+        {
+        }
     }
 }

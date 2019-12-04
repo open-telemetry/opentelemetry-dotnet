@@ -81,6 +81,16 @@ namespace OpenTelemetry.Metrics.Export
             throw new NotImplementedException();
         }
 
+        public override void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<long> measureAggregator)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<double> measureAggregator)
+        {
+            throw new NotImplementedException();
+        }
+
         private async Task ExportBatchAsync(CancellationToken cancellationToken)
         {
             try
