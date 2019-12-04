@@ -46,14 +46,14 @@ namespace OpenTelemetry.Trace.Test
             meter.Collect();
 
             Assert.Equal(2, testProcessor.counters.Count);
-            Assert.Equal("testCounter", testProcessor.counters[0].Item1);
             Assert.Equal("testCounter", testProcessor.counters[1].Item1);
+            Assert.Equal("testCounter", testProcessor.counters[0].Item1);
 
-            Assert.Equal(meter.GetLabelSet(labels1), testProcessor.counters[0].Item2);
-            Assert.Equal(meter.GetLabelSet(labels2), testProcessor.counters[1].Item2);
+            Assert.Equal(meter.GetLabelSet(labels1), testProcessor.counters[1].Item2);
+            Assert.Equal(meter.GetLabelSet(labels2), testProcessor.counters[0].Item2);
 
-            Assert.Equal(110, testProcessor.counters[0].Item3);
-            Assert.Equal(210, testProcessor.counters[1].Item3);
+            Assert.Equal(110, testProcessor.counters[1].Item3);
+            Assert.Equal(210, testProcessor.counters[0].Item3);
         }
     }
 }
