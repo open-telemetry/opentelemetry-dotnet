@@ -23,6 +23,7 @@ namespace OpenTelemetry.Metrics
 {
     public class MeterSDK : Meter
     {
+        private readonly string meterName;
         private readonly MetricProcessor metricProcessor;
         private readonly IDictionary<string, CounterSDK<long>> longCounters = new ConcurrentDictionary<string, CounterSDK<long>>();
         private readonly IDictionary<string, CounterSDK<double>> doubleCounters = new ConcurrentDictionary<string, CounterSDK<double>>();
@@ -30,9 +31,10 @@ namespace OpenTelemetry.Metrics
         private readonly IDictionary<string, GaugeSDK<long>> longGauges = new ConcurrentDictionary<string, GaugeSDK<long>>();
         private readonly IDictionary<string, GaugeSDK<double>> doubleGauges = new ConcurrentDictionary<string, GaugeSDK<double>>();
 
-        internal MeterSDK(MetricProcessor metricProcessor)
+        internal MeterSDK(string meterName, MetricProcessor metricProcessor)
         {
-            this.metricProcessor = metricProcessor;
+            this.meterName = meterName;
+            this.metricProcessor = metricProcessor;            
         }
 
         public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)
@@ -53,7 +55,7 @@ namespace OpenTelemetry.Metrics
                     var labelSet = handle.Key;
                     var sumValue = handle.Value.GetAggregator();
 
-                    this.metricProcessor.ProcessCounter(metricName, labelSet, sumValue);
+                    this.metricProcessor.ProcessCounter(this.meterName, metricName, labelSet, sumValue);
                 }
             }
 
@@ -66,7 +68,7 @@ namespace OpenTelemetry.Metrics
                     var labelSet = handle.Key;
                     var sumValue = handle.Value.GetAggregator();
 
-                    this.metricProcessor.ProcessCounter(metricName, labelSet, sumValue);
+                    this.metricProcessor.ProcessCounter(this.meterName, metricName, labelSet, sumValue);
                 }
             }
 
@@ -79,7 +81,7 @@ namespace OpenTelemetry.Metrics
                     var labelSet = handle.Key;
                     var sumValue = handle.Value.GetAggregator();
 
-                    this.metricProcessor.ProcessGauge(metricName, labelSet, sumValue);
+                    this.metricProcessor.ProcessGauge(this.meterName, metricName, labelSet, sumValue);
                 }
             }
 
@@ -92,7 +94,7 @@ namespace OpenTelemetry.Metrics
                     var labelSet = handle.Key;
                     var sumValue = handle.Value.GetAggregator();
 
-                    this.metricProcessor.ProcessGauge(metricName, labelSet, sumValue);
+                    this.metricProcessor.ProcessGauge(this.meterName, metricName, labelSet, sumValue);
                 }
             }
         }

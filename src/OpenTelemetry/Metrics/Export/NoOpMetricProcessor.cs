@@ -18,19 +18,19 @@ namespace OpenTelemetry.Metrics.Export
 {
     internal class NoOpMetricProcessor : MetricProcessor
     {
-        public override void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator)
+        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator)
         {
         }
 
-        public override void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator)
+        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator)
         {
         }
 
-        public override void ProcessGauge(string metricName, LabelSet labelSet, GaugeAggregator<long> gaugeAggregator)
+        public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<long> gaugeAggregator)
         {
         }
 
-        public override void ProcessGauge(string metricName, LabelSet labelSet, GaugeAggregator<double> gaugeAggregator)
+        public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<double> gaugeAggregator)
         {
         }
     }

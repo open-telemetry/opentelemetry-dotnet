@@ -48,7 +48,7 @@ namespace OpenTelemetry.Metrics.Export
             this.worker = Task.Factory.StartNew(s => this.Worker((CancellationToken)s), this.cts.Token);
         }
 
-        public override void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator)
+        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator)
         {
             if (!this.metricsLong.TryGetValue(metricName, out var metric))
             {
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Metrics.Export
             metricSeries.Add(sumAggregator.Sum());
         }
 
-        public override void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator)
+        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator)
         {
             if (!this.metricsDouble.TryGetValue(metricName, out var metric))
             {
@@ -70,12 +70,12 @@ namespace OpenTelemetry.Metrics.Export
             metricSeries.Add(sumAggregator.Sum());
         }
 
-        public override void ProcessGauge(string metricName, LabelSet labelSet, GaugeAggregator<long> gaugeAggregator)
+        public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<long> gaugeAggregator)
         {
             throw new NotImplementedException();
         }
 
-        public override void ProcessGauge(string metricName, LabelSet labelSet, GaugeAggregator<double> gaugeAggregator)
+        public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<double> gaugeAggregator)
         {
             throw new NotImplementedException();
         }

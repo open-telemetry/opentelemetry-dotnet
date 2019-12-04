@@ -23,20 +23,20 @@ namespace OpenTelemetry.Metrics.Export
     {
         public List<Tuple<string, LabelSet, long>> counters = new List<Tuple<string, LabelSet, long>>();
 
-        public override void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator)
+        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<long> sumAggregator)
         {
             counters.Add(new Tuple<string, LabelSet, long>(metricName, labelSet, sumAggregator.Sum()));
         }
 
-        public override void ProcessCounter(string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator)
+        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, SumAggregator<double> sumAggregator)
         {
         }
 
-        public override void ProcessGauge(string metricName, LabelSet labelSet, GaugeAggregator<long> gaugeAggregator)
+        public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<long> gaugeAggregator)
         {
         }
 
-        public override void ProcessGauge(string metricName, LabelSet labelSet, GaugeAggregator<double> gaugeAggregator)
+        public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<double> gaugeAggregator)
         {
         }
     }
