@@ -32,8 +32,9 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         private readonly PropertyFetcher stopExceptionFetcher = new PropertyFetcher("Exception");
         private readonly PropertyFetcher stopRequestStatusFetcher = new PropertyFetcher("RequestTaskStatus");
         private readonly bool httpClientSupportsW3C = false;
+        private readonly HttpClientCollectorOptions options;
 
-        public HttpHandlerDiagnosticListener(ITracer tracer)
+        public HttpHandlerDiagnosticListener(ITracer tracer, HttpClientCollectorOptions options)
             : base("HttpHandlerDiagnosticListener", tracer)
         {
             var framework = Assembly
@@ -48,6 +49,8 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             {
                 this.httpClientSupportsW3C = true;
             }
+
+            this.options = options;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -69,12 +72,15 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
             if (span.IsRecording)
             {
+                span.PutComponentAttribute("http");
                 span.PutHttpMethodAttribute(request.Method.ToString());
                 span.PutHttpHostAttribute(request.RequestUri.Host, request.RequestUri.Port);
-                span.PutHttpPathAttribute(request.RequestUri.AbsolutePath);
-                request.Headers.TryGetValues("User-Agent", out var userAgents);
-                span.PutHttpUserAgentAttribute(userAgents?.FirstOrDefault());
                 span.PutHttpRawUrlAttribute(request.RequestUri.OriginalString);
+
+                if (this.options.SetHttpFlavor)
+                {
+                    span.PutHttpFlavorAttribute(request.Version.ToString());
+                }
             }
 
             if (!this.httpClientSupportsW3C)

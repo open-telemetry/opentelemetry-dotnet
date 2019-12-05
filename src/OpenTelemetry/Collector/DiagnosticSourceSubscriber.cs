@@ -22,28 +22,28 @@ namespace OpenTelemetry.Collector
 {
     public class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
     {
-        private readonly ListenerHandler handler;
+        private readonly Func<string, ListenerHandler> handlerFactory;
         private readonly Func<DiagnosticListener, bool> diagnosticSourceFilter;
-        private readonly Func<string, object, object, bool> filter;
+        private readonly Func<string, object, object, bool> isEnabledFilter;
         private long disposed;
         private IDisposable allSourcesSubscription;
         private List<IDisposable> listenerSubscriptions;
 
         public DiagnosticSourceSubscriber(
             ListenerHandler handler,
-            Func<string, object, object, bool> filter) : this(handler, value => handler.SourceName == value.Name, filter)
+            Func<string, object, object, bool> isEnabledFilter) : this(_ => handler, value => handler.SourceName == value.Name, isEnabledFilter)
         {
         }
 
         public DiagnosticSourceSubscriber(
-            ListenerHandler handler,
+            Func<string, ListenerHandler> handlerFactory,
             Func<DiagnosticListener, bool> diagnosticSourceFilter,
-            Func<string, object, object, bool> filter)
+            Func<string, object, object, bool> isEnabledFilter)
         {
             this.listenerSubscriptions = new List<IDisposable>();
-            this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
+            this.handlerFactory = handlerFactory ?? throw new ArgumentNullException(nameof(handlerFactory));
             this.diagnosticSourceFilter = diagnosticSourceFilter;
-            this.filter = filter;
+            this.isEnabledFilter = isEnabledFilter;
         }
 
         public void Subscribe()
@@ -59,10 +59,11 @@ namespace OpenTelemetry.Collector
             if ((Interlocked.Read(ref this.disposed) == 0) &&
                 this.diagnosticSourceFilter(value))
             {
-                var listener = new DiagnosticSourceListener(this.handler);
-                var subscription = this.filter == null ?
+                var handler = this.handlerFactory(value.Name);
+                var listener = new DiagnosticSourceListener(handler);
+                var subscription = this.isEnabledFilter == null ?
                     value.Subscribe(listener) :
-                    value.Subscribe(listener, this.filter);
+                    value.Subscribe(listener, this.isEnabledFilter);
 
                 lock (this.listenerSubscriptions)
                 {

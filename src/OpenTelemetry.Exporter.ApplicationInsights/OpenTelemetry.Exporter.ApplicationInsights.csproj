@@ -9,4 +9,8 @@
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.11.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Implementation\" />
+  </ItemGroup>
 </Project>

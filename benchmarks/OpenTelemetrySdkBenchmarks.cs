@@ -19,7 +19,7 @@ using BenchmarkDotNet.Running;
 using Benchmarks.Tracing;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Sampler;
+using OpenTelemetry.Trace.Samplers;
 
 namespace Benchmarks
 {
@@ -33,10 +33,10 @@ namespace Benchmarks
         public OpenTelemetrySdkBenchmarks()
         {
             this.alwaysSampleTracer = TracerFactory
-                .Create(b => b.SetSampler(Samplers.AlwaysSample))
+                .Create(b => b.SetSampler(new AlwaysSampleSampler()))
                 .GetTracer(null);
             this.neverSampleTracer = TracerFactory
-                .Create(b => b.SetSampler(Samplers.NeverSample))
+                .Create(b => b.SetSampler(new NeverSampleSampler()))
                 .GetTracer(null);
             this.noopTracer = TracerFactoryBase.Default.GetTracer(null);
         }

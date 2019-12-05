@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace.Sampler;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,6 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Samplers;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Export.Test
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private Span CreateSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
         {
             var tracer = TracerFactory.Create(b => b
-                .SetSampler(Samplers.AlwaysSample)
+                .SetSampler(new AlwaysSampleSampler())
                 .AddProcessorPipeline(p => p.AddProcessor(e => spanProcessor))
                 .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private Span CreateNotSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
         {
             var tracer = TracerFactory.Create(b => b
-                .SetSampler(Samplers.NeverSample)
+                .SetSampler(new NeverSampleSampler())
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor))
                 .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
@@ -223,8 +223,9 @@ namespace OpenTelemetry.Trace.Export.Test
 
         [Fact]
         public void ProcessorDoesNotBlockOnExporter()
-        {
-            var spanExporter = new TestExporter(_ => Thread.Sleep(500));
+        { 
+            var resetEvent = new ManualResetEvent(false);
+            var spanExporter = new TestExporter(_ => resetEvent.WaitOne(TimeSpan.FromSeconds(10)));
             using (var factory = TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p
                     .SetExporter(spanExporter)
@@ -241,6 +242,8 @@ namespace OpenTelemetry.Trace.Export.Test
                 sw.Stop();
 
                 Assert.InRange(sw.Elapsed, TimeSpan.Zero, TimeSpan.FromMilliseconds(100));
+
+                resetEvent.Set();
 
                 var exported = WaitForSpans(spanExporter, 1, DefaultTimeout);
 

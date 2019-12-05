@@ -1255,6 +1255,64 @@ namespace OpenTelemetry.Trace.Test
             Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
         }
 
+        [Fact]
+        public void StartSpan_WithAttributes_PassesAttributesToSampler_AndSetsOnSpan()
+        {
+            var samplerMock = new Mock<Sampler>();
+            var tracer = TracerFactory.Create(b => b
+                    .SetSampler(samplerMock.Object)
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor)))
+                .GetTracer(null);
+
+            samplerMock.Setup(s => s.ShouldSample(
+                It.IsAny<SpanContext>(),
+                It.IsAny<ActivityTraceId>(),
+                It.IsAny<ActivitySpanId>(),
+                It.IsAny<string>(),
+                It.IsAny<IDictionary<string, object>>(),
+                It.IsAny<IEnumerable<Link>>())).Returns(new Decision(true));
+
+            var span = (Span)tracer.StartSpan("test", SpanKind.Client, new SpanCreationOptions { Attributes = this.attributes, });
+            span.Attributes.AssertAreSame(this.attributes);
+
+            samplerMock.Verify(o => o.ShouldSample(
+                It.IsAny<SpanContext>(), 
+                It.IsAny<ActivityTraceId>(), 
+                It.IsAny<ActivitySpanId>(),
+                It.IsAny<string>(),
+                It.Is<IDictionary<string, object>>(a => a == this.attributes),
+                It.IsAny<IEnumerable<Link>>()), Times.Once);
+        }
+
+        [Fact]
+        public void StartNotSampledSpan_WithAttributes_PassesAttributesToSampler_DoesNotSetAttributesOnSpan()
+        {
+            var samplerMock = new Mock<Sampler>();
+            var tracer = TracerFactory.Create(b => b
+                    .SetSampler(samplerMock.Object)
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor)))
+                .GetTracer(null);
+
+            samplerMock.Setup(s => s.ShouldSample(
+                It.IsAny<SpanContext>(),
+                It.IsAny<ActivityTraceId>(),
+                It.IsAny<ActivitySpanId>(),
+                It.IsAny<string>(),
+                It.IsAny<IDictionary<string, object>>(),
+                It.IsAny<IEnumerable<Link>>())).Returns(new Decision(false));
+
+            var span = (Span)tracer.StartSpan("test", SpanKind.Client, new SpanCreationOptions { Attributes = this.attributes, });
+            Assert.Empty(span.Attributes);
+
+            samplerMock.Verify(o => o.ShouldSample(
+                It.IsAny<SpanContext>(),
+                It.IsAny<ActivityTraceId>(),
+                It.IsAny<ActivitySpanId>(),
+                It.IsAny<string>(),
+                It.Is<IDictionary<string, object>>(a => a == this.attributes),
+                It.IsAny<IEnumerable<Link>>()), Times.Once);
+        }
+
         private void AssertApproxSameTimestamp(DateTimeOffset one, DateTimeOffset two)
         {
             var timeShift = Math.Abs((one - two).TotalMilliseconds);

@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
@@ -20,5 +22,18 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public class LabelSet
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LabelSet"/> class.
+        /// </summary>
+        /// <param name="labels">labels from which labelset should be constructed.</param>
+        public LabelSet(IEnumerable<KeyValuePair<string, string>> labels)
+        {
+            this.Labels = labels;
+        }
+
+        /// <summary>
+        /// Gets or sets the labels for this LabelSet.
+        /// </summary>
+        public IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
     }
 }
