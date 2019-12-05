@@ -50,51 +50,21 @@ namespace OpenTelemetry.Trace
 
         public ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
             return this.realTracer != null ? this.realTracer.StartRootSpan(operationName, kind, options) : BlankSpan.Instance;
         }
 
         public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
         {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
             return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
         }
 
         public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
             return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
         }
 
         public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
-            if (activity == null)
-            {
-                throw new ArgumentNullException(nameof(activity));
-            }
-
-            if (activity.IdFormat != ActivityIdFormat.W3C)
-            {
-                throw new ArgumentException("Current Activity is not in W3C format");
-            }
-
             return this.realTracer != null ? this.realTracer.StartSpanFromActivity(operationName, activity, kind, links) : BlankSpan.Instance;
         }
 

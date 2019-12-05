@@ -63,33 +63,71 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void Tracer_CreateSpan_BadArgs()
+        public void Tracer_StartRootSpan_BadArgs_NullSpanName()
         {
-            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client, null));
+            var span1 = (Span)tracer.StartRootSpan(null);
+            Assert.Equal(string.Empty, span1.Name);
 
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client, null));
+            var span2 = (Span)tracer.StartRootSpan(null, SpanKind.Client);
+            Assert.Equal(string.Empty, span2.Name);
 
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, null));
+            var span3 = (Span)tracer.StartRootSpan(null, SpanKind.Client, null);
+            Assert.Equal(string.Empty, span3.Name);
+        }
 
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.BlankLocal));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client, null));
+        [Fact]
+        public void Tracer_StartSpan_BadArgs_NullSpanName()
+        {
+            var span1 = (Span)tracer.StartSpan(null);
+            Assert.Equal(string.Empty, span1.Name);
 
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpanFromActivity(null, new Activity("foo").Start()));
+            var span2 = (Span)tracer.StartSpan(null, SpanKind.Client);
+            Assert.Equal(string.Empty, span2.Name);
 
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpanFromActivity("foo", null));
+            var span3 = (Span)tracer.StartSpan(null, SpanKind.Client, null);
+            Assert.Equal(string.Empty, span3.Name);
+        }
 
-            Assert.Throws<ArgumentException>(() => tracer.StartSpanFromActivity("foo", new Activity("foo")));
+        [Fact]
+        public void Tracer_StartSpan_FromParent_BadArgs_NullSpanName()
+        {
+            var span1 = (Span)tracer.StartSpan(null, BlankSpan.Instance);
+            Assert.Equal(string.Empty, span1.Name);
 
-            Assert.Throws<ArgumentException>(() => tracer.StartSpanFromActivity(
-                    "foo",
-                    new Activity("foo").SetIdFormat(ActivityIdFormat.Hierarchical).Start()));
+            var span2 = (Span)tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client);
+            Assert.Equal(string.Empty, span2.Name);
+
+            var span3 = (Span)tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, null);
+            Assert.Equal(string.Empty, span3.Name);
+        }
+
+        [Fact]
+        public void Tracer_StartSpan_FromParentContext_BadArgs_NullSpanName()
+        {
+            var span1 = (Span)tracer.StartSpan(null, SpanContext.BlankLocal);
+            Assert.Equal(string.Empty, span1.Name);
+
+            var span2 = (Span)tracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client);
+            Assert.Equal(string.Empty, span2.Name);
+
+            var span3 = (Span)tracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client, null);
+            Assert.Equal(string.Empty, span3.Name);
+        }
+
+        [Fact]
+        public void Tracer_StartSpan_FromActivity_BadArgs_NullSpanName()
+        {
+            var span = (Span)tracer.StartSpanFromActivity(null, new Activity("foo").Start());
+            Assert.Equal(string.Empty, span.Name);
+        }
+
+        [Fact]
+        public void Tracer_StartSpan_FromActivity_BadArgs_NullActivity()
+        {
+            var span = (Span)tracer.StartSpanFromActivity("foo", null);
+            Assert.NotNull(span);
+            Assert.Equal("foo", span.Name);
+            Assert.Equal(default, span.ParentSpanId);
         }
 
         [Fact]
@@ -131,7 +169,6 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void CreateSpan_ByTracerWithResource()
         {
-
             var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.0.0");
             var span = (Span)tracer.StartSpan("some span");
             Assert.Equal(tracer.LibraryResource, span.LibraryResource);
@@ -140,7 +177,14 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void WithSpanNull()
         {
-            Assert.Throws<ArgumentNullException>(() => tracer.WithSpan(null));
+            Assert.NotNull(this.tracer.WithSpan(null));
+            Assert.Equal(BlankSpan.Instance, this.tracer.CurrentSpan);
+
+            using (this.tracer.StartActiveSpan("some span", out var span))
+            {
+                this.tracer.WithSpan(null);
+                Assert.Equal(span, this.tracer.CurrentSpan);
+            }
         }
 
         [Fact]
