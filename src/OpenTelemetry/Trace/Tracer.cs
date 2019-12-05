@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace
         public IDisposable WithSpan(ISpan span, bool endSpanOnDispose)
         {
             if (span != null)
-            { 
+            {
                 OpenTelemetrySdkEventSource.Log.InvalidArgument("WithSpan", nameof(span) + " is null");
             }
 
