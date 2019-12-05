@@ -53,12 +53,14 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (carrier == null)
             {
-                throw new ArgumentNullException(nameof(carrier));
+                OpenTelemetrySdkEventSource.Log.FailedToExtractSpanContext("null carrier");
+                return SpanContext.BlankRemote;
             }
 
             if (getter == null)
             {
-                throw new ArgumentNullException(nameof(getter));
+                OpenTelemetrySdkEventSource.Log.FailedToExtractSpanContext("null getter");
+                return SpanContext.BlankRemote;
             }
 
             try

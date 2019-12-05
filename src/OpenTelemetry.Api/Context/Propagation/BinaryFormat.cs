@@ -51,11 +51,13 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (bytes == null)
             {
+                OpenTelemetryApiEventSource.Log.FailedToExtractSpanContext("null bytes");
                 return SpanContext.BlankRemote;
             }
 
             if (bytes.Length != 29 || bytes[0] != VersionId)
             {
+                OpenTelemetryApiEventSource.Log.FailedToExtractSpanContext("unexpected bytes length or version");
                 return SpanContext.BlankRemote;
             }
 

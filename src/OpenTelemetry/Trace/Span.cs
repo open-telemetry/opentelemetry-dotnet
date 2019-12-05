@@ -63,8 +63,17 @@ namespace OpenTelemetry.Trace
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
-        { 
-            this.Name = name ?? string.Empty;
+        {
+            if (name != null)
+            {
+                this.Name = name;
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpan", "span name is null");
+                this.Name = string.Empty;
+            }
+
             this.LibraryResource = libraryResource;
 
             IEnumerable<Link> links = null;
@@ -213,7 +222,15 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            this.Name = name ?? string.Empty;
+            if (name != null)
+            {
+                this.Name = name;
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("UpdateName", "span name is null");
+                this.Name = string.Empty;
+            }
         }
 
         /// <inheritdoc/>

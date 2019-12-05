@@ -97,9 +97,9 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(9, Message = "Failed to extract span context: '{0}'", Level = EventLevel.Warning)]
-        public void FailedToExtractSpanContext(string exception)
+        public void FailedToExtractSpanContext(string error)
         {
-            this.WriteEvent(9, exception);
+            this.WriteEvent(9, error);
         }
 
         [Event(10, Message = "Failed to inject span context: '{0}'", Level = EventLevel.Warning)]
