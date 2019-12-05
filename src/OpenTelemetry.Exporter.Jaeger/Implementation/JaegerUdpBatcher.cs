@@ -50,39 +50,23 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             int spanSize = this.GetSize(span);
 
-            if (spanSize > this.maxPacketSize)
+            if (spanSize + this.processByteSize > this.maxPacketSize)
             {
-                throw new JaegerExporterException($"ThriftSender received a span that was too large, size = {spanSize}, max = {this.maxPacketSize}", null);
+                throw new JaegerExporterException($"ThriftSender received a span that was too large, size = {spanSize + this.processByteSize}, max = {this.maxPacketSize}", null);
             }
 
-            this.batchByteSize += spanSize;
-            if (this.batchByteSize <= this.maxPacketSize)
+            var flushedSpanCount = 0;
+
+            // flush if current batch size plus new span size equals or exceeds max batch size
+            if (this.batchByteSize + spanSize >= this.maxPacketSize)
             {
-                this.currentBatch.Add(span);
-
-                if (this.batchByteSize < this.maxPacketSize)
-                {
-                    return 0;
-                }
-
-                return await this.FlushAsync(cancellationToken).ConfigureAwait(false);
+                flushedSpanCount = await this.FlushAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            int n;
-
-            try
-            {
-                n = await this.FlushAsync(cancellationToken).ConfigureAwait(false);
-            }
-            catch (JaegerExporterException ex)
-            {
-                // +1 for the span not submitted in the buffer above
-                throw new JaegerExporterException(ex.Message, ex);
-            }
-
+            // add span to batch and wait for more spans
             this.currentBatch.Add(span);
-            this.batchByteSize = this.processByteSize + spanSize;
-            return n;
+            this.batchByteSize += spanSize;
+            return flushedSpanCount;
         }
 
         public async Task<int> FlushAsync(CancellationToken cancellationToken)
