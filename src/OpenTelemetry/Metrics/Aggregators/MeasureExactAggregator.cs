@@ -19,11 +19,19 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics.Aggregators
 {
-    public class MeasureExactAggregator<T> where T : struct
+    public class MeasureExactAggregator<T> : Aggregator<T> 
+        where T : struct
     {
         private List<T> values = new List<T>();
+        private List<T> checkPoint;
 
-        internal void Update(T value)
+        public override void Checkpoint()
+        {
+            this.checkPoint = this.values;
+            this.values = new List<T>();
+        }
+
+        public override void Update(T value)
         {
             if (typeof(T) == typeof(double))
             {
@@ -35,9 +43,9 @@ namespace OpenTelemetry.Metrics.Aggregators
             }
         }
 
-        internal List<T> AllValues()
+        internal List<T> ValueFromLastCheckpoint()
         {
-            return this.values;
+            return this.checkPoint;
         }
     }
 }

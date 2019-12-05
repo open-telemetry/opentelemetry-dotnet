@@ -83,8 +83,8 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(meter.GetLabelSet(labels1), testProcessor.gauges[1].Item2);
             Assert.Equal(meter.GetLabelSet(labels2), testProcessor.gauges[0].Item2);
 
-            Assert.Equal(10, testProcessor.gauges[1].Item3);
-            Assert.Equal(20, testProcessor.gauges[0].Item3);
+            Assert.Equal(10, testProcessor.gauges[1].Item3.Item1);
+            Assert.Equal(20, testProcessor.gauges[0].Item3.Item1);
         }
 
 

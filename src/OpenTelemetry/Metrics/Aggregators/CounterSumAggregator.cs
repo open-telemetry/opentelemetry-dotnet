@@ -14,15 +14,20 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Metrics.Aggregators
 {
-    public class CounterSumAggregator<T> where T : struct
+    public class CounterSumAggregator<T> : Aggregator<T>
+        where T : struct
     {
         private T sum;
+        private T checkPoint;
 
-        internal void Update(T value)
+        public override void Checkpoint()
+        {
+            this.checkPoint = this.sum;
+        }
+
+        public override void Update(T value)
         {
             if (typeof(T) == typeof(double))
             {
@@ -34,9 +39,9 @@ namespace OpenTelemetry.Metrics.Aggregators
             }
         }
 
-        internal T Sum()
+        public T ValueFromLastCheckpoint()
         {
-            return this.sum;
+            return this.checkPoint;
         }
     }
 }

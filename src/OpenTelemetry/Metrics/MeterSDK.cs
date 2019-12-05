@@ -58,7 +58,7 @@ namespace OpenTelemetry.Metrics
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
-
+                        aggregator.Checkpoint();
                         this.metricProcessor.ProcessCounter(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Metrics
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
-
+                        aggregator.Checkpoint();
                         this.metricProcessor.ProcessCounter(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
@@ -84,7 +84,7 @@ namespace OpenTelemetry.Metrics
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
-
+                        aggregator.Checkpoint();
                         this.metricProcessor.ProcessGauge(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Metrics
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
-
+                        aggregator.Checkpoint();
                         this.metricProcessor.ProcessGauge(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Metrics
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
-
+                        aggregator.Checkpoint();
                         this.metricProcessor.ProcessMeasure(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
@@ -123,7 +123,7 @@ namespace OpenTelemetry.Metrics
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
-
+                        aggregator.Checkpoint();
                         this.metricProcessor.ProcessMeasure(this.meterName, metricName, labelSet, aggregator);
                     }
                 }

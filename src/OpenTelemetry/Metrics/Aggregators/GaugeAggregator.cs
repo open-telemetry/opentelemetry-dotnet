@@ -18,12 +18,19 @@ using System;
 
 namespace OpenTelemetry.Metrics.Aggregators
 {
-    public class GaugeAggregator<T> where T : struct
+    public class GaugeAggregator<T> : Aggregator<T>
+        where T : struct
     {
         private T value;
-        private DateTime timestamp; 
+        private DateTime timestamp;
+        private Tuple<T, DateTime> checkpoint;
 
-        internal void Update(T value)
+        public override void Checkpoint()
+        {
+            this.checkpoint = new Tuple<T, DateTime>(this.value, this.timestamp);
+        }
+
+        public override void Update(T value)
         {
             if (typeof(T) == typeof(double))
             {
@@ -37,9 +44,9 @@ namespace OpenTelemetry.Metrics.Aggregators
             this.timestamp = DateTime.UtcNow;
         }
 
-        internal T LastValue()
+        public Tuple<T, DateTime> ValueFromLastCheckpoint()
         {
-            return this.value;
+            return this.checkpoint;
         }
     }
 }
