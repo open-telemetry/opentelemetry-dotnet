@@ -21,7 +21,7 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Export.Internal;
-using OpenTelemetry.Trace.Sampler;
+using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace.Configuration
 {
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Configuration
         private readonly Dictionary<TracerRegistryKey, ITracer> tracerRegistry = new Dictionary<TracerRegistryKey, ITracer>();
         private readonly List<object> collectors = new List<object>();
 
-        private readonly ISampler sampler;
+        private readonly Sampler sampler;
         private readonly Resource defaultResource;
         private readonly TracerConfiguration configurationOptions;
         private readonly SpanProcessor spanProcessor;
@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         private TracerFactory(TracerBuilder builder)
         {
-            this.sampler = builder.Sampler ?? Samplers.AlwaysSample;
+            this.sampler = builder.Sampler ?? new AlwaysSampleSampler();
             this.defaultResource = builder.Resource;
 
             this.configurationOptions =

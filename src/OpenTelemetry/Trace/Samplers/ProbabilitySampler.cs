@@ -16,57 +16,48 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using OpenTelemetry.Utils;
 
-namespace OpenTelemetry.Trace.Sampler
+namespace OpenTelemetry.Trace.Samplers
 {
     /// <inheritdoc />
-    public sealed class ProbabilitySampler : ISampler
+    public sealed class ProbabilitySampler : Sampler
     {
-        private ProbabilitySampler(double probability, long idUpperBound)
-        {
-            this.Probability = probability;
-            this.IdUpperBound = idUpperBound;
-        }
+        private readonly long idUpperBound;
+        private readonly double probability;
 
-        /// <inheritdoc />
-        public string Description => $"ProbabilitySampler({this.Probability:F6})";
-
-        public double Probability { get; }
-
-        public long IdUpperBound { get; }
-
-        public static ProbabilitySampler Create(double probability)
+        public ProbabilitySampler(double probability)
         {
             if (probability < 0.0 || probability > 1.0)
             {
-                throw new ArgumentOutOfRangeException(nameof(probability), "probability must be in range [0.0, 1.0]");
+                throw new ArgumentOutOfRangeException(nameof(probability), "Probability must be in range [0.0, 1.0]");
             }
 
-            long idUpperBound;
+            this.probability = probability;
+            this.Description = $"ProbabilitySampler({this.probability:F6})";
 
             // Special case the limits, to avoid any possible issues with lack of precision across
             // double/long boundaries. For probability == 0.0, we use Long.MIN_VALUE as this guarantees
             // that we will never sample a trace, even in the case where the id == Long.MIN_VALUE, since
             // Math.Abs(Long.MIN_VALUE) == Long.MIN_VALUE.
-            if (probability == 0.0)
+            if (this.probability == 0.0)
             {
-                idUpperBound = long.MinValue;
+                this.idUpperBound = long.MinValue;
             }
-            else if (probability == 1.0)
+            else if (this.probability == 1.0)
             {
-                idUpperBound = long.MaxValue;
+                this.idUpperBound = long.MaxValue;
             }
             else
             {
-                idUpperBound = (long)(probability * long.MaxValue);
+                this.idUpperBound = (long)(probability * long.MaxValue);
             }
-
-            return new ProbabilitySampler(probability, idUpperBound);
         }
 
         /// <inheritdoc />
-        public Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<Link> links)
+        public override string Description { get; }
+
+        /// <inheritdoc />
+        public override Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IDictionary<string, object> attributes, IEnumerable<Link> links)
         {
             // If the parent is sampled keep the sampling decision.
             if (parentContext != null &&
@@ -97,48 +88,10 @@ namespace OpenTelemetry.Trace.Sampler
             // code is executed in-line for every Span creation).
             Span<byte> traceIdBytes = stackalloc byte[16];
             traceId.CopyTo(traceIdBytes);
-            return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.IdUpperBound ? new Decision(true) : new Decision(false);
+            return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.idUpperBound ? new Decision(true) : new Decision(false);
         }
 
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return nameof(ProbabilitySampler)
-                + "{"
-                + nameof(this.Probability) + "=" + this.Probability + ", "
-                + nameof(this.IdUpperBound) + "=" + this.IdUpperBound
-                + "}";
-        }
-
-        /// <inheritdoc/>
-        public override bool Equals(object o)
-        {
-            if (o == this)
-            {
-                return true;
-            }
-
-            if (o is ProbabilitySampler that)
-            {
-                return DoubleUtil.ToInt64(this.Probability) == DoubleUtil.ToInt64(that.Probability)
-                     && (this.IdUpperBound == that.IdUpperBound);
-            }
-
-            return false;
-        }
-
-        /// <inheritdoc/>
-        public override int GetHashCode()
-        {
-            long h = 1;
-            h *= 1000003;
-            h ^= (DoubleUtil.ToInt64(this.Probability) >> 32) ^ DoubleUtil.ToInt64(this.Probability);
-            h *= 1000003;
-            h ^= (this.IdUpperBound >> 32) ^ this.IdUpperBound;
-            return (int)h;
-        }
-
-        public long GetLowerLong(ReadOnlySpan<byte> bytes)
+        private long GetLowerLong(ReadOnlySpan<byte> bytes)
         {
             long result = 0;
             for (var i = 0; i < 8; i++)

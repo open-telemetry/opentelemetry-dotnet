@@ -15,7 +15,6 @@
 // </copyright>
 
 using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Sampler;
 using Xunit;
 using Microsoft.AspNetCore.Mvc.Testing;
 using TestApp.AspNetCore._2._0;
@@ -31,6 +30,7 @@ using OpenTelemetry.Context.Propagation;
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Collector.AspNetCore.Tests
 {
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             {
                 services.AddSingleton<TracerFactory>(_ =>
                     TracerFactory.Create(b => b
-                        .SetSampler(Samplers.AlwaysSample)
+                        .SetSampler(new AlwaysSampleSampler())
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                         .AddRequestCollector()));
             }
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     {
                         services.AddSingleton<TracerFactory>(_ =>
                             TracerFactory.Create(b => b
-                                .SetSampler(Samplers.AlwaysSample)
+                                .SetSampler(new AlwaysSampleSampler())
                                 .SetTextFormat(tf.Object)
                                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                                 .AddRequestCollector()));
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             {
                 services.AddSingleton<TracerFactory>(_ =>
                     TracerFactory.Create(b => b
-                        .SetSampler(Samplers.AlwaysSample)
+                        .SetSampler(new AlwaysSampleSampler())
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                         .AddRequestCollector(o => o.EventFilter = Filter)));
             }

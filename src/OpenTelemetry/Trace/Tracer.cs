@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace
     {
         private readonly SpanProcessor spanProcessor;
         private readonly TracerConfiguration tracerConfiguration;
-        private readonly ISampler sampler;
+        private readonly Sampler sampler;
 
         static Tracer()
         {
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace
         /// <param name="binaryFormat">Binary format context propagator.</param>
         /// <param name="textFormat">Text format context propagator.</param>
         /// <param name="libraryResource">Resource describing the instrumentation library.</param>
-        internal Tracer(SpanProcessor spanProcessor, ISampler sampler, TracerConfiguration tracerConfiguration, IBinaryFormat binaryFormat, ITextFormat textFormat, Resource libraryResource)
+        internal Tracer(SpanProcessor spanProcessor, Sampler sampler, TracerConfiguration tracerConfiguration, IBinaryFormat binaryFormat, ITextFormat textFormat, Resource libraryResource)
         {
             this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
             this.tracerConfiguration = tracerConfiguration ?? throw new ArgumentNullException(nameof(tracerConfiguration));

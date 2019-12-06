@@ -15,7 +15,6 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Context;
 using OpenTelemetry.Exporter.Prometheus;
@@ -32,7 +31,7 @@ namespace Samples
             Metric<long> metric = new Metric<long>("sample");
             var promExporter = new PrometheusExporter<long>(promOptions, metric);
             try
-            {                                
+            {
                 promExporter.Start();
                 List<KeyValuePair<string, string>> label1 = new List<KeyValuePair<string, string>>();
                 label1.Add(new KeyValuePair<string, string>("dim1", "value1"));

@@ -16,26 +16,16 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace OpenTelemetry.Trace.Sampler.Internal
+namespace OpenTelemetry.Trace.Samplers
 {
-    internal sealed class AlwaysSampleSampler : ISampler
+    public sealed class AlwaysSampleSampler : Sampler
     {
-        internal AlwaysSampleSampler()
-        {
-        }
-
-        public string Description => this.ToString();
+        public override string Description { get; } = nameof(AlwaysSampleSampler);
 
         /// <inheritdoc />
-        public Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IEnumerable<Link> parentLinks)
+        public override Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IDictionary<string, object> attributes, IEnumerable<Link> parentLinks)
         {
             return new Decision(true);
-        }
-
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return nameof(AlwaysSampleSampler);
         }
     }
 }
