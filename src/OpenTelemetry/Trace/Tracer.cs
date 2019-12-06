@@ -71,7 +71,7 @@ namespace OpenTelemetry.Trace
         {
             if (span == null)
             {
-                throw new ArgumentNullException(nameof(span));
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("WithSpan", nameof(span) + " is null");
             }
 
             if (span is Span spanImpl)
@@ -85,22 +85,12 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
             return Span.CreateRoot(operationName, kind, options, this.sampler, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
         public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
         {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
             if (parent == null)
             {
                 parent = this.CurrentSpan;
@@ -113,11 +103,6 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
             if (parent != null)
             {
                 return Span.CreateFromParentContext(operationName, parent, kind, options, this.sampler, this.tracerConfiguration,
@@ -131,25 +116,32 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
-            if (operationName == null)
-            {
-                throw new ArgumentNullException(nameof(operationName));
-            }
-
+            bool isValidActivity = true;
             if (activity == null)
             {
-                throw new ArgumentNullException(nameof(activity));
+                isValidActivity = false;
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpanFromActivity", nameof(activity) + " is null");
+            }
+            else
+            {
+                if (activity.IdFormat != ActivityIdFormat.W3C)
+                {
+                    isValidActivity = false;
+                    OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpanFromActivity",
+                        nameof(activity) + " is not in W3C Trace-Context format");
+                }
+
+                if (activity.StartTimeUtc == default)
+                {
+                    isValidActivity = false;
+                    OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpanFromActivity",
+                        nameof(activity) + " is not started");
+                }
             }
 
-            if (activity.IdFormat != ActivityIdFormat.W3C)
+            if (!isValidActivity)
             {
-                throw new ArgumentException("Current Activity is not in W3C format");
-            }
-
-            if (activity.StartTimeUtc == default || activity.Duration != default)
-            {
-                throw new ArgumentException(
-                    "Current Activity is not running: it has not been started or has been stopped");
+                return this.StartSpan(operationName, kind, links != null ? new SpanCreationOptions { Links = links } : null);
             }
 
             return Span.CreateFromActivity(operationName, activity, kind, links, this.sampler, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);

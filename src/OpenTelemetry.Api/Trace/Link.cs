@@ -13,9 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using System.Collections.Generic;
-using System.Linq;
 
 namespace OpenTelemetry.Trace
 {
@@ -42,18 +41,8 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Link attributes.</param>
         public Link(SpanContext spanContext, IDictionary<string, object> attributes)
         {
-            if (spanContext == null)
-            {
-                throw new ArgumentNullException(nameof(spanContext));
-            }
-
-            if (!spanContext.IsValid)
-            {
-                throw new ArgumentException(nameof(spanContext));
-            }
-
-            this.Context = spanContext;
-            this.Attributes = attributes ?? throw new ArgumentNullException(nameof(attributes));
+            this.Context = spanContext ?? SpanContext.BlankLocal;
+            this.Attributes = attributes ?? EmptyAttributes;
         }
 
         /// <summary>
@@ -65,35 +54,5 @@ namespace OpenTelemetry.Trace
         /// Gets the collection of attributes associated with the link.
         /// </summary>
         public IDictionary<string, object> Attributes { get; }
-
-        /// <inheritdoc/>
-        public override bool Equals(object o)
-        {
-            if (o == this)
-            {
-                return true;
-            }
-
-            if (o is Link that)
-            {
-                return this.Context.Equals(that.Context)
-                     && this.Attributes.SequenceEqual(that.Attributes);
-            }
-
-            return false;
-        }
-
-        /// <inheritdoc/>
-        public override int GetHashCode()
-        {
-            var h = 1;
-            h *= 1000003;
-            h ^= this.Context.TraceId.GetHashCode();
-            h *= 1000003;
-            h ^= this.Context.SpanId.GetHashCode();
-            h *= 1000003;
-            h ^= this.Attributes.GetHashCode();
-            return h;
-        }
     }
 }

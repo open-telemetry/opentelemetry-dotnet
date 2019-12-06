@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Api.Context.Propagation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Context.Propagation
@@ -69,9 +70,9 @@ namespace OpenTelemetry.Context.Propagation
 
                 return new SpanContext(traceId, spanId, traceoptions, true, tracestate);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // TODO: logging
+                OpenTelemetryApiEventSource.Log.SpanContextExtractException(ex);
             }
 
             // in case of exception indicate to upstream that there is no parseable context from the top
@@ -81,6 +82,24 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
         {
+            if (spanContext == null || !spanContext.IsValid)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectSpanContext("Invalid context");
+                return;
+            }
+
+            if (carrier == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectSpanContext("null carrier");
+                return;
+            }
+
+            if (setter == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectSpanContext("null setter");
+                return;
+            }
+
             var traceparent = string.Concat("00-", spanContext.TraceId.ToHexString(), "-", spanContext.SpanId.ToHexString());
             traceparent = string.Concat(traceparent, (spanContext.TraceOptions & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
 
@@ -219,32 +238,22 @@ namespace OpenTelemetry.Context.Propagation
         {
             tracestateResult = null;
 
-            try
+            if (tracestateCollection != null)
             {
-                if (tracestateCollection != null)
-                {
-                    tracestateResult = new List<KeyValuePair<string, string>>();
+                tracestateResult = new List<KeyValuePair<string, string>>();
 
-                    // Iterate in reverse order because when call builder set the elements is added in the
-                    // front of the list.
-                    for (int i = tracestateCollection.Length - 1; i >= 0; i--)
+                // Iterate in reverse order because when call builder set the elements is added in the
+                // front of the list.
+                for (int i = tracestateCollection.Length - 1; i >= 0; i--)
+                {
+                    if (!TracestateUtils.AppendTracestate(tracestateCollection[i], tracestateResult))
                     {
-                        if (!TracestateUtils.AppendTracestate(tracestateCollection[i], tracestateResult))
-                        {
-                            return false;
-                        }
+                        return false;
                     }
                 }
-
-                return true;
-            }
-            catch (Exception)
-            {
-                // failure to parse tracestate should not disregard traceparent
-                // TODO: logging
             }
 
-            return false;
+            return true;
         }
     }
 }

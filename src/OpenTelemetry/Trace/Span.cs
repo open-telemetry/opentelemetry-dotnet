@@ -63,8 +63,17 @@ namespace OpenTelemetry.Trace
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
-        { 
-            this.Name = name;
+        {
+            if (name != null)
+            {
+                this.Name = name;
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpan", "span name is null");
+                this.Name = string.Empty;
+            }
+
             this.LibraryResource = libraryResource;
 
             IEnumerable<Link> links = null;
@@ -129,7 +138,16 @@ namespace OpenTelemetry.Trace
         {
             get => this.StatusWithDefault;
 
-            set => this.status = value.IsValid ? value : throw new ArgumentException(nameof(value));
+            set
+            {
+                if (!value.IsValid)
+                {
+                    OpenTelemetrySdkEventSource.Log.InvalidArgument("set_Status", "value");
+                    return;
+                }
+
+                this.status = value;
+            }
         }
 
         public ActivitySpanId ParentSpanId => this.Activity.ParentSpanId;
@@ -204,22 +222,20 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            this.Name = name ?? throw new ArgumentNullException(nameof(name));
+            if (name != null)
+            {
+                this.Name = name;
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("UpdateName", "span name is null");
+                this.Name = string.Empty;
+            }
         }
 
         /// <inheritdoc/>
         public void SetAttribute(KeyValuePair<string, object> keyValuePair)
         {
-            if (keyValuePair.Key == null)
-            {
-                throw new ArgumentNullException(nameof(keyValuePair.Key));
-            }
-
-            if (keyValuePair.Value == null)
-            {
-                throw new ArgumentNullException(nameof(keyValuePair.Value));
-            }
-
             if (!this.IsRecording)
             {
                 return;
@@ -239,7 +255,7 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
+                this.attributes.Add(new KeyValuePair<string, object>(keyValuePair.Key ?? string.Empty, keyValuePair.Value ?? string.Empty));
             }
         }
 
@@ -282,7 +298,8 @@ namespace OpenTelemetry.Trace
         {
             if (addEvent == null)
             {
-                throw new ArgumentNullException(nameof(addEvent));
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("AddEvent", nameof(addEvent));
+                return;
             }
 
             if (!this.IsRecording)
@@ -416,7 +433,8 @@ namespace OpenTelemetry.Trace
             }
 
             var currentActivity = Activity.Current;
-            if (currentActivity == null)
+            if (currentActivity == null ||
+                currentActivity.IdFormat != ActivityIdFormat.W3C)
             {
                 return new Span(
                     name,

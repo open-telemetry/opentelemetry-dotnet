@@ -143,7 +143,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             {
                 {B3Format.XB3TraceId, "abcdefghijklmnop"}, {B3Format.XB3SpanId, SpanIdBase16},
             };
-            Assert.Throws<SpanContextParseException>(() => b3Format.Extract(invalidHeaders, getter));
+            Assert.Equal(SpanContext.BlankRemote, b3Format.Extract(invalidHeaders, getter));
         }
 
         [Fact]
@@ -153,14 +153,15 @@ namespace OpenTelemetry.Context.Propagation.Test
             {
                 {B3Format.XB3TraceId, "0123456789abcdef00"}, {B3Format.XB3SpanId, SpanIdBase16},
             };
-            Assert.Throws<SpanContextParseException>(() => b3Format.Extract(invalidHeaders, getter));
+
+            Assert.Equal(SpanContext.BlankRemote, b3Format.Extract(invalidHeaders, getter));
         }
 
         [Fact]
         public void ParseMissingTraceId()
         {
             var invalidHeaders = new Dictionary<string, string> {{B3Format.XB3SpanId, SpanIdBase16},};
-            Assert.Throws<SpanContextParseException>(() => b3Format.Extract(invalidHeaders, getter));
+            Assert.Equal(SpanContext.BlankRemote, b3Format.Extract(invalidHeaders, getter));
         }
 
         [Fact]
@@ -170,7 +171,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             {
                 {B3Format.XB3TraceId, TraceIdBase16}, {B3Format.XB3SpanId, "abcdefghijklmnop"},
             };
-            Assert.Throws<SpanContextParseException>(() => b3Format.Extract(invalidHeaders, getter));
+            Assert.Equal(SpanContext.BlankRemote, b3Format.Extract(invalidHeaders, getter));
         }
 
         [Fact]
@@ -180,14 +181,14 @@ namespace OpenTelemetry.Context.Propagation.Test
             {
                 {B3Format.XB3TraceId, TraceIdBase16}, {B3Format.XB3SpanId, "0123456789abcdef00"},
             };
-            Assert.Throws<SpanContextParseException>(() => b3Format.Extract(invalidHeaders, getter));
+            Assert.Equal(SpanContext.BlankRemote, b3Format.Extract(invalidHeaders, getter));
         }
 
         [Fact]
         public void ParseMissingSpanId()
         {
             var invalidHeaders = new Dictionary<string, string> {{B3Format.XB3TraceId, TraceIdBase16}};
-            Assert.Throws<SpanContextParseException>(() => b3Format.Extract(invalidHeaders, getter));
+            Assert.Equal(SpanContext.BlankRemote, b3Format.Extract(invalidHeaders, getter));
         }
 
         [Fact]

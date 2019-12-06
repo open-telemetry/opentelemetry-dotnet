@@ -60,18 +60,18 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void BadArguments()
+        public void BadArguments_DoesNotThrow()
         {
-            Assert.Throws<ArgumentException>(() => BlankSpan.Instance.Status = new Status());
-            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.UpdateName(null));
-            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, string.Empty));
-            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(string.Empty, null));
-            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, "foo"));
-            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, 1L));
-            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, 0.1d));
-            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.SetAttribute(null, true));
-            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.AddEvent((string)null));
-            Assert.Throws<ArgumentNullException>(() => BlankSpan.Instance.AddEvent((Event)null));
+            BlankSpan.Instance.Status = new Status();
+            BlankSpan.Instance.UpdateName(null);
+            BlankSpan.Instance.SetAttribute(null, string.Empty);
+            BlankSpan.Instance.SetAttribute(string.Empty, null);
+            BlankSpan.Instance.SetAttribute(null, "foo");
+            BlankSpan.Instance.SetAttribute(null, 1L);
+            BlankSpan.Instance.SetAttribute(null, 0.1d);
+            BlankSpan.Instance.SetAttribute(null, true);
+            BlankSpan.Instance.AddEvent((string)null);
+            BlankSpan.Instance.AddEvent((Event)null);
         }
     }
 }
