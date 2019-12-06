@@ -32,7 +32,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var promExporter = new PrometheusExporter<long>(promOptions, metric);
             try
             {
-                promExporter.Start();
                 List<KeyValuePair<string, string>> label1 = new List<KeyValuePair<string, string>>();
                 label1.Add(new KeyValuePair<string, string>("dim1", "value1"));
                 var labelSet1 = new LabelSet(label1);
@@ -42,7 +41,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             finally
             {
                 Task.Delay(10000).Wait();
-                promExporter.Stop();
             }
         }
     }

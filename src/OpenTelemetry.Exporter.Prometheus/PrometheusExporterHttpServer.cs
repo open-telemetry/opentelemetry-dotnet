@@ -1,4 +1,4 @@
-﻿// <copyright file="MetricsHttpServer.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="PrometheusExporterHttpServer.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.IO;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Metrics.Implementation;
 
-namespace OpenTelemetry.Exporter.Prometheus.Implementation
+namespace OpenTelemetry.Exporter.Prometheus
 {
-    internal class MetricsHttpServer<T>
+    /// <summary>
+    /// A Http host for <see cref="PrometheusExporter{T}"/> using a <see cref="HttpListener"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of metric. Only long and double are supported now.</typeparam>
+    public class PrometheusExporterHttpServer<T>
+        where T : struct
     {
         private readonly Metric<T> metric;
 
@@ -29,14 +37,62 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
 
         private readonly HttpListener httpListener = new HttpListener();
 
-        public MetricsHttpServer(Metric<T> metric, PrometheusExporterOptions options, CancellationToken token)
+        private readonly object lck = new object();
+
+        private CancellationTokenSource tokenSource;
+
+        private Task workerThread;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrometheusExporterHttpServer{T}"/> class.
+        /// </summary>
+        /// <param name="metric">The <see cref="Metric{T}"/> metric.</param>
+        /// <param name="exporter">The <see cref="PrometheusExporter{T}"/> to host.</param>
+        /// <param name="token">A <see cref="CancellationToken"/> that can be used to stop the worker thread.</param>
+        public PrometheusExporterHttpServer(Metric<T> metric, PrometheusExporter<T> exporter, CancellationToken token)
         {
             this.metric = metric;
             this.token = token;
-            this.httpListener.Prefixes.Add(options.Url);
+            this.httpListener.Prefixes.Add(exporter.Options.Url);
         }
 
-        public void WorkerThread()
+        /// <summary>
+        /// Start exporter.
+        /// </summary>
+        public void Start()
+        {
+            lock (this.lck)
+            {
+                if (this.tokenSource != null)
+                {
+                    return;
+                }
+
+                this.tokenSource = new CancellationTokenSource();
+                var token = this.tokenSource.Token;
+                this.workerThread = Task.Factory.StartNew((Action)this.WorkerThread, TaskCreationOptions.LongRunning);
+            }
+        }
+
+        /// <summary>
+        /// Stop exporter.
+        /// </summary>
+        public void Stop()
+        {
+            lock (this.lck)
+            {
+                if (this.tokenSource == null)
+                {
+                    return;
+                }
+
+                this.tokenSource.Cancel();
+                this.workerThread.Wait();
+                this.tokenSource = null;
+            }
+        }
+
+        private void WorkerThread()
         {
             this.httpListener.Start();
 

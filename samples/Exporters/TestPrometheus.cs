@@ -13,8 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Context;
 using OpenTelemetry.Exporter.Prometheus;
@@ -32,9 +34,12 @@ namespace Samples
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
             Metric<long> metric = new Metric<long>("sample");
             var promExporter = new PrometheusExporter<long>(promOptions, metric);
+
+            var httpServer = new PrometheusExporterHttpServer<long>(metric, promExporter, CancellationToken.None);
             try
-            {                                
-                promExporter.Start();
+            {
+                httpServer.Start();
+
                 List<KeyValuePair<string, string>> label1 = new List<KeyValuePair<string, string>>();
                 label1.Add(new KeyValuePair<string, string>("dim1", "value1"));
                 var labelSet1 = new LabelSet(label1);
@@ -46,7 +51,7 @@ namespace Samples
             }
             finally
             {
-                promExporter.Stop();
+                httpServer.Stop();
             }
 
             return null;
