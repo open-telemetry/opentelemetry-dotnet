@@ -16,7 +16,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Utils;
 
 namespace OpenTelemetry.Resources
@@ -40,10 +39,8 @@ namespace OpenTelemetry.Resources
         /// <param name="labels">An <see cref="IDictionary{String, String}"/> of labels that describe the resource.</param>
         public Resource(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            if (ValidateLabels(labels))
-            {
-                this.Labels = labels;
-            }
+            ValidateLabels(labels);
+            this.Labels = labels;
         }
 
         /// <summary>
@@ -88,30 +85,25 @@ namespace OpenTelemetry.Resources
             return new Resource(newLabels);
         }
 
-        private static bool ValidateLabels(IEnumerable<KeyValuePair<string, string>> labels)
+        private static void ValidateLabels(IEnumerable<KeyValuePair<string, string>> labels)
         {
             if (labels == null)
             {
-                OpenTelemetrySdkEventSource.Log.InvalidArgument(nameof(ValidateLabels), "labels are null");
-                return false;
+                throw new ArgumentNullException(nameof(labels));
             }
 
             foreach (var label in labels)
             {
                 if (!IsValidAndNotEmpty(label.Key))
                 {
-                    OpenTelemetrySdkEventSource.Log.InvalidArgument(nameof(ValidateLabels), $"Label key should be a string with a length greater than 0 and not exceeding {MaxResourceTypeNameLength} characters.");
-                    return false;
+                    throw new ArgumentException($"Label key should be a string with a length greater than 0 and not exceeding {MaxResourceTypeNameLength} characters.");
                 }
 
                 if (!IsValid(label.Value))
                 {
-                    OpenTelemetrySdkEventSource.Log.InvalidArgument(nameof(ValidateLabels), $"Label value should be a string with a length not exceeding {MaxResourceTypeNameLength} characters.");
-                    return false;
+                    throw new ArgumentException($"Label value should be a string with a length not exceeding {MaxResourceTypeNameLength} characters.");
                 }
             }
-
-            return true;
         }
 
         private static bool IsValidAndNotEmpty(string name)
