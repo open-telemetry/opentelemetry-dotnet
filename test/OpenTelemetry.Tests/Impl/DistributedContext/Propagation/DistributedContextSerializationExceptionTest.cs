@@ -1,4 +1,4 @@
-﻿// <copyright file="TagContextDeserializationExceptionTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DistributedContextSerializationExceptionTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,19 +18,19 @@ using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Test
 {
-    public class TagContextDeserializationExceptionTest
+    public class DistributedContextSerializationExceptionTest
     {
         [Fact]
         public void CreateWithMessage()
         {
-            Assert.Equal("my message", new TagContextDeserializationException("my message").Message);
+            Assert.Equal("my message", new DistributedContextSerializationException("my message").Message);
         }
 
         [Fact]
         public void CreateWithMessageAndCause()
         {
             var cause = new Exception();
-            var exception = new TagContextDeserializationException("my message", cause);
+            var exception = new DistributedContextSerializationException("my message", cause);
             Assert.Equal("my message", exception.Message);
             Assert.Equal(cause, exception.InnerException);
         }

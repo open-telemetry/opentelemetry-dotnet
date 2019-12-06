@@ -1,4 +1,4 @@
-﻿// <copyright file="TagContextDeserializationException.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DistributedContextState.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,20 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 
-namespace OpenTelemetry.Context.Propagation
+namespace OpenTelemetry.Context
 {
-    public sealed class TagContextDeserializationException : Exception
+    internal struct DistributedContextState : IDisposable
     {
-        public TagContextDeserializationException(string message)
-            : base(message)
+        private DistributedContext context;
+
+        internal DistributedContextState(in DistributedContext context)
         {
+            this.context = AsyncLocalDistributedContextCarrier.Instance.Current;
+            ((AsyncLocalDistributedContextCarrier)AsyncLocalDistributedContextCarrier.Instance).OverwriteCurrent(in context);
         }
 
-        public TagContextDeserializationException(string message, Exception cause)
-            : base(message, cause)
+        public void Dispose()
         {
+            ((AsyncLocalDistributedContextCarrier)AsyncLocalDistributedContextCarrier.Instance).OverwriteCurrent(in this.context);
         }
     }
 }

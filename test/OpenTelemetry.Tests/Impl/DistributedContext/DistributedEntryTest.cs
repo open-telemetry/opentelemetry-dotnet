@@ -1,4 +1,4 @@
-﻿// <copyright file="TagTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DistributedEntryTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 using Xunit;
+using System.Collections.Generic;
 
 namespace OpenTelemetry.Context.Test
 {
-    public class TagTest
+    public class DistributedEntryTest
     {
         [Fact]
         public void TestGetKey()
@@ -38,7 +40,14 @@ namespace OpenTelemetry.Context.Test
             Assert.NotEqual(tag2, tag3);
             Assert.NotEqual(tag2, tag4);
             Assert.NotEqual(tag3, tag4);
+        }
 
+        [Fact]
+        public void TestNullKeyValue()
+        {
+            Assert.Throws<ArgumentNullException>(() => new DistributedContextEntry(null, null));
+            Assert.Throws<ArgumentNullException>(() => new DistributedContextEntry(null, ""));
+            Assert.Throws<ArgumentNullException>(() => new DistributedContextEntry("", null));
         }
     }
 }

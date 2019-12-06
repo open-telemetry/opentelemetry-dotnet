@@ -1,4 +1,4 @@
-﻿// <copyright file="TagContextSerializationException.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DistributedContextBinarySerializer.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,20 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
 
 namespace OpenTelemetry.Context.Propagation
 {
-    public sealed class TagContextSerializationException : Exception
+    internal sealed class DistributedContextBinarySerializer : DistributedContextBinarySerializerBase
     {
-        public TagContextSerializationException(string message)
-             : base(message)
+        private static readonly byte[] EmptyByteArray = { };
+
+        internal DistributedContextBinarySerializer()
         {
         }
 
-        public TagContextSerializationException(string message, Exception cause)
-            : base(message, cause)
+        public override byte[] ToByteArray(DistributedContext tags)
         {
+            return SerializationUtils.SerializeBinary(tags);
+        }
+
+        public override DistributedContext FromByteArray(byte[] bytes)
+        {
+            return SerializationUtils.DeserializeBinary(bytes);
         }
     }
 }

@@ -25,8 +25,6 @@ namespace Samples
 {
     internal class TestPrometheus
     {
-        private static readonly ITagger Tagger = Tags.Tagger;
-
         internal static object Run()
         {
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
