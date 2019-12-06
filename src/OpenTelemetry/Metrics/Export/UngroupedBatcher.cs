@@ -1,4 +1,4 @@
-﻿// <copyright file="SimpleMetricProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="UngroupedBatcher.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Metrics.Export
 {
-    public class SimpleMetricProcessor : MetricProcessor
+    public class UngroupedBatcher : MetricProcessor
     {
         private readonly MetricExporter exporter;        
         private readonly Task worker;
@@ -36,11 +36,11 @@ namespace OpenTelemetry.Metrics.Export
         private List<Metric> metrics;
 
         /// <summary>
-        /// Constructs simple processor.
+        /// Constructs UngroupedBatcher.
         /// </summary>
         /// <param name="exporter">Metric exporter instance.</param>
         /// <param name="aggregationInterval">Interval at which metrics are pushed to Exporter.</param>
-        public SimpleMetricProcessor(MetricExporter exporter, TimeSpan aggregationInterval)
+        public UngroupedBatcher(MetricExporter exporter, TimeSpan aggregationInterval)
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
             this.metrics = new List<Metric>();
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Metrics.Export
 
         public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<long> sumAggregator)
         {
-            var metric = new Metric(meterName, metricName, "description", labelSet.Labels, sumAggregator.ValueFromLastCheckpoint());
+            var metric = new Metric(meterName, metricName, meterName + metricName, labelSet.Labels, sumAggregator.ValueFromLastCheckpoint());
             this.metrics.Add(metric);
         }
 
@@ -90,9 +90,12 @@ namespace OpenTelemetry.Metrics.Export
                 {
                     var sw = Stopwatch.StartNew();
 
-                    var metricToExport = this.metrics;
-                    this.metrics = new List<Metric>();
-                    await this.exporter.ExportAsync(metricToExport, cancellationToken);
+                    if (this.metrics.Count > 0)
+                    {
+                        var metricToExport = this.metrics;
+                        this.metrics = new List<Metric>();
+                        await this.exporter.ExportAsync(metricToExport, cancellationToken);
+                    }
 
                     if (cancellationToken.IsCancellationRequested)
                     {

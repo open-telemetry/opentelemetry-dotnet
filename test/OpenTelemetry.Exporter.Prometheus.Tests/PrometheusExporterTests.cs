@@ -58,7 +58,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         {
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
             var promExporter = new PrometheusExporter(promOptions);
-            var simpleProcessor = new SimpleMetricProcessor(promExporter, TimeSpan.FromSeconds(5));
+            var simpleProcessor = new UngroupedBatcher(promExporter, TimeSpan.FromSeconds(5));
             var meter = MeterFactory.Create(simpleProcessor).GetMeter("library1") as MeterSDK;
             var testCounter = meter.CreateInt64Counter("testCounter");
 
@@ -72,16 +72,23 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             {
                 promExporter.Start();
 
-                testCounter.Add(SpanContext.BlankLocal, 100, meter.GetLabelSet(labels1));
-                testCounter.Add(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels1));
-                testCounter.Add(SpanContext.BlankLocal, 200, meter.GetLabelSet(labels2));
-                testCounter.Add(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels2));
+                for (int i = 0; i < 1000; i++)
+                {
+                    testCounter.Add(SpanContext.BlankLocal, 100, meter.GetLabelSet(labels1));
+                    testCounter.Add(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels1));
+                    testCounter.Add(SpanContext.BlankLocal, 200, meter.GetLabelSet(labels2));
+                    testCounter.Add(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels2));
 
-                meter.Collect();
+                    if (i % 10 == 0)
+                    {
+                        meter.Collect();
+                    }
+                    Task.Delay(1000).Wait();
+                }
             }
             finally
             {
-                Task.Delay(30000).Wait();
+                Task.Delay(3000).Wait();
                 promExporter.Stop();
             }
         }

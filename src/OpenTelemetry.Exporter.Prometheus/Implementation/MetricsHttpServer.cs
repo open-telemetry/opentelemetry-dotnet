@@ -63,7 +63,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
 
                                 var builder = new PrometheusMetricBuilder()
                                     .WithName(metric.MetricName)
-                                    .WithDescription(metric.MetricName);
+                                    .WithDescription(metric.MetricDescription);
 
                                 builder = builder.WithType("counter");
 
