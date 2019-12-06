@@ -1,4 +1,4 @@
-﻿// <copyright file="TagsTestUtil.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DistributedContextBinarySerializerBase.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections.Generic;
-using System.Linq;
 
-namespace OpenTelemetry.Context.Test
+namespace OpenTelemetry.Context.Propagation
 {
-    internal static class TagsTestUtil
+    public abstract class DistributedContextBinarySerializerBase
     {
-        public static ICollection<DistributedContextEntry> TagContextToList(ITagContext tags)
-        {
-            return tags.ToList();
-        }
+        public abstract DistributedContext FromByteArray(byte[] bytes);
+
+        public abstract byte[] ToByteArray(DistributedContext tags);
     }
 }

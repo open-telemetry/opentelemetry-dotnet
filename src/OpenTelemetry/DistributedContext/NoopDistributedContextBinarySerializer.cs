@@ -1,4 +1,4 @@
-﻿// <copyright file="NoopTagContextBinarySerializer.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopDistributedContextBinarySerializer.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,14 @@ using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Context
 {
-    public class NoopTagContextBinarySerializer : TagContextBinarySerializerBase
+    public class NoopDistributedContextBinarySerializer : DistributedContextBinarySerializerBase
     {
-        internal static readonly ITagContextBinarySerializer Instance = new NoopTagContextBinarySerializer();
+        internal static readonly DistributedContextBinarySerializerBase Instance = new NoopDistributedContextBinarySerializer();
         private static readonly byte[] EmptyByteArray = { };
 
-        public override byte[] ToByteArray(ITagContext tags)
+        public override byte[] ToByteArray(DistributedContext tags)
         {
-            if (tags == null)
+            if (tags.Entries is null)
             {
                 throw new ArgumentNullException(nameof(tags));
             }
@@ -33,14 +33,14 @@ namespace OpenTelemetry.Context
             return EmptyByteArray;
         }
 
-        public override ITagContext FromByteArray(byte[] bytes)
+        public override DistributedContext FromByteArray(byte[] bytes)
         {
             if (bytes == null)
             {
                 throw new ArgumentNullException(nameof(bytes));
             }
 
-            return NoopTags.NoopTagContext;
+            return DistributedContext.Empty;
         }
     }
 }
