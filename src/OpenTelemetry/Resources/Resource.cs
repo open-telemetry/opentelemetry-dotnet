@@ -31,13 +31,13 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Maximum length of the resource type name.
         /// </summary>
-        private const int MaxResourceTypeNameLength = 255;
+        internal const int MaxResourceTypeNameLength = 255;
 
         /// <summary>
         /// Creates a new <see cref="Resource"/>.
         /// </summary>
-        /// <param name="attributes">An <see cref="IDictionary{String, String}"/> of attributes that describe the resource.</param>
-        public Resource(IEnumerable<KeyValuePair<string, string>> attributes)
+        /// <param name="attributes">An <see cref="IDictionary{ResourceKey, String}"/> of attributes that describe the resource.</param>
+        public Resource(IEnumerable<KeyValuePair<ResourceKey, string>> attributes)
         {
             ValidateAttributes(attributes);
             this.Attributes = attributes;
@@ -46,12 +46,12 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Gets an empty Resource.
         /// </summary>
-        public static Resource Empty { get; } = new Resource(Enumerable.Empty<KeyValuePair<string, string>>());
+        public static Resource Empty { get; } = new Resource(Enumerable.Empty<KeyValuePair<ResourceKey, string>>());
 
         /// <summary>
         /// Gets the collection of key-value pairs describing the resource.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, string>> Attributes { get; }
+        public IEnumerable<KeyValuePair<ResourceKey, string>> Attributes { get; }
 
         /// <summary>
         /// Returns a new, merged <see cref="Resource"/> by merging the current <see cref="Resource"/> with the.
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Resources
         /// <returns><see cref="Resource"/>.</returns>
         public Resource Merge(Resource other)
         {
-            var newAttributes = new Dictionary<string, string>();
+            var newAttributes = new Dictionary<ResourceKey, string>();
 
             foreach (var attribute in this.Attributes)
             {
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Resources
             return new Resource(newAttributes);
         }
 
-        private static void ValidateAttributes(IEnumerable<KeyValuePair<string, string>> attributes)
+        private static void ValidateAttributes(IEnumerable<KeyValuePair<ResourceKey, string>> attributes)
         {
             if (attributes == null)
             {
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Resources
 
             foreach (var attribute in attributes)
             {
-                if (!IsValidAndNotEmpty(attribute.Key))
+                if (!attribute.Key.IsValid())
                 {
                     throw new ArgumentException($"Attribute key should be a string with a length greater than 0 and not exceeding {MaxResourceTypeNameLength} characters.");
                 }
@@ -104,11 +104,6 @@ namespace OpenTelemetry.Resources
                     throw new ArgumentException($"Attribute value should be a string with a length not exceeding {MaxResourceTypeNameLength} characters.");
                 }
             }
-        }
-
-        private static bool IsValidAndNotEmpty(string name)
-        {
-            return !string.IsNullOrEmpty(name) && IsValid(name);
         }
 
         private static bool IsValid(string name)

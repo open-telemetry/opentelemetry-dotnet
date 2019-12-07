@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace.Configuration
             }
             else if (builder.ProcessingPipelines.Count == 1)
             {
-                // if there is only one pipeline - use it's outer processor as a 
+                // if there is only one pipeline - use it's outer processor as a
                 // single processor on the tracer.
                 var processorFactory = builder.ProcessingPipelines[0];
                 this.spanProcessor = processorFactory.Build();
@@ -156,15 +156,15 @@ namespace OpenTelemetry.Trace.Configuration
             }
         }
 
-        private static IEnumerable<KeyValuePair<string, string>> CreateLibraryResourceLabels(string name, string version)
+        private static IEnumerable<KeyValuePair<ResourceKey, string>> CreateLibraryResourceLabels(string name, string version)
         {
-            var labels = new Dictionary<string, string> { { "name", name } };
+            var attributes = new Dictionary<ResourceKey, string> { { "name", name } };
             if (!string.IsNullOrEmpty(version))
             {
-                labels.Add("version", version);
+                attributes.Add("version", version);
             }
 
-            return labels;
+            return attributes;
         }
 
         private readonly struct TracerRegistryKey

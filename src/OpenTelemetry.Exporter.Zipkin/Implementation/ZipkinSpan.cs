@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
@@ -137,7 +138,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 return this;
             }
 
-            internal Builder PutTag(string key, string value)
+            internal Builder PutTag(ResourceKey key, string value)
             {
                 if (this.result.Tags == null)
                 {
@@ -149,7 +150,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                     throw new ArgumentNullException(nameof(key));
                 }
 
-                this.result.Tags[key] = value ?? throw new ArgumentNullException(nameof(value));
+                this.result.Tags[key.ToString()] = value ?? throw new ArgumentNullException(nameof(value));
 
                 return this;
             }

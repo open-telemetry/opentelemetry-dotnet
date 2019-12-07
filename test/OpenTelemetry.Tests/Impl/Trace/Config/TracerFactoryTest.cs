@@ -140,7 +140,7 @@ namespace OpenTelemetry.Trace.Test
 
             TestProcessor testProcessor1 = null;
             var testProcessor2 = new TestProcessor(_ => processCalledCount ++);
-            
+
             var tracerFactory = TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p
                     .SetExporter(testExporter)
@@ -163,7 +163,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(testProcessor1.IsDisposed);
             Assert.True(testProcessor2.IsDisposed);
         }
-        
+
         [Fact]
         public void GetTracer_NoName_NoVersion()
         {
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetTracerReturnsTracerWithResourceAfterSetResource()
         {
-            var tracerFactory = TracerFactory.Create(b => { b.SetResource(new Resource(new Dictionary<string, string>() { { "a", "b" } })); });
+            var tracerFactory = TracerFactory.Create(b => { b.SetResource(new Resource(new Dictionary<ResourceKey, string>() { { "a", "b" } })); });
             var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("b", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "a").Value);
             Assert.Equal("foo", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "name").Value);
@@ -213,9 +213,9 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetTracerReturnsTracerWithResourceOverriddenBySetResource()
         {
-            var tracerFactory = TracerFactory.Create(b => { 
-                b.SetResource(new Resource(new Dictionary<string, string>() { { "a", "b" } }))
-                .SetResource(new Resource(new Dictionary<string, string>() { { "a", "c" } })); });
+            var tracerFactory = TracerFactory.Create(b => {
+                b.SetResource(new Resource(new Dictionary<ResourceKey, string>() { { "a", "b" } }))
+                .SetResource(new Resource(new Dictionary<ResourceKey, string>() { { "a", "c" } })); });
             var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("c", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "a").Value);
         }
