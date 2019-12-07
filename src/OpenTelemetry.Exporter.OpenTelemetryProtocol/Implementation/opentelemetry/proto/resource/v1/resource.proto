@@ -22,6 +22,6 @@ option java_outer_classname = "ResourceProto";
 
 // Resource information.
 message Resource {
-  // Set of labels that describe the resource.
-  map<string,string> labels = 1;
+  // Set of attributes that describe the resource.
+  map<string,string> attributes = 1;
 }
