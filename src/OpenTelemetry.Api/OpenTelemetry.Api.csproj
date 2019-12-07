@@ -4,6 +4,7 @@
     <Description>OpenTelemetry .NET instrumentation API</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
     <DefineConstants>$(DefineConstants);API</DefineConstants>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Trace\Internal\**" />

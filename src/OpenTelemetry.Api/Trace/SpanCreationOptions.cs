@@ -33,17 +33,17 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets or sets list of <see cref="Link"/>.
         /// </summary>
-        public IEnumerable<Link> Links { get; set; }
+        public IEnumerable<Link>? Links { get; set; }
 
         /// <summary>
         /// Gets or sets attributes known prior to span creation.
         /// </summary>
-        public IDictionary<string, object> Attributes { get; set; }
+        public IDictionary<string, object>? Attributes { get; set; }
 
         /// <summary>
         /// Gets or sets Links factory. Use it to deserialize list of <see cref="Link"/> lazily
         /// when application configures OpenTelemetry implementation that supports links.
         /// </summary>
-        public Func<IEnumerable<Link>> LinksFactory { get; set; }
+        public Func<IEnumerable<Link>>? LinksFactory { get; set; }
     }
 }

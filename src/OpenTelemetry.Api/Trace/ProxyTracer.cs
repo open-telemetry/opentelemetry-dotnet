@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace
         private readonly IBinaryFormat binaryFormat = new BinaryFormat();
         private readonly ITextFormat textFormat = new TraceContextFormat();
 
-        private ITracer realTracer;
+        private ITracer? realTracer;
 
         /// <inheritdoc/>
         public ISpan CurrentSpan => this.realTracer?.CurrentSpan ?? BlankSpan.Instance;
@@ -48,22 +48,22 @@ namespace OpenTelemetry.Trace
             return this.realTracer != null ? this.realTracer.WithSpan(span, endOnDispose) : NoopScope;
         }
 
-        public ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
+        public ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions? options)
         {
             return this.realTracer != null ? this.realTracer.StartRootSpan(operationName, kind, options) : BlankSpan.Instance;
         }
 
-        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
+        public ISpan StartSpan(string operationName, ISpan? parent, SpanKind kind, SpanCreationOptions? options)
         {
             return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
         }
 
-        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
+        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions? options)
         {
             return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
         }
 
-        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link>? links)
         {
             return this.realTracer != null ? this.realTracer.StartSpanFromActivity(operationName, activity, kind, links) : BlankSpan.Instance;
         }

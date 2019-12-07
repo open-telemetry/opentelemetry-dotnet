@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="options">Advanced span creation options.</param>
         /// <returns>Span instance.</returns>
-        ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options);
+        ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions? options);
 
         /// <summary>
         /// Starts span.
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="options">Advanced span creation options.</param>
         /// <returns>Span instance.</returns>
-        ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options);
+        ISpan StartSpan(string operationName, ISpan? parent, SpanKind kind, SpanCreationOptions? options);
 
        /// <summary>
         /// Starts span.
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="options">Advanced span creation options.</param>
         /// <returns>Span instance.</returns>
-        ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options);
+        ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions? options);
 
         /// <summary>
         /// Starts span from auto-collected <see cref="Activity"/>.
@@ -88,6 +88,6 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="links">Links collection.</param>
         /// <returns>Span scope instance.</returns>
-        ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links);
+        ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link>? links);
     }
 }

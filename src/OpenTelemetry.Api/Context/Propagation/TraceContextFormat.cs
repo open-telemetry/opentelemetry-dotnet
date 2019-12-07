@@ -61,7 +61,7 @@ namespace OpenTelemetry.Context.Propagation
                     return SpanContext.BlankRemote;
                 }
 
-                List<KeyValuePair<string, string>> tracestate = null;
+                List<KeyValuePair<string, string>>? tracestate = null;
                 var tracestateCollection = getter(carrier, "tracestate");
                 if (tracestateCollection != null)
                 {
@@ -234,7 +234,7 @@ namespace OpenTelemetry.Context.Propagation
             throw new ArgumentOutOfRangeException(nameof(c), $"Invalid character: {c}.");
         }
 
-        private bool TryExtractTracestate(string[] tracestateCollection, out List<KeyValuePair<string, string>> tracestateResult)
+        private bool TryExtractTracestate(string[] tracestateCollection, out List<KeyValuePair<string, string>>? tracestateResult)
         {
             tracestateResult = null;
 

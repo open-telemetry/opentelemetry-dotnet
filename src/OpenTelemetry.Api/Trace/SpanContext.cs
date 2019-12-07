@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace
         /// associate with the <see cref="SpanContext"/>.</param>
         /// <param name="isRemote">The value indicating whether this <see cref="SpanContext"/> was propagated from the remote parent.</param>
         /// <param name="tracestate">The tracestate to associate with the <see cref="SpanContext"/>.</param>
-        public SpanContext(ActivityTraceId traceId, ActivitySpanId spanId, ActivityTraceFlags traceOptions, bool isRemote = false, IEnumerable<KeyValuePair<string, string>> tracestate = null)
+        public SpanContext(ActivityTraceId traceId, ActivitySpanId spanId, ActivityTraceFlags traceOptions, bool isRemote = false, IEnumerable<KeyValuePair<string, string>>? tracestate = null)
         {
             this.TraceId = traceId;
             this.SpanId = spanId;

@@ -37,7 +37,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="name">Name of the instrumentation library.</param>
         /// <param name="version">Version of the instrumentation library (optional).</param>
         /// <returns>Meter with the given component name and version.</returns>
-        public virtual Meter GetMeter(string name, string version = null)
+        public virtual Meter GetMeter(string name, string? version = null)
         {
             return noOpMeter;
         }

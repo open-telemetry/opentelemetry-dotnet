@@ -142,7 +142,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         public static readonly Status DataLoss = new Status(CanonicalCode.DataLoss);
 
-        internal Status(CanonicalCode canonicalCode, string description = null)
+        internal Status(CanonicalCode canonicalCode, string? description = null)
         {
             this.CanonicalCode = canonicalCode;
             this.Description = description;
@@ -163,10 +163,10 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the status description.
         /// </summary>
-        public string Description { get; }
+        public string? Description { get; }
 
         /// <summary>
-        /// Gets a value indicating whether span completed sucessfully.
+        /// Gets a value indicating whether span completed successfully.
         /// </summary>
         public bool IsOk
         {
@@ -208,7 +208,7 @@ namespace OpenTelemetry.Trace
         {
             var result = 1;
             result = (31 * result) + this.CanonicalCode.GetHashCode();
-            result = (31 * result) + this.Description.GetHashCode();
+            result = (31 * result) + this.Description?.GetHashCode() ?? 0;
             return result;
         }
 

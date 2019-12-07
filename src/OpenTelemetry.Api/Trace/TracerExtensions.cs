@@ -77,7 +77,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="options">Advanced span creation options.</param>
         /// <returns>Span instance.</returns>
-        public static ISpan StartSpan(this ITracer tracer, string operationName, SpanKind kind, SpanCreationOptions options)
+        public static ISpan StartSpan(this ITracer tracer, string operationName, SpanKind kind, SpanCreationOptions? options)
         {
             return tracer.StartSpan(operationName, null, kind, options);
         }
