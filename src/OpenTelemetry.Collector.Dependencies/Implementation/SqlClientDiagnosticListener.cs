@@ -54,10 +54,9 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                     {
                         var command = this.commandFetcher.Fetch(payload);
 
-                        const string EventNameSuffix = ".OnStartActivity";
                         if (command == null)
                         {
-                            CollectorEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener) + EventNameSuffix);
+                            CollectorEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener) + name);
                             return;
                         }
 
@@ -80,12 +79,11 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 case "System.Data.SqlClient.WriteCommandAfter":
                 case "Microsoft.Data.SqlClient.WriteCommandAfter":
                     {
-                        const string EventNameSuffix = ".OnStopActivity";
                         var span = this.Tracer.CurrentSpan;
 
                         if (span == null || span == BlankSpan.Instance)
                         {
-                            CollectorEventSource.Log.NullOrBlankSpan(nameof(SqlClientDiagnosticListener) + EventNameSuffix);
+                            CollectorEventSource.Log.NullOrBlankSpan(nameof(SqlClientDiagnosticListener) + name);
                             return;
                         }
 
@@ -96,12 +94,11 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 case "System.Data.SqlClient.WriteCommandError":
                 case "Microsoft.Data.SqlClient.WriteCommandError":
                     {
-                        const string EventNameSuffix = ".OnException";
                         var span = this.Tracer.CurrentSpan;
 
                         if (span == null || span == BlankSpan.Instance)
                         {
-                            CollectorEventSource.Log.NullOrBlankSpan(nameof(SqlClientDiagnosticListener) + EventNameSuffix);
+                            CollectorEventSource.Log.NullOrBlankSpan(nameof(SqlClientDiagnosticListener) + name);
                             return;
                         }
 
@@ -109,7 +106,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                         {
                             if (!(this.exceptionFetcher.Fetch(payload) is Exception exception))
                             {
-                                CollectorEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener) + EventNameSuffix);
+                                CollectorEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener) + name);
                                 return;
                             }
 
