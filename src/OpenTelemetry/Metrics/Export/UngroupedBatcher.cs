@@ -15,11 +15,8 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Metrics.Aggregators;
@@ -27,6 +24,9 @@ using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Metrics.Export
 {
+    /// <summary>
+    /// Batcher which retains all dimensions/labels.
+    /// </summary>
     public class UngroupedBatcher : MetricProcessor
     {
         private readonly MetricExporter exporter;        
