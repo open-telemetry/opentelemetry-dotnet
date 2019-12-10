@@ -48,6 +48,15 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        [NonEvent]
+        public void TracestateExtractException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.TracestateExtractError(ToInvariantString(ex));
+            }
+        }
+
         [Event(1, Message = "Span processor queue size reached maximum. Throttling spans.", Level = EventLevel.Warning)]
         public void SpanProcessorQueueIsExhausted()
         {
@@ -106,6 +115,30 @@ namespace OpenTelemetry.Internal
         public void FailedToInjectSpanContext(string error)
         {
             this.WriteEvent(10, error);
+        }
+
+        [Event(11, Message = "Failed to parse tracestate: too many items", Level = EventLevel.Warning)]
+        public void TooManyItemsInTracestate()
+        {
+            this.WriteEvent(11);
+        }
+
+        [Event(12, Message = "Tracestate key is invalid, key = '{0}'", Level = EventLevel.Warning)]
+        public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
+        {
+            this.WriteEvent(12, key.ToString());
+        }
+
+        [Event(13, Message = "Tracestate value is invalid, value = '{0}'", Level = EventLevel.Warning)]
+        public void TracestateValueIsInvalid(ReadOnlySpan<char> value)
+        {
+            this.WriteEvent(13, value.ToString());
+        }
+
+        [Event(14, Message = "Tracestate parse error: '{0}'", Level = EventLevel.Warning)]
+        public void TracestateExtractError(string error)
+        {
+            this.WriteEvent(14, error);
         }
 
         /// <summary>
