@@ -43,6 +43,7 @@ namespace OpenTelemetry.Metrics.Export
         public UngroupedBatcher(MetricExporter exporter, TimeSpan aggregationInterval)
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+            // TODO make this thread safe.
             this.metrics = new List<Metric>();
             this.aggregationInterval = aggregationInterval;
             this.cts = new CancellationTokenSource();
@@ -93,7 +94,7 @@ namespace OpenTelemetry.Metrics.Export
         {
             try 
             {
-                await Task.Delay(this.aggregationInterval).ConfigureAwait(false);
+                await Task.Delay(this.aggregationInterval, cancellationToken).ConfigureAwait(false);
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     var sw = Stopwatch.StartNew();

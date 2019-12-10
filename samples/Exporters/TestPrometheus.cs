@@ -34,7 +34,7 @@ namespace Samples
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
             var promExporter = new PrometheusExporter(promOptions);
             var simpleProcessor = new UngroupedBatcher(promExporter, TimeSpan.FromSeconds(5));
-            var meter = MeterFactory.Create(simpleProcessor).GetMeter("library1") as MeterSDK;
+            var meter = MeterFactory.Create(simpleProcessor).GetMeter("library1");
             var testCounter = meter.CreateInt64Counter("testCounter");
 
             var labels1 = new List<KeyValuePair<string, string>>();
@@ -57,8 +57,9 @@ namespace Samples
                     if (i % 10 == 0)
                     {
                         // Collect is called here explicitly as there is 
-                        // Controller implementation yet.
-                        meter.Collect();
+                        // no controller implementation yet.
+                        // TODO: There should be no need to cast to MeterSDK.                        
+                        (meter as MeterSDK).Collect();
                     }
 
                     Task.Delay(1000).Wait();
