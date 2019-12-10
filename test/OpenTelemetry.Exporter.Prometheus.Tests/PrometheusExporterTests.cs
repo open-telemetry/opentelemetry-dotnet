@@ -87,7 +87,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
                     // Change delay to higher value to manually check Promtheus.
                     // These tests are just to temporarily validate export to prometheus.
-                    Task.Delay(1).Wait();
+                    // Task.Delay(1).Wait();
                 }
             }
             finally
