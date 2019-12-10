@@ -50,6 +50,14 @@ namespace OpenTelemetry.Metrics.Export
                 s => this.Worker((CancellationToken)s), this.cts.Token).ContinueWith((task) => Console.WriteLine("error"), TaskContinuationOptions.OnlyOnFaulted);
         }
 
+        /// <summary>
+        /// Constructs UngroupedBatcher.
+        /// </summary>
+        /// <param name="exporter">Metric exporter instance.</param>
+        public UngroupedBatcher(MetricExporter exporter) : this(exporter, TimeSpan.FromSeconds(5))
+        {
+        }
+
         public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<long> sumAggregator)
         {
             var metric = new Metric(meterName, metricName, meterName + metricName, labelSet.Labels, sumAggregator.ValueFromLastCheckpoint());
