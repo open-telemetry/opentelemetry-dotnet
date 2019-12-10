@@ -22,7 +22,7 @@ using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
-using OpenTelemetry.Trace.Sampler;
+using OpenTelemetry.Trace.Samplers;
 using Xunit;
 
 namespace OpenTelemetry.Tests.Impl.Trace
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             bool processorFactoryCalled = false;
             bool collectorFactoryCalled = true;
 
-            var sampler = ProbabilitySampler.Create(0.1);
+            var sampler = new ProbabilitySampler(0.1);
             var exporter = new TestExporter(_ => { });
             var options = new TracerConfiguration(1, 1, 1);
             var binaryFormat = new BinaryFormat();
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal("semver:" + typeof(TestCollector).Assembly.GetName().Version, collectorFactory.Version);
 
             Assert.NotNull(collectorFactory.Factory);
-            collectorFactory.Factory(new Tracer(new SimpleSpanProcessor(exporter), Samplers.AlwaysSample, options, binaryFormat, textFormat,
+            collectorFactory.Factory(new Tracer(new SimpleSpanProcessor(exporter), new AlwaysSampleSampler(), options, binaryFormat, textFormat,
                 Resource.Empty));
 
             Assert.True(collectorFactoryCalled);

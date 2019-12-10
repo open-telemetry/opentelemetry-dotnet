@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal TracerConfiguration TracerConfigurationOptions { get; private set; }
 
-        internal ISampler Sampler { get; private set; }
+        internal Sampler Sampler { get; private set; }
 
         internal Resource Resource { get; private set; } = Resource.Empty;
 
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Configures sampler.
         /// </summary>
         /// <param name="sampler">Sampler instance.</param>
-        public TracerBuilder SetSampler(ISampler sampler)
+        public TracerBuilder SetSampler(Sampler sampler)
         {
             this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             return this;

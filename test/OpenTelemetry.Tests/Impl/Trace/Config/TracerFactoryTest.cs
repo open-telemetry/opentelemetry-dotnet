@@ -97,8 +97,8 @@ namespace OpenTelemetry.Trace.Test
             // default sampler is always sample
             Assert.True(span.IsRecording);
             Assert.Equal(1, exporterCalledCount);
-            Assert.Single(((Span)span).LibraryResource.Labels);
-            Assert.Single(((Span)span).LibraryResource.Labels.Where(kvp => kvp.Key == "name" && kvp.Value == "my-app"));
+            Assert.Single(((Span)span).LibraryResource.Attributes);
+            Assert.Single(((Span)span).LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value == "my-app"));
 
             Assert.NotNull(collector1);
             Assert.NotNull(collector2);
@@ -109,13 +109,13 @@ namespace OpenTelemetry.Trace.Test
 
             Assert.Equal(3, exporterCalledCount);
 
-            Assert.Equal(2, span1.LibraryResource.Labels.Count());
-            Assert.Equal(2, span2.LibraryResource.Labels.Count());
-            Assert.Single(span1.LibraryResource.Labels.Where(kvp => kvp.Key == "name" && kvp.Value == "TestCollector"));
-            Assert.Single(span2.LibraryResource.Labels.Where(kvp => kvp.Key == "name" && kvp.Value == "TestCollector"));
+            Assert.Equal(2, span1.LibraryResource.Attributes.Count());
+            Assert.Equal(2, span2.LibraryResource.Attributes.Count());
+            Assert.Single(span1.LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value == "TestCollector"));
+            Assert.Single(span2.LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value == "TestCollector"));
 
-            Assert.Single(span1.LibraryResource.Labels.Where(kvp => kvp.Key == "version" && kvp.Value == "semver:1.0.0.0"));
-            Assert.Single(span2.LibraryResource.Labels.Where(kvp => kvp.Key == "version" && kvp.Value == "semver:1.0.0.0"));
+            Assert.Single(span1.LibraryResource.Attributes.Where(kvp => kvp.Key == "version" && kvp.Value == "semver:1.0.0.0"));
+            Assert.Single(span2.LibraryResource.Attributes.Where(kvp => kvp.Key == "version" && kvp.Value == "semver:1.0.0.0"));
 
             tracerFactory.Dispose();
             Assert.True(collector1.IsDisposed);
@@ -169,8 +169,8 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracerFactory = TracerFactory.Create(b => { });
             var tracer = (Tracer)tracerFactory.GetTracer("");
-            Assert.DoesNotContain(tracer.LibraryResource.Labels, kvp => kvp.Key == "name");
-            Assert.DoesNotContain(tracer.LibraryResource.Labels, kvp => kvp.Key == "version");
+            Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "name");
+            Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "version");
         }
 
         [Fact]
@@ -178,8 +178,8 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracerFactory = TracerFactory.Create(b => { });
             var tracer = (Tracer)tracerFactory.GetTracer(null, "semver:1.0.0");
-            Assert.DoesNotContain(tracer.LibraryResource.Labels, kvp => kvp.Key == "name");
-            Assert.DoesNotContain(tracer.LibraryResource.Labels, kvp => kvp.Key == "version");
+            Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "name");
+            Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "version");
         }
 
         [Fact]
@@ -187,8 +187,8 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracerFactory = TracerFactory.Create(b => { });
             var tracer = (Tracer)tracerFactory.GetTracer("foo");
-            Assert.Equal("foo", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "name").Value);
-            Assert.DoesNotContain(tracer.LibraryResource.Labels, kvp => kvp.Key == "version");
+            Assert.Equal("foo", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "name").Value);
+            Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "version");
         }
 
         [Fact]
@@ -196,8 +196,8 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracerFactory = TracerFactory.Create(b => { });
             var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
-            Assert.Equal("foo", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "name").Value);
-            Assert.Equal("semver:1.2.3", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "version").Value);
+            Assert.Equal("foo", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "name").Value);
+            Assert.Equal("semver:1.2.3", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "version").Value);
         }
 
         [Fact]
@@ -205,9 +205,9 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracerFactory = TracerFactory.Create(b => { b.SetResource(new Resource(new Dictionary<string, string>() { { "a", "b" } })); });
             var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
-            Assert.Equal("b", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "a").Value);
-            Assert.Equal("foo", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "name").Value);
-            Assert.Equal("semver:1.2.3", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "version").Value);
+            Assert.Equal("b", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "a").Value);
+            Assert.Equal("foo", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "name").Value);
+            Assert.Equal("semver:1.2.3", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "version").Value);
         }
 
         [Fact]
@@ -217,7 +217,7 @@ namespace OpenTelemetry.Trace.Test
                 b.SetResource(new Resource(new Dictionary<string, string>() { { "a", "b" } }))
                 .SetResource(new Resource(new Dictionary<string, string>() { { "a", "c" } })); });
             var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
-            Assert.Equal("c", tracer.LibraryResource.Labels.Single(kvp => kvp.Key == "a").Value);
+            Assert.Equal("c", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "a").Value);
         }
 
         [Fact]

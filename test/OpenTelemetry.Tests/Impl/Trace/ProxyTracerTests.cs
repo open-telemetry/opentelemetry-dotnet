@@ -43,42 +43,34 @@ namespace OpenTelemetry.Tests.Impl.Trace
         }
 
         [Fact]
-        public void ProxyTracer_CreateSpan_BadArgs()
+        public void ProxyTracer_CreateSpan_BadArgs_DoesNotThrow()
         {
             var proxyTracer = new ProxyTracer();
             
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartRootSpan(null, SpanKind.Client, null));
+            proxyTracer.StartRootSpan(null);
+            proxyTracer.StartRootSpan(null, SpanKind.Client);
+            proxyTracer.StartRootSpan(null, SpanKind.Client, default);
+            proxyTracer.StartRootSpan(null, SpanKind.Client, null);
 
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanKind.Client, null));
+            proxyTracer.StartSpan(null);
+            proxyTracer.StartSpan(null, SpanKind.Client);
+            proxyTracer.StartSpan(null, SpanKind.Client, default);
+            proxyTracer.StartSpan(null, SpanKind.Client, null);
 
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, null));
+            proxyTracer.StartSpan(null, BlankSpan.Instance);
+            proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client);
+            proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, default);
+            proxyTracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, null);
 
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.BlankLocal));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client, default));
-            Assert.Throws<ArgumentNullException>(() => proxyTracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client, null));
+            proxyTracer.StartSpan(null, SpanContext.BlankLocal);
+            proxyTracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client);
+            proxyTracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client, default);
+            proxyTracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client, null);
 
-            Assert.Throws<ArgumentNullException>(() =>
-                proxyTracer.StartSpanFromActivity(null, new Activity("foo").Start()));
-
-            Assert.Throws<ArgumentNullException>(() =>
-                proxyTracer.StartSpanFromActivity("foo", null));
-
-            Assert.Throws<ArgumentException>(() =>
-                proxyTracer.StartSpanFromActivity("foo", new Activity("foo")));
-
-            Assert.Throws<ArgumentException>(() => proxyTracer.StartSpanFromActivity(
-                    "foo", 
-                    new Activity("foo").SetIdFormat(ActivityIdFormat.Hierarchical).Start()));
+            proxyTracer.StartSpanFromActivity(null, new Activity("foo").Start());
+            proxyTracer.StartSpanFromActivity(null, null);
+            proxyTracer.StartSpanFromActivity(null, new Activity("foo"));
+            proxyTracer.StartSpanFromActivity(null, new Activity("foo").SetIdFormat(ActivityIdFormat.Hierarchical).Start());
         }
 
         [Fact]

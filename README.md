@@ -263,7 +263,7 @@ Configuration is done by user application: it should configure exporter and may 
     services.AddOpenTelemetry(builder =>
     {
         builder
-            .SetSampler(Samplers.AlwaysSample)
+            .SetSampler(new AlwaysSampleSampler())
             .UseZipkin()
 
             // you may also configure request and dependencies collectors
@@ -287,7 +287,7 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
     var connection = ConnectionMultiplexer.Connect("localhost:6379");
 
     using (TracerFactory.Create(b => b
-                .SetSampler(Samplers.AlwaysSample)
+                .SetSampler(new AlwaysSampleSampler())
                 .UseZipkin()
                 .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } }))
                 .AddCollector(t =>
@@ -309,7 +309,7 @@ You may configure sampler of your choice
 
 ```csharp
  using (TracerFactory.Create(b => b
-            .SetSampler(ProbabilitySampler.Create(0.1))
+            .SetSampler(new ProbabilitySampler(0.1))
             .UseZipkin()
             .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } })))
 {
@@ -320,12 +320,12 @@ You may configure sampler of your choice
 You can also implement custom sampler by implementing `ISampler` interface
 
 ```csharp
-class MySampler : ISampler
+class MySampler : Sampler
 {
-    public string Description { get; } = "my custom sampler";
+    public override string Description { get; } = "my custom sampler";
 
-    public Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name,
-        IEnumerable<Link> links)
+    public override Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name,
+        IDictionary<string, object> attributes, IEnumerable<Link> links)
     {
         bool sampledIn;
         if (parentContext != null && parentContext.IsValid)

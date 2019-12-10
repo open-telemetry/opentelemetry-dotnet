@@ -140,7 +140,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             string serviceName = string.Empty;
             string serviceNamespace = string.Empty;
 
-            foreach (var label in otelSpan.LibraryResource.Labels)
+            foreach (var label in otelSpan.LibraryResource.Attributes)
             {
                 string key = label.Key;
                 string val = label.Value;

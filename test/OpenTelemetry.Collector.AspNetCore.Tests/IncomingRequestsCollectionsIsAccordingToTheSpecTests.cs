@@ -15,7 +15,6 @@
 // </copyright>
 
 using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Sampler;
 using Xunit;
 using Microsoft.AspNetCore.Mvc.Testing;
 using TestApp.AspNetCore._2._0;
@@ -27,6 +26,7 @@ using Moq;
 using Microsoft.AspNetCore.TestHost;
 using System;
 using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Collector.AspNetCore.Tests
 {
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl());
                         services.AddSingleton<TracerFactory>(_ =>
                             TracerFactory.Create(b => b
-                                .SetSampler(Samplers.AlwaysSample)
+                                .SetSampler(new AlwaysSampleSampler())
                                 .AddProcessorPipeline(p => p.AddProcessor(e => spanProcessor.Object))
                                 .AddRequestCollector()));
                     }))
