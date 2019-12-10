@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Context.Propagation
@@ -43,17 +44,21 @@ namespace OpenTelemetry.Context.Propagation
         private const int TraceOptionOffset = TraceOptionFieldIdOffset + IdSize;
         private const int FormatLength = (4 * IdSize) + TraceIdSize + SpanIdSize + TraceOptionsSize;
 
+        private static readonly byte[] InvalidContext = new byte[0];
+
         /// <inheritdoc />
         public SpanContext FromByteArray(byte[] bytes)
         {
             if (bytes == null)
             {
-                throw new ArgumentNullException(nameof(bytes));
+                OpenTelemetryApiEventSource.Log.FailedToExtractSpanContext("null bytes");
+                return SpanContext.BlankRemote;
             }
 
-            if (bytes.Length == 0 || bytes[0] != VersionId)
+            if (bytes.Length != 29 || bytes[0] != VersionId)
             {
-                throw new SpanContextParseException("Unsupported version.");
+                OpenTelemetryApiEventSource.Log.FailedToExtractSpanContext("unexpected bytes length or version");
+                return SpanContext.BlankRemote;
             }
 
             ActivityTraceId traceId = default;
@@ -83,18 +88,19 @@ namespace OpenTelemetry.Context.Propagation
 
                 return new SpanContext(traceId, spanId, traceOptions);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                throw new SpanContextParseException("Invalid input.", e);
+                OpenTelemetryApiEventSource.Log.SpanContextExtractException(ex);
+                return SpanContext.BlankRemote;
             }
         }
 
         /// <inheritdoc />
         public byte[] ToByteArray(SpanContext spanContext)
         {
-            if (spanContext == null)
+            if (spanContext == null || !spanContext.IsValid)
             {
-                throw new ArgumentNullException(nameof(spanContext));
+                return InvalidContext;
             }
 
             Span<byte> spanBytes = stackalloc byte[FormatLength];

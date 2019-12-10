@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace.Sampler;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,6 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Samplers;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Export.Test
@@ -38,9 +38,10 @@ namespace OpenTelemetry.Trace.Export.Test
         private Span CreateSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
         {
             var tracer = TracerFactory.Create(b => b
-                .SetSampler(Samplers.AlwaysSample)
+                .SetSampler(new AlwaysSampleSampler())
                 .AddProcessorPipeline(p => p.AddProcessor(e => spanProcessor))
                 .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
+
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var span = (Span)tracer.StartSpan(spanName, context);
             span.End();
@@ -50,7 +51,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private Span CreateNotSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
         {
             var tracer = TracerFactory.Create(b => b
-                .SetSampler(Samplers.NeverSample)
+                .SetSampler(new NeverSampleSampler())
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor))
                 .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
@@ -173,8 +174,14 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ExportMoreSpansThanTheMaxBatchSize()
         {
+            var exporterCalled = new ManualResetEvent(false);
             int exportCalledCount = 0;
-            var spanExporter = new TestExporter(_ => Interlocked.Increment(ref exportCalledCount));
+            var spanExporter = new TestExporter(_ =>
+            {
+                exporterCalled.Set();
+                Interlocked.Increment(ref exportCalledCount);
+            });
+
             using (var spanProcessor = new BatchingSpanProcessor(spanExporter, 128, DefaultDelay, 3))
             {
                 var span1 = CreateSampledEndedSpan(SpanName1, spanProcessor);
@@ -184,7 +191,11 @@ namespace OpenTelemetry.Trace.Export.Test
                 var span5 = CreateSampledEndedSpan(SpanName1, spanProcessor);
                 var span6 = CreateSampledEndedSpan(SpanName1, spanProcessor);
 
+                // wait for exporter to be called to stabilize tests on the build server
+                exporterCalled.WaitOne(TimeSpan.FromSeconds(10));
+
                 var exported = WaitForSpans(spanExporter, 6, DefaultTimeout);
+
                 Assert.InRange(exportCalledCount, 2, 6);
 
                 Assert.Equal(6, exported.Count());
@@ -223,8 +234,9 @@ namespace OpenTelemetry.Trace.Export.Test
 
         [Fact]
         public void ProcessorDoesNotBlockOnExporter()
-        {
-            var spanExporter = new TestExporter(_ => Thread.Sleep(500));
+        { 
+            var resetEvent = new ManualResetEvent(false);
+            var spanExporter = new TestExporter(_ => resetEvent.WaitOne(TimeSpan.FromSeconds(10)));
             using (var factory = TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p
                     .SetExporter(spanExporter)
@@ -241,6 +253,8 @@ namespace OpenTelemetry.Trace.Export.Test
                 sw.Stop();
 
                 Assert.InRange(sw.Elapsed, TimeSpan.Zero, TimeSpan.FromMilliseconds(100));
+
+                resetEvent.Set();
 
                 var exported = WaitForSpans(spanExporter, 1, DefaultTimeout);
 

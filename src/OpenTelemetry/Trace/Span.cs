@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
     {
         private static readonly ConditionalWeakTable<Activity, Span> ActivitySpanTable = new ConditionalWeakTable<Activity, Span>();
 
-        private readonly ISampler sampler;
+        private readonly Sampler sampler;
         private readonly TracerConfiguration tracerConfiguration;
         private readonly SpanProcessor spanProcessor;
         private readonly object lck = new object();
@@ -59,12 +59,21 @@ namespace OpenTelemetry.Trace
             bool createdFromActivity,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
-            ISampler sampler,
+            Sampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
-        { 
-            this.Name = name;
+        {
+            if (name != null)
+            {
+                this.Name = name;
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpan", "span name is null");
+                this.Name = string.Empty;
+            }
+
             this.LibraryResource = libraryResource;
 
             IEnumerable<Link> links = null;
@@ -90,6 +99,7 @@ namespace OpenTelemetry.Trace
             this.IsRecording = MakeSamplingDecision(
                 parentSpanContext,
                 name,
+                spanCreationOptions?.Attributes,
                 links, // we'll enumerate again, but double enumeration over small collection is cheaper than allocation
                 this.Activity.TraceId,
                 this.Activity.SpanId,
@@ -106,6 +116,15 @@ namespace OpenTelemetry.Trace
             if (this.IsRecording)
             {
                 this.SetLinks(links);
+
+                if (spanCreationOptions?.Attributes != null)
+                {
+                    foreach (var attribute in spanCreationOptions.Attributes)
+                    {
+                        this.SetAttribute(attribute);
+                    }
+                }
+
                 this.spanProcessor.OnStart(this);
             }
         }
@@ -119,7 +138,16 @@ namespace OpenTelemetry.Trace
         {
             get => this.StatusWithDefault;
 
-            set => this.status = value.IsValid ? value : throw new ArgumentException(nameof(value));
+            set
+            {
+                if (!value.IsValid)
+                {
+                    OpenTelemetrySdkEventSource.Log.InvalidArgument("set_Status", "value");
+                    return;
+                }
+
+                this.status = value;
+            }
         }
 
         public ActivitySpanId ParentSpanId => this.Activity.ParentSpanId;
@@ -194,22 +222,20 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            this.Name = name ?? throw new ArgumentNullException(nameof(name));
+            if (name != null)
+            {
+                this.Name = name;
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("UpdateName", "span name is null");
+                this.Name = string.Empty;
+            }
         }
 
         /// <inheritdoc/>
         public void SetAttribute(KeyValuePair<string, object> keyValuePair)
         {
-            if (keyValuePair.Key == null)
-            {
-                throw new ArgumentNullException(nameof(keyValuePair.Key));
-            }
-
-            if (keyValuePair.Value == null)
-            {
-                throw new ArgumentNullException(nameof(keyValuePair.Value));
-            }
-
             if (!this.IsRecording)
             {
                 return;
@@ -229,7 +255,7 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
+                this.attributes.Add(new KeyValuePair<string, object>(keyValuePair.Key ?? string.Empty, keyValuePair.Value ?? string.Empty));
             }
         }
 
@@ -272,7 +298,8 @@ namespace OpenTelemetry.Trace
         {
             if (addEvent == null)
             {
-                throw new ArgumentNullException(nameof(addEvent));
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("AddEvent", nameof(addEvent));
+                return;
             }
 
             if (!this.IsRecording)
@@ -385,7 +412,7 @@ namespace OpenTelemetry.Trace
             ISpan parentSpan,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
-            ISampler sampler,
+            Sampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -406,7 +433,8 @@ namespace OpenTelemetry.Trace
             }
 
             var currentActivity = Activity.Current;
-            if (currentActivity == null)
+            if (currentActivity == null ||
+                currentActivity.IdFormat != ActivityIdFormat.W3C)
             {
                 return new Span(
                     name,
@@ -442,7 +470,7 @@ namespace OpenTelemetry.Trace
             SpanContext parentContext,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
-            ISampler sampler,
+            Sampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -464,7 +492,7 @@ namespace OpenTelemetry.Trace
             string name,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
-            ISampler sampler,
+            Sampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -487,7 +515,7 @@ namespace OpenTelemetry.Trace
             Activity activity,
             SpanKind spanKind,
             IEnumerable<Link> links,
-            ISampler sampler,
+            Sampler sampler,
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
@@ -535,12 +563,13 @@ namespace OpenTelemetry.Trace
         private static bool MakeSamplingDecision(
             SpanContext parent,
             string name,
+            IDictionary<string, object> attributes,
             IEnumerable<Link> parentLinks,
             ActivityTraceId traceId,
             ActivitySpanId spanId,
-            ISampler sampler)
+            Sampler sampler)
         {
-            return sampler.ShouldSample(parent, traceId, spanId, name, parentLinks).IsSampled;
+            return sampler.ShouldSample(parent, traceId, spanId, name, attributes, parentLinks).IsSampled;
         }
 
         private static ActivityAndTracestate FromCurrentParentActivity(string spanName, Activity current)

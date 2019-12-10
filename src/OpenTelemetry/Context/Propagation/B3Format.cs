@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Context.Propagation
@@ -52,12 +53,14 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (carrier == null)
             {
-                throw new ArgumentNullException(nameof(carrier));
+                OpenTelemetrySdkEventSource.Log.FailedToExtractSpanContext("null carrier");
+                return SpanContext.BlankRemote;
             }
 
             if (getter == null)
             {
-                throw new ArgumentNullException(nameof(getter));
+                OpenTelemetrySdkEventSource.Log.FailedToExtractSpanContext("null getter");
+                return SpanContext.BlankRemote;
             }
 
             try
@@ -76,7 +79,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 else
                 {
-                    throw new SpanContextParseException("Missing X_B3_TRACE_ID.");
+                    return SpanContext.BlankRemote;
                 }
 
                 ActivitySpanId spanId;
@@ -87,7 +90,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 else
                 {
-                    throw new SpanContextParseException("Missing X_B3_SPAN_ID.");
+                    return SpanContext.BlankRemote;
                 }
 
                 var traceOptions = ActivityTraceFlags.None;
@@ -101,7 +104,8 @@ namespace OpenTelemetry.Context.Propagation
             }
             catch (Exception e)
             {
-                throw new SpanContextParseException("Invalid input.", e);
+                OpenTelemetrySdkEventSource.Log.SpanContextExtractException(e);
+                return SpanContext.BlankRemote;
             }
         }
 
@@ -110,22 +114,26 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (spanContext == null)
             {
-                throw new ArgumentNullException(nameof(spanContext));
+                OpenTelemetrySdkEventSource.Log.FailedToInjectSpanContext("null context");
+                return;
             }
 
             if (!spanContext.IsValid)
             {
-                throw new ArgumentException(nameof(spanContext));
+                OpenTelemetrySdkEventSource.Log.FailedToInjectSpanContext("invalid context");
+                return;
             }
 
             if (carrier == null)
             {
-                throw new ArgumentNullException(nameof(carrier));
+                OpenTelemetrySdkEventSource.Log.FailedToInjectSpanContext("null carrier");
+                return;
             }
 
             if (setter == null)
             {
-                throw new ArgumentNullException(nameof(setter));
+                OpenTelemetrySdkEventSource.Log.FailedToInjectSpanContext("null setter");
+                return;
             }
 
             setter(carrier, XB3TraceId, spanContext.TraceId.ToHexString());

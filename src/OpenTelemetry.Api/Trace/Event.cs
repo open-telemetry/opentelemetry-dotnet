@@ -16,7 +16,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using OpenTelemetry.Api.Utils;
 
 namespace OpenTelemetry.Trace
@@ -56,8 +55,8 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Event attributes.</param>
         public Event(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
         {
-            this.Name = name ?? throw new ArgumentNullException(nameof(name));
-            this.Attributes = attributes ?? throw new ArgumentNullException(nameof(attributes));
+            this.Name = name ?? string.Empty;
+            this.Attributes = attributes ?? EmptyAttributes;
             this.Timestamp = timestamp != default ? timestamp : PreciseTimestamp.GetUtcNow();
         }
 
@@ -75,36 +74,5 @@ namespace OpenTelemetry.Trace
         /// Gets the <see cref="IDictionary{String, Object}"/> collection of attributes associated with the event.
         /// </summary>
         public IDictionary<string, object> Attributes { get; }
-
-        /// <inheritdoc/>
-        public override bool Equals(object obj)
-        {
-            if (obj == this)
-            {
-                return true;
-            }
-
-            if (obj is Event @event)
-            {
-                return this.Name.Equals(@event.Name) &&
-                    this.Attributes.SequenceEqual(@event.Attributes) &&
-                    this.Timestamp.Equals(@event.Timestamp);
-            }
-
-            return false;
-        }
-
-        /// <inheritdoc/>
-        public override int GetHashCode()
-        {
-            var h = 1;
-            h *= 1000003;
-            h ^= this.Name.GetHashCode();
-            h *= 1000003;
-            h ^= this.Attributes.GetHashCode();
-            h *= 1000003;
-            h ^= this.Timestamp.GetHashCode();
-            return h;
-        }
     }
 }

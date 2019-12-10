@@ -36,11 +36,11 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Creates a new <see cref="Resource"/>.
         /// </summary>
-        /// <param name="labels">An <see cref="IDictionary{String, String}"/> of labels that describe the resource.</param>
-        public Resource(IEnumerable<KeyValuePair<string, string>> labels)
+        /// <param name="attributes">An <see cref="IDictionary{String, String}"/> of attributes that describe the resource.</param>
+        public Resource(IEnumerable<KeyValuePair<string, string>> attributes)
         {
-            ValidateLabels(labels);
-            this.Labels = labels;
+            ValidateAttributes(attributes);
+            this.Attributes = attributes;
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Gets the collection of key-value pairs describing the resource.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, string>> Labels { get; }
+        public IEnumerable<KeyValuePair<string, string>> Attributes { get; }
 
         /// <summary>
         /// Returns a new, merged <see cref="Resource"/> by merging the current <see cref="Resource"/> with the.
@@ -61,47 +61,47 @@ namespace OpenTelemetry.Resources
         /// <returns><see cref="Resource"/>.</returns>
         public Resource Merge(Resource other)
         {
-            var newLabels = new Dictionary<string, string>();
+            var newAttributes = new Dictionary<string, string>();
 
-            foreach (var label in this.Labels)
+            foreach (var attribute in this.Attributes)
             {
-                if (!newLabels.TryGetValue(label.Key, out var value) || string.IsNullOrEmpty(value))
+                if (!newAttributes.TryGetValue(attribute.Key, out var value) || string.IsNullOrEmpty(value))
                 {
-                    newLabels[label.Key] = label.Value;
+                    newAttributes[attribute.Key] = attribute.Value;
                 }
             }
 
             if (other != null)
             {
-                foreach (var label in other.Labels)
+                foreach (var attribute in other.Attributes)
                 {
-                    if (!newLabels.TryGetValue(label.Key, out var value) || string.IsNullOrEmpty(value))
+                    if (!newAttributes.TryGetValue(attribute.Key, out var value) || string.IsNullOrEmpty(value))
                     {
-                        newLabels[label.Key] = label.Value;
+                        newAttributes[attribute.Key] = attribute.Value;
                     }
                 }
             }
 
-            return new Resource(newLabels);
+            return new Resource(newAttributes);
         }
 
-        private static void ValidateLabels(IEnumerable<KeyValuePair<string, string>> labels)
+        private static void ValidateAttributes(IEnumerable<KeyValuePair<string, string>> attributes)
         {
-            if (labels == null)
+            if (attributes == null)
             {
-                throw new ArgumentNullException(nameof(labels));
+                throw new ArgumentNullException(nameof(attributes));
             }
 
-            foreach (var label in labels)
+            foreach (var attribute in attributes)
             {
-                if (!IsValidAndNotEmpty(label.Key))
+                if (!IsValidAndNotEmpty(attribute.Key))
                 {
-                    throw new ArgumentException($"Label key should be a string with a length greater than 0 and not exceeding {MaxResourceTypeNameLength} characters.");
+                    throw new ArgumentException($"Attribute key should be a string with a length greater than 0 and not exceeding {MaxResourceTypeNameLength} characters.");
                 }
 
-                if (!IsValid(label.Value))
+                if (!IsValid(attribute.Value))
                 {
-                    throw new ArgumentException($"Label value should be a string with a length not exceeding {MaxResourceTypeNameLength} characters.");
+                    throw new ArgumentException($"Attribute value should be a string with a length not exceeding {MaxResourceTypeNameLength} characters.");
                 }
             }
         }
