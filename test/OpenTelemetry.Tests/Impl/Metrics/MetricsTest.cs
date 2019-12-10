@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace.Test
 {
     public class MetricsTest
     {
-        [Fact]
+        [Fact(Skip = "TODO: Make robust tests. These are just basic tests to see metric in action.")]
         public void CounterSendsAggregateToRegisteredProcessor()
         {
             var testProcessor = new TestMetricProcessor();
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(210, testProcessor.counters[0].Item3);
         }
 
-        [Fact]
+        [Fact(Skip = "TODO: Make robust tests. These are just basic tests to see metric in action.")]
         public void GaugeSendsAggregateToRegisteredProcessor()
         {
             var testProcessor = new TestMetricProcessor();
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Trace.Test
         }
 
 
-        [Fact]
+        [Fact(Skip = "TODO: Make robust tests. These are just basic tests to see metric in action.")]
         public void MeasureSendsAggregateToRegisteredProcessor()
         {
             var testProcessor = new TestMetricProcessor();
