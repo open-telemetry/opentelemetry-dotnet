@@ -47,7 +47,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             }
             finally
             {
-                Task.Delay(10000).Wait();
+                // Change delay to higher value to manually check Promtheus.
+                // These tests are just to temporarily validate export to prometheus.
+                Task.Delay(10).Wait();
                 promExporter.Stop();
             }
         }
@@ -82,12 +84,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     {
                         meter.Collect();
                     }
-                    Task.Delay(1000).Wait();
+
+                    // Change delay to higher value to manually check Promtheus.
+                    // These tests are just to temporarily validate export to prometheus.
+                    Task.Delay(100).Wait();
                 }
             }
             finally
             {
-                Task.Delay(3000).Wait();
+                Task.Delay(100).Wait();
                 promExporter.Stop();
             }
         }
