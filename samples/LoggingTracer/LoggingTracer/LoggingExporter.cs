@@ -58,7 +58,7 @@ namespace LoggingTracer
 
         private static string StringifyResource(Resource resource)
         {
-            return string.Join(", ", resource.Labels.Select(l => l.Value));
+            return string.Join(", ", resource.Attributes.Select(l => l.Value));
         }
 
         private static void AppendIndentedLine(StringBuilder sb, int indentationLevel, string line)
