@@ -15,14 +15,13 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Context;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Metrics.Export;
-using OpenTelemetry.Metrics.Implementation;
+using OpenTelemetry.Trace;
 
 namespace Samples
 {
@@ -33,32 +32,41 @@ namespace Samples
         internal static object Run()
         {
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
-            Metric<long> metric = new Metric<long>("sample");
-            var promExporter = new PrometheusExporter<long>(promOptions, metric);
+            var promExporter = new PrometheusExporter(promOptions);
+            var simpleProcessor = new UngroupedBatcher(promExporter, TimeSpan.FromSeconds(5));
+            var meter = MeterFactory.Create(simpleProcessor).GetMeter("library1") as MeterSDK;
+            var testCounter = meter.CreateInt64Counter("testCounter");
 
-            var metricProcessor = new AggregatingMetricProcessor(promExporter);
+            var labels1 = new List<KeyValuePair<string, string>>();
+            labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
 
-            List<KeyValuePair<string, string>> label1 = new List<KeyValuePair<string, string>>();
-            label1.Add(new KeyValuePair<string, string>("dim1", "value1"));
-            var meterFactory = MeterFactory.Create(metricProcessor);
-            var meter = meterFactory.GetMeter("TestMeter");
-            var testCounter = meter.CreateInt64Counter("TestCounter");
-            testCounter.Add(null, 100, label1);
-            
+            var labels2 = new List<KeyValuePair<string, string>>();
+            labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
+
             try
-            {                                
+            {
                 promExporter.Start();
-                List<KeyValuePair<string, string>> label1 = new List<KeyValuePair<string, string>>();
-                label1.Add(new KeyValuePair<string, string>("dim1", "value1"));
-                var labelSet1 = new LabelSet(label1);
-                metric.GetOrCreateMetricTimeSeries(labelSet1).Add(100);
-                Task.Delay(30000).Wait();
-                metric.GetOrCreateMetricTimeSeries(labelSet1).Add(200);
-                Console.WriteLine("Look at metrics in Prometheus console!");
-                Console.ReadLine();
+
+                for (int i = 0; i < 1000; i++)
+                {
+                    testCounter.Add(SpanContext.BlankLocal, 100, meter.GetLabelSet(labels1));
+                    testCounter.Add(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels1));
+                    testCounter.Add(SpanContext.BlankLocal, 200, meter.GetLabelSet(labels2));
+                    testCounter.Add(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels2));
+
+                    if (i % 10 == 0)
+                    {
+                        // Collect is called here explicitly as there is 
+                        // Controller implementation yet.
+                        meter.Collect();
+                    }
+
+                    Task.Delay(1000).Wait();
+                }
             }
             finally
             {
+                Task.Delay(3000).Wait();
                 promExporter.Stop();
             }
 

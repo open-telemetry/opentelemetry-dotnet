@@ -21,6 +21,7 @@ namespace OpenTelemetry.Metrics
 {
     /// <summary>
     /// Normalized name value pairs of metric labels.
+    /// TODO: Most of the logic here would be moved into SDK from the API.
     /// </summary>
     public class LabelSet
     {

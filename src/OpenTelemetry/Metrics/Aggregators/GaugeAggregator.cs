@@ -18,6 +18,10 @@ using System;
 
 namespace OpenTelemetry.Metrics.Aggregators
 {
+    /// <summary>
+    /// Basic aggregator which keeps the last recorded value and timestamp.
+    /// </summary>
+    /// <typeparam name="T">Type of gauge.</typeparam>
     public class GaugeAggregator<T> : Aggregator<T>
         where T : struct
     {

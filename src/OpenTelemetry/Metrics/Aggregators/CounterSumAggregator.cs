@@ -16,6 +16,10 @@
 
 namespace OpenTelemetry.Metrics.Aggregators
 {
+    /// <summary>
+    /// Basic aggregator which calculates a Sum from individual measurements.
+    /// </summary>
+    /// <typeparam name="T">Type of counter.</typeparam>
     public class CounterSumAggregator<T> : Aggregator<T>
         where T : struct
     {
@@ -29,6 +33,8 @@ namespace OpenTelemetry.Metrics.Aggregators
 
         public override void Update(T value)
         {
+            // TODO discuss if we should move away from generics to avoid
+            // these conversions.
             if (typeof(T) == typeof(double))
             {
                 this.sum = (T)(object)((double)(object)this.sum + (double)(object)value);

@@ -19,6 +19,10 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics.Aggregators
 {
+    /// <summary>
+    /// Basic aggregator keeping all raw values.
+    /// </summary>
+    /// <typeparam name="T">Type of measure instrument.</typeparam>
     public class MeasureExactAggregator<T> : Aggregator<T> 
         where T : struct
     {
@@ -27,6 +31,8 @@ namespace OpenTelemetry.Metrics.Aggregators
 
         public override void Checkpoint()
         {
+            // TODO = don't lose old checkpoint if it was not exported.
+            // Merge with it.
             this.checkPoint = this.values;
             this.values = new List<T>();
         }
