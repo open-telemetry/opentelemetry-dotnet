@@ -191,9 +191,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 
                 await duplexCall.RequestStream.CompleteAsync().ConfigureAwait(false);
             }
-            catch (RpcException)
+            catch (RpcException ex)
             {
-                // TODO: log
+                ExporterEventSource.Log.FailedToReachCollector(ex);
                 throw;
             }
         }
