@@ -26,6 +26,11 @@ namespace OpenTelemetry.Metrics
     public class LabelSet
     {
         /// <summary>
+        /// Empty LabelSet.
+        /// </summary>
+        public static readonly LabelSet BlankLabelSet = new LabelSet();
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="LabelSet"/> class.
         /// </summary>
         /// <param name="labels">labels from which labelset should be constructed.</param>
@@ -33,6 +38,10 @@ namespace OpenTelemetry.Metrics
         {
             this.Labels = labels;
             this.LabelSetEncoded = this.GetLabelSetEncoded(labels);
+        }
+
+        private LabelSet()
+        {
         }
 
         /// <summary>
