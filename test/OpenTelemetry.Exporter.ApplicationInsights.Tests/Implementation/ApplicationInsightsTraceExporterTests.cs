@@ -103,7 +103,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.Equal(span.Context.TraceId.ToHexString(), request.Context.Operation.Id);
 
-            Assert.Equal($"|{span.Context.TraceId.ToHexString()}.{span.Context.SpanId.ToHexString()}.", request.Id);
+            Assert.Equal(span.Context.SpanId.ToHexString(), request.Id);
             Assert.Null(request.Context.Operation.ParentId);
 
             Assert.True(request.Success);
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var sentItems = ConvertSpan(span);
 
             // ASSERT
-            Assert.Equal($"|{TestTraceId}.{TestParentSpanId}.", ((RequestTelemetry)sentItems.Single()).Context.Operation.ParentId);
+            Assert.Equal(TestParentSpanId, ((RequestTelemetry)sentItems.Single()).Context.Operation.ParentId);
         }
 
         [Fact]
@@ -288,7 +288,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.Equal(span.Context.TraceId.ToHexString(), dependency.Context.Operation.Id);
             Assert.Null(dependency.Context.Operation.ParentId);
-            Assert.Equal($"|{span.Context.TraceId.ToHexString()}.{span.Context.SpanId.ToHexString()}.", dependency.Id);
+            Assert.Equal(span.Context.SpanId.ToHexString(), dependency.Id);
 
             Assert.Equal("0", dependency.ResultCode);
             Assert.True(dependency.Success.HasValue);
@@ -328,8 +328,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.Equal(TestTraceId, dependency.Context.Operation.Id);
 
-            Assert.Equal($"|{TestTraceId}.{span.Context.SpanId.ToHexString()}.", dependency.Id);
-            Assert.Equal($"|{TestTraceId}.{parentSpanId.ToHexString()}.", dependency.Context.Operation.ParentId);
+            Assert.Equal(span.Context.SpanId.ToHexString(), dependency.Id);
+            Assert.Equal(parentSpanId.ToHexString(), dependency.Context.Operation.ParentId);
 
             Assert.Equal("0", dependency.ResultCode);
             Assert.True(dependency.Success.HasValue);
@@ -390,8 +390,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.Equal(TestTraceId, dependency.Context.Operation.Id);
 
-            Assert.Equal($"|{TestTraceId}.{span.Context.SpanId.ToHexString()}.", dependency.Id);
-            Assert.Equal($"|{TestTraceId}.{ActivitySpanId.CreateFromBytes(testParentSpanIdBytes)}.", dependency.Context.Operation.ParentId);
+            Assert.Equal(span.Context.SpanId.ToHexString(), dependency.Id);
+            Assert.Equal(ActivitySpanId.CreateFromBytes(testParentSpanIdBytes).ToHexString(), dependency.Context.Operation.ParentId);
             Assert.Equal("0", dependency.ResultCode);
             Assert.True(dependency.Success.HasValue);
             Assert.True(dependency.Success);
@@ -446,7 +446,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             // ASSERT
             var dependency = sentItems.OfType<DependencyTelemetry>().Single();
-            Assert.Equal($"|{TestTraceId}.{TestParentSpanId}.", dependency.Context.Operation.ParentId);
+            Assert.Equal(TestParentSpanId, dependency.Context.Operation.ParentId);
         }
 
         [Fact]
@@ -1276,11 +1276,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal(link1TraceId, actualLinks[1].operation_Id);
             Assert.Equal(link2TraceId, actualLinks[2].operation_Id);
 
-            Assert.Equal($"|{link0TraceId}.{link0SpanId}.", actualLinks[0].id);
-            Assert.Equal($"|{link1TraceId}.{link1SpanId}.", actualLinks[1].id);
-            Assert.Equal($"|{link2TraceId}.{link2SpanId}.", actualLinks[2].id);
+            Assert.Equal(link0SpanId, actualLinks[0].id);
+            Assert.Equal(link1SpanId, actualLinks[1].id);
+            Assert.Equal(link2SpanId, actualLinks[2].id);
             
-            Assert.Equal($"[{{\"operation_Id\":\"{link0TraceId}\",\"id\":\"|{link0TraceId}.{link0SpanId}.\"}},{{\"operation_Id\":\"{link1TraceId}\",\"id\":\"|{link1TraceId}.{link1SpanId}.\"}},{{\"operation_Id\":\"{link2TraceId}\",\"id\":\"|{link2TraceId}.{link2SpanId}.\"}}]", linksStr);
+            Assert.Equal($"[{{\"operation_Id\":\"{link0TraceId}\",\"id\":\"{link0SpanId}\"}},{{\"operation_Id\":\"{link1TraceId}\",\"id\":\"{link1SpanId}\"}},{{\"operation_Id\":\"{link2TraceId}\",\"id\":\"{link2SpanId}\"}}]", linksStr);
         }
 
         [Fact]
@@ -1365,9 +1365,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal(link1TraceId, actualLinks[1].operation_Id);
             Assert.Equal(link2TraceId, actualLinks[2].operation_Id);
 
-            Assert.Equal($"|{link0TraceId}.{link0SpanId}.", actualLinks[0].id);
-            Assert.Equal($"|{link1TraceId}.{link1SpanId}.", actualLinks[1].id);
-            Assert.Equal($"|{link2TraceId}.{link2SpanId}.", actualLinks[2].id);
+            Assert.Equal(link0SpanId, actualLinks[0].id);
+            Assert.Equal(link1SpanId, actualLinks[1].id);
+            Assert.Equal(link2SpanId, actualLinks[2].id);
         }
 
         [Fact]
