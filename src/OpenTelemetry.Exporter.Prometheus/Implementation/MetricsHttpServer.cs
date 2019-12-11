@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading;
@@ -21,17 +22,16 @@ using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Exporter.Prometheus.Implementation
 {
-    internal class MetricsHttpServer<T>
+    internal class MetricsHttpServer
     {
-        private readonly Metric<T> metric;
+        internal List<Metric> Metrics;
 
         private readonly CancellationToken token;
-
         private readonly HttpListener httpListener = new HttpListener();
 
-        public MetricsHttpServer(Metric<T> metric, PrometheusExporterOptions options, CancellationToken token)
+        public MetricsHttpServer(List<Metric> metrics, PrometheusExporterOptions options, CancellationToken token)
         {
-            this.metric = metric;
+            this.Metrics = metrics;
             this.token = token;
             this.httpListener.Prefixes.Add(options.Url);
         }
@@ -56,21 +56,21 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                     {
                         using (var writer = new StreamWriter(output))
                         {
-                            foreach (var metricSeries in this.metric.TimeSeries)
+                            foreach (var metric in this.Metrics)
                             {
-                                var labels = metricSeries.Key.Labels;
-                                var values = metricSeries.Value.Points;
+                                var labels = metric.Labels;
+                                var value = metric.Value;
 
                                 var builder = new PrometheusMetricBuilder()
-                                    .WithName(this.metric.MetricName)
-                                    .WithDescription(this.metric.MetricDescription);
+                                    .WithName(metric.MetricName)
+                                    .WithDescription(metric.MetricDescription);
 
                                 builder = builder.WithType("counter");
 
                                 foreach (var label in labels)
                                 {
                                     var metricValueBuilder = builder.AddValue();
-                                    metricValueBuilder = metricValueBuilder.WithValue((long)(object)values[0]);
+                                    metricValueBuilder = metricValueBuilder.WithValue(value);
                                     metricValueBuilder.WithLabel(label.Key, label.Value);
                                 }
 

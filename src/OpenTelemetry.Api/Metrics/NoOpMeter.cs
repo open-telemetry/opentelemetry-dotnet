@@ -24,41 +24,38 @@ namespace OpenTelemetry.Metrics
         {
         }
 
+        public override Counter<double> CreateDoubleCounter(string name, bool monotonic = true)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Gauge<double> CreateDoubleGauge(string name, bool monotonic = false)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Measure<double> CreateDoubleMeasure(string name, bool absolute = true)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Counter<long> CreateInt64Counter(string name, bool monotonic = true)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Gauge<long> CreateInt64Gauge(string name, bool monotonic = false)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Measure<long> CreateInt64Measure(string name, bool absolute = true)
+        {
+            throw new NotImplementedException();
+        }
+
         public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            // return no op
-            throw new System.NotImplementedException();
-        }
-
-        protected override Counter<T> CreateCounter<T>(string name, bool monotonic = true)
-        {
-            if (typeof(T) != typeof(long) || typeof(T) != typeof(double))
-            {
-                throw new InvalidOperationException();
-            }
-
-            // return no op
-            throw new System.NotImplementedException();
-        }
-
-        protected override Gauge<T> CreateGauge<T>(string name, bool monotonic = true)
-        {
-            if (typeof(T) != typeof(long) || typeof(T) != typeof(double))
-            {
-                throw new InvalidOperationException();
-            }
-
-            // return no op
-            throw new System.NotImplementedException();
-        }
-
-        protected override Measure<T> CreateMeasure<T>(string name, bool monotonic = true)
-        {
-            if (typeof(T) != typeof(long) || typeof(T) != typeof(double))
-            {
-                throw new InvalidOperationException();
-            }
-
             // return no op
             throw new System.NotImplementedException();
         }
