@@ -210,8 +210,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                         // avoiding json serializers for now because of extra dependency.
                         // System.Text.Json is starting at 4.6.1 while exporter is 4.6
                         // also serialization is trivial and looks like `links` property with json blob
-                        // [{"operation_Id":"5eca8b153632494ba00f619d6877b134","id":"|5eca8b153632494ba00f619d6877b134.d4c1279b6e7b7c47."},
-                        //  {"operation_Id":"ff28988d0776b44f9ca93352da126047","id":"|ff28988d0776b44f9ca93352da126047.bf4fa4855d161141."}]
+                        // [{"operation_Id":"5eca8b153632494ba00f619d6877b134","id":"d4c1279b6e7b7c47"},
+                        //  {"operation_Id":"ff28988d0776b44f9ca93352da126047","id":"bf4fa4855d161141"}]
                         linksJson
                             .Append('{')
                             .Append("\"operation_Id\":")
@@ -222,11 +222,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                         linksJson
                             .Append("\"id\":")
                             .Append('\"')
-                            .Append('|')
-                            .Append(linkTraceId)
-                            .Append('.')
                             .Append(link.Context.SpanId.ToHexString())
-                            .Append('.')
                             .Append('\"');
 
                         // we explicitly ignore sampling flag, tracestate and attributes at this point.
@@ -260,7 +256,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                     }
 
                     log.Context.Operation.Id = traceId;
-                    log.Context.Operation.ParentId = string.Concat("|", traceId, ".", spanId, ".");
+                    log.Context.Operation.ParentId = spanId;
 
                     this.telemetryClient.Track(log);
                 }
@@ -280,11 +276,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
 
                 if (parentId != null)
                 {
-                    result.Context.Operation.ParentId = string.Concat("|", traceId, ".", parentId, ".");
+                    result.Context.Operation.ParentId = parentId;
                 }
 
-                // TODO: this concatenation is required for Application Insights backward compatibility reasons
-                result.Id = string.Concat("|", traceId, ".", spanId, ".");
+                result.Id = spanId;
 
                 foreach (var ts in span.Context.Tracestate)
                 {
