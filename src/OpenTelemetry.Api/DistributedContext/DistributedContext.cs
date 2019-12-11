@@ -111,12 +111,10 @@ namespace OpenTelemetry.Context
             {
                 if (value is null)
                 {
-                    OpenTelemetryApiEventSource.Log.InvalidArgument("set_Carrier", "value is null");
+                    OpenTelemetryApiEventSource.Log.InvalidArgument("set_Carrier", nameof(value), "is null");
                 }
-                else
-                {
-                    carrier = value;
-                }
+
+                carrier = value ?? NoopDistributedContextCarrier.Instance;
             }
         }
 

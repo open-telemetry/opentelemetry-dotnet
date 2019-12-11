@@ -44,7 +44,7 @@ namespace OpenTelemetry.Context
             if (key == null)
             {
                 this.Key = string.Empty;
-                OpenTelemetryApiEventSource.Log.InvalidArgument(nameof(DistributedContextEntry), "null key");
+                OpenTelemetryApiEventSource.Log.InvalidArgument(nameof(DistributedContextEntry), nameof(key), "is null");
             }
             else
             {
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Context
             if (value == null)
             {
                 this.Value = string.Empty;
-                OpenTelemetryApiEventSource.Log.InvalidArgument(nameof(DistributedContextEntry), "null value");
+                OpenTelemetryApiEventSource.Log.InvalidArgument(nameof(DistributedContextEntry), nameof(value), "is null");
             }
             else
             {

@@ -83,10 +83,10 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(6, error);
         }
 
-        [Event(7, Message = "Calling method '{0}' with invalid argument '{1}'.", Level = EventLevel.Warning)]
-        public void InvalidArgument(string methodName, string issue)
+        [Event(7, Message = "Calling method '{0}' with invalid argument '{1}', issue '{2}'.", Level = EventLevel.Warning)]
+        public void InvalidArgument(string methodName, string argumentName, string issue)
         {
-            this.WriteEvent(7, methodName, issue);
+            this.WriteEvent(7, methodName, argumentName, issue);
         }
 
         /// <summary>

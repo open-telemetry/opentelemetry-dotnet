@@ -99,10 +99,10 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(7, spanName);
         }
 
-        [Event(8, Message = "Calling method '{0}' with invalid argument '{1}'.", Level = EventLevel.Warning)]
-        public void InvalidArgument(string methodName, string issue)
+        [Event(8, Message = "Calling method '{0}' with invalid argument '{1}', issue '{2}'.", Level = EventLevel.Warning)]
+        public void InvalidArgument(string methodName, string argumentName, string issue)
         {
-            this.WriteEvent(8, methodName, issue);
+            this.WriteEvent(8, methodName, argumentName, issue);
         }
 
         [Event(9, Message = "Failed to extract span context: '{0}'", Level = EventLevel.Warning)]
