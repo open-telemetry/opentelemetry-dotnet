@@ -17,7 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization.Formatters;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context
 {
@@ -78,11 +78,6 @@ namespace OpenTelemetry.Context
         /// <param name="value">The value of the context entry.</param>
         public DistributedContext(string key, string value)
         {
-            if (key is null || value is null)
-            {
-                throw new ArgumentNullException(key is null ? nameof(key) : nameof(value));
-            }
-
             this.entries = carrier is NoopDistributedContextCarrier ? emptyList : new List<DistributedContextEntry>(1) { new DistributedContextEntry(key, value) };
         }
 
@@ -116,10 +111,10 @@ namespace OpenTelemetry.Context
             {
                 if (value is null)
                 {
-                    throw new ArgumentNullException(nameof(value));
+                    OpenTelemetryApiEventSource.Log.InvalidArgument("set_Carrier", nameof(value), "is null");
                 }
 
-                carrier = value;
+                carrier = value ?? NoopDistributedContextCarrier.Instance;
             }
         }
 

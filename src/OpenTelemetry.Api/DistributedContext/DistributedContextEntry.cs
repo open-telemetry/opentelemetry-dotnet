@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Context
 {
-    using System;
-
     /// <summary>
     /// Distributed Context entry with the key, value and metadata.
     /// </summary>
@@ -41,8 +41,26 @@ namespace OpenTelemetry.Context
         /// <param name="metadata">Entry metadata.</param>
         public DistributedContextEntry(string key, string value, in EntryMetadata metadata)
         {
-            this.Key = key ?? throw new ArgumentNullException(nameof(key));
-            this.Value = value ?? throw new ArgumentNullException(nameof(value));
+            if (key == null)
+            {
+                this.Key = string.Empty;
+                OpenTelemetryApiEventSource.Log.InvalidArgument(nameof(DistributedContextEntry), nameof(key), "is null");
+            }
+            else
+            {
+                this.Key = key;
+            }
+
+            if (value == null)
+            {
+                this.Value = string.Empty;
+                OpenTelemetryApiEventSource.Log.InvalidArgument(nameof(DistributedContextEntry), nameof(value), "is null");
+            }
+            else
+            {
+                this.Value = value;
+            }
+
             this.Metadata = metadata;
         }
 

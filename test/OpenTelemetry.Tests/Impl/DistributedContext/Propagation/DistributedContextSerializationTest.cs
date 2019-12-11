@@ -99,7 +99,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
             DistributedContext dc = new DistributedContext(list);
 
-            Assert.Throws<DistributedContextSerializationException>(() => serializer.ToByteArray(dc));
+            Assert.Empty(serializer.ToByteArray(dc));
         }
 
         private void TestSerialize(params DistributedContextEntry[] tags)

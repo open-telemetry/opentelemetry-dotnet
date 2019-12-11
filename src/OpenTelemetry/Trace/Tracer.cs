@@ -71,7 +71,7 @@ namespace OpenTelemetry.Trace
         {
             if (span == null)
             {
-                OpenTelemetrySdkEventSource.Log.InvalidArgument("WithSpan", nameof(span) + " is null");
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("WithSpan", nameof(span), "is null");
             }
 
             if (span is Span spanImpl)
@@ -120,22 +120,20 @@ namespace OpenTelemetry.Trace
             if (activity == null)
             {
                 isValidActivity = false;
-                OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpanFromActivity", nameof(activity) + " is null");
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpanFromActivity", nameof(activity), "is null");
             }
             else
             {
                 if (activity.IdFormat != ActivityIdFormat.W3C)
                 {
                     isValidActivity = false;
-                    OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpanFromActivity",
-                        nameof(activity) + " is not in W3C Trace-Context format");
+                    OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpanFromActivity", nameof(activity), "is not in W3C Trace-Context format");
                 }
 
                 if (activity.StartTimeUtc == default)
                 {
                     isValidActivity = false;
-                    OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpanFromActivity",
-                        nameof(activity) + " is not started");
+                    OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpanFromActivity", nameof(activity), "is not started");
                 }
             }
 

@@ -40,11 +40,11 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void SpanContextExtractException(Exception ex)
+        public void ContextExtractException(Exception ex)
         {
             if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
-                this.FailedToExtractSpanContext(ToInvariantString(ex));
+                this.FailedToExtractContext(ToInvariantString(ex));
             }
         }
 
@@ -99,20 +99,20 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(7, spanName);
         }
 
-        [Event(8, Message = "Calling method '{0}' with invalid argument '{1}'.", Level = EventLevel.Warning)]
-        public void InvalidArgument(string methodName, string issue)
+        [Event(8, Message = "Calling method '{0}' with invalid argument '{1}', issue '{2}'.", Level = EventLevel.Warning)]
+        public void InvalidArgument(string methodName, string argumentName, string issue)
         {
-            this.WriteEvent(8, methodName, issue);
+            this.WriteEvent(8, methodName, argumentName, issue);
         }
 
         [Event(9, Message = "Failed to extract span context: '{0}'", Level = EventLevel.Warning)]
-        public void FailedToExtractSpanContext(string error)
+        public void FailedToExtractContext(string error)
         {
             this.WriteEvent(9, error);
         }
 
         [Event(10, Message = "Failed to inject span context: '{0}'", Level = EventLevel.Warning)]
-        public void FailedToInjectSpanContext(string error)
+        public void FailedToInjectContext(string error)
         {
             this.WriteEvent(10, error);
         }

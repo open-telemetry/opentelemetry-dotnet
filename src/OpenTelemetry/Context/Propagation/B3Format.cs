@@ -53,13 +53,13 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (carrier == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToExtractSpanContext("null carrier");
+                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null carrier");
                 return SpanContext.BlankRemote;
             }
 
             if (getter == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToExtractSpanContext("null getter");
+                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null getter");
                 return SpanContext.BlankRemote;
             }
 
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Context.Propagation
             }
             catch (Exception e)
             {
-                OpenTelemetrySdkEventSource.Log.SpanContextExtractException(e);
+                OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
                 return SpanContext.BlankRemote;
             }
         }
@@ -114,25 +114,25 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (spanContext == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectSpanContext("null context");
+                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("null context");
                 return;
             }
 
             if (!spanContext.IsValid)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectSpanContext("invalid context");
+                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("invalid context");
                 return;
             }
 
             if (carrier == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectSpanContext("null carrier");
+                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("null carrier");
                 return;
             }
 
             if (setter == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectSpanContext("null setter");
+                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("null setter");
                 return;
             }
 
