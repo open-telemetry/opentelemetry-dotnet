@@ -13,8 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context
 {
@@ -27,7 +28,7 @@ namespace OpenTelemetry.Context
         {
             if (tags.Entries is null)
             {
-                throw new ArgumentNullException(nameof(tags));
+                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("entries are null");
             }
 
             return EmptyByteArray;
@@ -37,7 +38,7 @@ namespace OpenTelemetry.Context
         {
             if (bytes == null)
             {
-                throw new ArgumentNullException(nameof(bytes));
+                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null bytes");
             }
 
             return DistributedContext.Empty;

@@ -55,7 +55,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void TestDeserializeEmptyByteArrayThrowException()
         {
-            Assert.Throws<DistributedContextDeserializationException>(() => serializer.FromByteArray(new byte[0]));
+            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(new byte[0]));
         }
 
         [Fact]
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
             var bytes = output.ToArray();
 
-            Assert.Throws<DistributedContextDeserializationException>(() => serializer.FromByteArray(bytes));
+            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(bytes));
         }
 
         // Deserializing this inPut should cause an error, even though it represents a relatively small
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
             var bytes = output.ToArray();
 
-            Assert.Throws<DistributedContextDeserializationException>(() => serializer.FromByteArray(bytes));
+            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(bytes));
         }
 
         [Fact]
@@ -252,20 +252,20 @@ namespace OpenTelemetry.Context.Propagation.Test
         public void TestDeserializeWrongFormat()
         {
             // encoded tags should follow the format <version_id>(<tag_field_id><tag_encoding>)*
-            Assert.Throws<DistributedContextDeserializationException>(() => serializer.FromByteArray(new byte[3]));
+            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(new byte[3]));
         }
 
         [Fact]
         public void TestDeserializeWrongVersionId()
         {
 
-            Assert.Throws<DistributedContextDeserializationException>(() => serializer.FromByteArray(new byte[] { SerializationUtils.VersionId + 1 }));
+            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(new byte[] { SerializationUtils.VersionId + 1 }));
         }
 
         [Fact]
         public void TestDeserializeNegativeVersionId()
         {
-            Assert.Throws<DistributedContextDeserializationException>(() => serializer.FromByteArray(new byte[] { 0xff }));
+            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(new byte[] { 0xff }));
         }
 
         // <tag_encoding> ==

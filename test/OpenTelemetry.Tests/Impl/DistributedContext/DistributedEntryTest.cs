@@ -43,11 +43,27 @@ namespace OpenTelemetry.Context.Test
         }
 
         [Fact]
-        public void TestNullKeyValue()
+        public void TestNullKeyNullValue()
         {
-            Assert.Throws<ArgumentNullException>(() => new DistributedContextEntry(null, null));
-            Assert.Throws<ArgumentNullException>(() => new DistributedContextEntry(null, ""));
-            Assert.Throws<ArgumentNullException>(() => new DistributedContextEntry("", null));
+            var entry = new DistributedContextEntry(null, null);
+            Assert.Empty(entry.Key);
+            Assert.Empty(entry.Value);
+        }
+
+        [Fact]
+        public void TestNullKey()
+        {
+            var entry = new DistributedContextEntry(null, "foo");
+            Assert.Empty(entry.Key);
+            Assert.Equal("foo", entry.Value);
+        }
+
+        [Fact]
+        public void TestNullValue()
+        {
+            var entry = new DistributedContextEntry("foo", null);
+            Assert.Equal("foo", entry.Key);
+            Assert.Empty(entry.Value);
         }
     }
 }
