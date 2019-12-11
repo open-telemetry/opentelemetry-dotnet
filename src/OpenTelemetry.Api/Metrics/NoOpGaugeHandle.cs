@@ -20,7 +20,7 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Handle to the metrics gauge with the defined <see cref="LabelSet"/>.
+    /// No-Op handle.
     /// </summary>
     /// <typeparam name="T">The type of gauge. Only long and double are supported now.</typeparam>
     public sealed class NoOpGaugeHandle<T> : GaugeHandle<T>
