@@ -24,7 +24,7 @@ using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Metrics.Export
 {
-    public abstract class MetricExporter<T> where T : struct
+    public abstract class MetricExporter
     {
         public enum ExportResult
         {
@@ -44,6 +44,6 @@ namespace OpenTelemetry.Metrics.Export
             FailedRetryable = 2,
         }
 
-        public abstract Task<ExportResult> ExportAsync(Metric<T> metric, CancellationToken cancellationToken);
+        public abstract Task<ExportResult> ExportAsync(List<Metric> metrics, CancellationToken cancellationToken);
     }
 }

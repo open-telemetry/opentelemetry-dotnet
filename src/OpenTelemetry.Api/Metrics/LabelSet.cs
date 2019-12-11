@@ -14,11 +14,14 @@
 // limitations under the License.
 // </copyright>
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
     /// Normalized name value pairs of metric labels.
+    /// TODO: Most of the logic here would be moved into SDK from the API.
     /// </summary>
     public class LabelSet
     {
@@ -29,11 +32,53 @@ namespace OpenTelemetry.Metrics
         public LabelSet(IEnumerable<KeyValuePair<string, string>> labels)
         {
             this.Labels = labels;
+            this.LabelSetEncoded = this.GetLabelSetEncoded(labels);
         }
 
         /// <summary>
         /// Gets or sets the labels for this LabelSet.
         /// </summary>
         public IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
+
+        /// <summary>
+        /// Gets or sets the label set in encoded form for this LabelSet.
+        /// </summary>
+        public string LabelSetEncoded { get; set; }
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            return this.LabelSetEncoded.GetHashCode();
+        }
+
+        /// <inheritdoc/>
+        public override bool Equals(object obj)
+        {
+            return this.LabelSetEncoded.Equals(((LabelSet)obj).LabelSetEncoded);
+        }
+
+        private string GetLabelSetEncoded(IEnumerable<KeyValuePair<string, string>> labels)
+        {
+            // Sort using keys.
+            var ordered = this.Labels.OrderBy(x => x.Key);
+            StringBuilder encoder = new StringBuilder();
+            bool isFirstLabel = true;
+
+            // simple encoding.
+            foreach (KeyValuePair<string, string> label in ordered)
+            {
+                if (!isFirstLabel)
+                {
+                    encoder.Append("\0");
+                }
+
+                encoder.Append(label.Key);
+                encoder.Append("\t");
+                encoder.Append(label.Value);
+                isFirstLabel = false;
+            }
+
+            return encoder.ToString();
+        }
     }
 }

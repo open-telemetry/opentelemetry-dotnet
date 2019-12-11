@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Prometheus.Implementation;
@@ -23,37 +24,34 @@ using OpenTelemetry.Metrics.Implementation;
 namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
-    /// Exporter of Open Telemetry traces and metrics to Prometheus.
+    /// Exporter of Open Telemetry metrics to Prometheus.
     /// </summary>
-    /// <typeparam name="T">The type of metric. Only long and double are supported now.</typeparam>
-    public class PrometheusExporter<T> : MetricExporter<T>
-        where T : struct
+    public class PrometheusExporter : MetricExporter
     {
-        private readonly Metric<T> metric;
-
         private readonly PrometheusExporterOptions options;
 
         private readonly object lck = new object();
 
         private CancellationTokenSource tokenSource;
-
+        private List<Metric> metrics;
+        private MetricsHttpServer metricsHttpServer;
         private Task workerThread;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PrometheusExporter{T}"/> class.
+        /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
         /// </summary>
         /// <param name="options">Options for the exporter.</param>
-        /// <param name="metric">The metric instance where metric values and labels can be read from.</param>
-        public PrometheusExporter(PrometheusExporterOptions options, Metric<T> metric)
+        public PrometheusExporter(PrometheusExporterOptions options)
         {
             this.options = options;
-            this.metric = metric;
+            this.metrics = new List<Metric>();
         }
 
         /// <inheritdoc/>
-        public override Task<ExportResult> ExportAsync(Metric<T> metric, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync(List<Metric> metrics, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            this.metricsHttpServer.Metrics = metrics;
+            return Task.FromResult(ExportResult.Success);
         }
 
         /// <summary>
@@ -72,8 +70,8 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                 var token = this.tokenSource.Token;
 
-                var metricsServer = new MetricsHttpServer<T>(this.metric, this.options, token);
-                this.workerThread = Task.Factory.StartNew((Action)metricsServer.WorkerThread, TaskCreationOptions.LongRunning);
+                this.metricsHttpServer = new MetricsHttpServer(this.metrics, this.options, token);
+                this.workerThread = Task.Factory.StartNew((Action)this.metricsHttpServer.WorkerThread, TaskCreationOptions.LongRunning);
             }
         }
 
