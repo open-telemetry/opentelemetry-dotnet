@@ -1,4 +1,4 @@
-﻿// <copyright file="MetricTimeSeries.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Aggregator.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-
-namespace OpenTelemetry.Metrics.Implementation
+namespace OpenTelemetry.Metrics.Aggregators
 {
-    public class MetricTimeSeries<T>
+    public abstract class Aggregator<T> where T : struct
     {
-        public LabelSet LabelSet;
-        public List<T> Points = new List<T>();
+        public abstract void Update(T value);
 
-        public MetricTimeSeries(LabelSet labelSet)
-        {
-            this.LabelSet = labelSet;
-        }
-
-        public void Add(T value)
-        {
-            this.Points.Add(value);
-        }
+        public abstract void Checkpoint();        
     }
 }
