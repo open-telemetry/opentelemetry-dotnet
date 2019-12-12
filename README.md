@@ -428,6 +428,12 @@ finally
     exporter.Stop();
 }
 ```
+### Using the NewRelic exporter
+
+The New Relic OpenTelemetry Trace Exporter is a OpenTelemetry Provider that sends data from .NET applications to New Relic.
+It uses the NewRelic SDK to send Traces to the New Relic backend
+
+Please refer to the New Relic Exporter [Documentation][newrelic-get-started]
 
 ### Using Stackdriver Exporter
 
@@ -659,6 +665,7 @@ deprecate it for 18 months before removing it, if possible.
 [good-first-issues]: https://github.com/open-telemetry/OpenTelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [zipkin-get-started]: https://zipkin.io/pages/quickstart.html
 [jaeger-get-started]: https://www.jaegertracing.io/docs/1.13/getting-started/
+[newrelic-get-started]: https://github.com/newrelic/newrelic-telemetry-sdk-dotnet/blob/master/src/OpenTelemetry.Exporter.NewRelic/README.md
 [ai-get-started]: https://docs.microsoft.com/azure/application-insights
 [stackdriver-trace-setup]: https://cloud.google.com/trace/docs/setup/
 [stackdriver-monitoring-setup]: https://cloud.google.com/monitoring/api/enable-api
