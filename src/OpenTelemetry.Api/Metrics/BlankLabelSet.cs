@@ -1,4 +1,4 @@
-﻿// <copyright file="LabelSet.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="BlankLabelSet.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,20 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Normalized name value pairs of metric labels.
+    /// Blank or no-op labelset.
     /// </summary>
-    public abstract class LabelSet
+    public sealed class BlankLabelSet : LabelSet
     {
-        /// <summary>
-        /// Empty LabelSet.
-        /// </summary>
-        public static readonly LabelSet BlankLabelSet = new BlankLabelSet();
     }
 }
