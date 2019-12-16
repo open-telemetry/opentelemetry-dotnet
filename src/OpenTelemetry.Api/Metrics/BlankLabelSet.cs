@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
@@ -21,5 +23,7 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public sealed class BlankLabelSet : LabelSet
     {
+        /// <inheritdoc/>
+        public override IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
     }
 }

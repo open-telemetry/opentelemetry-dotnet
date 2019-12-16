@@ -17,9 +17,10 @@ using System.Collections.Generic;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Metrics.Export;
+using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Trace.Test
+namespace OpenTelemetry.Metrics.Test
 {
     public class MetricsTest
     {

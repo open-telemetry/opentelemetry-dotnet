@@ -28,5 +28,10 @@ namespace OpenTelemetry.Metrics
         /// Empty LabelSet.
         /// </summary>
         public static readonly LabelSet BlankLabelSet = new BlankLabelSet();
+
+        /// <summary>
+        /// Gets or sets the labels after sorting and removing duplicates.
+        /// </summary>
+        public abstract IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
     }
 }

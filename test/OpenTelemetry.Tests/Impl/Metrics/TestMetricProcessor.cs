@@ -17,8 +17,9 @@
 using System;
 using System.Collections.Generic;
 using OpenTelemetry.Metrics.Aggregators;
+using OpenTelemetry.Metrics.Export;
 
-namespace OpenTelemetry.Metrics.Export
+namespace OpenTelemetry.Metrics.Test
 {
     internal class TestMetricProcessor : MetricProcessor
     {

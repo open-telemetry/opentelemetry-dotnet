@@ -41,7 +41,7 @@ namespace OpenTelemetry.Metrics
 
         public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            return new LabelSet(labels);
+            return new LabelSetSDK(labels);
         }
 
         public void Collect()

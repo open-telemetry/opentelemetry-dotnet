@@ -57,7 +57,7 @@ namespace OpenTelemetry.Metrics
 
         public override CounterHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            return this.GetHandle(new LabelSet(labels));
+            return this.GetHandle(new LabelSetSDK(labels));
         }
 
         internal IDictionary<LabelSet, CounterHandleSDK<T>> GetAllHandles()
