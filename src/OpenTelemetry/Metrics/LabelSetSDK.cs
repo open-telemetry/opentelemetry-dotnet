@@ -21,13 +21,13 @@ using System.Text;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Normalized name value pairs of metric labels.
+    /// LabelSet implemetation.
     /// </summary>
     public class LabelSetSDK : LabelSet
     {
         // encoded value is used internally by the SDK as a key in Dictionary.
         // This could potentially be made public, and combined with an
-        // option to override Encoder, can avoid reencoding
+        // option to override Encoder, can avoid reencoding of labels
         // at Exporter level.
         private string labelSetEncoded;
 
@@ -35,7 +35,7 @@ namespace OpenTelemetry.Metrics
         /// Initializes a new instance of the <see cref="LabelSet"/> class.
         /// </summary>
         /// <param name="labels">labels from which labelset should be constructed.</param>
-        public LabelSetSDK(IEnumerable<KeyValuePair<string, string>> labels)
+        internal LabelSetSDK(IEnumerable<KeyValuePair<string, string>> labels)
         {
             this.Labels = this.SortAndDedup(labels);
             this.labelSetEncoded = this.GetLabelSetEncoded(this.Labels);
