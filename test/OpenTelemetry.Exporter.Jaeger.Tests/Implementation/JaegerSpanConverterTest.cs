@@ -151,7 +151,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
             Assert.Equal((long)((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000), jaegerSpan.Duration);
 
-            Assert.Empty(jaegerSpan.JaegerTags);
+            // A single tag representing the span.kind
+            Assert.Single(jaegerSpan.JaegerTags);
 
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
@@ -287,6 +288,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(JaegerTagType.BOOL, tag.VType);
             Assert.Equal("boolKey", tag.Key);
             Assert.Equal(true, tag.VBool);
+
+            // The last tag should be span.kind in this case
+            tag = tags.Last();
+            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal("span.kind", tag.Key);
+            Assert.Equal("client", tag.VStr);
 
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
