@@ -126,7 +126,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal(startTimestamp, span.StartTimestamp);
             Assert.Single(span.Links);
-            Assert.Same(linkContext, span.Links.Single().Context);
+            Assert.Equal(linkContext, span.Links.Single().Context);
         }
 
         [Fact]
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal(startTimestamp, span.StartTimestamp);
             Assert.Single(span.Links);
-            Assert.Same(linkContext, span.Links.Single().Context);
+            Assert.Equal(linkContext, span.Links.Single().Context);
         }
 
         [Fact]
@@ -188,7 +188,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal(SpanKind.Client, span.Kind);
             Assert.Equal(startTimestamp, span.StartTimestamp);
             Assert.Single(span.Links);
-            Assert.Same(linkContext, span.Links.Single().Context);
+            Assert.Equal(linkContext, span.Links.Single().Context);
         }
 
         [Fact]
@@ -215,7 +215,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal(activity.StartTimeUtc, span.StartTimestamp.DateTime);
             Assert.Equal(activity, span.Activity);
             Assert.Single(span.Links);
-            Assert.Same(linkContext, span.Links.Single().Context);
+            Assert.Equal(linkContext, span.Links.Single().Context);
         }
 
         [Fact]
@@ -248,7 +248,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
                 Assert.Equal(SpanKind.Consumer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
-                Assert.Same(linkContext, span.Links.Single().Context);
+                Assert.Equal(linkContext, span.Links.Single().Context);
             }
         }
 

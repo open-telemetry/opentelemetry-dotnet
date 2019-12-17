@@ -19,7 +19,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Span execution status.
     /// </summary>
-    public struct Status
+    public readonly struct Status
     {
         /// <summary>
         /// The operation completed successfully.
@@ -153,7 +153,7 @@ namespace OpenTelemetry.Trace
         /// Gets a value indicating whether this is a valid-to-use status.
         /// Only status instances created with a CanonicalCode (optional Description) are considered valid.
         /// </summary>
-        public bool IsValid { get; private set; }
+        public bool IsValid { get; }
 
         /// <summary>
         /// Gets the canonical code from this status.
@@ -168,13 +168,21 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets a value indicating whether span completed sucessfully.
         /// </summary>
-        public bool IsOk
-        {
-            get
-            {
-                return this.CanonicalCode == CanonicalCode.Ok;
-            }
-        }
+        public bool IsOk => this.CanonicalCode == CanonicalCode.Ok;
+
+        /// <summary>
+        /// Compare two <see cref="Status"/> for equality.
+        /// </summary>
+        /// <param name="status1">First Status to compare.</param>
+        /// <param name="status2">Second Status to compare.</param>
+        public static bool operator ==(Status status1, Status status2) => status1.Equals(status2);
+
+        /// <summary>
+        /// Compare two <see cref="Status"/> for not equality.
+        /// </summary>
+        /// <param name="status1">First Status to compare.</param>
+        /// <param name="status2">Second Status to compare.</param>
+        public static bool operator !=(Status status1, Status status2) => !status1.Equals(status2);
 
         /// <summary>
         /// Returns a new instance of a status with the description populated.

@@ -57,11 +57,10 @@ namespace OpenTelemetry.Trace.Samplers
         public override string Description { get; }
 
         /// <inheritdoc />
-        public override Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IDictionary<string, object> attributes, IEnumerable<Link> links)
+        public override Decision ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, IDictionary<string, object> attributes, IEnumerable<Link> links)
         {
             // If the parent is sampled keep the sampling decision.
-            if (parentContext != null &&
-                parentContext.IsValid &&
+            if (parentContext.IsValid &&
                 (parentContext.TraceOptions & ActivityTraceFlags.Recorded) != 0)
             {
                 return new Decision(true);

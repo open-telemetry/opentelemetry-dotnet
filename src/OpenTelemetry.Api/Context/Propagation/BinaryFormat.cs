@@ -98,7 +98,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc />
         public byte[] ToByteArray(SpanContext spanContext)
         {
-            if (spanContext == null || !spanContext.IsValid)
+            if (!spanContext.IsValid)
             {
                 return InvalidContext;
             }

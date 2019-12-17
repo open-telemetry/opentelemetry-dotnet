@@ -146,7 +146,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(SpanKind.Server, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Single(span.Links);
-            Assert.Same(linkContext, span.Links.Single().Context);
+            Assert.Equal(linkContext, span.Links.Single().Context);
         }
 
         [Fact]
@@ -164,7 +164,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(SpanKind.Server, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Single(span.Links);
-            Assert.Same(linkContext, span.Links.Single().Context);
+            Assert.Equal(linkContext, span.Links.Single().Context);
         }
 
         [Fact]
@@ -269,7 +269,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal(startTimestamp, span.StartTimestamp);
             Assert.Single(span.Links);
-            Assert.Same(linkContext, span.Links.Single().Context);
+            Assert.Equal(linkContext, span.Links.Single().Context);
         }
 
         [Fact]
@@ -365,7 +365,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(SpanKind.Server, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Single(span.Links);
-            Assert.Same(linkContext, span.Links.Single().Context);
+            Assert.Equal(linkContext, span.Links.Single().Context);
         }
 
         [Fact]
@@ -384,8 +384,8 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(SpanKind.Server, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Equal(2, span.Links.Count());
-            Assert.Same(firstLinkContext, span.Links.First().Context);
-            Assert.Same(secondLinkContext, span.Links.Last().Context);
+            Assert.Equal(firstLinkContext, span.Links.First().Context);
+            Assert.Equal(secondLinkContext, span.Links.Last().Context);
         }
 
         [Fact]
@@ -495,8 +495,8 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(activity.StartTimeUtc, span.StartTimestamp.DateTime);
             Assert.Equal(activity, span.Activity);
             Assert.Equal(2, span.Links.Count());
-            Assert.Same(firstLinkContext, span.Links.First().Context);
-            Assert.Same(secondLinkContext, span.Links.Last().Context);
+            Assert.Equal(firstLinkContext, span.Links.First().Context);
+            Assert.Equal(secondLinkContext, span.Links.Last().Context);
         }
 
         [Fact]
@@ -555,7 +555,7 @@ namespace OpenTelemetry.Trace.Test
             AssertApproxSameTimestamp(startTime, span.StartTimestamp);
 
             Assert.Single(span.Links);
-            Assert.Same(linkContext, span.Links.First().Context);
+            Assert.Equal(linkContext, span.Links.First().Context);
         }
 
         [Fact]
@@ -711,7 +711,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(SpanKind.Server, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
-                Assert.Same(linkContext, span.Links.Single().Context);
+                Assert.Equal(linkContext, span.Links.Single().Context);
             }
         }
 
@@ -732,7 +732,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(SpanKind.Server, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
-                Assert.Same(linkContext, span.Links.Single().Context);
+                Assert.Equal(linkContext, span.Links.Single().Context);
             }
         }
 
@@ -783,7 +783,7 @@ namespace OpenTelemetry.Trace.Test
                 .Setup(s => s.OnStart(It.IsAny<Span>()))
                 .Callback<Span>(s =>
                 {
-                    spanPassedToSpanProcessorHasSpanContext = s.Context != null;
+                    spanPassedToSpanProcessorHasSpanContext = s.Context.IsValid;
                 });
 
             var span = (Span)tracer.StartSpan(SpanName, SpanKind.Client, new SpanCreationOptions { StartTimestamp = startTime, LinksFactory = () => new[] { link } });
@@ -1437,9 +1437,9 @@ namespace OpenTelemetry.Trace.Test
                 .GetTracer(null);
 
             samplerMock.Setup(s => s.ShouldSample(
-                It.IsAny<SpanContext>(),
-                It.IsAny<ActivityTraceId>(),
-                It.IsAny<ActivitySpanId>(),
+                in It.Ref<SpanContext>.IsAny,
+                in It.Ref<ActivityTraceId>.IsAny,
+                in It.Ref<ActivitySpanId>.IsAny,
                 It.IsAny<string>(),
                 It.IsAny<IDictionary<string, object>>(),
                 It.IsAny<IEnumerable<Link>>())).Returns(new Decision(true));
@@ -1448,9 +1448,9 @@ namespace OpenTelemetry.Trace.Test
             span.Attributes.AssertAreSame(this.attributes);
 
             samplerMock.Verify(o => o.ShouldSample(
-                It.IsAny<SpanContext>(), 
-                It.IsAny<ActivityTraceId>(), 
-                It.IsAny<ActivitySpanId>(),
+                in It.Ref<SpanContext>.IsAny,
+                in It.Ref<ActivityTraceId>.IsAny,
+                in It.Ref<ActivitySpanId>.IsAny,
                 It.IsAny<string>(),
                 It.Is<IDictionary<string, object>>(a => a == this.attributes),
                 It.IsAny<IEnumerable<Link>>()), Times.Once);
@@ -1466,9 +1466,9 @@ namespace OpenTelemetry.Trace.Test
                 .GetTracer(null);
 
             samplerMock.Setup(s => s.ShouldSample(
-                It.IsAny<SpanContext>(),
-                It.IsAny<ActivityTraceId>(),
-                It.IsAny<ActivitySpanId>(),
+                in It.Ref<SpanContext>.IsAny,
+                in It.Ref<ActivityTraceId>.IsAny,
+                in It.Ref<ActivitySpanId>.IsAny,
                 It.IsAny<string>(),
                 It.IsAny<IDictionary<string, object>>(),
                 It.IsAny<IEnumerable<Link>>())).Returns(new Decision(false));
@@ -1477,9 +1477,9 @@ namespace OpenTelemetry.Trace.Test
             Assert.Empty(span.Attributes);
 
             samplerMock.Verify(o => o.ShouldSample(
-                It.IsAny<SpanContext>(),
-                It.IsAny<ActivityTraceId>(),
-                It.IsAny<ActivitySpanId>(),
+                in It.Ref<SpanContext>.IsAny,
+                in It.Ref<ActivityTraceId>.IsAny,
+                in It.Ref<ActivitySpanId>.IsAny,
                 It.IsAny<string>(),
                 It.Is<IDictionary<string, object>>(a => a == this.attributes),
                 It.IsAny<IEnumerable<Link>>()), Times.Once);

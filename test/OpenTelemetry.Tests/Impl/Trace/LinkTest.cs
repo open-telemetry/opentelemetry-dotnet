@@ -24,7 +24,6 @@ namespace OpenTelemetry.Trace.Test
     {
         private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();
         private readonly SpanContext spanContext;
-          
 
         public LinkTest()
         {
@@ -53,6 +52,46 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(attributesMap, link.Attributes);
         }
 
+        [Fact]
+        public void Equality()
+        {
+            var link1 = new Link(spanContext);
+            var link2 = new Link(spanContext);
+
+            Assert.Equal(link1, link2);
+            Assert.True(link1 == link2);
+        }
+
+        [Fact]
+        public void Equality_WithAttributes()
+        {
+            var link1 = new Link(spanContext, attributesMap);
+            var link2 = new Link(spanContext, attributesMap);
+
+            Assert.Equal(link1, link2);
+            Assert.True(link1 == link2);
+        }
+
+        [Fact]
+        public void NotEquality()
+        {
+            var link1 = new Link(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+            var link2 = new Link(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+
+            Assert.NotEqual(link1, link2);
+            Assert.True(link1 != link2);
+        }
+
+        [Fact]
+        public void NotEquality_WithAttributes()
+        {
+            var link1 = new Link(spanContext, new Dictionary<string, object>());
+            var link2 = new Link(spanContext, this.attributesMap);
+
+            Assert.NotEqual(link1, link2);
+            Assert.True(link1 != link2);
+        }
+        
         public void Dispose()
         {
             Activity.Current = null;

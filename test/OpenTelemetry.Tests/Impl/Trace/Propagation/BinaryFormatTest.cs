@@ -15,7 +15,6 @@
 // </copyright>
 using System.Diagnostics;
 using OpenTelemetry.Trace;
-using System;
 using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Test
@@ -53,14 +52,21 @@ namespace OpenTelemetry.Context.Propagation.Test
             TestSpanContextConversion(new SpanContext(TraceId, SpanId, ActivityTraceFlags.None));
         }
 
+
         [Fact]
-        public void ToBinaryValue_NullSpanContext()
+        public void ToBinaryValue_InvalidSpanContext_Default()
         {
-            Assert.Empty(binaryFormat.ToByteArray(null));
+            Assert.Empty(binaryFormat.ToByteArray(default));
         }
 
         [Fact]
-        public void ToBinaryValue_InvalidSpanContext()
+        public void ToBinaryValue_InvalidSpanContext_Remote()
+        {
+            Assert.Empty(binaryFormat.ToByteArray(SpanContext.BlankRemote));
+        }
+
+        [Fact]
+        public void ToBinaryValue_InvalidSpanContext_Local()
         {
             Assert.Empty(binaryFormat.ToByteArray(SpanContext.BlankLocal));
         }

@@ -115,7 +115,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     });
 
             var spanContextSetter = typeof(Span).GetMethod("set_Context", BindingFlags.Instance | BindingFlags.NonPublic);
-            spanContextSetter.Invoke(span, new []{ new SpanContext(traceId, ActivitySpanId.CreateFromString(spanId.AsSpan()), ActivityTraceFlags.Recorded) });
+
+            ActivitySpanId activitySpanId = ActivitySpanId.CreateFromString(spanId.AsSpan());
+            spanContextSetter.Invoke(span, new []{ (object)new SpanContext(in traceId, in activitySpanId, ActivityTraceFlags.Recorded) });
 
             foreach (var attribute in attributes)
             {
