@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace
             }
             else
             {
-                OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpan", "span name is null");
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpan", nameof(name), "is null");
                 this.Name = string.Empty;
             }
 
@@ -141,8 +141,8 @@ namespace OpenTelemetry.Trace
             set
             {
                 if (!value.IsValid)
-                {
-                    OpenTelemetrySdkEventSource.Log.InvalidArgument("set_Status", "value");
+                { 
+                    OpenTelemetrySdkEventSource.Log.InvalidArgument("set_Status", nameof(value), "is null");
                     return;
                 }
 
@@ -228,7 +228,7 @@ namespace OpenTelemetry.Trace
             }
             else
             {
-                OpenTelemetrySdkEventSource.Log.InvalidArgument("UpdateName", "span name is null");
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("UpdateName", nameof(name), "is null");
                 this.Name = string.Empty;
             }
         }
@@ -298,7 +298,7 @@ namespace OpenTelemetry.Trace
         {
             if (addEvent == null)
             {
-                OpenTelemetrySdkEventSource.Log.InvalidArgument("AddEvent", nameof(addEvent));
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("AddEvent", nameof(addEvent), "is null");
                 return;
             }
 
