@@ -32,6 +32,6 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Gets or sets the labels after sorting and removing duplicates.
         /// </summary>
-        public abstract IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
+        public abstract IEnumerable<KeyValuePair<string, string>> Labels { get; set; } = Enumerable.Empty<KeyValuePair<string, string>>();
     }
 }
