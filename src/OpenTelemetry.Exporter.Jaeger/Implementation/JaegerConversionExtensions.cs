@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using OpenTelemetry.Trace;
 
@@ -43,11 +44,45 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public static JaegerSpan ToJaegerSpan(this Span span)
         {
-            IEnumerable<JaegerTag> jaegerTags = null;
+            List<JaegerTag> jaegerTags = null;
 
             if (span?.Attributes is IEnumerable<KeyValuePair<string, object>> attributeMap)
             {
-                jaegerTags = attributeMap.Select(a => a.ToJaegerTag()).AsEnumerable();
+                jaegerTags = attributeMap.Select(a => a.ToJaegerTag()).ToList();
+            }
+
+            // The Span.Kind must translate into a tag.
+            // See https://opentracing.io/specification/conventions/
+            if (span.Kind.HasValue)
+            {
+                string spanKind = null;
+
+                if (span.Kind.Value == SpanKind.Server)
+                {
+                    spanKind = "server";
+                }
+                else if (span.Kind.Value == SpanKind.Client)
+                {
+                    spanKind = "client";
+                }
+                else if (span.Kind.Value == SpanKind.Consumer)
+                {
+                    spanKind = "consumer";
+                }
+                else if (span.Kind.Value == SpanKind.Producer)
+                {
+                    spanKind = "producer";
+                }
+
+                if (spanKind != null)
+                {
+                    jaegerTags.Add(new JaegerTag
+                    {
+                        Key = "span.kind",
+                        VType = JaegerTagType.STRING,
+                        VStr = spanKind,
+                    });
+                }
             }
 
             IEnumerable<JaegerLog> jaegerLogs = null;
