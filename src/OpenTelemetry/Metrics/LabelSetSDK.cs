@@ -21,9 +21,9 @@ using System.Text;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// LabelSet implemetation.
+    /// LabelSet implementation.
     /// </summary>
-    public class LabelSetSDK : LabelSet
+    internal class LabelSetSDK : LabelSet
     {
         // encoded value is used internally by the SDK as a key in Dictionary.
         // This could potentially be made public, and combined with an
