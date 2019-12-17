@@ -23,7 +23,5 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public sealed class BlankLabelSet : LabelSet
     {
-        /// <inheritdoc/>
-        public override IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
     }
 }
