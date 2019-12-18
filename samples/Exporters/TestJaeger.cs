@@ -52,7 +52,7 @@ namespace Samples
             }
         }
 
-        private static void DoWork(int i, ITracer tracer)
+        private static void DoWork(int i, Tracer tracer)
         {
             // Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be

@@ -31,7 +31,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <summary>
         /// The tracer.
         /// </summary>
-        private readonly Trace.ITracer tracer;
+        private readonly Trace.Tracer tracer;
 
         /// <summary>
         /// The span name.
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         private bool error;
 
-        public SpanBuilderShim(Trace.ITracer tracer, string spanName, IList<string> rootOperationNamesForActivityBasedAutoCollectors = null)
+        public SpanBuilderShim(Trace.Tracer tracer, string spanName, IList<string> rootOperationNamesForActivityBasedAutoCollectors = null)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             this.spanName = spanName ?? throw new ArgumentNullException(nameof(spanName));

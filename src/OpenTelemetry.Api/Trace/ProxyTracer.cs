@@ -25,50 +25,50 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// No-op tracer.
     /// </summary>
-    internal sealed class ProxyTracer : ITracer
+    internal sealed class ProxyTracer : Tracer
     {
         private static readonly IDisposable NoopScope = new NoopDisposable();
         private readonly IBinaryFormat binaryFormat = new BinaryFormat();
         private readonly ITextFormat textFormat = new TraceContextFormat();
 
-        private ITracer realTracer;
+        private Tracer realTracer;
 
         /// <inheritdoc/>
-        public ISpan CurrentSpan => this.realTracer?.CurrentSpan ?? BlankSpan.Instance;
+        public override ISpan CurrentSpan => this.realTracer?.CurrentSpan ?? BlankSpan.Instance;
 
         /// <inheritdoc/>
-        public IBinaryFormat BinaryFormat => this.realTracer?.BinaryFormat ?? this.binaryFormat;
+        public override IBinaryFormat BinaryFormat => this.realTracer?.BinaryFormat ?? this.binaryFormat;
 
         /// <inheritdoc/>
-        public ITextFormat TextFormat => this.realTracer?.TextFormat ?? this.textFormat;
+        public override ITextFormat TextFormat => this.realTracer?.TextFormat ?? this.textFormat;
 
         /// <inheritdoc/>
-        public IDisposable WithSpan(ISpan span, bool endOnDispose)
+        public override IDisposable WithSpan(ISpan span, bool endOnDispose)
         {
             return this.realTracer != null ? this.realTracer.WithSpan(span, endOnDispose) : NoopScope;
         }
 
-        public ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
+        public override ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
             return this.realTracer != null ? this.realTracer.StartRootSpan(operationName, kind, options) : BlankSpan.Instance;
         }
 
-        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
+        public override ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
         {
             return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
         }
 
-        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
+        public override ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
             return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
         }
 
-        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public override ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
             return this.realTracer != null ? this.realTracer.StartSpanFromActivity(operationName, activity, kind, links) : BlankSpan.Instance;
         }
 
-        public void UpdateTracer(ITracer realTracer)
+        public void UpdateTracer(Tracer realTracer)
         {
             if (this.realTracer != null)
             {

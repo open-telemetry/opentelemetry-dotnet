@@ -63,12 +63,12 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Returns an ITracer for a given name and version.
+        /// Returns an Tracer for a given name and version.
         /// </summary>
         /// <param name="name">Name of the instrumentation library.</param>
         /// <param name="version">Version of the instrumentation library (optional).</param>
         /// <returns>Tracer for the given name and version information.</returns>
-        public virtual ITracer GetTracer(string name, string version = null)
+        public virtual Tracer GetTracer(string name, string version = null)
         {
             return isInitialized ? defaultFactory.GetTracer(name, version) : proxy;
         }

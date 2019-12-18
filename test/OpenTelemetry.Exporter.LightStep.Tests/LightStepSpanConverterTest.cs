@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
 {
     public class LightStepSpanConverterTest
     {
-        private readonly ITracer tracer;
+        private readonly Tracer tracer;
 
         public LightStepSpanConverterTest()
         {

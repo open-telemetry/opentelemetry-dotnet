@@ -1,4 +1,4 @@
-﻿// <copyright file="ITracer.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Tracer.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,22 +24,22 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Tracer to record distributed tracing information.
     /// </summary>
-    public interface ITracer
+    public abstract class Tracer
     {
         /// <summary>
         /// Gets the current span from the context.
         /// </summary>
-        ISpan CurrentSpan { get; }
+        public abstract ISpan CurrentSpan { get; }
 
         /// <summary>
         /// Gets the <see cref="IBinaryFormat"/> for this implementation.
         /// </summary>
-        IBinaryFormat BinaryFormat { get; }
+        public abstract IBinaryFormat BinaryFormat { get; }
 
         /// <summary>
         /// Gets the <see cref="ITextFormat"/> for this implementation.
         /// </summary>
-        ITextFormat TextFormat { get; }
+        public abstract ITextFormat TextFormat { get; }
 
         /// <summary>
         /// Activates the span on the current context.
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace
         /// <param name="span">Span to associate with the current context.</param>
         /// <param name="endSpanOnDispose">Flag indicating if span should end when scope is disposed.</param>
         /// <returns>Disposable object to control span to current context association.</returns>
-        IDisposable WithSpan(ISpan span, bool endSpanOnDispose);
+        public abstract IDisposable WithSpan(ISpan span, bool endSpanOnDispose);
 
         // TODO: add sampling hints
 
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="options">Advanced span creation options.</param>
         /// <returns>Span instance.</returns>
-        ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options);
+        public abstract ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options);
 
         /// <summary>
         /// Starts span.
@@ -68,9 +68,9 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="options">Advanced span creation options.</param>
         /// <returns>Span instance.</returns>
-        ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options);
+        public abstract ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options);
 
-       /// <summary>
+        /// <summary>
         /// Starts span.
         /// </summary>
         /// <param name="operationName">Span name.</param>
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="options">Advanced span creation options.</param>
         /// <returns>Span instance.</returns>
-        ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options);
+        public abstract ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options);
 
         /// <summary>
         /// Starts span from auto-collected <see cref="Activity"/>.
@@ -88,6 +88,6 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="links">Links collection.</param>
         /// <returns>Span scope instance.</returns>
-        ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links);
+        public abstract ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links);
     }
 }

@@ -33,7 +33,7 @@ namespace OpenTelemetry.Metrics.Test
             labels.Add(new KeyValuePair<string, string>("dim3", "value3"));
             labels.Add(new KeyValuePair<string, string>("dim4", "value4"));
 
-            var labelSet = new LabelSetSDK(labels);
+            var labelSet = new LabelSetSdk(labels);
             Assert.True(labelSet.Labels.ToList<KeyValuePair<string, string>>().Count == 3);
             Assert.Contains<KeyValuePair<string, string>>(labelSet.Labels, kv => kv.Key.Equals("dim1") && kv.Value.Equals("value2"));
             Assert.DoesNotContain<KeyValuePair<string, string>>(labelSet.Labels, kv => kv.Key.Equals("dim1") && kv.Value.Equals("value1"));
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Metrics.Test
             labels.Add(new KeyValuePair<string, string>("dim1", "value2"));
             labels.Add(new KeyValuePair<string, string>("dim1", "value3"));
 
-            var labelSet = new LabelSetSDK(labels);
+            var labelSet = new LabelSetSdk(labels);
             Assert.True(labelSet.Labels.ToList<KeyValuePair<string, string>>().Count == 1);
             Assert.Contains(labelSet.Labels, kv => kv.Key.Equals("dim1") && kv.Value.Equals("value3"));
             Assert.DoesNotContain(labelSet.Labels, kv => kv.Key.Equals("dim1") && kv.Value.Equals("value1"));
@@ -64,16 +64,16 @@ namespace OpenTelemetry.Metrics.Test
             labels1.Add(new KeyValuePair<string, string>("dim2", "value2"));
             labels1.Add(new KeyValuePair<string, string>("dim3", "value3"));
             // Construct labelset some labels.
-            var labelSet1 = new LabelSetSDK(labels1);
+            var labelSet1 = new LabelSetSdk(labels1);
 
             var labels2 = new List<KeyValuePair<string, string>>();
             labels1.Add(new KeyValuePair<string, string>("dim3", "value3"));
             labels1.Add(new KeyValuePair<string, string>("dim2", "value2"));
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
             // Construct another labelset with same labels but in different order.
-            var labelSet2 = new LabelSetSDK(labels1);
+            var labelSet2 = new LabelSetSdk(labels1);
 
-            var hashSet = new HashSet<LabelSetSDK>();
+            var hashSet = new HashSet<LabelSetSdk>();
 
             hashSet.Add(labelSet1);
             hashSet.Add(labelSet2);
