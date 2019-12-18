@@ -1,4 +1,4 @@
-﻿// <copyright file="CounterHandleSDK.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CounterHandleSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,12 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
-    public class CounterHandleSDK<T> : CounterHandle<T>
+    internal class CounterHandleSdk<T> : CounterHandle<T>
         where T : struct
     {
         private readonly CounterSumAggregator<T> sumAggregator = new CounterSumAggregator<T>();
 
-        internal CounterHandleSDK()
+        internal CounterHandleSdk()
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {

@@ -1,4 +1,4 @@
-﻿// <copyright file="MeterSDK.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MeterSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,26 +14,26 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MeterSDK : Meter
+    // TODO: make MeterSdk internal
+    public class MeterSdk : Meter
     {
         private readonly string meterName;
         private readonly MetricProcessor metricProcessor;
-        private readonly IDictionary<string, CounterSDK<long>> longCounters = new ConcurrentDictionary<string, CounterSDK<long>>();
-        private readonly IDictionary<string, CounterSDK<double>> doubleCounters = new ConcurrentDictionary<string, CounterSDK<double>>();
+        private readonly IDictionary<string, CounterSdk<long>> longCounters = new ConcurrentDictionary<string, CounterSdk<long>>();
+        private readonly IDictionary<string, CounterSdk<double>> doubleCounters = new ConcurrentDictionary<string, CounterSdk<double>>();
         private readonly IDictionary<string, GaugeSDK<long>> longGauges = new ConcurrentDictionary<string, GaugeSDK<long>>();
         private readonly IDictionary<string, GaugeSDK<double>> doubleGauges = new ConcurrentDictionary<string, GaugeSDK<double>>();
-        private readonly IDictionary<string, MeasureSDK<long>> longMeasures = new ConcurrentDictionary<string, MeasureSDK<long>>();
-        private readonly IDictionary<string, MeasureSDK<double>> doubleMeasures = new ConcurrentDictionary<string, MeasureSDK<double>>();
+        private readonly IDictionary<string, MeasureSdk<long>> longMeasures = new ConcurrentDictionary<string, MeasureSdk<long>>();
+        private readonly IDictionary<string, MeasureSdk<double>> doubleMeasures = new ConcurrentDictionary<string, MeasureSdk<double>>();
         private readonly object collectLock = new object();
 
-        internal MeterSDK(string meterName, MetricProcessor metricProcessor)
+        internal MeterSdk(string meterName, MetricProcessor metricProcessor)
         {
             this.meterName = meterName;
             this.metricProcessor = metricProcessor;            
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Metrics
 
         public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            return new LabelSetSDK(labels);
+            return new LabelSetSdk(labels);
         }
 
         public void Collect()
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.longCounters.TryGetValue(name, out var counter))
             {
-                counter = new CounterSDK<long>(name);
+                counter = new CounterSdk<long>(name);
 
                 this.longCounters.Add(name, counter);
             }
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.doubleCounters.TryGetValue(name, out var counter))
             {
-                counter = new CounterSDK<double>(name);
+                counter = new CounterSdk<double>(name);
                 this.doubleCounters.Add(name, counter);
             }
 
@@ -181,7 +181,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.doubleMeasures.TryGetValue(name, out var measure))
             {
-                measure = new MeasureSDK<double>(name);
+                measure = new MeasureSdk<double>(name);
 
                 this.doubleMeasures.Add(name, measure);
             }
@@ -193,7 +193,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.longMeasures.TryGetValue(name, out var measure))
             {
-                measure = new MeasureSDK<long>(name);
+                measure = new MeasureSdk<long>(name);
 
                 this.longMeasures.Add(name, measure);
             }

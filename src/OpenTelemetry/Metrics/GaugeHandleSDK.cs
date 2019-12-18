@@ -1,4 +1,4 @@
-﻿// <copyright file="GaugeHandleSDK.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="GaugeHandleSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,12 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
-    public class GaugeHandleSDK<T> : GaugeHandle<T>
+    internal class GaugeHandleSdk<T> : GaugeHandle<T>
         where T : struct
     {
         private readonly GaugeAggregator<T> gaugeAggregator = new GaugeAggregator<T>();
 
-        internal GaugeHandleSDK()
+        internal GaugeHandleSdk()
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {

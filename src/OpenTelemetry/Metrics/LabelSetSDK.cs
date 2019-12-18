@@ -1,4 +1,4 @@
-﻿// <copyright file="LabelSetSDK.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="LabelSetSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// LabelSet implementation.
     /// </summary>
-    internal class LabelSetSDK : LabelSet
+    internal class LabelSetSdk : LabelSet
     {
         // encoded value is used internally by the SDK as a key in Dictionary.
         // This could potentially be made public, and combined with an
@@ -35,7 +35,7 @@ namespace OpenTelemetry.Metrics
         /// Initializes a new instance of the <see cref="LabelSet"/> class.
         /// </summary>
         /// <param name="labels">labels from which labelset should be constructed.</param>
-        internal LabelSetSDK(IEnumerable<KeyValuePair<string, string>> labels)
+        internal LabelSetSdk(IEnumerable<KeyValuePair<string, string>> labels)
         {
             this.Labels = this.SortAndDedup(labels);
             this.labelSetEncoded = this.GetLabelSetEncoded(this.Labels);
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         public override bool Equals(object obj)
         {
-            return this.labelSetEncoded.Equals(((LabelSetSDK)obj).labelSetEncoded);
+            return this.labelSetEncoded.Equals(((LabelSetSdk)obj).labelSetEncoded);
         }
 
         private IEnumerable<KeyValuePair<string, string>> SortAndDedup(IEnumerable<KeyValuePair<string, string>> labels)

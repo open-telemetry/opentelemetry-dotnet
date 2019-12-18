@@ -1,4 +1,4 @@
-﻿// <copyright file="MeasureSDK.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MeasureSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,13 +20,13 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MeasureSDK<T> : Measure<T>
+    internal class MeasureSdk<T> : Measure<T>
         where T : struct
     {        
-        private readonly IDictionary<LabelSet, MeasureHandleSDK<T>> measureHandles = new ConcurrentDictionary<LabelSet, MeasureHandleSDK<T>>();
+        private readonly IDictionary<LabelSet, MeasureHandleSdk<T>> measureHandles = new ConcurrentDictionary<LabelSet, MeasureHandleSdk<T>>();
         private string metricName;
 
-        public MeasureSDK()
+        public MeasureSdk()
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {
@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public MeasureSDK(string name) : this()
+        public MeasureSdk(string name) : this()
         {
             this.metricName = name;
         }
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.measureHandles.TryGetValue(labelset, out var handle))
             {
-                handle = new MeasureHandleSDK<T>();
+                handle = new MeasureHandleSdk<T>();
 
                 this.measureHandles.Add(labelset, handle);
             }
@@ -53,10 +53,10 @@ namespace OpenTelemetry.Metrics
 
         public override MeasureHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            return this.GetHandle(new LabelSetSDK(labels));
+            return this.GetHandle(new LabelSetSdk(labels));
         }
 
-        internal IDictionary<LabelSet, MeasureHandleSDK<T>> GetAllHandles()
+        internal IDictionary<LabelSet, MeasureHandleSdk<T>> GetAllHandles()
         {
             return this.measureHandles;
         }

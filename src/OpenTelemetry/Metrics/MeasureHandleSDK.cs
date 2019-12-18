@@ -1,4 +1,4 @@
-﻿// <copyright file="MeasureHandleSDK.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MeasureHandleSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,12 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MeasureHandleSDK<T> : MeasureHandle<T>
+    internal class MeasureHandleSdk<T> : MeasureHandle<T>
         where T : struct
     {
         private readonly MeasureExactAggregator<T> measureExactAggregator = new MeasureExactAggregator<T>();
 
-        internal MeasureHandleSDK()
+        internal MeasureHandleSdk()
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {

@@ -1,4 +1,4 @@
-﻿// <copyright file="CounterSDK.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CounterSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,20 +17,16 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics
 {
-    public class CounterSDK<T> : Counter<T>
+    internal class CounterSdk<T> : Counter<T>
         where T : struct
     {        
-        private readonly IDictionary<LabelSet, CounterHandleSDK<T>> counterHandles = new ConcurrentDictionary<LabelSet, CounterHandleSDK<T>>();
+        private readonly IDictionary<LabelSet, CounterHandleSdk<T>> counterHandles = new ConcurrentDictionary<LabelSet, CounterHandleSdk<T>>();
         private string metricName;
 
-        public CounterSDK()
+        public CounterSdk()
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {
@@ -38,7 +34,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public CounterSDK(string name) : this()
+        public CounterSdk(string name) : this()
         {
             this.metricName = name;
         }
@@ -47,7 +43,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.counterHandles.TryGetValue(labelset, out var handle))
             {
-                handle = new CounterHandleSDK<T>();
+                handle = new CounterHandleSdk<T>();
 
                 this.counterHandles.Add(labelset, handle);
             }
@@ -57,10 +53,10 @@ namespace OpenTelemetry.Metrics
 
         public override CounterHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            return this.GetHandle(new LabelSetSDK(labels));
+            return this.GetHandle(new LabelSetSdk(labels));
         }
 
-        internal IDictionary<LabelSet, CounterHandleSDK<T>> GetAllHandles()
+        internal IDictionary<LabelSet, CounterHandleSdk<T>> GetAllHandles()
         {
             return this.counterHandles;
         }
