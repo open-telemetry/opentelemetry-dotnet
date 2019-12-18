@@ -186,7 +186,7 @@ namespace OpenTelemetry.Trace
         public SpanKind? Kind { get; }
 
         /// <summary>
-        /// Gets the "Library Resource" (name + version) associated with the Tracer that produced this span.
+        /// Gets the "Library Resource" (name + version) associated with the TracerSdk that produced this span.
         /// </summary>
         public Resource LibraryResource { get; }
 

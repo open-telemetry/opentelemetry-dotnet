@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace.Test
 {
     public class CurrentSpanTests: IDisposable
     {
-        private readonly ITracer tracer;
+        private readonly Tracer tracer;
 
         public CurrentSpanTests()
         {

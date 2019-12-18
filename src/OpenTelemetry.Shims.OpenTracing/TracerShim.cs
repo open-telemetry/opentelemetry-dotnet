@@ -22,9 +22,9 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     public class TracerShim : global::OpenTracing.ITracer
     {
-        private readonly Trace.ITracer tracer;
+        private readonly Trace.Tracer tracer;
 
-        private TracerShim(Trace.ITracer tracer)
+        private TracerShim(Trace.Tracer tracer)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             this.ScopeManager = new ScopeManagerShim(this.tracer);
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpan ActiveSpan => this.ScopeManager.Active?.Span;
 
-        public static global::OpenTracing.ITracer Create(Trace.ITracer tracer)
+        public static global::OpenTracing.ITracer Create(Trace.Tracer tracer)
         {
             return new TracerShim(tracer);
         }

@@ -33,7 +33,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
         private readonly bool hostingSupportsW3C = false;
 
-        public HttpInListener(string name, ITracer tracer)
+        public HttpInListener(string name, Tracer tracer)
             : base(name, tracer)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;

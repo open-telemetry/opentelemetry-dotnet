@@ -30,7 +30,7 @@ namespace OpenTelemetry.Collector.AspNetCore
         /// Initializes a new instance of the <see cref="AspNetCoreCollector"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public AspNetCoreCollector(ITracer tracer)
+        public AspNetCoreCollector(Tracer tracer)
             : this(tracer, new AspNetCoreCollectorOptions())
         {
         }
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Collector.AspNetCore
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="options">Configuration options for dependencies collector.</param>
-        public AspNetCoreCollector(ITracer tracer, AspNetCoreCollectorOptions options)
+        public AspNetCoreCollector(Tracer tracer, AspNetCoreCollectorOptions options)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInListener("Microsoft.AspNetCore", tracer), options.EventFilter);
             this.diagnosticSourceSubscriber.Subscribe();
