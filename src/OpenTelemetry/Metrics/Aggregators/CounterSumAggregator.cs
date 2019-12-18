@@ -14,6 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Runtime.CompilerServices;
+using System.Threading;
+
 namespace OpenTelemetry.Metrics.Aggregators
 {
     /// <summary>
@@ -26,22 +30,43 @@ namespace OpenTelemetry.Metrics.Aggregators
         private T sum;
         private T checkPoint;
 
+        public CounterSumAggregator()
+        {
+            if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
+            {
+                throw new Exception("Invalid Type");
+            }
+        }
+
         public override void Checkpoint()
         {
-            this.checkPoint = this.sum;
+            // checkpoints the current running sum into checkpoint, and starts counting again.
+            if (typeof(T) == typeof(double))
+            {
+                this.checkPoint = (T)(object)Interlocked.Exchange(ref Unsafe.As<T, double>(ref this.sum), 0.0);
+            }
+            else
+            {
+                this.checkPoint = (T)(object)Interlocked.Exchange(ref Unsafe.As<T, long>(ref this.sum), 0);
+            }
         }
 
         public override void Update(T value)
         {
-            // TODO discuss if we should move away from generics to avoid
-            // these conversions.
+            // Adds value to the running total in a thread safe manner.
             if (typeof(T) == typeof(double))
             {
-                this.sum = (T)(object)((double)(object)this.sum + (double)(object)value);
+                double initialTotal, computedTotal;
+                do
+                {
+                    initialTotal = (double)(object)this.sum;
+                    computedTotal = initialTotal + (double)(object)value;
+                }
+                while (initialTotal != Interlocked.CompareExchange(ref Unsafe.As<T, double>(ref this.sum), computedTotal, initialTotal));
             }
             else
             {
-                this.sum = (T)(object)((long)(object)this.sum + (long)(object)value);
+                Interlocked.Add(ref Unsafe.As<T, long>(ref this.sum), (long)(object)value);
             }
         }
 
