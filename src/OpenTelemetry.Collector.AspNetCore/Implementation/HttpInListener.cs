@@ -35,7 +35,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
         private readonly bool hostingSupportsW3C = false;
         private readonly Predicate<HttpContext> requestFilter;
 
-        public HttpInListener(string name, ITracer tracer, Predicate<HttpContext> requestFilter)
+        public HttpInListener(string name, Tracer tracer, Predicate<HttpContext> requestFilter)
             : base(name, tracer)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;

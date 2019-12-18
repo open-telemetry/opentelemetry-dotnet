@@ -60,7 +60,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
             var promExporter = new PrometheusExporter(promOptions);
             var simpleProcessor = new UngroupedBatcher(promExporter);
-            var meter = MeterFactory.Create(simpleProcessor).GetMeter("library1") as MeterSDK;
+            var meter = MeterFactory.Create(simpleProcessor).GetMeter("library1") as MeterSdk;
             var testCounter = meter.CreateInt64Counter("testCounter");
 
             var labels1 = new List<KeyValuePair<string, string>>();

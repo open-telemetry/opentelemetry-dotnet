@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private const string SpanName2 = "MySpanName/2";
 
         private TestExporter spanExporter;
-        private ITracer tracer;
+        private Tracer tracer;
 
         public SimpleSpanProcessorTest()
         {

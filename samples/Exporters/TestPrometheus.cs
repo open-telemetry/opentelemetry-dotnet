@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using OpenTelemetry.Context;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Configuration;
@@ -56,8 +56,8 @@ namespace Samples
                     {
                         // Collect is called here explicitly as there is 
                         // no controller implementation yet.
-                        // TODO: There should be no need to cast to MeterSDK.                        
-                        (meter as MeterSDK).Collect();
+                        // TODO: There should be no need to cast to MeterSdk.
+                        (meter as MeterSdk).Collect();
                     }
 
                     Task.Delay(1000).Wait();

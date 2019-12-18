@@ -1,4 +1,4 @@
-﻿// <copyright file="GaugeSDK.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="GaugeSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +20,10 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    public class GaugeSDK<T> : Gauge<T>
+    internal class GaugeSDK<T> : Gauge<T>
         where T : struct
     {        
-        private readonly IDictionary<LabelSet, GaugeHandleSDK<T>> gaugeHandles = new ConcurrentDictionary<LabelSet, GaugeHandleSDK<T>>();
+        private readonly IDictionary<LabelSet, GaugeHandleSdk<T>> gaugeHandles = new ConcurrentDictionary<LabelSet, GaugeHandleSdk<T>>();
         private string metricName;
 
         public GaugeSDK()
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.gaugeHandles.TryGetValue(labelset, out var handle))
             {
-                handle = new GaugeHandleSDK<T>();
+                handle = new GaugeHandleSdk<T>();
 
                 this.gaugeHandles.Add(labelset, handle);
             }
@@ -53,10 +53,10 @@ namespace OpenTelemetry.Metrics
 
         public override GaugeHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            return this.GetHandle(new LabelSetSDK(labels));
+            return this.GetHandle(new LabelSetSdk(labels));
         }
 
-        internal IDictionary<LabelSet, GaugeHandleSDK<T>> GetAllHandles()
+        internal IDictionary<LabelSet, GaugeHandleSdk<T>> GetAllHandles()
         {
             return this.gaugeHandles;
         }

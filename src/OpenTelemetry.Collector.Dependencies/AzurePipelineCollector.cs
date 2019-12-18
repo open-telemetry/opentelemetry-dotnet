@@ -29,7 +29,7 @@ namespace OpenTelemetry.Collector.Dependencies
         /// Initializes a new instance of the <see cref="AzurePipelineCollector"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public AzurePipelineCollector(ITracer tracer)
+        public AzurePipelineCollector(Tracer tracer)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new AzureSdkDiagnosticListener("Azure.Pipeline", tracer), null);
             this.diagnosticSourceSubscriber.Subscribe();
