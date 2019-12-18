@@ -22,6 +22,14 @@ namespace OpenTelemetry.Metrics.Test
 {
     public class CounterAggregatorTest
     {
+        private class UpdateThreadArguments<T> where T: struct
+        {
+            public ManualResetEvent mreToBlockUpdateThread;
+            public ManualResetEvent mreToEnsureAllThreadsStart;
+            public int threadsStartedCount;
+            public CounterSumAggregator<T> counterSumAggregator;
+        }
+
         [Fact]
         public void CounterAggregatorSupportsLong()
         {            
@@ -58,13 +66,23 @@ namespace OpenTelemetry.Metrics.Test
 
             // setup args to threads.
             var mre = new ManualResetEvent(false);
-            var args = new Tuple<ManualResetEvent, CounterSumAggregator<long>>(mre, aggregator);
+            var mreToEnsureAllThreadsStart = new ManualResetEvent(false);
+
+            var argToThread = new UpdateThreadArguments<long>();
+            argToThread.counterSumAggregator = aggregator;
+            argToThread.threadsStartedCount = 0;
+            argToThread.mreToBlockUpdateThread = mre;
+            argToThread.mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
+            
             Thread[] t = new Thread[10];
             for (int i = 0; i < 10; i++)
             {
                 t[i] = new Thread(LongMetricUpdateThread);
-                t[i].Start(args);
+                t[i].Start(argToThread);
             }
+
+            // Block until all 10 threads started.
+            mreToEnsureAllThreadsStart.WaitOne();
 
             // kick-off all the threads.
             mre.Set();
@@ -95,13 +113,23 @@ namespace OpenTelemetry.Metrics.Test
 
             // setup args to threads.
             var mre = new ManualResetEvent(false);
-            var args = new Tuple<ManualResetEvent, CounterSumAggregator<double>>(mre, aggregator);
+            var mreToEnsureAllThreadsStart = new ManualResetEvent(false);            
+
+            var argToThread = new UpdateThreadArguments<double>();
+            argToThread.counterSumAggregator = aggregator;
+            argToThread.threadsStartedCount = 0;
+            argToThread.mreToBlockUpdateThread = mre;
+            argToThread.mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
+
             Thread[] t = new Thread[10];
             for (int i = 0; i < 10; i++)
             {
                 t[i] = new Thread(DoubleMetricUpdateThread);
-                t[i].Start(args);
+                t[i].Start(argToThread);
             }
+
+            // Block until all 10 threads started.
+            mreToEnsureAllThreadsStart.WaitOne();
 
             // kick-off all the threads.
             mre.Set();
@@ -123,9 +151,15 @@ namespace OpenTelemetry.Metrics.Test
 
         private static void LongMetricUpdateThread(object obj)
         {
-            var tuple = obj as Tuple<ManualResetEvent, CounterSumAggregator<long>>;
-            var mre = tuple.Item1;
-            var agg = tuple.Item2;
+            var arguments = obj as UpdateThreadArguments<long>;
+            var mre = arguments.mreToBlockUpdateThread;
+            var mreToEnsureAllThreadsStart = arguments.mreToEnsureAllThreadsStart;
+            var agg = arguments.counterSumAggregator;
+
+            if (Interlocked.Increment(ref arguments.threadsStartedCount) == 10)
+            {
+                mreToEnsureAllThreadsStart.Set();
+            }
 
             // Wait until signalled to start calling update on aggregator
             mre.WaitOne();
@@ -138,9 +172,15 @@ namespace OpenTelemetry.Metrics.Test
 
         private static void DoubleMetricUpdateThread(object obj)
         {
-            var tuple = obj as Tuple<ManualResetEvent, CounterSumAggregator<double>>;
-            var mre = tuple.Item1;
-            var agg = tuple.Item2;
+            var arguments = obj as UpdateThreadArguments<double>;
+            var mre = arguments.mreToBlockUpdateThread;
+            var mreToEnsureAllThreadsStart = arguments.mreToEnsureAllThreadsStart;
+            var agg = arguments.counterSumAggregator;
+
+            if (Interlocked.Increment(ref arguments.threadsStartedCount) == 10)
+            {
+                mreToEnsureAllThreadsStart.Set();
+            }
 
             // Wait until signalled to start calling update on aggregator
             mre.WaitOne();
