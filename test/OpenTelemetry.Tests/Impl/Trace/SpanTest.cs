@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentSpan()
         {
-            var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.0.0");
+            var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.0.0");
 
             var traceState = new List<KeyValuePair<string, string>> {new KeyValuePair<string, string>("k1", "v1")};
             var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, false, traceState);

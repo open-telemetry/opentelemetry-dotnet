@@ -30,7 +30,7 @@ namespace OpenTelemetry.Collector.Dependencies
         /// Initializes a new instance of the <see cref="HttpClientCollector"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public HttpClientCollector(ITracer tracer)
+        public HttpClientCollector(Tracer tracer)
             : this(tracer, new HttpClientCollectorOptions())
         {
         }
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Collector.Dependencies
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="options">Configuration options for dependencies collector.</param>
-        public HttpClientCollector(ITracer tracer, HttpClientCollectorOptions options)
+        public HttpClientCollector(Tracer tracer, HttpClientCollectorOptions options)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(tracer, options), options.EventFilter);
             this.diagnosticSourceSubscriber.Subscribe();

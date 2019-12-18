@@ -90,9 +90,9 @@ namespace OpenTelemetry.Trace.Configuration
         /// Adds auto-collectors for spans.
         /// </summary>
         /// <typeparam name="TCollector">Type of collector class.</typeparam>
-        /// <param name="collectorFactory">Function that builds collector from <see cref="ITracer"/>.</param>
+        /// <param name="collectorFactory">Function that builds collector from <see cref="Tracer"/>.</param>
         public TracerBuilder AddCollector<TCollector>(
-            Func<ITracer, TCollector> collectorFactory)
+            Func<Tracer, TCollector> collectorFactory)
             where TCollector : class
         {
             if (collectorFactory == null)
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Configures <see cref="ITextFormat"/> on the tracer.
+        /// Configures <see cref="ITextFormat"/> on the tracerSdk.
         /// </summary>
         /// <param name="textFormat"><see cref="ITextFormat"/> implementation class instance.</param>
         public TracerBuilder SetTextFormat(ITextFormat textFormat)
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Configures <see cref="IBinaryFormat"/> on the tracer.
+        /// Configures <see cref="IBinaryFormat"/> on the tracerSdk.
         /// </summary>
         /// <param name="binaryFormat"><see cref="IBinaryFormat"/> implementation class instance.</param>
         public TracerBuilder SetBinaryFormat(IBinaryFormat binaryFormat)
@@ -148,9 +148,9 @@ namespace OpenTelemetry.Trace.Configuration
         {
             public readonly string Name;
             public readonly string Version;
-            public readonly Func<ITracer, object> Factory;
+            public readonly Func<Tracer, object> Factory;
 
-            internal CollectorFactory(string name, string version, Func<ITracer, object> factory)
+            internal CollectorFactory(string name, string version, Func<Tracer, object> factory)
             {
                 this.Name = name;
                 this.Version = version;

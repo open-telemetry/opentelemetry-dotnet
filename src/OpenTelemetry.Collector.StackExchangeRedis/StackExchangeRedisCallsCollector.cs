@@ -28,7 +28,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
     /// </summary>
     public class StackExchangeRedisCallsCollector : IDisposable
     {
-        private readonly ITracer tracer;
+        private readonly Tracer tracer;
 
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly CancellationToken cancellationToken;
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         /// Initializes a new instance of the <see cref="StackExchangeRedisCallsCollector"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public StackExchangeRedisCallsCollector(ITracer tracer)
+        public StackExchangeRedisCallsCollector(Tracer tracer)
         {
             this.tracer = tracer;
 

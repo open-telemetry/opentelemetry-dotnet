@@ -39,7 +39,7 @@ namespace Samples
             }
         }
 
-        private static void DoWork(int i, ITracer tracer)
+        private static void DoWork(int i, Tracer tracer)
         {
             using (tracer.WithSpan(tracer.StartSpan("DoWork")))
             {

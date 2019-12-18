@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace.Test
             var tracerFactory = TracerFactory.Create(b => { });
             var tracer = tracerFactory.GetTracer("");
             Assert.NotNull(tracer);
-            Assert.IsType<Tracer>(tracer);
+            Assert.IsType<TracerSdk>(tracer);
 
             Assert.IsType<BinaryFormat>(tracer.BinaryFormat);
             Assert.IsType<TraceContextFormat>(tracer.TextFormat);
@@ -168,7 +168,7 @@ namespace OpenTelemetry.Trace.Test
         public void GetTracer_NoName_NoVersion()
         {
             var tracerFactory = TracerFactory.Create(b => { });
-            var tracer = (Tracer)tracerFactory.GetTracer("");
+            var tracer = (TracerSdk)tracerFactory.GetTracer("");
             Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "name");
             Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "version");
         }
@@ -177,7 +177,7 @@ namespace OpenTelemetry.Trace.Test
         public void GetTracer_NoName_Version()
         {
             var tracerFactory = TracerFactory.Create(b => { });
-            var tracer = (Tracer)tracerFactory.GetTracer(null, "semver:1.0.0");
+            var tracer = (TracerSdk)tracerFactory.GetTracer(null, "semver:1.0.0");
             Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "name");
             Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "version");
         }
@@ -186,7 +186,7 @@ namespace OpenTelemetry.Trace.Test
         public void GetTracer_Name_NoVersion()
         {
             var tracerFactory = TracerFactory.Create(b => { });
-            var tracer = (Tracer)tracerFactory.GetTracer("foo");
+            var tracer = (TracerSdk)tracerFactory.GetTracer("foo");
             Assert.Equal("foo", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "name").Value);
             Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "version");
         }
@@ -195,7 +195,7 @@ namespace OpenTelemetry.Trace.Test
         public void GetTracer_Name_Version()
         {
             var tracerFactory = TracerFactory.Create(b => { });
-            var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
+            var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("foo", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "name").Value);
             Assert.Equal("semver:1.2.3", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "version").Value);
         }
@@ -204,7 +204,7 @@ namespace OpenTelemetry.Trace.Test
         public void GetTracerReturnsTracerWithResourceAfterSetResource()
         {
             var tracerFactory = TracerFactory.Create(b => { b.SetResource(new Resource(new Dictionary<string, string>() { { "a", "b" } })); });
-            var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
+            var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("b", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "a").Value);
             Assert.Equal("foo", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "name").Value);
             Assert.Equal("semver:1.2.3", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "version").Value);
@@ -216,7 +216,7 @@ namespace OpenTelemetry.Trace.Test
             var tracerFactory = TracerFactory.Create(b => { 
                 b.SetResource(new Resource(new Dictionary<string, string>() { { "a", "b" } }))
                 .SetResource(new Resource(new Dictionary<string, string>() { { "a", "c" } })); });
-            var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.2.3");
+            var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("c", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "a").Value);
         }
 
@@ -284,10 +284,10 @@ namespace OpenTelemetry.Trace.Test
 
         private class TestCollector : IDisposable
         {
-            private readonly ITracer tracer;
+            private readonly Tracer tracer;
             public bool IsDisposed { get; private set; }
 
-            public TestCollector(ITracer tracer)
+            public TestCollector(Tracer tracer)
             {
                 this.tracer = tracer;
             }
