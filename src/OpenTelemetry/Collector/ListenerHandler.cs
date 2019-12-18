@@ -20,9 +20,9 @@ namespace OpenTelemetry.Collector
 {
     public abstract class ListenerHandler
     {
-        protected readonly ITracer Tracer;
+        protected readonly Tracer Tracer;
 
-        public ListenerHandler(string sourceName, ITracer tracer)
+        public ListenerHandler(string sourceName, Tracer tracer)
         {
             this.SourceName = sourceName;
             this.Tracer = tracer;

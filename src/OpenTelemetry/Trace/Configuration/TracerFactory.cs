@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace.Configuration
     public class TracerFactory : TracerFactoryBase, IDisposable
     {
         private readonly object lck = new object();
-        private readonly Dictionary<TracerRegistryKey, ITracer> tracerRegistry = new Dictionary<TracerRegistryKey, ITracer>();
+        private readonly Dictionary<TracerRegistryKey, Tracer> tracerRegistry = new Dictionary<TracerRegistryKey, Tracer>();
         private readonly List<object> collectors = new List<object>();
 
         private readonly Sampler sampler;
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace.Configuration
         private readonly IBinaryFormat binaryFormat;
         private readonly ITextFormat textFormat;
 
-        private ITracer defaultTracer;
+        private Tracer defaultTracer;
 
         private TracerFactory(TracerBuilder builder)
         {
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Trace.Configuration
             else if (builder.ProcessingPipelines.Count == 1)
             {
                 // if there is only one pipeline - use it's outer processor as a 
-                // single processor on the tracer.
+                // single processor on the tracerSdk.
                 var processorFactory = builder.ProcessingPipelines[0];
                 this.spanProcessor = processorFactory.Build();
             }
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Trace.Configuration
             this.binaryFormat = builder.BinaryFormat ?? new BinaryFormat();
             this.textFormat = builder.TextFormat ?? new TraceContextFormat();
 
-            this.defaultTracer = new Tracer(
+            this.defaultTracer = new TracerSdk(
                 this.spanProcessor,
                 this.sampler,
                 this.configurationOptions,
@@ -86,9 +86,9 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Creates tracer factory.
+        /// Creates tracerSdk factory.
         /// </summary>
-        /// <param name="configure">Function that configures tracer factory.</param>
+        /// <param name="configure">Function that configures tracerSdk factory.</param>
         public static TracerFactory Create(Action<TracerBuilder> configure)
         {
             if (configure == null)
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Trace.Configuration
             return factory;
         }
 
-        public override ITracer GetTracer(string name, string version = null)
+        public override Tracer GetTracer(string name, string version = null)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Trace.Configuration
                 var key = new TracerRegistryKey(name, version);
                 if (!this.tracerRegistry.TryGetValue(key, out var tracer))
                 {
-                    tracer = this.defaultTracer = new Tracer(
+                    tracer = this.defaultTracer = new TracerSdk(
                         this.spanProcessor,
                         this.sampler,
                         this.configurationOptions,

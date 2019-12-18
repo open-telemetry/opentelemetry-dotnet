@@ -21,7 +21,7 @@ namespace LoggingTracer
     public class LoggingTracerFactory : TracerFactoryBase
     {
         /// <inheritdoc/>
-        public override ITracer GetTracer(string name, string version = null)
+        public override Tracer GetTracer(string name, string version = null)
         {
             Logger.Log($"ITracerFactory.GetTracer('{name}', '{version}')");
 

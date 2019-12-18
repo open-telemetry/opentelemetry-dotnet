@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         private const long MillisPerSecond = 1000L;
         private const long NanosPerMillisecond = 1000 * 1000;
         private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
-        private readonly ITracer tracer;
+        private readonly Tracer tracer;
 
         public JaegerSpanConverterTest()
         {
