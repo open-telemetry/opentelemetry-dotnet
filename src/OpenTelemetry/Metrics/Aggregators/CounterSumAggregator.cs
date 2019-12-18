@@ -30,10 +30,11 @@ namespace OpenTelemetry.Metrics.Aggregators
         private T checkPoint;
 
         public override void Checkpoint()
-        {            
+        {
+            // checkpoints the current running sum into checkpoint, and starts counting again.
             if (typeof(T) == typeof(double))
             {
-                this.checkPoint = (T)(object)Interlocked.Exchange(ref Unsafe.As<T, double>(ref this.sum), 0);
+                this.checkPoint = (T)(object)Interlocked.Exchange(ref Unsafe.As<T, double>(ref this.sum), 0.0);
             }
             else
             {
@@ -43,6 +44,7 @@ namespace OpenTelemetry.Metrics.Aggregators
 
         public override void Update(T value)
         {
+            // Adds value to the running total in a thread safe manner.
             if (typeof(T) == typeof(double))
             {
                 double initialTotal, computedTotal;
