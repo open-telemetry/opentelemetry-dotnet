@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -28,6 +29,14 @@ namespace OpenTelemetry.Metrics.Aggregators
     {
         private T sum;
         private T checkPoint;
+
+        public CounterSumAggregator()
+        {
+            if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
+            {
+                throw new Exception("Invalid Type");
+            }
+        }
 
         public override void Checkpoint()
         {

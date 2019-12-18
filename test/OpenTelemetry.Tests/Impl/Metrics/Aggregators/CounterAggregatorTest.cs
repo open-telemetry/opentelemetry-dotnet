@@ -23,6 +23,30 @@ namespace OpenTelemetry.Metrics.Test
     public class CounterAggregatorTest
     {
         [Fact]
+        public void CounterAggregatorSupportsLong()
+        {            
+            CounterSumAggregator<long> aggregator = new CounterSumAggregator<long>();            
+        }
+
+        [Fact]
+        public void CounterAggregatorSupportsDouble()
+        {
+            CounterSumAggregator<double> aggregator = new CounterSumAggregator<double>();
+        }
+
+        [Fact]
+        public void CounterAggregatorConstructorThrowsForUnSupportedTypeInt()
+        {
+            Assert.Throws<Exception>(() => new CounterSumAggregator<int>());            
+        }
+
+        [Fact]
+        public void CounterAggregatorConstructorThrowsForUnSupportedTypeByte()
+        {
+            Assert.Throws<Exception>(() => new CounterSumAggregator<byte>());
+        }
+
+        [Fact]
         public void CounterAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdatesLong()
         {
             // create an aggregator
