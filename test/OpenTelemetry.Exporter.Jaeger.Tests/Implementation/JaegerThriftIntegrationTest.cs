@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
     public class JaegerThriftIntegrationTest
     {
-        private readonly ITracer tracer;
+        private readonly Tracer tracer;
 
         public JaegerThriftIntegrationTest()
         {

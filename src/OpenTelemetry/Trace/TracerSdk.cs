@@ -1,4 +1,4 @@
-﻿// <copyright file="Tracer.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,20 +25,20 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace
 {
-    internal sealed class Tracer : ITracer
+    internal sealed class TracerSdk : Tracer
     {
         private readonly SpanProcessor spanProcessor;
         private readonly TracerConfiguration tracerConfiguration;
         private readonly Sampler sampler;
 
-        static Tracer()
+        static TracerSdk()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
         }
 
         /// <summary>
-        /// Creates an instance of <see cref="Tracer"/>.
+        /// Creates an instance of <see cref="TracerSdk"/>.
         /// </summary>
         /// <param name="spanProcessor">Span processor.</param>
         /// <param name="sampler">Sampler to use.</param>
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace
         /// <param name="binaryFormat">Binary format context propagator.</param>
         /// <param name="textFormat">Text format context propagator.</param>
         /// <param name="libraryResource">Resource describing the instrumentation library.</param>
-        internal Tracer(SpanProcessor spanProcessor, Sampler sampler, TracerConfiguration tracerConfiguration, IBinaryFormat binaryFormat, ITextFormat textFormat, Resource libraryResource)
+        internal TracerSdk(SpanProcessor spanProcessor, Sampler sampler, TracerConfiguration tracerConfiguration, IBinaryFormat binaryFormat, ITextFormat textFormat, Resource libraryResource)
         {
             this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
             this.tracerConfiguration = tracerConfiguration ?? throw new ArgumentNullException(nameof(tracerConfiguration));
@@ -59,15 +59,15 @@ namespace OpenTelemetry.Trace
         public Resource LibraryResource { get; }
 
         /// <inheritdoc/>
-        public ISpan CurrentSpan => (ISpan)Span.Current ?? BlankSpan.Instance;
+        public override ISpan CurrentSpan => (ISpan)Span.Current ?? BlankSpan.Instance;
 
         /// <inheritdoc/>
-        public IBinaryFormat BinaryFormat { get; }
+        public override IBinaryFormat BinaryFormat { get; }
 
         /// <inheritdoc/>
-        public ITextFormat TextFormat { get; }
+        public override ITextFormat TextFormat { get; }
 
-        public IDisposable WithSpan(ISpan span, bool endSpanOnDispose)
+        public override IDisposable WithSpan(ISpan span, bool endSpanOnDispose)
         {
             if (span == null)
             {
@@ -83,13 +83,13 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
+        public override ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
             return Span.CreateRoot(operationName, kind, options, this.sampler, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
+        public override ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
         {
             if (parent == null)
             {
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
+        public override ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
             if (parent != null)
             {
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public override ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
             bool isValidActivity = true;
             if (activity == null)

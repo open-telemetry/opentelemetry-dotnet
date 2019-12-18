@@ -34,7 +34,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         private readonly bool httpClientSupportsW3C = false;
         private readonly HttpClientCollectorOptions options;
 
-        public HttpHandlerDiagnosticListener(ITracer tracer, HttpClientCollectorOptions options)
+        public HttpHandlerDiagnosticListener(Tracer tracer, HttpClientCollectorOptions options)
             : base("HttpHandlerDiagnosticListener", tracer)
         {
             var framework = Assembly

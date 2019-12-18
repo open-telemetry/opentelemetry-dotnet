@@ -27,7 +27,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 {
     public class RedisProfilerEntryToSpanConverterTests
     {
-        private readonly ITracer tracer;
+        private readonly Tracer tracer;
 
         public RedisProfilerEntryToSpanConverterTests()
         {

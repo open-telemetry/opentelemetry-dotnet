@@ -27,7 +27,7 @@ namespace OpenTelemetry.Collector.Dependencies
         // all fetchers must not be reused between DiagnosticSources.
         private readonly PropertyFetcher linksPropertyFetcher = new PropertyFetcher("Links");
 
-        public AzureSdkDiagnosticListener(string sourceName, ITracer tracer)
+        public AzureSdkDiagnosticListener(string sourceName, Tracer tracer)
             : base(sourceName, tracer)
         {
         }

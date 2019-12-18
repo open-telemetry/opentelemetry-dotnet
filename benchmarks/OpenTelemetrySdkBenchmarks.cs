@@ -26,9 +26,9 @@ namespace Benchmarks
     [MemoryDiagnoser]
     public class OpenTelemetrySdkBenchmarks
     {
-        private readonly ITracer alwaysSampleTracer;
-        private readonly ITracer neverSampleTracer;
-        private readonly ITracer noopTracer;
+        private readonly Tracer alwaysSampleTracer;
+        private readonly Tracer neverSampleTracer;
+        private readonly Tracer noopTracer;
 
         public OpenTelemetrySdkBenchmarks()
         {
