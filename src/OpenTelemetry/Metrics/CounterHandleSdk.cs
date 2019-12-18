@@ -1,4 +1,4 @@
-﻿// <copyright file="GaugeHandleSDK.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CounterHandleSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,12 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
-    public class GaugeHandleSDK<T> : GaugeHandle<T>
+    internal class CounterHandleSdk<T> : CounterHandle<T>
         where T : struct
     {
-        private readonly GaugeAggregator<T> gaugeAggregator = new GaugeAggregator<T>();
+        private readonly CounterSumAggregator<T> sumAggregator = new CounterSumAggregator<T>();
 
-        internal GaugeHandleSDK()
+        internal CounterHandleSdk()
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {
@@ -34,19 +34,19 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public override void Set(in SpanContext context, T value)
+        public override void Add(in SpanContext context, T value)
         {
-            this.gaugeAggregator.Update(value);
+            this.sumAggregator.Update(value);
         }
 
-        public override void Set(in DistributedContext context, T value)
+        public override void Add(in DistributedContext context, T value)
         {
-            this.gaugeAggregator.Update(value);
+            this.sumAggregator.Update(value);
         }
 
-        internal GaugeAggregator<T> GetAggregator()
+        internal CounterSumAggregator<T> GetAggregator()
         {
-            return this.gaugeAggregator;
+            return this.sumAggregator;
         }
     }
 }

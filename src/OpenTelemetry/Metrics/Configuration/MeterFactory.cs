@@ -37,7 +37,7 @@ namespace OpenTelemetry.Metrics.Configuration
                 this.metricProcessor = metricProcessor;
             }
            
-            this.defaultMeter = new MeterSDK(string.Empty,
+            this.defaultMeter = new MeterSdk(string.Empty,
                 this.metricProcessor);
         }
 
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Metrics.Configuration
                 var key = new MeterRegistryKey(name, version);
                 if (!this.meterRegistry.TryGetValue(key, out var meter))
                 {
-                    meter = this.defaultMeter = new MeterSDK(name,
+                    meter = this.defaultMeter = new MeterSdk(name,
                         this.metricProcessor);
 
                     this.meterRegistry.Add(key, meter);
