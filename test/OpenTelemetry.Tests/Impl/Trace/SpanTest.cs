@@ -750,7 +750,7 @@ namespace OpenTelemetry.Trace.Test
             // recorded.
             foreach (var attribute in attributes)
             {
-                span.SetAttribute(attribute);
+                span.SetAttribute(attribute.Key, attribute.Value);
             }
 
             span.SetAttribute(
@@ -758,7 +758,7 @@ namespace OpenTelemetry.Trace.Test
                 "MySingleStringAttributeValue");
 
             span.AddEvent(new Event(EventDescription));
-            span.AddEvent(EventDescription, attributes);
+            span.AddEvent(new Event(EventDescription, attributes));
 
             Assert.NotEqual(default, span.StartTimestamp);
             Assert.Empty(span.Attributes);
@@ -793,7 +793,7 @@ namespace OpenTelemetry.Trace.Test
                 "MySingleStringAttributeValue");
             foreach (var attribute in attributes)
             {
-                span.SetAttribute(attribute);
+                span.SetAttribute(attribute.Key, attribute.Value);
             }
 
             var firstEventTime = PreciseTimestamp.GetUtcNow();
@@ -801,7 +801,7 @@ namespace OpenTelemetry.Trace.Test
             await Task.Delay(TimeSpan.FromMilliseconds(100));
 
             var secondEventTime = PreciseTimestamp.GetUtcNow();
-            span.AddEvent(EventDescription, attributes);
+            span.AddEvent(new Event(EventDescription, attributes));
 
             Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
             Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
@@ -855,7 +855,7 @@ namespace OpenTelemetry.Trace.Test
                 "MySingleStringAttributeValue");
             foreach (var attribute in attributes)
             {
-                span.SetAttribute(attribute);
+                span.SetAttribute(attribute.Key, attribute.Value);
             }
 
             await Task.Delay(TimeSpan.FromMilliseconds(100));
@@ -864,7 +864,7 @@ namespace OpenTelemetry.Trace.Test
 
             await Task.Delay(TimeSpan.FromMilliseconds(100));
             var secondEventTime = PreciseTimestamp.GetUtcNow();
-            span.AddEvent(EventDescription, attributes);
+            span.AddEvent(new Event(EventDescription, attributes));
 
             span.Status = Status.Cancelled;
 
@@ -959,6 +959,42 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
+        public void SetAttribute_ValidTypes()
+        {
+            var tracer = tracerFactory.GetTracer(null);
+            var span = (Span)tracer.StartRootSpan(SpanName);
+
+            span.SetAttribute("string", "foo");
+            span.SetAttribute("bool", false);
+            span.SetAttribute("long", -1L);
+            span.SetAttribute("ulong", (ulong)1);
+            span.SetAttribute("uint", 2U);
+            span.SetAttribute("int", -2);
+            span.SetAttribute("sbyte", (sbyte)-3);
+            span.SetAttribute("byte", (byte)3);
+            span.SetAttribute("short", (short)-4);
+            span.SetAttribute("ushort", (ushort)4);
+            span.SetAttribute("double", 0.1d);
+            span.SetAttribute("float", 0.2f);
+            span.SetAttribute("decimal", 0.3M);
+
+            Assert.Equal(13, span.Attributes.Count());
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "string" && kvp.Value is string sv && sv == "foo"));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "bool" && kvp.Value is bool bv && bv == false));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "long" && kvp.Value is long lv && lv == -1));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "ulong" && kvp.Value is ulong uv && uv == 1));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "uint" && kvp.Value is uint uv && uv == 2));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "int" && kvp.Value is int iv && iv == -2));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "sbyte" && kvp.Value is sbyte sv && sv == -3));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "byte" && kvp.Value is byte bv && bv == 3));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "short" && kvp.Value is short sv && sv == -4));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "ushort" && kvp.Value is ushort uv && uv == 4));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "double" && kvp.Value is double dv && dv == 0.1));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "float" && kvp.Value is float fv && fv == 0.2f));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "decimal" && kvp.Value is decimal dv && dv == 0.3M));
+        }
+
+        [Fact]
         public void BadArguments_SetAttribute_NullOrEmptyValue()
         {
             var tracer = tracerFactory.GetTracer(null);
@@ -974,13 +1010,28 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
+        public void BadArguments_SetAttribute_BadTypeValue()
+        {
+            var tracer = tracerFactory.GetTracer(null);
+            var span = (Span)tracer.StartRootSpan(SpanName);
+
+            // does not throw
+            span.SetAttribute("complex type", new { });
+            span.SetAttribute("not supported type", DateTimeOffset.UtcNow);
+
+            Assert.Equal(2, span.Attributes.Count());
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "complex type" && kvp.Value is string sv && sv == string.Empty));
+            Assert.Single(span.Attributes.Where(kvp => kvp.Key == "not supported type" && kvp.Value is string sv && sv == string.Empty));
+        }
+
+        [Fact]
         public void BadArguments_NullEvent()
         {
             var tracer = tracerFactory.GetTracer(null);
             var span = (Span)tracer.StartRootSpan(SpanName);
 
             span.AddEvent((string)null);
-            span.AddEvent(null, null);
+            span.AddEvent(new Event(null, null));
             Assert.Equal(2, span.Events.Count());
 
             var event0 = span.Events.ToArray()[0];

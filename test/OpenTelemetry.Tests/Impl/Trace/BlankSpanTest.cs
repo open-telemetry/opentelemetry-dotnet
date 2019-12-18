@@ -39,17 +39,17 @@ namespace OpenTelemetry.Trace.Test
                 "MyStringAttributeKey2", "MyStringAttributeValue2");
             foreach (var a in attributes)
             {
-                BlankSpan.Instance.SetAttribute(a);
+                BlankSpan.Instance.SetAttribute(a.Key, a.Value);
             }
 
             foreach (var a in multipleAttributes)
             {
-                BlankSpan.Instance.SetAttribute(a);
+                BlankSpan.Instance.SetAttribute(a.Key, a.Value);
             }
 
             BlankSpan.Instance.AddEvent("MyEvent");
-            BlankSpan.Instance.AddEvent("MyEvent", attributes);
-            BlankSpan.Instance.AddEvent("MyEvent", multipleAttributes);
+            BlankSpan.Instance.AddEvent(new Event("MyEvent", attributes));
+            BlankSpan.Instance.AddEvent(new Event("MyEvent", multipleAttributes));
             BlankSpan.Instance.AddEvent(new Event("MyEvent"));
 
             Assert.False(BlankSpan.Instance.Context.IsValid);

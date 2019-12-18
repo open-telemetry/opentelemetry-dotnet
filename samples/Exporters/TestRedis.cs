@@ -96,7 +96,7 @@ namespace Samples
                 {
                     { "use", "demo" },
                 };
-                span.AddEvent("Invoking DoWork", attributes);
+                span.AddEvent(new Event("Invoking DoWork", attributes));
             }
         }
     }

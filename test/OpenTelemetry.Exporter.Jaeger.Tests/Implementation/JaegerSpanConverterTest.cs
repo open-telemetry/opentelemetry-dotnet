@@ -382,7 +382,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             {
                 foreach (var attribute in attributes)
                 {
-                    span.SetAttribute(attribute);
+                    span.SetAttribute(attribute.Key, attribute.Value);
                 }
             }
 

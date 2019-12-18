@@ -1471,12 +1471,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var now = DateTimeOffset.UtcNow.AddSeconds(-1);
 
             span.AddEvent(new Event("test message1", now));
-            span.AddEvent("test message2", new Dictionary<string, object>()
+            span.AddEvent(new Event("test message2", new Dictionary<string, object>()
             {
                 { "custom.stringAttribute", "string" },
                 { "custom.longAttribute", long.MaxValue },
                 { "custom.boolAttribute", true },
-            });
+            }));
 
             var sentItems = ConvertSpan(span);
 

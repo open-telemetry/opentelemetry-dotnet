@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Collections.Generic;
 
 namespace OpenTelemetry.Trace
 {
@@ -47,37 +46,12 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public void SetAttribute(KeyValuePair<string, object> keyValuePair)
-        {
-        }
-
-        /// <inheritdoc />
-        public void SetAttribute(string key, string value)
-        {
-        }
-
-        /// <inheritdoc />
-        public void SetAttribute(string key, long value)
-        {
-        }
-
-        /// <inheritdoc />
-        public void SetAttribute(string key, double value)
-        {
-        }
-
-        /// <inheritdoc />
-        public void SetAttribute(string key, bool value)
+        public void SetAttribute(string key, object value)
         {
         }
 
         /// <inheritdoc />
         public void AddEvent(string name)
-        {
-        }
-
-        /// <inheritdoc />
-        public void AddEvent(string name, IDictionary<string, object> attributes)
         {
         }
 

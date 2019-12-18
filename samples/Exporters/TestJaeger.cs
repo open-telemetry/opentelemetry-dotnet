@@ -75,7 +75,7 @@ namespace Samples
                 var attributes = new Dictionary<string, object>();
                 attributes.Add("use", "demo");
                 attributes.Add("iteration", i);
-                span.AddEvent("Invoking DoWork", attributes);
+                span.AddEvent(new Event("Invoking DoWork", attributes));
             }
         }
     }

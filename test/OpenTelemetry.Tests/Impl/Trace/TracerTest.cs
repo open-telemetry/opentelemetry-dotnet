@@ -389,7 +389,7 @@ namespace OpenTelemetry.Trace.Test
             }
 
             Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
-            for (long i = 0; i < maxNumberOfAttributes; i++)
+            for (int i = 0; i < maxNumberOfAttributes; i++)
             {
                 Assert.Equal(
                     i + maxNumberOfAttributes,
@@ -401,7 +401,7 @@ namespace OpenTelemetry.Trace.Test
             span.End();
 
             Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
-            for (long i = 0; i < maxNumberOfAttributes; i++)
+            for (int i = 0; i < maxNumberOfAttributes; i++)
             {
                 Assert.Equal(
                     i + maxNumberOfAttributes,
