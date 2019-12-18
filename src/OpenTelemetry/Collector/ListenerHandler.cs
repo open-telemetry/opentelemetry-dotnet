@@ -22,7 +22,7 @@ namespace OpenTelemetry.Collector
     {
         protected readonly ITracer Tracer;
 
-        public ListenerHandler(string sourceName, ITracer tracer)
+        protected ListenerHandler(string sourceName, ITracer tracer)
         {
             this.SourceName = sourceName;
             this.Tracer = tracer;
@@ -50,9 +50,6 @@ namespace OpenTelemetry.Collector
 
         public virtual void OnException(Activity activity, object payload)
         {
-            var span = this.Tracer.CurrentSpan;
-
-            // TODO: gather exception information
         }
 
         public virtual void OnCustom(string name, Activity activity, object payload)

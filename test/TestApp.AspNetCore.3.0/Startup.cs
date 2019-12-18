@@ -19,9 +19,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Trace.Configuration;
 
-namespace TestApp.AspNetCore._2._0
+namespace TestApp.AspNetCore._3._0
 {
     public class Startup
     {
@@ -39,10 +41,14 @@ namespace TestApp.AspNetCore._2._0
             services.AddSingleton<HttpClient>();
             services.AddSingleton(
                 new CallbackMiddleware.CallbackMiddlewareImpl());
+
+            services.TryAddSingleton<TracerFactory>(_ => TracerFactory.Create(b => b
+                    .AddRequestCollector()
+                    .AddDependencyCollector()));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, TracerFactory factory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, TracerFactory factory)
         {
             if (env.IsDevelopment())
             {
@@ -50,7 +56,14 @@ namespace TestApp.AspNetCore._2._0
             }
 
             app.UseMiddleware<CallbackMiddleware>();
-            app.UseMvc();
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }

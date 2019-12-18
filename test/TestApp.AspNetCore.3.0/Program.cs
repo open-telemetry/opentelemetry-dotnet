@@ -17,7 +17,7 @@
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
-namespace TestApp.AspNetCore._2._0
+namespace TestApp.AspNetCore._3._0
 {
     public class Program
     {
