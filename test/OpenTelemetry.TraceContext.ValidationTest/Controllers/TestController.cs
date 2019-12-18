@@ -46,8 +46,7 @@ namespace OpenTelemetry.TraceContext.ValidationTest.Controllers
                     {
                         Content = new StringContent(JsonConvert.SerializeObject(argument.Arguments), Encoding.UTF8, "application/json"),
                     };
-                    var response = await this.httpClient.SendAsync(request);
-                    return await response.Content.ReadAsStringAsync();
+                    await this.httpClient.SendAsync(request);
                 }
             }
             else

@@ -51,8 +51,6 @@ namespace OpenTelemetry.TraceContext.ValidationTest
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
-
             app.UseRouting();
 
             app.UseAuthorization();
