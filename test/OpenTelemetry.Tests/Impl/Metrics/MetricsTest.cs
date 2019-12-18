@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using System.Collections.Generic;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
