@@ -9,4 +9,5 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="2.1.0" />
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
+
 </Project>

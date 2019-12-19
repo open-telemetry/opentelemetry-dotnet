@@ -49,7 +49,7 @@ You can contribute to this project from a Windows, macOS or Linux machine. Requi
 In all platforms, the requirements are:
 
 * Git client and command line tools. You may use Visual Studio to clone the repo, but we use [SourceLink](https://github.com/dotnet/sourcelink) to build and it needs git.
-* .NET Core 2.1+
+* .NET Core 3.1+
 
 #### Windows
 
@@ -67,7 +67,7 @@ This is because unit tests targeting .NET Framework (i.e: `net46`) are disabled 
 
 Open `OpenTelemetry.sln` in your IDE of choice and follow normal development process.
 
-To build from the command line you need `dotnet` version `2.1+`.
+To build from the command line you need `dotnet` version `3.1+`.
 
 ``` sh
 dotnet build OpenTelemetry.sln
@@ -79,7 +79,7 @@ You can use any of the IDEs mentioned above to test your contribution. Open root
 folder or `OpenTelemetry.sln` in your editor and follow normal development
 process.
 
-To test from command line you need `dotnet` version `2.0+`.
+To test from command line you need `dotnet` version `3.1+`.
 
 ``` sh
 dotnet test OpenTelemetry.sln

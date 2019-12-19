@@ -19,35 +19,21 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
-namespace TestApp.AspNetCore._2._0.Controllers
+namespace TestApp.AspNetCore._3._0.Controllers
 {
     [Route("api/[controller]")]
     public class ForwardController : Controller
     {
         private readonly HttpClient httpClient;
-        public ForwardController(HttpClient httpclient)
+
+        public ForwardController(HttpClient httpClient)
         {
-            this.httpClient = httpclient;
+            this.httpClient = httpClient;
         }
 
-        private async Task<string> CallNextAsync(string url, Data[] arguments)
-        {
-            if (url != null)
-            {
-                var request = new HttpRequestMessage(HttpMethod.Post, url)
-                {
-                    Content = new StringContent(JsonConvert.SerializeObject(arguments), Encoding.UTF8, "application/json"),
-                };
-                var response = await httpClient.SendAsync(request);
-                return await response.Content.ReadAsStringAsync();
-            }
-
-            return "all done";
-        }
-
-        // POST api/values
+        // POST api/test
         [HttpPost]
-        public async Task<string> Post([FromBody]Data[] data)
+        public async Task<string> Post([FromBody] Data[] data)
         {
             var result = string.Empty;
 
@@ -55,13 +41,12 @@ namespace TestApp.AspNetCore._2._0.Controllers
             {
                 foreach (var argument in data)
                 {
-                    if (argument.sleep != null)
+                    var request = new HttpRequestMessage(HttpMethod.Post, argument.Url)
                     {
-                        result = "slept for " + argument.sleep.Value + " ms";
-                        await Task.Delay(argument.sleep.Value);
-                    }
-
-                    result += await CallNextAsync(argument.url, argument.arguments);
+                        Content = new StringContent(JsonConvert.SerializeObject(argument.Arguments),
+                            Encoding.UTF8, "application/json"),
+                    };
+                    await this.httpClient.SendAsync(request);
                 }
             }
             else
@@ -75,8 +60,11 @@ namespace TestApp.AspNetCore._2._0.Controllers
 
     public class Data
     {
-        public int? sleep { get; set; }
-        public string url { get; set; }
-        public Data[] arguments { get; set; }
+        [JsonProperty("url")]
+        public string Url { get; set; }
+
+        [JsonProperty("arguments")]
+        public Data[] Arguments { get; set; }
     }
 }
+

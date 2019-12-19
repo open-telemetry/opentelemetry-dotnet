@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry</Description>
-    <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,9 +28,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\OpenTelemetry.Collector.AspNetCore\OpenTelemetry.Collector.AspNetCore.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
-    <ProjectReference Include="..\TestApp.AspNetCore.2.0\TestApp.AspNetCore.2.0.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="2.1.2" />
+    <ProjectReference Include="..\TestApp.AspNetCore.3.0\TestApp.AspNetCore.3.0.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>

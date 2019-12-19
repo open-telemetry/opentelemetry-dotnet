@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -27,5 +27,4 @@
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.ApplicationInsights\OpenTelemetry.Exporter.ApplicationInsights.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
   </ItemGroup>
-
 </Project>

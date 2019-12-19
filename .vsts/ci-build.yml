@@ -1,7 +1,7 @@
 # CI build. No publioshing of artifacts
 
 variables:
-  DotNetVersion: "2.2.101"
+  DotNetVersion: "3.1.100"
 
 # A pipeline with no CI trigger
 trigger: none
