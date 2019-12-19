@@ -20,4 +20,5 @@
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
   </ItemGroup>
+
 </Project>

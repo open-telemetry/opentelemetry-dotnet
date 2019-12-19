@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
+using Microsoft.AspNetCore.Http;
 
 namespace OpenTelemetry.Collector.AspNetCore
 {
@@ -25,9 +27,9 @@ namespace OpenTelemetry.Collector.AspNetCore
         /// <summary>
         /// Gets or sets a hook to exclude calls based on domain or other per-request criterion.
         /// </summary>
-        internal Func<string, object, object, bool> EventFilter { get; set; } = DefaultFilter;
+        internal Predicate<HttpContext> RequestFilter { get; set; } = DefaultFilter;
 
-        private static bool DefaultFilter(string activityName, object arg1, object unused)
+        private static bool DefaultFilter(HttpContext httpContext)
         {
             return true;
         }

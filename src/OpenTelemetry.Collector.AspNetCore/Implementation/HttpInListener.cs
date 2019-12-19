@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -32,11 +33,13 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
         private readonly PropertyFetcher beforeActionAttributeRouteInfoFetcher = new PropertyFetcher("AttributeRouteInfo");
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
         private readonly bool hostingSupportsW3C = false;
+        private readonly Predicate<HttpContext> requestFilter;
 
-        public HttpInListener(string name, Tracer tracer)
+        public HttpInListener(string name, Tracer tracer, Predicate<HttpContext> requestFilter)
             : base(name, tracer)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
+            this.requestFilter = requestFilter;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -47,6 +50,12 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             if (context == null)
             {
                 CollectorEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
+                return;
+            }
+
+            if (this.requestFilter != null && !this.requestFilter(context))
+            {
+                CollectorEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 return;
             }
 

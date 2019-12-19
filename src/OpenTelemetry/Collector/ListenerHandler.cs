@@ -50,9 +50,6 @@ namespace OpenTelemetry.Collector
 
         public virtual void OnException(Activity activity, object payload)
         {
-            var span = this.Tracer.CurrentSpan;
-
-            // TODO: gather exception information
         }
 
         public virtual void OnCustom(string name, Activity activity, object payload)

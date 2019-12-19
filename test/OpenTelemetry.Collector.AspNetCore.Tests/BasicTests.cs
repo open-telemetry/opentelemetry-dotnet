@@ -17,7 +17,6 @@
 using OpenTelemetry.Trace.Configuration;
 using Xunit;
 using Microsoft.AspNetCore.Mvc.Testing;
-using TestApp.AspNetCore._2._0;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Trace;
@@ -26,11 +25,10 @@ using Moq;
 using Microsoft.AspNetCore.TestHost;
 using System;
 using System.Threading;
-using OpenTelemetry.Context.Propagation;
-using Microsoft.AspNetCore.Http;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net.Http;
 using OpenTelemetry.Trace.Samplers;
+using TestApp.AspNetCore._3._0;
 
 namespace OpenTelemetry.Collector.AspNetCore.Tests
 {
@@ -98,13 +96,6 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
-            var tf = new Mock<ITextFormat>();
-            tf.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new SpanContext(
-                expectedTraceId,
-                expectedSpanId,
-                ActivityTraceFlags.Recorded,
-                true));
-
             // Arrange
             using (var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
@@ -112,15 +103,16 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     {
                         services.AddSingleton<TracerFactory>(_ =>
                             TracerFactory.Create(b => b
-                                .SetSampler(new AlwaysSampleSampler())
-                                .SetTextFormat(tf.Object)
                                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                                 .AddRequestCollector()));
                     })))
             using (var client = testFactory.CreateClient())
             {
+                var request = new HttpRequestMessage(HttpMethod.Get, "/api/values/2");
+                request.Headers.Add("traceparent", $"00-{expectedTraceId}-{expectedSpanId}-01");
+
                 // Act
-                var response = await client.GetAsync("/api/values/2");
+                var response = await client.SendAsync(request);
 
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -142,27 +134,14 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         [Fact]
         public async Task FilterOutRequest()
         {
-            bool Filter(string eventName, object arg1, object _)
-            {
-                if (eventName == "Microsoft.AspNetCore.Hosting.HttpRequestIn" &&
-                    arg1 is HttpContext context &&
-                    context.Request.Path == "/api/values/2")
-                {
-                    return false;
-                }
-
-                return true;
-            }
-
             var spanProcessor = new Mock<SpanProcessor>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
                 services.AddSingleton<TracerFactory>(_ =>
                     TracerFactory.Create(b => b
-                        .SetSampler(new AlwaysSampleSampler())
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
-                        .AddRequestCollector(o => o.EventFilter = Filter)));
+                        .AddRequestCollector(o => o.RequestFilter = (httpContext) => httpContext.Request.Path != "/api/values/2")));
             }
 
             // Arrange
