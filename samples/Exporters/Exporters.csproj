@@ -27,5 +27,4 @@
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.ApplicationInsights\OpenTelemetry.Exporter.ApplicationInsights.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
   </ItemGroup>
-
 </Project>

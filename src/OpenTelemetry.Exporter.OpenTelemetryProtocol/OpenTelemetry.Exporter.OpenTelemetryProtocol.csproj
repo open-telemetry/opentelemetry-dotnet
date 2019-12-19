@@ -17,4 +17,11 @@
       <ProtoRoot>Implementation</ProtoRoot>
     </Protobuf>
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="MinVer" Version="2.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 </Project>
