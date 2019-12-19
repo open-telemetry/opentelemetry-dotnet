@@ -156,15 +156,15 @@ namespace OpenTelemetry.Trace.Configuration
             }
         }
 
-        private static IEnumerable<KeyValuePair<string, string>> CreateLibraryResourceLabels(string name, string version)
+        private static IEnumerable<KeyValuePair<string, object>> CreateLibraryResourceLabels(string name, string version)
         {
-            var labels = new Dictionary<string, string> { { "name", name } };
+            var attributes = new Dictionary<string, object> { { "name", name } };
             if (!string.IsNullOrEmpty(version))
             {
-                labels.Add("version", version);
+                attributes.Add("version", version);
             }
 
-            return labels;
+            return attributes;
         }
 
         private readonly struct TracerRegistryKey

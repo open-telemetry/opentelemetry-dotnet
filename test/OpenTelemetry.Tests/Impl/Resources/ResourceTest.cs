@@ -31,79 +31,56 @@ namespace OpenTelemetry.Impl.Resources
         public static void CreateResource_NullAttributeCollection()
         {
             // Act and Assert
-            Assert.Throws<ArgumentNullException>(() => new Resource(null));
+            var resource = new Resource(null);
+            Assert.Empty(resource.Attributes);
         }
 
         [Fact]
         public void CreateResource_NullAttributeValue()
         {
             // Arrange
-            var attributeCount = 3;
-            var attributes = this.CreateAttributes(attributeCount);
-            attributes.Add("NullValue", null);
+            var attributes = new Dictionary<string, object> { { "NullValue", null } };
 
             // Act
-            var ex = Assert.Throws<ArgumentException>(() => new Resource(attributes));
+            var resource = new Resource(attributes);
 
             // Assert
-            Assert.Equal("Attribute value should be a string with a length not exceeding 255 characters.", ex.Message);
+            Assert.Single(resource.Attributes);
+
+            var attribute = resource.Attributes.Single();
+            Assert.Equal("NullValue", attribute.Key);
+            Assert.Empty((string)attribute.Value);
         }
 
         [Fact]
         public void CreateResource_EmptyAttributeKey()
         {
             // Arrange
-            var attributes = new Dictionary<string, string> { { string.Empty, "value" } };
+            var attributes = new Dictionary<string, object> { { string.Empty, "value" } };
 
             // Act
-            var ex = Assert.Throws<ArgumentException>(() => new Resource(attributes));
+            var resource = new Resource(attributes);
 
             // Assert
-            Assert.Equal("Attribute key should be a string with a length greater than 0 and not exceeding 255 characters.", ex.Message);
+            Assert.Single(resource.Attributes);
+
+            var attribute = resource.Attributes.Single();
+            Assert.Empty(attribute.Key);
+            Assert.Equal("value", attribute.Value);
         }
 
         [Fact]
         public void CreateResource_EmptyAttributeValue()
         {
             // Arrange
-            var attributes = new Dictionary<string, string> {{"EmptyValue", string.Empty}};
+            var attributes = new Dictionary<string, object> {{"EmptyValue", string.Empty}};
 
             // does not throw
             var resource = new Resource(attributes);
 
             // Assert
             Assert.Single(resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, string>("EmptyValue", string.Empty), resource.Attributes);
-        }
-
-        [Fact]
-        public void CreateResource_ExceedsLengthAttributeValue()
-        {
-            // Arrange
-            var attributes = new Dictionary<string, string> { { "ExceedsLengthValue", RandomString(256) }};
-
-            // Act
-            var ex = Assert.Throws<ArgumentException>(() => new Resource(attributes));
-
-            // Assert
-            Assert.Equal("Attribute value should be a string with a length not exceeding 255 characters.", ex.Message);
-        }
-
-
-        [Fact]
-        public void CreateResource_MaxLengthAttributeValue()
-        {
-            // Arrange
-            var attributes = new Dictionary<string, string> { { "ExceedsLengthValue", RandomString(255) } };
-
-            // Act
-            var resource = new Resource(attributes);
-
-            // Assert
-            Assert.NotNull(resource);
-            Assert.NotNull(resource.Attributes);
-            Assert.Single( resource.Attributes);
-            Assert.Contains(attributes.Single(), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("EmptyValue", string.Empty), resource.Attributes);
         }
 
         [Fact]
@@ -146,6 +123,46 @@ namespace OpenTelemetry.Impl.Resources
 
             // Assert
             ValidateResource(resource, attributeCount);
+        }
+
+        [Fact]
+        public void CreateResource_SupportedAttributeTypes()
+        {
+            var attributes = new Dictionary<string, object>
+            {
+                { "string", "stringValue" },
+                { "long", 1L },
+                { "bool", true },
+                { "double", 0.1d },
+            };
+
+            var resource = new Resource(attributes);
+
+            Assert.Equal(4, resource.Attributes.Count());
+            Assert.Contains(new KeyValuePair<string, object>("string", "stringValue"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("long", 1L), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("bool", true), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("double", 0.1d), resource.Attributes);
+        }
+
+        [Fact]
+        public void CreateResource_NotSupportedAttributeTypes()
+        {
+            var attributes = new Dictionary<string, object>
+            {
+                { "dynamic", new {} },
+                { "array", new int [1]},
+                { "complex", this },
+                { "float", 0.1f },
+            };
+
+            var resource = new Resource(attributes);
+
+            Assert.Equal(4, resource.Attributes.Count());
+            Assert.Contains(new KeyValuePair<string, object>("dynamic", string.Empty), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("array", string.Empty), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("complex", string.Empty), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("float", string.Empty), resource.Attributes);
         }
 
         [Fact]
@@ -270,16 +287,16 @@ namespace OpenTelemetry.Impl.Resources
         public void MergeResource_MultiAttributeSource_DuplicatedKeysInPrimary()
         {
             // Arrange
-            var sourceAttributes = new List<KeyValuePair<string, string>>
+            var sourceAttributes = new List<KeyValuePair<string, object>>
             {
-                new KeyValuePair<string, string>("key1", "value1"),
-                new KeyValuePair<string, string>("key1", "value1.1"),
+                new KeyValuePair<string, object>("key1", "value1"),
+                new KeyValuePair<string, object>("key1", "value1.1"),
             };
             var sourceResource = new Resource(sourceAttributes);
 
-            var otherAttributes = new List<KeyValuePair<string, string>>
+            var otherAttributes = new List<KeyValuePair<string, object>>
             {
-                new KeyValuePair<string, string>("key2", "value2"),
+                new KeyValuePair<string, object>("key2", "value2"),
             };
 
             var otherResource = new Resource(otherAttributes);
@@ -292,16 +309,16 @@ namespace OpenTelemetry.Impl.Resources
             Assert.NotSame(sourceResource, newResource);
 
             Assert.Equal(2, newResource.Attributes.Count());
-            Assert.Contains(new KeyValuePair<string, string>("key1", "value1"), newResource.Attributes);
-            Assert.Contains(new KeyValuePair<string, string>("key2", "value2"), newResource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("key1", "value1"), newResource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("key2", "value2"), newResource.Attributes);
         }
 
         [Fact]
         public void MergeResource_SecondaryCanOverridePrimaryEmptyAttributeValue()
         {
             // Arrange
-            var primaryAttributes = new Dictionary<string, string> { { "value", string.Empty } };
-            var secondaryAttributes = new Dictionary<string, string> { { "value", "not empty" } };
+            var primaryAttributes = new Dictionary<string, object> { { "value", string.Empty } };
+            var secondaryAttributes = new Dictionary<string, object> { { "value", "not empty" } };
             var primaryResource = new Resource(primaryAttributes);
             var secondaryResource = new Resource(secondaryAttributes);
 
@@ -309,10 +326,10 @@ namespace OpenTelemetry.Impl.Resources
 
             // Assert
             Assert.Single(newResource.Attributes);
-            Assert.Contains(new KeyValuePair<string, string>("value", "not empty"), newResource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("value", "not empty"), newResource.Attributes);
         }
 
-        private static void AddAttributes(Dictionary<string, string> attributes, int attributeCount, int startIndex = 0)
+        private static void AddAttributes(Dictionary<string, object> attributes, int attributeCount, int startIndex = 0)
         {
             for (var i = startIndex; i < attributeCount + startIndex; ++i)
             {
@@ -320,19 +337,19 @@ namespace OpenTelemetry.Impl.Resources
             }
         }
 
-        private Dictionary<string, string> CreateAttributes(int attributeCount, int startIndex = 0)
+        private Dictionary<string, object> CreateAttributes(int attributeCount, int startIndex = 0)
         {
-            var attributes = new Dictionary<string, string>();
+            var attributes = new Dictionary<string, object>();
             AddAttributes(attributes, attributeCount, startIndex);
             return attributes;
         }
 
-        private static void ValidateAttributes(IEnumerable<KeyValuePair<string, string>> attributes, int startIndex = 0)
+        private static void ValidateAttributes(IEnumerable<KeyValuePair<string, object>> attributes, int startIndex = 0)
         {
-            var keyValuePairs = attributes as KeyValuePair<string, string>[] ?? attributes.ToArray();
+            var keyValuePairs = attributes as KeyValuePair<string, object>[] ?? attributes.ToArray();
             for (var i = startIndex; i < keyValuePairs.Length; ++i)
             {
-                Assert.Contains(new KeyValuePair<string, string>(
+                Assert.Contains(new KeyValuePair<string, object>(
                     $"{KeyName}{i}", $"{ValueName}{i}"), keyValuePairs);
             }
         }
