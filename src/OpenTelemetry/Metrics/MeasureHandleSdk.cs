@@ -24,29 +24,31 @@ namespace OpenTelemetry.Metrics
     internal class MeasureHandleSdk<T> : MeasureHandle<T>
         where T : struct
     {
-        private readonly MeasureExactAggregator<T> measureExactAggregator = new MeasureExactAggregator<T>();
+        private readonly Aggregator<T> aggregator;
 
-        internal MeasureHandleSdk()
+        internal MeasureHandleSdk(Aggregator<T> aggregator)
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {
                 throw new Exception("Invalid Type");
             }
+
+            this.aggregator = aggregator;
         }
 
         public override void Record(in SpanContext context, T value)
         {
-            this.measureExactAggregator.Update(value);
+            this.aggregator.Update(value);
         }
 
         public override void Record(in DistributedContext context, T value)
         {
-            this.measureExactAggregator.Update(value);
+            this.aggregator.Update(value);
         }
 
-        internal MeasureExactAggregator<T> GetAggregator()
+        internal Aggregator<T> GetAggregator()
         {
-            return this.measureExactAggregator;
+            return this.aggregator;
         }
     }
 }

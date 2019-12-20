@@ -63,7 +63,7 @@ namespace OpenTelemetry.Metrics.Export
         {
             var checkPoint = sumAggregator.ValueFromLastCheckpoint();
             var metricValue = new MetricValue<long>() { Value = checkPoint };
-            var metric = new Metric(meterName, metricName, meterName + metricName, MetricKind.COUNTER_LONG, labelSet.Labels, metricValue);
+            var metric = new Metric(meterName, metricName, meterName + metricName, InstrumentKind.COUNTER, labelSet.Labels, metricValue);
             this.metrics.Add(metric);
         }
 
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Metrics.Export
         {
             var checkPoint = sumAggregator.ValueFromLastCheckpoint();
             var metricValue = new MetricValue<double>() { Value = checkPoint };
-            var metric = new Metric(meterName, metricName, meterName + metricName, MetricKind.COUNTER_DOUBLE, labelSet.Labels, metricValue);
+            var metric = new Metric(meterName, metricName, meterName + metricName, InstrumentKind.COUNTER, labelSet.Labels, metricValue);
             this.metrics.Add(metric);
         }
 
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Metrics.Export
         {
             var checkPoint = gaugeAggregator.ValueFromLastCheckpoint();
             var metricValue = new MetricValue<long>() { Value = checkPoint.Value, Timestamp = checkPoint.Timestamp };
-            var metric = new Metric(meterName, metricName, meterName + metricName, MetricKind.GAUGE_LONG, labelSet.Labels, metricValue);
+            var metric = new Metric(meterName, metricName, meterName + metricName, InstrumentKind.GAUGE, labelSet.Labels, metricValue);
             this.metrics.Add(metric);
         }
 
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Metrics.Export
         {
             var checkPoint = gaugeAggregator.ValueFromLastCheckpoint();
             var metricValue = new MetricValue<double>() { Value = checkPoint.Value, Timestamp = checkPoint.Timestamp };
-            var metric = new Metric(meterName, metricName, meterName + metricName, MetricKind.GAUGE_DOUBLE, labelSet.Labels, metricValue);
+            var metric = new Metric(meterName, metricName, meterName + metricName, InstrumentKind.GAUGE, labelSet.Labels, metricValue);
             this.metrics.Add(metric);
         }
 

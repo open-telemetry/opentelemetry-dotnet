@@ -1,4 +1,4 @@
-﻿// <copyright file="MetricKind.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="InstrumentKind.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,26 +16,21 @@
 
 namespace OpenTelemetry.Metrics.Implementation
 {
-    public enum MetricKind
+    public enum InstrumentKind
     {
         /// <summary>
-        /// Long counter.
+        /// Counter.
         /// </summary>
-        COUNTER_LONG,
+        COUNTER,
 
         /// <summary>
-        /// Double counter.
+        /// Gauge.
         /// </summary>
-        COUNTER_DOUBLE,
+        GAUGE,
 
         /// <summary>
-        /// Long Gauge.
+        /// Measure.
         /// </summary>
-        GAUGE_LONG,
-
-        /// <summary>
-        /// Double Gauge.
-        /// </summary>
-        GAUGE_DOUBLE,
+        MEASURE,
     }
 }

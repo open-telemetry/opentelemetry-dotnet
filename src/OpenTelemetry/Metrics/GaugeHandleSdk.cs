@@ -24,29 +24,31 @@ namespace OpenTelemetry.Metrics
     internal class GaugeHandleSdk<T> : GaugeHandle<T>
         where T : struct
     {
-        private readonly GaugeAggregator<T> gaugeAggregator = new GaugeAggregator<T>();
+        private readonly Aggregator<T> aggregator;
 
-        internal GaugeHandleSdk()
+        internal GaugeHandleSdk(Aggregator<T> aggregator)
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {
                 throw new Exception("Invalid Type");
             }
+
+            this.aggregator = aggregator;
         }
 
         public override void Set(in SpanContext context, T value)
         {
-            this.gaugeAggregator.Update(value);
+            this.aggregator.Update(value);
         }
 
         public override void Set(in DistributedContext context, T value)
         {
-            this.gaugeAggregator.Update(value);
+            this.aggregator.Update(value);
         }
 
-        internal GaugeAggregator<T> GetAggregator()
+        internal Aggregator<T> GetAggregator()
         {
-            return this.gaugeAggregator;
+            return this.aggregator;
         }
     }
 }

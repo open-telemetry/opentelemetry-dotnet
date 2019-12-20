@@ -24,29 +24,31 @@ namespace OpenTelemetry.Metrics
     internal class CounterHandleSdk<T> : CounterHandle<T>
         where T : struct
     {
-        private readonly CounterSumAggregator<T> sumAggregator = new CounterSumAggregator<T>();
+        private readonly Aggregator<T> aggregator;
 
-        internal CounterHandleSdk()
+        internal CounterHandleSdk(Aggregator<T> aggregator)
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {
                 throw new Exception("Invalid Type");
             }
+
+            this.aggregator = aggregator;
         }
 
         public override void Add(in SpanContext context, T value)
         {
-            this.sumAggregator.Update(value);
+            this.aggregator.Update(value);
         }
 
         public override void Add(in DistributedContext context, T value)
         {
-            this.sumAggregator.Update(value);
+            this.aggregator.Update(value);
         }
 
-        internal CounterSumAggregator<T> GetAggregator()
+        internal Aggregator<T> GetAggregator()
         {
-            return this.sumAggregator;
+            return this.aggregator;
         }
     }
 }

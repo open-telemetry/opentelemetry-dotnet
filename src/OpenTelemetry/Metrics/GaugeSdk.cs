@@ -17,6 +17,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using OpenTelemetry.Metrics.Configuration;
+using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Metrics
 {
@@ -25,6 +27,7 @@ namespace OpenTelemetry.Metrics
     {        
         private readonly IDictionary<LabelSet, GaugeHandleSdk<T>> gaugeHandles = new ConcurrentDictionary<LabelSet, GaugeHandleSdk<T>>();
         private string metricName;
+        private AggregatorSelector selector;
 
         public GaugeSDK()
         {
@@ -34,16 +37,17 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public GaugeSDK(string name) : this()
+        public GaugeSDK(string name, AggregatorSelector selector) : this()
         {
             this.metricName = name;
+            this.selector = selector;
         }
 
         public override GaugeHandle<T> GetHandle(LabelSet labelset)
         {
             if (!this.gaugeHandles.TryGetValue(labelset, out var handle))
             {
-                handle = new GaugeHandleSdk<T>();
+                handle = new GaugeHandleSdk<T>(this.selector.SelectAggregator<T>(InstrumentKind.GAUGE));
 
                 this.gaugeHandles.Add(labelset, handle);
             }

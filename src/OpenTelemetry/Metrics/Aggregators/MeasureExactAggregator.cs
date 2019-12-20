@@ -26,6 +26,7 @@ namespace OpenTelemetry.Metrics.Aggregators
     public class MeasureExactAggregator<T> : Aggregator<T> 
         where T : struct
     {
+        // TODO: Make thread safe implementation.
         private List<T> values = new List<T>();
         private List<T> checkPoint;
 

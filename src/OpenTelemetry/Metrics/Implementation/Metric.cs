@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics.Implementation
         public Metric(string metricNamespace,
             string metricName,
             string desc,
-            MetricKind kind,
+            InstrumentKind kind,
             IEnumerable<KeyValuePair<string, string>> labels,
             MetricValue<long> value)
         {
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Metrics.Implementation
         public Metric(string metricNamespace,
             string metricName,
             string desc,
-            MetricKind kind,
+            InstrumentKind kind,
             IEnumerable<KeyValuePair<string, string>> labels,
             MetricValue<double> value)
         {
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Metrics.Implementation
 
         public string MetricDescription { get; private set; }
 
-        public MetricKind Kind { get; private set; }
+        public InstrumentKind Kind { get; private set; }
 
         public IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
 

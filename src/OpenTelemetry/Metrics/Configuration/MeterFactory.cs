@@ -24,9 +24,10 @@ namespace OpenTelemetry.Metrics.Configuration
         private readonly object lck = new object();
         private readonly Dictionary<MeterRegistryKey, Meter> meterRegistry = new Dictionary<MeterRegistryKey, Meter>();
         private readonly MetricProcessor metricProcessor;
+        private readonly AggregatorSelector selector;
         private Meter defaultMeter;
 
-        private MeterFactory(MetricProcessor metricProcessor)
+        private MeterFactory(MetricProcessor metricProcessor, AggregatorSelector selector)
         {
             if (metricProcessor == null)
             {
@@ -36,14 +37,28 @@ namespace OpenTelemetry.Metrics.Configuration
             {
                 this.metricProcessor = metricProcessor;
             }
-           
+
+            if (selector == null)
+            {
+                this.selector = new ExactMeasureAggregatorSelector();
+            }
+            else
+            {
+                this.selector = selector;
+            }
+
             this.defaultMeter = new MeterSdk(string.Empty,
-                this.metricProcessor);
+                this.metricProcessor, this.selector);
+        }
+
+        public static MeterFactory Create(MetricProcessor metricProcessor, AggregatorSelector selector)
+        {
+            return new MeterFactory(metricProcessor, selector);
         }
 
         public static MeterFactory Create(MetricProcessor metricProcessor)
         {
-            return new MeterFactory(metricProcessor);
+            return new MeterFactory(metricProcessor, new ExactMeasureAggregatorSelector());
         }
 
         public override Meter GetMeter(string name, string version = null)
@@ -59,7 +74,7 @@ namespace OpenTelemetry.Metrics.Configuration
                 if (!this.meterRegistry.TryGetValue(key, out var meter))
                 {
                     meter = this.defaultMeter = new MeterSdk(name,
-                        this.metricProcessor);
+                        this.metricProcessor, this.selector);
 
                     this.meterRegistry.Add(key, meter);
                 }
