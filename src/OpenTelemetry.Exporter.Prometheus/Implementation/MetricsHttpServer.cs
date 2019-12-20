@@ -59,7 +59,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                             foreach (var metric in this.Metrics)
                             {
                                 var labels = metric.Labels;
-                                var value = metric.Value;
+                                var value = metric.LongValue.Value;
 
                                 var builder = new PrometheusMetricBuilder()
                                     .WithName(metric.MetricName)
