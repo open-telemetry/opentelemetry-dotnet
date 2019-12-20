@@ -103,7 +103,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
-            if (parent != null)
+            if (parent.IsValid)
             {
                 return Span.CreateFromParentContext(operationName, parent, kind, options, this.sampler, this.tracerConfiguration,
                     this.spanProcessor, this.LibraryResource);

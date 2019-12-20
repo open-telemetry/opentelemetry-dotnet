@@ -21,7 +21,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Sampling decision.
     /// </summary>
-    public struct Decision
+    public readonly struct Decision
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Decision"/> struct.
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="isSampled">True if sampled, false otherwise.</param>
         /// <param name="attributes">Attributes associated with the sampling decision. Attributes list passed to
-        /// this method must be imutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
+        /// this method must be immutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
         public Decision(bool isSampled, IEnumerable<KeyValuePair<string, object>> attributes)
         {
             this.IsSampled = isSampled;
@@ -53,11 +53,46 @@ namespace OpenTelemetry.Trace
         /// Gets a value indicating whether Span was sampled or not.
         /// The value is not suppose to change over time and can be cached.
         /// </summary>
-        public bool IsSampled { get; private set; }
+        public bool IsSampled { get; }
 
         /// <summary>
         /// Gets a map of attributes associated with the sampling decision.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, object>> Attributes { get; private set; }
+        public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
+
+        /// <summary>
+        /// Compare two <see cref="Decision"/> for equality.
+        /// </summary>
+        /// <param name="decision1">First Decision to compare.</param>
+        /// <param name="decision2">Second Decision to compare.</param>
+        public static bool operator ==(Decision decision1, Decision decision2) => decision1.Equals(decision2);
+
+        /// <summary>
+        /// Compare two <see cref="Decision"/> for not equality.
+        /// </summary>
+        /// <param name="decision1">First Decision to compare.</param>
+        /// <param name="decision2">Second Decision to compare.</param>
+        public static bool operator !=(Decision decision1, Decision decision2) => !decision1.Equals(decision2);
+
+        /// <inheritdoc/>
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Decision))
+            {
+                return false;
+            }
+
+            var that = (Decision)obj;
+            return this.IsSampled == that.IsSampled && this.Attributes == that.Attributes;
+        }
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            var result = 1;
+            result = (31 * result) + this.IsSampled.GetHashCode();
+            result = (31 * result) + this.Attributes.GetHashCode();
+            return result;
+        }
     }
 }

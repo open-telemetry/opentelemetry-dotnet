@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using OpenTelemetry.Trace;
 
 namespace Benchmarks.Tracing
@@ -23,6 +24,14 @@ namespace Benchmarks.Tracing
         public static ISpan CreateSpan(Tracer tracer)
         {
             var span = tracer.StartSpan("span");
+            span.End();
+            return span;
+        }
+
+        public static ISpan CreateSpan_ParentContext(Tracer tracer)
+        {
+            var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, true);
+            var span = tracer.StartSpan("span", parentContext);
             span.End();
             return span;
         }

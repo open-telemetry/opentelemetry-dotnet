@@ -614,7 +614,7 @@ namespace OpenTelemetry.Trace
             var activity = new Activity(spanName);
 
             IEnumerable<KeyValuePair<string, string>> tracestate = null;
-            if (parentContext != null && parentContext.IsValid)
+            if (parentContext.IsValid)
             {
                 activity.SetParentId(parentContext.TraceId,
                     parentContext.SpanId,
@@ -675,7 +675,7 @@ namespace OpenTelemetry.Trace
                     activity.ActivityTraceFlags);
             }
 
-            return null;
+            return SpanContext.BlankLocal;
         }
 
         private void SetLinks(IEnumerable<Link> links)

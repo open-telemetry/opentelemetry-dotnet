@@ -60,7 +60,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(carrier));
             }
 
-            Trace.SpanContext spanContext = null;
+            Trace.SpanContext spanContext = default;
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
@@ -81,18 +81,21 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return value;
                 }
 
-                spanContext = this.tracer.TextFormat?.Extract(carrierMap, GetCarrierKeyValue);
+                if (this.tracer.TextFormat != null)
+                {
+                    spanContext = this.tracer.TextFormat.Extract(carrierMap, GetCarrierKeyValue);
+                }
             }
             else if (format == BuiltinFormats.Binary && carrier is IBinary binaryCarrier)
             {
                 var ms = binaryCarrier.Get();
-                if (ms != null)
+                if (ms != null && this.tracer.BinaryFormat != null)
                 {
-                    spanContext = this.tracer.BinaryFormat?.FromByteArray(ms.ToArray());
+                    spanContext = this.tracer.BinaryFormat.FromByteArray(ms.ToArray());
                 }
             }
 
-            return (spanContext == null || !spanContext.IsValid) ? null : new SpanContextShim(spanContext);
+            return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
         }
 
         /// <inheritdoc/>

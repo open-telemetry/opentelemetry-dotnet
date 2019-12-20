@@ -37,15 +37,56 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void Status_EqualsAndHashCode()
+        public void Equality()
         {
-            // EqualsTester tester = new EqualsTester();
-            // tester.addEqualityGroup(Status.OK, Status.OK.withDescription(null));
-            // tester.addEqualityGroup(
-            //    Status.CANCELLED.withDescription("ThisIsAnError"),
-            //    Status.CANCELLED.withDescription("ThisIsAnError"));
-            // tester.addEqualityGroup(Status.UNKNOWN.withDescription("This is an error."));
-            // tester.testEquals();
+            var status1 = new Status(CanonicalCode.Ok);
+            var status2 = new Status(CanonicalCode.Ok);
+
+            Assert.Equal(status1, status2);
+            Assert.True(status1 == status2);
         }
+
+        [Fact]
+        public void Equality_WithDescription()
+        {
+            var status1 = new Status(CanonicalCode.Unknown, "error");
+            var status2 = new Status(CanonicalCode.Unknown, "error");
+
+            Assert.Equal(status1, status2);
+            Assert.True(status1 == status2);
+        }
+
+
+        [Fact]
+        public void Not_Equality()
+        {
+            var status1 = new Status(CanonicalCode.Ok);
+            var status2 = new Status(CanonicalCode.Unknown);
+
+            Assert.NotEqual(status1, status2);
+            Assert.True(status1 != status2);
+        }
+
+        [Fact]
+        public void Not_Equality_WithDescription1()
+        {
+            var status1 = new Status(CanonicalCode.Ok, "ok");
+            var status2 = new Status(CanonicalCode.Unknown, "error");
+
+            Assert.NotEqual(status1, status2);
+            Assert.True(status1 != status2);
+        }
+
+
+        [Fact]
+        public void Not_Equality_WithDescription2()
+        {
+            var status1 = new Status(CanonicalCode.Ok);
+            var status2 = new Status(CanonicalCode.Unknown, "error");
+
+            Assert.NotEqual(status1, status2);
+            Assert.True(status1 != status2);
+        }
+
     }
 }

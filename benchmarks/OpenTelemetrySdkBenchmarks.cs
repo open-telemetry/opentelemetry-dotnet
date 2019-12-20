@@ -50,6 +50,9 @@ namespace Benchmarks
         public ISpan CreateSpan_Sampled() => SpanCreationScenarios.CreateSpan(this.alwaysSampleTracer);
 
         [Benchmark]
+        public ISpan CreateSpan_ParentContext() => SpanCreationScenarios.CreateSpan_ParentContext(this.alwaysSampleTracer);
+
+        [Benchmark]
         public ISpan CreateSpan_Attributes_Sampled() => SpanCreationScenarios.CreateSpan_Attributes(this.alwaysSampleTracer);
 
         [Benchmark]

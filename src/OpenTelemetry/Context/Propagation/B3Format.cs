@@ -112,12 +112,6 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
         {
-            if (spanContext == null)
-            {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("null context");
-                return;
-            }
-
             if (!spanContext.IsValid)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToInjectContext("invalid context");

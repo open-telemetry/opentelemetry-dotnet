@@ -99,9 +99,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 refs = span.Links.Select(l => l.ToJaegerSpanRef()).Where(l => l != null).AsEnumerable();
             }
 
-            var traceId = span?.Context?.TraceId == null ? Int128.Empty : new Int128(span.Context.TraceId);
-            var spanId = span?.Context?.SpanId == null ? Int128.Empty : new Int128(span.Context.SpanId);
-            var parentSpanId = span?.ParentSpanId == null ? Int128.Empty : new Int128(span.ParentSpanId);
+            var traceId = Int128.Empty;
+            var spanId = Int128.Empty;
+            var parentSpanId = Int128.Empty;
+
+            if (span != null && span.Context.IsValid)
+            {
+                traceId = new Int128(span.Context.TraceId);
+                spanId = new Int128(span.Context.SpanId);
+                parentSpanId = new Int128(span.ParentSpanId);
+            }
 
             return new JaegerSpan
             {
@@ -157,7 +164,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             var traceId = Int128.Empty;
             var spanId = Int128.Empty;
 
-            if (link != null)
+            if (link != default)
             {
                 traceId = new Int128(link.Context.TraceId);
                 spanId = new Int128(link.Context.SpanId);
