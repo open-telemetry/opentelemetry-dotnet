@@ -24,7 +24,7 @@ namespace OpenTelemetry.Metrics.Test
     internal class TestMetricProcessor : MetricProcessor
     {
         public List<Tuple<string, LabelSet, long>> counters = new List<Tuple<string, LabelSet, long>>();
-        public List<Tuple<string, LabelSet, Tuple<long, DateTime>>> gauges = new List<Tuple<string, LabelSet, Tuple<long, DateTime>>>();
+        public List<Tuple<string, LabelSet, GaugeData<long>>> gauges = new List<Tuple<string, LabelSet, GaugeData<long>>>();
         public List<Tuple<string, LabelSet, List<long>>> measures = new List<Tuple<string, LabelSet, List<long>>>();
 
         public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<long> sumAggregator)
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Metrics.Test
 
         public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<long> gaugeAggregator)
         {
-            gauges.Add(new Tuple<string, LabelSet, Tuple<long, DateTime>>(metricName, labelSet, gaugeAggregator.ValueFromLastCheckpoint()));
+            gauges.Add(new Tuple<string, LabelSet, GaugeData<long>>(metricName, labelSet, gaugeAggregator.ValueFromLastCheckpoint()));
         }
 
         public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<double> gaugeAggregator)
