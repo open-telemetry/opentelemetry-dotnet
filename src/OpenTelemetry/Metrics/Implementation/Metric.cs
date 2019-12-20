@@ -23,15 +23,40 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics.Implementation
 {
+    /// <summary>
+    /// This class need to evolve to what's referred to as Export Record in the spec.
+    /// An exporter-independent in-memory representation combining the metric instrument, the LabelSet for export, and the associated aggregate state.
+    /// </summary>
     public class Metric
     {
-        public Metric(string metricNamespace, string metricName, string desc, IEnumerable<KeyValuePair<string, string>> labels, long value)
+        public Metric(string metricNamespace,
+            string metricName,
+            string desc,
+            MetricKind kind,
+            IEnumerable<KeyValuePair<string, string>> labels,
+            MetricValue<long> value)
         {
             this.MetricNamespace = metricNamespace;
             this.MetricName = metricName;
             this.MetricDescription = desc;
+            this.Kind = kind;
             this.Labels = labels;
-            this.Value = value;
+            this.LongValue = value;
+        }
+
+        public Metric(string metricNamespace,
+            string metricName,
+            string desc,
+            MetricKind kind,
+            IEnumerable<KeyValuePair<string, string>> labels,
+            MetricValue<double> value)
+        {
+            this.MetricNamespace = metricNamespace;
+            this.MetricName = metricName;
+            this.MetricDescription = desc;
+            this.Kind = kind;
+            this.Labels = labels;
+            this.DoubleValue = value;
         }
 
         public string MetricNamespace { get; private set; }
@@ -40,8 +65,12 @@ namespace OpenTelemetry.Metrics.Implementation
 
         public string MetricDescription { get; private set; }
 
+        public MetricKind Kind { get; private set; }
+
         public IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
 
-        public long Value { get; set; }
+        public MetricValue<long> LongValue { get; set; }
+
+        public MetricValue<double> DoubleValue { get; set; }
     }
 }

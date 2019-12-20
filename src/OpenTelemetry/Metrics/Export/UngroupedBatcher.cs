@@ -61,23 +61,34 @@ namespace OpenTelemetry.Metrics.Export
 
         public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<long> sumAggregator)
         {
-            var metric = new Metric(meterName, metricName, meterName + metricName, labelSet.Labels, sumAggregator.ValueFromLastCheckpoint());
+            var checkPoint = sumAggregator.ValueFromLastCheckpoint();
+            var metricValue = new MetricValue<long>() { Value = checkPoint };
+            var metric = new Metric(meterName, metricName, meterName + metricName, MetricKind.COUNTER_LONG, labelSet.Labels, metricValue);
             this.metrics.Add(metric);
         }
 
         public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<double> sumAggregator)
         {
-            throw new NotImplementedException();
+            var checkPoint = sumAggregator.ValueFromLastCheckpoint();
+            var metricValue = new MetricValue<double>() { Value = checkPoint };
+            var metric = new Metric(meterName, metricName, meterName + metricName, MetricKind.COUNTER_DOUBLE, labelSet.Labels, metricValue);
+            this.metrics.Add(metric);
         }
 
         public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<long> gaugeAggregator)
         {
-            throw new NotImplementedException();
+            var checkPoint = gaugeAggregator.ValueFromLastCheckpoint();
+            var metricValue = new MetricValue<long>() { Value = checkPoint.Value, Timestamp = checkPoint.Timestamp };
+            var metric = new Metric(meterName, metricName, meterName + metricName, MetricKind.GAUGE_LONG, labelSet.Labels, metricValue);
+            this.metrics.Add(metric);
         }
 
         public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<double> gaugeAggregator)
         {
-            throw new NotImplementedException();
+            var checkPoint = gaugeAggregator.ValueFromLastCheckpoint();
+            var metricValue = new MetricValue<double>() { Value = checkPoint.Value, Timestamp = checkPoint.Timestamp };
+            var metric = new Metric(meterName, metricName, meterName + metricName, MetricKind.GAUGE_DOUBLE, labelSet.Labels, metricValue);
+            this.metrics.Add(metric);
         }
 
         public override void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<long> measureAggregator)

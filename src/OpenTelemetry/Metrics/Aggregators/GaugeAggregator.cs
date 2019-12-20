@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Threading;
 
 namespace OpenTelemetry.Metrics.Aggregators
 {
@@ -25,30 +26,29 @@ namespace OpenTelemetry.Metrics.Aggregators
     public class GaugeAggregator<T> : Aggregator<T>
         where T : struct
     {
-        private T value;
-        private DateTime timestamp;
-        private Tuple<T, DateTime> checkpoint;
+        private GaugeData<T> current;
+        private GaugeData<T> checkpoint;
+
+        public GaugeAggregator()
+        {
+            if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
+            {
+                throw new Exception("Invalid Type");
+            }
+        }
 
         public override void Checkpoint()
         {
-            this.checkpoint = new Tuple<T, DateTime>(this.value, this.timestamp);
+            this.checkpoint = Interlocked.Exchange<GaugeData<T>>(ref this.current, new GaugeData<T>());
         }
 
         public override void Update(T value)
         {
-            if (typeof(T) == typeof(double))
-            {
-                this.value = (T)(object)((double)(object)value);
-            }
-            else
-            {
-                this.value = (T)(object)((long)(object)value);
-            }
-
-            this.timestamp = DateTime.UtcNow;
+            var newState = new GaugeData<T>() { Value = value, Timestamp = DateTime.UtcNow };
+            Interlocked.Exchange<GaugeData<T>>(ref this.current, newState);
         }
 
-        public Tuple<T, DateTime> ValueFromLastCheckpoint()
+        public GaugeData<T> ValueFromLastCheckpoint()
         {
             return this.checkpoint;
         }
