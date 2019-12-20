@@ -383,13 +383,13 @@ namespace OpenTelemetry.Trace.Test
                 .GetTracer(null);
 
             var span = (Span)tracer.StartRootSpan(SpanName);
-            for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
+            for (long i = 0; i < 2 * maxNumberOfAttributes; i++)
             {
                 span.SetAttribute("MyStringAttributeKey" + i, i);
             }
 
             Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
-            for (int i = 0; i < maxNumberOfAttributes; i++)
+            for (long i = 0; i < maxNumberOfAttributes; i++)
             {
                 Assert.Equal(
                     i + maxNumberOfAttributes,
@@ -401,7 +401,7 @@ namespace OpenTelemetry.Trace.Test
             span.End();
 
             Assert.Equal(maxNumberOfAttributes, span.Attributes.Count());
-            for (int i = 0; i < maxNumberOfAttributes; i++)
+            for (long i = 0; i < maxNumberOfAttributes; i++)
             {
                 Assert.Equal(
                     i + maxNumberOfAttributes,

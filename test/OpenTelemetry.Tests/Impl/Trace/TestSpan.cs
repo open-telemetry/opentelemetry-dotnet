@@ -14,16 +14,11 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Collections.Generic;
 
 namespace OpenTelemetry.Trace.Test
 {
     public class TestSpan : ISpan
     {
-        public TestSpan()
-        {
-        }
-
         public SpanContext Context { get; }
         public bool IsRecording { get; }
         public Status Status { get; set; }
@@ -37,15 +32,23 @@ namespace OpenTelemetry.Trace.Test
         {
         }
 
+        public void SetAttribute(string key, long value)
+        {
+        }
+
+        public void SetAttribute(string key, bool value)
+        {
+        }
+
+        public void SetAttribute(string key, double value)
+        {
+        }
+
         public void AddEvent(string name)
         {
         }
 
         public void AddEvent(Event newEvent)
-        {
-        }
-
-        public void AddLink(Link link)
         {
         }
 

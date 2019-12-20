@@ -99,7 +99,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
 
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));
-            Assert.Equal(503, span.Attributes.GetValue("http.status_code"));
+            Assert.Equal(503L, span.Attributes.GetValue("http.status_code"));
         }
     }
 }

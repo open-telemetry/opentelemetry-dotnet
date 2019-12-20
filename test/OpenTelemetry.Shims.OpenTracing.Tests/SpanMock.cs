@@ -76,6 +76,21 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             this.Attributes.Add(new KeyValuePair<string, object>(key, value));
         }
 
+        public void SetAttribute(string key, long value)
+        {
+            this.SetAttribute(key, (object)value);
+        }
+
+        public void SetAttribute(string key, bool value)
+        {
+            this.SetAttribute(key, (object)value);
+        }
+
+        public void SetAttribute(string key, double value)
+        {
+            this.SetAttribute(key, (object)value);
+        }
+
         public void UpdateName(string name)
         {
             this.Name = name;

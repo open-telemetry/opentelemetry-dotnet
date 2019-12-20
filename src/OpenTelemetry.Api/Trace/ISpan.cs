@@ -53,11 +53,32 @@ namespace OpenTelemetry.Trace
         void UpdateName(string name);
 
         /// <summary>
-        /// Puts a new attribute to the span.
+        /// Sets a new attribute on the span.
         /// </summary>
         /// <param name="key">Attribute key.</param>
         /// <param name="value">Attribute value.</param>
         void SetAttribute(string key, object value);
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="value">Attribute value.</param>
+        void SetAttribute(string key, long value);
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="value">Attribute value.</param>
+        void SetAttribute(string key, bool value);
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="value">Attribute value.</param>
+        void SetAttribute(string key, double value);
 
         /// <summary>
         /// Adds a single <see cref="Event"/> to the <see cref="ISpan"/>.

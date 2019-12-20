@@ -51,6 +51,21 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
+        public void SetAttribute(string key, bool value)
+        {
+        }
+
+        /// <inheritdoc />
+        public void SetAttribute(string key, long value)
+        {
+        }
+
+        /// <inheritdoc />
+        public void SetAttribute(string key, double value)
+        {
+        }
+
+        /// <inheritdoc />
         public void AddEvent(string name)
         {
         }

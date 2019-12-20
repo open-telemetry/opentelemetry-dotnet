@@ -267,6 +267,84 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
+        public void SetAttribute(string key, bool value)
+        {
+            if (!this.IsRecording)
+            {
+                return;
+            }
+
+            if (this.hasEnded)
+            {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("SetAttribute");
+                return;
+            }
+
+            lock (this.lck)
+            {
+                if (this.attributes == null)
+                {
+                    this.attributes =
+                        new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
+                }
+
+                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+            }
+        }
+
+        /// <inheritdoc/>
+        public void SetAttribute(string key, long value)
+        {
+            if (!this.IsRecording)
+            {
+                return;
+            }
+
+            if (this.hasEnded)
+            {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("SetAttribute");
+                return;
+            }
+
+            lock (this.lck)
+            {
+                if (this.attributes == null)
+                {
+                    this.attributes =
+                        new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
+                }
+
+                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+            }
+        }
+
+        /// <inheritdoc/>
+        public void SetAttribute(string key, double value)
+        {
+            if (!this.IsRecording)
+            {
+                return;
+            }
+
+            if (this.hasEnded)
+            {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("SetAttribute");
+                return;
+            }
+
+            lock (this.lck)
+            {
+                if (this.attributes == null)
+                {
+                    this.attributes =
+                        new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
+                }
+
+                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+            }
+        }
+
+        /// <inheritdoc/>
         public void AddEvent(string name)
         {
             if (!this.IsRecording)
