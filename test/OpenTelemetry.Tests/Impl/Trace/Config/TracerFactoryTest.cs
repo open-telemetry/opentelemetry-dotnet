@@ -111,11 +111,11 @@ namespace OpenTelemetry.Trace.Test
 
             Assert.Equal(2, span1.LibraryResource.Attributes.Count());
             Assert.Equal(2, span2.LibraryResource.Attributes.Count());
-            Assert.Single(span1.LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value == "TestCollector"));
-            Assert.Single(span2.LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value == "TestCollector"));
+            Assert.Single(span1.LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value is string sv && sv == "TestCollector"));
+            Assert.Single(span2.LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value is string sv && sv == "TestCollector"));
 
-            Assert.Single(span1.LibraryResource.Attributes.Where(kvp => kvp.Key == "version" && kvp.Value == "semver:1.0.0.0"));
-            Assert.Single(span2.LibraryResource.Attributes.Where(kvp => kvp.Key == "version" && kvp.Value == "semver:1.0.0.0"));
+            Assert.Single(span1.LibraryResource.Attributes.Where(kvp => kvp.Key == "version" && kvp.Value is string sv && sv == "semver:1.0.0.0"));
+            Assert.Single(span2.LibraryResource.Attributes.Where(kvp => kvp.Key == "version" && kvp.Value is string sv && sv == "semver:1.0.0.0"));
 
             tracerFactory.Dispose();
             Assert.True(collector1.IsDisposed);
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetTracerReturnsTracerWithResourceAfterSetResource()
         {
-            var tracerFactory = TracerFactory.Create(b => { b.SetResource(new Resource(new Dictionary<string, string>() { { "a", "b" } })); });
+            var tracerFactory = TracerFactory.Create(b => { b.SetResource(new Resource(new Dictionary<string, object>() { { "a", "b" } })); });
             var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("b", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "a").Value);
             Assert.Equal("foo", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "name").Value);
@@ -214,8 +214,8 @@ namespace OpenTelemetry.Trace.Test
         public void GetTracerReturnsTracerWithResourceOverriddenBySetResource()
         {
             var tracerFactory = TracerFactory.Create(b => { 
-                b.SetResource(new Resource(new Dictionary<string, string>() { { "a", "b" } }))
-                .SetResource(new Resource(new Dictionary<string, string>() { { "a", "c" } })); });
+                b.SetResource(new Resource(new Dictionary<string, object>() { { "a", "b" } }))
+                .SetResource(new Resource(new Dictionary<string, object>() { { "a", "c" } })); });
             var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("c", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "a").Value);
         }

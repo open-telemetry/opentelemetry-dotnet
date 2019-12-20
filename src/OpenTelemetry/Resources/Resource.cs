@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using System.Collections.Generic;
 using System.Linq;
-using OpenTelemetry.Utils;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
 {
@@ -29,29 +29,31 @@ namespace OpenTelemetry.Resources
         // this implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/sdk-resource.md
 
         /// <summary>
-        /// Maximum length of the resource type name.
-        /// </summary>
-        private const int MaxResourceTypeNameLength = 255;
-
-        /// <summary>
         /// Creates a new <see cref="Resource"/>.
         /// </summary>
-        /// <param name="attributes">An <see cref="IDictionary{String, String}"/> of attributes that describe the resource.</param>
-        public Resource(IEnumerable<KeyValuePair<string, string>> attributes)
+        /// <param name="attributes">An <see cref="IDictionary{String, Object}"/> of attributes that describe the resource.</param>
+        public Resource(IEnumerable<KeyValuePair<string, object>> attributes)
         {
-            ValidateAttributes(attributes);
-            this.Attributes = attributes;
+            if (attributes == null)
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attributes", "are null");
+                this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
+                return;
+            }
+
+            // resource creation is expected to be done a few times during app startup i.e. not on the hot path, we can copy attributes.
+            this.Attributes = attributes.Select(SanitizeAttribute).ToList();
         }
 
         /// <summary>
         /// Gets an empty Resource.
         /// </summary>
-        public static Resource Empty { get; } = new Resource(Enumerable.Empty<KeyValuePair<string, string>>());
+        public static Resource Empty { get; } = new Resource(Enumerable.Empty<KeyValuePair<string, object>>());
 
         /// <summary>
         /// Gets the collection of key-value pairs describing the resource.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, string>> Attributes { get; }
+        public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
 
         /// <summary>
         /// Returns a new, merged <see cref="Resource"/> by merging the current <see cref="Resource"/> with the.
@@ -61,11 +63,11 @@ namespace OpenTelemetry.Resources
         /// <returns><see cref="Resource"/>.</returns>
         public Resource Merge(Resource other)
         {
-            var newAttributes = new Dictionary<string, string>();
+            var newAttributes = new Dictionary<string, object>();
 
             foreach (var attribute in this.Attributes)
             {
-                if (!newAttributes.TryGetValue(attribute.Key, out var value) || string.IsNullOrEmpty(value))
+                if (!newAttributes.TryGetValue(attribute.Key, out var value) || (value is string strValue && string.IsNullOrEmpty(strValue)))
                 {
                     newAttributes[attribute.Key] = attribute.Value;
                 }
@@ -75,7 +77,7 @@ namespace OpenTelemetry.Resources
             {
                 foreach (var attribute in other.Attributes)
                 {
-                    if (!newAttributes.TryGetValue(attribute.Key, out var value) || string.IsNullOrEmpty(value))
+                    if (!newAttributes.TryGetValue(attribute.Key, out var value) || (value is string strValue && string.IsNullOrEmpty(strValue)))
                     {
                         newAttributes[attribute.Key] = attribute.Value;
                     }
@@ -85,35 +87,42 @@ namespace OpenTelemetry.Resources
             return new Resource(newAttributes);
         }
 
-        private static void ValidateAttributes(IEnumerable<KeyValuePair<string, string>> attributes)
+        private static KeyValuePair<string, object> SanitizeAttribute(KeyValuePair<string, object> attribute)
         {
-            if (attributes == null)
+            string sanitizedKey = null;
+            object sanitizedValue = null;
+
+            if (attribute.Key == null)
             {
-                throw new ArgumentNullException(nameof(attributes));
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute key", "Attribute key should be non-null string.");
+                sanitizedKey = string.Empty;
+            }
+            else
+            {
+                sanitizedKey = attribute.Key;
             }
 
-            foreach (var attribute in attributes)
+            if (!IsValidValue(attribute.Value))
             {
-                if (!IsValidAndNotEmpty(attribute.Key))
-                {
-                    throw new ArgumentException($"Attribute key should be a string with a length greater than 0 and not exceeding {MaxResourceTypeNameLength} characters.");
-                }
-
-                if (!IsValid(attribute.Value))
-                {
-                    throw new ArgumentException($"Attribute value should be a string with a length not exceeding {MaxResourceTypeNameLength} characters.");
-                }
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute value", "Attribute value should be a non-null string, long, bool or double.");
+                sanitizedValue = string.Empty;
             }
+            else
+            {
+                sanitizedValue = attribute.Value;
+            }
+
+            return new KeyValuePair<string, object>(sanitizedKey, sanitizedValue);
         }
 
-        private static bool IsValidAndNotEmpty(string name)
+        private static bool IsValidValue(object value)
         {
-            return !string.IsNullOrEmpty(name) && IsValid(name);
-        }
+            if (value != null && (value is string || value is bool || value is long || value is double))
+            {
+                return true;
+            }
 
-        private static bool IsValid(string name)
-        {
-            return name != null && name.Length <= MaxResourceTypeNameLength && StringUtil.IsPrintableString(name);
+            return false;
         }
     }
 }
