@@ -150,7 +150,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public static JaegerLog ToJaegerLog(this Event timedEvent)
         {
             var tags = timedEvent.Attributes.Select(a => a.ToJaegerTag()).ToList();
-            tags.Add(new JaegerTag { Key = "description", VType = JaegerTagType.STRING, VStr = timedEvent.Name });
+
+            // Matches what OpenTracing and OpenTelemetry defines as the event name.
+            // https://github.com/opentracing/specification/blob/master/semantic_conventions.md#log-fields-table
+            // https://github.com/open-telemetry/opentelemetry-specification/pull/397/files
+            tags.Add(new JaegerTag { Key = "message", VType = JaegerTagType.STRING, VStr = timedEvent.Name });
 
             return new JaegerLog
             {
