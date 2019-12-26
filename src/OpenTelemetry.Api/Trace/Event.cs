@@ -61,6 +61,18 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="Event"/> class.
+        /// </summary>
+        /// <param name="name">Event name.</param>
+        /// <param name="attributes">Event attributes.</param>
+        public Event(string name, IDictionary<string, object> attributes)
+        {
+            this.Name = name ?? string.Empty;
+            this.Attributes = attributes ?? EmptyAttributes;
+            this.Timestamp = PreciseTimestamp.GetUtcNow();
+        }
+
+        /// <summary>
         /// Gets the <see cref="Event"/> name.
         /// </summary>
         public string Name { get; }

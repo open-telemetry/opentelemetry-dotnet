@@ -121,7 +121,7 @@ namespace OpenTelemetry.Trace
                 {
                     foreach (var attribute in spanCreationOptions.Attributes)
                     {
-                        this.SetAttribute(attribute);
+                        this.SetAttribute(attribute.Key, attribute.Value);
                     }
                 }
 
@@ -234,7 +234,40 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void SetAttribute(KeyValuePair<string, object> keyValuePair)
+        public void SetAttribute(string key, object value)
+        {
+            if (!this.IsRecording)
+            {
+                return;
+            }
+
+            if (this.hasEnded)
+            {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("SetAttribute");
+                return;
+            }
+
+            object sanitizedValue = value;
+            if (value == null || !this.IsAttributeValueTypeSupported(value))
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("SetAttribute", nameof(value), $"Type '{value?.GetType()}' of attribute '{key}' is not supported");
+                sanitizedValue = string.Empty;
+            }
+
+            lock (this.lck)
+            {
+                if (this.attributes == null)
+                {
+                    this.attributes =
+                        new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
+                }
+
+                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, sanitizedValue));
+            }
+        }
+
+        /// <inheritdoc/>
+        public void SetAttribute(string key, bool value)
         {
             if (!this.IsRecording)
             {
@@ -255,7 +288,59 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(keyValuePair.Key ?? string.Empty, keyValuePair.Value ?? string.Empty));
+                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+            }
+        }
+
+        /// <inheritdoc/>
+        public void SetAttribute(string key, long value)
+        {
+            if (!this.IsRecording)
+            {
+                return;
+            }
+
+            if (this.hasEnded)
+            {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("SetAttribute");
+                return;
+            }
+
+            lock (this.lck)
+            {
+                if (this.attributes == null)
+                {
+                    this.attributes =
+                        new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
+                }
+
+                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+            }
+        }
+
+        /// <inheritdoc/>
+        public void SetAttribute(string key, double value)
+        {
+            if (!this.IsRecording)
+            {
+                return;
+            }
+
+            if (this.hasEnded)
+            {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("SetAttribute");
+                return;
+            }
+
+            lock (this.lck)
+            {
+                if (this.attributes == null)
+                {
+                    this.attributes =
+                        new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
+                }
+
+                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
             }
         }
 
@@ -274,23 +359,6 @@ namespace OpenTelemetry.Trace
             }
 
             this.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow()));
-        }
-
-        /// <inheritdoc/>
-        public void AddEvent(string name, IDictionary<string, object> eventAttributes)
-        {
-            if (!this.IsRecording)
-            {
-                return;
-            }
-
-            if (this.hasEnded)
-            {
-                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("AddEvent");
-                return;
-            }
-
-            this.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow(), eventAttributes));
         }
 
         /// <inheritdoc/>
@@ -356,50 +424,6 @@ namespace OpenTelemetry.Trace
             {
                 this.spanProcessor.OnEnd(this);
             }
-        }
-
-        /// <inheritdoc/>
-        public void SetAttribute(string key, string value)
-        {
-            if (!this.IsRecording)
-            {
-                return;
-            }
-
-            this.SetAttribute(new KeyValuePair<string, object>(key, value));
-        }
-
-        /// <inheritdoc/>
-        public void SetAttribute(string key, long value)
-        {
-            if (!this.IsRecording)
-            {
-                return;
-            }
-
-            this.SetAttribute(new KeyValuePair<string, object>(key, value));
-        }
-
-        /// <inheritdoc/>
-        public void SetAttribute(string key, double value)
-        {
-            if (!this.IsRecording)
-            {
-                return;
-            }
-
-            this.SetAttribute(new KeyValuePair<string, object>(key, value));
-        }
-
-        /// <inheritdoc/>
-        public void SetAttribute(string key, bool value)
-        {
-            if (!this.IsRecording)
-            {
-                return;
-            }
-
-            this.SetAttribute(new KeyValuePair<string, object>(key, value));
         }
 
         public void Dispose()
@@ -715,6 +739,35 @@ namespace OpenTelemetry.Trace
             {
                 OpenTelemetrySdkEventSource.Log.AttemptToEndScopeWhichIsNotCurrent(this.Name);
             }
+        }
+
+        private bool IsAttributeValueTypeSupported(object attributeValue)
+        {
+            if (this.IsNumericBoolOrString(attributeValue))
+            {
+                return true;
+            }
+
+            // TODO add array support
+
+            return false;
+        }
+
+        private bool IsNumericBoolOrString(object attributeValue)
+        {
+            return attributeValue is string
+                   || attributeValue is bool
+                   || attributeValue is int
+                   || attributeValue is uint
+                   || attributeValue is long
+                   || attributeValue is ulong
+                   || attributeValue is double
+                   || attributeValue is sbyte
+                   || attributeValue is byte
+                   || attributeValue is short
+                   || attributeValue is ushort
+                   || attributeValue is float
+                   || attributeValue is decimal;
         }
 
         private readonly struct ActivityAndTracestate

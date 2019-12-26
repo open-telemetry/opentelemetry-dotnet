@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace.Test
         public void FromDescriptionAndDefaultTimestamp()
         {
             var approxTimestamp = PreciseTimestamp.GetUtcNow();
-            var @event = new Event("MyEventText", default);
+            var @event = new Event("MyEventText", (DateTimeOffset)default);
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(0, @event.Attributes.Count);
             Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 20);

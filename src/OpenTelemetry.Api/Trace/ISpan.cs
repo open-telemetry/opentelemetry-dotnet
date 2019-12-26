@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
-using System.Collections.Generic;
 
 namespace OpenTelemetry.Trace
 {
@@ -53,38 +53,32 @@ namespace OpenTelemetry.Trace
         void UpdateName(string name);
 
         /// <summary>
-        /// Puts a new attribute to the span.
+        /// Sets a new attribute on the span.
         /// </summary>
-        /// <param name="key">Key of the attribute.</param>
+        /// <param name="key">Attribute key.</param>
         /// <param name="value">Attribute value.</param>
-        void SetAttribute(string key, string value);
+        void SetAttribute(string key, object value);
 
         /// <summary>
-        /// Puts a new attribute to the span.
+        /// Sets a new attribute on the span.
         /// </summary>
-        /// <param name="key">Key of the attribute.</param>
+        /// <param name="key">Attribute key.</param>
         /// <param name="value">Attribute value.</param>
         void SetAttribute(string key, long value);
 
         /// <summary>
-        /// Puts a new attribute to the span.
+        /// Sets a new attribute on the span.
         /// </summary>
-        /// <param name="key">Key of the attribute.</param>
-        /// <param name="value">Attribute value.</param>
-        void SetAttribute(string key, double value);
-
-        /// <summary>
-        /// Puts a new attribute to the span.
-        /// </summary>
-        /// <param name="key">Key of the attribute.</param>
+        /// <param name="key">Attribute key.</param>
         /// <param name="value">Attribute value.</param>
         void SetAttribute(string key, bool value);
 
         /// <summary>
-        /// Puts a new attribute to the span.
+        /// Sets a new attribute on the span.
         /// </summary>
-        /// <param name="attribute">Attribute as a <see cref="KeyValuePair{TKey, TValue}"/>.</param>
-        void SetAttribute(KeyValuePair<string, object> attribute);
+        /// <param name="key">Attribute key.</param>
+        /// <param name="value">Attribute value.</param>
+        void SetAttribute(string key, double value);
 
         /// <summary>
         /// Adds a single <see cref="Event"/> to the <see cref="ISpan"/>.
@@ -93,14 +87,7 @@ namespace OpenTelemetry.Trace
         void AddEvent(string name);
 
         /// <summary>
-        /// Adds a single <see cref="Event"/> with the <see cref="IDictionary{String, IAttributeValue}"/> attributes to the <see cref="ISpan"/>.
-        /// </summary>
-        /// <param name="name">Event name.</param>
-        /// <param name="attributes"><see cref="IDictionary{String, IAttributeValue}"/> of attributes name/value pairs associated with the <see cref="Event"/>.</param>
-        void AddEvent(string name, IDictionary<string, object> attributes);
-
-        /// <summary>
-        /// Adds an <see cref="Event"/> object to the <see cref="ISpan"/>.
+        /// Adds an <see cref="Event"/> instance to the <see cref="ISpan"/>.
         /// </summary>
         /// <param name="newEvent"><see cref="Event"/> to add to the span.</param>
         void AddEvent(Event newEvent);

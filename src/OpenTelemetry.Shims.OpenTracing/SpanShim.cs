@@ -18,10 +18,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using global::OpenTracing;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    public sealed class SpanShim : ISpan
+    public sealed class SpanShim : global::OpenTracing.ISpan
     {
         /// <summary>
         /// The default event name if not specified.
@@ -82,7 +83,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
+        public global::OpenTracing.ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
         {
             if (fields is null)
             {
@@ -93,26 +94,21 @@ namespace OpenTelemetry.Shims.OpenTracing
             var eventName = payload.Item1;
             var eventAttributes = payload.Item2;
 
-            if (timestamp == DateTimeOffset.MinValue)
-            {
-                this.Span.AddEvent(eventName, eventAttributes);
-            }
-            else
-            {
-                this.Span.AddEvent(new Trace.Event(eventName, timestamp, eventAttributes));
-            }
+            this.Span.AddEvent(timestamp == DateTimeOffset.MinValue
+                ? new Event(eventName, eventAttributes)
+                : new Event(eventName, timestamp, eventAttributes));
 
             return this;
         }
 
         /// <inheritdoc/>
-        public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields)
+        public global::OpenTracing.ISpan Log(IEnumerable<KeyValuePair<string, object>> fields)
         {
             return this.Log(DateTimeOffset.MinValue, fields);
         }
 
         /// <inheritdoc/>
-        public ISpan Log(string @event)
+        public global::OpenTracing.ISpan Log(string @event)
         {
             if (@event is null)
             {
@@ -124,7 +120,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public ISpan Log(DateTimeOffset timestamp, string @event)
+        public global::OpenTracing.ISpan Log(DateTimeOffset timestamp, string @event)
         {
             if (@event is null)
             {
@@ -136,7 +132,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public ISpan SetBaggageItem(string key, string value)
+        public global::OpenTracing.ISpan SetBaggageItem(string key, string value)
         {
             if (key is null)
             {
@@ -148,7 +144,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public ISpan SetOperationName(string operationName)
+        public global::OpenTracing.ISpan SetOperationName(string operationName)
         {
             if (operationName is null)
             {
@@ -160,7 +156,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public ISpan SetTag(string key, string value)
+        public global::OpenTracing.ISpan SetTag(string key, string value)
         {
             if (key is null)
             {
@@ -172,7 +168,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public ISpan SetTag(string key, bool value)
+        public global::OpenTracing.ISpan SetTag(string key, bool value)
         {
             if (key is null)
             {
@@ -194,7 +190,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public ISpan SetTag(string key, int value)
+        public global::OpenTracing.ISpan SetTag(string key, int value)
         {
             if (key is null)
             {
@@ -206,7 +202,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public ISpan SetTag(string key, double value)
+        public global::OpenTracing.ISpan SetTag(string key, double value)
         {
             if (key is null)
             {
@@ -218,13 +214,13 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public ISpan SetTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
+        public global::OpenTracing.ISpan SetTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
         {
             return this.SetTag(tag?.Key, value);
         }
 
         /// <inheritdoc/>
-        public ISpan SetTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
+        public global::OpenTracing.ISpan SetTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
         {
             if (int.TryParse(value, out var result))
             {
@@ -235,13 +231,13 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public ISpan SetTag(global::OpenTracing.Tag.IntTag tag, int value)
+        public global::OpenTracing.ISpan SetTag(global::OpenTracing.Tag.IntTag tag, int value)
         {
             return this.SetTag(tag?.Key, value);
         }
 
         /// <inheritdoc/>
-        public ISpan SetTag(global::OpenTracing.Tag.StringTag tag, string value)
+        public global::OpenTracing.ISpan SetTag(global::OpenTracing.Tag.StringTag tag, string value)
         {
             return this.SetTag(tag?.Key, value);
         }

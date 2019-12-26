@@ -201,7 +201,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             foreach (var kvp in this.attributes)
             {
-                span.SetAttribute(kvp);
+                span.SetAttribute(kvp.Key, kvp.Value);
             }
 
             if (this.error)

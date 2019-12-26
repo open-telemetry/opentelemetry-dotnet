@@ -383,7 +383,7 @@ namespace OpenTelemetry.Trace.Test
                 .GetTracer(null);
 
             var span = (Span)tracer.StartRootSpan(SpanName);
-            for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
+            for (long i = 0; i < 2 * maxNumberOfAttributes; i++)
             {
                 span.SetAttribute("MyStringAttributeKey" + i, i);
             }
