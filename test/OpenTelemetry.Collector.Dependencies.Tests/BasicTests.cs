@@ -19,11 +19,13 @@ using Moq;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Context.Propagation;
 using Xunit;
 
 namespace OpenTelemetry.Collector.Dependencies.Tests
@@ -94,6 +96,58 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             Assert.Single(tracestates);
 
             Assert.Equal($"00-{span.Context.TraceId}-{span.Context.SpanId}-01", traceparents.Single());
+            Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+        }
+
+        [Fact]
+        public async Task HttpDependenciesCollectorInjectsHeadersAsync_CustomFormat()
+        {
+            var textFormat = new Mock<ITextFormat>();
+            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<SpanContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                .Callback<SpanContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+                {
+                    action(message, "custom_traceparent", $"00/{context.TraceId}/{context.SpanId}/01");
+                    action(message, "custom_tracestate", Activity.Current.TraceStateString);
+                });
+
+            var spanProcessor = new Mock<SpanProcessor>();
+            var tracer = TracerFactory.Create(b => b
+                    .SetTextFormat(textFormat.Object)
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
+                .GetTracer(null);
+
+            var request = new HttpRequestMessage
+            {
+                RequestUri = new Uri(url),
+                Method = new HttpMethod("GET"),
+            };
+
+            var parent = new Activity("parent")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+            parent.TraceStateString = "k1=v1,k2=v2";
+            parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
+            using (var c = new HttpClient())
+            {
+                await c.SendAsync(request);
+            }
+
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
+
+            Assert.Equal(parent.TraceId, span.Context.TraceId);
+            Assert.Equal(parent.SpanId, span.ParentSpanId);
+            Assert.NotEqual(parent.SpanId, span.Context.SpanId);
+            Assert.NotEqual(default, span.Context.SpanId);
+
+            Assert.True(request.Headers.TryGetValues("custom_traceparent", out var traceparents));
+            Assert.True(request.Headers.TryGetValues("custom_tracestate", out var tracestates));
+            Assert.Single(traceparents);
+            Assert.Single(tracestates);
+
+            Assert.Equal($"00/{span.Context.TraceId}/{span.Context.SpanId}/01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
         }
 

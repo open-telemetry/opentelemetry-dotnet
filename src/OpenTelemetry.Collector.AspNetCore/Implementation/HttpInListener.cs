@@ -20,6 +20,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Collector.AspNetCore.Implementation
@@ -65,7 +66,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
             ISpan span;
-            if (this.hostingSupportsW3C)
+            if (this.hostingSupportsW3C && this.Tracer.TextFormat is TraceContextFormat)
             {
                 this.Tracer.StartActiveSpanFromActivity(path, Activity.Current, SpanKind.Server, out span);
             }

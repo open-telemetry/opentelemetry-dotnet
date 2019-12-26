@@ -21,6 +21,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Collector.Dependencies.Implementation
@@ -83,7 +84,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 }
             }
 
-            if (!this.httpClientSupportsW3C)
+            if (!(this.httpClientSupportsW3C && this.Tracer.TextFormat is TraceContextFormat))
             {
                 this.Tracer.TextFormat.Inject<HttpRequestMessage>(span.Context, request, (r, k, v) => r.Headers.Add(k, v));
             }
