@@ -608,7 +608,10 @@ namespace OpenTelemetry.Trace
             if (activity.TraceStateString != null)
             {
                 tracestate = new List<KeyValuePair<string, string>>();
-                TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate);
+                if (!TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate))
+                {
+                    activity.TraceStateString = null;
+                }
             }
 
             return new ActivityAndTracestate(activity, tracestate);
@@ -683,7 +686,10 @@ namespace OpenTelemetry.Trace
             if (activity.TraceStateString != null)
             {
                 tracestate = new List<KeyValuePair<string, string>>();
-                TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate);
+                if (!TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate))
+                {
+                    activity.TraceStateString = null;
+                }
             }
 
             return new ActivityAndTracestate(activity, tracestate);
