@@ -40,8 +40,6 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         [InlineData("=v")]
         [InlineData("kv")]
         [InlineData("k =v")]
-        [InlineData("k=\tv")]
-        [InlineData("k=v\t")]
         [InlineData("k\t=v")]
         [InlineData("k=v,k=v")]
         [InlineData("k1=v1,,,k2=v2")]
@@ -79,9 +77,12 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         [Theory]
         [InlineData("k=v")]
         [InlineData(" k=v ")]
+        [InlineData("\tk=v")]
         [InlineData(" k= v ")]
         [InlineData(",k=v,")]
         [InlineData(", k= v, ")]
+        [InlineData("k=\tv")]
+        [InlineData("k=v\t")]
         public void ValidPair(string pair)
         {
             var tracestateEntries = new List<KeyValuePair<string, string>>();

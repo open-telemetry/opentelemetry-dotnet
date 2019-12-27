@@ -170,14 +170,14 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            key = pair.Slice(0, keyEndIdx).TrimStart(' ');
+            key = pair.Slice(0, keyEndIdx).TrimStart();
             if (!ValidateKey(key))
             {
                 LogKeyIsInvalid(key);
                 return false;
             }
 
-            value = pair.Slice(valueStartIdx, pair.Length - valueStartIdx).Trim(' ');
+            value = pair.Slice(valueStartIdx, pair.Length - valueStartIdx).Trim();
             if (!ValidateValue(value))
             {
                 LogValueIsInvalid(value);
