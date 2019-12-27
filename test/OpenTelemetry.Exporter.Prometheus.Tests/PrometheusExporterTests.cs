@@ -73,12 +73,14 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             {
                 promExporter.Start();
 
+                var defaultContext = default(SpanContext);
+
                 for (int i = 0; i < 1000; i++)
                 {
-                    testCounter.Add(SpanContext.BlankLocal, 100, meter.GetLabelSet(labels1));
-                    testCounter.Add(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels1));
-                    testCounter.Add(SpanContext.BlankLocal, 200, meter.GetLabelSet(labels2));
-                    testCounter.Add(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels2));
+                    testCounter.Add(defaultContext, 100, meter.GetLabelSet(labels1));
+                    testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels1));
+                    testCounter.Add(defaultContext, 200, meter.GetLabelSet(labels2));
+                    testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels2));
 
                     if (i % 10 == 0)
                     {

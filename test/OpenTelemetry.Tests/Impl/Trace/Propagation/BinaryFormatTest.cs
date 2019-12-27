@@ -68,7 +68,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void ToBinaryValue_InvalidSpanContext_Local()
         {
-            Assert.Empty(binaryFormat.ToByteArray(SpanContext.BlankLocal));
+            Assert.Empty(binaryFormat.ToByteArray(default));
         }
 
         [Fact]

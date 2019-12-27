@@ -86,7 +86,7 @@ namespace OpenTelemetry.Collector.Dependencies
         {
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null || span == BlankSpan.Instance)
+            if (span == null || !span.Context.IsValid)
             {
                 CollectorEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnStopActivity");
                 return;
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Collector.Dependencies
         {
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null || span == BlankSpan.Instance)
+            if (span == null || !span.Context.IsValid)
             {
                 CollectorEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnException");
                 return;
