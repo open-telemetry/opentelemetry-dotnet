@@ -253,15 +253,6 @@ namespace OpenTelemetry.Tests.Impl.Trace
                 Assert.Equal(linkContext, span.Links.Single().Context);
             }
         }
-
-        [Fact]
-        public void ProxyTracer_Formats()
-        {
-            Assert.NotNull(new ProxyTracer().TextFormat);
-            Assert.NotNull(new ProxyTracer().BinaryFormat);
-            Assert.IsAssignableFrom<ITextFormat>(new ProxyTracer().TextFormat);
-            Assert.IsAssignableFrom<IBinaryFormat>(new ProxyTracer().BinaryFormat);
-        }
     }
 }
 

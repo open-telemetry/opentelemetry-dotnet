@@ -35,8 +35,6 @@ namespace OpenTelemetry.Trace.Configuration
         private readonly Resource defaultResource;
         private readonly TracerConfiguration configurationOptions;
         private readonly SpanProcessor spanProcessor;
-        private readonly IBinaryFormat binaryFormat;
-        private readonly ITextFormat textFormat;
 
         private Tracer defaultTracer;
 
@@ -73,15 +71,10 @@ namespace OpenTelemetry.Trace.Configuration
                 this.spanProcessor = new BroadcastProcessor(processors);
             }
 
-            this.binaryFormat = builder.BinaryFormat ?? new BinaryFormat();
-            this.textFormat = builder.TextFormat ?? new TraceContextFormat();
-
             this.defaultTracer = new TracerSdk(
                 this.spanProcessor,
                 this.sampler,
                 this.configurationOptions,
-                this.binaryFormat,
-                this.textFormat,
                 this.defaultResource);
         }
 
@@ -128,8 +121,6 @@ namespace OpenTelemetry.Trace.Configuration
                         this.spanProcessor,
                         this.sampler,
                         this.configurationOptions,
-                        this.binaryFormat,
-                        this.textFormat,
                         this.defaultResource.Merge(new Resource(CreateLibraryResourceLabels(name, version))));
                     this.tracerRegistry.Add(key, tracer);
                 }

@@ -43,15 +43,11 @@ namespace OpenTelemetry.Trace
         /// <param name="spanProcessor">Span processor.</param>
         /// <param name="sampler">Sampler to use.</param>
         /// <param name="tracerConfiguration">Trace configuration.</param>
-        /// <param name="binaryFormat">Binary format context propagator.</param>
-        /// <param name="textFormat">Text format context propagator.</param>
         /// <param name="libraryResource">Resource describing the instrumentation library.</param>
-        internal TracerSdk(SpanProcessor spanProcessor, Sampler sampler, TracerConfiguration tracerConfiguration, IBinaryFormat binaryFormat, ITextFormat textFormat, Resource libraryResource)
+        internal TracerSdk(SpanProcessor spanProcessor, Sampler sampler, TracerConfiguration tracerConfiguration, Resource libraryResource)
         {
             this.spanProcessor = spanProcessor ?? throw new ArgumentNullException(nameof(spanProcessor));
             this.tracerConfiguration = tracerConfiguration ?? throw new ArgumentNullException(nameof(tracerConfiguration));
-            this.BinaryFormat = binaryFormat ?? throw new ArgumentNullException(nameof(binaryFormat));
-            this.TextFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
             this.LibraryResource = libraryResource ?? throw new ArgumentNullException(nameof(libraryResource));
             this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
         }
@@ -60,12 +56,6 @@ namespace OpenTelemetry.Trace
 
         /// <inheritdoc/>
         public override ISpan CurrentSpan => SpanSdk.Current;
-
-        /// <inheritdoc/>
-        public override IBinaryFormat BinaryFormat { get; }
-
-        /// <inheritdoc/>
-        public override ITextFormat TextFormat { get; }
 
         public override IDisposable WithSpan(ISpan span, bool endSpanOnDispose)
         {

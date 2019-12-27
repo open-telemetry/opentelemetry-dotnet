@@ -35,8 +35,6 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetSampler(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().AddProcessorPipeline(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetTracerOptions(null));
-            Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetBinaryFormat(null));
-            Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetTextFormat(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().AddCollector<object>(null));
         }
 
@@ -46,8 +44,6 @@ namespace OpenTelemetry.Tests.Impl.Trace
             var builder = new TracerBuilder();
             Assert.Null(builder.Sampler);
             Assert.Null(builder.ProcessingPipelines);
-            Assert.Null(builder.BinaryFormat);
-            Assert.Null(builder.TextFormat);
             Assert.Null(builder.TracerConfigurationOptions);
             Assert.Null(builder.CollectorFactories);
         }
@@ -63,8 +59,6 @@ namespace OpenTelemetry.Tests.Impl.Trace
             var sampler = new ProbabilitySampler(0.1);
             var exporter = new TestExporter(_ => { });
             var options = new TracerConfiguration(1, 1, 1);
-            var binaryFormat = new BinaryFormat();
-            var textFormat = new TraceContextFormat();
 
             builder
                 .SetSampler(sampler)
@@ -77,8 +71,6 @@ namespace OpenTelemetry.Tests.Impl.Trace
                         return new SimpleSpanProcessor(e);
                     }))
                 .SetTracerOptions(options)
-                .SetBinaryFormat(binaryFormat)
-                .SetTextFormat(textFormat)
                 .AddCollector(t =>
                 {
                     Assert.NotNull(t);
@@ -95,8 +87,6 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.True(processorFactoryCalled);
 
             Assert.Same(options, builder.TracerConfigurationOptions);
-            Assert.Same(binaryFormat, builder.BinaryFormat);
-            Assert.Same(textFormat, builder.TextFormat);
             Assert.Single(builder.CollectorFactories);
 
             var collectorFactory = builder.CollectorFactories.Single();
@@ -104,8 +94,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal("semver:" + typeof(TestCollector).Assembly.GetName().Version, collectorFactory.Version);
 
             Assert.NotNull(collectorFactory.Factory);
-            collectorFactory.Factory(new TracerSdk(new SimpleSpanProcessor(exporter), new AlwaysSampleSampler(), options, binaryFormat, textFormat,
-                Resource.Empty));
+            collectorFactory.Factory(new TracerSdk(new SimpleSpanProcessor(exporter), new AlwaysSampleSampler(), options, Resource.Empty));
 
             Assert.True(collectorFactoryCalled);
         }
