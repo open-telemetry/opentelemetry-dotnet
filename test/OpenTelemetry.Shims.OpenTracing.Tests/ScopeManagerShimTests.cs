@@ -31,11 +31,10 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Active_IsNull()
         {
-            var tracerMock = new Mock<Tracer>();
-            tracerMock.Setup(x => x.CurrentSpan).Returns(Trace.BlankSpan.Instance);
+            var tracer = TracerFactoryBase.Default.GetTracer(null);
+            var shim = new ScopeManagerShim(tracer);
 
-            var shim = new ScopeManagerShim(tracerMock.Object);
-
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
             Assert.Null(shim.Active);
         }
 

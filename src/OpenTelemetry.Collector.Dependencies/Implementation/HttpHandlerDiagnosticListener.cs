@@ -94,7 +94,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             const string EventNameSuffix = ".OnStopActivity";
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null || span == BlankSpan.Instance)
+            if (span == null || !span.Context.IsValid)
             {
                 CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
                 return;
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             const string EventNameSuffix = ".OnException";
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null || span == BlankSpan.Instance)
+            if (span == null || !span.Context.IsValid)
             {
                 CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
                 return;

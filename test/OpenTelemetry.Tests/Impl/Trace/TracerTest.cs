@@ -104,13 +104,14 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Tracer_StartSpan_FromParentContext_BadArgs_NullSpanName()
         {
-            var span1 = (Span)this.tracerSdk.StartSpan(null, SpanContext.BlankLocal);
+            var blankContext = default(SpanContext);
+            var span1 = (Span)this.tracerSdk.StartSpan(null, blankContext);
             Assert.Equal(string.Empty, span1.Name);
 
-            var span2 = (Span)this.tracerSdk.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client);
+            var span2 = (Span)this.tracerSdk.StartSpan(null, blankContext, SpanKind.Client);
             Assert.Equal(string.Empty, span2.Name);
 
-            var span3 = (Span)this.tracerSdk.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client, null);
+            var span3 = (Span)this.tracerSdk.StartSpan(null, blankContext, SpanKind.Client, null);
             Assert.Equal(string.Empty, span3.Name);
         }
 
@@ -133,7 +134,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetCurrentSpanBlank()
         {
-            Assert.Same(BlankSpan.Instance, this.tracerSdk.CurrentSpan);
+            Assert.False(this.tracerSdk.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -144,7 +145,8 @@ namespace OpenTelemetry.Trace.Test
             {
                 Assert.Same(span, this.tracerSdk.CurrentSpan);
             }
-            Assert.Same(BlankSpan.Instance, this.tracerSdk.CurrentSpan);
+
+            Assert.False(this.tracerSdk.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -178,7 +180,7 @@ namespace OpenTelemetry.Trace.Test
         public void WithSpanNull()
         {
             Assert.NotNull(this.tracerSdk.WithSpan(null));
-            Assert.Equal(BlankSpan.Instance, this.tracerSdk.CurrentSpan);
+            Assert.False(this.tracerSdk.CurrentSpan.Context.IsValid);
 
             using (this.tracerSdk.StartActiveSpan("some span", out var span))
             {

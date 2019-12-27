@@ -44,6 +44,7 @@ namespace OpenTelemetry.Context.Propagation
         internal static readonly string FlagsValue = "1";
 
         private static readonly HashSet<string> AllFields = new HashSet<string>() { XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags };
+        private static readonly SpanContext RemoteInvalidContext = new SpanContext(default, default, ActivityTraceFlags.None, true);
 
         /// <inheritdoc/>
         public ISet<string> Fields => AllFields;
@@ -54,13 +55,13 @@ namespace OpenTelemetry.Context.Propagation
             if (carrier == null)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null carrier");
-                return SpanContext.BlankRemote;
+                return RemoteInvalidContext;
             }
 
             if (getter == null)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null getter");
-                return SpanContext.BlankRemote;
+                return RemoteInvalidContext;
             }
 
             try
@@ -79,7 +80,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 else
                 {
-                    return SpanContext.BlankRemote;
+                    return RemoteInvalidContext;
                 }
 
                 ActivitySpanId spanId;
@@ -90,7 +91,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 else
                 {
-                    return SpanContext.BlankRemote;
+                    return RemoteInvalidContext;
                 }
 
                 var traceOptions = ActivityTraceFlags.None;
@@ -105,7 +106,7 @@ namespace OpenTelemetry.Context.Propagation
             catch (Exception e)
             {
                 OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
-                return SpanContext.BlankRemote;
+                return RemoteInvalidContext;
             }
         }
 
