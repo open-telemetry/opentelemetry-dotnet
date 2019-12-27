@@ -46,7 +46,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             get
             {
                 var currentSpan = this.tracer.CurrentSpan;
-                if (currentSpan == Trace.BlankSpan.Instance)
+                if (currentSpan == null || !currentSpan.Context.IsValid)
                 {
                     return null;
                 }

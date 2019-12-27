@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace
         public Resource LibraryResource { get; }
 
         /// <inheritdoc/>
-        public override ISpan CurrentSpan => (ISpan)Span.Current ?? BlankSpan.Instance;
+        public override ISpan CurrentSpan => Span.Current;
 
         /// <inheritdoc/>
         public override IBinaryFormat BinaryFormat { get; }

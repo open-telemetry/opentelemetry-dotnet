@@ -36,10 +36,11 @@ namespace OpenTelemetry.Metrics.Test
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
 
-            testCounter.Add(SpanContext.BlankLocal, 100, meter.GetLabelSet(labels1));
-            testCounter.Add(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels1));
-            testCounter.Add(SpanContext.BlankLocal, 200, meter.GetLabelSet(labels2));
-            testCounter.Add(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels2));
+            var context = default(SpanContext);
+            testCounter.Add(context, 100, meter.GetLabelSet(labels1));
+            testCounter.Add(context, 10, meter.GetLabelSet(labels1));
+            testCounter.Add(context, 200, meter.GetLabelSet(labels2));
+            testCounter.Add(context, 10, meter.GetLabelSet(labels2));
 
             meter.Collect();
 
@@ -67,10 +68,11 @@ namespace OpenTelemetry.Metrics.Test
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
 
-            testGauge.Set(SpanContext.BlankLocal, 100, meter.GetLabelSet(labels1));
-            testGauge.Set(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels1));
-            testGauge.Set(SpanContext.BlankLocal, 200, meter.GetLabelSet(labels2));
-            testGauge.Set(SpanContext.BlankLocal, 20, meter.GetLabelSet(labels2));
+            var context = default(SpanContext);
+            testGauge.Set(context, 100, meter.GetLabelSet(labels1));
+            testGauge.Set(context, 10, meter.GetLabelSet(labels1));
+            testGauge.Set(context, 200, meter.GetLabelSet(labels2));
+            testGauge.Set(context, 20, meter.GetLabelSet(labels2));
 
             meter.Collect();
 
@@ -99,10 +101,11 @@ namespace OpenTelemetry.Metrics.Test
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
 
-            testMeasure.Record(SpanContext.BlankLocal, 100, meter.GetLabelSet(labels1));
-            testMeasure.Record(SpanContext.BlankLocal, 10, meter.GetLabelSet(labels1));
-            testMeasure.Record(SpanContext.BlankLocal, 200, meter.GetLabelSet(labels2));
-            testMeasure.Record(SpanContext.BlankLocal, 20, meter.GetLabelSet(labels2));
+            var context = default(SpanContext);
+            testMeasure.Record(context, 100, meter.GetLabelSet(labels1));
+            testMeasure.Record(context, 10, meter.GetLabelSet(labels1));
+            testMeasure.Record(context, 200, meter.GetLabelSet(labels2));
+            testMeasure.Record(context, 20, meter.GetLabelSet(labels2));
 
             meter.Collect();
 

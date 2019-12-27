@@ -302,7 +302,7 @@ namespace OpenTelemetry.Trace.Test
         public void StartSpanFrom_InvalidContext()
         {
             var tracer = tracerFactory.GetTracer(null);
-            var parentContext = SpanContext.BlankLocal;
+            var parentContext = default(SpanContext);
 
             var span = (Span)tracer.StartSpan(SpanName, parentContext);
 
@@ -1154,12 +1154,11 @@ namespace OpenTelemetry.Trace.Test
                 var span = tracer.CurrentSpan;
                 Assert.Same(ispan, span);
                 Assert.NotNull(span);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(parentSpan.Context.SpanId,((Span)span).ParentSpanId);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -1176,12 +1175,11 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.NotNull(span);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(parentSpan.Context.SpanId, ((Span)span).ParentSpanId);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
 
@@ -1201,13 +1199,12 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Same(ispan, span);
                 Assert.NotNull(span);
                 Assert.True(span.Context.IsValid);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Equal(parentSpan.Context.SpanId, ((Span)span).ParentSpanId);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -1227,14 +1224,13 @@ namespace OpenTelemetry.Trace.Test
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
                 Assert.Equal(parentSpan.Context.SpanId, ((Span)span).ParentSpanId);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -1250,12 +1246,11 @@ namespace OpenTelemetry.Trace.Test
                 var span = tracer.CurrentSpan;
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(parentContext.SpanId, ((Span)span).ParentSpanId);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -1273,12 +1268,12 @@ namespace OpenTelemetry.Trace.Test
                 Assert.True(span.Context.IsValid);
                 Assert.Same(ispan, span);
                 Assert.NotNull(span);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
+
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(parentContext.SpanId, ((Span)span).ParentSpanId);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
 
@@ -1298,13 +1293,12 @@ namespace OpenTelemetry.Trace.Test
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Equal(parentContext.SpanId, ((Span)span).ParentSpanId);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -1324,14 +1318,13 @@ namespace OpenTelemetry.Trace.Test
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
                 Assert.Equal(parentContext.SpanId, ((Span)span).ParentSpanId);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -1347,12 +1340,12 @@ namespace OpenTelemetry.Trace.Test
                 var span = tracer.CurrentSpan;
                 Assert.Same(childSpan, span);
                 Assert.NotNull(span);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
+
                 Assert.True(span.Context.IsValid);
                 Assert.NotEqual(default, ((Span)span).ParentSpanId);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -1370,12 +1363,12 @@ namespace OpenTelemetry.Trace.Test
                 Assert.True(span.Context.IsValid);
                 Assert.NotNull(span);
                 Assert.Same(childSpan, span);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
+
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.NotEqual(default, ((Span)span).ParentSpanId);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
 
@@ -1395,13 +1388,13 @@ namespace OpenTelemetry.Trace.Test
                 Assert.NotNull(span);
                 Assert.Same(childSpan, span);
                 Assert.True(span.Context.IsValid);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
+
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.NotEqual(default, ((Span)span).ParentSpanId);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -1421,14 +1414,14 @@ namespace OpenTelemetry.Trace.Test
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
+
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
                 Assert.NotEqual(default, ((Span)span).ParentSpanId);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -1444,14 +1437,14 @@ namespace OpenTelemetry.Trace.Test
                 var span = tracer.CurrentSpan;
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
+
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(activity.SpanId, span.Context.SpanId);
                 Assert.Equal(SpanKind.Internal, ((Span)span).Kind);
                 Assert.Empty(((Span)span).Links);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -1467,14 +1460,13 @@ namespace OpenTelemetry.Trace.Test
                 var span = tracer.CurrentSpan;
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(activity.SpanId, span.Context.SpanId);
                 Assert.Equal(SpanKind.Consumer, ((Span)span).Kind);
                 Assert.Empty(((Span)span).Links);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -1491,14 +1483,13 @@ namespace OpenTelemetry.Trace.Test
                 var span = tracer.CurrentSpan;
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
-                Assert.NotSame(BlankSpan.Instance, tracer.CurrentSpan);
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(activity.SpanId, span.Context.SpanId);
                 Assert.Equal(SpanKind.Consumer, ((Span)span).Kind);
                 Assert.Single(((Span)span).Links);
             }
 
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]

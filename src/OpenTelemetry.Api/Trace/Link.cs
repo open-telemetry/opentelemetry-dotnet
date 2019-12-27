@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Link attributes.</param>
         public Link(in SpanContext spanContext, IDictionary<string, object> attributes)
         {
-            this.Context = spanContext.IsValid ? spanContext : SpanContext.BlankLocal;
+            this.Context = spanContext.IsValid ? spanContext : default;
             this.Attributes = attributes ?? EmptyAttributes;
         }
 

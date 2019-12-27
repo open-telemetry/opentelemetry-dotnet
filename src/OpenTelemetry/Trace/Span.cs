@@ -34,6 +34,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Span : ISpan, IDisposable
     {
+        internal static readonly Span Invalid = new Span();
         private static readonly ConditionalWeakTable<Activity, Span> ActivitySpanTable = new ConditionalWeakTable<Activity, Span>();
 
         private readonly Sampler sampler;
@@ -51,6 +52,13 @@ namespace OpenTelemetry.Trace
         private DateTimeOffset endTimestamp;
         private bool hasEnded;
         private bool endOnDispose;
+
+        private Span()
+        {
+            this.Name = string.Empty;
+            this.Context = default;
+            this.IsRecording = false;
+        }
 
         private Span(
             string name,
@@ -197,7 +205,7 @@ namespace OpenTelemetry.Trace
                 var currentActivity = Activity.Current;
                 if (currentActivity == null)
                 {
-                    return null;
+                    return Invalid;
                 }
 
                 if (ActivitySpanTable.TryGetValue(currentActivity, out var currentSpan))
@@ -205,7 +213,7 @@ namespace OpenTelemetry.Trace
                     return currentSpan;
                 }
 
-                return null;
+                return Invalid;
             }
         }
 
@@ -462,7 +470,7 @@ namespace OpenTelemetry.Trace
             {
                 return new Span(
                     name,
-                    SpanContext.BlankLocal,
+                    default,
                     CreateRoot(name),
                     false,
                     spanKind,
@@ -523,7 +531,7 @@ namespace OpenTelemetry.Trace
         {
             return new Span(
                 name,
-                SpanContext.BlankLocal,
+                default,
                 CreateRoot(name),
                 false,
                 spanKind,
@@ -699,7 +707,7 @@ namespace OpenTelemetry.Trace
                     activity.ActivityTraceFlags);
             }
 
-            return SpanContext.BlankLocal;
+            return default;
         }
 
         private void SetLinks(IEnumerable<Link> links)

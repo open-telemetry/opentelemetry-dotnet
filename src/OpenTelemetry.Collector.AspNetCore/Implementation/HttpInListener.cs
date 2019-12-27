@@ -96,7 +96,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             const string EventNameSuffix = ".OnStopActivity";
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null || span == BlankSpan.Instance)
+            if (span == null || !span.Context.IsValid)
             {
                 CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpInListener) + EventNameSuffix);
                 return;
