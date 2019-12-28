@@ -27,7 +27,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using OpenTelemetry.Trace.Export;
 using Xunit;
+using OpenTelemetry.Resources;
+using Event = OpenTelemetry.Trace.Event;
 
 namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 {
@@ -55,7 +58,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             tracer = TracerFactory.Create(_ => { }).GetTracer(null);
         }
 
-        private ConcurrentQueue<ITelemetry> ConvertSpan(Span otSpan)
+        private ConcurrentQueue<ITelemetry> ConvertSpan(IReadableSpan otSpan)
         {
             var sentItems = new ConcurrentQueue<ITelemetry>();
             var configuration = new TelemetryConfiguration();
@@ -68,7 +71,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             configuration.TelemetryChannel = channel;
 
             var exporter = new ApplicationInsightsTraceExporter(configuration);
-            exporter.ExportAsync(new List<Span> { otSpan }, CancellationToken.None).Wait();
+            exporter.ExportAsync(new List<IReadableSpan> { otSpan }, CancellationToken.None).Wait();
 
             return sentItems;
         }
@@ -83,12 +86,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var startTimestamp = endTimestamp.AddSeconds(-1);
             parentSpanId = default;
             var span = CreateTestSpan(name, traceId, parentSpanId, traceOptions, tracestate, kind, status, 
-                new SpanCreationOptions
-                {
-                    StartTimestamp = startTimestamp,
-                });
+                 new SpanCreationOptions { StartTimestamp = startTimestamp, }, endTimestamp);
 
-            span.End(endTimestamp);
             // ACT
             var sentItems = ConvertSpan(span);
 
@@ -249,7 +248,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 tracestate, kind, status);
 
             span.SetAttribute("error", true);
-            span.End();
 
             var sentItems = ConvertSpan(span);
 
@@ -269,11 +267,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var endTimestamp = DateTimeOffset.UtcNow;
             var startTimestamp = endTimestamp.AddSeconds(-1);
             var span = CreateTestSpan(name, traceId, parentSpanId, traceOptions,
-                tracestate, kind, status, new SpanCreationOptions
-                {
-                    StartTimestamp = startTimestamp,
-                });
-            span.End(endTimestamp);
+                tracestate, kind, status, new SpanCreationOptions { StartTimestamp = startTimestamp, }, endTimestamp);
+
             // ACT
             var sentItems = ConvertSpan(span);
 
@@ -308,11 +303,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             var endTimestamp = DateTimeOffset.UtcNow;
             var startTimestamp = endTimestamp.AddSeconds(-1);
-            var span = CreateTestSpan(name, traceId, parentSpanId, traceOptions, tracestate, kind, status, new SpanCreationOptions
-            {
-                StartTimestamp = startTimestamp,
-            });
-            span.End(endTimestamp);
+            var span = CreateTestSpan(name, traceId, parentSpanId, traceOptions, tracestate, kind, status,
+                new SpanCreationOptions { StartTimestamp = startTimestamp, }, endTimestamp);
+
             // ACT
             var sentItems = ConvertSpan(span);
 
@@ -351,7 +344,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             span.SetAttribute("http.url", TestChannelEndpoint);
             span.SetAttribute("http.method", "POST");
             span.SetAttribute("http.status_code", 200);
-            span.End();
 
             // ACT
             var sentItems = ConvertSpan(span);
@@ -369,12 +361,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             var endTimestamp = DateTimeOffset.UtcNow;
             var startTimestamp = endTimestamp.AddSeconds(-1);
-            var span = CreateTestSpan(name, traceId, parentSpanId, traceOptions, tracestate, kind, status, new SpanCreationOptions
-            {
-                StartTimestamp = startTimestamp,
-            });
-
-            span.End(endTimestamp);
+            var span = CreateTestSpan(name, traceId, parentSpanId, traceOptions, tracestate, kind, status,
+                new SpanCreationOptions { StartTimestamp = startTimestamp, }, endTimestamp);
 
             // ACT
             var sentItems = ConvertSpan(span);
@@ -528,7 +516,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var span = CreateTestSpan(name, traceId, parentSpanId, traceOptions,
                 tracestate, kind, status);
             span.SetAttribute("error", true);
-            span.End();
 
             var sentItems = ConvertSpan(span);
 
@@ -546,7 +533,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var span = CreateTestSpan(name, traceId, parentSpanId, traceOptions,
                 tracestate, kind, status);
             span.SetAttribute("span.kind", "client");
-            span.End();
 
             var sentItems = ConvertSpan(span);
 
@@ -619,7 +605,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 tracestate, kind, status);
 
             span.SetAttribute("span.kind", "client");
-            span.End();
 
             var sentItems = ConvertSpan(span);
 
@@ -1301,7 +1286,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 });
 
             var span = CreateTestSpan(name, traceId, parentSpanId, traceOptions,
-                tracestate, kind, status, new SpanCreationOptions { LinksFactory = () => new [] {parentLink}});
+                tracestate, kind, status, new SpanCreationOptions { Links = new [] { parentLink }});
 
             var sentItems = ConvertSpan(span);
 
@@ -1391,7 +1376,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             };
 
             var span = CreateTestSpan(name, traceId, parentSpanId, traceOptions,
-                tracestate, kind, status, new SpanCreationOptions { LinksFactory = () => parentLinks });
+                tracestate, kind, status, new SpanCreationOptions { Links = parentLinks });
 
             var sentItems = ConvertSpan(span);
 
@@ -1555,25 +1540,74 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             public string id { get; set; }
         }
 
-        internal Span CreateTestSpan(string name,
+        internal TestSpan CreateTestSpan(string name,
             ActivityTraceId traceId,
             ActivitySpanId parentSpanId,
             ActivityTraceFlags traceOptions,
             List<KeyValuePair<string, string>> tracestate,
             SpanKind kind,
             Status status,
-            SpanCreationOptions options = null)
+            SpanCreationOptions options = null,
+            DateTimeOffset endTimestamp = default)
         {
-            var span = parentSpanId == default ? 
-                tracer.StartRootSpan(name, kind, options) :
-                tracer.StartSpan(name, new SpanContext(traceId, parentSpanId, traceOptions, false, tracestate), kind, options);
+            var span = new TestSpan(
+                name,
+                new SpanContext(traceId, ActivitySpanId.CreateRandom(), traceOptions, false, tracestate),
+                kind,
+                options?.StartTimestamp ?? DateTimeOffset.UtcNow,
+                options?.Links ?? Enumerable.Empty<Link>(),
+                parentSpanId,
+                status.IsValid ? status : Status.Ok,
+                endTimestamp != default ? endTimestamp : DateTimeOffset.UtcNow);
 
-            if (status.IsValid)
-            {
-                span.Status = status;
-            }
-
-            return (Span)span;
+            return span;
         }
+    }
+
+    internal class TestSpan : IReadableSpan
+    {
+        public TestSpan(string name,
+            SpanContext context,
+            SpanKind kind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<Link> links,
+            ActivitySpanId parentSpanId,
+            Status status,
+            DateTimeOffset endTimestamp)
+        {
+            this.Name = name;
+            this.Context = context;
+            this.Kind = kind;
+            this.StartTimestamp = startTimestamp;
+            this.Links = links;
+            this.ParentSpanId = parentSpanId;
+            this.Attributes = new List<KeyValuePair<string, object>>();
+            this.Events = new List<Event>();
+            this.Status = status;
+            this.EndTimestamp = endTimestamp;
+        }
+
+        public Trace.SpanContext Context { get; }
+        public string Name { get; }
+        public Status Status { get; }
+        public ActivitySpanId ParentSpanId { get; }
+        public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
+        public IEnumerable<Event> Events { get; }
+        public IEnumerable<Link> Links { get; }
+        public DateTimeOffset StartTimestamp { get; }
+        public DateTimeOffset EndTimestamp { get; }
+        public SpanKind? Kind { get; }
+        public Resource LibraryResource { get; }
+
+        public void SetAttribute(string key, object value)
+        {
+            ((List<KeyValuePair<string, object>>)this.Attributes).Add(new KeyValuePair<string, object>(key, value));
+        }
+
+        public void AddEvent(Event evnt)
+        {
+            ((List<Event>)this.Events).Add(evnt);
+        }
+
     }
 };

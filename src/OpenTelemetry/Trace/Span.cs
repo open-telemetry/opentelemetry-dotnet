@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Span implementation.
     /// </summary>
-    public sealed class Span : ISpan, IDisposable
+    internal sealed class Span : ISpan, IReadableSpan, IDisposable
     {
         internal static readonly Span Invalid = new Span();
         private static readonly ConditionalWeakTable<Activity, Span> ActivitySpanTable = new ConditionalWeakTable<Activity, Span>();

@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         private const uint MaxSpanBatchSize = 32;
         private readonly Channel channel;
         private readonly Proto.Agent.Trace.V1.TraceService.TraceServiceClient traceClient;
-        private readonly ConcurrentQueue<Span> spans = new ConcurrentQueue<Span>();
+        private readonly ConcurrentQueue<IReadableSpan> spans = new ConcurrentQueue<IReadableSpan>();
         private readonly Proto.Agent.Common.V1.Node node;
         private readonly uint spanBatchSize;
         private CancellationTokenSource cts;
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
                 LibraryInfo = new Proto.Agent.Common.V1.LibraryInfo
                 {
                     Language = Proto.Agent.Common.V1.LibraryInfo.Types.Language.CSharp,
-                    CoreLibraryVersion = GetAssemblyVersion(typeof(Span).Assembly),
+                    CoreLibraryVersion = GetAssemblyVersion(typeof(IReadableSpan).Assembly),
                     ExporterVersion = GetAssemblyVersion(typeof(TraceExporter).Assembly),
                 },
                 ServiceInfo = new Proto.Agent.Common.V1.ServiceInfo
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         }
 
         /// <inheritdoc/>
-        public override async Task<ExportResult> ExportAsync(IEnumerable<Span> spanDataList, CancellationToken cancellationToken)
+        public override async Task<ExportResult> ExportAsync(IEnumerable<IReadableSpan> spanDataList, CancellationToken cancellationToken)
         {
             await Task.Run(
                 () =>

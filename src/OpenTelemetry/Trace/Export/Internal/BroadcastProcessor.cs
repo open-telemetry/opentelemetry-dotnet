@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace.Export.Internal
             this.processors = processors;
         }
 
-        public override void OnEnd(Span span)
+        public override void OnEnd(IReadableSpan span)
         {
             foreach (var processor in this.processors)
             {
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace.Export.Internal
             }
         }
 
-        public override void OnStart(Span span)
+        public override void OnStart(IReadableSpan span)
         {
             foreach (var processor in this.processors)
             {

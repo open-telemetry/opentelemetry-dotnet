@@ -155,23 +155,23 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
 
         private class TestProcessor : SpanProcessor, IDisposable
         {
-            private readonly Action<Span> onStart;
-            private readonly Action<Span> onEnd;
+            private readonly Action<IReadableSpan> onStart;
+            private readonly Action<IReadableSpan> onEnd;
             public bool ShutdownCalled { get; private set; } = false;
             public bool DisposedCalled { get; private set; } = false;
 
-            public TestProcessor(Action<Span> onStart, Action<Span> onEnd)
+            public TestProcessor(Action<IReadableSpan> onStart, Action<IReadableSpan> onEnd)
             {
                 this.onStart = onStart;
                 this.onEnd = onEnd;
             }
 
-            public override void OnStart(Span span)
+            public override void OnStart(IReadableSpan span)
             {
                 this.onStart?.Invoke(span);
             }
 
-            public override void OnEnd(Span span)
+            public override void OnEnd(IReadableSpan span)
             {
                 this.onEnd?.Invoke(span);
             }

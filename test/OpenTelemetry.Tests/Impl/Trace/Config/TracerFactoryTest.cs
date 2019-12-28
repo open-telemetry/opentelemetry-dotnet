@@ -245,11 +245,11 @@ namespace OpenTelemetry.Trace.Test
         private class TestProcessor : SpanProcessor, IDisposable
         {
             private readonly SpanExporter exporter;
-            private readonly Action<Span> onEnd;
+            private readonly Action<IReadableSpan> onEnd;
 
             public bool IsDisposed { get; private set; }
 
-            public TestProcessor(Action<Span> onEnd)
+            public TestProcessor(Action<IReadableSpan> onEnd)
             {
                 this.exporter = null;
                 this.onEnd = onEnd;
@@ -266,11 +266,11 @@ namespace OpenTelemetry.Trace.Test
                 IsDisposed = true;
             }
 
-            public override void OnStart(Span span)
+            public override void OnStart(IReadableSpan span)
             {
             }
 
-            public override void OnEnd(Span span)
+            public override void OnEnd(IReadableSpan span)
             {
                 this.onEnd?.Invoke(span);
                 exporter?.ExportAsync(new[] {span}, default);

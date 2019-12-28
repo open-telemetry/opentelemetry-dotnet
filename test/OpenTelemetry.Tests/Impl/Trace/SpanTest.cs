@@ -803,8 +803,8 @@ namespace OpenTelemetry.Trace.Test
             var spanPassedToSpanProcessorHasSpanContext = false;
 
             spanProcessorMock
-                .Setup(s => s.OnStart(It.IsAny<Span>()))
-                .Callback<Span>(s =>
+                .Setup(s => s.OnStart(It.IsAny<IReadableSpan>()))
+                .Callback<IReadableSpan>(s =>
                 {
                     spanPassedToSpanProcessorHasSpanContext = s.Context.IsValid;
                 });

@@ -157,7 +157,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Activity.Current = null;
         }
 
-        private Span[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
+        private IReadableSpan[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
         {
             Assert.True(
                 SpinWait.SpinUntil(() =>

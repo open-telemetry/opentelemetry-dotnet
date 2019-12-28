@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
@@ -42,7 +43,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
 
-        public static JaegerSpan ToJaegerSpan(this Span span)
+        public static JaegerSpan ToJaegerSpan(this IReadableSpan span)
         {
             List<JaegerTag> jaegerTags = null;
 

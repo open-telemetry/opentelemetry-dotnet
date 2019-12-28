@@ -19,6 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Collector.StackExchangeRedis.Implementation;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 using StackExchange.Redis.Profiling;
 
 namespace OpenTelemetry.Collector.StackExchangeRedis
@@ -104,7 +105,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
 
                     // TODO expose end timestamp on ISpan (needed anyway) and use it as indicator that span has ended.
                     // after that, Redis can depend on abstractions
-                    if (span is Span spanImpl && spanImpl.EndTimestamp != default)
+                    if (span is IReadableSpan spanImpl && spanImpl.EndTimestamp != default)
                     {
                         this.cache.TryRemove(span, out session);
                     }

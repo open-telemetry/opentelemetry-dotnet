@@ -19,8 +19,11 @@ using OpenTelemetry.Exporter.LightStep.Implementation;
 using OpenTelemetry.Trace.Configuration;
 using System;
 using System.Diagnostics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 using Xunit;
+using SpanContext = OpenTelemetry.Trace.SpanContext;
 
 namespace OpenTelemetry.Exporter.LightStep.Tests
 {
@@ -72,29 +75,19 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
             var link = new Link(new Trace.SpanContext(
                 traceId, linkedSpanId, ActivityTraceFlags.Recorded));
 
-            var span = (Span)tracer
-                .StartSpan("Test", new Trace.SpanContext(traceId, parentId, ActivityTraceFlags.Recorded), SpanKind.Client,
-                    new SpanCreationOptions
-                    {
-                        StartTimestamp = startTs,
-                        Links = new[] { link },
-                    });
+            var span = new TestSpan(
+                "Test",
+                new SpanContext(traceId, ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded),
+                SpanKind.Client,
+                startTs,
+                new[] { link },
+                parentId,
+                attrs,
+                evts,
+                Status.Ok,
+                endTs);
 
             var spanIdInt = span.Context.SpanId.ToLSSpanId();
-
-            foreach (var attribute in attrs)
-            {
-                span.SetAttribute(attribute.Key, attribute.Value);
-            }
-
-            foreach (var evnt in evts)
-            {
-                span.AddEvent(evnt);
-            }
-
-
-            span.End(endTs);
-            span.Status = Status.Ok;
 
             var lsSpan = span.ToLightStepSpan();
 
@@ -106,5 +99,43 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
             Assert.Equal(spanIdInt, lsSpan.SpanContext.SpanId);
             Assert.Equal(parentIdInt, lsSpan.References[0].SpanContext.SpanId);
         }
+    }
+
+    internal class TestSpan : IReadableSpan
+    {
+        public TestSpan(string name,
+            Trace.SpanContext context,
+            SpanKind kind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<Link> links,
+            ActivitySpanId parentSpanId,
+            IEnumerable<KeyValuePair<string, object>> attributes,
+            IEnumerable<Event> events,
+            Status status,
+            DateTimeOffset endTimestamp)
+        {
+            this.Name = name;
+            this.Context = context;
+            this.Kind = kind;
+            this.StartTimestamp = startTimestamp;
+            this.Links = links;
+            this.ParentSpanId = parentSpanId;
+            this.Attributes = attributes;
+            this.Events = events;
+            this.Status = status;
+            this.EndTimestamp = endTimestamp;
+        }
+
+        public Trace.SpanContext Context { get; }
+        public string Name { get; }
+        public Status Status { get; }
+        public ActivitySpanId ParentSpanId { get; }
+        public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
+        public IEnumerable<Event> Events { get; }
+        public IEnumerable<Link> Links { get; }
+        public DateTimeOffset StartTimestamp { get; }
+        public DateTimeOffset EndTimestamp { get; }
+        public SpanKind? Kind { get; }
+        public Resource LibraryResource { get; }
     }
 }
