@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace.Configuration
             configure(options);
             return builder.AddProcessorPipeline(b => b
                 .SetExporter(new ConsoleTraceExporter(options))
-                .SetExportingProcessor(e => new BatchingSpanProcessor(e)));
+                .SetExportingProcessor(e => new SimpleSpanProcessor(e)));
         }
 
         /// <summary>
@@ -78,7 +78,8 @@ namespace OpenTelemetry.Trace.Configuration
             configure(options);
             return builder.AddProcessorPipeline(b =>
             {
-                b.SetExporter(new ConsoleTraceExporter(options));
+                b.SetExporter(new ConsoleTraceExporter(options))
+                    .SetExportingProcessor(e => new SimpleSpanProcessor(e));
                 processorConfigure.Invoke(b);
             });
         }

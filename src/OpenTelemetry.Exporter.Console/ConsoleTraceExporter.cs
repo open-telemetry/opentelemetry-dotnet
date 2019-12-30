@@ -41,7 +41,11 @@ namespace OpenTelemetry.Exporter.Console
         /// <inheritdoc/>
         public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
         {
-            System.Console.WriteLine(JsonConvert.SerializeObject(batch, this.options.PrettyPrint ? Formatting.Indented : Formatting.None));
+            foreach (var span in batch)
+            {
+                System.Console.WriteLine(JsonConvert.SerializeObject(span, this.options.PrettyPrint ? Formatting.Indented : Formatting.None));
+            }
+
             return Task.FromResult(ExportResult.Success);
         }
 

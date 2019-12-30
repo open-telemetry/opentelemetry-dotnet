@@ -24,6 +24,6 @@ namespace OpenTelemetry.Exporter.Console
         /// <summary>
         /// Gets or sets a value indicating whether output should be pretty printed.
         /// </summary>
-        public bool PrettyPrint { get; set; }
+        public bool PrettyPrint { get; set; } = true;
     }
 }
