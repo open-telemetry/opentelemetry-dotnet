@@ -180,7 +180,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             {
                 span = this.tracer.StartSpan(this.spanName, this.parentSpanContext, this.spanKind, options);
             }
-            else if (this.parentSpan == null && !this.parentSpanContext.IsValid && (this.tracer.CurrentSpan == null || this.tracer.CurrentSpan == Trace.BlankSpan.Instance))
+            else if (this.parentSpan == null && !this.parentSpanContext.IsValid && (this.tracer.CurrentSpan == null || !this.tracer.CurrentSpan.Context.IsValid))
             {
                 // We need to know if we should inherit an existing Activity-based context or start a new one.
                 if (System.Diagnostics.Activity.Current != null && System.Diagnostics.Activity.Current.IdFormat == System.Diagnostics.ActivityIdFormat.W3C)

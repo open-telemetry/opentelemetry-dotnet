@@ -37,14 +37,14 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void CurrentSpan_WhenNoContext()
         {
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
         public void CurrentSpan_WhenNoSpanOnActivity()
         {
             var a = new Activity("foo").Start();
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
         }
 
         [Theory]
@@ -57,14 +57,14 @@ namespace OpenTelemetry.Trace.Test
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
             var span = (Span)tracer.StartSpan("foo", spanContext);
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             using (this.tracer.WithSpan(span, endSpan))
             {
                 Assert.Same(span.Activity, Activity.Current);
                 Assert.Same(span, this.tracer.CurrentSpan);
             }
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             Assert.Null(Activity.Current);
 
             if (endSpan)
@@ -82,14 +82,14 @@ namespace OpenTelemetry.Trace.Test
         {
             var span = (Span)tracer.StartSpan("foo");
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             using (this.tracer.WithSpan(span))
             {
                 Assert.Same(span.Activity, Activity.Current);
                 Assert.Same(span, this.tracer.CurrentSpan);
             }
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             Assert.Null(Activity.Current);
 
             // span not ended
@@ -101,14 +101,14 @@ namespace OpenTelemetry.Trace.Test
         {
             var span = (Span)tracer.StartSpan("foo");
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             using (this.tracer.WithSpan(span))
             {
                 Assert.Same(span.Activity, Activity.Current);
                 Assert.Same(span, this.tracer.CurrentSpan);
             }
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             Assert.Null(Activity.Current);
 
             using (this.tracer.WithSpan(span))
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Same(span, this.tracer.CurrentSpan);
             }
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             Assert.Null(Activity.Current);
 
             // span not ended
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Trace.Test
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
             var span = (Span)tracer.StartSpan("foo", spanContext);
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             using (this.tracer.WithSpan(span, endSpan))
             {
                 Assert.Same(span.Activity, Activity.Current);
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Trace.Test
                 if (endSpan)
                 {
                     Assert.Null(Activity.Current);
-                    Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+                    Assert.False(this.tracer.CurrentSpan.Context.IsValid);
                 }
                 else
                 {
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Trace.Test
                 }
             }
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             Assert.Null(Activity.Current);
         }
 
@@ -183,7 +183,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Same(((Span)span).Activity, Activity.Current);
             }
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             Assert.Equal(activity, Activity.Current);
 
             // span ended
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Same(span.Activity, Activity.Current);
             }
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             Assert.Null(Activity.Current);
 
             // span ended
@@ -218,7 +218,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Same(scope, this.tracer.WithSpan(span));
             }
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             Assert.Null(Activity.Current);
         }
 
@@ -294,7 +294,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Same(span, this.tracer.CurrentSpan);
             }
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             Assert.Null(Activity.Current);
 
             // span not ended
@@ -311,11 +311,11 @@ namespace OpenTelemetry.Trace.Test
             using (this.tracer.WithSpan(span))
             {
                 Assert.Null(Activity.Current);
-                Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+                Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             }
 
             Assert.Null(Activity.Current);
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
 
             // span not ended
             Assert.Equal(default, span.EndTimestamp);
@@ -329,7 +329,7 @@ namespace OpenTelemetry.Trace.Test
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
 
             var span = (Span)tracer.StartSpan("foo", spanContext);
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             using (this.tracer.WithSpan(span))
             {
                 Assert.Same(span.Activity, Activity.Current);
@@ -338,7 +338,7 @@ namespace OpenTelemetry.Trace.Test
                 var anotherActivity = new Activity("foo").Start();
             }
 
-            Assert.Same(BlankSpan.Instance, this.tracer.CurrentSpan);
+            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             Assert.NotSame(span.Activity, Activity.Current);
             Assert.NotNull(Activity.Current);
 

@@ -20,7 +20,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Blank span.
     /// </summary>
-    public sealed class BlankSpan : ISpan
+    internal sealed class BlankSpan : ISpan
     {
         /// <summary>
         /// Blank span instance.
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public SpanContext Context => SpanContext.BlankLocal;
+        public SpanContext Context => default;
 
         /// <inheritdoc />
         public bool IsRecording => false;

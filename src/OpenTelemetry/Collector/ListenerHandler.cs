@@ -36,7 +36,7 @@ namespace OpenTelemetry.Collector
         {
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null || span == BlankSpan.Instance)
+            if (span == null || !span.Context.IsValid)
             {
                 CollectorEventSource.Log.NullOrBlankSpan("ListenerHandler.OnStopActivity");
                 return;
