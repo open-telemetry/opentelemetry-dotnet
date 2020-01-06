@@ -24,9 +24,12 @@ using OpenTelemetry.Trace.Export;
 using Moq;
 using Microsoft.AspNetCore.TestHost;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
 using System.Net.Http;
+using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace.Samplers;
 using TestApp.AspNetCore._3._0;
 
@@ -130,6 +133,52 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             Assert.Equal(expectedTraceId, span.Context.TraceId);
             Assert.Equal(expectedSpanId, span.ParentSpanId);
         }
+
+        [Fact]
+        public async Task CustomTextFormat()
+        {
+            var spanProcessor = new Mock<SpanProcessor>();
+
+            var expectedTraceId = ActivityTraceId.CreateRandom();
+            var expectedSpanId = ActivitySpanId.CreateRandom();
+
+            var textFormat = new Mock<ITextFormat>();
+            textFormat.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new SpanContext(
+                expectedTraceId,
+                expectedSpanId,
+                ActivityTraceFlags.Recorded,
+                true));
+
+            // Arrange
+            using (var testFactory = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(services =>
+                    {
+                        services.AddSingleton<TracerFactory>(_ =>
+                            TracerFactory.Create(b => b
+                                .SetTextFormat(textFormat.Object)
+                                .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
+                                .AddRequestCollector()));
+                    })))
+            using (var client = testFactory.CreateClient())
+            {
+                var response = await client.GetAsync("/api/values/2");
+                response.EnsureSuccessStatusCode(); // Status Code 200-299
+
+                WaitForProcessorInvocations(spanProcessor, 2);
+            }
+
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
+
+            Assert.Equal(SpanKind.Server, span.Kind);
+            Assert.Equal("api/Values/{id}", span.Name);
+            Assert.Equal("/api/values/2", span.Attributes.GetValue("http.path"));
+
+            Assert.Equal(expectedTraceId, span.Context.TraceId);
+            Assert.Equal(expectedSpanId, span.ParentSpanId);
+        }
+
 
         [Fact]
         public async Task FilterOutRequest()
