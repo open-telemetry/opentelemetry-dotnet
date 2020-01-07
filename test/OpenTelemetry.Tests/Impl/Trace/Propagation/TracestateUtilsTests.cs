@@ -36,18 +36,32 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         }
 
         [Theory]
-        [InlineData("k=", 0)]
-        [InlineData("=v", 0)]
-        [InlineData("kv", 0)]
-        [InlineData("k=v,k=v", 1)]
-        [InlineData("k1=v1,,,k2=v2", 1)]
-        [InlineData("k=morethan256......................................................................................................................................................................................................................................................", 0)]
-        [InlineData("v=morethan256......................................................................................................................................................................................................................................................", 0)]
-        public void InvalidTracestate(string tracestate, int validEntriesCount)
+        [InlineData("k=")]
+        [InlineData("=v")]
+        [InlineData("kv")]
+        [InlineData("k =v")]
+        [InlineData("k\t=v")]
+        [InlineData("k=v,k=v")]
+        [InlineData("k1=v1,,,k2=v2")]
+        [InlineData("k=morethan256......................................................................................................................................................................................................................................................")]
+        [InlineData("v=morethan256......................................................................................................................................................................................................................................................")]
+        public void InvalidTracestate(string tracestate)
         {
             var tracestateEntries = new List<KeyValuePair<string, string>>();
             Assert.False(TracestateUtils.AppendTracestate(tracestate, tracestateEntries));
-            Assert.Equal(validEntriesCount, tracestateEntries.Count);
+            Assert.Empty(tracestateEntries);
+        }
+
+        [Fact]
+        public void MaxEntries()
+        {
+            var tracestateEntries = new List<KeyValuePair<string, string>>();
+            var tracestate =
+                "k0=v,k1=v,k2=v,k3=v,k4=v,k5=v,k6=v,k7=v1,k8=v,k9=v,k10=v,k11=v,k12=v,k13=v,k14=v,k15=v,k16=v,k17=v,k18=v,k19=v,k20=v,k21=v,k22=v,k23=v,k24=v,k25=v,k26=v,k27=v1,k28=v,k29=v,k30=v,k31=v";
+            Assert.True(TracestateUtils.AppendTracestate(tracestate, tracestateEntries));
+            Assert.Equal(32, tracestateEntries.Count);
+            Assert.Equal("k0=v,k1=v,k2=v,k3=v,k4=v,k5=v,k6=v,k7=v1,k8=v,k9=v,k10=v,k11=v,k12=v,k13=v,k14=v,k15=v,k16=v,k17=v,k18=v,k19=v,k20=v,k21=v,k22=v,k23=v,k24=v,k25=v,k26=v,k27=v1,k28=v,k29=v,k30=v,k31=v",
+                TracestateUtils.GetString(tracestateEntries));
         }
 
         [Fact]
@@ -55,22 +69,20 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         {
             var tracestateEntries = new List<KeyValuePair<string, string>>();
             var tracestate =
-                "k0=v,k1=v,k2=v,k3=v,k4=v,k5=v,k6=v,k7=v1,k8=v,k9=v,k10=v,k11=v,k12=v,k13=v,k14=v,k15=v,k16=v,k17=v,k18=v,k19=v,k20=v,k21=v,k22=v,k23=v,k24=v,k25=v,k26=v,k27=v1,k28=v,k29=v,k30=v,k31=v,k32=v,k33=v";
-            Assert.True(TracestateUtils.AppendTracestate(tracestate, tracestateEntries));
-            Assert.Equal(32, tracestateEntries.Count);
-            Assert.DoesNotContain(new KeyValuePair<string, string>("k33", "v"), tracestateEntries);
-
-            Assert.Equal("k0=v,k1=v,k2=v,k3=v,k4=v,k5=v,k6=v,k7=v1,k8=v,k9=v,k10=v,k11=v,k12=v,k13=v,k14=v,k15=v,k16=v,k17=v,k18=v,k19=v,k20=v,k21=v,k22=v,k23=v,k24=v,k25=v,k26=v,k27=v1,k28=v,k29=v,k30=v,k31=v",
-                TracestateUtils.GetString(tracestateEntries));
+                "k0=v,k1=v,k2=v,k3=v,k4=v,k5=v,k6=v,k7=v1,k8=v,k9=v,k10=v,k11=v,k12=v,k13=v,k14=v,k15=v,k16=v,k17=v,k18=v,k19=v,k20=v,k21=v,k22=v,k23=v,k24=v,k25=v,k26=v,k27=v1,k28=v,k29=v,k30=v,k31=v,k32=v";
+            Assert.False(TracestateUtils.AppendTracestate(tracestate, tracestateEntries));
+            Assert.Empty(tracestateEntries);
         }
 
         [Theory]
         [InlineData("k=v")]
         [InlineData(" k=v ")]
-        [InlineData(" k = v ")]
-        [InlineData("\tk\t=\tv\t")]
+        [InlineData("\tk=v")]
+        [InlineData(" k= v ")]
         [InlineData(",k=v,")]
-        [InlineData(", k = v, ")]
+        [InlineData(", k= v, ")]
+        [InlineData("k=\tv")]
+        [InlineData("k=v\t")]
         public void ValidPair(string pair)
         {
             var tracestateEntries = new List<KeyValuePair<string, string>>();
