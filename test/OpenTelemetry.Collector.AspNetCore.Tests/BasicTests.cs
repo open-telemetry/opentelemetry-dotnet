@@ -31,7 +31,7 @@ using System.Net.Http;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace.Samplers;
-using TestApp.AspNetCore._3._0;
+using TestApp.AspNetCore._3._1;
 
 namespace OpenTelemetry.Collector.AspNetCore.Tests
 {
