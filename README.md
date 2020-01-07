@@ -8,16 +8,17 @@ We hold regular meetings. See details at [community page](https://github.com/ope
 
 Approvers ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
-- [Liudmila Molkova](https://github.com/lmolkova), Microsoft
-- [Christoph Neumueller](https://github.com/discostu105), Dynatrace
 - [Bruno Garcia](https://github.com/bruno-garcia), Sentry
+- [Christoph Neumueller](https://github.com/discostu105), Dynatrace
+- [Liudmila Molkova](https://github.com/lmolkova), Microsoft
+- [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
 
 *Find more about the approver role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).*
 
 Maintainers ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
-- [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Microsoft
 - [Austin Parker](https://github.com/austinlparker), LightStep
+- [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Microsoft
 
 *Find more about the maintainer role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
 
