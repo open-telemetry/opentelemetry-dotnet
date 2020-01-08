@@ -33,13 +33,15 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// </summary>
         /// <param name="builder">The <see cref="IWebHostBuilder"/> to configure.</param>
         /// <param name="options">The <see cref="PrometheusExporterOptions"/> to configure the exporter with.</param>
+        /// <param name="metric">The <see cref="Metric{T}"/> to export.</param>
+        /// <typeparam name="T">The type of metric value.</typeparam>
         /// <returns>The <see cref="IWebHostBuilder"/> for chaining.</returns>
-        public static IWebHostBuilder UsePrometheus<T>(this IHostBuilder builder, PrometheusExporterOptions options, Metric<T> metric)
+        public static IWebHostBuilder UsePrometheus<T>(this IWebHostBuilder builder, PrometheusExporterOptions options, Metric<T> metric)
             where T : struct
         {
             return builder.ConfigureServices((context, services) =>
             {
-                services.AddPrometheus(options, metric);
+                services.AddSingleton(new PrometheusExporter<T>(options, metric));
             });
         }
 
@@ -48,6 +50,8 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// </summary>
         /// <param name="builder">The <see cref="IWebHostBuilder"/> to configure.</param>
         /// <param name="configure">A <see cref="Action{PrometheusExporterOptions}"/> to configure the exporter with.</param>
+        /// <param name="metric">The <see cref="Metric{T}"/> to export.</param>
+        /// <typeparam name="T">The type of metric value.</typeparam>
         /// <returns>The <see cref="IWebHostBuilder"/> for chaining.</returns>
         public static IWebHostBuilder UsePrometheus<T>(this IWebHostBuilder builder, Action<PrometheusExporterOptions> configure, Metric<T> metric)
             where T : struct
@@ -56,16 +60,6 @@ namespace OpenTelemetry.Exporter.Prometheus
             configure(options);
 
             return builder.UsePrometheus(options, metric);
-        }
-    }
-
-    public static class ServicesCollectionExtensions
-    {
-        public static IServiceCollection AddPrometheus<T>(this IServiceCollection services, PrometheusExporterOptions options, Metric<T> metric)
-            where T : struct
-        {
-            services.AddSingleton(new PrometheusExporter<T>(options, metric));
-            return services;
         }
     }
 }
