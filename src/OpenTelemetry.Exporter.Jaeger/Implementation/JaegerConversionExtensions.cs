@@ -51,6 +51,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 jaegerTags = attributeMap.Select(a => a.ToJaegerTag()).ToList();
             }
 
+            // Add any Span resource attributes as Jaeger tags
+            // Resource attributes should follow https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md
+            if (span?.LibraryResource.Attributes is IEnumerable<KeyValuePair<string, object>> resourceAttributeMap)
+            {
+                jaegerTags.AddRange(resourceAttributeMap.Select(a => a.ToJaegerTag()));
+            }
+
             // The Span.Kind must translate into a tag.
             // See https://opentracing.io/specification/conventions/
             if (span.Kind.HasValue)

@@ -35,7 +35,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
         public JaegerSpanConverterTest()
         {
-            tracer = TracerFactory.Create(b => { }).GetTracer(null);
+            tracer = TracerFactory.Create(
+                b =>
+                {
+                    b.SetResource(new Resources.Resource(new List<KeyValuePair<string, object>>
+                    {
+                        new KeyValuePair<string, object>("service.name", "foobar"),
+                    })); ;
+                }).GetTracer(null);
         }
 
         [Fact]
@@ -94,6 +101,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(JaegerTagType.BOOL, tag.VType);
             Assert.Equal("boolKey", tag.Key);
             Assert.Equal(true, tag.VBool);
+
+            // Resource attribute check
+            tag = tags[6];
+            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal("service.name", tag.Key);
+            Assert.Equal("foobar", tag.VStr);
 
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
