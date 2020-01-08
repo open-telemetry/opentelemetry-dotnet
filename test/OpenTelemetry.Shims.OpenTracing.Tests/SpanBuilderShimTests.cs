@@ -31,7 +31,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void CtorArgumentValidation()
         {
             Assert.Throws<ArgumentNullException>(() => new SpanBuilderShim(null, "foo"));
-            Assert.Throws<ArgumentNullException>(() => new SpanBuilderShim(new Mock<ITracer>().Object, null));
+            Assert.Throws<ArgumentNullException>(() => new SpanBuilderShim(new Mock<Tracer>().Object, null));
         }
 
         [Fact]
@@ -324,9 +324,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Equal(spanMock, span.Span);
         }
 
-        private static Mock<ITracer> GetDefaultTracerMock(SpanMock spanMock = null)
+        private static Mock<Tracer> GetDefaultTracerMock(SpanMock spanMock = null)
         {
-            var mock = new Mock<ITracer>();
+            var mock = new Mock<Tracer>();
             spanMock = spanMock ?? Defaults.GetOpenTelemetrySpanMock();
 
             mock.Setup(x => x.StartRootSpan(It.IsAny<string>(), It.IsAny<SpanKind>(), It.IsAny<SpanCreationOptions>())).Returns(spanMock);

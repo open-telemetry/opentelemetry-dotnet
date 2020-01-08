@@ -21,6 +21,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Collector.Dependencies.Implementation
@@ -34,7 +35,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         private readonly bool httpClientSupportsW3C = false;
         private readonly HttpClientCollectorOptions options;
 
-        public HttpHandlerDiagnosticListener(ITracer tracer, HttpClientCollectorOptions options)
+        public HttpHandlerDiagnosticListener(Tracer tracer, HttpClientCollectorOptions options)
             : base("HttpHandlerDiagnosticListener", tracer)
         {
             var framework = Assembly
@@ -83,7 +84,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 }
             }
 
-            if (!this.httpClientSupportsW3C)
+            if (!(this.httpClientSupportsW3C && this.Tracer.TextFormat is TraceContextFormat))
             {
                 this.Tracer.TextFormat.Inject<HttpRequestMessage>(span.Context, request, (r, k, v) => r.Headers.Add(k, v));
             }
@@ -94,7 +95,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             const string EventNameSuffix = ".OnStopActivity";
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null || span == BlankSpan.Instance)
+            if (span == null || !span.Context.IsValid)
             {
                 CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
                 return;
@@ -132,7 +133,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             const string EventNameSuffix = ".OnException";
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null || span == BlankSpan.Instance)
+            if (span == null || !span.Context.IsValid)
             {
                 CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
                 return;

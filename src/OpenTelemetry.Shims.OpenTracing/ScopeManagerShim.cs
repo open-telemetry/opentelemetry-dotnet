@@ -25,13 +25,13 @@ namespace OpenTelemetry.Shims.OpenTracing
     {
         private static readonly ConditionalWeakTable<Trace.ISpan, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<Trace.ISpan, global::OpenTracing.IScope>();
 
-        private readonly Trace.ITracer tracer;
+        private readonly Trace.Tracer tracer;
 
 #if DEBUG
         private int spanScopeTableCount;
 #endif
 
-        public ScopeManagerShim(Trace.ITracer tracer)
+        public ScopeManagerShim(Trace.Tracer tracer)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
         }
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             get
             {
                 var currentSpan = this.tracer.CurrentSpan;
-                if (currentSpan == Trace.BlankSpan.Instance)
+                if (currentSpan == null || !currentSpan.Context.IsValid)
                 {
                     return null;
                 }

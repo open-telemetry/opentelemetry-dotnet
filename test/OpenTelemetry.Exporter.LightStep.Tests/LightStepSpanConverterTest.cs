@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
 {
     public class LightStepSpanConverterTest
     {
-        private readonly ITracer tracer;
+        private readonly Tracer tracer;
 
         public LightStepSpanConverterTest()
         {
@@ -84,7 +84,7 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
 
             foreach (var attribute in attrs)
             {
-                span.SetAttribute(attribute);
+                span.SetAttribute(attribute.Key, attribute.Value);
             }
 
             foreach (var evnt in evts)

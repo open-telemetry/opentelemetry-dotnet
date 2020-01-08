@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace.Test
         private const string SpanName = "MySpanName";
         private readonly SpanProcessor spanProcessor;
         private readonly TracerConfiguration tracerConfiguration;
-        private readonly Tracer tracer;
+        private readonly TracerSdk tracerSdk;
         private readonly TracerFactory tracerFactory;
 
         public TracerTest()
@@ -45,74 +45,114 @@ namespace OpenTelemetry.Trace.Test
             tracerConfiguration = new TracerConfiguration();
             tracerFactory = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor)));
-            tracer = (Tracer)tracerFactory.GetTracer(null);
+            this.tracerSdk = (TracerSdk)tracerFactory.GetTracer(null);
         }
 
         [Fact]
         public void BadConstructorArgumentsThrow()
         {
             var noopProc = new SimpleSpanProcessor(new TestExporter(null));
-            Assert.Throws<ArgumentNullException>(() => new Tracer(null, new AlwaysSampleSampler(), new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new TracerSdk(null, new AlwaysSampleSampler(), new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new AlwaysSampleSampler(), null, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysSampleSampler(), null, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new AlwaysSampleSampler(), new TracerConfiguration(), null, new TraceContextFormat(), Resource.Empty));
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new AlwaysSampleSampler(), new TracerConfiguration(), new BinaryFormat(), null, Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysSampleSampler(), new TracerConfiguration(), null, new TraceContextFormat(), Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysSampleSampler(), new TracerConfiguration(), new BinaryFormat(), null, Resource.Empty));
 
-            Assert.Throws<ArgumentNullException>(() => new Tracer(noopProc, new AlwaysSampleSampler(), new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), null));
+            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysSampleSampler(), new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), null));
         }
 
         [Fact]
-        public void Tracer_CreateSpan_BadArgs()
+        public void Tracer_StartRootSpan_BadArgs_NullSpanName()
         {
-            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartRootSpan(null, SpanKind.Client, null));
+            var span1 = (Span)this.tracerSdk.StartRootSpan(null);
+            Assert.Equal(string.Empty, span1.Name);
 
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanKind.Client, null));
+            var span2 = (Span)this.tracerSdk.StartRootSpan(null, SpanKind.Client);
+            Assert.Equal(string.Empty, span2.Name);
 
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, BlankSpan.Instance, SpanKind.Client, null));
+            var span3 = (Span)this.tracerSdk.StartRootSpan(null, SpanKind.Client, null);
+            Assert.Equal(string.Empty, span3.Name);
+        }
 
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.BlankLocal));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client));
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpan(null, SpanContext.BlankLocal, SpanKind.Client, null));
+        [Fact]
+        public void Tracer_StartSpan_BadArgs_NullSpanName()
+        {
+            var span1 = (Span)this.tracerSdk.StartSpan(null);
+            Assert.Equal(string.Empty, span1.Name);
 
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpanFromActivity(null, new Activity("foo").Start()));
+            var span2 = (Span)this.tracerSdk.StartSpan(null, SpanKind.Client);
+            Assert.Equal(string.Empty, span2.Name);
 
-            Assert.Throws<ArgumentNullException>(() => tracer.StartSpanFromActivity("foo", null));
+            var span3 = (Span)this.tracerSdk.StartSpan(null, SpanKind.Client, null);
+            Assert.Equal(string.Empty, span3.Name);
+        }
 
-            Assert.Throws<ArgumentException>(() => tracer.StartSpanFromActivity("foo", new Activity("foo")));
+        [Fact]
+        public void Tracer_StartSpan_FromParent_BadArgs_NullSpanName()
+        {
+            var span1 = (Span)this.tracerSdk.StartSpan(null, BlankSpan.Instance);
+            Assert.Equal(string.Empty, span1.Name);
 
-            Assert.Throws<ArgumentException>(() => tracer.StartSpanFromActivity(
-                    "foo",
-                    new Activity("foo").SetIdFormat(ActivityIdFormat.Hierarchical).Start()));
+            var span2 = (Span)this.tracerSdk.StartSpan(null, BlankSpan.Instance, SpanKind.Client);
+            Assert.Equal(string.Empty, span2.Name);
+
+            var span3 = (Span)this.tracerSdk.StartSpan(null, BlankSpan.Instance, SpanKind.Client, null);
+            Assert.Equal(string.Empty, span3.Name);
+        }
+
+        [Fact]
+        public void Tracer_StartSpan_FromParentContext_BadArgs_NullSpanName()
+        {
+            var blankContext = default(SpanContext);
+            var span1 = (Span)this.tracerSdk.StartSpan(null, blankContext);
+            Assert.Equal(string.Empty, span1.Name);
+
+            var span2 = (Span)this.tracerSdk.StartSpan(null, blankContext, SpanKind.Client);
+            Assert.Equal(string.Empty, span2.Name);
+
+            var span3 = (Span)this.tracerSdk.StartSpan(null, blankContext, SpanKind.Client, null);
+            Assert.Equal(string.Empty, span3.Name);
+        }
+
+        [Fact]
+        public void Tracer_StartSpan_FromActivity_BadArgs_NullSpanName()
+        {
+            var span = (Span)this.tracerSdk.StartSpanFromActivity(null, new Activity("foo").Start());
+            Assert.Equal(string.Empty, span.Name);
+        }
+
+        [Fact]
+        public void Tracer_StartSpan_FromActivity_BadArgs_NullActivity()
+        {
+            var span = (Span)this.tracerSdk.StartSpanFromActivity("foo", null);
+            Assert.NotNull(span);
+            Assert.Equal("foo", span.Name);
+            Assert.Equal(default, span.ParentSpanId);
         }
 
         [Fact]
         public void GetCurrentSpanBlank()
         {
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+            Assert.False(this.tracerSdk.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
         public void GetCurrentSpan()
         {
-            var span = tracer.StartSpan("foo");
-            using (tracer.WithSpan(span))
+            var span = this.tracerSdk.StartSpan("foo");
+            using (this.tracerSdk.WithSpan(span))
             {
-                Assert.Same(span, tracer.CurrentSpan);
+                Assert.Same(span, this.tracerSdk.CurrentSpan);
             }
-            Assert.Same(BlankSpan.Instance, tracer.CurrentSpan);
+
+            Assert.False(this.tracerSdk.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
         public void CreateSpan_Sampled()
         {
-            var span = tracer.StartSpan("foo");
+            var span = this.tracerSdk.StartSpan("foo");
             Assert.True(span.IsRecording);
         }
 
@@ -131,8 +171,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void CreateSpan_ByTracerWithResource()
         {
-
-            var tracer = (Tracer)tracerFactory.GetTracer("foo", "semver:1.0.0");
+            var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.0.0");
             var span = (Span)tracer.StartSpan("some span");
             Assert.Equal(tracer.LibraryResource, span.LibraryResource);
         }
@@ -140,19 +179,26 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void WithSpanNull()
         {
-            Assert.Throws<ArgumentNullException>(() => tracer.WithSpan(null));
+            Assert.NotNull(this.tracerSdk.WithSpan(null));
+            Assert.False(this.tracerSdk.CurrentSpan.Context.IsValid);
+
+            using (this.tracerSdk.StartActiveSpan("some span", out var span))
+            {
+                this.tracerSdk.WithSpan(null);
+                Assert.Equal(span, this.tracerSdk.CurrentSpan);
+            }
         }
 
         [Fact]
         public void GetTextFormat()
         {
-            Assert.NotNull(tracer.TextFormat);
+            Assert.NotNull(this.tracerSdk.TextFormat);
         }
 
         [Fact]
         public void GetBinaryFormat()
         {
-            Assert.NotNull(tracer.BinaryFormat);
+            Assert.NotNull(this.tracerSdk.BinaryFormat);
         }
 
         [Fact]
@@ -339,7 +385,7 @@ namespace OpenTelemetry.Trace.Test
                 .GetTracer(null);
 
             var span = (Span)tracer.StartRootSpan(SpanName);
-            for (var i = 0; i < 2 * maxNumberOfAttributes; i++)
+            for (long i = 0; i < 2 * maxNumberOfAttributes; i++)
             {
                 span.SetAttribute("MyStringAttributeKey" + i, i);
             }

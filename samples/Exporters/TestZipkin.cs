@@ -50,7 +50,7 @@ namespace Samples
             return null;
         }
 
-        private static void DoWork(int i, ITracer tracer)
+        private static void DoWork(int i, Tracer tracer)
         {
             // Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be
@@ -70,9 +70,8 @@ namespace Samples
                 }
 
                 // Annotate our span to capture metadata about our operation
-                var attributes = new Dictionary<string, object>();
-                attributes.Add("use", "demo");
-                span.AddEvent("Invoking DoWork", attributes);
+                var attributes = new Dictionary<string, object> { { "use", "demo" } };
+                span.AddEvent(new Event("Invoking DoWork", attributes));
             }
         }
     }

@@ -18,7 +18,7 @@ using System.IO;
 
 namespace OpenTelemetry.Internal
 {
-    public static class VarInt
+    internal static class VarInt
     {
         /// <summary>
         /// Maximum encoded size of 32-bit positive integers (in bytes).

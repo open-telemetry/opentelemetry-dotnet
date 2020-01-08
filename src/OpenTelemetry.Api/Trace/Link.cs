@@ -13,47 +13,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using System.Collections.Generic;
-using System.Linq;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Link associated with the span.
     /// </summary>
-    public sealed class Link
+    public readonly struct Link
     {
         private static readonly IDictionary<string, object> EmptyAttributes = new Dictionary<string, object>();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Link"/> class.
+        /// Initializes a new instance of the <see cref="Link"/> struct.
         /// </summary>
         /// <param name="spanContext">Span context of a linked span.</param>
-        public Link(SpanContext spanContext)
+        public Link(in SpanContext spanContext)
             : this(spanContext, EmptyAttributes)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Link"/> class.
+        /// Initializes a new instance of the <see cref="Link"/> struct.
         /// </summary>
         /// <param name="spanContext">Span context of a linked span.</param>
         /// <param name="attributes">Link attributes.</param>
-        public Link(SpanContext spanContext, IDictionary<string, object> attributes)
+        public Link(in SpanContext spanContext, IDictionary<string, object> attributes)
         {
-            if (spanContext == null)
-            {
-                throw new ArgumentNullException(nameof(spanContext));
-            }
-
-            if (!spanContext.IsValid)
-            {
-                throw new ArgumentException(nameof(spanContext));
-            }
-
-            this.Context = spanContext;
-            this.Attributes = attributes ?? throw new ArgumentNullException(nameof(attributes));
+            this.Context = spanContext.IsValid ? spanContext : default;
+            this.Attributes = attributes ?? EmptyAttributes;
         }
 
         /// <summary>
@@ -66,34 +55,40 @@ namespace OpenTelemetry.Trace
         /// </summary>
         public IDictionary<string, object> Attributes { get; }
 
-        /// <inheritdoc/>
-        public override bool Equals(object o)
+        /// <summary>
+        /// Compare two <see cref="Link"/> for equality.
+        /// </summary>
+        /// <param name="link1">First link to compare.</param>
+        /// <param name="link2">Second link to compare.</param>
+        public static bool operator ==(Link link1, Link link2) => link1.Equals(link2);
+
+        /// <summary>
+        /// Compare two <see cref="Link"/> for not equality.
+        /// </summary>
+        /// <param name="link1">First link to compare.</param>
+        /// <param name="link2">Second link to compare.</param>
+        public static bool operator !=(Link link1, Link link2) => !link1.Equals(link2);
+
+        /// <inheritdoc />
+        public override bool Equals(object obj)
         {
-            if (o == this)
+            if (!(obj is Link))
             {
-                return true;
+                return false;
             }
 
-            if (o is Link that)
-            {
-                return this.Context.Equals(that.Context)
-                     && this.Attributes.SequenceEqual(that.Attributes);
-            }
-
-            return false;
+            Link that = (Link)obj;
+            return that.Context == this.Context &&
+                that.Attributes == this.Attributes;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override int GetHashCode()
         {
-            var h = 1;
-            h *= 1000003;
-            h ^= this.Context.TraceId.GetHashCode();
-            h *= 1000003;
-            h ^= this.Context.SpanId.GetHashCode();
-            h *= 1000003;
-            h ^= this.Attributes.GetHashCode();
-            return h;
+            var result = 1;
+            result = (31 * result) + this.Context.GetHashCode();
+            result = (31 * result) + this.Attributes.GetHashCode();
+            return result;
         }
     }
 }

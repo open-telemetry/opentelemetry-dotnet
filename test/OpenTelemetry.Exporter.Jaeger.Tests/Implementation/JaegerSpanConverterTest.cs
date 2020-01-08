@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         private const long MillisPerSecond = 1000L;
         private const long NanosPerMillisecond = 1000 * 1000;
         private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
-        private readonly ITracer tracer;
+        private readonly Tracer tracer;
 
         public JaegerSpanConverterTest()
         {
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
-            Assert.Equal("description", eventField.Key);
+            Assert.Equal("message", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
 
             Assert.Equal(span.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
-            Assert.Equal("description", eventField.Key);
+            Assert.Equal("message", eventField.Key);
             Assert.Equal("Event2", eventField.VStr);
         }
 
@@ -151,7 +151,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
             Assert.Equal((long)((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000), jaegerSpan.Duration);
 
-            Assert.Empty(jaegerSpan.JaegerTags);
+            // A single tag representing the span.kind
+            Assert.Single(jaegerSpan.JaegerTags);
 
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
@@ -162,7 +163,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
-            Assert.Equal("description", eventField.Key);
+            Assert.Equal("message", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
 
             Assert.Equal(span.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
@@ -174,7 +175,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
-            Assert.Equal("description", eventField.Key);
+            Assert.Equal("message", eventField.Key);
             Assert.Equal("Event2", eventField.VStr);
         }
 
@@ -288,6 +289,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("boolKey", tag.Key);
             Assert.Equal(true, tag.VBool);
 
+            // The last tag should be span.kind in this case
+            tag = tags.Last();
+            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal("span.kind", tag.Key);
+            Assert.Equal("client", tag.VStr);
+
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(span.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
@@ -297,7 +304,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
-            Assert.Equal("description", eventField.Key);
+            Assert.Equal("message", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
             Assert.Equal(span.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
 
@@ -308,7 +315,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
-            Assert.Equal("description", eventField.Key);
+            Assert.Equal("message", eventField.Key);
             Assert.Equal("Event2", eventField.VStr);
         }
 
@@ -375,7 +382,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             {
                 foreach (var attribute in attributes)
                 {
-                    span.SetAttribute(attribute);
+                    span.SetAttribute(attribute.Key, attribute.Value);
                 }
             }
 

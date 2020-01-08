@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using OpenTelemetry.Internal;
 
 #if API
 namespace OpenTelemetry.Api.Context.Propagation
@@ -36,7 +37,7 @@ namespace OpenTelemetry.Context.Propagation
         private const int MaxKeyValuePairsCount = 32;
 
         /// <summary>
-        /// Extracts tracestate pairs from the given string and appends it to provided tracestate list"/>"/>.
+        /// Extracts tracestate pairs from the given string and appends it to provided tracestate list.
         /// </summary>
         /// <param name="tracestateString">String with comma separated tracestate key value pairs.</param>
         /// <param name="tracestate"><see cref="List{T}"/> to set tracestate pairs on.</param>
@@ -44,11 +45,13 @@ namespace OpenTelemetry.Context.Propagation
         internal static bool AppendTracestate(string tracestateString, List<KeyValuePair<string, string>> tracestate)
         {
             Debug.Assert(tracestate != null, "tracestate list cannot be null");
+
             if (string.IsNullOrEmpty(tracestateString))
             {
                 return false;
             }
 
+            bool isValid = true;
             try
             {
                 var names = new HashSet<string>();
@@ -66,7 +69,8 @@ namespace OpenTelemetry.Context.Propagation
 
                     if (!TryParseKeyValue(tracestateSpan.Slice(0, pairEnd), out var key, out var value))
                     {
-                        return false;
+                        isValid = false;
+                        break;
                     }
 
                     var keyStr = key.ToString();
@@ -76,12 +80,14 @@ namespace OpenTelemetry.Context.Propagation
                     }
                     else
                     {
-                        return false;
+                        isValid = false;
+                        break;
                     }
 
-                    if (tracestate.Count == MaxKeyValuePairsCount)
+                    if (tracestate.Count > MaxKeyValuePairsCount)
                     {
-                        // TODO: log
+                        LogTooManyItemsInTracestate();
+                        isValid = false;
                         break;
                     }
 
@@ -94,12 +100,21 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 while (tracestateSpan.Length > 0);
 
+                if (!isValid)
+                {
+                    tracestate.Clear();
+                    return false;
+                }
+
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // failure to parse tracestate
-                // TODO: logging
+#if API
+                OpenTelemetryApiEventSource.Log.TracestateExtractException(ex);
+#else
+                OpenTelemetrySdkEventSource.Log.TracestateExtractException(ex);
+#endif
             }
 
             return false;
@@ -107,7 +122,7 @@ namespace OpenTelemetry.Context.Propagation
 
         internal static string GetString(IEnumerable<KeyValuePair<string, string>> tracestate)
         {
-            if (tracestate == null)
+            if (tracestate == null || !tracestate.Any())
             {
                 return string.Empty;
             }
@@ -115,14 +130,9 @@ namespace OpenTelemetry.Context.Propagation
             // it's supposedly cheaper to iterate over very short collection a couple of times
             // than to convert it to array.
             var pairsCount = tracestate.Count();
-            if (pairsCount == 0)
-            {
-                return string.Empty;
-            }
-
             if (pairsCount > MaxKeyValuePairsCount)
             {
-                // TODO log that tracestate is too big and we'll ignore last entries
+                LogTooManyItemsInTracestate();
             }
 
             var sb = new StringBuilder();
@@ -160,17 +170,17 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            key = pair.Slice(0, keyEndIdx).Trim();
+            key = pair.Slice(0, keyEndIdx).TrimStart();
             if (!ValidateKey(key))
             {
-                // TODO log
+                LogKeyIsInvalid(key);
                 return false;
             }
 
             value = pair.Slice(valueStartIdx, pair.Length - valueStartIdx).Trim();
             if (!ValidateValue(value))
             {
-                // TODO log
+                LogValueIsInvalid(value);
                 return false;
             }
 
@@ -270,6 +280,33 @@ namespace OpenTelemetry.Context.Propagation
             }
 
             return true;
+        }
+
+        private static void LogTooManyItemsInTracestate()
+        {
+#if API
+           OpenTelemetryApiEventSource.Log.TooManyItemsInTracestate();
+#else
+            OpenTelemetrySdkEventSource.Log.TooManyItemsInTracestate();
+#endif
+        }
+
+        private static void LogKeyIsInvalid(ReadOnlySpan<char> key)
+        {
+#if API
+            OpenTelemetryApiEventSource.Log.TracestateKeyIsInvalid(key);
+#else
+            OpenTelemetrySdkEventSource.Log.TracestateKeyIsInvalid(key);
+#endif
+        }
+
+        private static void LogValueIsInvalid(ReadOnlySpan<char> value)
+        {
+#if API
+            OpenTelemetryApiEventSource.Log.TracestateValueIsInvalid(value);
+#else
+            OpenTelemetrySdkEventSource.Log.TracestateValueIsInvalid(value);
+#endif
         }
     }
 }

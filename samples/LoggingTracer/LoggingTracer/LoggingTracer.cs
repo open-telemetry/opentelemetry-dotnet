@@ -24,7 +24,7 @@ namespace LoggingTracer
     /// <summary>
     /// Logger tracer.
     /// </summary>
-    public class LoggingTracer : ITracer
+    public class LoggingTracer : Tracer
     {
         private readonly string prefix;
 
@@ -38,44 +38,44 @@ namespace LoggingTracer
         }
 
         /// <inheritdoc/>
-        public ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
+        public override ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
 
         /// <inheritdoc/>
-        public IBinaryFormat BinaryFormat => new LoggingBinaryFormat();
+        public override IBinaryFormat BinaryFormat => new LoggingBinaryFormat();
 
         /// <inheritdoc/>
-        public ITextFormat TextFormat => new LoggingTextFormat();
+        public override ITextFormat TextFormat => new LoggingTextFormat();
 
         /// <inheritdoc/>
-        public IDisposable WithSpan(ISpan span, bool endOnDispose)
+        public override IDisposable WithSpan(ISpan span, bool endOnDispose)
         {
             Logger.Log($"{this.prefix}.WithSpan {endOnDispose}");
             return new CurrentSpanUtils.LoggingScope(span);
         }
 
         /// <inheritdoc/>
-        public ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
+        public override ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
             Logger.Log($"{this.prefix}.StartRootSpan({operationName}, {kind}, {options.StartTimestamp:o}, {options.LinksFactory}, {options.Links})");
             return new LoggingSpan(operationName, kind);
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
+        public override ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
         {
             Logger.Log($"{this.prefix}.StartSpan({operationName}, {parent.GetType().Name}, {kind}, {options.StartTimestamp:o}, {options.LinksFactory}, {options.Links})");
             return new LoggingSpan(operationName, kind);
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
+        public override ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
             Logger.Log($"{this.prefix}.StartSpan({operationName}, {parent.GetType().Name}, {kind}, {options.StartTimestamp:o}, {options.LinksFactory}, {options.Links})");
             return new LoggingSpan(operationName, kind);
         }
 
         /// <inheritdoc/>
-        public ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public override ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
             Logger.Log($"{this.prefix}.StartSpanFromActivity({operationName}, {activity.OperationName}, {kind}, {links})");
             return new LoggingSpan(operationName, kind);

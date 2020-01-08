@@ -8,16 +8,17 @@ We hold regular meetings. See details at [community page](https://github.com/ope
 
 Approvers ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
-- [Liudmila Molkova](https://github.com/lmolkova), Microsoft
-- [Christoph Neumueller](https://github.com/discostu105), Dynatrace
 - [Bruno Garcia](https://github.com/bruno-garcia), Sentry
+- [Christoph Neumueller](https://github.com/discostu105), Dynatrace
+- [Liudmila Molkova](https://github.com/lmolkova), Microsoft
+- [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
 
 *Find more about the approver role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).*
 
 Maintainers ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
-- [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Microsoft
 - [Austin Parker](https://github.com/austinlparker), LightStep
+- [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Microsoft
 
 *Find more about the maintainer role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
 
@@ -69,6 +70,8 @@ Myget feeds:
 | Stackdriver          | [![MyGet Nightly][OpenTelemetry-exporter-stackdriver-myget-image]][OpenTelemetry-exporter-stackdriver-myget-url] | [![NuGet release][OpenTelemetry-exporter-stackdriver-nuget-image]][OpenTelemetry-exporter-stackdriver-nuget-url] |
 | Jaeger               | [![MyGet Nightly][OpenTelemetry-exporter-jaeger-myget-image]][OpenTelemetry-exporter-jaeger-myget-url]           | [![NuGet release][OpenTelemetry-exporter-jaeger-nuget-image]][OpenTelemetry-exporter-jaeger-nuget-url]           |
 | LightStep            | [![MyGet Nightly][OpenTelemetry-exporter-lightstep-myget-image]][OpenTelemetry-exporter-lightstep-myget-url]     | [![NuGet release][OpenTelemetry-exporter-lightstep-nuget-image]][OpenTelemetry-exporter-lightstep-nuget-url]     |
+| NewRelic             |                                                                                                                  | [![NuGet release][OpenTelemetry-exporter-newrelic-nuget-image]][OpenTelemetry-exporter-newrelic-nuget-url]       |
+
 
 ## OpenTelemetry Tracing QuickStart: collecting data
 
@@ -426,6 +429,12 @@ finally
     exporter.Stop();
 }
 ```
+### Using the NewRelic exporter
+
+The New Relic OpenTelemetry Trace Exporter is a OpenTelemetry Provider that sends data from .NET applications to New Relic.
+It uses the NewRelic SDK to send Traces to the New Relic backend
+
+Please refer to the New Relic Exporter [Documentation][newrelic-get-started]
 
 ### Using Stackdriver Exporter
 
@@ -645,6 +654,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-exporter-stackdriver-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.Stackdriver
 [OpenTelemetry-exporter-lightstep-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.LightStep.svg
 [OpenTelemetry-exporter-lightstep-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.Lightstep
+[OpenTelemetry-exporter-newrelic-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.NewRelic.svg
+[OpenTelemetry-exporter-newrelic-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.NewRelic
 [OpenTelemetry-collect-aspnetcore-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Collector.AspNetCore.svg
 [OpenTelemetry-collect-aspnetcore-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Collector.AspNetCore
 [OpenTelemetry-collect-deps-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Collector.Dependencies.svg
@@ -655,6 +666,7 @@ deprecate it for 18 months before removing it, if possible.
 [good-first-issues]: https://github.com/open-telemetry/OpenTelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [zipkin-get-started]: https://zipkin.io/pages/quickstart.html
 [jaeger-get-started]: https://www.jaegertracing.io/docs/1.13/getting-started/
+[newrelic-get-started]: https://github.com/newrelic/newrelic-telemetry-sdk-dotnet/blob/master/src/OpenTelemetry.Exporter.NewRelic/README.md
 [ai-get-started]: https://docs.microsoft.com/azure/application-insights
 [stackdriver-trace-setup]: https://cloud.google.com/trace/docs/setup/
 [stackdriver-monitoring-setup]: https://cloud.google.com/monitoring/api/enable-api

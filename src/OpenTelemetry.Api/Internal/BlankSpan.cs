@@ -14,14 +14,13 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Collections.Generic;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Blank span.
     /// </summary>
-    public sealed class BlankSpan : ISpan
+    internal sealed class BlankSpan : ISpan
     {
         /// <summary>
         /// Blank span instance.
@@ -33,114 +32,47 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public SpanContext Context => SpanContext.BlankLocal;
+        public SpanContext Context => default;
 
         /// <inheritdoc />
         public bool IsRecording => false;
 
         /// <inheritdoc />
-        public Status Status
-        {
-            get => Status.Ok;
-
-            set
-            {
-                if (!value.IsValid)
-                {
-                    throw new ArgumentException(nameof(value));
-                }
-            }
-        }
+        public Status Status { get; set; } = Status.Ok;
 
         /// <inheritdoc />
         public void UpdateName(string name)
         {
-            if (name == null)
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
         }
 
         /// <inheritdoc />
-        public void SetAttribute(KeyValuePair<string, object> keyValuePair)
+        public void SetAttribute(string key, object value)
         {
-            if (keyValuePair.Key == null || keyValuePair.Value == null)
-            {
-                throw new ArgumentNullException(nameof(keyValuePair));
-            }
-        }
-
-        /// <inheritdoc />
-        public void SetAttribute(string key, string value)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-        }
-
-        /// <inheritdoc />
-        public void SetAttribute(string key, long value)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-        }
-
-        /// <inheritdoc />
-        public void SetAttribute(string key, double value)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
         }
 
         /// <inheritdoc />
         public void SetAttribute(string key, bool value)
         {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
+        }
+
+        /// <inheritdoc />
+        public void SetAttribute(string key, long value)
+        {
+        }
+
+        /// <inheritdoc />
+        public void SetAttribute(string key, double value)
+        {
         }
 
         /// <inheritdoc />
         public void AddEvent(string name)
         {
-            if (name == null)
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
-        }
-
-        /// <inheritdoc />
-        public void AddEvent(string name, IDictionary<string, object> attributes)
-        {
-            if (name == null)
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
-
-            if (attributes == null)
-            {
-                throw new ArgumentNullException(nameof(attributes));
-            }
         }
 
         /// <inheritdoc />
         public void AddEvent(Event newEvent)
         {
-            if (newEvent == null)
-            {
-                throw new ArgumentNullException(nameof(newEvent));
-            }
         }
 
         /// <inheritdoc />

@@ -231,7 +231,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             Assert.Single(spanMock.Attributes);
             Assert.Equal("foo", spanMock.Attributes.First().Key);
-            Assert.Equal(1, (long)spanMock.Attributes.First().Value);
+            Assert.Equal(1L, spanMock.Attributes.First().Value);
         }
 
         [Fact]
@@ -297,7 +297,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             Assert.Single(spanMock.Attributes);
             Assert.Equal("foo", spanMock.Attributes.First().Key);
-            Assert.Equal(1, (long)spanMock.Attributes.First().Value);
+            Assert.Equal(1L, spanMock.Attributes.First().Value);
         }
 
         [Fact]
@@ -314,7 +314,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Equal(2, spanMock.Attributes.Count);
 
             Assert.Equal("foo", spanMock.Attributes.First().Key);
-            Assert.Equal(1, (long)spanMock.Attributes.First().Value);
+            Assert.Equal(1L, spanMock.Attributes.First().Value);
 
             Assert.Equal("bar", spanMock.Attributes.Last().Key);
             Assert.Equal("baz", (string)spanMock.Attributes.Last().Value);

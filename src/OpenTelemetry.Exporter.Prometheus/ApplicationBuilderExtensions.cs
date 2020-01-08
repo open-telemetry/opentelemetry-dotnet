@@ -17,6 +17,7 @@
 // #if NETSTANDARD
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -35,14 +36,12 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// </summary>
         /// <param name="app">The <see cref="IApplicationBuilder"/> to configure.</param>
         /// <param name="options">The <see cref="PrometheusExporterOptions"/> to configure the exporter.</param>
-        /// <param name="metric">The <see cref="Metric{T}"/> to export.</param>
-        /// <typeparam name="T">The type of metric value.</typeparam>
+        /// <param name="metrics">The <see cref="List{Metric}"/> to export.</param>
         /// <returns>The <see cref="IApplicationBuilder"/> for chaining.</returns>
-        public static IApplicationBuilder UsePrometheus<T>(this IApplicationBuilder app, PrometheusExporterOptions options, Metric<T> metric)
-            where T : struct
+        public static IApplicationBuilder UsePrometheus(this IApplicationBuilder app, PrometheusExporterOptions options, List<Metric> metrics)
         {
-            var exporter = new PrometheusExporter<T>(options, metric);
-            app.Map(options.Url, a => HandleMetrics(a, exporter, metric));
+            var exporter = new PrometheusExporter(options);
+            app.Map(options.Url, a => HandleMetrics(a, exporter, metrics));
             return app;
         }
 
@@ -51,20 +50,17 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// </summary>
         /// <param name="app">The <see cref="IApplicationBuilder"/> to configure.</param>
         /// <param name="configure">The <see cref="Action{PrometheusExporterOptions}"/> to configure the exporter options.</param>
-        /// <param name="metric">The <see cref="Metric{T}"/> to export.</param>
-        /// <typeparam name="T">The type of metric value.</typeparam>
+        /// <param name="metrics">The <see cref="List{Metric}"/> to export.</param>
         /// <returns>The <see cref="IApplicationBuilder"/> for chaining.</returns>
-        public static IApplicationBuilder UsePrometheus<T>(this IApplicationBuilder app, Action<PrometheusExporterOptions> configure, Metric<T> metric)
-            where T : struct
+        public static IApplicationBuilder UsePrometheus(this IApplicationBuilder app, Action<PrometheusExporterOptions> configure, List<Metric> metrics)
         {
             var options = new PrometheusExporterOptions();
             configure(options);
 
-            return app.UsePrometheus<T>(options, metric);
+            return app.UsePrometheus(options, metrics);
         }
 
-        private static void HandleMetrics<T>(IApplicationBuilder app, PrometheusExporter<T> exporter, Metric<T> metric)
-            where T : struct
+        private static void HandleMetrics(IApplicationBuilder app, PrometheusExporter exporter, List<Metric> metrics)
         {
             app.Run(context =>
             {
@@ -73,10 +69,10 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                 using (var writer = new StreamWriter(context.Response.Body))
                 {
-                    foreach (var metricSeries in metric.TimeSeries)
+                    foreach (var metric in metrics)
                     {
-                        var labels = metricSeries.Key.Labels;
-                        var values = metricSeries.Value.Points;
+                        var labels = metric.Labels;
+                        var value = metric.Value;
 
                         var builder = new PrometheusMetricBuilder()
                             .WithName(metric.MetricName)
@@ -87,7 +83,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                         foreach (var label in labels)
                         {
                             var metricValueBuilder = builder.AddValue();
-                            metricValueBuilder = metricValueBuilder.WithValue((long)(object)values[0]);
+                            metricValueBuilder = metricValueBuilder.WithValue(value);
                             metricValueBuilder.WithLabel(label.Key, label.Value);
                         }
 

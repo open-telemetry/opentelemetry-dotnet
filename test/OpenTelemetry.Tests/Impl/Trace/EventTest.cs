@@ -25,7 +25,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromDescription_NullDescription()
         {
-            Assert.Throws<ArgumentNullException>(() => new Event(null));
+            var evnt = new Event(null);
+            Assert.Empty(evnt.Name);
         }
 
         [Fact]
@@ -42,7 +43,7 @@ namespace OpenTelemetry.Trace.Test
         public void FromDescriptionAndDefaultTimestamp()
         {
             var approxTimestamp = PreciseTimestamp.GetUtcNow();
-            var @event = new Event("MyEventText", default);
+            var @event = new Event("MyEventText", (DateTimeOffset)default);
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(0, @event.Attributes.Count);
             Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 20);
@@ -61,13 +62,15 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromDescriptionAndAttributes_NullDescription()
         {
-            Assert.Throws<ArgumentNullException>(() => new Event(null, DateTime.UtcNow, new Dictionary<string, object>()));
+            var evnt = new Event(null, DateTimeOffset.Now, new Dictionary<string, object>());
+            Assert.Empty(evnt.Name);
         }
 
         [Fact]
         public void FromDescriptionAndAttributes_NullAttributes()
         {
-            Assert.Throws<ArgumentNullException>(() => new Event("", DateTime.UtcNow, null));
+            var evnt = new Event("", DateTime.UtcNow, null);
+            Assert.Empty(evnt.Attributes);
         }
 
         [Fact]

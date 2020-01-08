@@ -17,6 +17,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Trace.Internal
 {
@@ -53,10 +54,7 @@ namespace OpenTelemetry.Trace.Internal
 
         internal void Add(T evnt)
         {
-            if (evnt == null)
-            {
-                throw new ArgumentNullException();
-            }
+            Debug.Assert(evnt != null, "Event must not be null");
 
             this.totalRecorded++;
             if (this.maxNumEvents == 0)

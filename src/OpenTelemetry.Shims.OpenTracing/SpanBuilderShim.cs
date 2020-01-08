@@ -31,7 +31,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <summary>
         /// The tracer.
         /// </summary>
-        private readonly Trace.ITracer tracer;
+        private readonly Trace.Tracer tracer;
 
         /// <summary>
         /// The span name.
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         private bool error;
 
-        public SpanBuilderShim(Trace.ITracer tracer, string spanName, IList<string> rootOperationNamesForActivityBasedAutoCollectors = null)
+        public SpanBuilderShim(Trace.Tracer tracer, string spanName, IList<string> rootOperationNamesForActivityBasedAutoCollectors = null)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             this.spanName = spanName ?? throw new ArgumentNullException(nameof(spanName));
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         private global::OpenTracing.IScopeManager ScopeManager { get; }
 
-        private bool ParentSet => this.parentSpan != null || (this.parentSpanContext != null && this.parentSpanContext.IsValid);
+        private bool ParentSet => this.parentSpan != null || this.parentSpanContext.IsValid;
 
         /// <inheritdoc/>
         public ISpanBuilder AsChildOf(ISpanContext parent)
@@ -176,11 +176,11 @@ namespace OpenTelemetry.Shims.OpenTracing
             {
                 span = this.tracer.StartSpan(this.spanName, this.parentSpan, this.spanKind, options);
             }
-            else if (this.parentSpanContext != null && this.parentSpanContext.IsValid)
+            else if (this.parentSpanContext.IsValid)
             {
                 span = this.tracer.StartSpan(this.spanName, this.parentSpanContext, this.spanKind, options);
             }
-            else if (this.parentSpan == null && (this.parentSpanContext == null || !this.parentSpanContext.IsValid) && (this.tracer.CurrentSpan == null || this.tracer.CurrentSpan == Trace.BlankSpan.Instance))
+            else if (this.parentSpan == null && !this.parentSpanContext.IsValid && (this.tracer.CurrentSpan == null || !this.tracer.CurrentSpan.Context.IsValid))
             {
                 // We need to know if we should inherit an existing Activity-based context or start a new one.
                 if (System.Diagnostics.Activity.Current != null && System.Diagnostics.Activity.Current.IdFormat == System.Diagnostics.ActivityIdFormat.W3C)
@@ -201,7 +201,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             foreach (var kvp in this.attributes)
             {
-                span.SetAttribute(kvp);
+                span.SetAttribute(kvp.Key, kvp.Value);
             }
 
             if (this.error)

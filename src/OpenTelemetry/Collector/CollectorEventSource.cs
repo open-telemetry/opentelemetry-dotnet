@@ -1,4 +1,4 @@
-// <copyright file="CollectorEventSource.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CollectorEventSource.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -77,6 +77,12 @@ namespace OpenTelemetry.Collector
         public void NullPayload(string eventName)
         {
             this.WriteEvent(5, eventName);
+        }
+
+        [Event(6, Message = "Request is filtered out.", Level = EventLevel.Verbose)]
+        public void RequestIsFilteredOut(string eventName)
+        {
+            this.WriteEvent(6, eventName);
         }
 
         /// <summary>

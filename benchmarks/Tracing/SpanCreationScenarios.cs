@@ -14,20 +14,29 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using OpenTelemetry.Trace;
 
 namespace Benchmarks.Tracing
 {
     internal class SpanCreationScenarios
     {
-        public static ISpan CreateSpan(ITracer tracer)
+        public static ISpan CreateSpan(Tracer tracer)
         {
             var span = tracer.StartSpan("span");
             span.End();
             return span;
         }
 
-        public static ISpan CreateSpan_Attributes(ITracer tracer)
+        public static ISpan CreateSpan_ParentContext(Tracer tracer)
+        {
+            var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, true);
+            var span = tracer.StartSpan("span", parentContext);
+            span.End();
+            return span;
+        }
+
+        public static ISpan CreateSpan_Attributes(Tracer tracer)
         {
             var span = tracer.StartSpan("span");
             span.SetAttribute("attribute1", "1");
@@ -38,7 +47,7 @@ namespace Benchmarks.Tracing
             return span;
         }
 
-        public static ISpan CreateSpan_Propagate(ITracer tracer)
+        public static ISpan CreateSpan_Propagate(Tracer tracer)
         {
             var span = tracer.StartSpan("span");
             using (tracer.WithSpan(span))
@@ -49,7 +58,7 @@ namespace Benchmarks.Tracing
             return span;
         }
 
-        public static ISpan CreateSpan_Active(ITracer tracer)
+        public static ISpan CreateSpan_Active(Tracer tracer)
         {
             using (tracer.StartActiveSpan("span", out var span))
             {
@@ -57,7 +66,7 @@ namespace Benchmarks.Tracing
             }
         }
 
-        public static ISpan CreateSpan_Active_GetCurrent(ITracer tracer)
+        public static ISpan CreateSpan_Active_GetCurrent(Tracer tracer)
         {
             ISpan span;
             

@@ -34,6 +34,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Span : ISpan, IDisposable
     {
+        internal static readonly Span Invalid = new Span();
         private static readonly ConditionalWeakTable<Activity, Span> ActivitySpanTable = new ConditionalWeakTable<Activity, Span>();
 
         private readonly Sampler sampler;
@@ -52,6 +53,13 @@ namespace OpenTelemetry.Trace
         private bool hasEnded;
         private bool endOnDispose;
 
+        private Span()
+        {
+            this.Name = string.Empty;
+            this.Context = default;
+            this.IsRecording = false;
+        }
+
         private Span(
             string name,
             SpanContext parentSpanContext,
@@ -63,8 +71,17 @@ namespace OpenTelemetry.Trace
             TracerConfiguration tracerConfiguration,
             SpanProcessor spanProcessor,
             Resource libraryResource)
-        { 
-            this.Name = name;
+        {
+            if (name != null)
+            {
+                this.Name = name;
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpan", nameof(name), "is null");
+                this.Name = string.Empty;
+            }
+
             this.LibraryResource = libraryResource;
 
             IEnumerable<Link> links = null;
@@ -112,7 +129,7 @@ namespace OpenTelemetry.Trace
                 {
                     foreach (var attribute in spanCreationOptions.Attributes)
                     {
-                        this.SetAttribute(attribute);
+                        this.SetAttribute(attribute.Key, attribute.Value);
                     }
                 }
 
@@ -129,7 +146,16 @@ namespace OpenTelemetry.Trace
         {
             get => this.StatusWithDefault;
 
-            set => this.status = value.IsValid ? value : throw new ArgumentException(nameof(value));
+            set
+            {
+                if (!value.IsValid)
+                { 
+                    OpenTelemetrySdkEventSource.Log.InvalidArgument("set_Status", nameof(value), "is null");
+                    return;
+                }
+
+                this.status = value;
+            }
         }
 
         public ActivitySpanId ParentSpanId => this.Activity.ParentSpanId;
@@ -168,7 +194,7 @@ namespace OpenTelemetry.Trace
         public SpanKind? Kind { get; }
 
         /// <summary>
-        /// Gets the "Library Resource" (name + version) associated with the Tracer that produced this span.
+        /// Gets the "Library Resource" (name + version) associated with the TracerSdk that produced this span.
         /// </summary>
         public Resource LibraryResource { get; }
 
@@ -179,7 +205,7 @@ namespace OpenTelemetry.Trace
                 var currentActivity = Activity.Current;
                 if (currentActivity == null)
                 {
-                    return null;
+                    return Invalid;
                 }
 
                 if (ActivitySpanTable.TryGetValue(currentActivity, out var currentSpan))
@@ -187,7 +213,7 @@ namespace OpenTelemetry.Trace
                     return currentSpan;
                 }
 
-                return null;
+                return Invalid;
             }
         }
 
@@ -204,22 +230,53 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            this.Name = name ?? throw new ArgumentNullException(nameof(name));
+            if (name != null)
+            {
+                this.Name = name;
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("UpdateName", nameof(name), "is null");
+                this.Name = string.Empty;
+            }
         }
 
         /// <inheritdoc/>
-        public void SetAttribute(KeyValuePair<string, object> keyValuePair)
+        public void SetAttribute(string key, object value)
         {
-            if (keyValuePair.Key == null)
+            if (!this.IsRecording)
             {
-                throw new ArgumentNullException(nameof(keyValuePair.Key));
+                return;
             }
 
-            if (keyValuePair.Value == null)
+            if (this.hasEnded)
             {
-                throw new ArgumentNullException(nameof(keyValuePair.Value));
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("SetAttribute");
+                return;
             }
 
+            object sanitizedValue = value;
+            if (value == null || !this.IsAttributeValueTypeSupported(value))
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("SetAttribute", nameof(value), $"Type '{value?.GetType()}' of attribute '{key}' is not supported");
+                sanitizedValue = string.Empty;
+            }
+
+            lock (this.lck)
+            {
+                if (this.attributes == null)
+                {
+                    this.attributes =
+                        new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
+                }
+
+                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, sanitizedValue));
+            }
+        }
+
+        /// <inheritdoc/>
+        public void SetAttribute(string key, bool value)
+        {
             if (!this.IsRecording)
             {
                 return;
@@ -239,7 +296,59 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(keyValuePair.Key, keyValuePair.Value));
+                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+            }
+        }
+
+        /// <inheritdoc/>
+        public void SetAttribute(string key, long value)
+        {
+            if (!this.IsRecording)
+            {
+                return;
+            }
+
+            if (this.hasEnded)
+            {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("SetAttribute");
+                return;
+            }
+
+            lock (this.lck)
+            {
+                if (this.attributes == null)
+                {
+                    this.attributes =
+                        new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
+                }
+
+                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+            }
+        }
+
+        /// <inheritdoc/>
+        public void SetAttribute(string key, double value)
+        {
+            if (!this.IsRecording)
+            {
+                return;
+            }
+
+            if (this.hasEnded)
+            {
+                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("SetAttribute");
+                return;
+            }
+
+            lock (this.lck)
+            {
+                if (this.attributes == null)
+                {
+                    this.attributes =
+                        new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
+                }
+
+                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
             }
         }
 
@@ -261,28 +370,12 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void AddEvent(string name, IDictionary<string, object> eventAttributes)
-        {
-            if (!this.IsRecording)
-            {
-                return;
-            }
-
-            if (this.hasEnded)
-            {
-                OpenTelemetrySdkEventSource.Log.UnexpectedCallOnEndedSpan("AddEvent");
-                return;
-            }
-
-            this.AddEvent(new Event(name, PreciseTimestamp.GetUtcNow(), eventAttributes));
-        }
-
-        /// <inheritdoc/>
         public void AddEvent(Event addEvent)
         {
             if (addEvent == null)
             {
-                throw new ArgumentNullException(nameof(addEvent));
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("AddEvent", nameof(addEvent), "is null");
+                return;
             }
 
             if (!this.IsRecording)
@@ -341,50 +434,6 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        /// <inheritdoc/>
-        public void SetAttribute(string key, string value)
-        {
-            if (!this.IsRecording)
-            {
-                return;
-            }
-
-            this.SetAttribute(new KeyValuePair<string, object>(key, value));
-        }
-
-        /// <inheritdoc/>
-        public void SetAttribute(string key, long value)
-        {
-            if (!this.IsRecording)
-            {
-                return;
-            }
-
-            this.SetAttribute(new KeyValuePair<string, object>(key, value));
-        }
-
-        /// <inheritdoc/>
-        public void SetAttribute(string key, double value)
-        {
-            if (!this.IsRecording)
-            {
-                return;
-            }
-
-            this.SetAttribute(new KeyValuePair<string, object>(key, value));
-        }
-
-        /// <inheritdoc/>
-        public void SetAttribute(string key, bool value)
-        {
-            if (!this.IsRecording)
-            {
-                return;
-            }
-
-            this.SetAttribute(new KeyValuePair<string, object>(key, value));
-        }
-
         public void Dispose()
         {
             this.End();
@@ -416,11 +465,12 @@ namespace OpenTelemetry.Trace
             }
 
             var currentActivity = Activity.Current;
-            if (currentActivity == null)
+            if (currentActivity == null ||
+                currentActivity.IdFormat != ActivityIdFormat.W3C)
             {
                 return new Span(
                     name,
-                    SpanContext.BlankLocal,
+                    default,
                     CreateRoot(name),
                     false,
                     spanKind,
@@ -481,7 +531,7 @@ namespace OpenTelemetry.Trace
         {
             return new Span(
                 name,
-                SpanContext.BlankLocal,
+                default,
                 CreateRoot(name),
                 false,
                 spanKind,
@@ -566,7 +616,10 @@ namespace OpenTelemetry.Trace
             if (activity.TraceStateString != null)
             {
                 tracestate = new List<KeyValuePair<string, string>>();
-                TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate);
+                if (!TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate))
+                {
+                    activity.TraceStateString = null;
+                }
             }
 
             return new ActivityAndTracestate(activity, tracestate);
@@ -596,7 +649,7 @@ namespace OpenTelemetry.Trace
             var activity = new Activity(spanName);
 
             IEnumerable<KeyValuePair<string, string>> tracestate = null;
-            if (parentContext != null && parentContext.IsValid)
+            if (parentContext.IsValid)
             {
                 activity.SetParentId(parentContext.TraceId,
                     parentContext.SpanId,
@@ -641,7 +694,10 @@ namespace OpenTelemetry.Trace
             if (activity.TraceStateString != null)
             {
                 tracestate = new List<KeyValuePair<string, string>>();
-                TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate);
+                if (!TracestateUtils.AppendTracestate(activity.TraceStateString, tracestate))
+                {
+                    activity.TraceStateString = null;
+                }
             }
 
             return new ActivityAndTracestate(activity, tracestate);
@@ -657,7 +713,7 @@ namespace OpenTelemetry.Trace
                     activity.ActivityTraceFlags);
             }
 
-            return null;
+            return default;
         }
 
         private void SetLinks(IEnumerable<Link> links)
@@ -697,6 +753,35 @@ namespace OpenTelemetry.Trace
             {
                 OpenTelemetrySdkEventSource.Log.AttemptToEndScopeWhichIsNotCurrent(this.Name);
             }
+        }
+
+        private bool IsAttributeValueTypeSupported(object attributeValue)
+        {
+            if (this.IsNumericBoolOrString(attributeValue))
+            {
+                return true;
+            }
+
+            // TODO add array support
+
+            return false;
+        }
+
+        private bool IsNumericBoolOrString(object attributeValue)
+        {
+            return attributeValue is string
+                   || attributeValue is bool
+                   || attributeValue is int
+                   || attributeValue is uint
+                   || attributeValue is long
+                   || attributeValue is ulong
+                   || attributeValue is double
+                   || attributeValue is sbyte
+                   || attributeValue is byte
+                   || attributeValue is short
+                   || attributeValue is ushort
+                   || attributeValue is float
+                   || attributeValue is decimal;
         }
 
         private readonly struct ActivityAndTracestate

@@ -22,9 +22,9 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     public class TracerShim : global::OpenTracing.ITracer
     {
-        private readonly Trace.ITracer tracer;
+        private readonly Trace.Tracer tracer;
 
-        private TracerShim(Trace.ITracer tracer)
+        private TracerShim(Trace.Tracer tracer)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             this.ScopeManager = new ScopeManagerShim(this.tracer);
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpan ActiveSpan => this.ScopeManager.Active?.Span;
 
-        public static global::OpenTracing.ITracer Create(Trace.ITracer tracer)
+        public static global::OpenTracing.ITracer Create(Trace.Tracer tracer)
         {
             return new TracerShim(tracer);
         }
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(carrier));
             }
 
-            Trace.SpanContext spanContext = null;
+            Trace.SpanContext spanContext = default;
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
@@ -81,18 +81,21 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return value;
                 }
 
-                spanContext = this.tracer.TextFormat?.Extract(carrierMap, GetCarrierKeyValue);
+                if (this.tracer.TextFormat != null)
+                {
+                    spanContext = this.tracer.TextFormat.Extract(carrierMap, GetCarrierKeyValue);
+                }
             }
             else if (format == BuiltinFormats.Binary && carrier is IBinary binaryCarrier)
             {
                 var ms = binaryCarrier.Get();
-                if (ms != null)
+                if (ms != null && this.tracer.BinaryFormat != null)
                 {
-                    spanContext = this.tracer.BinaryFormat?.FromByteArray(ms.ToArray());
+                    spanContext = this.tracer.BinaryFormat.FromByteArray(ms.ToArray());
                 }
             }
 
-            return (spanContext == null || !spanContext.IsValid) ? null : new SpanContextShim(spanContext);
+            return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
         }
 
         /// <inheritdoc/>

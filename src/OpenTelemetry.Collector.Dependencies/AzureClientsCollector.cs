@@ -29,7 +29,7 @@ namespace OpenTelemetry.Collector.Dependencies
         /// Initializes a new instance of the <see cref="AzureClientsCollector"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public AzureClientsCollector(ITracer tracer)
+        public AzureClientsCollector(Tracer tracer)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
                 name => new AzureSdkDiagnosticListener(name, tracer),

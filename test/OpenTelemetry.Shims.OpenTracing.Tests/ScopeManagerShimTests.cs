@@ -31,18 +31,17 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Active_IsNull()
         {
-            var tracerMock = new Mock<ITracer>();
-            tracerMock.Setup(x => x.CurrentSpan).Returns(Trace.BlankSpan.Instance);
+            var tracer = TracerFactoryBase.Default.GetTracer(null);
+            var shim = new ScopeManagerShim(tracer);
 
-            var shim = new ScopeManagerShim(tracerMock.Object);
-
+            Assert.False(tracer.CurrentSpan.Context.IsValid);
             Assert.Null(shim.Active);
         }
 
         [Fact]
         public void Active_IsNotNull()
         {
-            var tracerMock = new Mock<ITracer>();
+            var tracerMock = new Mock<Tracer>();
             var shim = new ScopeManagerShim(tracerMock.Object);
             var openTracingSpan = new SpanShim(Defaults.GetOpenTelemetrySpanMock());
             var scopeMock = new Mock<IDisposable>();
@@ -60,7 +59,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Activate_SpanMustBeShim()
         {
-            var tracerMock = new Mock<ITracer>();
+            var tracerMock = new Mock<Tracer>();
             var shim = new ScopeManagerShim(tracerMock.Object);
 
             Assert.Throws<ArgumentException>(() => shim.Activate(new Mock<global::OpenTracing.ISpan>().Object, true));
@@ -69,7 +68,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Activate()
         {
-            var tracerMock = new Mock<ITracer>();
+            var tracerMock = new Mock<Tracer>();
             var shim = new ScopeManagerShim(tracerMock.Object);
             var scopeMock = new Mock<IDisposable>();
             var spanShim = new SpanShim(Defaults.GetOpenTelemetryMockSpan().Object);

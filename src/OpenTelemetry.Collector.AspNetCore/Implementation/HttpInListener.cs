@@ -14,11 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Collector.AspNetCore.Implementation
@@ -32,11 +34,13 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
         private readonly PropertyFetcher beforeActionAttributeRouteInfoFetcher = new PropertyFetcher("AttributeRouteInfo");
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
         private readonly bool hostingSupportsW3C = false;
+        private readonly Predicate<HttpContext> requestFilter;
 
-        public HttpInListener(string name, ITracer tracer)
+        public HttpInListener(string name, Tracer tracer, Predicate<HttpContext> requestFilter)
             : base(name, tracer)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
+            this.requestFilter = requestFilter;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -50,13 +54,19 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                 return;
             }
 
+            if (this.requestFilter != null && !this.requestFilter(context))
+            {
+                CollectorEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                return;
+            }
+
             var request = context.Request;
 
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
             ISpan span;
-            if (this.hostingSupportsW3C)
+            if (this.hostingSupportsW3C && this.Tracer.TextFormat is TraceContextFormat)
             {
                 this.Tracer.StartActiveSpanFromActivity(path, Activity.Current, SpanKind.Server, out span);
             }
@@ -87,7 +97,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             const string EventNameSuffix = ".OnStopActivity";
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null || span == BlankSpan.Instance)
+            if (span == null || !span.Context.IsValid)
             {
                 CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpInListener) + EventNameSuffix);
                 return;

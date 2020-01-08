@@ -23,11 +23,11 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
     /// <summary>
     /// A mock ISpan implementation for unit tests. Sometimes an actual Mock is just easier to deal with than objects created with Moq.
     /// </summary>
-    internal class SpanMock : Trace.ISpan, IDisposable
+    internal class SpanMock : ISpan, IDisposable
     {
         private static readonly ReadOnlyDictionary<string, object> EmptyAttributes = new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
 
-        public SpanMock(Trace.SpanContext spanContext)
+        public SpanMock(SpanContext spanContext)
         {
             this.Context = spanContext;
             this.Events = new List<Event>();
@@ -56,19 +56,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             this.Events.Add(new Event(name));
         }
 
-        public void AddEvent(string name, IDictionary<string, object> attributes)
-        {
-            this.Events.Add(new Event(name, default, attributes));
-        }
-
         public void AddEvent(Event newEvent)
         {
             this.Events.Add(newEvent);
-        }
-
-        public void AddLink(Link link)
-        {
-            this.Links.Add(link);
         }
 
         public void End()
@@ -81,39 +71,29 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             this.End();
         }
 
-        public void SetAttribute(string key, string value)
+        public void SetAttribute(string key, object value)
         {
-            this.SetAttribute<string>(key, value);
+            this.Attributes.Add(new KeyValuePair<string, object>(key, value));
         }
 
         public void SetAttribute(string key, long value)
         {
-            this.SetAttribute<long>(key, value);
-        }
-
-        public void SetAttribute(string key, double value)
-        {
-            this.SetAttribute<double>(key, value);
+            this.SetAttribute(key, (object)value);
         }
 
         public void SetAttribute(string key, bool value)
         {
-            this.SetAttribute<bool>(key, value);
+            this.SetAttribute(key, (object)value);
         }
 
-        public void SetAttribute(KeyValuePair<string, object> keyValuePair)
+        public void SetAttribute(string key, double value)
         {
-            this.Attributes.Add(keyValuePair);
+            this.SetAttribute(key, (object)value);
         }
 
         public void UpdateName(string name)
         {
             this.Name = name;
-        }
-
-        private void SetAttribute<TValue>(string key, TValue value)
-        {
-            this.SetAttribute(new KeyValuePair<string, object>(key, value));
         }
 
         public void Dispose()

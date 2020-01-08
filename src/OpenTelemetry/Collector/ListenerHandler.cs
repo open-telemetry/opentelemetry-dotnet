@@ -20,9 +20,9 @@ namespace OpenTelemetry.Collector
 {
     public abstract class ListenerHandler
     {
-        protected readonly ITracer Tracer;
+        protected readonly Tracer Tracer;
 
-        public ListenerHandler(string sourceName, ITracer tracer)
+        public ListenerHandler(string sourceName, Tracer tracer)
         {
             this.SourceName = sourceName;
             this.Tracer = tracer;
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Collector
         {
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null || span == BlankSpan.Instance)
+            if (span == null || !span.Context.IsValid)
             {
                 CollectorEventSource.Log.NullOrBlankSpan("ListenerHandler.OnStopActivity");
                 return;
@@ -50,9 +50,6 @@ namespace OpenTelemetry.Collector
 
         public virtual void OnException(Activity activity, object payload)
         {
-            var span = this.Tracer.CurrentSpan;
-
-            // TODO: gather exception information
         }
 
         public virtual void OnCustom(string name, Activity activity, object payload)

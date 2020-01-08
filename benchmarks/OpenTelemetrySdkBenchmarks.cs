@@ -26,9 +26,9 @@ namespace Benchmarks
     [MemoryDiagnoser]
     public class OpenTelemetrySdkBenchmarks
     {
-        private readonly ITracer alwaysSampleTracer;
-        private readonly ITracer neverSampleTracer;
-        private readonly ITracer noopTracer;
+        private readonly Tracer alwaysSampleTracer;
+        private readonly Tracer neverSampleTracer;
+        private readonly Tracer noopTracer;
 
         public OpenTelemetrySdkBenchmarks()
         {
@@ -48,6 +48,9 @@ namespace Benchmarks
 
         [Benchmark]
         public ISpan CreateSpan_Sampled() => SpanCreationScenarios.CreateSpan(this.alwaysSampleTracer);
+
+        [Benchmark]
+        public ISpan CreateSpan_ParentContext() => SpanCreationScenarios.CreateSpan_ParentContext(this.alwaysSampleTracer);
 
         [Benchmark]
         public ISpan CreateSpan_Attributes_Sampled() => SpanCreationScenarios.CreateSpan_Attributes(this.alwaysSampleTracer);

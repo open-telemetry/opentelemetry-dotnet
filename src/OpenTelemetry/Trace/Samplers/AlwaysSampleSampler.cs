@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace.Samplers
         public override string Description { get; } = nameof(AlwaysSampleSampler);
 
         /// <inheritdoc />
-        public override Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name, IDictionary<string, object> attributes, IEnumerable<Link> parentLinks)
+        public override Decision ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, IDictionary<string, object> attributes, IEnumerable<Link> parentLinks)
         {
             return new Decision(true);
         }

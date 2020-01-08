@@ -15,7 +15,6 @@
 // </copyright>
 using System.Diagnostics;
 using OpenTelemetry.Trace;
-using System;
 using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Test
@@ -53,19 +52,23 @@ namespace OpenTelemetry.Context.Propagation.Test
             TestSpanContextConversion(new SpanContext(TraceId, SpanId, ActivityTraceFlags.None));
         }
 
+
         [Fact]
-        public void ToBinaryValue_NullSpanContext()
+        public void ToBinaryValue_InvalidSpanContext_Default()
         {
-            Assert.Throws<ArgumentNullException>(() => binaryFormat.ToByteArray(null));
+            Assert.Empty(binaryFormat.ToByteArray(default));
         }
 
         [Fact]
-        public void ToBinaryValue_InvalidSpanContext()
+        public void ToBinaryValue_InvalidSpanContext_Remote()
         {
-            Assert.Equal(
-                new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0},
-                binaryFormat.ToByteArray(SpanContext.BlankLocal));
+            Assert.Empty(binaryFormat.ToByteArray(SpanContext.BlankRemote));
+        }
 
+        [Fact]
+        public void ToBinaryValue_InvalidSpanContext_Local()
+        {
+            Assert.Empty(binaryFormat.ToByteArray(default));
         }
 
         [Fact]
@@ -77,19 +80,19 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void FromBinaryValue_NullInput()
         {
-            Assert.Throws<ArgumentNullException>(() => binaryFormat.FromByteArray(null));
+            Assert.Equal(SpanContext.BlankRemote, binaryFormat.FromByteArray(null));
         }
 
         [Fact]
         public void FromBinaryValue_EmptyInput()
         {
-            Assert.Throws<SpanContextParseException>(() => binaryFormat.FromByteArray(new byte[0]));
+            Assert.Equal(SpanContext.BlankRemote, binaryFormat.FromByteArray(new byte[0]));
         }
 
         [Fact]
         public void FromBinaryValue_UnsupportedVersionId()
         {
-            Assert.Throws<SpanContextParseException>(() => binaryFormat.FromByteArray(
+            Assert.Equal(SpanContext.BlankRemote, binaryFormat.FromByteArray(
                 new byte[] 
                 {
                     66, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 97, 98, 99, 100, 101,
@@ -129,20 +132,20 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void FromBinaryValue_ShorterTraceId()
         {
-            Assert.Throws<SpanContextParseException>(() => binaryFormat.FromByteArray(
+            Assert.Equal(SpanContext.BlankRemote, binaryFormat.FromByteArray(
                 new byte[] { 0, 0, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76 }));
         }
 
         [Fact]
         public void FromBinaryValue_ShorterSpanId()
         {
-            Assert.Throws<SpanContextParseException>(() => binaryFormat.FromByteArray(new byte[] { 0, 1, 97, 98, 99, 100, 101, 102, 103 }));
+            Assert.Equal(SpanContext.BlankRemote, binaryFormat.FromByteArray(new byte[] { 0, 1, 97, 98, 99, 100, 101, 102, 103 }));
         }
 
         [Fact]
         public void FromBinaryValue_ShorterTraceOptions()
         {
-            Assert.Throws<SpanContextParseException>(() => binaryFormat.FromByteArray(
+            Assert.Equal(SpanContext.BlankRemote, binaryFormat.FromByteArray(
                 new byte[] {
                     0, 0, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 1, 97, 98, 99, 100,
                     101, 102, 103, 104, 2,}));

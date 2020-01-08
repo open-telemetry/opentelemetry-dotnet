@@ -14,26 +14,24 @@
 // limitations under the License.
 // </copyright>
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
     /// Normalized name value pairs of metric labels.
     /// </summary>
-    public class LabelSet
+    public abstract class LabelSet
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="LabelSet"/> class.
+        /// Empty LabelSet.
         /// </summary>
-        /// <param name="labels">labels from which labelset should be constructed.</param>
-        public LabelSet(IEnumerable<KeyValuePair<string, string>> labels)
-        {
-            this.Labels = labels;
-        }
+        public static readonly LabelSet BlankLabelSet = new BlankLabelSet();
 
         /// <summary>
-        /// Gets or sets the labels for this LabelSet.
+        /// Gets or sets the labels after sorting and removing duplicates.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
+        public virtual IEnumerable<KeyValuePair<string, string>> Labels { get; set; } = Enumerable.Empty<KeyValuePair<string, string>>();
     }
 }

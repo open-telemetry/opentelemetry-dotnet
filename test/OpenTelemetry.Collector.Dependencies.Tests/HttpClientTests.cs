@@ -110,6 +110,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                         {
                             RequestUri = new Uri(tc.Url),
                             Method = new HttpMethod(tc.Method),
+                            Version = new Version(2, 0),
                         };
 
                         if (tc.Headers != null)

@@ -39,7 +39,7 @@ namespace Samples
             }
         }
 
-        private static void DoWork(int i, ITracer tracer)
+        private static void DoWork(int i, Tracer tracer)
         {
             using (tracer.WithSpan(tracer.StartSpan("DoWork")))
             {
@@ -60,7 +60,7 @@ namespace Samples
                 // Annotate our span to capture metadata about our operation
                 var attributes = new Dictionary<string, object>();
                 attributes.Add("use", "demo");
-                span.AddEvent("Invoking DoWork", attributes);
+                span.AddEvent(new Event("Invoking DoWork", attributes));
             }
         }
     }

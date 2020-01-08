@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
     public class JaegerThriftIntegrationTest
     {
-        private readonly ITracer tracer;
+        private readonly Tracer tracer;
 
         public JaegerThriftIntegrationTest()
         {
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public async void JaegerThriftIntegrationTest_TAbstractBaseGeneratesConsistentThriftPayload()
         {
-            var validJaegerThriftPayload = Convert.FromBase64String("goEBCWVtaXRCYXRjaBwcGAx0ZXN0IHByb2Nlc3MZHBgQdGVzdF9wcm9jZXNzX3RhZxUAGAp0ZXN0X3ZhbHVlAAAZHBab5cuG2OehhdwBFuPakI2n2cCVLhbUpdv9yJDPo4EBFpjckNKFzqHOsgEYBE5hbWUZHBUAFpvly4bY56GF3AEW49qQjafZwJUuFpCmrOGWyrWcgwEAFQIWgICz3saWvwUWgJycORlsGAlzdHJpbmdLZXkVABgFdmFsdWUAGAdsb25nS2V5FQZGAgAYCGxvbmdLZXkyFQZGAgAYCWRvdWJsZUtleRUCJwAAAAAAAPA/ABgKZG91YmxlS2V5MhUCJwAAAAAAAPA/ABgHYm9vbEtleRUEMQAZLBaAgLPexpa/BRksGANrZXkVABgFdmFsdWUAGAtkZXNjcmlwdGlvbhUAGAZFdmVudDEAABaAgLPexpa/BRksGANrZXkVABgFdmFsdWUAGAtkZXNjcmlwdGlvbhUAGAZFdmVudDIAAAAAAA==");
+            var validJaegerThriftPayload = Convert.FromBase64String("goEBCWVtaXRCYXRjaBwcGAx0ZXN0IHByb2Nlc3MZHBgQdGVzdF9wcm9jZXNzX3RhZxUAGAp0ZXN0X3ZhbHVlAAAZHBab5cuG2OehhdwBFuPakI2n2cCVLhbUpdv9yJDPo4EBFpjckNKFzqHOsgEYBE5hbWUZHBUAFpvly4bY56GF3AEW49qQjafZwJUuFpCmrOGWyrWcgwEAFQIWgICz3saWvwUWgJycORl8GAlzdHJpbmdLZXkVABgFdmFsdWUAGAdsb25nS2V5FQZGAgAYCGxvbmdLZXkyFQZGAgAYCWRvdWJsZUtleRUCJwAAAAAAAPA/ABgKZG91YmxlS2V5MhUCJwAAAAAAAPA/ABgHYm9vbEtleRUEMQAYCXNwYW4ua2luZBUAGAZjbGllbnQAGSwWgICz3saWvwUZLBgDa2V5FQAYBXZhbHVlABgHbWVzc2FnZRUAGAZFdmVudDEAABaAgLPexpa/BRksGANrZXkVABgFdmFsdWUAGAdtZXNzYWdlFQAYBkV2ZW50MgAAAAAA");
             
             using (var memoryTransport = new InMemoryTransport())
             {
@@ -115,11 +115,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     });
 
             var spanContextSetter = typeof(Span).GetMethod("set_Context", BindingFlags.Instance | BindingFlags.NonPublic);
-            spanContextSetter.Invoke(span, new []{ new SpanContext(traceId, ActivitySpanId.CreateFromString(spanId.AsSpan()), ActivityTraceFlags.Recorded) });
+
+            ActivitySpanId activitySpanId = ActivitySpanId.CreateFromString(spanId.AsSpan());
+            spanContextSetter.Invoke(span, new []{ (object)new SpanContext(in traceId, in activitySpanId, ActivityTraceFlags.Recorded) });
 
             foreach (var attribute in attributes)
             {
-                span.SetAttribute(attribute);
+                span.SetAttribute(attribute.Key, attribute.Value);
             }
 
             foreach (var evnt in events)

@@ -35,10 +35,25 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
         }
 
-        [Event(1, Message = "Exporter failed to convert SpanData content into GRPC proto definition. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
+        [NonEvent]
+        public void FailedToReachCollector(Exception ex)
+        {
+            if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.FailedToReachCollector(ToInvariantString(ex));
+            }
+        }
+
+        [Event(1, Message = "Exporter failed to convert SpanData content into gRPC proto definition. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
         public void FailedToConvertToProtoDefinitionError(string ex)
         {
             this.WriteEvent(1, ex);
+        }
+
+        [Event(2, Message = "Exporter failed send spans to collector. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
+        public void FailedToReachCollector(string ex)
+        {
+            this.WriteEvent(2, ex);
         }
 
         /// <summary>

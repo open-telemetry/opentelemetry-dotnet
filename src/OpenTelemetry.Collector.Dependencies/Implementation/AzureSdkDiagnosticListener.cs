@@ -27,7 +27,7 @@ namespace OpenTelemetry.Collector.Dependencies
         // all fetchers must not be reused between DiagnosticSources.
         private readonly PropertyFetcher linksPropertyFetcher = new PropertyFetcher("Links");
 
-        public AzureSdkDiagnosticListener(string sourceName, ITracer tracer)
+        public AzureSdkDiagnosticListener(string sourceName, Tracer tracer)
             : base(sourceName, tracer)
         {
         }
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Collector.Dependencies
         {
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null || span == BlankSpan.Instance)
+            if (span == null || !span.Context.IsValid)
             {
                 CollectorEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnStopActivity");
                 return;
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Collector.Dependencies
         {
             var span = this.Tracer.CurrentSpan;
 
-            if (span == null || span == BlankSpan.Instance)
+            if (span == null || !span.Context.IsValid)
             {
                 CollectorEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnException");
                 return;

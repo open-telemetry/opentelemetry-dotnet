@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using OpenTelemetry.Trace;
 
@@ -43,11 +44,45 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public static JaegerSpan ToJaegerSpan(this Span span)
         {
-            IEnumerable<JaegerTag> jaegerTags = null;
+            List<JaegerTag> jaegerTags = null;
 
             if (span?.Attributes is IEnumerable<KeyValuePair<string, object>> attributeMap)
             {
-                jaegerTags = attributeMap.Select(a => a.ToJaegerTag()).AsEnumerable();
+                jaegerTags = attributeMap.Select(a => a.ToJaegerTag()).ToList();
+            }
+
+            // The Span.Kind must translate into a tag.
+            // See https://opentracing.io/specification/conventions/
+            if (span.Kind.HasValue)
+            {
+                string spanKind = null;
+
+                if (span.Kind.Value == SpanKind.Server)
+                {
+                    spanKind = "server";
+                }
+                else if (span.Kind.Value == SpanKind.Client)
+                {
+                    spanKind = "client";
+                }
+                else if (span.Kind.Value == SpanKind.Consumer)
+                {
+                    spanKind = "consumer";
+                }
+                else if (span.Kind.Value == SpanKind.Producer)
+                {
+                    spanKind = "producer";
+                }
+
+                if (spanKind != null)
+                {
+                    jaegerTags.Add(new JaegerTag
+                    {
+                        Key = "span.kind",
+                        VType = JaegerTagType.STRING,
+                        VStr = spanKind,
+                    });
+                }
             }
 
             IEnumerable<JaegerLog> jaegerLogs = null;
@@ -64,9 +99,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 refs = span.Links.Select(l => l.ToJaegerSpanRef()).Where(l => l != null).AsEnumerable();
             }
 
-            var traceId = span?.Context?.TraceId == null ? Int128.Empty : new Int128(span.Context.TraceId);
-            var spanId = span?.Context?.SpanId == null ? Int128.Empty : new Int128(span.Context.SpanId);
-            var parentSpanId = span?.ParentSpanId == null ? Int128.Empty : new Int128(span.ParentSpanId);
+            var traceId = Int128.Empty;
+            var spanId = Int128.Empty;
+            var parentSpanId = Int128.Empty;
+
+            if (span != null && span.Context.IsValid)
+            {
+                traceId = new Int128(span.Context.TraceId);
+                spanId = new Int128(span.Context.SpanId);
+                parentSpanId = new Int128(span.ParentSpanId);
+            }
 
             return new JaegerSpan
             {
@@ -108,7 +150,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public static JaegerLog ToJaegerLog(this Event timedEvent)
         {
             var tags = timedEvent.Attributes.Select(a => a.ToJaegerTag()).ToList();
-            tags.Add(new JaegerTag { Key = "description", VType = JaegerTagType.STRING, VStr = timedEvent.Name });
+
+            // Matches what OpenTracing and OpenTelemetry defines as the event name.
+            // https://github.com/opentracing/specification/blob/master/semantic_conventions.md#log-fields-table
+            // https://github.com/open-telemetry/opentelemetry-specification/pull/397/files
+            tags.Add(new JaegerTag { Key = "message", VType = JaegerTagType.STRING, VStr = timedEvent.Name });
 
             return new JaegerLog
             {
@@ -122,7 +168,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             var traceId = Int128.Empty;
             var spanId = Int128.Empty;
 
-            if (link != null)
+            if (link != default)
             {
                 traceId = new Int128(link.Context.TraceId);
                 spanId = new Int128(link.Context.SpanId);

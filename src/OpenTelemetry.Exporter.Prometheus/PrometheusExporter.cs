@@ -13,41 +13,84 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
-    /// Exporter of Open Telemetry traces and metrics to Prometheus.
+    /// Exporter of Open Telemetry metrics to Prometheus.
     /// </summary>
-    /// <typeparam name="T">The type of metric. Only long and double are supported now.</typeparam>
-    public class PrometheusExporter<T> : MetricExporter<T>
-        where T : struct
+    public class PrometheusExporter : MetricExporter
     {
-        internal readonly PrometheusExporterOptions Options;
+        private readonly PrometheusExporterOptions options;
 
-        private readonly Metric<T> metric;
+        private readonly object lck = new object();
+
+        private CancellationTokenSource tokenSource;
+        private List<Metric> metrics;
+        private MetricsHttpServer metricsHttpServer;
+        private Task workerThread;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PrometheusExporter{T}"/> class.
+        /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
         /// </summary>
         /// <param name="options">Options for the exporter.</param>
-        /// <param name="metric">The metric instance where metric values and labels can be read from.</param>
-        public PrometheusExporter(PrometheusExporterOptions options, Metric<T> metric)
+        public PrometheusExporter(PrometheusExporterOptions options)
         {
-            this.Options = options;
-            this.metric = metric;
+            this.options = options;
+            this.metrics = new List<Metric>();
         }
 
         /// <inheritdoc/>
-        public override Task<ExportResult> ExportAsync(Metric<T> metric, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync(List<Metric> metrics, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            this.metricsHttpServer.Metrics = metrics;
+            return Task.FromResult(ExportResult.Success);
+        }
+
+        /// <summary>
+        /// Start exporter.
+        /// </summary>
+        public void Start()
+        {
+            lock (this.lck)
+            {
+                if (this.tokenSource != null)
+                {
+                    return;
+                }
+
+                this.tokenSource = new CancellationTokenSource();
+
+                var token = this.tokenSource.Token;
+
+                this.metricsHttpServer = new MetricsHttpServer(this.metrics, this.options, token);
+                this.workerThread = Task.Factory.StartNew((Action)this.metricsHttpServer.WorkerThread, TaskCreationOptions.LongRunning);
+            }
+        }
+
+        /// <summary>
+        /// Stop exporter.
+        /// </summary>
+        public void Stop()
+        {
+            lock (this.lck)
+            {
+                if (this.tokenSource == null)
+                {
+                    return;
+                }
+
+                this.tokenSource.Cancel();
+                this.workerThread.Wait();
+                this.tokenSource = null;
+            }
         }
     }
 }

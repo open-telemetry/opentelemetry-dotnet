@@ -63,7 +63,7 @@ namespace Samples
             }
         }
 
-        private static void DoWork(IDatabase db, ITracer tracer)
+        private static void DoWork(IDatabase db, Tracer tracer)
         {
             // Start another span. If another span was already started, it'll use that span as the parent span.
             // In this example, the main method already started a span, so that'll be the parent span, and this will be
@@ -96,7 +96,7 @@ namespace Samples
                 {
                     { "use", "demo" },
                 };
-                span.AddEvent("Invoking DoWork", attributes);
+                span.AddEvent(new Event("Invoking DoWork", attributes));
             }
         }
     }

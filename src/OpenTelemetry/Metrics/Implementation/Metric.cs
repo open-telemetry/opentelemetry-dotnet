@@ -23,37 +23,25 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics.Implementation
 {
-    public class Metric<T>
+    public class Metric
     {
-        public Metric(string name)
+        public Metric(string metricNamespace, string metricName, string desc, IEnumerable<KeyValuePair<string, string>> labels, long value)
         {
-            this.MetricName = name;
-            this.MetricDescription = "Description:" + name;
+            this.MetricNamespace = metricNamespace;
+            this.MetricName = metricName;
+            this.MetricDescription = desc;
+            this.Labels = labels;
+            this.Value = value;
         }
+
+        public string MetricNamespace { get; private set; }
 
         public string MetricName { get; private set; }
 
-        public string MetricDescription { get; private set; } 
+        public string MetricDescription { get; private set; }
 
-        public IDictionary<LabelSet, MetricTimeSeries<T>> TimeSeries { get; } = new ConcurrentDictionary<LabelSet, MetricTimeSeries<T>>();
+        public IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
 
-        public MetricTimeSeries<T> GetOrCreateMetricTimeSeries(LabelSet labelSet)
-        {
-            if (this.TimeSeries.ContainsKey(labelSet))
-            {
-                return this.TimeSeries[labelSet];
-            }
-            else
-            {
-                return this.CreateMetricTimeSeries(labelSet);
-            }
-        }
-
-        private MetricTimeSeries<T> CreateMetricTimeSeries(LabelSet labelSet)
-        {
-            var newSeries = new MetricTimeSeries<T>(labelSet);
-            this.TimeSeries.Add(labelSet, newSeries);
-            return newSeries;
-        }
+        public long Value { get; set; }
     }
 }

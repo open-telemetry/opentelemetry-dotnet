@@ -14,9 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-#if NETSTANDARD
+// #if NETSTANDARD
 
 using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Metrics.Implementation;
@@ -33,15 +34,13 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// </summary>
         /// <param name="builder">The <see cref="IWebHostBuilder"/> to configure.</param>
         /// <param name="options">The <see cref="PrometheusExporterOptions"/> to configure the exporter with.</param>
-        /// <param name="metric">The <see cref="Metric{T}"/> to export.</param>
-        /// <typeparam name="T">The type of metric value.</typeparam>
+        /// <param name="metrics">The <see cref="List{Metric}"/> to export.</param>
         /// <returns>The <see cref="IWebHostBuilder"/> for chaining.</returns>
-        public static IWebHostBuilder UsePrometheus<T>(this IWebHostBuilder builder, PrometheusExporterOptions options, Metric<T> metric)
-            where T : struct
+        public static IWebHostBuilder UsePrometheus(this IWebHostBuilder builder, PrometheusExporterOptions options, List<Metric> metrics)
         {
             return builder.ConfigureServices((context, services) =>
             {
-                services.AddSingleton(new PrometheusExporter<T>(options, metric));
+                services.AddSingleton(new PrometheusExporter(options));
             });
         }
 
@@ -50,18 +49,16 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// </summary>
         /// <param name="builder">The <see cref="IWebHostBuilder"/> to configure.</param>
         /// <param name="configure">A <see cref="Action{PrometheusExporterOptions}"/> to configure the exporter with.</param>
-        /// <param name="metric">The <see cref="Metric{T}"/> to export.</param>
-        /// <typeparam name="T">The type of metric value.</typeparam>
+        /// <param name="metrics">The <see cref="List{Metric}"/> to export.</param>
         /// <returns>The <see cref="IWebHostBuilder"/> for chaining.</returns>
-        public static IWebHostBuilder UsePrometheus<T>(this IWebHostBuilder builder, Action<PrometheusExporterOptions> configure, Metric<T> metric)
-            where T : struct
+        public static IWebHostBuilder UsePrometheus(this IWebHostBuilder builder, Action<PrometheusExporterOptions> configure, List<Metric> metrics)
         {
             var options = new PrometheusExporterOptions();
             configure(options);
 
-            return builder.UsePrometheus(options, metric);
+            return builder.UsePrometheus(options, metrics);
         }
     }
 }
 
-#endif
+// #endif
