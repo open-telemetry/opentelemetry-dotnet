@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
-namespace TestApp.AspNetCore._3._0.Controllers
+namespace TestApp.AspNetCore._3._1.Controllers
 {
     [Route("api/[controller]")]
     public class ForwardController : Controller
