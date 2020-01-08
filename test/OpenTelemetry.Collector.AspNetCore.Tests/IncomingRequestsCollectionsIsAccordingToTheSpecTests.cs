@@ -25,7 +25,7 @@ using Moq;
 using Microsoft.AspNetCore.TestHost;
 using System;
 using Microsoft.AspNetCore.Http;
-using TestApp.AspNetCore._3._0;
+using TestApp.AspNetCore._3._1;
 
 namespace OpenTelemetry.Collector.AspNetCore.Tests
 {

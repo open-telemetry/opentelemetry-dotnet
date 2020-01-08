@@ -54,7 +54,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.Asp
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "testdata", "testdata", "{77C7929A-2EED-4AA6-8705-B5C443C8AA0F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.3.0", "test\TestApp.AspNetCore.3.0\TestApp.AspNetCore.3.0.csproj", "{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.3.1", "test\TestApp.AspNetCore.3.1\TestApp.AspNetCore.3.1.csproj", "{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Stackdriver.Tests", "test\OpenTelemetry.Exporter.Stackdriver.Tests\OpenTelemetry.Exporter.Stackdriver.Tests.csproj", "{6875032B-DFDC-4CDE-A283-37CA7F99926A}"
 EndProject
