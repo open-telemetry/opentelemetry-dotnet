@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Metrics.Implementation;
 
@@ -30,13 +29,6 @@ namespace OpenTelemetry.Exporter.Prometheus
     {
         private readonly PrometheusExporterOptions options;
 
-        private readonly object lck = new object();
-
-        private CancellationTokenSource tokenSource;
-        private List<Metric> metrics;
-        private MetricsHttpServer metricsHttpServer;
-        private Task workerThread;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
         /// </summary>
@@ -44,53 +36,18 @@ namespace OpenTelemetry.Exporter.Prometheus
         public PrometheusExporter(PrometheusExporterOptions options)
         {
             this.options = options;
-            this.metrics = new List<Metric>();
+            this.Metrics = new List<Metric>();
         }
+
+        internal List<Metric> Metrics { get; private set; }
 
         /// <inheritdoc/>
         public override Task<ExportResult> ExportAsync(List<Metric> metrics, CancellationToken cancellationToken)
         {
-            this.metricsHttpServer.Metrics = metrics;
+            // Prometheus uses a pull process, not a push - just return success here.
+            // Store the updated metrics internally for the next pull.
+            this.Metrics = metrics;
             return Task.FromResult(ExportResult.Success);
-        }
-
-        /// <summary>
-        /// Start exporter.
-        /// </summary>
-        public void Start()
-        {
-            lock (this.lck)
-            {
-                if (this.tokenSource != null)
-                {
-                    return;
-                }
-
-                this.tokenSource = new CancellationTokenSource();
-
-                var token = this.tokenSource.Token;
-
-                this.metricsHttpServer = new MetricsHttpServer(this.metrics, this.options, token);
-                this.workerThread = Task.Factory.StartNew((Action)this.metricsHttpServer.WorkerThread, TaskCreationOptions.LongRunning);
-            }
-        }
-
-        /// <summary>
-        /// Stop exporter.
-        /// </summary>
-        public void Stop()
-        {
-            lock (this.lck)
-            {
-                if (this.tokenSource == null)
-                {
-                    return;
-                }
-
-                this.tokenSource.Cancel();
-                this.workerThread.Wait();
-                this.tokenSource = null;
-            }
         }
     }
 }

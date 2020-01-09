@@ -13,30 +13,83 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading;
-using OpenTelemetry.Metrics.Implementation;
+using System.Threading.Tasks;
+using OpenTelemetry.Exporter.Prometheus.Implementation;
 
-namespace OpenTelemetry.Exporter.Prometheus.Implementation
+namespace OpenTelemetry.Exporter.Prometheus
 {
-    internal class MetricsHttpServer
+    /// <summary>
+    /// A HTTP listener used to expose Prometheus metrics.
+    /// </summary>
+    public class MetricsHttpServer
     {
-        internal List<Metric> Metrics;
-
+        private readonly PrometheusExporter exporter;
         private readonly CancellationToken token;
         private readonly HttpListener httpListener = new HttpListener();
+        private readonly object lck = new object();
 
-        public MetricsHttpServer(List<Metric> metrics, PrometheusExporterOptions options, CancellationToken token)
+        private CancellationTokenSource tokenSource;
+        private Task workerThread;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MetricsHttpServer"/> class.
+        /// </summary>
+        /// <param name="exporter">The PrometheusExporter instance.</param>
+        /// <param name="options">The PrometheusOptions instance.</param>
+        /// <param name="token">A CancellationToken that can be used to stop the Htto Server.</param>
+        public MetricsHttpServer(PrometheusExporter exporter, PrometheusExporterOptions options, CancellationToken token)
         {
-            this.Metrics = metrics;
+            this.exporter = exporter;
             this.token = token;
             this.httpListener.Prefixes.Add(options.Url);
         }
 
-        public void WorkerThread()
+        /// <summary>
+        /// Start exporter.
+        /// </summary>
+        public void Start()
+        {
+            lock (this.lck)
+            {
+                if (this.tokenSource != null)
+                {
+                    return;
+                }
+
+                // link the passed in token if not null
+                this.tokenSource = this.token == null ?
+                    new CancellationTokenSource() :
+                    CancellationTokenSource.CreateLinkedTokenSource(this.token);
+
+                var token = this.tokenSource.Token;
+                this.workerThread = Task.Factory.StartNew((Action)this.WorkerThread, TaskCreationOptions.LongRunning);
+            }
+        }
+
+        /// <summary>
+        /// Stop exporter.
+        /// </summary>
+        public void Stop()
+        {
+            lock (this.lck)
+            {
+                if (this.tokenSource == null)
+                {
+                    return;
+                }
+
+                this.tokenSource.Cancel();
+                this.workerThread.Wait();
+                this.tokenSource = null;
+            }
+        }
+
+        private void WorkerThread()
         {
             this.httpListener.Start();
 
@@ -56,7 +109,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                     {
                         using (var writer = new StreamWriter(output))
                         {
-                            foreach (var metric in this.Metrics)
+                            foreach (var metric in this.exporter.Metrics)
                             {
                                 var labels = metric.Labels;
                                 var value = metric.Value;
