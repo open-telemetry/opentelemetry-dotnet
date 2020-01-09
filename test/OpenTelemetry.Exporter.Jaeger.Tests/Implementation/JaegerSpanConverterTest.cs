@@ -320,7 +320,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("Event2", eventField.VStr);
         }
 
-        internal IReadableSpan CreateTestSpan(
+        internal SpanData CreateTestSpan(
             bool setAttributes = true,
             bool addEvents = true,
             bool addLinks = true)
@@ -362,18 +362,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            var span =
-                new TestSpan(
+            var span = SpanDataHelper.CreateSpanData(
                     "Name",
-                    new SpanContext(traceId, ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded),
+                    new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
                     SpanKind.Client,
                     startTimestamp,
                     addLinks ? new[] { new Link(new SpanContext(
                             traceId,
                             linkedSpanId,
                             ActivityTraceFlags.Recorded)), } : Enumerable.Empty<Link>(),
-                    parentSpanId,
-                    setAttributes ? attributes : Enumerable.Empty<KeyValuePair<string, object>>(),
+                    setAttributes ? attributes : new Dictionary<string, object>(),
                     addEvents ? events : Enumerable.Empty<Event>(),
                     Status.Ok,
                     endTimestamp);

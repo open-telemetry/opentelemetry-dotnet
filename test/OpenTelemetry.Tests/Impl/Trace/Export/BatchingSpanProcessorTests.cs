@@ -113,8 +113,8 @@ namespace OpenTelemetry.Trace.Export.Test
                 var exported = WaitForSpans(spanExporter, 2, DefaultTimeout);
 
                 Assert.Equal(2, exported.Length);
-                Assert.Contains(span1, exported);
-                Assert.Contains(span2, exported);
+                Assert.Contains(new SpanData(span1), exported);
+                Assert.Contains(new SpanData(span2), exported);
             }
         }
 
@@ -167,7 +167,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
                 Assert.Equal(1, exportCalledCount);
                 Assert.InRange(exported.Length, 1, 2);
-                Assert.Contains(spans.First(), exported);
+                Assert.Contains(new SpanData(spans.First()), exported);
             }
         }
 
@@ -199,12 +199,12 @@ namespace OpenTelemetry.Trace.Export.Test
                 Assert.InRange(exportCalledCount, 2, 6);
 
                 Assert.Equal(6, exported.Count());
-                Assert.Contains(span1, exported);
-                Assert.Contains(span2, exported);
-                Assert.Contains(span3, exported);
-                Assert.Contains(span4, exported);
-                Assert.Contains(span5, exported);
-                Assert.Contains(span6, exported);
+                Assert.Contains(new SpanData(span1), exported);
+                Assert.Contains(new SpanData(span2), exported);
+                Assert.Contains(new SpanData(span3), exported);
+                Assert.Contains(new SpanData(span4), exported);
+                Assert.Contains(new SpanData(span5), exported);
+                Assert.Contains(new SpanData(span6), exported);
             }
         }
 
@@ -228,7 +228,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 // Need to check this because otherwise the variable span1 is unused, other option is to not
                 // have a span1 variable.
                 Assert.Single(exported);
-                Assert.Contains(span2, exported);
+                Assert.Contains(new SpanData(span2), exported);
             }
         }
 
@@ -350,7 +350,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Activity.Current = null;
         }
 
-        private IReadableSpan[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
+        private SpanData[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
         {
             Assert.True(
                 SpinWait.SpinUntil(() =>

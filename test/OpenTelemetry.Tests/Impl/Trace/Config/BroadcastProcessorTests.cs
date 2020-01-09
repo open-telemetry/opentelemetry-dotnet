@@ -74,11 +74,12 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             var tracer = TracerFactory.Create(_ => { }).GetTracer(null);
             var span = (Span)tracer.StartSpan("foo");
 
-            broadcastProcessor.OnStart(span);
+            var spanData = new SpanData(span);
+            broadcastProcessor.OnStart(spanData);
             Assert.True(start1Called);
             Assert.True(start2Called);
 
-            broadcastProcessor.OnEnd(span);
+            broadcastProcessor.OnEnd(spanData);
             Assert.True(end1Called);
             Assert.True(end2Called);
         }
@@ -127,11 +128,12 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             var tracer = TracerFactory.Create(_ => { }).GetTracer(null);
             var span = (Span)tracer.StartSpan("foo");
 
-            broadcastProcessor.OnStart(span);
+            var spanData = new SpanData(span);
+            broadcastProcessor.OnStart(spanData);
             Assert.True(start1Called);
             Assert.True(start2Called);
 
-            broadcastProcessor.OnEnd(span);
+            broadcastProcessor.OnEnd(spanData);
             Assert.True(end1Called);
             Assert.True(end2Called);
         }
@@ -155,23 +157,23 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
 
         private class TestProcessor : SpanProcessor, IDisposable
         {
-            private readonly Action<IReadableSpan> onStart;
-            private readonly Action<IReadableSpan> onEnd;
+            private readonly Action<SpanData> onStart;
+            private readonly Action<SpanData> onEnd;
             public bool ShutdownCalled { get; private set; } = false;
             public bool DisposedCalled { get; private set; } = false;
 
-            public TestProcessor(Action<IReadableSpan> onStart, Action<IReadableSpan> onEnd)
+            public TestProcessor(Action<SpanData> onStart, Action<SpanData> onEnd)
             {
                 this.onStart = onStart;
                 this.onEnd = onEnd;
             }
 
-            public override void OnStart(IReadableSpan span)
+            public override void OnStart(SpanData span)
             {
                 this.onStart?.Invoke(span);
             }
 
-            public override void OnEnd(IReadableSpan span)
+            public override void OnEnd(SpanData span)
             {
                 this.onEnd?.Invoke(span);
             }

@@ -19,6 +19,7 @@ using OpenTelemetry.Exporter.LightStep.Implementation;
 using OpenTelemetry.Trace.Configuration;
 using System;
 using System.Diagnostics;
+using Moq;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
@@ -75,21 +76,20 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
             var link = new Link(new Trace.SpanContext(
                 traceId, linkedSpanId, ActivityTraceFlags.Recorded));
 
-            var span = new TestSpan(
+            var spanData = CreateSpanData(
                 "Test",
-                new SpanContext(traceId, ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded),
+                new SpanContext(traceId, parentId, ActivityTraceFlags.Recorded),
                 SpanKind.Client,
                 startTs,
                 new[] { link },
-                parentId,
                 attrs,
                 evts,
                 Status.Ok,
                 endTs);
 
-            var spanIdInt = span.Context.SpanId.ToLSSpanId();
+            var spanIdInt = spanData.Context.SpanId.ToLSSpanId();
 
-            var lsSpan = span.ToLightStepSpan();
+            var lsSpan = spanData.ToLightStepSpan();
 
             Assert.Equal("Test", lsSpan.OperationName);
             Assert.Equal(2, lsSpan.Logs.Count);
@@ -99,43 +99,58 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
             Assert.Equal(spanIdInt, lsSpan.SpanContext.SpanId);
             Assert.Equal(parentIdInt, lsSpan.References[0].SpanContext.SpanId);
         }
-    }
 
-    internal class TestSpan : IReadableSpan
-    {
-        public TestSpan(string name,
-            Trace.SpanContext context,
+        private static SpanData CreateSpanData(string name,
+            SpanContext parentContext,
             SpanKind kind,
             DateTimeOffset startTimestamp,
             IEnumerable<Link> links,
-            ActivitySpanId parentSpanId,
-            IEnumerable<KeyValuePair<string, object>> attributes,
+            IDictionary<string, object> attributes,
             IEnumerable<Event> events,
             Status status,
             DateTimeOffset endTimestamp)
         {
-            this.Name = name;
-            this.Context = context;
-            this.Kind = kind;
-            this.StartTimestamp = startTimestamp;
-            this.Links = links;
-            this.ParentSpanId = parentSpanId;
-            this.Attributes = attributes;
-            this.Events = events;
-            this.Status = status;
-            this.EndTimestamp = endTimestamp;
-        }
+            var processor = new Mock<SpanProcessor>();
 
-        public Trace.SpanContext Context { get; }
-        public string Name { get; }
-        public Status Status { get; }
-        public ActivitySpanId ParentSpanId { get; }
-        public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
-        public IEnumerable<Event> Events { get; }
-        public IEnumerable<Link> Links { get; }
-        public DateTimeOffset StartTimestamp { get; }
-        public DateTimeOffset EndTimestamp { get; }
-        public SpanKind? Kind { get; }
-        public Resource LibraryResource { get; }
+            processor.Setup(p => p.OnEnd(It.IsAny<SpanData>()));
+
+            var tracer = TracerFactory.Create(b =>
+                    b.AddProcessorPipeline(p =>
+                        p.AddProcessor(_ => processor.Object)))
+                .GetTracer(null);
+
+            SpanCreationOptions spanOptions = null;
+
+            if (links != null || attributes != null || startTimestamp != default)
+            {
+                spanOptions = new SpanCreationOptions
+                {
+                    Links = links,
+                    Attributes = attributes,
+                    StartTimestamp = startTimestamp,
+                };
+            }
+            var span = tracer.StartSpan(name, parentContext, kind, spanOptions);
+
+            if (events != null)
+            {
+                foreach (var evnt in events)
+                {
+                    span.AddEvent(evnt);
+                }
+            }
+
+            span.Status = status.IsValid ? status : Status.Ok;
+            if (endTimestamp == default)
+            {
+                span.End();
+            }
+            else
+            {
+                span.End(endTimestamp);
+            }
+
+            return (SpanData)processor.Invocations[0].Arguments[0];
+        }
     }
 }

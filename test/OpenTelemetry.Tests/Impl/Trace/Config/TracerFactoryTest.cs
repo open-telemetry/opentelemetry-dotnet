@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace.Test
             {
                 exporterCalledCount ++;
                 Assert.Single(spans);
-                Assert.IsType<Span>(spans.Single());
+                Assert.IsType<SpanData>(spans.Single());
             });
 
             TestCollector collector1 = null;
@@ -245,11 +245,11 @@ namespace OpenTelemetry.Trace.Test
         private class TestProcessor : SpanProcessor, IDisposable
         {
             private readonly SpanExporter exporter;
-            private readonly Action<IReadableSpan> onEnd;
+            private readonly Action<SpanData> onEnd;
 
             public bool IsDisposed { get; private set; }
 
-            public TestProcessor(Action<IReadableSpan> onEnd)
+            public TestProcessor(Action<SpanData> onEnd)
             {
                 this.exporter = null;
                 this.onEnd = onEnd;
@@ -266,11 +266,11 @@ namespace OpenTelemetry.Trace.Test
                 IsDisposed = true;
             }
 
-            public override void OnStart(IReadableSpan span)
+            public override void OnStart(SpanData span)
             {
             }
 
-            public override void OnEnd(IReadableSpan span)
+            public override void OnEnd(SpanData span)
             {
                 this.onEnd?.Invoke(span);
                 exporter?.ExportAsync(new[] {span}, default);

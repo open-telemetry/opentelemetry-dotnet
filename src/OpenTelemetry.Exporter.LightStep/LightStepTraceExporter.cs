@@ -39,7 +39,7 @@ namespace OpenTelemetry.Exporter.LightStep
             this.httpClient.Timeout = this.options.SatelliteTimeout;
         }
 
-        public override async Task<ExportResult> ExportAsync(IEnumerable<IReadableSpan> spanDataList, CancellationToken cancellationToken)
+        public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> spanDataList, CancellationToken cancellationToken)
         {
             var lsReport = new LightStepReport
             {

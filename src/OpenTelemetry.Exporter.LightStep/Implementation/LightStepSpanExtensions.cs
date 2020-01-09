@@ -22,7 +22,7 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
 {
     public static class LightStepSpanExtensions
     {
-        public static LightStepSpan ToLightStepSpan(this IReadableSpan data)
+        public static LightStepSpan ToLightStepSpan(this SpanData data)
         {
             var duration = data.EndTimestamp - data.StartTimestamp;
             var span = new LightStepSpan();

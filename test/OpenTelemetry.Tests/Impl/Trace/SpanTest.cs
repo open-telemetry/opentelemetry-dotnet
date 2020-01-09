@@ -803,8 +803,8 @@ namespace OpenTelemetry.Trace.Test
             var spanPassedToSpanProcessorHasSpanContext = false;
 
             spanProcessorMock
-                .Setup(s => s.OnStart(It.IsAny<IReadableSpan>()))
-                .Callback<IReadableSpan>(s =>
+                .Setup(s => s.OnStart(It.IsAny<SpanData>()))
+                .Callback<SpanData>(s =>
                 {
                     spanPassedToSpanProcessorHasSpanContext = s.Context.IsValid;
                 });
@@ -858,9 +858,10 @@ namespace OpenTelemetry.Trace.Test
 
             var startEndMock = Mock.Get(spanProcessor);
 
-            spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
+            var spanData = new SpanData(span);
+            spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
             Assert.True(spanPassedToSpanProcessorHasSpanContext);
-            startEndMock.Verify(s => s.OnEnd(span), Times.Never);
+            startEndMock.Verify(s => s.OnEnd(spanData), Times.Never);
         }
 
         [Fact]
@@ -918,8 +919,9 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(Status.Cancelled, span.Status);
             AssertApproxSameTimestamp(spanEndTime, span.EndTimestamp);
 
-            spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
-            spanProcessorMock.Verify(s => s.OnEnd(span), Times.Once);
+            var spanData = new SpanData(span);
+            spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
+            spanProcessorMock.Verify(s => s.OnEnd(spanData), Times.Once);
         }
 
         [Fact]
@@ -934,8 +936,9 @@ namespace OpenTelemetry.Trace.Test
             span.End();
             Assert.Equal(Status.Cancelled, span.Status);
 
-            spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
-            spanProcessorMock.Verify(s => s.OnEnd(span), Times.Once);
+            var spanData = new SpanData(span);
+            spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
+            spanProcessorMock.Verify(s => s.OnEnd(spanData), Times.Once);
         }
 
         [Fact]

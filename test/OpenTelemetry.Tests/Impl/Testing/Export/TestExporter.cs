@@ -25,18 +25,18 @@ namespace OpenTelemetry.Testing.Export
 {
     public class TestExporter : SpanExporter
     {
-        private readonly ConcurrentQueue<IReadableSpan> spanDataList = new ConcurrentQueue<IReadableSpan>();
-        private readonly Action<IEnumerable<IReadableSpan>> onExport;
-        public TestExporter(Action<IEnumerable<IReadableSpan>> onExport)
+        private readonly ConcurrentQueue<SpanData> spanDataList = new ConcurrentQueue<SpanData>();
+        private readonly Action<IEnumerable<SpanData>> onExport;
+        public TestExporter(Action<IEnumerable<SpanData>> onExport)
         {
             this.onExport = onExport;
         }
 
-        public IReadableSpan[] ExportedSpans => spanDataList.ToArray();
+        public SpanData[] ExportedSpans => spanDataList.ToArray();
 
         public bool WasShutDown { get; private set; } = false;
 
-        public override Task<ExportResult> ExportAsync(IEnumerable<IReadableSpan> data, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> data, CancellationToken cancellationToken)
         {
             this.onExport?.Invoke(data);
 

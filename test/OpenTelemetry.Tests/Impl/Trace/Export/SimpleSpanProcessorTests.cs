@@ -129,8 +129,8 @@ namespace OpenTelemetry.Trace.Export.Test
 
             var exported = WaitForSpans(spanExporter, 2, TimeSpan.FromMilliseconds(100));
             Assert.Equal(2, exported.Length);
-            Assert.Contains(span1, exported);
-            Assert.Contains(span2, exported);
+            Assert.Contains(new SpanData(span1), exported);
+            Assert.Contains(new SpanData(span2), exported);
         }
 
         [Fact]
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Trace.Export.Test
             // Need to check this because otherwise the variable span1 is unused, other option is to not
             // have a span1 variable.
             Assert.Single(exported);
-            Assert.Contains(span2, exported);
+            Assert.Contains(new SpanData(span2), exported);
         }
 
         public void Dispose()
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Activity.Current = null;
         }
 
-        private IReadableSpan[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
+        private SpanData[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
         {
             Assert.True(
                 SpinWait.SpinUntil(() =>

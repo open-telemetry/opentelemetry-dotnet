@@ -20,9 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using System.Reflection;
+using Moq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using Thrift.Protocols;
@@ -58,19 +57,27 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
                 var buff = memoryTransport.GetBuffer();
 
-                Assert.Equal(validJaegerThriftPayload, buff);
+                // all parts except spanId match (we can't control/mock span-id generation)
+                Assert.Equal(validJaegerThriftPayload.AsSpan().Slice(0, 89).ToArray(), buff.AsSpan().Slice(0, 89).ToArray());
+                Assert.Equal(validJaegerThriftPayload.AsSpan().Slice(98).ToArray(), buff.AsSpan().Slice(98).ToArray());
+
+                byte [] spanIdBytes = new byte[8];
+                spanData.Context.SpanId.CopyTo(spanIdBytes);
+
+                Assert.Equal(span.SpanId, BitConverter.ToInt64(spanIdBytes, 0));
+
+                // TODO: validate spanId in thrift payload
             }
         }
 
 
-        private IReadableSpan CreateTestSpan()
+        private SpanData CreateTestSpan()
         {
             var startTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
             var endTimestamp = startTimestamp.AddSeconds(60);
             var eventTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
-            var spanId = "6a69db47429ea340";
             var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
             var attributes = new Dictionary<string, object>
             {
@@ -108,55 +115,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     linkedSpanId,
                     ActivityTraceFlags.Recorded));
 
-            return new TestSpan(
+            return SpanDataHelper.CreateSpanData(
                 "Name",
-                new SpanContext(traceId, ActivitySpanId.CreateFromString(spanId.AsSpan()), ActivityTraceFlags.Recorded),
+                new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
                 SpanKind.Client,
                 startTimestamp,
                 new[] {link},
-                parentSpanId,
                 attributes,
                 events,
                 Status.Ok,
                 endTimestamp);
         }
-    }
-
-    internal class TestSpan : IReadableSpan
-    {
-        public TestSpan(string name,
-            SpanContext context,
-            SpanKind kind,
-            DateTimeOffset startTimestamp,
-            IEnumerable<Link> links,
-            ActivitySpanId parentSpanId,
-            IEnumerable<KeyValuePair<string, object>> attributes,
-            IEnumerable<Event> events,
-            Status status,
-            DateTimeOffset endTimestamp)
-        {
-            this.Name = name;
-            this.Context = context;
-            this.Kind = kind;
-            this.StartTimestamp = startTimestamp;
-            this.Links = links;
-            this.ParentSpanId = parentSpanId;
-            this.Attributes = attributes;
-            this.Events = events;
-            this.Status = status;
-            this.EndTimestamp = endTimestamp;
-        }
-
-        public SpanContext Context { get; }
-        public string Name { get; }
-        public Status Status { get; }
-        public ActivitySpanId ParentSpanId { get; }
-        public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
-        public IEnumerable<Event> Events { get; }
-        public IEnumerable<Link> Links { get; }
-        public DateTimeOffset StartTimestamp { get; }
-        public DateTimeOffset EndTimestamp { get; }
-        public SpanKind? Kind { get; }
-        public Resource LibraryResource { get; }
     }
 }

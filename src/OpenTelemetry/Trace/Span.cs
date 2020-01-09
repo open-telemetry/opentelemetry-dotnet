@@ -32,11 +32,12 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Span implementation.
     /// </summary>
-    internal sealed class Span : ISpan, IReadableSpan, IDisposable
+    internal sealed class Span : ISpan, IDisposable
     {
         internal static readonly Span Invalid = new Span();
         private static readonly ConditionalWeakTable<Activity, Span> ActivitySpanTable = new ConditionalWeakTable<Activity, Span>();
 
+        private readonly SpanData spanData;
         private readonly Sampler sampler;
         private readonly TracerConfiguration tracerConfiguration;
         private readonly SpanProcessor spanProcessor;
@@ -120,7 +121,7 @@ namespace OpenTelemetry.Trace
 
             // this context is definitely not remote, setting isRemote to false
             this.Context = new SpanContext(this.Activity.TraceId, this.Activity.SpanId, this.Activity.ActivityTraceFlags, false, tracestate);
-
+            
             if (this.IsRecording)
             {
                 this.SetLinks(links);
@@ -133,7 +134,8 @@ namespace OpenTelemetry.Trace
                     }
                 }
 
-                this.spanProcessor.OnStart(this);
+                this.spanData = new SpanData(this);
+                this.spanProcessor.OnStart(this.spanData);
             }
         }
 
@@ -430,7 +432,7 @@ namespace OpenTelemetry.Trace
 
             if (this.IsRecording)
             {
-                this.spanProcessor.OnEnd(this);
+                this.spanProcessor.OnEnd(this.spanData);
             }
         }
 
