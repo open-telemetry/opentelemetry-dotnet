@@ -44,18 +44,18 @@ namespace OpenTelemetry.Trace.Export.Test
                 .GetTracer(null);
         }
 
-        private Span CreateSampledEndedSpan(string spanName)
+        private SpanSdk CreateSampledEndedSpan(string spanName)
         {
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (Span)tracer.StartSpan(spanName, context);
+            var span = (SpanSdk)tracer.StartSpan(spanName, context);
             span.End();
             return span;
         }
 
-        private Span CreateNotSampledEndedSpan(string spanName)
+        private SpanSdk CreateNotSampledEndedSpan(string spanName)
         {
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-            var span = (Span)tracer.StartSpan(spanName, context);
+            var span = (SpanSdk)tracer.StartSpan(spanName, context);
             span.End();
             return span;
         }
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 .GetTracer(null);
 
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (Span)tracer.StartSpan("foo", context);
+            var span = (SpanSdk)tracer.StartSpan("foo", context);
 
             // does not throw
             span.End();
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 .GetTracer(null);
 
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (Span)tracer.StartSpan("foo", context);
+            var span = (SpanSdk)tracer.StartSpan("foo", context);
 
             // does not block
             var sw = Stopwatch.StartNew();

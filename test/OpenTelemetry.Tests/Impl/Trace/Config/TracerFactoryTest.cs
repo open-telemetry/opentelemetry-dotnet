@@ -49,11 +49,11 @@ namespace OpenTelemetry.Trace.Test
 
             var span = tracer.StartSpan("foo");
             Assert.NotNull(span);
-            Assert.IsType<Span>(span);
+            Assert.IsType<SpanSdk>(span);
 
             // default sampler is always sample
             Assert.True(span.IsRecording);
-            Assert.Equal(Resource.Empty, ((Span)span).LibraryResource);
+            Assert.Equal(Resource.Empty, ((SpanSdk)span).LibraryResource);
         }
 
         [Fact]
@@ -97,8 +97,8 @@ namespace OpenTelemetry.Trace.Test
             // default sampler is always sample
             Assert.True(span.IsRecording);
             Assert.Equal(1, exporterCalledCount);
-            Assert.Single(((Span)span).LibraryResource.Attributes);
-            Assert.Single(((Span)span).LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value == "my-app"));
+            Assert.Single(((SpanSdk)span).LibraryResource.Attributes);
+            Assert.Single(((SpanSdk)span).LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value == "my-app"));
 
             Assert.NotNull(collector1);
             Assert.NotNull(collector2);
@@ -133,7 +133,7 @@ namespace OpenTelemetry.Trace.Test
             {
                 exporterCalledCount++;
                 Assert.Single(spans);
-                Assert.IsType<Span>(spans.Single());
+                Assert.IsType<SpanSdk>(spans.Single());
             });
 
             var processCalledCount = 0;
@@ -292,11 +292,11 @@ namespace OpenTelemetry.Trace.Test
                 this.tracer = tracer;
             }
 
-            public Span Collect()
+            public SpanSdk Collect()
             {
                 var span = this.tracer.StartSpan("foo");
                 span.End();
-                return (Span)span;
+                return (SpanSdk)span;
             }
 
             public void Dispose()

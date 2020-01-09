@@ -23,9 +23,9 @@ namespace OpenTelemetry.Trace.Export
 {
     public struct SpanData
     {
-        private readonly Span span;
+        private readonly SpanSdk span;
 
-        internal SpanData(Span span)
+        internal SpanData(SpanSdk span)
         {
             this.span = span;
         }

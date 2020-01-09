@@ -51,17 +51,17 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
 
             this.cancellationTokenSource = new CancellationTokenSource();
             this.cancellationToken = this.cancellationTokenSource.Token;
-            var spanType = typeof(TracerFactory).Assembly.GetType("OpenTelemetry.Trace.Span");
+            var spanType = typeof(TracerFactory).Assembly.GetType("OpenTelemetry.Trace.SpanSdk");
 
             this.spanEndTimestampInfo = spanType?.GetProperty("EndTimestamp");
             if (this.spanEndTimestampInfo == null)
             {
-                throw new ArgumentException("OpenTelemetry.Trace.Span.EndTimestamp property is missing");
+                throw new ArgumentException("OpenTelemetry.Trace.SpanSdk.EndTimestamp property is missing");
             }
 
             if (this.spanEndTimestampInfo.PropertyType != typeof(DateTimeOffset))
             {
-                throw new ArgumentException("OpenTelemetry.Trace.Span.EndTimestamp property is not of DateTimeOffset type");
+                throw new ArgumentException("OpenTelemetry.Trace.SpanSdk.EndTimestamp property is not of DateTimeOffset type");
             }
 
             Task.Factory.StartNew(this.DumpEntries, TaskCreationOptions.LongRunning, this.cancellationToken);
