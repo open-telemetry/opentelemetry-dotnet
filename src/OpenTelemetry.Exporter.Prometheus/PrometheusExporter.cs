@@ -44,8 +44,8 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <inheritdoc/>
         public override Task<ExportResult> ExportAsync(List<Metric> metrics, CancellationToken cancellationToken)
         {
-            // Prometheus uses a pull process, not a push - just return success here.
-            // Store the updated metrics internally for the next pull.
+            // Prometheus uses a pull process, not a push
+            // Store the updated metrics internally for the next pull and return success.
             this.Metrics = metrics;
             return Task.FromResult(ExportResult.Success);
         }

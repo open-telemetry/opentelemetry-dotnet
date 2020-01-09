@@ -42,7 +42,7 @@ namespace Samples
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
 
-            var httpServer = new MetricsHttpServer(promExporter, promOptions, CancellationToken.None);
+            var httpServer = new PrometheusExporterMetricsHttpServer(promExporter, promOptions, CancellationToken.None);
             var defaultContext = default(SpanContext);
             try
             {

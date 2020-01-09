@@ -34,7 +34,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
             List<Metric> metrics = new List<Metric>();
             var promExporter = new PrometheusExporter(promOptions);
-            var metricsHttpServer = new MetricsHttpServer(promExporter, promOptions, CancellationToken.None);
+            var metricsHttpServer = new PrometheusExporterMetricsHttpServer(promExporter, promOptions, CancellationToken.None);
 
             try
             {
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
 
-            var metricsHttpServer = new MetricsHttpServer(promExporter, promOptions, CancellationToken.None);
+            var metricsHttpServer = new PrometheusExporterMetricsHttpServer(promExporter, promOptions, CancellationToken.None);
             try
             {
                 metricsHttpServer.Start();
