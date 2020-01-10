@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <Description>OpenTelemetry collector for calls to dependencies</Description>
     <PackageTags>$(PackageTags);distributed-tracing;HttpClient</PackageTags>
   </PropertyGroup>
@@ -9,7 +9,7 @@
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
+  <ItemGroup>
     <Reference Include="System.Net.Http" />
   </ItemGroup>
 
