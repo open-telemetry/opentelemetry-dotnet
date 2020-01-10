@@ -111,7 +111,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Console", "Console", "{BC77
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Web", "Web", "{2CE2987E-9791-43D4-8448-295543BEED7C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.ApplicationInsights.Web", "samples\Exporters\Web\OpenTelemetry.Exporter.ApplicationInsights.Web.csproj", "{07989E94-E073-4E4F-8118-3927F458899D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Web", "samples\Exporters\Web\OpenTelemetry.Exporter.Web.csproj", "{07989E94-E073-4E4F-8118-3927F458899D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
