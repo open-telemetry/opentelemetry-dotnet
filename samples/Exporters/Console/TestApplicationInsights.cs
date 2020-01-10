@@ -14,11 +14,8 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Collections.Generic;
 using System.Threading;
-using Microsoft.ApplicationInsights.Extensibility;
 using OpenTelemetry.Context;
-using OpenTelemetry.Exporter.ApplicationInsights;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 

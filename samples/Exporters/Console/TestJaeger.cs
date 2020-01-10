@@ -16,7 +16,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using OpenTelemetry.Exporter.Jaeger;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
