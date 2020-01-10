@@ -194,7 +194,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         { }
 
         /// <summary>
-        /// Simple ITextMap implementation used for the inject/extract tests
+        /// Simple ITextMap implementation used for the inject/extract tests.
         /// </summary>
         /// <seealso cref="OpenTracing.Propagation.ITextMap" />
         private class TextMapCarrier : ITextMap
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         }
 
         /// <summary>
-        /// Simple IBinary implementation used for the inject/extract tests
+        /// Simple IBinary implementation used for the inject/extract tests.
         /// </summary>
         /// <seealso cref="OpenTracing.Propagation.IBinary" />
         private class BinaryCarrier : IBinary
