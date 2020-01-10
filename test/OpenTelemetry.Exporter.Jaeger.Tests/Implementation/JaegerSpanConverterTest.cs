@@ -149,6 +149,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
+            //TODO this assert is non deterministic. Could faild on some durations
             Assert.Equal((long)((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000), jaegerSpan.Duration);
 
             // A single tag representing the span.kind
