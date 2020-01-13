@@ -34,7 +34,7 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions, LoggingOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri),
@@ -44,6 +44,7 @@ namespace Samples
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (StackdriverOptions options) => TestStackdriver.Run(options.ProjectId),
                     (LightStepOptions options) => TestLightstep.Run(options.AccessToken),
+                    (LoggingOptions options) => TestLogging.Run(),
                     errs => 1);
 
             Console.ReadLine();
@@ -57,7 +58,7 @@ namespace Samples
         [Option('t', "accessToken", HelpText = "Please specify the access token for your LightStep project", Required = true)]
         public string AccessToken { get; set; }
     }
-    
+
     [Verb("stackdriver", HelpText = "Specify the options required to test Stackdriver exporter", Hidden = false)]
 #pragma warning disable SA1402 // File may only contain a single type
     internal class StackdriverOptions
@@ -103,6 +104,11 @@ namespace Samples
     {
         [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
         public string Uri { get; set; }
+    }
+
+    [Verb("logging", HelpText = "Specify the options required to test logging exporter")]
+    internal class LoggingOptions
+    {
     }
 
 #pragma warning restore SA1402 // File may only contain a single type
