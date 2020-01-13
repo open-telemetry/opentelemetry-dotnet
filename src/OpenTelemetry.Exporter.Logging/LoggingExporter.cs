@@ -63,10 +63,29 @@ namespace OpenTelemetry.Exporter.Logging
                 AppendIndentedLine(sb, 2, $"ParentSpanId: {span.ParentSpanId}");
                 AppendIndentedLine(sb, 2, $"Tracer: {StringifyResource(span.LibraryResource)}");
 
-                foreach (var a in span.Attributes)
+                if (span.Attributes?.Count() > 0)
                 {
-                    AppendIndentedLine(sb, 3, $"{a.Key}' : {a.Value}");
+                    AppendIndentedLine(sb, 2, "Attributes: ");
+                    foreach (var a in span.Attributes)
+                    {
+                        AppendIndentedLine(sb, 3, $"{a.Key}': {a.Value}");
+                    }
                 }
+
+                if (span.Events?.Count() > 0)
+                {
+                    AppendIndentedLine(sb, 2, "Events: ");
+                    foreach (var e in span.Events)
+                    {
+                        AppendIndentedLine(sb, 3, $"Name: {e.Name}");
+                        foreach (var a in e.Attributes)
+                        {
+                            AppendIndentedLine(sb, 4, $"{a.Key}': {a.Value}");
+                        }
+                    }
+                }
+
+                AppendIndentedLine(sb, 1, ")");
             }
 
             this.logger.Log(this.options.LogLevel, sb.ToString());
@@ -93,32 +112,3 @@ namespace OpenTelemetry.Exporter.Logging
         }
     }
 }
-
-
-
-                // if (span.Attributes?.Count() > 0)
-                // {
-                //     AppendIndentedLine(sb, 2, "attriburtes");
-                //     foreach (var a in span.Attributes)
-                //     {
-                //         AppendIndentedLine(sb, 3, $"{a.Key}': {a.Value}");
-                //     }
-                // }
-
-                // if (span.Events?.Count() > 0)
-                // {
-                //     AppendIndentedLine(sb, 2, "events");
-                //     foreach (var e in span.Events)
-                //     {
-                //         AppendIndentedLine(sb, 3, $"{e.Name}");
-                //         if (e.Attributes?.Count > 0)
-                //         {
-                //             foreach (var a in e.Attributes)
-                //             {
-                //                 AppendIndentedLine(sb, 4, $"{a.Key}': {a.Value}");
-                //             }
-                //         }
-                //     }
-                // }
-
-                // AppendIndentedLine(sb, 1, ")");
