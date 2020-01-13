@@ -40,7 +40,6 @@ namespace OpenTelemetry.Exporter.Logging
         public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("ConsoleExporter.ExportAsync:");
             foreach (var span in batch)
             {
                 this.WriteSpan(sb, span);
