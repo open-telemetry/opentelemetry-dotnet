@@ -40,26 +40,36 @@ namespace OpenTelemetry.Exporter.Logging
         public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
         {
             var sb = new StringBuilder();
-            foreach (var span in batch)
-            {
-                this.WriteSpan(sb, span);
-            }
 
-            this.logger.Log(this.options.LogLevel, sb.ToString());
+            using (this.logger.BeginScope("Exporting spans"))
+            {
+                foreach (var span in batch)
+                {
+                    this.WriteSpan(sb, span);
+                }
+            }
 
             return Task.FromResult(ExportResult.Success);
         }
 
         public virtual void WriteSpan(StringBuilder sb, Span span)
         {
-            AppendIndentedLine(sb, 1, $"Span('{span.Name}', {span.Kind}");
-            AppendIndentedLine(sb, 2, $"SpanId: {span.Context.SpanId}");
-            AppendIndentedLine(sb, 2, $"ParentSpanId: {span.ParentSpanId}");
-            AppendIndentedLine(sb, 2, $"Tracer: {StringifyResource(span.LibraryResource)}");
-            foreach (var a in span.Attributes)
+            sb.Clear();
+
+            using (this.logger.BeginScope($"SpanId: {span.Context.SpanId}"))
             {
-                AppendIndentedLine(sb, 3, $"{a.Key}' : {a.Value}");
+                AppendIndentedLine(sb, 1, $"Span('{span.Name}', {span.Kind}");
+                AppendIndentedLine(sb, 2, $"SpanId: {span.Context.SpanId}");
+                AppendIndentedLine(sb, 2, $"ParentSpanId: {span.ParentSpanId}");
+                AppendIndentedLine(sb, 2, $"Tracer: {StringifyResource(span.LibraryResource)}");
+
+                foreach (var a in span.Attributes)
+                {
+                    AppendIndentedLine(sb, 3, $"{a.Key}' : {a.Value}");
+                }
             }
+
+            this.logger.Log(this.options.LogLevel, sb.ToString());
         }
 
         public override Task ShutdownAsync(CancellationToken cancellationToken)
@@ -83,3 +93,32 @@ namespace OpenTelemetry.Exporter.Logging
         }
     }
 }
+
+
+
+                // if (span.Attributes?.Count() > 0)
+                // {
+                //     AppendIndentedLine(sb, 2, "attriburtes");
+                //     foreach (var a in span.Attributes)
+                //     {
+                //         AppendIndentedLine(sb, 3, $"{a.Key}': {a.Value}");
+                //     }
+                // }
+
+                // if (span.Events?.Count() > 0)
+                // {
+                //     AppendIndentedLine(sb, 2, "events");
+                //     foreach (var e in span.Events)
+                //     {
+                //         AppendIndentedLine(sb, 3, $"{e.Name}");
+                //         if (e.Attributes?.Count > 0)
+                //         {
+                //             foreach (var a in e.Attributes)
+                //             {
+                //                 AppendIndentedLine(sb, 4, $"{a.Key}': {a.Value}");
+                //             }
+                //         }
+                //     }
+                // }
+
+                // AppendIndentedLine(sb, 1, ")");
