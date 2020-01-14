@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Implementation\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
