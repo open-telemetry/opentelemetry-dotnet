@@ -90,7 +90,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// </summary>
         public void Dispose()
         {
-            if (this.httpListener != null)
+            if (this.httpListener != null && this.httpListener.IsListening)
             {
                 this.Stop();
             }
