@@ -29,7 +29,6 @@ namespace OpenTelemetry.Exporter.Prometheus
     public class PrometheusExporterMetricsHttpServer : IDisposable
     {
         private readonly PrometheusExporter exporter;
-        private readonly CancellationToken token;
         private readonly HttpListener httpListener = new HttpListener();
         private readonly object lck = new object();
 
@@ -40,18 +39,17 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// Initializes a new instance of the <see cref="PrometheusExporterMetricsHttpServer"/> class.
         /// </summary>
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
-        /// <param name="token">A <see cref="CancellationToken"/> that can be used to stop the Htto Server.</param>
-        public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter, CancellationToken token)
+        public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter)
         {
             this.exporter = exporter;
-            this.token = token;
             this.httpListener.Prefixes.Add(exporter.Options.Url);
         }
 
         /// <summary>
         /// Start exporter.
         /// </summary>
-        public void Start()
+        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the htto server.</param>
+        public void Start(CancellationToken token = default)
         {
             lock (this.lck)
             {
@@ -61,11 +59,10 @@ namespace OpenTelemetry.Exporter.Prometheus
                 }
 
                 // link the passed in token if not null
-                this.tokenSource = this.token == null ?
+                this.tokenSource = token == default ?
                     new CancellationTokenSource() :
-                    CancellationTokenSource.CreateLinkedTokenSource(this.token);
+                    CancellationTokenSource.CreateLinkedTokenSource(token);
 
-                var token = this.tokenSource.Token;
                 this.workerThread = Task.Factory.StartNew((Action)this.WorkerThread, TaskCreationOptions.LongRunning);
             }
         }
@@ -105,10 +102,10 @@ namespace OpenTelemetry.Exporter.Prometheus
 
             try
             {
-                while (!this.token.IsCancellationRequested)
+                while (!this.tokenSource.IsCancellationRequested)
                 {
                     var ctxTask = this.httpListener.GetContextAsync();
-                    ctxTask.Wait(this.token);
+                    ctxTask.Wait(this.tokenSource.Token);
 
                     var ctx = ctxTask.Result;
 
