@@ -1,4 +1,4 @@
-﻿// <copyright file="LoggingExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="LoggerExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,14 +24,14 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
-namespace OpenTelemetry.Exporter.Logging
+namespace OpenTelemetry.Exporter.Logger
 {
-    public class LoggingExporter : SpanExporter
+    public class LoggerExporter : SpanExporter
     {
         private readonly ILogger logger;
-        private readonly LoggingExporterOptions options;
+        private readonly LoggerExporterOptions options;
 
-        public LoggingExporter(ILogger logger, LoggingExporterOptions options)
+        public LoggerExporter(ILogger logger, LoggerExporterOptions options)
         {
             this.logger = logger;
             this.options = options;

@@ -44,7 +44,7 @@ namespace Samples
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (StackdriverOptions options) => TestStackdriver.Run(options.ProjectId),
                     (LightStepOptions options) => TestLightstep.Run(options.AccessToken),
-                    (LoggingOptions options) => TestLogging.Run(),
+                    (LoggingOptions options) => TestLogger.Run(),
                     errs => 1);
 
             Console.ReadLine();

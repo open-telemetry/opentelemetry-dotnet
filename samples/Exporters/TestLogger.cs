@@ -2,12 +2,12 @@
 
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Exporter.Logging;
+using OpenTelemetry.Exporter.Logger;
 using OpenTelemetry.Trace;
 
 namespace Samples
 {
-    internal class TestLogging
+    internal class TestLogger
     {
         internal static object Run()
         {

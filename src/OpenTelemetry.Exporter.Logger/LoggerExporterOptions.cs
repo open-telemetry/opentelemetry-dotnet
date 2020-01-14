@@ -1,4 +1,4 @@
-// <copyright file="LoggingExporterOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="LoggerExporterOptions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +16,9 @@
 
 using Microsoft.Extensions.Logging;
 
-namespace OpenTelemetry.Exporter.Logging
+namespace OpenTelemetry.Exporter.Logger
 {
-    public class LoggingExporterOptions
+    public class LoggerExporterOptions
     {
         public LogLevel LogLevel { get; set; } = LogLevel.Information;
     }
