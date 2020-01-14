@@ -40,13 +40,12 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// Initializes a new instance of the <see cref="PrometheusExporterMetricsHttpServer"/> class.
         /// </summary>
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
-        /// <param name="options">The <see cref="PrometheusExporterOptions"/> instance.</param>
         /// <param name="token">A <see cref="CancellationToken"/> that can be used to stop the Htto Server.</param>
-        public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter, PrometheusExporterOptions options, CancellationToken token)
+        public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter, CancellationToken token)
         {
             this.exporter = exporter;
             this.token = token;
-            this.httpListener.Prefixes.Add(options.Url);
+            this.httpListener.Prefixes.Add(exporter.Options.Url);
         }
 
         /// <summary>

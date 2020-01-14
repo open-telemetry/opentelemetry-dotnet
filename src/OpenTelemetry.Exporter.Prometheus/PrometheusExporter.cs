@@ -27,7 +27,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     /// </summary>
     public class PrometheusExporter : MetricExporter
     {
-        private readonly PrometheusExporterOptions options;
+        internal readonly PrometheusExporterOptions Options;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="options">Options for the exporter.</param>
         public PrometheusExporter(PrometheusExporterOptions options)
         {
-            this.options = options;
+            this.Options = options;
             this.Metrics = new List<Metric>();
         }
 
