@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     /// <summary>
     /// A HTTP listener used to expose Prometheus metrics.
     /// </summary>
-    public class PrometheusExporterMetricsHttpServer
+    public class PrometheusExporterMetricsHttpServer : IDisposable
     {
         private readonly PrometheusExporter exporter;
         private readonly CancellationToken token;
@@ -86,6 +86,17 @@ namespace OpenTelemetry.Exporter.Prometheus
                 this.tokenSource.Cancel();
                 this.workerThread.Wait();
                 this.tokenSource = null;
+            }
+        }
+
+        /// <summary>
+        /// Disposes of managed resources.
+        /// </summary>
+        public void Dispose()
+        {
+            if (this.httpListener != null)
+            {
+                this.Stop();
             }
         }
 
