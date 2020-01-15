@@ -44,7 +44,7 @@ namespace Samples
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (StackdriverOptions options) => TestStackdriver.Run(options.ProjectId),
                     (LightStepOptions options) => TestLightstep.Run(options.AccessToken),
-                    (ConsoleOptions options) => TestConsole.Run(),
+                    (ConsoleOptions options) => TestConsole.Run(options),
                     errs => 1);
 
             Console.ReadLine();
@@ -60,7 +60,6 @@ namespace Samples
     }
 
     [Verb("stackdriver", HelpText = "Specify the options required to test Stackdriver exporter", Hidden = false)]
-#pragma warning disable SA1402 // File may only contain a single type
     internal class StackdriverOptions
     {
         [Option('p', "projectId", HelpText = "Please specify the projectId of your GCP project", Required = true)]
@@ -109,6 +108,8 @@ namespace Samples
     [Verb("console", HelpText = "Specify the options required to test console exporter")]
     internal class ConsoleOptions
     {
+        [Option('p', "pretty", HelpText = "Specify if the output should be pretty printed (default: false)", Default = false)]
+        public bool Pretty { get; set; }
     }
 
 #pragma warning restore SA1402 // File may only contain a single type

@@ -15,11 +15,11 @@
 // </copyright>
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
@@ -27,13 +27,25 @@ namespace OpenTelemetry.Exporter.Console
 {
     public class ConsoleExporter : SpanExporter
     {
+        private readonly JsonSerializerOptions serializerOptions;
+
+        public ConsoleExporter(ConsoleExporterOptions options)
+        {
+            this.serializerOptions = new JsonSerializerOptions
+            {
+                WriteIndented = options.Pretty,
+            };
+
+            this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
+        }
+
         public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
         {
             var sb = new StringBuilder();
 
             foreach (var span in batch)
             {
-                this.WriteSpan(sb, span);
+                sb.AppendLine(JsonSerializer.Serialize(span, this.serializerOptions));
             }
 
             System.Console.WriteLine(sb.ToString());
@@ -41,56 +53,9 @@ namespace OpenTelemetry.Exporter.Console
             return Task.FromResult(ExportResult.Success);
         }
 
-        public virtual void WriteSpan(StringBuilder sb, Span span)
-        {
-            AppendIndentedLine(sb, 1, $"Span('{span.Name}', {span.Kind}");
-            AppendIndentedLine(sb, 2, $"SpanId: {span.Context.SpanId}");
-            AppendIndentedLine(sb, 2, $"ParentSpanId: {span.ParentSpanId}");
-            AppendIndentedLine(sb, 2, $"Tracer: {StringifyResource(span.LibraryResource)}");
-
-            if (span.Attributes?.Count() > 0)
-            {
-                AppendIndentedLine(sb, 2, "Attributes: ");
-                foreach (var a in span.Attributes)
-                {
-                    AppendIndentedLine(sb, 3, $"{a.Key}': {a.Value}");
-                }
-            }
-
-            if (span.Events?.Count() > 0)
-            {
-                AppendIndentedLine(sb, 2, "Events: ");
-                foreach (var e in span.Events)
-                {
-                    AppendIndentedLine(sb, 3, $"Name: {e.Name}");
-                    foreach (var a in e.Attributes)
-                    {
-                        AppendIndentedLine(sb, 4, $"{a.Key}': {a.Value}");
-                    }
-                }
-            }
-
-            AppendIndentedLine(sb, 1, ")");
-        }
-
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
-        }
-
-        private static string StringifyResource(Resource resource)
-        {
-            return string.Join(", ", resource.Attributes.Select(l => l.Value));
-        }
-
-        private static void AppendIndentedLine(StringBuilder sb, int indentationLevel, string line)
-        {
-            for (int i = 0; i < indentationLevel; i++)
-            {
-                sb.Append('\t');
-            }
-
-            sb.AppendLine(line);
         }
     }
 }

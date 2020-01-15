@@ -8,10 +8,16 @@ namespace Samples
 {
     internal class TestConsole
     {
-        internal static object Run()
+        internal static object Run(ConsoleOptions options)
         {
+            // map test project settings to ConsoleExporterSetting
+            var exporterOptions = new ConsoleExporterOptions
+            {
+                Pretty = options.Pretty
+            };
+
             // create exporter
-            var exporter = new ConsoleExporter();
+            var exporter = new ConsoleExporter(exporterOptions);
 
             // Create tracer
             using (var tracerFactory = TracerFactory.Create(builder => {
