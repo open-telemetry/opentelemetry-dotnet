@@ -44,7 +44,7 @@ namespace Samples
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (StackdriverOptions options) => TestStackdriver.Run(options.ProjectId),
                     (LightStepOptions options) => TestLightstep.Run(options.AccessToken),
-                    (LoggingOptions options) => TestLogger.Run(),
+                    (LoggingOptions options) => TestConsole.Run(),
                     errs => 1);
 
             Console.ReadLine();
@@ -106,7 +106,7 @@ namespace Samples
         public string Uri { get; set; }
     }
 
-    [Verb("logging", HelpText = "Specify the options required to test logging exporter")]
+    [Verb("console", HelpText = "Specify the options required to test console exporter")]
     internal class LoggingOptions
     {
     }

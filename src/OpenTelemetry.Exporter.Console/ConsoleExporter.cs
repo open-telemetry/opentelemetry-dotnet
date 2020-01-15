@@ -1,4 +1,4 @@
-﻿// <copyright file="LoggerExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ConsoleExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,76 +19,58 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
-namespace OpenTelemetry.Exporter.Logger
+namespace OpenTelemetry.Exporter.Console
 {
-    public class LoggerExporter : SpanExporter
+    public class ConsoleExporter : SpanExporter
     {
-        private readonly ILogger logger;
-        private readonly LoggerExporterOptions options;
-
-        public LoggerExporter(ILogger logger, LoggerExporterOptions options)
-        {
-            this.logger = logger;
-            this.options = options;
-        }
-
         public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
         {
             var sb = new StringBuilder();
 
-            using (this.logger.BeginScope("Exporting spans"))
+            foreach (var span in batch)
             {
-                foreach (var span in batch)
-                {
-                    this.WriteSpan(sb, span);
-                }
+                this.WriteSpan(sb, span);
             }
+
+            System.Console.WriteLine(sb.ToString());
 
             return Task.FromResult(ExportResult.Success);
         }
 
         public virtual void WriteSpan(StringBuilder sb, Span span)
         {
-            sb.Clear();
+            AppendIndentedLine(sb, 1, $"Span('{span.Name}', {span.Kind}");
+            AppendIndentedLine(sb, 2, $"SpanId: {span.Context.SpanId}");
+            AppendIndentedLine(sb, 2, $"ParentSpanId: {span.ParentSpanId}");
+            AppendIndentedLine(sb, 2, $"Tracer: {StringifyResource(span.LibraryResource)}");
 
-            using (this.logger.BeginScope($"SpanId: {span.Context.SpanId}"))
+            if (span.Attributes?.Count() > 0)
             {
-                AppendIndentedLine(sb, 1, $"Span('{span.Name}', {span.Kind}");
-                AppendIndentedLine(sb, 2, $"SpanId: {span.Context.SpanId}");
-                AppendIndentedLine(sb, 2, $"ParentSpanId: {span.ParentSpanId}");
-                AppendIndentedLine(sb, 2, $"Tracer: {StringifyResource(span.LibraryResource)}");
-
-                if (span.Attributes?.Count() > 0)
+                AppendIndentedLine(sb, 2, "Attributes: ");
+                foreach (var a in span.Attributes)
                 {
-                    AppendIndentedLine(sb, 2, "Attributes: ");
-                    foreach (var a in span.Attributes)
-                    {
-                        AppendIndentedLine(sb, 3, $"{a.Key}': {a.Value}");
-                    }
+                    AppendIndentedLine(sb, 3, $"{a.Key}': {a.Value}");
                 }
-
-                if (span.Events?.Count() > 0)
-                {
-                    AppendIndentedLine(sb, 2, "Events: ");
-                    foreach (var e in span.Events)
-                    {
-                        AppendIndentedLine(sb, 3, $"Name: {e.Name}");
-                        foreach (var a in e.Attributes)
-                        {
-                            AppendIndentedLine(sb, 4, $"{a.Key}': {a.Value}");
-                        }
-                    }
-                }
-
-                AppendIndentedLine(sb, 1, ")");
             }
 
-            this.logger.Log(this.options.LogLevel, sb.ToString());
+            if (span.Events?.Count() > 0)
+            {
+                AppendIndentedLine(sb, 2, "Events: ");
+                foreach (var e in span.Events)
+                {
+                    AppendIndentedLine(sb, 3, $"Name: {e.Name}");
+                    foreach (var a in e.Attributes)
+                    {
+                        AppendIndentedLine(sb, 4, $"{a.Key}': {a.Value}");
+                    }
+                }
+            }
+
+            AppendIndentedLine(sb, 1, ")");
         }
 
         public override Task ShutdownAsync(CancellationToken cancellationToken)
