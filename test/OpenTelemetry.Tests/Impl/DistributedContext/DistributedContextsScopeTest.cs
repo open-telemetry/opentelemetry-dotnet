@@ -37,10 +37,10 @@ namespace OpenTelemetry.Context.Test
             };
             Assert.Equal(DistributedContext.Empty, DistributedContext.Current);
 
-            using (DistributedContext.SetCurrent(new DistributedContext(KEY_1, VALUE_1)))
+            using (DistributedContext.SetCurrent(DistributedContextBuilder.CreateContext(KEY_1, VALUE_1)))
             {
                 Assert.Equal(DistributedContext.Empty, DistributedContext.Current);
-                using (DistributedContext.SetCurrent(new DistributedContext(list)))
+                using (DistributedContext.SetCurrent(DistributedContextBuilder.CreateContext(list)))
                 {
                     Assert.Equal(DistributedContext.Empty, DistributedContext.Current);
                 }
@@ -55,8 +55,8 @@ namespace OpenTelemetry.Context.Test
             DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
             List<DistributedContextEntry> list = new List<DistributedContextEntry>(2) { new DistributedContextEntry(KEY_1, VALUE_1), new DistributedContextEntry(KEY_2, VALUE_2), };
 
-            DistributedContext dc1 = new DistributedContext(KEY_1, VALUE_1);
-            DistributedContext dc2 = new DistributedContext(list);
+            DistributedContext dc1 = DistributedContextBuilder.CreateContext(KEY_1, VALUE_1);
+            DistributedContext dc2 = DistributedContextBuilder.CreateContext(list);
 
             DistributedContext.SetCurrent(DistributedContext.Empty);
             Assert.Equal(DistributedContext.Empty, DistributedContext.Current);
@@ -79,6 +79,45 @@ namespace OpenTelemetry.Context.Test
             }
             Assert.Equal(DistributedContext.Empty, DistributedContext.Current);
             await Task.Run(() => Assert.Equal(DistributedContext.Empty, DistributedContext.Current));
+        }
+
+        [Fact]
+        public async void TestContextInheritance()
+        {
+            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
+            List<DistributedContextEntry> list1 = new List<DistributedContextEntry>(1) { new DistributedContextEntry(KEY_1, VALUE_1)};
+            List<DistributedContextEntry> list2 = new List<DistributedContextEntry>(2) { new DistributedContextEntry(KEY_1, VALUE_1), new DistributedContextEntry(KEY_2, VALUE_2), };
+
+            DistributedContext.SetCurrent(DistributedContext.Empty);
+            await Task.Run(() => Assert.Equal(DistributedContext.Empty, DistributedContext.Current));
+
+            using (DistributedContext.SetCurrent(DistributedContextBuilder.CreateContext(list1)))
+            {
+                await Task.Run(() => Assert.Equal(DistributedContextBuilder.CreateContext(list1), DistributedContext.Current));
+
+                using (DistributedContext.SetCurrent(new DistributedContextBuilder(inheritCurrentContext: true).Build()))
+                {
+                    await Task.Run(() => Assert.Equal(DistributedContextBuilder.CreateContext(list1), DistributedContext.Current));
+
+                    using (DistributedContext.SetCurrent(new DistributedContextBuilder(inheritCurrentContext: true).Add(KEY_2, VALUE_2).Build()))
+                    {
+                        await Task.Run(() => Assert.Equal(DistributedContextBuilder.CreateContext(list2), DistributedContext.Current));
+                        using (DistributedContext.SetCurrent(new DistributedContextBuilder(inheritCurrentContext: true).Remove(KEY_2).Build()))
+                        {
+                            await Task.Run(() => Assert.Equal(DistributedContextBuilder.CreateContext(list1), DistributedContext.Current));
+                        }
+                    }
+
+                    await Task.Run(() => Assert.Equal(DistributedContextBuilder.CreateContext(list1), DistributedContext.Current));
+
+                    using (DistributedContext.SetCurrent(new DistributedContextBuilder(inheritCurrentContext: false).Build()))
+                    {
+                        await Task.Run(() => Assert.Equal(DistributedContext.Empty, DistributedContext.Current));
+                    }
+
+                    await Task.Run(() => Assert.Equal(DistributedContextBuilder.CreateContext(list1), DistributedContext.Current));
+                }
+            }
         }
     }
 }

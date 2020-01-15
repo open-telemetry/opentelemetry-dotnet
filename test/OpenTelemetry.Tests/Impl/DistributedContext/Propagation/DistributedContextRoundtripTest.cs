@@ -43,16 +43,16 @@ namespace OpenTelemetry.Context.Propagation.Test
         public void TestRoundtripSerialization_NormalTagContext()
         {
             TestRoundtripSerialization(DistributedContext.Empty);
-            TestRoundtripSerialization(new DistributedContext(K1, V1));
+            TestRoundtripSerialization(DistributedContextBuilder.CreateContext(K1, V1));
 
-            DistributedContext expected = new DistributedContext(new List<DistributedContextEntry>(3) {
+            DistributedContext expected = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(3) {
                                                                           new DistributedContextEntry(K1, V1),
                                                                           new DistributedContextEntry(K2, V2),
                                                                           new DistributedContextEntry(K3, V3),
                                                                  });
             TestRoundtripSerialization(expected);
 
-            TestRoundtripSerialization(new DistributedContext(K1, V_EMPTY));
+            TestRoundtripSerialization(DistributedContextBuilder.CreateContext(K1, V_EMPTY));
         }
 
         [Fact]
@@ -84,7 +84,7 @@ namespace OpenTelemetry.Context.Propagation.Test
                 list.Add(new DistributedContextEntry(str, str));
             }
 
-            TestRoundtripSerialization(new DistributedContext(list));
+            TestRoundtripSerialization(DistributedContextBuilder.CreateContext(list));
         }
 
         private void TestRoundtripSerialization(DistributedContext expected)
