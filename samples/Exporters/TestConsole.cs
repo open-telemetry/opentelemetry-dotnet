@@ -24,7 +24,7 @@ namespace Samples
                 builder.AddProcessorPipeline(p => p.SetExporter(exporter));
             }))
             {
-                var tracer = tracerFactory.GetTracer("logging-test");
+                var tracer = tracerFactory.GetTracer("console-test");
 
                 using (tracer.StartActiveSpan("parent", out var parent))
                 {
