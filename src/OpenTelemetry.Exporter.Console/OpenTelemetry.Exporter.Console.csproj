@@ -5,7 +5,7 @@
     <Authors>OpenTelemetry authors</Authors>
     <PackageIconUrl>https://opentelemetry.io/img/logos/opentelemetry-icon-color.png</PackageIconUrl>
     <PackageProjectUrl>https://OpenTelemetry.io</PackageProjectUrl>
-    <PackageTags>Tracing;OpenTelemetry;Management;Monitoring;Console;distributed-tracing;Debug</PackageTags>
+    <PackageTags>Tracing;OpenTelemetry;Management;Monitoring;Console;distributed-tracing;Debug;Experimental</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup>
