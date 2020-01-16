@@ -1515,50 +1515,68 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal(bool.TrueString, trace2.Properties["custom.boolAttribute"]);
         }
 
-        [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksRequestWithResource()
+        [Theory]
+        [InlineData(SpanKind.Client, typeof(DependencyTelemetry))]
+        [InlineData(SpanKind.Server, typeof(RequestTelemetry))]
+        public void OpenTelemetryTelemetryConverterTests_TracksWithServiceName(SpanKind spanKind, Type telemetryType)
         {
             GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
             name = "spanName";
-            kind = SpanKind.Client;
-
+            
             var resource = new[] { new KeyValuePair<string, object>("service.name", "my-service") };
             var tracerWithResource = TracerFactory.Create(b => b.SetResource(new Resource(resource))).GetTracer(null);
 
-            var span = tracerWithResource.StartRootSpan(name, SpanKind.Server);
+            var span = tracerWithResource.StartRootSpan(name, spanKind);
             span.AddEvent("test message1");
 
             var sentItems = ConvertSpan((Span)span);
 
-            var requests = sentItems.OfType<RequestTelemetry>();
-            var logs = sentItems.OfType<TraceTelemetry>();
-            Assert.Single(requests);
-            Assert.Single(logs);
-            Assert.Equal("my-service", requests.Single().Context.Cloud.RoleName);
-            Assert.Equal("my-service", logs.Single().Context.Cloud.RoleName);
+            var requestOrDependency = sentItems.Single(t => t.GetType() == telemetryType);
+            var log = sentItems.OfType<TraceTelemetry>().Single();
+
+            Assert.Equal(telemetryType, requestOrDependency.GetType());
+            Assert.Equal("my-service", requestOrDependency.Context.Cloud.RoleName);
+            Assert.Equal("my-service", log.Context.Cloud.RoleName);
+
+            Assert.Null(requestOrDependency.Context.Component.Version);
+            Assert.Null(log.Context.Component.Version);
         }
 
-        [Fact]
-        public void OpenTelemetryTelemetryConverterTests_TracksDependencyWithResource()
+
+        [Theory]
+        [InlineData(SpanKind.Client, typeof(DependencyTelemetry))]
+        [InlineData(SpanKind.Server, typeof(RequestTelemetry))]
+        public void OpenTelemetryTelemetryConverterTests_TrackWithResource(SpanKind spanKind, Type telemetryType)
         {
             GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
             name = "spanName";
-            kind = SpanKind.Client;
 
-            var resource = new[] { new KeyValuePair<string, object>("service.name", "my-service") };
+            var resource = new[]
+            {
+                new KeyValuePair<string, object>("service.name", "my-service"),
+                new KeyValuePair<string, object>("service.namespace", "my-service-namespace"),
+                new KeyValuePair<string, object>("service.instance.id", "my-instance-id"),
+                new KeyValuePair<string, object>("service.version", "my-service-version"),
+            };
+
             var tracerWithResource = TracerFactory.Create(b => b.SetResource(new Resource(resource))).GetTracer(null);
 
-            var span = tracerWithResource.StartRootSpan(name, SpanKind.Client);
+            var span = tracerWithResource.StartRootSpan(name, spanKind);
             span.AddEvent("test message1");
 
             var sentItems = ConvertSpan((Span)span);
 
-            var dependencies = sentItems.OfType<DependencyTelemetry>();
-            var logs = sentItems.OfType<TraceTelemetry>();
-            Assert.Single(dependencies);
-            Assert.Single(logs);
-            Assert.Equal("my-service", dependencies.Single().Context.Cloud.RoleName);
-            Assert.Equal("my-service", logs.Single().Context.Cloud.RoleName);
+            var requestOrDependency = sentItems.Single(t => t.GetType() == telemetryType);
+            var log = sentItems.OfType<TraceTelemetry>().Single();
+
+            Assert.Equal("my-service-namespace.my-service", requestOrDependency.Context.Cloud.RoleName);
+            Assert.Equal("my-service-namespace.my-service", log.Context.Cloud.RoleName);
+
+            Assert.Equal("my-instance-id", requestOrDependency.Context.Cloud.RoleInstance);
+            Assert.Equal("my-instance-id", log.Context.Cloud.RoleInstance);
+
+            Assert.Equal("my-service-version", requestOrDependency.Context.Component.Version);
+            Assert.Equal("my-service-version", log.Context.Component.Version);
         }
 
         private static (string, byte[]) GenerateRandomId(int byteCount)
