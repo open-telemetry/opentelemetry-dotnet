@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using OpenTelemetry.Resources;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
@@ -41,6 +42,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         private readonly byte[] testTraceIdBytes = { 0xd7, 0x9b, 0xdd, 0xa7, 0xeb, 0x9c, 0x4a, 0x9f, 0xa9, 0xbd, 0xa5, 0x2f, 0xe7, 0xb4, 0x8b, 0x95 };
         private readonly byte[] testSpanIdBytes = { 0xd7, 0xdd, 0xeb, 0x4a, 0xa9, 0xa5, 0xe7, 0x8b };
         private readonly byte[] testParentSpanIdBytes = { 0x9b, 0xa7, 0x9c, 0x9f, 0xbd, 0x2f, 0xb4, 0x95 };
+
+       
         private readonly Tracer tracer;
         private readonly JsonSerializerSettings jsonSettingThrowOnError = new JsonSerializerSettings
         {
@@ -1510,6 +1513,52 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.True(trace2.Properties.ContainsKey("custom.boolAttribute"));
             Assert.Equal(bool.TrueString, trace2.Properties["custom.boolAttribute"]);
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_TracksRequestWithResource()
+        {
+            GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
+            name = "spanName";
+            kind = SpanKind.Client;
+
+            var resource = new[] { new KeyValuePair<string, object>("service.name", "my-service") };
+            var tracerWithResource = TracerFactory.Create(b => b.SetResource(new Resource(resource))).GetTracer(null);
+
+            var span = tracerWithResource.StartRootSpan(name, SpanKind.Server);
+            span.AddEvent("test message1");
+
+            var sentItems = ConvertSpan((Span)span);
+
+            var requests = sentItems.OfType<RequestTelemetry>();
+            var logs = sentItems.OfType<TraceTelemetry>();
+            Assert.Single(requests);
+            Assert.Single(logs);
+            Assert.Equal("my-service", requests.Single().Context.Cloud.RoleName);
+            Assert.Equal("my-service", logs.Single().Context.Cloud.RoleName);
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_TracksDependencyWithResource()
+        {
+            GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
+            name = "spanName";
+            kind = SpanKind.Client;
+
+            var resource = new[] { new KeyValuePair<string, object>("service.name", "my-service") };
+            var tracerWithResource = TracerFactory.Create(b => b.SetResource(new Resource(resource))).GetTracer(null);
+
+            var span = tracerWithResource.StartRootSpan(name, SpanKind.Client);
+            span.AddEvent("test message1");
+
+            var sentItems = ConvertSpan((Span)span);
+
+            var dependencies = sentItems.OfType<DependencyTelemetry>();
+            var logs = sentItems.OfType<TraceTelemetry>();
+            Assert.Single(dependencies);
+            Assert.Single(logs);
+            Assert.Equal("my-service", dependencies.Single().Context.Cloud.RoleName);
+            Assert.Equal("my-service", logs.Single().Context.Cloud.RoleName);
         }
 
         private static (string, byte[]) GenerateRandomId(int byteCount)

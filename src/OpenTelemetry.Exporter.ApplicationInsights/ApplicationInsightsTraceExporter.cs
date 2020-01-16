@@ -84,7 +84,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                     out var spanId,
                     out var parentId,
                     out var success,
-                    out var duration);
+                    out var duration,
+                    out var roleName);
 
                 // BUILDING resulting telemetry
                 OperationTelemetry result;
@@ -102,6 +103,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                 {
                     result = new RequestTelemetry();
                 }
+
+                result.Context.Cloud.RoleName = roleName;
 
                 Uri url = null;
                 string data = null;
@@ -257,6 +260,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
 
                     log.Context.Operation.Id = traceId;
                     log.Context.Operation.ParentId = spanId;
+                    log.Context.Cloud.RoleName = roleName;
 
                     this.telemetryClient.Track(log);
                 }
@@ -339,10 +343,21 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             }
         }
 
-        private void ExtractGenericProperties(Span span,  out string name, out string resultCode, out string statusDescription, out string traceId, out string spanId, out string parentId, out bool? success, out TimeSpan duration)
+        private void ExtractGenericProperties(
+            Span span,
+            out string name,
+            out string resultCode,
+            out string statusDescription,
+            out string traceId,
+            out string spanId,
+            out string parentId,
+            out bool? success,
+            out TimeSpan duration,
+            out string roleName)
         {
             name = span.Name;
 
+            roleName = null;
             statusDescription = null;
 
             traceId = span.Context.TraceId.ToHexString();
@@ -366,6 +381,15 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             }
 
             duration = span.EndTimestamp - span.StartTimestamp;
+
+            foreach (var attribute in span.LibraryResource.Attributes)
+            {
+                if (attribute.Key == "service.name" && attribute.Value is string serviceName)
+                {
+                    roleName = serviceName;
+                    break;
+                }
+            }
         }
 
         private void OverwriteErrorAttribute(string errorAttr, ref bool? success)
