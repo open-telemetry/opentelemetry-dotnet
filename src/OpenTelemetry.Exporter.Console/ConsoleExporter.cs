@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Collections.Generic;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -41,14 +40,10 @@ namespace OpenTelemetry.Exporter.Console
 
         public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
         {
-            var sb = new StringBuilder();
-
             foreach (var span in batch)
             {
-                sb.AppendLine(JsonSerializer.Serialize(span, this.serializerOptions));
+                System.Console.WriteLine(JsonSerializer.Serialize(span, this.serializerOptions));
             }
-
-            System.Console.WriteLine(sb.ToString());
 
             return Task.FromResult(ExportResult.Success);
         }
