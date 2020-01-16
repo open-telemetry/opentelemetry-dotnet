@@ -33,6 +33,11 @@ namespace OpenTelemetry.Context.Test
                                                                             new DistributedContextEntry(KEY_2, VALUE_2),
                                                                       };
 
+        public DistributedContextBuilderTest()
+        {
+            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
+        }
+
         [Fact]
         public void ContextCreation()
         {
@@ -42,7 +47,7 @@ namespace OpenTelemetry.Context.Test
             dc = DistributedContextBuilder.CreateContext(DistributedContext.Empty.Entries);
             Assert.Equal(DistributedContext.Empty, dc);
 
-            dc = DistributedContextBuilder.CreateContext(KEY_1, KEY_2);
+            dc = DistributedContextBuilder.CreateContext(KEY_1, VALUE_1);
             Assert.Equal(DistributedContextBuilder.CreateContext(list1), dc);
 
             Assert.Equal(dc, new DistributedContextBuilder(dc).Build());
