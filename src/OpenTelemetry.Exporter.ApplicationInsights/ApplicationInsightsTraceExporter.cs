@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -31,7 +32,7 @@ using OpenTelemetry.Trace.Export;
 namespace OpenTelemetry.Exporter.ApplicationInsights
 {
     /// <summary>
-    /// Applicaiton Insights trace exporter.
+    /// Application Insights trace exporter.
     /// </summary>
     public class ApplicationInsightsTraceExporter : SpanExporter, IDisposable
     {
@@ -93,113 +94,49 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                 OperationTelemetry result;
                 if (span.Kind == SpanKind.Client || span.Kind == SpanKind.Internal || span.Kind == SpanKind.Producer)
                 {
-                    var resultD = new DependencyTelemetry();
-                    if (span.Kind == SpanKind.Internal)
+                    result = new DependencyTelemetry
                     {
-                        resultD.Type = "InProc";
-                    }
-
-                    result = resultD;
+                        Name = name,
+                        ResultCode = resultCode,
+                        Type = span.Kind == SpanKind.Internal ? "InProc" :
+                               span.Kind == SpanKind.Producer ? "Queue Message" : null,
+                    };
                 }
                 else
                 {
-                    result = new RequestTelemetry();
+                    result = new RequestTelemetry
+                    {
+                        Name = name,
+                        ResponseCode = resultCode,
+                    };
                 }
 
-                Uri url = null;
-                string data = null;
-                string target = null;
-                string type = null;
-                string userAgent = null;
+                string component = this.GetComponent(span);
 
-                string errorAttr = null;
-                string httpStatusCodeAttr = null;
-                string httpMethodAttr = null;
-                string httpPathAttr = null;
-                string httpHostAttr = null;
-
-                string httpUserAgentAttr = null;
-                string httpRouteAttr = null;
-                string httpPortAttr = null;
-
-                foreach (var attr in span.Attributes)
+                switch (component)
                 {
-                    switch (attr.Key)
-                    {
-                        case "error":
-                            errorAttr = attr.Value.ToString();
-                            break;
-                        case "http.method":
-                            httpMethodAttr = attr.Value.ToString();
-                            break;
-                        case "http.path":
-                            httpPathAttr = attr.Value.ToString();
-                            break;
-                        case "http.host":
-                            httpHostAttr = attr.Value.ToString();
-                            break;
-                        case "http.status_code":
-                            httpStatusCodeAttr = attr.Value.ToString();
-                            break;
-                        case "http.user_agent":
-                            httpUserAgentAttr = attr.Value.ToString();
-                            break;
-                        case "http.route":
-                            httpRouteAttr = attr.Value.ToString();
-                            break;
-                        case "http.port":
-                            httpPortAttr = attr.Value.ToString();
-                            break;
-                        case "http.url":
-                            // break without doing anything - this will prevent adding url to custom property bag.
-                            // httpUrlAttr is already populated.
-                            break;
-                        default:
-                            var value = attr.Value.ToString();
+                    case "http":
+                        this.SetHttpProperties(
+                            span,
+                            result,
+                            httpUrlAttr);
+                        break;
+                    case "eventhubs":
+                    case "Microsoft.EventHub":
+                        this.SetEventHubsProperties(span, result);
+                        break;
+                    default:
+                        if (result is DependencyTelemetry dependency && dependency.Type == null)
+                        {
+                            dependency.Type = component;
+                        }
 
-                            AddPropertyWithAdjustedName(result.Properties, attr.Key, value);
+                        foreach (var attribute in span.Attributes)
+                        {
+                            AddPropertyWithAdjustedName(result.Properties, attribute.Key, attribute.Value.ToString());
+                        }
 
-                            break;
-                    }
-                }
-
-                this.OverwriteFieldsForHttpSpans(
-                    httpMethodAttr,
-                    httpUrlAttr,
-                    httpHostAttr,
-                    httpPathAttr,
-                    httpStatusCodeAttr,
-                    httpUserAgentAttr,
-                    httpRouteAttr,
-                    httpPortAttr,
-                    ref name,
-                    ref resultCode,
-                    ref data,
-                    ref target,
-                    ref type,
-                    ref userAgent,
-                    ref url);
-
-                if (result is DependencyTelemetry dependency)
-                {
-                    dependency.Data = data;
-                    dependency.Target = target;
-                    dependency.Data = data;
-                    dependency.ResultCode = resultCode;
-
-                    if (string.IsNullOrEmpty(dependency.Type))
-                    {
-                        dependency.Type = type;
-                    }
-                }
-                else if (result is RequestTelemetry request)
-                {
-                    if (url != null)
-                    {
-                        request.Url = url;
-                    }
-
-                    request.ResponseCode = resultCode;
+                        break;
                 }
 
                 if (span.Links.Count() != 0)
@@ -267,8 +204,6 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                     this.telemetryClient.Track(log);
                 }
 
-                this.OverwriteErrorAttribute(errorAttr, ref success);
-
                 result.Success = success;
                 if (statusDescription != null)
                 {
@@ -276,9 +211,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                 }
 
                 result.Timestamp = span.StartTimestamp;
-                result.Name = name;
                 result.Context.Operation.Id = traceId;
-                result.Context.User.UserAgent = userAgent;
                 result.Context.Cloud.RoleName = roleName;
                 result.Context.Cloud.RoleInstance = roleInstance;
                 result.Context.Component.Version = version;
@@ -424,41 +357,61 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             }
         }
 
-        private void OverwriteErrorAttribute(string errorAttr, ref bool? success)
+        private void SetHttpProperties(SpanData span, OperationTelemetry telemetry, string httpUrlAttr)
         {
-            if (errorAttr != null)
-            {
-                success = errorAttr.ToLowerInvariant() != "true";
-            }
-        }
+            string httpStatusCodeAttr = null;
+            string httpMethodAttr = null;
+            string httpPathAttr = null;
+            string httpHostAttr = null;
 
-        private void OverwriteFieldsForHttpSpans(
-            string httpMethodAttr,
-            string httpUrlAttr,
-            string httpHostAttr,
-            string httpPathAttr,
-            string httpStatusCodeAttr,
-            string httpUserAgentAttr,
-            string httpRouteAttr,
-            string httpPortAttr,
-            ref string name,
-            ref string resultCode,
-            ref string data,
-            ref string target,
-            ref string type,
-            ref string userAgent,
-            ref Uri url)
-        {
+            string httpRouteAttr = null;
+            string httpPortAttr = null;
+
+            foreach (var attr in span.Attributes)
+            {
+                switch (attr.Key)
+                {
+                    case "http.method":
+                        httpMethodAttr = attr.Value.ToString();
+                        break;
+                    case "http.path":
+                        httpPathAttr = attr.Value.ToString();
+                        break;
+                    case "http.host":
+                        httpHostAttr = attr.Value.ToString();
+                        break;
+                    case "http.status_code":
+                        httpStatusCodeAttr = attr.Value.ToString();
+                        break;
+                    case "http.user_agent":
+                        telemetry.Context.User.UserAgent = attr.Value.ToString();
+                        break;
+                    case "http.route":
+                        httpRouteAttr = attr.Value.ToString();
+                        break;
+                    case "http.port":
+                        httpPortAttr = attr.Value.ToString();
+                        break;
+                    case "http.url":
+                        // break without doing anything - this will prevent adding url to custom property bag.
+                        // httpUrlAttr is already populated.
+                        break;
+                    default:
+                        AddPropertyWithAdjustedName(telemetry.Properties, attr.Key, attr.Value.ToString());
+                        break;
+                }
+            }
+
+            string resultCode = null;
             if (httpStatusCodeAttr != null)
             {
                 resultCode = httpStatusCodeAttr.ToString(CultureInfo.InvariantCulture);
-                type = "Http";
             }
 
+            Uri url = null;
             if (httpUrlAttr != null)
             {
-                var urlString = httpUrlAttr;
-                Uri.TryCreate(urlString, UriKind.RelativeOrAbsolute, out url);
+                Uri.TryCreate(httpUrlAttr, UriKind.RelativeOrAbsolute, out url);
             }
 
             string httpMethod = null;
@@ -470,43 +423,31 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             if (httpMethodAttr != null)
             {
                 httpMethod = httpMethodAttr;
-                type = "Http";
             }
 
             if (httpPathAttr != null)
             {
                 httpPath = httpPathAttr;
-                type = "Http";
             }
 
             if (httpHostAttr != null)
             {
                 httpHost = httpHostAttr;
-                type = "Http";
-            }
-
-            if (httpUserAgentAttr != null)
-            {
-                userAgent = httpUserAgentAttr;
-                type = "Http";
             }
 
             if (httpRouteAttr != null)
             {
                 httpRoute = httpRouteAttr;
-                type = "Http";
             }
 
             if (httpRouteAttr != null)
             {
                 httpRoute = httpRouteAttr;
-                type = "Http";
             }
 
             if (httpPortAttr != null)
             {
                 httpPort = httpPortAttr;
-                type = "Http";
             }
 
             // restore optional fields when possible
@@ -564,23 +505,104 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             {
                 if (httpRoute != null)
                 {
-                    name = (httpMethod + " " + httpRoute).Trim();
+                    telemetry.Name = (httpMethod + " " + httpRoute).Trim();
                 }
                 else
                 {
-                    name = (httpMethod + " " + httpPath).Trim();
+                    telemetry.Name = (httpMethod + " " + httpPath).Trim();
                 }
             }
 
-            if (url != null)
+            if (telemetry is DependencyTelemetry dependency)
             {
-                data = url.ToString();
+                if (url != null)
+                {
+                    dependency.Data = url.OriginalString;
+                    dependency.Target = url.IsAbsoluteUri ? url.Authority : null;
+                }
+                else
+                {
+                    dependency.Data = null;
+                    dependency.Target = null;
+                }
+
+                dependency.ResultCode = resultCode;
+
+                if (string.IsNullOrEmpty(dependency.Type))
+                {
+                    dependency.Type = "Http";
+                }
+            }
+            else if (telemetry is RequestTelemetry request)
+            {
+                if (url != null)
+                {
+                    request.Url = url;
+                }
+
+                request.ResponseCode = resultCode;
+            }
+        }
+
+        private void SetEventHubsProperties(SpanData span, OperationTelemetry telemetry)
+        {
+            string endpoint = null;
+            string queueName = null;
+
+            foreach (var attribute in span.Attributes)
+            {
+                if (attribute.Key == "peer.address" && attribute.Value is string)
+                {
+                    endpoint = (string)attribute.Value;
+                }
+                else if (attribute.Key == "message_bus.destination")
+                {
+                    queueName = (string)attribute.Value;
+                }
+                else
+                {
+                    AddPropertyWithAdjustedName(telemetry.Properties, attribute.Key, attribute.Value.ToString());
+                }
             }
 
-            if ((url != null) && url.IsAbsoluteUri)
+            if (telemetry is DependencyTelemetry dependency)
             {
-                target = url.Host;
+                // producer spans don't have event hubs info
+                if (span.Kind == SpanKind.Client)
+                {
+                    // Target uniquely identifies the resource, we use both: queueName and endpoint
+                    // with schema used for SQL-dependencies
+                    dependency.Target = string.Concat(endpoint, " | ", queueName);
+                    dependency.Type = "Azure Event Hubs";
+                }
             }
+            else if (telemetry is RequestTelemetry request)
+            {
+                request.Source = string.Concat(endpoint, " | ", queueName);
+            }
+        }
+
+        private string GetComponent(SpanData span)
+        {
+            foreach (var attr in span.Attributes)
+            {
+                if (attr.Key == "component" && attr.Value is string strValue)
+                {
+                    return strValue;
+                }
+
+                if (attr.Key == "az.namespace" && attr.Value is string azNamespace)
+                {
+                    return azNamespace;
+                }
+
+                if (attr.Key.StartsWith("http."))
+                {
+                    return "http";
+                }
+            }
+
+            return null;
         }
     }
 }
