@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private static readonly TimeSpan DefaultDelay = TimeSpan.FromMilliseconds(30);
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(1);
 
-        private Span CreateSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
+        private SpanSdk CreateSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
         {
             var tracer = TracerFactory.Create(b => b
                 .SetSampler(new AlwaysSampleSampler())
@@ -43,19 +43,19 @@ namespace OpenTelemetry.Trace.Export.Test
                 .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
 
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (Span)tracer.StartSpan(spanName, context);
+            var span = (SpanSdk)tracer.StartSpan(spanName, context);
             span.End();
             return span;
         }
 
-        private Span CreateNotSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
+        private SpanSdk CreateNotSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
         {
             var tracer = TracerFactory.Create(b => b
                 .SetSampler(new NeverSampleSampler())
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor))
                 .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-            var span = (Span)tracer.StartSpan(spanName, context);
+            var span = (SpanSdk)tracer.StartSpan(spanName, context);
             span.End();
             return span;
         }
@@ -113,8 +113,8 @@ namespace OpenTelemetry.Trace.Export.Test
                 var exported = WaitForSpans(spanExporter, 2, DefaultTimeout);
 
                 Assert.Equal(2, exported.Length);
-                Assert.Contains(span1, exported);
-                Assert.Contains(span2, exported);
+                Assert.Contains(new SpanData(span1), exported);
+                Assert.Contains(new SpanData(span2), exported);
             }
         }
 
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
             using (var spanProcessor = new BatchingSpanProcessor(spanExporter, 128, TimeSpan.FromMilliseconds(30), 2))
             {
-                var spans = new List<Span>();
+                var spans = new List<SpanSdk>();
                 for (int i = 0; i < 20; i++)
                 {
                     spans.Add(CreateSampledEndedSpan(i.ToString(), spanProcessor));
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var spanExporter = new TestExporter(_ => Interlocked.Increment(ref exportCalledCount));
             using (var spanProcessor = new BatchingSpanProcessor(spanExporter, 1, TimeSpan.FromMilliseconds(100), 1))
             {
-                var spans = new List<Span>();
+                var spans = new List<SpanSdk>();
                 for (int i = 0; i < 20; i++)
                 {
                     spans.Add(CreateSampledEndedSpan(i.ToString(), spanProcessor));
@@ -167,7 +167,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
                 Assert.Equal(1, exportCalledCount);
                 Assert.InRange(exported.Length, 1, 2);
-                Assert.Contains(spans.First(), exported);
+                Assert.Contains(new SpanData(spans.First()), exported);
             }
         }
 
@@ -199,12 +199,12 @@ namespace OpenTelemetry.Trace.Export.Test
                 Assert.InRange(exportCalledCount, 2, 6);
 
                 Assert.Equal(6, exported.Count());
-                Assert.Contains(span1, exported);
-                Assert.Contains(span2, exported);
-                Assert.Contains(span3, exported);
-                Assert.Contains(span4, exported);
-                Assert.Contains(span5, exported);
-                Assert.Contains(span6, exported);
+                Assert.Contains(new SpanData(span1), exported);
+                Assert.Contains(new SpanData(span2), exported);
+                Assert.Contains(new SpanData(span3), exported);
+                Assert.Contains(new SpanData(span4), exported);
+                Assert.Contains(new SpanData(span5), exported);
+                Assert.Contains(new SpanData(span6), exported);
             }
         }
 
@@ -228,7 +228,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 // Need to check this because otherwise the variable span1 is unused, other option is to not
                 // have a span1 variable.
                 Assert.Single(exported);
-                Assert.Contains(span2, exported);
+                Assert.Contains(new SpanData(span2), exported);
             }
         }
 
@@ -245,7 +245,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 var tracer = factory.GetTracer(null);
 
                 var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-                var span = (Span)tracer.StartSpan("foo", context);
+                var span = (SpanSdk)tracer.StartSpan("foo", context);
 
                 // does not block
                 var sw = Stopwatch.StartNew();
@@ -271,7 +271,7 @@ namespace OpenTelemetry.Trace.Export.Test
             using (var spanProcessor =
                 new BatchingSpanProcessor(spanExporter, 128, TimeSpan.FromMilliseconds(100), batchSize))
             {
-                var spans = new List<Span>();
+                var spans = new List<SpanSdk>();
                 for (int i = 0; i < 100; i++)
                 {
                     spans.Add(CreateSampledEndedSpan(i.ToString(), spanProcessor));
@@ -306,7 +306,7 @@ namespace OpenTelemetry.Trace.Export.Test
             using (var spanProcessor =
                 new BatchingSpanProcessor(spanExporter, 128, TimeSpan.FromMilliseconds(100), batchSize))
             {
-                var spans = new List<Span>();
+                var spans = new List<SpanSdk>();
                 for (int i = 0; i < 100; i++)
                 {
                     spans.Add(CreateSampledEndedSpan(i.ToString(), spanProcessor));
@@ -331,7 +331,7 @@ namespace OpenTelemetry.Trace.Export.Test
             const int batchSize = 2;
             int exportCalledCount = 0;
             var spanExporter = new TestExporter(_ => Interlocked.Increment(ref exportCalledCount));
-            var spans = new List<Span>();
+            var spans = new List<SpanSdk>();
             using (var spanProcessor = new BatchingSpanProcessor(spanExporter, 128, TimeSpan.FromMilliseconds(100), batchSize))
             {
                 for (int i = 0; i < 100; i++)
@@ -350,7 +350,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Activity.Current = null;
         }
 
-        private Span[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
+        private SpanData[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
         {
             Assert.True(
                 SpinWait.SpinUntil(() =>

@@ -50,7 +50,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
         }
 
         /// <inheritdoc/>
-        public override Task<ExportResult> ExportAsync(IEnumerable<Span> spanDataList, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> spanDataList, CancellationToken cancellationToken)
         {
             foreach (var span in spanDataList)
             {
@@ -339,7 +339,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             }
         }
 
-        private void ExtractGenericProperties(Span span,  out string name, out string resultCode, out string statusDescription, out string traceId, out string spanId, out string parentId, out bool? success, out TimeSpan duration)
+        private void ExtractGenericProperties(SpanData span,  out string name, out string resultCode, out string statusDescription, out string traceId, out string spanId, out string parentId, out bool? success, out TimeSpan duration)
         {
             name = span.Name;
 

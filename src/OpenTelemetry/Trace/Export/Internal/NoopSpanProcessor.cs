@@ -21,11 +21,11 @@ namespace OpenTelemetry.Trace.Export
 {
     internal sealed class NoopSpanProcessor : SpanProcessor
     {
-        public override void OnStart(Span span)
+        public override void OnStart(SpanData span)
         {
         }
 
-        public override void OnEnd(Span span)
+        public override void OnEnd(SpanData span)
         {
         }
 

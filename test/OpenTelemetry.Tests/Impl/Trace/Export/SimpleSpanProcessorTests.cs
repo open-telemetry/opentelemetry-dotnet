@@ -44,18 +44,18 @@ namespace OpenTelemetry.Trace.Export.Test
                 .GetTracer(null);
         }
 
-        private Span CreateSampledEndedSpan(string spanName)
+        private SpanSdk CreateSampledEndedSpan(string spanName)
         {
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (Span)tracer.StartSpan(spanName, context);
+            var span = (SpanSdk)tracer.StartSpan(spanName, context);
             span.End();
             return span;
         }
 
-        private Span CreateNotSampledEndedSpan(string spanName)
+        private SpanSdk CreateNotSampledEndedSpan(string spanName)
         {
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-            var span = (Span)tracer.StartSpan(spanName, context);
+            var span = (SpanSdk)tracer.StartSpan(spanName, context);
             span.End();
             return span;
         }
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 .GetTracer(null);
 
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (Span)tracer.StartSpan("foo", context);
+            var span = (SpanSdk)tracer.StartSpan("foo", context);
 
             // does not throw
             span.End();
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 .GetTracer(null);
 
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (Span)tracer.StartSpan("foo", context);
+            var span = (SpanSdk)tracer.StartSpan("foo", context);
 
             // does not block
             var sw = Stopwatch.StartNew();
@@ -129,8 +129,8 @@ namespace OpenTelemetry.Trace.Export.Test
 
             var exported = WaitForSpans(spanExporter, 2, TimeSpan.FromMilliseconds(100));
             Assert.Equal(2, exported.Length);
-            Assert.Contains(span1, exported);
-            Assert.Contains(span2, exported);
+            Assert.Contains(new SpanData(span1), exported);
+            Assert.Contains(new SpanData(span2), exported);
         }
 
         [Fact]
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Trace.Export.Test
             // Need to check this because otherwise the variable span1 is unused, other option is to not
             // have a span1 variable.
             Assert.Single(exported);
-            Assert.Contains(span2, exported);
+            Assert.Contains(new SpanData(span2), exported);
         }
 
         public void Dispose()
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Activity.Current = null;
         }
 
-        private Span[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
+        private SpanData[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
         {
             Assert.True(
                 SpinWait.SpinUntil(() =>
