@@ -84,7 +84,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                     out var spanId,
                     out var parentId,
                     out var success,
-                    out var duration);
+                    out var duration,
+                    out var roleName,
+                    out var roleInstance,
+                    out var version);
 
                 // BUILDING resulting telemetry
                 OperationTelemetry result;
@@ -257,6 +260,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
 
                     log.Context.Operation.Id = traceId;
                     log.Context.Operation.ParentId = spanId;
+                    log.Context.Cloud.RoleName = roleName;
+                    log.Context.Cloud.RoleInstance = roleInstance;
+                    log.Context.Component.Version = version;
 
                     this.telemetryClient.Track(log);
                 }
@@ -273,6 +279,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                 result.Name = name;
                 result.Context.Operation.Id = traceId;
                 result.Context.User.UserAgent = userAgent;
+                result.Context.Cloud.RoleName = roleName;
+                result.Context.Cloud.RoleInstance = roleInstance;
+                result.Context.Component.Version = version;
 
                 if (parentId != null)
                 {
@@ -339,10 +348,23 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             }
         }
 
-        private void ExtractGenericProperties(SpanData span,  out string name, out string resultCode, out string statusDescription, out string traceId, out string spanId, out string parentId, out bool? success, out TimeSpan duration)
+        private void ExtractGenericProperties(
+            SpanData span,
+            out string name,
+            out string resultCode,
+            out string statusDescription,
+            out string traceId,
+            out string spanId,
+            out string parentId,
+            out bool? success,
+            out TimeSpan duration,
+            out string roleName,
+            out string roleInstance,
+            out string serviceVersion)
         {
             name = span.Name;
 
+            roleName = null;
             statusDescription = null;
 
             traceId = span.Context.TraceId.ToHexString();
@@ -366,6 +388,40 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             }
 
             duration = span.EndTimestamp - span.StartTimestamp;
+
+            string serviceName = null;
+            string serviceNamespace = null;
+            serviceVersion = null;
+            roleInstance = null;
+
+            foreach (var attribute in span.LibraryResource.Attributes)
+            {
+                if (attribute.Key == "service.name" && attribute.Value is string)
+                {
+                    serviceName = (string)attribute.Value;
+                }
+                else if (attribute.Key == "service.namespace" && attribute.Value is string)
+                {
+                    serviceNamespace = (string)attribute.Value;
+                }
+                else if (attribute.Key == "service.version" && attribute.Value is string)
+                {
+                    serviceVersion = (string)attribute.Value;
+                }
+                else if (attribute.Key == "service.instance.id" && attribute.Value is string)
+                {
+                    roleInstance = (string)attribute.Value;
+                }
+            }
+
+            if (serviceName != null && serviceNamespace != null)
+            {
+                roleName = string.Concat(serviceNamespace, ".", serviceName);
+            }
+            else
+            {
+                roleName = serviceName;
+            }
         }
 
         private void OverwriteErrorAttribute(string errorAttr, ref bool? success)

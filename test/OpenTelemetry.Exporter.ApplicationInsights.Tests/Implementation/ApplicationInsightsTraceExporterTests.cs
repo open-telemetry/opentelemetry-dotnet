@@ -27,10 +27,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using OpenTelemetry.Resources;
 using Moq;
 using OpenTelemetry.Trace.Export;
 using Xunit;
-using OpenTelemetry.Resources;
 using Event = OpenTelemetry.Trace.Event;
 
 namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
@@ -45,6 +45,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         private readonly byte[] testTraceIdBytes = { 0xd7, 0x9b, 0xdd, 0xa7, 0xeb, 0x9c, 0x4a, 0x9f, 0xa9, 0xbd, 0xa5, 0x2f, 0xe7, 0xb4, 0x8b, 0x95 };
         private readonly byte[] testSpanIdBytes = { 0xd7, 0xdd, 0xeb, 0x4a, 0xa9, 0xa5, 0xe7, 0x8b };
         private readonly byte[] testParentSpanIdBytes = { 0x9b, 0xa7, 0x9c, 0x9f, 0xbd, 0x2f, 0xb4, 0x95 };
+
+       
         private readonly Tracer tracer;
         private readonly JsonSerializerSettings jsonSettingThrowOnError = new JsonSerializerSettings
         {
@@ -1691,6 +1693,65 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal(bool.TrueString, trace2.Properties["custom.boolAttribute"]);
         }
 
+        [Theory]
+        [InlineData(SpanKind.Client, typeof(DependencyTelemetry))]
+        [InlineData(SpanKind.Server, typeof(RequestTelemetry))]
+        public void OpenTelemetryTelemetryConverterTests_TracksWithServiceName(SpanKind spanKind, Type telemetryType)
+        {
+            GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
+            name = "spanName";
+            
+            var resource = new[] { new KeyValuePair<string, object>("service.name", "my-service") };
+
+            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions,
+                tracestate, spanKind, status, null, default, new[] { new Event("test message1") }, new Resource(resource));
+            var sentItems = ConvertSpan(span);
+
+            var requestOrDependency = sentItems.Single(t => t.GetType() == telemetryType);
+            var log = sentItems.OfType<TraceTelemetry>().Single();
+
+            Assert.Equal(telemetryType, requestOrDependency.GetType());
+            Assert.Equal("my-service", requestOrDependency.Context.Cloud.RoleName);
+            Assert.Equal("my-service", log.Context.Cloud.RoleName);
+
+            Assert.Null(requestOrDependency.Context.Component.Version);
+            Assert.Null(log.Context.Component.Version);
+        }
+
+
+        [Theory]
+        [InlineData(SpanKind.Client, typeof(DependencyTelemetry))]
+        [InlineData(SpanKind.Server, typeof(RequestTelemetry))]
+        public void OpenTelemetryTelemetryConverterTests_TrackWithResource(SpanKind spanKind, Type telemetryType)
+        {
+            GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
+            name = "spanName";
+
+            var resource = new[]
+            {
+                new KeyValuePair<string, object>("service.name", "my-service"),
+                new KeyValuePair<string, object>("service.namespace", "my-service-namespace"),
+                new KeyValuePair<string, object>("service.instance.id", "my-instance-id"),
+                new KeyValuePair<string, object>("service.version", "my-service-version"),
+            };
+
+            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions,
+                tracestate, spanKind, status, null, default, new[] { new Event("test message1") }, new Resource(resource));
+            var sentItems = ConvertSpan(span);
+
+            var requestOrDependency = sentItems.Single(t => t.GetType() == telemetryType);
+            var log = sentItems.OfType<TraceTelemetry>().Single();
+
+            Assert.Equal("my-service-namespace.my-service", requestOrDependency.Context.Cloud.RoleName);
+            Assert.Equal("my-service-namespace.my-service", log.Context.Cloud.RoleName);
+
+            Assert.Equal("my-instance-id", requestOrDependency.Context.Cloud.RoleInstance);
+            Assert.Equal("my-instance-id", log.Context.Cloud.RoleInstance);
+
+            Assert.Equal("my-service-version", requestOrDependency.Context.Component.Version);
+            Assert.Equal("my-service-version", log.Context.Component.Version);
+        }
+
         private static (string, byte[]) GenerateRandomId(int byteCount)
         {
             var idBytes = new byte[byteCount];
@@ -1743,15 +1804,16 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Status status,
             SpanCreationOptions options = null,
             DateTimeOffset endTimestamp = default,
-            IEnumerable<Event> events = null)
+            IEnumerable<Event> events = null,
+            Resource resource = null)
         {
             var processor = new Mock<SpanProcessor>();
 
             processor.Setup(p => p.OnEnd(It.IsAny<SpanData>()));
 
-            var tracer = TracerFactory.Create(b =>
-                b.AddProcessorPipeline(p =>
-                    p.AddProcessor(_ => processor.Object)))
+            var tracer = TracerFactory.Create(b =>b
+                    .SetResource(resource)
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => processor.Object)))
                 .GetTracer(null);
 
             var parentContext = new SpanContext(traceId, parentSpanId, traceOptions, false, tracestate);
