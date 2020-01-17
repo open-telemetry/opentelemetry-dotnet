@@ -379,7 +379,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
             success = null;
             if (span.Status.IsValid)
             {
-                resultCode = ((int)span.Status.CanonicalCode).ToString();
+                resultCode = span.Status.CanonicalCode.ToString();
                 success = span.Status.IsOk;
                 if (!string.IsNullOrEmpty(span.Status.Description))
                 {
