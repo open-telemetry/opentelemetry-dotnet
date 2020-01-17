@@ -17,19 +17,20 @@ using System.Linq;
 using Google.Cloud.Trace.V2;
 using Google.Protobuf.WellKnownTypes;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
     internal static class SpanExtensions
     {
         /// <summary>
-        /// Translating <see cref="Trace.Span"/> to Stackdriver's Span
+        /// Translating <see cref="SpanData"/> to Stackdriver's Span
         /// According to <see href="https://cloud.google.com/trace/docs/reference/v2/rpc/google.devtools.cloudtrace.v2"/> specifications.
         /// </summary>
         /// <param name="spanData">Span in OpenTelemetry format.</param>
         /// <param name="projectId">Google Cloud Platform Project Id.</param>
         /// <returns><see cref="ISpan"/>.</returns>
-        public static Google.Cloud.Trace.V2.Span ToSpan(this Trace.Span spanData, string projectId)
+        public static Google.Cloud.Trace.V2.Span ToSpan(this SpanData spanData, string projectId)
         {
             var spanId = spanData.Context.SpanId.ToHexString();
 

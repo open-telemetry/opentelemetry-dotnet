@@ -48,7 +48,7 @@ namespace OpenTelemetry.Trace.Export
         /// <param name="batch">Batch of spans to export.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Result of export.</returns>
-        public abstract Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken);
+        public abstract Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken);
 
         /// <summary>
         /// Shuts down exporter asynchronously.
