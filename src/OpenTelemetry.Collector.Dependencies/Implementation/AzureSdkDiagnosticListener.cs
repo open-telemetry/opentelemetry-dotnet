@@ -125,6 +125,8 @@ namespace OpenTelemetry.Collector.Dependencies
         {
             // activity name looks like 'Azure.<...>.<Class>.<Name>'
             // as namespace is too verbose, we'll just take the last two nodes from the activity name as telemetry name
+            // this will change with https://github.com/Azure/azure-sdk-for-net/issues/9071 ~Feb 2020
+
             string activityName = activity.OperationName;
             int methodDotIndex = activityName.LastIndexOf('.');
             if (methodDotIndex <= 0)
