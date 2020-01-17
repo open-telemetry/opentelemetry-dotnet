@@ -1509,6 +1509,7 @@ namespace OpenTelemetry.Trace.Test
                 in It.Ref<ActivityTraceId>.IsAny,
                 in It.Ref<ActivitySpanId>.IsAny,
                 It.IsAny<string>(),
+                It.IsAny<SpanKind>(),
                 It.IsAny<IDictionary<string, object>>(),
                 It.IsAny<IEnumerable<Link>>())).Returns(new Decision(true));
 
@@ -1520,6 +1521,7 @@ namespace OpenTelemetry.Trace.Test
                 in It.Ref<ActivityTraceId>.IsAny,
                 in It.Ref<ActivitySpanId>.IsAny,
                 It.IsAny<string>(),
+                It.IsAny<SpanKind>(),
                 It.Is<IDictionary<string, object>>(a => a == this.attributes),
                 It.IsAny<IEnumerable<Link>>()), Times.Once);
         }
@@ -1538,6 +1540,7 @@ namespace OpenTelemetry.Trace.Test
                 in It.Ref<ActivityTraceId>.IsAny,
                 in It.Ref<ActivitySpanId>.IsAny,
                 It.IsAny<string>(),
+                It.IsAny<SpanKind>(),
                 It.IsAny<IDictionary<string, object>>(),
                 It.IsAny<IEnumerable<Link>>())).Returns(new Decision(false));
 
@@ -1549,6 +1552,7 @@ namespace OpenTelemetry.Trace.Test
                 in It.Ref<ActivityTraceId>.IsAny,
                 in It.Ref<ActivitySpanId>.IsAny,
                 It.IsAny<string>(),
+                It.IsAny<SpanKind>(),
                 It.Is<IDictionary<string, object>>(a => a == this.attributes),
                 It.IsAny<IEnumerable<Link>>()), Times.Once);
         }
