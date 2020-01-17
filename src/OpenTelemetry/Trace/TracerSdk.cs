@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace
         public Resource LibraryResource { get; }
 
         /// <inheritdoc/>
-        public override ISpan CurrentSpan => Span.Current;
+        public override ISpan CurrentSpan => SpanSdk.Current;
 
         /// <inheritdoc/>
         public override IBinaryFormat BinaryFormat { get; }
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace
                 OpenTelemetrySdkEventSource.Log.InvalidArgument("WithSpan", nameof(span), "is null");
             }
 
-            if (span is Span spanImpl)
+            if (span is SpanSdk spanImpl)
             {
                 return spanImpl.BeginScope(endSpanOnDispose);
             }
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
-            return Span.CreateRoot(operationName, kind, options, this.sampler, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
+            return SpanSdk.CreateRoot(operationName, kind, options, this.sampler, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Trace
                 parent = this.CurrentSpan;
             }
 
-            return Span.CreateFromParentSpan(operationName, parent, kind, options, this.sampler, this.tracerConfiguration,
+            return SpanSdk.CreateFromParentSpan(operationName, parent, kind, options, this.sampler, this.tracerConfiguration,
                 this.spanProcessor, this.LibraryResource);
         }
 
@@ -105,11 +105,11 @@ namespace OpenTelemetry.Trace
         {
             if (parent.IsValid)
             {
-                return Span.CreateFromParentContext(operationName, parent, kind, options, this.sampler, this.tracerConfiguration,
+                return SpanSdk.CreateFromParentContext(operationName, parent, kind, options, this.sampler, this.tracerConfiguration,
                     this.spanProcessor, this.LibraryResource);
             }
 
-            return Span.CreateRoot(operationName, kind, options, this.sampler, this.tracerConfiguration,
+            return SpanSdk.CreateRoot(operationName, kind, options, this.sampler, this.tracerConfiguration,
                 this.spanProcessor, this.LibraryResource);
         }
 
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Trace
                 return this.StartSpan(operationName, kind, links != null ? new SpanCreationOptions { Links = links } : null);
             }
 
-            return Span.CreateFromActivity(operationName, activity, kind, links, this.sampler, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
+            return SpanSdk.CreateFromActivity(operationName, activity, kind, links, this.sampler, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
     }
 }

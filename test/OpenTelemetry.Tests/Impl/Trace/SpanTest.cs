@@ -64,10 +64,10 @@ namespace OpenTelemetry.Trace.Test
 
             var traceState = new List<KeyValuePair<string, string>> {new KeyValuePair<string, string>("k1", "v1")};
             var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, false, traceState);
-            var parentSpan = (Span)tracer.StartSpan(SpanName, grandParentContext);
+            var parentSpan = (SpanSdk)tracer.StartSpan(SpanName, grandParentContext);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartSpan(SpanName, parentSpan);
+            var span = (SpanSdk)tracer.StartSpan(SpanName, parentSpan);
 
             Assert.True(span.Context.IsValid);
             Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
@@ -89,9 +89,9 @@ namespace OpenTelemetry.Trace.Test
 
             using (tracer.StartActiveSpan("outer", out _))
             {
-                var parentSpan = (Span)tracer.StartRootSpan(SpanName);
+                var parentSpan = (SpanSdk)tracer.StartRootSpan(SpanName);
 
-                var span = (Span)tracer.StartSpan(SpanName, parentSpan);
+                var span = (SpanSdk)tracer.StartSpan(SpanName, parentSpan);
 
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
@@ -109,7 +109,7 @@ namespace OpenTelemetry.Trace.Test
             var parentSpan = tracer.StartRootSpan(SpanName);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartSpan(SpanName, parentSpan, SpanKind.Client);
+            var span = (SpanSdk)tracer.StartSpan(SpanName, parentSpan, SpanKind.Client);
 
             Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Client, span.Kind);
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Trace.Test
             var parentSpan = tracer.StartRootSpan(SpanName);
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
-            var span = (Span)tracer.StartSpan(SpanName, parentSpan, SpanKind.Server, new SpanCreationOptions { StartTimestamp = startTimestamp });
+            var span = (SpanSdk)tracer.StartSpan(SpanName, parentSpan, SpanKind.Server, new SpanCreationOptions { StartTimestamp = startTimestamp });
 
             Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Trace.Test
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartSpan(SpanName, parentSpan, SpanKind.Server, new SpanCreationOptions { LinksFactory = () => new[] { new Link(linkContext) } });
+            var span = (SpanSdk)tracer.StartSpan(SpanName, parentSpan, SpanKind.Server, new SpanCreationOptions { LinksFactory = () => new[] { new Link(linkContext) } });
 
             Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Trace.Test
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartSpan(SpanName, parentSpan, SpanKind.Server, new SpanCreationOptions { Links = new[] { new Link(linkContext) } });
+            var span = (SpanSdk)tracer.StartSpan(SpanName, parentSpan, SpanKind.Server, new SpanCreationOptions { Links = new[] { new Link(linkContext) } });
 
             Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
@@ -176,7 +176,7 @@ namespace OpenTelemetry.Trace.Test
 
             tracer.WithSpan(tracer.StartRootSpan("outer"));
             {
-                var span = (Span)tracer.StartRootSpan(SpanName);
+                var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
@@ -193,7 +193,7 @@ namespace OpenTelemetry.Trace.Test
 
             var outerActivity = new Activity("outer").SetIdFormat(ActivityIdFormat.W3C).Start();
 
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             Assert.True(span.Context.IsValid);
             Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
@@ -210,7 +210,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             Assert.True(span.Context.IsValid);
             Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
@@ -231,7 +231,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Consumer);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName, SpanKind.Consumer);
 
             Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Consumer, span.Kind);
@@ -245,7 +245,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
-            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Client, new SpanCreationOptions { StartTimestamp = startTimestamp });
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName, SpanKind.Client, new SpanCreationOptions { StartTimestamp = startTimestamp });
 
             Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Client, span.Kind);
@@ -261,7 +261,7 @@ namespace OpenTelemetry.Trace.Test
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Server, new SpanCreationOptions
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName, SpanKind.Server, new SpanCreationOptions
             {
                 StartTimestamp = startTimestamp,
                 Links = new[] { new Link(linkContext) },
@@ -283,7 +283,7 @@ namespace OpenTelemetry.Trace.Test
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, false, traceState);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartSpan(SpanName, parentContext);
+            var span = (SpanSdk)tracer.StartSpan(SpanName, parentContext);
 
             Assert.True(span.Context.IsValid);
             Assert.Equal(parentContext.TraceId, span.Context.TraceId);
@@ -304,7 +304,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
             var parentContext = default(SpanContext);
 
-            var span = (Span)tracer.StartSpan(SpanName, parentContext);
+            var span = (SpanSdk)tracer.StartSpan(SpanName, parentContext);
 
             Assert.True(span.Context.IsValid);
             Assert.NotEqual(default, span.Context.TraceId);
@@ -326,7 +326,7 @@ namespace OpenTelemetry.Trace.Test
                 var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.Recorded);
 
-                var span = (Span)tracer.StartSpan(SpanName, parentContext);
+                var span = (SpanSdk)tracer.StartSpan(SpanName, parentContext);
 
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(parentContext.TraceId, span.Context.TraceId);
@@ -344,7 +344,7 @@ namespace OpenTelemetry.Trace.Test
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
-            var span = (Span)tracer.StartSpan(SpanName, parentContext, SpanKind.Server, new SpanCreationOptions { StartTimestamp = startTimestamp } );
+            var span = (SpanSdk)tracer.StartSpan(SpanName, parentContext, SpanKind.Server, new SpanCreationOptions { StartTimestamp = startTimestamp } );
 
             Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
@@ -361,7 +361,7 @@ namespace OpenTelemetry.Trace.Test
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartSpan(SpanName, parentContext, SpanKind.Server, new SpanCreationOptions { LinksFactory = () => new[] { new Link(linkContext) }} );
+            var span = (SpanSdk)tracer.StartSpan(SpanName, parentContext, SpanKind.Server, new SpanCreationOptions { LinksFactory = () => new[] { new Link(linkContext) }} );
 
             Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
@@ -380,7 +380,7 @@ namespace OpenTelemetry.Trace.Test
             var secondLinkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartSpan(SpanName, parentContext, SpanKind.Server, new SpanCreationOptions { Links = new[] { new Link(firstLinkContext), new Link(secondLinkContext) } });
+            var span = (SpanSdk)tracer.StartSpan(SpanName, parentContext, SpanKind.Server, new SpanCreationOptions { Links = new[] { new Link(firstLinkContext), new Link(secondLinkContext) } });
 
             Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
@@ -399,7 +399,7 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             activity.TraceStateString = "k1=v1,k2=v2";
 
-            var span = (Span)tracer.StartSpanFromActivity(SpanName, activity);
+            var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, activity);
 
             Assert.Equal(activity.TraceId, span.Context.TraceId);
             Assert.Equal(activity.SpanId, span.Context.SpanId);
@@ -425,7 +425,7 @@ namespace OpenTelemetry.Trace.Test
                 var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).SetParentId(" ").Start();
                 activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
-                var span = (Span)tracer.StartSpanFromActivity(SpanName, activity);
+                var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, activity);
 
                 Assert.Equal(activity.TraceId, span.Context.TraceId);
                 Assert.Equal(activity.SpanId, span.Context.SpanId);
@@ -443,7 +443,7 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags = ActivityTraceFlags.None;
             activity.TraceStateString = "k1=v1,k2=v2";
 
-            var span = (Span)tracer.StartSpanFromActivity(SpanName, activity);
+            var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, activity);
 
             Assert.Equal(activity.TraceId, span.Context.TraceId);
             Assert.Equal(activity.SpanId, span.Context.SpanId);
@@ -470,7 +470,7 @@ namespace OpenTelemetry.Trace.Test
             var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
-            var span = (Span)tracer.StartSpanFromActivity(SpanName, activity, SpanKind.Client);
+            var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, activity, SpanKind.Client);
 
             Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Client, span.Kind);
@@ -490,7 +490,7 @@ namespace OpenTelemetry.Trace.Test
             var firstLinkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var secondLinkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
 
-            var span = (Span)tracer.StartSpanFromActivity(SpanName, activity, SpanKind.Server, new[] { new Link(firstLinkContext), new Link(secondLinkContext),  });
+            var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, activity, SpanKind.Server, new[] { new Link(firstLinkContext), new Link(secondLinkContext),  });
 
             Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Server, span.Kind);
@@ -507,7 +507,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var startTime = DateTimeOffset.UtcNow;
-            var span = (Span)tracer.StartSpanFromActivity(SpanName, null);
+            var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, null);
 
             Assert.NotNull(span.Activity);
             Assert.Equal(default, span.ParentSpanId);
@@ -525,7 +525,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var startTime = DateTimeOffset.UtcNow;
-            var span = (Span)tracer.StartSpanFromActivity(SpanName, null, SpanKind.Producer);
+            var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, null, SpanKind.Producer);
 
             Assert.NotNull(span.Activity);
             Assert.Equal(default, span.ParentSpanId);
@@ -546,7 +546,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var startTime = DateTimeOffset.UtcNow;
-            var span = (Span)tracer.StartSpanFromActivity(SpanName, null, SpanKind.Consumer, new[] { new Link(linkContext) });
+            var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, null, SpanKind.Consumer, new[] { new Link(linkContext) });
 
             Assert.NotNull(span.Activity);
             Assert.Equal(default, span.ParentSpanId);
@@ -569,7 +569,7 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             activity.TraceStateString = "k1=v1,k2=v2";
 
-            var span = (Span)tracer.StartSpanFromActivity(SpanName, activity);
+            var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, activity);
 
             Assert.NotEqual(activity, span.Activity);
             Assert.NotEqual(activity, span.Activity.Parent);
@@ -592,7 +592,7 @@ namespace OpenTelemetry.Trace.Test
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             activity.TraceStateString = "k1=v1,k2=v2";
 
-            var span = (Span)tracer.StartSpanFromActivity(SpanName, activity);
+            var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, activity);
 
             Assert.NotEqual(activity, span.Activity);
             Assert.NotEqual(activity, span.Activity.Parent);
@@ -617,7 +617,7 @@ namespace OpenTelemetry.Trace.Test
                 var parentSpan = tracer.CurrentSpan;
 
                 var startTimestamp = PreciseTimestamp.GetUtcNow();
-                var span = (Span)tracer.StartSpan(SpanName);
+                var span = (SpanSdk)tracer.StartSpan(SpanName);
 
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
@@ -643,7 +643,7 @@ namespace OpenTelemetry.Trace.Test
             parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
-            var span = (Span)tracer.StartSpan(SpanName);
+            var span = (SpanSdk)tracer.StartSpan(SpanName);
 
             Assert.True(span.Context.IsValid);
             Assert.Equal(parentActivity.TraceId, span.Context.TraceId);
@@ -670,7 +670,7 @@ namespace OpenTelemetry.Trace.Test
             using (tracer.WithSpan(tracer.StartRootSpan(SpanName)))
             {
                 var startTimestamp = PreciseTimestamp.GetUtcNow();
-                var span = (Span)tracer.StartSpan(SpanName, SpanKind.Producer);
+                var span = (SpanSdk)tracer.StartSpan(SpanName, SpanKind.Producer);
 
                 Assert.True(span.IsRecording);
                 Assert.Equal(SpanKind.Producer, span.Kind);
@@ -687,7 +687,7 @@ namespace OpenTelemetry.Trace.Test
             using (tracer.WithSpan(tracer.StartRootSpan(SpanName)))
             {
                 var startTimestamp = DateTimeOffset.UtcNow.AddSeconds(-10);
-                var span = (Span)tracer.StartSpan(SpanName, SpanKind.Server, new SpanCreationOptions { StartTimestamp = startTimestamp });
+                var span = (SpanSdk)tracer.StartSpan(SpanName, SpanKind.Server, new SpanCreationOptions { StartTimestamp = startTimestamp });
 
                 Assert.True(span.IsRecording);
                 Assert.Equal(SpanKind.Server, span.Kind);
@@ -707,7 +707,7 @@ namespace OpenTelemetry.Trace.Test
                     ActivityTraceFlags.Recorded);
 
                 var startTimestamp = DateTimeOffset.UtcNow.AddSeconds(-10);
-                var span = (Span)tracer.StartSpan(SpanName, SpanKind.Server, new SpanCreationOptions { StartTimestamp = startTimestamp, LinksFactory = () => new[] { new Link(linkContext) } });
+                var span = (SpanSdk)tracer.StartSpan(SpanName, SpanKind.Server, new SpanCreationOptions { StartTimestamp = startTimestamp, LinksFactory = () => new[] { new Link(linkContext) } });
 
                 Assert.True(span.IsRecording);
                 Assert.Equal(SpanKind.Server, span.Kind);
@@ -728,7 +728,7 @@ namespace OpenTelemetry.Trace.Test
                     ActivityTraceFlags.Recorded);
 
                 var startTimestamp = DateTimeOffset.UtcNow.AddSeconds(-10);
-                var span = (Span)tracer.StartSpan(SpanName, SpanKind.Server, new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) } });
+                var span = (SpanSdk)tracer.StartSpan(SpanName, SpanKind.Server, new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) } });
 
                 Assert.True(span.IsRecording);
                 Assert.Equal(SpanKind.Server, span.Kind);
@@ -745,7 +745,7 @@ namespace OpenTelemetry.Trace.Test
                     .SetSampler(new NeverSampleSampler()))
                 .GetTracer(null);
 
-            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Client);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName, SpanKind.Client);
 
             // Check that adding attributes or events is not possible on not recorded span
             span.SetAttribute("string", "value");
@@ -764,7 +764,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracer = tracerFactory.GetTracer(null);
 
-            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Client);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName, SpanKind.Client);
 
             var spanEndTime = DateTimeOffset.UtcNow.AddSeconds(10);
             span.End(spanEndTime);
@@ -803,13 +803,13 @@ namespace OpenTelemetry.Trace.Test
             var spanPassedToSpanProcessorHasSpanContext = false;
 
             spanProcessorMock
-                .Setup(s => s.OnStart(It.IsAny<Span>()))
-                .Callback<Span>(s =>
+                .Setup(s => s.OnStart(It.IsAny<SpanData>()))
+                .Callback<SpanData>(s =>
                 {
                     spanPassedToSpanProcessorHasSpanContext = s.Context.IsValid;
                 });
 
-            var span = (Span)tracer.StartSpan(SpanName, SpanKind.Client, new SpanCreationOptions { StartTimestamp = startTime, LinksFactory = () => new[] { link } });
+            var span = (SpanSdk)tracer.StartSpan(SpanName, SpanKind.Client, new SpanCreationOptions { StartTimestamp = startTime, LinksFactory = () => new[] { link } });
 
             span.SetAttribute(
                 "MySingleStringAttributeKey",
@@ -858,9 +858,10 @@ namespace OpenTelemetry.Trace.Test
 
             var startEndMock = Mock.Get(spanProcessor);
 
-            spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
+            var spanData = new SpanData(span);
+            spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
             Assert.True(spanPassedToSpanProcessorHasSpanContext);
-            startEndMock.Verify(s => s.OnEnd(span), Times.Never);
+            startEndMock.Verify(s => s.OnEnd(spanData), Times.Never);
         }
 
         [Fact]
@@ -872,7 +873,7 @@ namespace OpenTelemetry.Trace.Test
             var link = new Link(contextLink);
             var tracer = tracerFactory.GetTracer(null);
             var startTime = DateTimeOffset.UtcNow.AddSeconds(-1);
-            var span = (Span)tracer.StartRootSpan(SpanName, SpanKind.Client, new SpanCreationOptions { StartTimestamp = startTime, LinksFactory = () => new[] { link }});
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName, SpanKind.Client, new SpanCreationOptions { StartTimestamp = startTime, LinksFactory = () => new[] { link }});
             span.SetAttribute(
                 "MySingleStringAttributeKey",
                 "MySingleStringAttributeValue");
@@ -918,15 +919,16 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(Status.Cancelled, span.Status);
             AssertApproxSameTimestamp(spanEndTime, span.EndTimestamp);
 
-            spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
-            spanProcessorMock.Verify(s => s.OnEnd(span), Times.Once);
+            var spanData = new SpanData(span);
+            spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
+            spanProcessorMock.Verify(s => s.OnEnd(spanData), Times.Once);
         }
 
         [Fact]
         public void SetStatus()
         {
             var tracer = tracerFactory.GetTracer(null);
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             Assert.Equal(Status.Ok, span.Status);
             span.Status = Status.Cancelled;
@@ -934,15 +936,16 @@ namespace OpenTelemetry.Trace.Test
             span.End();
             Assert.Equal(Status.Cancelled, span.Status);
 
-            spanProcessorMock.Verify(s => s.OnStart(span), Times.Once);
-            spanProcessorMock.Verify(s => s.OnEnd(span), Times.Once);
+            var spanData = new SpanData(span);
+            spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
+            spanProcessorMock.Verify(s => s.OnEnd(spanData), Times.Once);
         }
 
         [Fact]
         public void BadArguments_SetInvalidStatus()
         {
             var tracer = tracerFactory.GetTracer(null);
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             // does not throw
             span.Status = new Status();
@@ -954,7 +957,7 @@ namespace OpenTelemetry.Trace.Test
         public void BadArguments_UpdateName_Null()
         {
             var tracer = tracerFactory.GetTracer(null);
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             // does not throw
             span.UpdateName(null);
@@ -966,7 +969,7 @@ namespace OpenTelemetry.Trace.Test
         public void BadArguments_SetAttribute_NullKey()
         {
             var tracer = tracerFactory.GetTracer(null);
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             // does not throw
             span.SetAttribute(null, "foo");
@@ -985,7 +988,7 @@ namespace OpenTelemetry.Trace.Test
         public void SetAttribute_ValidTypes()
         {
             var tracer = tracerFactory.GetTracer(null);
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             span.SetAttribute("string", "foo");
             span.SetAttribute("bool", false);
@@ -1021,7 +1024,7 @@ namespace OpenTelemetry.Trace.Test
         public void BadArguments_SetAttribute_NullOrEmptyValue()
         {
             var tracer = tracerFactory.GetTracer(null);
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             // does not throw
             span.SetAttribute("null", null);
@@ -1036,7 +1039,7 @@ namespace OpenTelemetry.Trace.Test
         public void BadArguments_SetAttribute_BadTypeValue()
         {
             var tracer = tracerFactory.GetTracer(null);
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             // does not throw
             span.SetAttribute("complex type", new { });
@@ -1051,7 +1054,7 @@ namespace OpenTelemetry.Trace.Test
         public void BadArguments_NullEvent()
         {
             var tracer = tracerFactory.GetTracer(null);
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             span.AddEvent((string)null);
             span.AddEvent(new Event(null, null));
@@ -1084,7 +1087,7 @@ namespace OpenTelemetry.Trace.Test
 
             var tracer = tracerFactory
                 .GetTracer(null);
-            var span = (Span)tracer.StartSpan(SpanName);
+            var span = (SpanSdk)tracer.StartSpan(SpanName);
             span.End();
 
             // activity is stopped
@@ -1105,7 +1108,7 @@ namespace OpenTelemetry.Trace.Test
 
             var tracer = tracerFactory
                 .GetTracer(null);
-            var span = (Span)tracer.StartSpanFromActivity(SpanName, activity);
+            var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, activity);
             span.End();
 
             Assert.Same(activity, Activity.Current);
@@ -1125,14 +1128,14 @@ namespace OpenTelemetry.Trace.Test
             }
             var tracer = tracerFactory.GetTracer(null);
 
-            Span span;
+            SpanSdk span;
             if (ownsActivity)
             {
-                span = (Span)tracer.StartSpanFromActivity(SpanName, activity);
+                span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, activity);
             }
             else
             {
-                span = (Span)tracer.StartSpan(SpanName);
+                span = (SpanSdk)tracer.StartSpan(SpanName);
             }
 
             var anotherActivity = new Activity(SpanName).Start();
@@ -1146,7 +1149,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracer = tracerFactory.GetTracer(null);
 
-            var parentSpan = (Span)tracer.StartSpan(SpanName);
+            var parentSpan = (SpanSdk)tracer.StartSpan(SpanName);
             using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, out var ispan))
             {
                 Assert.NotNull(scope);
@@ -1155,7 +1158,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Same(ispan, span);
                 Assert.NotNull(span);
                 Assert.True(span.Context.IsValid);
-                Assert.Equal(parentSpan.Context.SpanId,((Span)span).ParentSpanId);
+                Assert.Equal(parentSpan.Context.SpanId,((SpanSdk)span).ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1166,17 +1169,17 @@ namespace OpenTelemetry.Trace.Test
         {
             var tracer = tracerFactory.GetTracer(null);
 
-            var parentSpan = (Span)tracer.StartSpan(SpanName);
+            var parentSpan = (SpanSdk)tracer.StartSpan(SpanName);
             using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer, out var ispan))
             {
                 Assert.NotNull(scope);
 
-                var span = (Span)tracer.CurrentSpan;
+                var span = (SpanSdk)tracer.CurrentSpan;
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.NotNull(span);
                 Assert.Equal(SpanKind.Producer, span.Kind);
-                Assert.Equal(parentSpan.Context.SpanId, ((Span)span).ParentSpanId);
+                Assert.Equal(parentSpan.Context.SpanId, ((SpanSdk)span).ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1189,19 +1192,19 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
-            var parentSpan = (Span)tracer.StartSpan(SpanName);
+            var parentSpan = (SpanSdk)tracer.StartSpan(SpanName);
             using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp }, 
                 out var ispan))
             {
                 Assert.NotNull(scope);
 
-                var span = (Span)tracer.CurrentSpan;
+                var span = (SpanSdk)tracer.CurrentSpan;
                 Assert.Same(ispan, span);
                 Assert.NotNull(span);
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
-                Assert.Equal(parentSpan.Context.SpanId, ((Span)span).ParentSpanId);
+                Assert.Equal(parentSpan.Context.SpanId, ((SpanSdk)span).ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1214,20 +1217,20 @@ namespace OpenTelemetry.Trace.Test
 
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
-            var parentSpan = (Span)tracer.StartSpan(SpanName);
+            var parentSpan = (SpanSdk)tracer.StartSpan(SpanName);
             using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer,
                 new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan))
             {
                 Assert.NotNull(scope);
 
-                var span = (Span)tracer.CurrentSpan;
+                var span = (SpanSdk)tracer.CurrentSpan;
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
-                Assert.Equal(parentSpan.Context.SpanId, ((Span)span).ParentSpanId);
+                Assert.Equal(parentSpan.Context.SpanId, ((SpanSdk)span).ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1247,7 +1250,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
-                Assert.Equal(parentContext.SpanId, ((Span)span).ParentSpanId);
+                Assert.Equal(parentContext.SpanId, ((SpanSdk)span).ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1263,14 +1266,14 @@ namespace OpenTelemetry.Trace.Test
             {
                 Assert.NotNull(scope);
 
-                var span = (Span)tracer.CurrentSpan;
+                var span = (SpanSdk)tracer.CurrentSpan;
 
                 Assert.True(span.Context.IsValid);
                 Assert.Same(ispan, span);
                 Assert.NotNull(span);
 
                 Assert.Equal(SpanKind.Producer, span.Kind);
-                Assert.Equal(parentContext.SpanId, ((Span)span).ParentSpanId);
+                Assert.Equal(parentContext.SpanId, ((SpanSdk)span).ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1289,13 +1292,13 @@ namespace OpenTelemetry.Trace.Test
             {
                 Assert.NotNull(scope);
 
-                var span = (Span)tracer.CurrentSpan;
+                var span = (SpanSdk)tracer.CurrentSpan;
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
-                Assert.Equal(parentContext.SpanId, ((Span)span).ParentSpanId);
+                Assert.Equal(parentContext.SpanId, ((SpanSdk)span).ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1314,14 +1317,14 @@ namespace OpenTelemetry.Trace.Test
             {
                 Assert.NotNull(scope);
 
-                var span = (Span)tracer.CurrentSpan;
+                var span = (SpanSdk)tracer.CurrentSpan;
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
-                Assert.Equal(parentContext.SpanId, ((Span)span).ParentSpanId);
+                Assert.Equal(parentContext.SpanId, ((SpanSdk)span).ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1342,7 +1345,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.NotNull(span);
 
                 Assert.True(span.Context.IsValid);
-                Assert.NotEqual(default, ((Span)span).ParentSpanId);
+                Assert.NotEqual(default, ((SpanSdk)span).ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1358,14 +1361,14 @@ namespace OpenTelemetry.Trace.Test
             {
                 Assert.NotNull(scope);
 
-                var span = (Span)tracer.CurrentSpan;
+                var span = (SpanSdk)tracer.CurrentSpan;
 
                 Assert.True(span.Context.IsValid);
                 Assert.NotNull(span);
                 Assert.Same(childSpan, span);
 
                 Assert.Equal(SpanKind.Producer, span.Kind);
-                Assert.NotEqual(default, ((Span)span).ParentSpanId);
+                Assert.NotEqual(default, ((SpanSdk)span).ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1384,14 +1387,14 @@ namespace OpenTelemetry.Trace.Test
             {
                 Assert.NotNull(scope);
 
-                var span = (Span)tracer.CurrentSpan;
+                var span = (SpanSdk)tracer.CurrentSpan;
                 Assert.NotNull(span);
                 Assert.Same(childSpan, span);
                 Assert.True(span.Context.IsValid);
 
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
-                Assert.NotEqual(default, ((Span)span).ParentSpanId);
+                Assert.NotEqual(default, ((SpanSdk)span).ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1410,7 +1413,7 @@ namespace OpenTelemetry.Trace.Test
             {
                 Assert.NotNull(scope);
 
-                var span = (Span)tracer.CurrentSpan;
+                var span = (SpanSdk)tracer.CurrentSpan;
                 Assert.NotNull(span);
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
@@ -1418,7 +1421,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
-                Assert.NotEqual(default, ((Span)span).ParentSpanId);
+                Assert.NotEqual(default, ((SpanSdk)span).ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1440,8 +1443,8 @@ namespace OpenTelemetry.Trace.Test
 
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(activity.SpanId, span.Context.SpanId);
-                Assert.Equal(SpanKind.Internal, ((Span)span).Kind);
-                Assert.Empty(((Span)span).Links);
+                Assert.Equal(SpanKind.Internal, ((SpanSdk)span).Kind);
+                Assert.Empty(((SpanSdk)span).Links);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1462,8 +1465,8 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(activity.SpanId, span.Context.SpanId);
-                Assert.Equal(SpanKind.Consumer, ((Span)span).Kind);
-                Assert.Empty(((Span)span).Links);
+                Assert.Equal(SpanKind.Consumer, ((SpanSdk)span).Kind);
+                Assert.Empty(((SpanSdk)span).Links);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1485,8 +1488,8 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Same(ispan, span);
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(activity.SpanId, span.Context.SpanId);
-                Assert.Equal(SpanKind.Consumer, ((Span)span).Kind);
-                Assert.Single(((Span)span).Links);
+                Assert.Equal(SpanKind.Consumer, ((SpanSdk)span).Kind);
+                Assert.Single(((SpanSdk)span).Links);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1509,7 +1512,7 @@ namespace OpenTelemetry.Trace.Test
                 It.IsAny<IDictionary<string, object>>(),
                 It.IsAny<IEnumerable<Link>>())).Returns(new Decision(true));
 
-            var span = (Span)tracer.StartSpan("test", SpanKind.Client, new SpanCreationOptions { Attributes = this.attributes, });
+            var span = (SpanSdk)tracer.StartSpan("test", SpanKind.Client, new SpanCreationOptions { Attributes = this.attributes, });
             span.Attributes.AssertAreSame(this.attributes);
 
             samplerMock.Verify(o => o.ShouldSample(
@@ -1538,7 +1541,7 @@ namespace OpenTelemetry.Trace.Test
                 It.IsAny<IDictionary<string, object>>(),
                 It.IsAny<IEnumerable<Link>>())).Returns(new Decision(false));
 
-            var span = (Span)tracer.StartSpan("test", SpanKind.Client, new SpanCreationOptions { Attributes = this.attributes, });
+            var span = (SpanSdk)tracer.StartSpan("test", SpanKind.Client, new SpanCreationOptions { Attributes = this.attributes, });
             Assert.Empty(span.Attributes);
 
             samplerMock.Verify(o => o.ShouldSample(

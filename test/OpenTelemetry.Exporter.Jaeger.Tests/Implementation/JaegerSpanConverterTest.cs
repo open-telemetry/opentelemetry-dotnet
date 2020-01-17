@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
@@ -319,7 +320,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("Event2", eventField.VStr);
         }
 
-        internal Span CreateTestSpan(
+        internal SpanData CreateTestSpan(
             bool setAttributes = true,
             bool addEvents = true,
             bool addLinks = true)
@@ -361,42 +362,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            Func<IEnumerable<Link>> linkGetter = null;
-            if (addLinks)
-            {
-                linkGetter = () => new [] { new Link(new SpanContext(
-                    traceId,
-                    linkedSpanId,
-                    ActivityTraceFlags.Recorded)),
-                };
-            }
+            var span = SpanDataHelper.CreateSpanData(
+                    "Name",
+                    new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
+                    SpanKind.Client,
+                    startTimestamp,
+                    addLinks ? new[] { new Link(new SpanContext(
+                            traceId,
+                            linkedSpanId,
+                            ActivityTraceFlags.Recorded)), } : Enumerable.Empty<Link>(),
+                    setAttributes ? attributes : new Dictionary<string, object>(),
+                    addEvents ? events : Enumerable.Empty<Event>(),
+                    Status.Ok,
+                    endTimestamp);
 
-            var span = (Span)tracer
-                .StartSpan("Name", new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded), SpanKind.Client, new SpanCreationOptions
-                {
-                    StartTimestamp = startTimestamp.Date,
-                    LinksFactory = linkGetter,
-                });
-
-            if (setAttributes)
-            {
-                foreach (var attribute in attributes)
-                {
-                    span.SetAttribute(attribute.Key, attribute.Value);
-                }
-            }
-
-            if (addEvents)
-            {
-                foreach (var evnt in events)
-                {
-                    span.AddEvent(evnt);
-                }
-            }
-
-            span.Status = Status.Ok;
-
-            span.End(endTimestamp);
             return span;
         }
     }

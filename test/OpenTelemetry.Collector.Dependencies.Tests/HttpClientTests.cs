@@ -131,7 +131,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
+            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(tc.SpanName, span.Name);
             Assert.Equal(tc.SpanKind, span.Kind.ToString());

@@ -42,7 +42,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             profiledCommand.Setup(m => m.Command).Returns("SET");
 
-            var result = (Span)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(tracer, null, profiledCommand.Object);
+            var result = (SpanSdk)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(tracer, null, profiledCommand.Object);
             Assert.Equal("SET", result.Name);
         }
 
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var profiledCommand = new Mock<IProfiledCommand>();
             var now = DateTimeOffset.Now;
             profiledCommand.Setup(m => m.CommandCreated).Returns(now.DateTime);
-            var result = ((Span)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object));
+            var result = ((SpanSdk)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object));
             Assert.Equal(now, result.StartTimestamp);
         }
 
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
         {
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
-            var result = ((Span)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object));
+            var result = ((SpanSdk)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object));
             Assert.Contains(result.Attributes, kvp => kvp.Key == "db.type");
             Assert.Equal("redis", result.Attributes.GetValue("db.type"));
         }
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             profiledCommand.Setup(m => m.Command).Returns("SET");
-            var result = ((Span)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object));
+            var result = ((SpanSdk)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object));
             Assert.Contains(result.Attributes, kvp => kvp.Key == "db.statement");
             Assert.Equal("SET", result.Attributes.GetValue("db.statement"));
         }
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             var expectedFlags = StackExchange.Redis.CommandFlags.FireAndForget |
                                 StackExchange.Redis.CommandFlags.NoRedirect;
             profiledCommand.Setup(m => m.Flags).Returns(expectedFlags);
-            var result = ((Span)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object));
+            var result = ((SpanSdk)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object));
             Assert.Contains(result.Attributes, kvp => kvp.Key == "redis.flags");
             Assert.Equal("None, FireAndForget, NoRedirect", result.Attributes.GetValue("redis.flags"));
         }
