@@ -39,9 +39,10 @@ namespace OpenTelemetry.Trace
         /// Typical example of a name change is when <see cref="ISpan"/> representing incoming http request
         /// has a name of url path and then being updated with route name when routing complete.
         /// </param>
+        /// <param name="spanKind">The type of the Span.</param>
         /// <param name="attributes">Initial set of Attributes for the Span being constructed.</param>
         /// <param name="links">Links associated with the span.</param>
         /// <returns>Sampling decision on whether Span needs to be sampled or not.</returns>
-        public abstract Decision ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, IDictionary<string, object> attributes, IEnumerable<Link> links);
+        public abstract Decision ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IDictionary<string, object> attributes, IEnumerable<Link> links);
     }
 }

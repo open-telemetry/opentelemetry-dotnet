@@ -108,6 +108,7 @@ namespace OpenTelemetry.Trace
             this.IsRecording = MakeSamplingDecision(
                 parentSpanContext,
                 name,
+                spanKind,
                 spanCreationOptions?.Attributes,
                 links, // we'll enumerate again, but double enumeration over small collection is cheaper than allocation
                 this.Activity.TraceId,
@@ -597,13 +598,14 @@ namespace OpenTelemetry.Trace
         private static bool MakeSamplingDecision(
             SpanContext parent,
             string name,
+            SpanKind spanKind,
             IDictionary<string, object> attributes,
             IEnumerable<Link> parentLinks,
             ActivityTraceId traceId,
             ActivitySpanId spanId,
             Sampler sampler)
         {
-            return sampler.ShouldSample(parent, traceId, spanId, name, attributes, parentLinks).IsSampled;
+            return sampler.ShouldSample(parent, traceId, spanId, name, spanKind, attributes, parentLinks).IsSampled;
         }
 
         private static ActivityAndTracestate FromCurrentParentActivity(string spanName, Activity current)
