@@ -19,8 +19,12 @@ using OpenTelemetry.Exporter.LightStep.Implementation;
 using OpenTelemetry.Trace.Configuration;
 using System;
 using System.Diagnostics;
+using Moq;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 using Xunit;
+using SpanContext = OpenTelemetry.Trace.SpanContext;
 
 namespace OpenTelemetry.Exporter.LightStep.Tests
 {
@@ -72,31 +76,20 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
             var link = new Link(new Trace.SpanContext(
                 traceId, linkedSpanId, ActivityTraceFlags.Recorded));
 
-            var span = (Span)tracer
-                .StartSpan("Test", new Trace.SpanContext(traceId, parentId, ActivityTraceFlags.Recorded), SpanKind.Client,
-                    new SpanCreationOptions
-                    {
-                        StartTimestamp = startTs,
-                        Links = new[] { link },
-                    });
+            var spanData = CreateSpanData(
+                "Test",
+                new SpanContext(traceId, parentId, ActivityTraceFlags.Recorded),
+                SpanKind.Client,
+                startTs,
+                new[] { link },
+                attrs,
+                evts,
+                Status.Ok,
+                endTs);
 
-            var spanIdInt = span.Context.SpanId.ToLSSpanId();
+            var spanIdInt = spanData.Context.SpanId.ToLSSpanId();
 
-            foreach (var attribute in attrs)
-            {
-                span.SetAttribute(attribute.Key, attribute.Value);
-            }
-
-            foreach (var evnt in evts)
-            {
-                span.AddEvent(evnt);
-            }
-
-
-            span.End(endTs);
-            span.Status = Status.Ok;
-
-            var lsSpan = span.ToLightStepSpan();
+            var lsSpan = spanData.ToLightStepSpan();
 
             Assert.Equal("Test", lsSpan.OperationName);
             Assert.Equal(2, lsSpan.Logs.Count);
@@ -105,6 +98,59 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
             Assert.Equal(traceIdInt, lsSpan.SpanContext.TraceId);
             Assert.Equal(spanIdInt, lsSpan.SpanContext.SpanId);
             Assert.Equal(parentIdInt, lsSpan.References[0].SpanContext.SpanId);
+        }
+
+        private static SpanData CreateSpanData(string name,
+            SpanContext parentContext,
+            SpanKind kind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<Link> links,
+            IDictionary<string, object> attributes,
+            IEnumerable<Event> events,
+            Status status,
+            DateTimeOffset endTimestamp)
+        {
+            var processor = new Mock<SpanProcessor>();
+
+            processor.Setup(p => p.OnEnd(It.IsAny<SpanData>()));
+
+            var tracer = TracerFactory.Create(b =>
+                    b.AddProcessorPipeline(p =>
+                        p.AddProcessor(_ => processor.Object)))
+                .GetTracer(null);
+
+            SpanCreationOptions spanOptions = null;
+
+            if (links != null || attributes != null || startTimestamp != default)
+            {
+                spanOptions = new SpanCreationOptions
+                {
+                    Links = links,
+                    Attributes = attributes,
+                    StartTimestamp = startTimestamp,
+                };
+            }
+            var span = tracer.StartSpan(name, parentContext, kind, spanOptions);
+
+            if (events != null)
+            {
+                foreach (var evnt in events)
+                {
+                    span.AddEvent(evnt);
+                }
+            }
+
+            span.Status = status.IsValid ? status : Status.Ok;
+            if (endTimestamp == default)
+            {
+                span.End();
+            }
+            else
+            {
+                span.End(endTimestamp);
+            }
+
+            return (SpanData)processor.Invocations[0].Arguments[0];
         }
     }
 }

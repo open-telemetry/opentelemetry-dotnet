@@ -238,11 +238,11 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
                 this.Name = name;
             }
 
-            public override void OnStart(Span span)
+            public override void OnStart(SpanData span)
             {
             }
 
-            public override void OnEnd(Span span)
+            public override void OnEnd(SpanData span)
             {
             }
 

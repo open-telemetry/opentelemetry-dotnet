@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.jaegerAgentUdpBatcher = jaegerAgentUdpBatcher;
         }
 
-        public override async Task<ExportResult> ExportAsync(IEnumerable<Span> otelSpanList, CancellationToken cancellationToken)
+        public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> otelSpanList, CancellationToken cancellationToken)
         {
             var jaegerSpans = otelSpanList.Select(sdl => sdl.ToJaegerSpan());
 

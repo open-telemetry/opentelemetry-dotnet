@@ -1,4 +1,4 @@
-﻿// <copyright file="NoopSpanProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZipkinTraceExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,25 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Trace.Export;
 
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Exporter.ZPages
 {
-    internal sealed class NoopSpanProcessor : SpanProcessor
+    public class ZPagesExporter : SpanExporter
     {
-        public override void OnStart(SpanData span)
+        public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
         {
-        }
-
-        public override void OnEnd(SpanData span)
-        {
+            throw new NotImplementedException();
         }
 
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            return Task.CompletedTask;
+            throw new NotImplementedException();
         }
     }
 }
