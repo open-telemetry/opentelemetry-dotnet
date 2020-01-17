@@ -107,7 +107,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Null(request.Context.Operation.ParentId);
 
             Assert.True(request.Success);
-            Assert.Equal("0", request.ResponseCode);
+            Assert.Equal("Ok", request.ResponseCode);
 
             Assert.StartsWith("ot:", request.Context.GetInternalContext().SdkVersion);
         }
@@ -193,7 +193,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.True(request.Success.HasValue);
             Assert.True(request.Success.Value);
-            Assert.Equal("0", request.ResponseCode); // this check doesn't match Local Forwarder Assert.IsTrue(string.IsNullOrEmpty(request.ResponseCode));
+            Assert.Equal("Ok", request.ResponseCode); // this check doesn't match Local Forwarder Assert.IsTrue(string.IsNullOrEmpty(request.ResponseCode));
         }
 
         [Fact]
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.True(request.Success.HasValue);
             Assert.True(request.Success.Value);
-            Assert.Equal("0", request.ResponseCode);  // this check doesn't match Local Forwarder Assert.AreEqual("all good", request.ResponseCode);
+            Assert.Equal("Ok", request.ResponseCode);  // this check doesn't match Local Forwarder Assert.AreEqual("all good", request.ResponseCode);
             Assert.Equal("all good", request.Properties["statusDescription"]);  // this check doesn't match Local Forwarder
         }
 
@@ -236,7 +236,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.True(request.Success.HasValue);
             Assert.False(request.Success.Value);
-            Assert.Equal("1", request.ResponseCode);  // this check doesn't match Local Forwarder Assert.AreEqual("all bad", request.ResponseCode);
+            Assert.Equal("Cancelled", request.ResponseCode);  // this check doesn't match Local Forwarder Assert.AreEqual("all bad", request.ResponseCode);
             Assert.Equal("all bad", request.Properties["statusDescription"]);  // this check doesn't match Local Forwarder
         }
 
@@ -290,7 +290,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Null(dependency.Context.Operation.ParentId);
             Assert.Equal(span.Context.SpanId.ToHexString(), dependency.Id);
 
-            Assert.Equal("0", dependency.ResultCode);
+            Assert.Equal("Ok", dependency.ResultCode);
             Assert.True(dependency.Success.HasValue);
             Assert.True(dependency.Success);
 
@@ -331,7 +331,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal(span.Context.SpanId.ToHexString(), dependency.Id);
             Assert.Equal(parentSpanId.ToHexString(), dependency.Context.Operation.ParentId);
 
-            Assert.Equal("0", dependency.ResultCode);
+            Assert.Equal("Ok", dependency.ResultCode);
             Assert.True(dependency.Success.HasValue);
             Assert.True(dependency.Success);
 
@@ -392,7 +392,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.Equal(span.Context.SpanId.ToHexString(), dependency.Id);
             Assert.Equal(ActivitySpanId.CreateFromBytes(testParentSpanIdBytes).ToHexString(), dependency.Context.Operation.ParentId);
-            Assert.Equal("0", dependency.ResultCode);
+            Assert.Equal("Ok", dependency.ResultCode);
             Assert.True(dependency.Success.HasValue);
             Assert.True(dependency.Success);
 
@@ -468,7 +468,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.True(dependency.Success.HasValue);
             Assert.True(dependency.Success.Value);
-            Assert.Equal("0", dependency.ResultCode);
+            Assert.Equal("Ok", dependency.ResultCode);
             Assert.False(dependency.Properties.ContainsKey("StatusDescription"));  // TODO: why it is upper case first letter?
         }
 
@@ -491,7 +491,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.True(dependency.Success.HasValue);
             Assert.True(dependency.Success.Value);
 
-            Assert.Equal("0", dependency.ResultCode);
+            Assert.Equal("Ok", dependency.ResultCode);
             Assert.True(dependency.Properties.ContainsKey("statusDescription"));
             Assert.Equal("all good", dependency.Properties["statusDescription"]);
         }
@@ -514,7 +514,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.True(dependency.Success.HasValue);
             Assert.False(dependency.Success.Value);
-            Assert.Equal("1", dependency.ResultCode);
+            Assert.Equal("Cancelled", dependency.ResultCode);
             Assert.True(dependency.Properties.ContainsKey("statusDescription"));
             Assert.Equal("all bad", dependency.Properties["statusDescription"]);
         }
