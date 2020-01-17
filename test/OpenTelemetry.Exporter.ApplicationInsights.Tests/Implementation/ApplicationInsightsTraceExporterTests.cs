@@ -31,7 +31,6 @@ using OpenTelemetry.Resources;
 using Moq;
 using OpenTelemetry.Trace.Export;
 using Xunit;
-using OpenTelemetry.Resources;
 using Event = OpenTelemetry.Trace.Event;
 
 namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
@@ -1703,12 +1702,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             name = "spanName";
             
             var resource = new[] { new KeyValuePair<string, object>("service.name", "my-service") };
-            var tracerWithResource = TracerFactory.Create(b => b.SetResource(new Resource(resource))).GetTracer(null);
 
-            var span = tracerWithResource.StartRootSpan(name, spanKind);
-            span.AddEvent("test message1");
-
-            var sentItems = ConvertSpan((Span)span);
+            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions,
+                tracestate, spanKind, status, null, default, new[] { new Event("test message1") }, new Resource(resource));
+            var sentItems = ConvertSpan(span);
 
             var requestOrDependency = sentItems.Single(t => t.GetType() == telemetryType);
             var log = sentItems.OfType<TraceTelemetry>().Single();
@@ -1738,12 +1735,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 new KeyValuePair<string, object>("service.version", "my-service-version"),
             };
 
-            var tracerWithResource = TracerFactory.Create(b => b.SetResource(new Resource(resource))).GetTracer(null);
-
-            var span = tracerWithResource.StartRootSpan(name, spanKind);
-            span.AddEvent("test message1");
-
-            var sentItems = ConvertSpan((Span)span);
+            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions,
+                tracestate, spanKind, status, null, default, new[] { new Event("test message1") }, new Resource(resource));
+            var sentItems = ConvertSpan(span);
 
             var requestOrDependency = sentItems.Single(t => t.GetType() == telemetryType);
             var log = sentItems.OfType<TraceTelemetry>().Single();
@@ -1810,15 +1804,16 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Status status,
             SpanCreationOptions options = null,
             DateTimeOffset endTimestamp = default,
-            IEnumerable<Event> events = null)
+            IEnumerable<Event> events = null,
+            Resource resource = null)
         {
             var processor = new Mock<SpanProcessor>();
 
             processor.Setup(p => p.OnEnd(It.IsAny<SpanData>()));
 
-            var tracer = TracerFactory.Create(b =>
-                b.AddProcessorPipeline(p =>
-                    p.AddProcessor(_ => processor.Object)))
+            var tracer = TracerFactory.Create(b =>b
+                    .SetResource(resource)
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => processor.Object)))
                 .GetTracer(null);
 
             var parentContext = new SpanContext(traceId, parentSpanId, traceOptions, false, tracestate);
