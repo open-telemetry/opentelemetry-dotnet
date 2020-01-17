@@ -83,7 +83,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
+            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(parent.TraceId, span.Context.TraceId);
             Assert.Equal(parent.SpanId, span.ParentSpanId);
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
+            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(parent.TraceId, span.Context.TraceId);
             Assert.Equal(parent.SpanId, span.ParentSpanId);
@@ -168,7 +168,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnStart"));
             Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnEnd"));
-            Assert.IsType<Span>(spanProcessor.Invocations[1].Arguments[0]);
+            Assert.IsType<SpanData>(spanProcessor.Invocations[1].Arguments[0]);
         }
 
         [Fact]
@@ -189,7 +189,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnStart"));
             Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnEnd"));
-            Assert.IsType<Span>(spanProcessor.Invocations[1].Arguments[0]);
+            Assert.IsType<SpanData>(spanProcessor.Invocations[1].Arguments[0]);
         }
 
         [Fact]

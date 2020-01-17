@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Export
         private const int DefaultMaxQueueSize = 2048;
         private const int DefaultMaxExportBatchSize = 512;
         private static readonly TimeSpan DefaultScheduleDelay = TimeSpan.FromMilliseconds(5000);
-        private readonly ConcurrentQueue<Span> exportQueue;
+        private readonly ConcurrentQueue<SpanData> exportQueue;
         private readonly int maxQueueSize;
         private readonly int maxExportBatchSize;
         private readonly TimeSpan scheduleDelay;
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Trace.Export
             this.maxExportBatchSize = maxExportBatchSize;
 
             this.cts = new CancellationTokenSource();
-            this.exportQueue = new ConcurrentQueue<Span>();
+            this.exportQueue = new ConcurrentQueue<SpanData>();
 
             // worker task that will last for lifetime of processor.
             // No need to specify long running - it is useless if any async calls are made internally.
@@ -94,11 +94,11 @@ namespace OpenTelemetry.Trace.Export
             this.worker = Task.Factory.StartNew(s => this.Worker((CancellationToken)s), this.cts.Token);
         }
 
-        public override void OnStart(Span span)
+        public override void OnStart(SpanData span)
         {
         }
 
-        public override void OnEnd(Span span)
+        public override void OnEnd(SpanData span)
         {
             if (this.stopping)
             {
@@ -164,11 +164,11 @@ namespace OpenTelemetry.Trace.Export
                     return;
                 }
 
-                List<Span> batch = null;
+                List<SpanData> batch = null;
                 if (this.exportQueue.TryDequeue(out var nextSpan))
                 {
                     Interlocked.Decrement(ref this.currentQueueSize);
-                    batch = new List<Span> { nextSpan };
+                    batch = new List<SpanData> { nextSpan };
                 }
                 else
                 {

@@ -65,39 +65,39 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Tracer_StartRootSpan_BadArgs_NullSpanName()
         {
-            var span1 = (Span)this.tracerSdk.StartRootSpan(null);
+            var span1 = (SpanSdk)this.tracerSdk.StartRootSpan(null);
             Assert.Equal(string.Empty, span1.Name);
 
-            var span2 = (Span)this.tracerSdk.StartRootSpan(null, SpanKind.Client);
+            var span2 = (SpanSdk)this.tracerSdk.StartRootSpan(null, SpanKind.Client);
             Assert.Equal(string.Empty, span2.Name);
 
-            var span3 = (Span)this.tracerSdk.StartRootSpan(null, SpanKind.Client, null);
+            var span3 = (SpanSdk)this.tracerSdk.StartRootSpan(null, SpanKind.Client, null);
             Assert.Equal(string.Empty, span3.Name);
         }
 
         [Fact]
         public void Tracer_StartSpan_BadArgs_NullSpanName()
         {
-            var span1 = (Span)this.tracerSdk.StartSpan(null);
+            var span1 = (SpanSdk)this.tracerSdk.StartSpan(null);
             Assert.Equal(string.Empty, span1.Name);
 
-            var span2 = (Span)this.tracerSdk.StartSpan(null, SpanKind.Client);
+            var span2 = (SpanSdk)this.tracerSdk.StartSpan(null, SpanKind.Client);
             Assert.Equal(string.Empty, span2.Name);
 
-            var span3 = (Span)this.tracerSdk.StartSpan(null, SpanKind.Client, null);
+            var span3 = (SpanSdk)this.tracerSdk.StartSpan(null, SpanKind.Client, null);
             Assert.Equal(string.Empty, span3.Name);
         }
 
         [Fact]
         public void Tracer_StartSpan_FromParent_BadArgs_NullSpanName()
         {
-            var span1 = (Span)this.tracerSdk.StartSpan(null, BlankSpan.Instance);
+            var span1 = (SpanSdk)this.tracerSdk.StartSpan(null, BlankSpan.Instance);
             Assert.Equal(string.Empty, span1.Name);
 
-            var span2 = (Span)this.tracerSdk.StartSpan(null, BlankSpan.Instance, SpanKind.Client);
+            var span2 = (SpanSdk)this.tracerSdk.StartSpan(null, BlankSpan.Instance, SpanKind.Client);
             Assert.Equal(string.Empty, span2.Name);
 
-            var span3 = (Span)this.tracerSdk.StartSpan(null, BlankSpan.Instance, SpanKind.Client, null);
+            var span3 = (SpanSdk)this.tracerSdk.StartSpan(null, BlankSpan.Instance, SpanKind.Client, null);
             Assert.Equal(string.Empty, span3.Name);
         }
 
@@ -105,27 +105,27 @@ namespace OpenTelemetry.Trace.Test
         public void Tracer_StartSpan_FromParentContext_BadArgs_NullSpanName()
         {
             var blankContext = default(SpanContext);
-            var span1 = (Span)this.tracerSdk.StartSpan(null, blankContext);
+            var span1 = (SpanSdk)this.tracerSdk.StartSpan(null, blankContext);
             Assert.Equal(string.Empty, span1.Name);
 
-            var span2 = (Span)this.tracerSdk.StartSpan(null, blankContext, SpanKind.Client);
+            var span2 = (SpanSdk)this.tracerSdk.StartSpan(null, blankContext, SpanKind.Client);
             Assert.Equal(string.Empty, span2.Name);
 
-            var span3 = (Span)this.tracerSdk.StartSpan(null, blankContext, SpanKind.Client, null);
+            var span3 = (SpanSdk)this.tracerSdk.StartSpan(null, blankContext, SpanKind.Client, null);
             Assert.Equal(string.Empty, span3.Name);
         }
 
         [Fact]
         public void Tracer_StartSpan_FromActivity_BadArgs_NullSpanName()
         {
-            var span = (Span)this.tracerSdk.StartSpanFromActivity(null, new Activity("foo").Start());
+            var span = (SpanSdk)this.tracerSdk.StartSpanFromActivity(null, new Activity("foo").Start());
             Assert.Equal(string.Empty, span.Name);
         }
 
         [Fact]
         public void Tracer_StartSpan_FromActivity_BadArgs_NullActivity()
         {
-            var span = (Span)this.tracerSdk.StartSpanFromActivity("foo", null);
+            var span = (SpanSdk)this.tracerSdk.StartSpanFromActivity("foo", null);
             Assert.NotNull(span);
             Assert.Equal("foo", span.Name);
             Assert.Equal(default, span.ParentSpanId);
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Trace.Test
         public void CreateSpan_ByTracerWithResource()
         {
             var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.0.0");
-            var span = (Span)tracer.StartSpan("some span");
+            var span = (SpanSdk)tracer.StartSpan("some span");
             Assert.Equal(tracer.LibraryResource, span.LibraryResource);
         }
 
@@ -212,7 +212,7 @@ namespace OpenTelemetry.Trace.Test
                     .SetSampler(new AlwaysSampleSampler()))
                 .GetTracer(null);
 
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             for (long i = 0; i < 2 * maxNumberOfAttributes; i++)
             {
@@ -264,7 +264,7 @@ namespace OpenTelemetry.Trace.Test
                     .SetSampler(new AlwaysSampleSampler()))
                 .GetTracer(null);
 
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             var eventTimestamps = new DateTimeOffset[2 * maxNumberOfEvents];
 
@@ -310,7 +310,7 @@ namespace OpenTelemetry.Trace.Test
                 overflowedLinks.Add(link);
             }
 
-            var span = (Span)tracer.StartSpan(SpanName, SpanKind.Client, new SpanCreationOptions
+            var span = (SpanSdk)tracer.StartSpan(SpanName, SpanKind.Client, new SpanCreationOptions
             {
                 LinksFactory = () => overflowedLinks,
             });
@@ -352,7 +352,7 @@ namespace OpenTelemetry.Trace.Test
                 overflowedLinks.Add(link);
             }
 
-            var span = (Span)tracer.StartSpan(SpanName, SpanKind.Client, new SpanCreationOptions
+            var span = (SpanSdk)tracer.StartSpan(SpanName, SpanKind.Client, new SpanCreationOptions
             {
                 Links = overflowedLinks,
             });
@@ -384,7 +384,7 @@ namespace OpenTelemetry.Trace.Test
                     .SetSampler(new AlwaysSampleSampler()))
                 .GetTracer(null);
 
-            var span = (Span)tracer.StartRootSpan(SpanName);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
             for (long i = 0; i < 2 * maxNumberOfAttributes; i++)
             {
                 span.SetAttribute("MyStringAttributeKey" + i, i);

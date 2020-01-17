@@ -27,13 +27,13 @@ namespace OpenTelemetry.Trace.Export
         /// Span start hook.
         /// </summary>
         /// <param name="span">Instance of span to process.</param>
-        public abstract void OnStart(Span span);
+        public abstract void OnStart(SpanData span);
         
         /// <summary>
         /// Span end hook.
         /// </summary>
         /// <param name="span">Instance of Span to process.</param>
-        public abstract void OnEnd(Span span);
+        public abstract void OnEnd(SpanData span);
 
         /// <summary>
         /// Shuts down span processor asynchronously.
