@@ -88,7 +88,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
             // StackDriver uses different labels that are used to categorize spans
             // replace attribute keys with StackDriver version
-            foreach (var entry in httpLabelsToRepalce)
+            foreach (var entry in httpLabelsToReplace)
             {
                 if (span.Attributes.AttributeMap.TryGetValue(entry.Key, out var attrValue))
                 {
