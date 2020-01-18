@@ -57,16 +57,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
                 var buff = memoryTransport.GetBuffer();
 
-                // all parts except spanId match (we can't control/mock span-id generation)
-                Assert.Equal(validJaegerThriftPayload.AsSpan().Slice(0, 89).ToArray(), buff.AsSpan().Slice(0, 89).ToArray());
-                Assert.Equal(validJaegerThriftPayload.AsSpan().Slice(98).ToArray(), buff.AsSpan().Slice(98).ToArray());
-
-                byte [] spanIdBytes = new byte[8];
-                spanData.Context.SpanId.CopyTo(spanIdBytes);
-
-                Assert.Equal(span.SpanId, BitConverter.ToInt64(spanIdBytes, 0));
-
-                // TODO: validate spanId in thrift payload
+                Assert.Equal(validJaegerThriftPayload, buff);
             }
         }
 
@@ -78,6 +69,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var eventTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
+            var spanId = ActivitySpanId.CreateFromString("6a69db47429ea340".AsSpan());
             var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
             var attributes = new Dictionary<string, object>
             {
@@ -115,14 +107,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     linkedSpanId,
                     ActivityTraceFlags.Recorded));
 
-            return SpanDataHelper.CreateSpanData(
+            return new SpanData(
                 "Name",
-                new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
+                new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded),
+                parentSpanId,
                 SpanKind.Client,
                 startTimestamp,
-                new[] {link},
                 attributes,
                 events,
+                new[] { link, },
+                null,
                 Status.Ok,
                 endTimestamp);
         }
