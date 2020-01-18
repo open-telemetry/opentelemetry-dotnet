@@ -147,7 +147,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public Status Status
         {
-            get => this.Status;
+            get => this.status;
 
             set
             {

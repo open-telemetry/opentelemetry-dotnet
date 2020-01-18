@@ -64,8 +64,8 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal(parentContext.TraceId, spanData.Context.TraceId);
             Assert.Equal(span.Context.SpanId, spanData.Context.SpanId);
             Assert.Equal(ActivityTraceFlags.Recorded, spanData.Context.TraceOptions);
-            Assert.True(spanData.Context.IsRemote);
-            Assert.Same(tracestate, spanData.Context.Tracestate);
+            Assert.False(spanData.Context.IsRemote);
+            Assert.Empty(spanData.Context.Tracestate);
 
             Assert.Single(spanData.Attributes);
             Assert.Equal("key", spanData.Attributes.Single().Key);
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             var span = (SpanSdk)tracer.StartSpan("name");
             span.End();
 
-            var spanData = new SpanData((SpanSdk)span);
+            var spanData = new SpanData(span);
 
             Assert.Equal("name", spanData.Name);
             Assert.Equal(SpanKind.Internal, spanData.Kind);
@@ -114,15 +114,15 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Empty(spanData.Attributes);
             Assert.Empty(spanData.Events);
             Assert.Equal(default, spanData.EndTimestamp);
-
+            
             span.AddEvent(new Event("event"));
             span.SetAttribute("key", "value");
 
             Assert.Single(spanData.Attributes);
             Assert.Single(spanData.Events);
-            Assert.NotEqual(default, spanData.EndTimestamp);
-
             span.End();
+            Assert.NotEqual(default, spanData.EndTimestamp);
+            Assert.Equal(Status.Ok, spanData.Status);
         }
 
         [Fact]
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             var spanData = new SpanData("name", context, default, SpanKind.Client, startTime, null, null, null, null, Status.Cancelled, endTime);
 
             Assert.Equal("name", spanData.Name);
-            Assert.Equal(SpanKind.Internal, spanData.Kind);
+            Assert.Equal(SpanKind.Client, spanData.Kind);
             Assert.Equal(default, spanData.ParentSpanId);
             Assert.Equal(startTime, spanData.StartTimestamp);
             Assert.Equal(endTime, spanData.EndTimestamp);
