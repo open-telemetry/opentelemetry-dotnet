@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
     internal static class SpanExtensions
     {
-        private static Dictionary<string, string> httpLabelsToRepalce = new Dictionary<string, string>
+        private static Dictionary<string, string> httpLabelsToReplace = new Dictionary<string, string>
         {
             { "http.method", "/http/method" },
             { "http.host", "/http/host" },
