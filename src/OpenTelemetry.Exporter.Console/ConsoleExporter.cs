@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.Console
             this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
         }
 
-        public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
         {
             foreach (var span in batch)
             {
