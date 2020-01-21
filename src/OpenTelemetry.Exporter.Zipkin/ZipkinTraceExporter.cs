@@ -60,7 +60,7 @@ namespace OpenTelemetry.Exporter.Zipkin
         }
 
         /// <inheritdoc/>
-        public override async Task<ExportResult> ExportAsync(IEnumerable<Span> otelSpanList, CancellationToken cancellationToken)
+        public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> otelSpanList, CancellationToken cancellationToken)
         {
             var zipkinSpans = new List<ZipkinSpan>();
 
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             return Task.CompletedTask;
         }
 
-        internal ZipkinSpan GenerateSpan(Span otelSpan, ZipkinEndpoint defaultLocalEndpoint)
+        internal ZipkinSpan GenerateSpan(SpanData otelSpan, ZipkinEndpoint defaultLocalEndpoint)
         {
             var context = otelSpan.Context;
             var startTimestamp = this.ToEpochMicroseconds(otelSpan.StartTimestamp);
@@ -224,7 +224,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             return spanId.ToHexString();
         }
 
-        private ZipkinSpanKind ToSpanKind(Span otelSpan)
+        private ZipkinSpanKind ToSpanKind(SpanData otelSpan)
         {
             if (otelSpan.Kind == SpanKind.Server)
             {

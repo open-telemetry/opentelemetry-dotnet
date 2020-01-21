@@ -13,12 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Concurrent;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Collector.StackExchangeRedis.Implementation;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
 using StackExchange.Redis.Profiling;
 
 namespace OpenTelemetry.Collector.StackExchangeRedis
@@ -36,6 +39,8 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         private readonly ProfilingSession defaultSession = new ProfilingSession();
         private readonly ConcurrentDictionary<ISpan, ProfilingSession> cache = new ConcurrentDictionary<ISpan, ProfilingSession>();
 
+        private readonly PropertyInfo spanEndTimestampInfo;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="StackExchangeRedisCallsCollector"/> class.
         /// </summary>
@@ -46,6 +51,19 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
 
             this.cancellationTokenSource = new CancellationTokenSource();
             this.cancellationToken = this.cancellationTokenSource.Token;
+            var spanType = typeof(TracerFactory).Assembly.GetType("OpenTelemetry.Trace.SpanSdk");
+
+            this.spanEndTimestampInfo = spanType?.GetProperty("EndTimestamp");
+            if (this.spanEndTimestampInfo == null)
+            {
+                throw new ArgumentException("OpenTelemetry.Trace.SpanSdk.EndTimestamp property is missing");
+            }
+
+            if (this.spanEndTimestampInfo.PropertyType != typeof(DateTimeOffset))
+            {
+                throw new ArgumentException("OpenTelemetry.Trace.SpanSdk.EndTimestamp property is not of DateTimeOffset type");
+            }
+
             Task.Factory.StartNew(this.DumpEntries, TaskCreationOptions.LongRunning, this.cancellationToken);
         }
 
@@ -102,9 +120,9 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
                     var span = entry.Key;
                     ProfilingSession session;
 
-                    // TODO expose end timestamp on ISpan (needed anyway) and use it as indicator that span has ended.
-                    // after that, Redis can depend on abstractions
-                    if (span is Span spanImpl && spanImpl.EndTimestamp != default)
+                    // Redis instrumentation needs a hack to know that current span has ended (it's not tracing-friendly)
+                    var endTimestamp = (DateTimeOffset)this.spanEndTimestampInfo.GetValue(span);
+                    if (endTimestamp != default)
                     {
                         this.cache.TryRemove(span, out session);
                     }

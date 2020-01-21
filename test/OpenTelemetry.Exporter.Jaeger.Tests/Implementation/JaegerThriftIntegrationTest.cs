@@ -20,9 +20,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using System.Reflection;
+using Moq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 using Thrift.Protocols;
 using Xunit;
 using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
@@ -56,19 +57,27 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
                 var buff = memoryTransport.GetBuffer();
 
-                Assert.Equal(validJaegerThriftPayload, buff);
+                // all parts except spanId match (we can't control/mock span-id generation)
+                Assert.Equal(validJaegerThriftPayload.AsSpan().Slice(0, 89).ToArray(), buff.AsSpan().Slice(0, 89).ToArray());
+                Assert.Equal(validJaegerThriftPayload.AsSpan().Slice(98).ToArray(), buff.AsSpan().Slice(98).ToArray());
+
+                byte [] spanIdBytes = new byte[8];
+                spanData.Context.SpanId.CopyTo(spanIdBytes);
+
+                Assert.Equal(span.SpanId, BitConverter.ToInt64(spanIdBytes, 0));
+
+                // TODO: validate spanId in thrift payload
             }
         }
 
 
-        private Span CreateTestSpan()
+        private SpanData CreateTestSpan()
         {
             var startTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
             var endTimestamp = startTimestamp.AddSeconds(60);
             var eventTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
-            var spanId = "6a69db47429ea340";
             var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
             var attributes = new Dictionary<string, object>
             {
@@ -106,33 +115,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     linkedSpanId,
                     ActivityTraceFlags.Recorded));
 
-            var span = (Span)tracer
-                .StartSpan("Name",  new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded), SpanKind.Client,
-                    new SpanCreationOptions
-                    {
-                        StartTimestamp = startTimestamp,
-                        Links = new[] { link },
-                    });
-
-            var spanContextSetter = typeof(Span).GetMethod("set_Context", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            ActivitySpanId activitySpanId = ActivitySpanId.CreateFromString(spanId.AsSpan());
-            spanContextSetter.Invoke(span, new []{ (object)new SpanContext(in traceId, in activitySpanId, ActivityTraceFlags.Recorded) });
-
-            foreach (var attribute in attributes)
-            {
-                span.SetAttribute(attribute.Key, attribute.Value);
-            }
-
-            foreach (var evnt in events)
-            {
-                span.AddEvent(evnt);
-            }
-
-            span.Status = Status.Ok;
-
-            span.End(endTimestamp);
-            return span;
+            return SpanDataHelper.CreateSpanData(
+                "Name",
+                new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
+                SpanKind.Client,
+                startTimestamp,
+                new[] {link},
+                attributes,
+                events,
+                Status.Ok,
+                endTimestamp);
         }
     }
 }
