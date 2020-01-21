@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System.Collections.Generic;
 using System.Linq;
 using Google.Cloud.Trace.V2;
 using Google.Protobuf.WellKnownTypes;
@@ -23,6 +25,15 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
     internal static class SpanExtensions
     {
+        private static Dictionary<string, string> httpLabelsToReplace = new Dictionary<string, string>
+        {
+            { "http.method", "/http/method" },
+            { "http.host", "/http/host" },
+            { "http.status_code", "/http/status_code" },
+            { "http.user_agent", "/agent" },
+            { "http.path", "/http/url" },
+        };
+
         /// <summary>
         /// Translating <see cref="SpanData"/> to Stackdriver's Span
         /// According to <see href="https://cloud.google.com/trace/docs/reference/v2/rpc/google.devtools.cloudtrace.v2"/> specifications.
@@ -74,6 +85,17 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
                                         s => s.Value?.ToAttributeValue()),
                     },
                 };
+            }
+
+            // StackDriver uses different labels that are used to categorize spans
+            // replace attribute keys with StackDriver version
+            foreach (var entry in httpLabelsToReplace)
+            {
+                if (span.Attributes.AttributeMap.TryGetValue(entry.Key, out var attrValue))
+                {
+                    span.Attributes.AttributeMap.Remove(entry.Key);
+                    span.Attributes.AttributeMap.Add(entry.Value, attrValue);
+                }
             }
 
             return span;

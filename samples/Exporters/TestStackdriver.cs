@@ -40,9 +40,15 @@ namespace Samples
 
                 using (DistributedContext.SetCurrent(dc))
                 {
-                    using (tracer.StartActiveSpan("incoming request", out var span))
+                    using (tracer.StartActiveSpan("/getuser", out ISpan span))
                     {
                         span.AddEvent("Processing video.");
+                        span.PutHttpMethodAttribute("GET");
+                        span.PutHttpHostAttribute("localhost", 8080);
+                        span.PutHttpPathAttribute("/resource");
+                        span.PutHttpStatusCodeAttribute(200);
+                        span.PutHttpUserAgentAttribute("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0");
+
                         Thread.Sleep(TimeSpan.FromMilliseconds(10));
                     }
                 }
