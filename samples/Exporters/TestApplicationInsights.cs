@@ -31,7 +31,7 @@ namespace Samples
         internal static object Run()
         {
             DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance; // Enable asynclocal carrier for the context
-            DistributedContext dc = new DistributedContext(FrontendKey, "mobile-ios9.3.5");
+            DistributedContext dc = DistributedContextBuilder.CreateContext(FrontendKey, "mobile-ios9.3.5");
 
             using (var tracerFactory = TracerFactory.Create(builder => builder
                 .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key")))

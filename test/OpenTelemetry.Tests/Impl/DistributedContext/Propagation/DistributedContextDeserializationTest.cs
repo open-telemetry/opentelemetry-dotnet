@@ -136,7 +136,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             var output = new MemoryStream();
             output.WriteByte(SerializationUtils.VersionId);
             EncodeTagToOutPut("Key", "Value", output);
-            DistributedContext expected = new DistributedContext("Key", "Value");
+            DistributedContext expected = DistributedContextBuilder.CreateContext("Key", "Value");
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
 
@@ -147,7 +147,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             output.WriteByte(SerializationUtils.VersionId);
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key2", "Value2", output);
-            DistributedContext expected = new DistributedContext(new List<DistributedContextEntry>(2) { new DistributedContextEntry("Key1", "Value1"), new DistributedContextEntry("Key2", "Value2") });
+            DistributedContext expected = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(2) { new DistributedContextEntry("Key1", "Value1"), new DistributedContextEntry("Key2", "Value2") });
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
 
@@ -158,7 +158,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             output.WriteByte(SerializationUtils.VersionId);
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key1", "Value2", output);
-            DistributedContext expected = new DistributedContext("Key1", "Value2");
+            DistributedContext expected = DistributedContextBuilder.CreateContext("Key1", "Value2");
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
 
@@ -173,7 +173,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             EncodeTagToOutPut("Key1", "Value4", output);
             EncodeTagToOutPut("Key2", "Value5", output);
 
-            DistributedContext expected = new DistributedContext(new List<DistributedContextEntry>(3) { 
+            DistributedContext expected = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(3) { 
                                                                           new DistributedContextEntry("Key1", "Value4"), 
                                                                           new DistributedContextEntry("Key2", "Value5"),
                                                                           new DistributedContextEntry("Key3", "Value3"),
@@ -188,7 +188,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             output.WriteByte(SerializationUtils.VersionId);
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key1", "Value2", output);
-            DistributedContext expected = new DistributedContext("Key1", "Value2");
+            DistributedContext expected = DistributedContextBuilder.CreateContext("Key1", "Value2");
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
 
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key2", "Value2", output);
 
-            DistributedContext expected = new DistributedContext(new List<DistributedContextEntry>(3) {
+            DistributedContext expected = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(3) {
                                                                           new DistributedContextEntry("Key1", "Value1"),
                                                                           new DistributedContextEntry("Key2", "Value2"),
                                                                           new DistributedContextEntry("Key3", "Value3"),
@@ -226,7 +226,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
             EncodeTagToOutPut("Key3", "Value3", output);
 
-            DistributedContext expected = new DistributedContext(new List<DistributedContextEntry>(2) {
+            DistributedContext expected = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(2) {
                                                                           new DistributedContextEntry("Key1", "Value1"),
                                                                           new DistributedContextEntry("Key2", "Value2"),
                                                                  });
