@@ -86,7 +86,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 if (TryParseTags(buffer, out var tags))
                 {
-                    return new DistributedContext(tags);
+                    return DistributedContextBuilder.CreateContext(tags);
                 }
             }
             catch (Exception e)
