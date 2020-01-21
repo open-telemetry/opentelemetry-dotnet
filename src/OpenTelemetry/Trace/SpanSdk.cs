@@ -147,7 +147,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public Status Status
         {
-            get => this.StatusWithDefault;
+            get => this.status;
 
             set
             {
@@ -169,17 +169,17 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets attributes.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, object>> Attributes => this.attributes ?? Enumerable.Empty<KeyValuePair<string, object>>();
+        public IEnumerable<KeyValuePair<string, object>> Attributes => this.attributes;
 
         /// <summary>
         /// Gets events.
         /// </summary>
-        public IEnumerable<Event> Events => this.events ?? Enumerable.Empty<Event>();
+        public IEnumerable<Event> Events => this.events;
 
         /// <summary>
         /// Gets links.
         /// </summary>
-        public IEnumerable<Link> Links => this.links ?? Enumerable.Empty<Link>();
+        public IEnumerable<Link> Links => this.links;
 
         /// <summary>
         /// Gets span start timestamp.
@@ -221,8 +221,6 @@ namespace OpenTelemetry.Trace
         }
 
         internal Activity Activity { get; }
-
-        private Status StatusWithDefault => this.status.IsValid ? this.status : Status.Ok;
 
         /// <inheritdoc />
         public void UpdateName(string name)

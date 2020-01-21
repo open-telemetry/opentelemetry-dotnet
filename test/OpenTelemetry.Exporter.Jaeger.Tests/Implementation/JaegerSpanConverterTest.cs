@@ -330,6 +330,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var eventTimestamp = DateTime.UtcNow;
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
 
+            var spanId = ActivitySpanId.CreateRandom();
             var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
             var attributes = new Dictionary<string, object>
             {
@@ -362,21 +363,21 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            var span = SpanDataHelper.CreateSpanData(
-                    "Name",
-                    new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
-                    SpanKind.Client,
-                    startTimestamp,
-                    addLinks ? new[] { new Link(new SpanContext(
-                            traceId,
-                            linkedSpanId,
-                            ActivityTraceFlags.Recorded)), } : Enumerable.Empty<Link>(),
-                    setAttributes ? attributes : new Dictionary<string, object>(),
-                    addEvents ? events : Enumerable.Empty<Event>(),
-                    Status.Ok,
-                    endTimestamp);
-
-            return span;
+            return new SpanData(
+                "Name",
+                new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded),
+                parentSpanId,
+                SpanKind.Client,
+                startTimestamp,
+                setAttributes ? attributes : null,
+                addEvents ? events : null,
+                addLinks ? new[] { new Link(new SpanContext(
+                        traceId,
+                        linkedSpanId,
+                        ActivityTraceFlags.Recorded)), } : null,
+                null,
+                Status.Ok,
+                endTimestamp);
         }
     }
 }
