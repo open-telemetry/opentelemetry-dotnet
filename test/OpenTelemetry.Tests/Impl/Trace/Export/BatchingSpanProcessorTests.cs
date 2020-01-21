@@ -352,17 +352,13 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private SpanData[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
         {
-            Assert.True(
-                SpinWait.SpinUntil(() =>
-                {
-                    if (exporter.ExportedSpans.Length >= spanCount)
-                    {
-                        return true;
-                    }
+            var sw = Stopwatch.StartNew();
+            while (exporter.ExportedSpans.Length < spanCount && sw.Elapsed <= timeout)
+            {
+                Thread.Sleep(10);
+            }
 
-                    Thread.Sleep(10);
-                    return false;
-                }, timeout),
+            Assert.True(exporter.ExportedSpans.Length >= spanCount,
                 $"Expected at least {spanCount}, got {exporter.ExportedSpans.Length}");
 
             return exporter.ExportedSpans;
