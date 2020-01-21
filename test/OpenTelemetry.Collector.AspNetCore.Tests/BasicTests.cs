@@ -85,7 +85,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
+            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
+            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal("api/Values/{id}", span.Name);
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
+            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal("api/Values/{id}", span.Name);
@@ -213,7 +213,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
 
             // we should only create one span and never call processor with another
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = ((Span)spanProcessor.Invocations[1].Arguments[0]);
+            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(SpanKind.Server, span.Kind);
             Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));

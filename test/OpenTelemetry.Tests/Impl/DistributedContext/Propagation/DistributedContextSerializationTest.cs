@@ -97,7 +97,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             // more than limit.
             list.Add(new DistributedContextEntry("last", "last1"));
 
-            DistributedContext dc = new DistributedContext(list);
+            DistributedContext dc = DistributedContextBuilder.CreateContext(list);
 
             Assert.Empty(serializer.ToByteArray(dc));
         }
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Context.Propagation.Test
                 list.Add(tag);
             }
 
-            var actual = serializer.ToByteArray(new DistributedContext(list));
+            var actual = serializer.ToByteArray(DistributedContextBuilder.CreateContext(list));
             var tagsList = tags.ToList();
             var tagPermutation = Permutate(tagsList, tagsList.Count);
             ISet<String> possibleOutPuts = new HashSet<String>();

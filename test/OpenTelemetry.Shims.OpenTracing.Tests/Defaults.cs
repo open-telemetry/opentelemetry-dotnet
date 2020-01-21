@@ -35,7 +35,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         /// <summary>
         /// Creates an instance of SpanMock from this test project. This is a basic implementation used to verify calls to add events, links, and attributes.
         /// </summary>
-        /// <returns>an instance of Span</returns>
+        /// <returns>an instance of Span.</returns>
         public static SpanMock GetOpenTelemetrySpanMock()
         {
             return new SpanMock(GetOpenTelemetrySpanContext());

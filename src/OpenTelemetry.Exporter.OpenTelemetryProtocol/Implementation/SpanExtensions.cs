@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace.Export;
+
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     using System;
@@ -28,7 +30,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
     internal static class SpanExtensions
     {
-        internal static Proto.Trace.V1.Span ToProtoSpan(this Trace.Span otelSpan)
+        internal static Proto.Trace.V1.Span ToProtoSpan(this SpanData otelSpan)
         {
             try
             {

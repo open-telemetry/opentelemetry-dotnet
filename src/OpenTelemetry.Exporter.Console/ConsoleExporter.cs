@@ -1,4 +1,4 @@
-﻿// <copyright file="TestExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ConsoleExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,36 +13,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using System.Collections.Generic;
-using System.Collections.Concurrent;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
-namespace OpenTelemetry.Testing.Export
+namespace OpenTelemetry.Exporter.Console
 {
-    public class TestExporter : SpanExporter
+    public class ConsoleExporter : SpanExporter
     {
-        private readonly ConcurrentQueue<SpanData> spanDataList = new ConcurrentQueue<SpanData>();
-        private readonly Action<IEnumerable<SpanData>> onExport;
-        public TestExporter(Action<IEnumerable<SpanData>> onExport)
+        private readonly JsonSerializerOptions serializerOptions;
+
+        public ConsoleExporter(ConsoleExporterOptions options)
         {
-            this.onExport = onExport;
+            this.serializerOptions = new JsonSerializerOptions
+            {
+                WriteIndented = options.Pretty,
+            };
+
+            this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
         }
 
-        public SpanData[] ExportedSpans => spanDataList.ToArray();
-
-        public bool WasShutDown { get; private set; } = false;
-
-        public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> data, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
         {
-            this.onExport?.Invoke(data);
-
-            foreach (var s in data)
+            foreach (var span in batch)
             {
-                this.spanDataList.Enqueue(s);
+                System.Console.WriteLine(JsonSerializer.Serialize(span, this.serializerOptions));
             }
 
             return Task.FromResult(ExportResult.Success);
@@ -50,7 +50,6 @@ namespace OpenTelemetry.Testing.Export
 
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            this.WasShutDown = true;
             return Task.CompletedTask;
         }
     }
