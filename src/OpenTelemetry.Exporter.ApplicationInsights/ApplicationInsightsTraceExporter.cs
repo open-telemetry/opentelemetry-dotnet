@@ -126,6 +126,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                         this.SetEventHubsProperties(span, result);
                         break;
                     default:
+
                         if (result is DependencyTelemetry dependency && dependency.Type == null)
                         {
                             dependency.Type = component;
@@ -256,6 +257,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
 
         private static void AddPropertyWithAdjustedName(IDictionary<string, string> props, string name, string value)
         {
+            if (name == "component" || name == "az.namespace" || name == "kind")
+            {
+                // these attributes are reflected in telemetry types and should not be populated.
+                return;
+            }
+
             var n = name;
             var i = 0;
             while (props.ContainsKey(n))
@@ -565,20 +572,19 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                 }
             }
 
-            if (telemetry is DependencyTelemetry dependency)
+            if (endpoint != null && queueName != null)
             {
-                // producer spans don't have event hubs info
-                if (span.Kind == SpanKind.Client)
+                if (telemetry is DependencyTelemetry dependency)
                 {
                     // Target uniquely identifies the resource, we use both: queueName and endpoint
                     // with schema used for SQL-dependencies
                     dependency.Target = string.Concat(endpoint, " | ", queueName);
                     dependency.Type = "Azure Event Hubs";
                 }
-            }
-            else if (telemetry is RequestTelemetry request)
-            {
-                request.Source = string.Concat(endpoint, " | ", queueName);
+                else if (telemetry is RequestTelemetry request)
+                {
+                    request.Source = string.Concat(endpoint, " | ", queueName);
+                }
             }
         }
 
