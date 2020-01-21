@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
@@ -319,7 +320,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("Event2", eventField.VStr);
         }
 
-        internal Span CreateTestSpan(
+        internal SpanData CreateTestSpan(
             bool setAttributes = true,
             bool addEvents = true,
             bool addLinks = true)
@@ -329,6 +330,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var eventTimestamp = DateTime.UtcNow;
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
 
+            var spanId = ActivitySpanId.CreateRandom();
             var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
             var attributes = new Dictionary<string, object>
             {
@@ -361,43 +363,21 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            Func<IEnumerable<Link>> linkGetter = null;
-            if (addLinks)
-            {
-                linkGetter = () => new [] { new Link(new SpanContext(
-                    traceId,
-                    linkedSpanId,
-                    ActivityTraceFlags.Recorded)),
-                };
-            }
-
-            var span = (Span)tracer
-                .StartSpan("Name", new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded), SpanKind.Client, new SpanCreationOptions
-                {
-                    StartTimestamp = startTimestamp.Date,
-                    LinksFactory = linkGetter,
-                });
-
-            if (setAttributes)
-            {
-                foreach (var attribute in attributes)
-                {
-                    span.SetAttribute(attribute.Key, attribute.Value);
-                }
-            }
-
-            if (addEvents)
-            {
-                foreach (var evnt in events)
-                {
-                    span.AddEvent(evnt);
-                }
-            }
-
-            span.Status = Status.Ok;
-
-            span.End(endTimestamp);
-            return span;
+            return new SpanData(
+                "Name",
+                new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded),
+                parentSpanId,
+                SpanKind.Client,
+                startTimestamp,
+                setAttributes ? attributes : null,
+                addEvents ? events : null,
+                addLinks ? new[] { new Link(new SpanContext(
+                        traceId,
+                        linkedSpanId,
+                        ActivityTraceFlags.Recorded)), } : null,
+                null,
+                Status.Ok,
+                endTimestamp);
         }
     }
 }

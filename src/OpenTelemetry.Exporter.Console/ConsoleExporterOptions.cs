@@ -1,4 +1,4 @@
-﻿// <copyright file="NoopSpanProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="ConsoleExporterOptions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Exporter.Console
 {
-    internal sealed class NoopSpanProcessor : SpanProcessor
+    public class ConsoleExporterOptions
     {
-        public override void OnStart(SpanData span)
-        {
-        }
-
-        public override void OnEnd(SpanData span)
-        {
-        }
-
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
+        public bool Pretty { get; set; }
     }
 }

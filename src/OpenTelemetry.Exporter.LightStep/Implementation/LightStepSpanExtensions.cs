@@ -16,13 +16,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.LightStep.Implementation
 {
     public static class LightStepSpanExtensions
     {
-        public static LightStepSpan ToLightStepSpan(this Span data)
+        public static LightStepSpan ToLightStepSpan(this SpanData data)
         {
             var duration = data.EndTimestamp - data.StartTimestamp;
             var span = new LightStepSpan();

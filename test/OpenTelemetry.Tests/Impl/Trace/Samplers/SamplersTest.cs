@@ -24,6 +24,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
     {
         private static readonly string SpanName = "MySpanName";
         private static readonly int NUM_SAMPLE_TRIES = 1000;
+        private static readonly SpanKind SpanKindServer = SpanKind.Server;
         private readonly ActivityTraceId traceId;
         private readonly ActivitySpanId parentSpanId;
         private readonly ActivitySpanId spanId;
@@ -52,6 +53,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                             traceId,
                             spanId,
                             "Another name",
+                            SpanKindServer,
                             null,
                             null).IsSampled);
 
@@ -63,6 +65,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                             traceId,
                             spanId,
                             "Yet another name",
+                            SpanKindServer,
                             null,
                             null).IsSampled);
 
@@ -85,6 +88,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                             traceId,
                             spanId,
                             "bar",
+                            SpanKindServer,
                             null,
                             null).IsSampled);
             // Not sampled parent.
@@ -95,6 +99,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                             traceId,
                             spanId,
                             "quux",
+                            SpanKindServer,
                             null,
                             null).IsSampled);
         }
@@ -211,6 +216,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                         notSampledtraceId,
                         ActivitySpanId.CreateRandom(),
                         SpanName,
+                        SpanKindServer,
                         null,
                         null).IsSampled);
             // This traceId will be sampled by the ProbabilitySampler because the first 8 bytes as long
@@ -242,6 +248,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                         sampledtraceId,
                         ActivitySpanId.CreateRandom(),
                         SpanName,
+                        SpanKindServer,
                         null,
                         null).IsSampled);
         }
@@ -264,6 +271,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
                     SpanName,
+                    SpanKindServer,
                     null,
                     links).IsSampled)
                 {

@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinTraceExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ConsoleExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,24 +13,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
-namespace OpenTelemetry.Exporter.ZPages
+namespace OpenTelemetry.Exporter.Console
 {
-    public class ZPagesExporter : SpanExporter
+    public class ConsoleExporter : SpanExporter
     {
+        private readonly JsonSerializerOptions serializerOptions;
+
+        public ConsoleExporter(ConsoleExporterOptions options)
+        {
+            this.serializerOptions = new JsonSerializerOptions
+            {
+                WriteIndented = options.Pretty,
+            };
+
+            this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
+        }
+
         public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            foreach (var span in batch)
+            {
+                System.Console.WriteLine(JsonSerializer.Serialize(span, this.serializerOptions));
+            }
+
+            return Task.FromResult(ExportResult.Success);
         }
 
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
         }
     }
 }

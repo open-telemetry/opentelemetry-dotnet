@@ -29,7 +29,7 @@ namespace LoggingTracer
     /// </summary>
     public class LoggingExporter : SpanExporter
     {
-        public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
         {
             var sb = new StringBuilder();
             sb.AppendLine("LoggingExporter.ExportAsync:");

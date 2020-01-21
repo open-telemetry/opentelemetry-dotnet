@@ -42,7 +42,7 @@ namespace OpenTelemetry.Collector.Dependencies
 
         public override void OnStartActivity(Activity current, object valueValue)
         {
-            var operationName = current.OperationName;
+            string operationName = null;
             var spanKind = SpanKind.Internal;
 
             foreach (var keyValuePair in current.Tags)
@@ -61,6 +61,11 @@ namespace OpenTelemetry.Collector.Dependencies
                         spanKind = parsedSpanKind;
                     }
                 }
+            }
+
+            if (operationName == null)
+            {
+                operationName = this.GetOperationName(current);
             }
 
             List<Link> parentLinks = null;
@@ -114,6 +119,29 @@ namespace OpenTelemetry.Collector.Dependencies
             }
 
             span.Status = Status.Unknown.WithDescription(valueValue?.ToString());
+        }
+
+        private string GetOperationName(Activity activity)
+        {
+            // activity name looks like 'Azure.<...>.<Class>.<Name>'
+            // as namespace is too verbose, we'll just take the last two nodes from the activity name as telemetry name
+            // this will change with https://github.com/Azure/azure-sdk-for-net/issues/9071 ~Feb 2020
+
+            string activityName = activity.OperationName;
+            int methodDotIndex = activityName.LastIndexOf('.');
+            if (methodDotIndex <= 0)
+            {
+                return activityName;
+            }
+
+            int classDotIndex = activityName.LastIndexOf('.', methodDotIndex - 1);
+
+            if (classDotIndex == -1)
+            {
+                return activityName;
+            }
+
+            return activityName.Substring(classDotIndex + 1, activityName.Length - classDotIndex - 1);
         }
     }
 }

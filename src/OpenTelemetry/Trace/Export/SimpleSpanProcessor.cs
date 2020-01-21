@@ -38,12 +38,12 @@ namespace OpenTelemetry.Trace.Export
         }
 
         /// <inheritdoc />
-        public override void OnStart(Span span)
+        public override void OnStart(SpanData span)
         {
         }
 
         /// <inheritdoc />
-        public override void OnEnd(Span span)
+        public override void OnEnd(SpanData span)
         {
             try
             {
