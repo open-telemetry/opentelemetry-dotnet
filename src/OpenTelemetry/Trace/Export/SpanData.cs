@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace.Export
@@ -24,66 +25,144 @@ namespace OpenTelemetry.Trace.Export
     public struct SpanData
     {
         private readonly SpanSdk span;
+        private readonly SpanContext context;
+        private readonly string name;
+        private readonly SpanKind kind;
+        private readonly DateTimeOffset startTimestamp;
+        private readonly DateTimeOffset endTimestamp;
+        private readonly ActivitySpanId parentSpanId;
+        private readonly Status status;
+        private readonly IEnumerable<KeyValuePair<string, object>> attributes;
+        private readonly IEnumerable<Link> links;
+        private readonly IEnumerable<Event> events;
+        private readonly Resource resource;
 
+        /// <summary>
+        /// Creates SpanData instance.
+        /// <remarks>This constructor should be used to export out of band spans such as 
+        /// compatible events created without OpenTelemetry API or in a different process</remarks>
+        /// </summary>
+        /// <param name="name">Span name.</param>
+        /// <param name="context">Span context.</param>
+        /// <param name="parentSpanId">Parent span Id.</param>
+        /// <param name="kind">Span kind.</param>
+        /// <param name="startTimestamp">Span start timestamp.</param>
+        /// <param name="attributes">Span attributes.</param>
+        /// <param name="events">Span events.</param>
+        /// <param name="links">Span links.</param>
+        /// <param name="resource">Library resource.</param>
+        /// <param name="status">Span status.</param>
+        /// <param name="endTimestamp">Span end timestamp.</param>
+        public SpanData(
+            string name,
+            in SpanContext context,
+            in ActivitySpanId parentSpanId,
+            SpanKind kind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<KeyValuePair<string, object>> attributes,
+            IEnumerable<Event> events,
+            IEnumerable<Link> links,
+            Resource resource,
+            Status status,
+            DateTimeOffset endTimestamp)
+        {
+            this.span = null;
+
+            this.name = name;
+            this.context = context;
+            this.parentSpanId = parentSpanId;
+            this.kind = kind;
+            this.startTimestamp = startTimestamp;
+            this.attributes = attributes;
+            this.links = links;
+            this.events = events;
+            this.resource = resource;
+            this.status = status;
+            this.endTimestamp = endTimestamp;
+        }
+
+        /// <summary>
+        /// Creates SpanData from SpanSdk.
+        /// </summary>
+        /// <param name="span">Span instance.</param>
         internal SpanData(SpanSdk span)
         {
             this.span = span;
+
+            this.name = null;
+            this.context = default;
+            this.parentSpanId = default;
+            this.kind = default;
+            this.startTimestamp = default;
+            this.attributes = null;
+            this.links = null;
+            this.events = null;
+            this.resource = null;
+            this.status = default;
+            this.endTimestamp = default;
         }
 
         /// <summary>
         /// Gets span context.
         /// </summary>
-        public SpanContext Context => this.span.Context;
+        public SpanContext Context => this.span?.Context ?? this.context;
 
         /// <summary>
         /// Gets span name.
         /// </summary>
-        public string Name => this.span.Name;
+        public string Name => this.span?.Name ?? this.name;
 
         /// <summary>
         /// Gets span status.
         /// </summary>
-        public Status Status => this.span.Status;
+        public Status Status
+        {
+            get
+            {
+                var s = this.span?.Status ?? this.status;
+                return s.IsValid ? s : Status.Ok;
+            }
+        }
 
         /// <summary>
         /// Gets parent span id.
         /// </summary>
-        public ActivitySpanId ParentSpanId => this.span.ParentSpanId;
+        public ActivitySpanId ParentSpanId => this.span?.ParentSpanId ?? this.parentSpanId;
 
         /// <summary>
         /// Gets attributes.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, object>> Attributes => this.span.Attributes;
+        public IEnumerable<KeyValuePair<string, object>> Attributes => this.span?.Attributes ?? this.attributes ?? Enumerable.Empty<KeyValuePair<string, object>>();
 
         /// <summary>
         /// Gets events.
         /// </summary>
-        public IEnumerable<Event> Events => this.span.Events;
+        public IEnumerable<Event> Events => this.span?.Events ?? this.events ?? Enumerable.Empty<Event>();
 
         /// <summary>
         /// Gets links.
         /// </summary>
-        public IEnumerable<Link> Links => this.span.Links;
+        public IEnumerable<Link> Links => this.span?.Links ?? this.links ?? Enumerable.Empty<Link>();
 
         /// <summary>
         /// Gets span start timestamp.
         /// </summary>
-        public DateTimeOffset StartTimestamp => this.span.StartTimestamp;
+        public DateTimeOffset StartTimestamp => this.span?.StartTimestamp ?? this.startTimestamp;
 
         /// <summary>
         /// Gets span end timestamp.
         /// </summary>
-        public DateTimeOffset EndTimestamp => this.span.EndTimestamp;
+        public DateTimeOffset EndTimestamp => this.span?.EndTimestamp ?? this.endTimestamp;
 
         /// <summary>
         /// Gets the span kind.
         /// </summary>
-        public SpanKind? Kind => this.span.Kind;
+        public SpanKind? Kind => this.span?.Kind ?? this.kind;
 
         /// <summary>
         /// Gets the "Library Resource" (name + version) associated with the TracerSdk that produced this span.
         /// </summary>
-        public Resource LibraryResource => this.span.LibraryResource;
+        public Resource LibraryResource => this.span?.LibraryResource ?? this.resource ?? Resource.Empty;
 
         /// <summary>
         /// Compare two <see cref="SpanData"/> for equality.
@@ -109,14 +188,53 @@ namespace OpenTelemetry.Trace.Export
 
             var that = (SpanData)obj;
 
-            return object.ReferenceEquals(this.span, that.span);
+            if (this.span != null && that.span != null)
+            {
+                return object.ReferenceEquals(this.span, that.span);
+            }
+
+            if (this.span == null && that.span == null)
+            {
+                return this.name == that.name &&
+                       this.kind == that.kind &&
+                       this.context == that.context &&
+                       this.parentSpanId == that.parentSpanId &&
+                       this.startTimestamp == that.startTimestamp &&
+                       this.attributes == that.attributes &&
+                       this.events == that.events &&
+                       this.links == that.links &&
+                       this.endTimestamp == that.endTimestamp &&
+                       this.resource == that.resource &&
+                       this.status == that.status;
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>
         public override int GetHashCode()
         {
             var result = 1;
-            result = (31 * result) + this.span.GetHashCode();
+
+            if (this.span != null)
+            {
+                result = (31 * result) + this.span.GetHashCode();
+            }
+            else
+            {
+                result = (31 * result) + this.name.GetHashCode();
+                result = (31 * result) + this.kind.GetHashCode();
+                result = (31 * result) + this.context.GetHashCode();
+                result = (31 * result) + this.parentSpanId.GetHashCode();
+                result = (31 * result) + this.startTimestamp.GetHashCode();
+                result = (31 * result) + this.attributes.GetHashCode();
+                result = (31 * result) + this.events.GetHashCode();
+                result = (31 * result) + this.links.GetHashCode();
+                result = (31 * result) + this.endTimestamp.GetHashCode();
+                result = (31 * result) + this.resource.GetHashCode();
+                result = (31 * result) + this.status.GetHashCode();
+            }
+
             return result;
         }
     }
