@@ -15,6 +15,8 @@
 // </copyright>
 using System;
 using System.Diagnostics;
+using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
@@ -27,31 +29,32 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public Int128(ActivitySpanId spanId)
         {
-            var bytes = new byte[SpanIdBytes];
-
+            Span<byte> bytes = stackalloc byte[SpanIdBytes];
             spanId.CopyTo(bytes);
 
+            if (BitConverter.IsLittleEndian)
+            {
+                bytes.Reverse();
+            }
+
+            var longs = MemoryMarshal.Cast<byte, long>(bytes);
             this.High = 0;
-            this.Low = BitConverter.ToInt64(bytes, 0);
+            this.Low = longs[0];
         }
 
         public Int128(ActivityTraceId traceId)
         {
-            var bytes = new byte[TraceIdBytes];
-
+            Span<byte> bytes = stackalloc byte[TraceIdBytes];
             traceId.CopyTo(bytes);
 
             if (BitConverter.IsLittleEndian)
             {
-                Array.Reverse(bytes);
-                this.High = BitConverter.ToInt64(bytes, 8);
-                this.Low = BitConverter.ToInt64(bytes, 0);
+                bytes.Reverse();
             }
-            else
-            {
-                this.High = BitConverter.ToInt64(bytes, 0);
-                this.Low = BitConverter.ToInt64(bytes, 8);
-            }
+
+            var longs = MemoryMarshal.Cast<byte, long>(bytes);
+            this.High = BitConverter.IsLittleEndian ? longs[1] : longs[0];
+            this.Low = BitConverter.IsLittleEndian ? longs[0] : longs[1];
         }
 
         public long High { get; set; }
