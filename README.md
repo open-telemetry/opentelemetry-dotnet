@@ -71,6 +71,7 @@ Myget feeds:
 | Jaeger               | [![MyGet Nightly][OpenTelemetry-exporter-jaeger-myget-image]][OpenTelemetry-exporter-jaeger-myget-url]           | [![NuGet release][OpenTelemetry-exporter-jaeger-nuget-image]][OpenTelemetry-exporter-jaeger-nuget-url]           |
 | LightStep            | [![MyGet Nightly][OpenTelemetry-exporter-lightstep-myget-image]][OpenTelemetry-exporter-lightstep-myget-url]     | [![NuGet release][OpenTelemetry-exporter-lightstep-nuget-image]][OpenTelemetry-exporter-lightstep-nuget-url]     |
 | NewRelic             |                                                                                                                  | [![NuGet release][OpenTelemetry-exporter-newrelic-nuget-image]][OpenTelemetry-exporter-newrelic-nuget-url]       |
+| Console              | [![MyGet Nightly][OpenTelemetry-exporter-console-myget-image]][OpenTelemetry-exporter-console-myget-url]         |                                                                                                                  |
 
 
 ## OpenTelemetry Tracing QuickStart: collecting data
@@ -630,6 +631,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-exporter-stackdriver-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Stackdriver
 [OpenTelemetry-exporter-lightstep-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.LightStep.svg
 [OpenTelemetry-exporter-lightstep-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.LightStep
+[OpenTelemetry-exporter-console-myget-image]: https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Console.svg
+[OpenTelemetry-exporter-console-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Console
 [OpenTelemetry-collect-aspnetcore-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.AspNetCore.svg
 [OpenTelemetry-collect-aspnetcore-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Collector.AspNetCore
 [OpenTelemetry-collect-deps-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.Dependencies.svg
