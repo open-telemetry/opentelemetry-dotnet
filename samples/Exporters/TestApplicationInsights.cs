@@ -19,6 +19,7 @@ using System.Threading;
 using Microsoft.ApplicationInsights.Extensibility;
 using OpenTelemetry.Context;
 using OpenTelemetry.Exporter.ApplicationInsights;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
@@ -34,6 +35,7 @@ namespace Samples
             DistributedContext dc = DistributedContextBuilder.CreateContext(FrontendKey, "mobile-ios9.3.5");
 
             using (var tracerFactory = TracerFactory.Create(builder => builder
+                .SetResource(Resources.CreateServiceResource("my-service"))
                 .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key")))
             {
                 var tracer = tracerFactory.GetTracer("application-insights-test");
