@@ -321,6 +321,16 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(default, span.EndTimestamp);
         }
 
+        [Fact]
+        public void WithOutOfBandSpan()
+        {
+            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var span = new SpanSdk("name", context, default, SpanKind.Client, DateTimeOffset.UtcNow, null, null, null, null, Status.Cancelled, DateTimeOffset.UtcNow, new TracerConfiguration());
+
+            Assert.Same(NoopDisposable.Instance, this.tracer.WithSpan(span));
+            Assert.Null(Activity.Current);
+        }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
