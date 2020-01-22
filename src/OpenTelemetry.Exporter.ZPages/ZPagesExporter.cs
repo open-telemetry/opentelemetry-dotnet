@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinTraceExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZPagesExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,13 +21,18 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.ZPages
 {
+    /// <summary>
+    /// Implements ZPages exporter.
+    /// </summary>
     public class ZPagesExporter : SpanExporter
     {
+        /// <inheritdoc />
         public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
