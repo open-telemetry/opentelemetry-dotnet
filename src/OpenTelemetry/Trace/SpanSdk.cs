@@ -35,24 +35,75 @@ namespace OpenTelemetry.Trace
     internal sealed class SpanSdk : ISpan, IDisposable
     {
         internal static readonly SpanSdk Invalid = new SpanSdk();
-        private static readonly ConditionalWeakTable<Activity, SpanSdk> ActivitySpanTable = new ConditionalWeakTable<Activity, SpanSdk>();
 
+        private static readonly ConditionalWeakTable<Activity, SpanSdk> ActivitySpanTable = new ConditionalWeakTable<Activity, SpanSdk>();
         private readonly SpanData spanData;
         private readonly Sampler sampler;
         private readonly TracerConfiguration tracerConfiguration;
         private readonly SpanProcessor spanProcessor;
-        private readonly object lck = new object();
         private readonly bool createdFromActivity;
-
+        private readonly object lck = new object();
+        private readonly bool isOutOfBand;
+        private bool endOnDispose;
+        private Status status;
         private EvictingQueue<KeyValuePair<string, object>> attributes;
         private EvictingQueue<Event> events;
-        private List<Link> links;
-        private Status status;
-
-        private DateTimeOffset startTimestamp;
-        private DateTimeOffset endTimestamp;
         private bool hasEnded;
-        private bool endOnDispose;
+
+        internal SpanSdk(
+            string name,
+            in SpanContext context,
+            in ActivitySpanId parentSpanId,
+            SpanKind kind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<KeyValuePair<string, object>> attributes,
+            IEnumerable<Event> events,
+            IEnumerable<Link> links,
+            Resource resource,
+            Status status,
+            DateTimeOffset endTimestamp,
+            TracerConfiguration tracerConfiguration)
+        {
+            this.tracerConfiguration = tracerConfiguration;
+            this.IsRecording = true;
+            if (name != null)
+            {
+                this.Name = name;
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("StartSpan", nameof(name), "is null");
+                this.Name = string.Empty;
+            }
+
+            this.Context = context;
+            this.Kind = kind;
+            this.StartTimestamp = startTimestamp;
+
+            this.SetLinks(links);
+            if (attributes != null)
+            {
+                foreach (var attribute in attributes)
+                {
+                    this.SetAttribute(attribute.Key, attribute.Value);
+                }
+            }
+
+            if (events != null)
+            {
+                foreach (var evnt in events)
+                {
+                    this.AddEvent(evnt);
+                }
+            }
+
+            this.Status = status;
+            this.EndTimestamp = endTimestamp;
+            this.LibraryResource = resource;
+            this.ParentSpanId = parentSpanId;
+            this.isOutOfBand = true;
+            this.hasEnded = true;
+        }
 
         private SpanSdk()
         {
@@ -89,12 +140,12 @@ namespace OpenTelemetry.Trace
             if (spanCreationOptions != null)
             {
                 links = spanCreationOptions.Links ?? spanCreationOptions.LinksFactory?.Invoke();
-                this.startTimestamp = spanCreationOptions.StartTimestamp;
+                this.StartTimestamp = spanCreationOptions.StartTimestamp;
             }
 
-            if (this.startTimestamp == default)
+            if (this.StartTimestamp == default)
             {
-                this.startTimestamp = PreciseTimestamp.GetUtcNow();
+                this.StartTimestamp = PreciseTimestamp.GetUtcNow();
             }
 
             this.sampler = sampler;
@@ -122,7 +173,8 @@ namespace OpenTelemetry.Trace
 
             // this context is definitely not remote, setting isRemote to false
             this.Context = new SpanContext(this.Activity.TraceId, this.Activity.SpanId, this.Activity.ActivityTraceFlags, false, tracestate);
-            
+            this.ParentSpanId = this.Activity.ParentSpanId;
+
             if (this.IsRecording)
             {
                 this.SetLinks(links);
@@ -138,9 +190,11 @@ namespace OpenTelemetry.Trace
                 this.spanData = new SpanData(this);
                 this.spanProcessor.OnStart(this.spanData);
             }
+
+            this.isOutOfBand = false;
         }
 
-        public SpanContext Context { get; private set; }
+        public SpanContext Context { get; }
 
         public string Name { get; private set; }
 
@@ -161,7 +215,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public ActivitySpanId ParentSpanId => this.Activity.ParentSpanId;
+        public ActivitySpanId ParentSpanId { get; }
 
         /// <inheritdoc/>
         public bool IsRecording { get; }
@@ -179,17 +233,17 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets links.
         /// </summary>
-        public IEnumerable<Link> Links => this.links;
+        public IEnumerable<Link> Links { get; private set; }
 
         /// <summary>
         /// Gets span start timestamp.
         /// </summary>
-        public DateTimeOffset StartTimestamp => this.startTimestamp;
+        public DateTimeOffset StartTimestamp { get; private set; }
 
         /// <summary>
         /// Gets span end timestamp.
         /// </summary>
-        public DateTimeOffset EndTimestamp => this.endTimestamp;
+        public DateTimeOffset EndTimestamp { get; private set; }
 
         /// <summary>
         /// Gets the span kind.
@@ -417,7 +471,7 @@ namespace OpenTelemetry.Trace
             }
 
             this.hasEnded = true;
-            this.endTimestamp = endTimestamp;
+            this.EndTimestamp = endTimestamp;
 
             if (!this.createdFromActivity)
             {
@@ -565,7 +619,7 @@ namespace OpenTelemetry.Trace
                 spanProcessor,
                 libraryResource)
             {
-                startTimestamp = new DateTimeOffset(activity.StartTimeUtc),
+                StartTimestamp = new DateTimeOffset(activity.StartTimeUtc),
             };
 
             span.SetLinks(links);
@@ -575,6 +629,12 @@ namespace OpenTelemetry.Trace
 
         internal IDisposable BeginScope(bool endOnDispose)
         {
+            if (this.isOutOfBand)
+            {
+                OpenTelemetrySdkEventSource.Log.AttemptToActivateOobSpan(this.Name);
+                return NoopDisposable.Instance;
+            }
+
             if (ActivitySpanTable.TryGetValue(this.Activity, out _))
             {
                 OpenTelemetrySdkEventSource.Log.AttemptToActivateActiveSpan(this.Name);
@@ -727,11 +787,11 @@ namespace OpenTelemetry.Trace
                     var parentLinks = links.ToList();
                     if (parentLinks.Count <= this.tracerConfiguration.MaxNumberOfLinks)
                     {
-                        this.links = parentLinks;
+                        this.Links = parentLinks;
                     }
                     else
                     {
-                        this.links = parentLinks.GetRange(parentLinks.Count - this.tracerConfiguration.MaxNumberOfLinks,
+                        this.Links = parentLinks.GetRange(parentLinks.Count - this.tracerConfiguration.MaxNumberOfLinks,
                             this.tracerConfiguration.MaxNumberOfLinks);
                     }
                 }
