@@ -15,7 +15,6 @@
 // </copyright>
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
@@ -84,9 +83,9 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 }
             }
 
-            if (!(this.httpClientSupportsW3C && this.Tracer.TextFormat is TraceContextFormat))
+            if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormat))
             {
-                this.Tracer.TextFormat.Inject<HttpRequestMessage>(span.Context, request, (r, k, v) => r.Headers.Add(k, v));
+                this.options.TextFormat.Inject<HttpRequestMessage>(span.Context, request, (r, k, v) => r.Headers.Add(k, v));
             }
         }
 

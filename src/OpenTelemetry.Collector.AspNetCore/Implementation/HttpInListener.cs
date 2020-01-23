@@ -34,13 +34,13 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
         private readonly PropertyFetcher beforeActionAttributeRouteInfoFetcher = new PropertyFetcher("AttributeRouteInfo");
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
         private readonly bool hostingSupportsW3C = false;
-        private readonly Predicate<HttpContext> requestFilter;
+        private readonly AspNetCoreCollectorOptions options;
 
-        public HttpInListener(string name, Tracer tracer, Predicate<HttpContext> requestFilter)
+        public HttpInListener(string name, Tracer tracer, AspNetCoreCollectorOptions options)
             : base(name, tracer)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
-            this.requestFilter = requestFilter;
+            this.options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
                 return;
             }
 
-            if (this.requestFilter != null && !this.requestFilter(context))
+            if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
                 CollectorEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 return;
@@ -66,13 +66,13 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
             ISpan span;
-            if (this.hostingSupportsW3C && this.Tracer.TextFormat is TraceContextFormat)
+            if (this.hostingSupportsW3C && this.options.TextFormat is TraceContextFormat)
             {
                 this.Tracer.StartActiveSpanFromActivity(path, Activity.Current, SpanKind.Server, out span);
             }
             else
             {
-                var ctx = this.Tracer.TextFormat.Extract<HttpRequest>(
+                var ctx = this.options.TextFormat.Extract<HttpRequest>(
                     request,
                     (r, name) => r.Headers[name]);
 

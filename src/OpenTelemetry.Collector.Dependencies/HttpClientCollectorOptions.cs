@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Net.Http;
+using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Collector.Dependencies
 {
@@ -46,6 +47,11 @@ namespace OpenTelemetry.Collector.Dependencies
         /// Gets or sets a value indicating whether add HTTP version to a trace.
         /// </summary>
         public bool SetHttpFlavor { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets <see cref="ITextFormat"/> for context propagation.
+        /// </summary>
+        public ITextFormat TextFormat { get; set; } = new TraceContextFormat();
 
         /// <summary>
         /// Gets a hook to exclude calls based on domain or other per-request criterion.

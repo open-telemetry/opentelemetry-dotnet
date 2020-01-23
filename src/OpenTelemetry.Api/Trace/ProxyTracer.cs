@@ -28,19 +28,11 @@ namespace OpenTelemetry.Trace
     internal sealed class ProxyTracer : Tracer
     {
         private static readonly IDisposable NoopScope = new NoopDisposable();
-        private readonly IBinaryFormat binaryFormat = new BinaryFormat();
-        private readonly ITextFormat textFormat = new TraceContextFormat();
 
         private Tracer realTracer;
 
         /// <inheritdoc/>
         public override ISpan CurrentSpan => this.realTracer?.CurrentSpan ?? BlankSpan.Instance;
-
-        /// <inheritdoc/>
-        public override IBinaryFormat BinaryFormat => this.realTracer?.BinaryFormat ?? this.binaryFormat;
-
-        /// <inheritdoc/>
-        public override ITextFormat TextFormat => this.realTracer?.TextFormat ?? this.textFormat;
 
         /// <inheritdoc/>
         public override IDisposable WithSpan(ISpan span, bool endOnDispose)
