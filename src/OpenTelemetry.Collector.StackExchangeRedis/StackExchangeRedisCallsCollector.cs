@@ -37,7 +37,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
         private readonly CancellationToken cancellationToken;
 
         private readonly ProfilingSession defaultSession = new ProfilingSession();
-        private readonly ConcurrentDictionary<ISpan, ProfilingSession> cache = new ConcurrentDictionary<ISpan, ProfilingSession>();
+        private readonly ConcurrentDictionary<TelemetrySpan, ProfilingSession> cache = new ConcurrentDictionary<TelemetrySpan, ProfilingSession>();
 
         private readonly PropertyInfo spanEndTimestampInfo;
 

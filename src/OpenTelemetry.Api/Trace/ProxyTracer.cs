@@ -32,30 +32,30 @@ namespace OpenTelemetry.Trace
         private Tracer realTracer;
 
         /// <inheritdoc/>
-        public override ISpan CurrentSpan => this.realTracer?.CurrentSpan ?? BlankSpan.Instance;
+        public override TelemetrySpan CurrentSpan => this.realTracer?.CurrentSpan ?? BlankSpan.Instance;
 
         /// <inheritdoc/>
-        public override IDisposable WithSpan(ISpan span, bool endOnDispose)
+        public override IDisposable WithSpan(TelemetrySpan span, bool endOnDispose)
         {
             return this.realTracer != null ? this.realTracer.WithSpan(span, endOnDispose) : NoopScope;
         }
 
-        public override ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
             return this.realTracer != null ? this.realTracer.StartRootSpan(operationName, kind, options) : BlankSpan.Instance;
         }
 
-        public override ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartSpan(string operationName, TelemetrySpan parent, SpanKind kind, SpanCreationOptions options)
         {
             return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
         }
 
-        public override ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
             return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
         }
 
-        public override ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public override TelemetrySpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
             return this.realTracer != null ? this.realTracer.StartSpanFromActivity(operationName, activity, kind, links) : BlankSpan.Instance;
         }

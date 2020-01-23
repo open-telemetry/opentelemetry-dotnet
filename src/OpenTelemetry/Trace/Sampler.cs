@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
         /// <param name="spanId">Span ID of a span to be created.</param>
         /// <param name="name"> Name of a span to be created. Note, that the name of the span is settable.
         /// So this name can be changed later and Sampler implementation should assume that.
-        /// Typical example of a name change is when <see cref="ISpan"/> representing incoming http request
+        /// Typical example of a name change is when <see cref="TelemetrySpan"/> representing incoming http request
         /// has a name of url path and then being updated with route name when routing complete.
         /// </param>
         /// <param name="spanKind">The type of the Span.</param>

@@ -47,33 +47,33 @@ namespace Benchmarks
         }
 
         [Benchmark]
-        public ISpan CreateSpan_Sampled() => SpanCreationScenarios.CreateSpan(this.alwaysSampleTracer);
+        public TelemetrySpan CreateSpan_Sampled() => SpanCreationScenarios.CreateSpan(this.alwaysSampleTracer);
 
         [Benchmark]
-        public ISpan CreateSpan_ParentContext() => SpanCreationScenarios.CreateSpan_ParentContext(this.alwaysSampleTracer);
+        public TelemetrySpan CreateSpan_ParentContext() => SpanCreationScenarios.CreateSpan_ParentContext(this.alwaysSampleTracer);
 
         [Benchmark]
-        public ISpan CreateSpan_Attributes_Sampled() => SpanCreationScenarios.CreateSpan_Attributes(this.alwaysSampleTracer);
+        public TelemetrySpan CreateSpan_Attributes_Sampled() => SpanCreationScenarios.CreateSpan_Attributes(this.alwaysSampleTracer);
 
         [Benchmark]
-        public ISpan CreateSpan_WithSpan() => SpanCreationScenarios.CreateSpan_Propagate(this.alwaysSampleTracer);
+        public TelemetrySpan CreateSpan_WithSpan() => SpanCreationScenarios.CreateSpan_Propagate(this.alwaysSampleTracer);
 
         [Benchmark]
-        public ISpan CreateSpan_Active() => SpanCreationScenarios.CreateSpan_Active(this.alwaysSampleTracer);
+        public TelemetrySpan CreateSpan_Active() => SpanCreationScenarios.CreateSpan_Active(this.alwaysSampleTracer);
 
         [Benchmark]
-        public ISpan CreateSpan_Active_GetCurrent() => SpanCreationScenarios.CreateSpan_Active_GetCurrent(this.alwaysSampleTracer);
+        public TelemetrySpan CreateSpan_Active_GetCurrent() => SpanCreationScenarios.CreateSpan_Active_GetCurrent(this.alwaysSampleTracer);
 
         [Benchmark]
         public void CreateSpan_Attributes_NotSampled() => SpanCreationScenarios.CreateSpan_Attributes(this.neverSampleTracer);
 
         [Benchmark(Baseline = true)]
-        public ISpan CreateSpan_Noop() => SpanCreationScenarios.CreateSpan(this.noopTracer);
+        public TelemetrySpan CreateSpan_Noop() => SpanCreationScenarios.CreateSpan(this.noopTracer);
 
         [Benchmark]
-        public ISpan CreateSpan_Attributes_Noop() => SpanCreationScenarios.CreateSpan_Attributes(this.noopTracer);
+        public TelemetrySpan CreateSpan_Attributes_Noop() => SpanCreationScenarios.CreateSpan_Attributes(this.noopTracer);
 
         [Benchmark]
-        public ISpan CreateSpan_Propagate_Noop() => SpanCreationScenarios.CreateSpan_Propagate(this.noopTracer);
+        public TelemetrySpan CreateSpan_Propagate_Noop() => SpanCreationScenarios.CreateSpan_Propagate(this.noopTracer);
     }
 }

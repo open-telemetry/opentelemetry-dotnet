@@ -174,7 +174,7 @@ namespace OpenTelemetry.Trace.Test
 
             activity.Start();
 
-            ISpan span;
+            TelemetrySpan span;
             using (var scope = tracer.StartActiveSpanFromActivity("foo", activity, out span))
             {
                 Assert.IsType<SpanSdk>(scope);

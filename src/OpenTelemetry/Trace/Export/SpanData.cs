@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
 
@@ -94,7 +93,14 @@ namespace OpenTelemetry.Trace.Export
         /// <summary>
         /// Gets span status.
         /// </summary>
-        public Status Status => this.span.Status.IsValid ? this.span.Status : Status.Ok;
+        public Status Status
+        {
+            get
+            {
+                var s = this.span.GetStatus();
+                return s.IsValid ? s : Status.Ok;
+            }
+        }
 
         /// <summary>
         /// Gets parent span id.

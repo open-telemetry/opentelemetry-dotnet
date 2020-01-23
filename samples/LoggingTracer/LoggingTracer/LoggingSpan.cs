@@ -19,8 +19,9 @@ using OpenTelemetry.Trace;
 
 namespace LoggingTracer
 {
-    public class LoggingSpan : ISpan
+    public class LoggingSpan : TelemetrySpan
     {
+        private Status status;
         public LoggingSpan(string name, SpanKind kind)
         {
             Logger.Log($"Span.ctor({name}, {kind})");
@@ -31,92 +32,65 @@ namespace LoggingTracer
         public string Name { get; set; }
 
         /// <inheritdoc/>
-        public SpanContext Context { get; set; }
+        public override SpanContext Context { get; }
 
         /// <inheritdoc/>
-        public Status Status { get; set; }
+        public override Status Status { set => this.status = value; }
 
         public SpanKind? Kind { get; set; }
 
-        public bool HasEnded { get; set; }
+        /// <inheritdoc/>
+        public override bool IsRecording => true;
 
         /// <inheritdoc/>
-        public bool IsRecording => true;
-
-        /// <inheritdoc/>
-        public void AddEvent(string name)
+        public override void AddEvent(string name)
         {
             Logger.Log($"Span.AddEvent({name})");
         }
 
         /// <inheritdoc/>
-        public void AddEvent(string name, IDictionary<string, object> attributes)
-        {
-            Logger.Log($"Span.AddEvent({name}, attributes: {attributes.Count})");
-        }
-
-        /// <inheritdoc/>
-        public void AddEvent(Event newEvent)
+        public override void AddEvent(Event newEvent)
         {
             Logger.Log($"Span.AddEvent({newEvent})");
         }
 
         /// <inheritdoc/>
-        public void AddLink(Link link)
-        {
-            Logger.Log($"Span.AddLink({link})");
-        }
-
-        /// <inheritdoc/>
-        public void End()
+        public override void End()
         {
             Logger.Log($"Span.End, Name: {this.Name}");
         }
 
         /// <inheritdoc/>
-        public void End(DateTimeOffset endTimestamp)
+        public override void End(DateTimeOffset endTimestamp)
         {
             Logger.Log($"Span.End, Name: {this.Name}, Timestamp: {endTimestamp:o}");
         }
 
-        public void SetAttribute(string key, object value)
+        public override void SetAttribute(string key, object value)
         {
             this.LogSetAttribute(key, value);
         }
 
         /// <inheritdoc/>
-        public void SetAttribute(string key, string value)
+        public override void SetAttribute(string key, long value)
         {
             this.LogSetAttribute(key, value);
         }
 
         /// <inheritdoc/>
-        public void SetAttribute(string key, long value)
+        public override void SetAttribute(string key, double value)
         {
             this.LogSetAttribute(key, value);
         }
 
         /// <inheritdoc/>
-        public void SetAttribute(string key, double value)
+        public override void SetAttribute(string key, bool value)
         {
             this.LogSetAttribute(key, value);
         }
 
         /// <inheritdoc/>
-        public void SetAttribute(string key, bool value)
-        {
-            this.LogSetAttribute(key, value);
-        }
-
-        /// <inheritdoc/>
-        public void SetAttribute(KeyValuePair<string, object> keyValuePair)
-        {
-            Logger.Log($"Span.SetAttributes(attributes: {keyValuePair})");
-            this.SetAttribute(keyValuePair.Key, keyValuePair.Value);
-        }
-
-        /// <inheritdoc/>
-        public void UpdateName(string name)
+        public override void UpdateName(string name)
         {
             Logger.Log($"Span.UpdateName({name})");
             this.Name = name;
