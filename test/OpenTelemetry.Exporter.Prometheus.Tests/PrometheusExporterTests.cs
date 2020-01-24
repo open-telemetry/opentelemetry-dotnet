@@ -34,9 +34,11 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
             List<Metric> metrics = new List<Metric>();
             var promExporter = new PrometheusExporter(promOptions);
+            var metricsHttpServer = new PrometheusExporterMetricsHttpServer(promExporter);
+
             try
             {
-                promExporter.Start();
+                metricsHttpServer.Start();
                 var label1 = new List<KeyValuePair<string, string>>();
                 label1.Add(new KeyValuePair<string, string>("dim1", "value1"));
                 metrics.Add(new Metric("ns", "metric1", "desc", label1, 100));
@@ -50,7 +52,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 // Change delay to higher value to manually check Promtheus.
                 // These tests are just to temporarily validate export to prometheus.
                 Task.Delay(10).Wait();
-                promExporter.Stop();
+                metricsHttpServer.Stop();
             }
         }
 
@@ -69,9 +71,10 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
 
+            var metricsHttpServer = new PrometheusExporterMetricsHttpServer(promExporter);
             try
             {
-                promExporter.Start();
+                metricsHttpServer.Start();
 
                 var defaultContext = default(SpanContext);
 
@@ -95,7 +98,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             finally
             {
                 Task.Delay(100).Wait();
-                promExporter.Stop();
+                metricsHttpServer.Stop();
             }
         }
     }

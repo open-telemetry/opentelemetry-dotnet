@@ -44,9 +44,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.NotNull(tracer);
             Assert.IsType<TracerSdk>(tracer);
 
-            Assert.IsType<BinaryFormat>(tracer.BinaryFormat);
-            Assert.IsType<TraceContextFormat>(tracer.TextFormat);
-
             var span = tracer.StartSpan("foo");
             Assert.NotNull(span);
             Assert.IsType<SpanSdk>(span);

@@ -52,14 +52,9 @@ namespace OpenTelemetry.Trace.Test
         public void BadConstructorArgumentsThrow()
         {
             var noopProc = new SimpleSpanProcessor(new TestExporter(null));
-            Assert.Throws<ArgumentNullException>(() => new TracerSdk(null, new AlwaysSampleSampler(), new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
-
-            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysSampleSampler(), null, new BinaryFormat(), new TraceContextFormat(), Resource.Empty));
-
-            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysSampleSampler(), new TracerConfiguration(), null, new TraceContextFormat(), Resource.Empty));
-            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysSampleSampler(), new TracerConfiguration(), new BinaryFormat(), null, Resource.Empty));
-
-            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysSampleSampler(), new TracerConfiguration(), new BinaryFormat(), new TraceContextFormat(), null));
+            Assert.Throws<ArgumentNullException>(() => new TracerSdk(null, new AlwaysSampleSampler(), new TracerConfiguration(), Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysSampleSampler(), null, Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysSampleSampler(), new TracerConfiguration(), null));
         }
 
         [Fact]
@@ -187,18 +182,6 @@ namespace OpenTelemetry.Trace.Test
                 this.tracerSdk.WithSpan(null);
                 Assert.Equal(span, this.tracerSdk.CurrentSpan);
             }
-        }
-
-        [Fact]
-        public void GetTextFormat()
-        {
-            Assert.NotNull(this.tracerSdk.TextFormat);
-        }
-
-        [Fact]
-        public void GetBinaryFormat()
-        {
-            Assert.NotNull(this.tracerSdk.BinaryFormat);
         }
 
         [Fact]

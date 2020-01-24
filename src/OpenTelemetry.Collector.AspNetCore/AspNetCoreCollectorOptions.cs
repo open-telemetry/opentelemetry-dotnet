@@ -16,6 +16,7 @@
 
 using System;
 using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Collector.AspNetCore
 {
@@ -24,6 +25,11 @@ namespace OpenTelemetry.Collector.AspNetCore
     /// </summary>
     public class AspNetCoreCollectorOptions
     {
+        /// <summary>
+        /// Gets or sets <see cref="ITextFormat"/> for context propagation.
+        /// </summary>
+        public ITextFormat TextFormat { get; set; } = new TraceContextFormat();
+
         /// <summary>
         /// Gets or sets a hook to exclude calls based on domain or other per-request criterion.
         /// </summary>

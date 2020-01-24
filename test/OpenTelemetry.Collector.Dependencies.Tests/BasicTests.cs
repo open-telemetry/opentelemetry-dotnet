@@ -112,7 +112,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             var spanProcessor = new Mock<SpanProcessor>();
             var tracer = TracerFactory.Create(b => b
-                    .SetTextFormat(textFormat.Object)
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
@@ -128,7 +127,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
+            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions {TextFormat = textFormat.Object}))
             using (var c = new HttpClient())
             {
                 await c.SendAsync(request);

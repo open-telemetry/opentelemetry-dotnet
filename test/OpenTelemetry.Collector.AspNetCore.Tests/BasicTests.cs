@@ -156,9 +156,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     {
                         services.AddSingleton<TracerFactory>(_ =>
                             TracerFactory.Create(b => b
-                                .SetTextFormat(textFormat.Object)
                                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
-                                .AddRequestCollector()));
+                                .AddRequestCollector(o => o.TextFormat = textFormat.Object)));
                     })))
             using (var client = testFactory.CreateClient())
             {
