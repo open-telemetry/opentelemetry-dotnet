@@ -141,6 +141,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(14, error);
         }
 
+        [Event(15, Message = "Attempting to activate out-of-band span '{0}'", Level = EventLevel.Warning)]
+        public void AttemptToActivateOobSpan(string spanName)
+        {
+            this.WriteEvent(15, spanName);
+        }
+
         /// <summary>
         /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
         /// appropriate for diagnostics tracing.
