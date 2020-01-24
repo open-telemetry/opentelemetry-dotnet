@@ -18,24 +18,16 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace.Configuration;
 
 namespace OpenTelemetry.Trace.Export
 {
     public struct SpanData
     {
+        private static readonly TracerConfiguration DefaultConfiguration = new TracerConfiguration();
         private readonly SpanSdk span;
-        private readonly SpanContext context;
-        private readonly string name;
-        private readonly SpanKind kind;
-        private readonly DateTimeOffset startTimestamp;
-        private readonly DateTimeOffset endTimestamp;
-        private readonly ActivitySpanId parentSpanId;
-        private readonly Status status;
-        private readonly IEnumerable<KeyValuePair<string, object>> attributes;
-        private readonly IEnumerable<Link> links;
-        private readonly IEnumerable<Event> events;
-        private readonly Resource resource;
 
         /// <summary>
         /// Creates SpanData instance.
@@ -66,19 +58,18 @@ namespace OpenTelemetry.Trace.Export
             Status status,
             DateTimeOffset endTimestamp)
         {
-            this.span = null;
-
-            this.name = name;
-            this.context = context;
-            this.parentSpanId = parentSpanId;
-            this.kind = kind;
-            this.startTimestamp = startTimestamp;
-            this.attributes = attributes;
-            this.links = links;
-            this.events = events;
-            this.resource = resource;
-            this.status = status;
-            this.endTimestamp = endTimestamp;
+            this.span = new SpanSdk(
+                name,
+                context,
+                parentSpanId,
+                kind,
+                startTimestamp,
+                attributes,
+                events, links,
+                resource,
+                status,
+                endTimestamp,
+                DefaultConfiguration);
         }
 
         /// <summary>
@@ -88,81 +79,62 @@ namespace OpenTelemetry.Trace.Export
         internal SpanData(SpanSdk span)
         {
             this.span = span;
-
-            this.name = null;
-            this.context = default;
-            this.parentSpanId = default;
-            this.kind = default;
-            this.startTimestamp = default;
-            this.attributes = null;
-            this.links = null;
-            this.events = null;
-            this.resource = null;
-            this.status = default;
-            this.endTimestamp = default;
         }
 
         /// <summary>
         /// Gets span context.
         /// </summary>
-        public SpanContext Context => this.span?.Context ?? this.context;
+        public SpanContext Context => this.span.Context;
 
         /// <summary>
         /// Gets span name.
         /// </summary>
-        public string Name => this.span?.Name ?? this.name;
+        public string Name => this.span.Name;
 
         /// <summary>
         /// Gets span status.
         /// </summary>
-        public Status Status
-        {
-            get
-            {
-                var s = this.span?.Status ?? this.status;
-                return s.IsValid ? s : Status.Ok;
-            }
-        }
+        public Status Status => this.span.Status.IsValid ? this.span.Status : Status.Ok;
 
         /// <summary>
         /// Gets parent span id.
         /// </summary>
-        public ActivitySpanId ParentSpanId => this.span?.ParentSpanId ?? this.parentSpanId;
+        public ActivitySpanId ParentSpanId => this.span.ParentSpanId;
 
         /// <summary>
         /// Gets attributes.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, object>> Attributes => this.span?.Attributes ?? this.attributes ?? Enumerable.Empty<KeyValuePair<string, object>>();
+        public IEnumerable<KeyValuePair<string, object>> Attributes => this.span.Attributes ?? Enumerable.Empty<KeyValuePair<string, object>>();
 
         /// <summary>
         /// Gets events.
         /// </summary>
-        public IEnumerable<Event> Events => this.span?.Events ?? this.events ?? Enumerable.Empty<Event>();
+        public IEnumerable<Event> Events => this.span.Events ?? Enumerable.Empty<Event>();
 
         /// <summary>
         /// Gets links.
         /// </summary>
-        public IEnumerable<Link> Links => this.span?.Links ?? this.links ?? Enumerable.Empty<Link>();
+        public IEnumerable<Link> Links => this.span.Links ?? Enumerable.Empty<Link>();
 
         /// <summary>
         /// Gets span start timestamp.
         /// </summary>
-        public DateTimeOffset StartTimestamp => this.span?.StartTimestamp ?? this.startTimestamp;
+        public DateTimeOffset StartTimestamp => this.span.StartTimestamp;
 
         /// <summary>
         /// Gets span end timestamp.
         /// </summary>
-        public DateTimeOffset EndTimestamp => this.span?.EndTimestamp ?? this.endTimestamp;
+        public DateTimeOffset EndTimestamp => this.span.EndTimestamp;
 
         /// <summary>
         /// Gets the span kind.
         /// </summary>
-        public SpanKind? Kind => this.span?.Kind ?? this.kind;
+        public SpanKind? Kind => this.span.Kind;
 
         /// <summary>
         /// Gets the "Library Resource" (name + version) associated with the TracerSdk that produced this span.
         /// </summary>
-        public Resource LibraryResource => this.span?.LibraryResource ?? this.resource ?? Resource.Empty;
+        public Resource LibraryResource => this.span.LibraryResource ?? Resource.Empty;
 
         /// <summary>
         /// Compare two <see cref="SpanData"/> for equality.
@@ -193,21 +165,6 @@ namespace OpenTelemetry.Trace.Export
                 return object.ReferenceEquals(this.span, that.span);
             }
 
-            if (this.span == null && that.span == null)
-            {
-                return this.name == that.name &&
-                       this.kind == that.kind &&
-                       this.context == that.context &&
-                       this.parentSpanId == that.parentSpanId &&
-                       this.startTimestamp == that.startTimestamp &&
-                       this.attributes == that.attributes &&
-                       this.events == that.events &&
-                       this.links == that.links &&
-                       this.endTimestamp == that.endTimestamp &&
-                       this.resource == that.resource &&
-                       this.status == that.status;
-            }
-
             return false;
         }
 
@@ -215,26 +172,7 @@ namespace OpenTelemetry.Trace.Export
         public override int GetHashCode()
         {
             var result = 1;
-
-            if (this.span != null)
-            {
-                result = (31 * result) + this.span.GetHashCode();
-            }
-            else
-            {
-                result = (31 * result) + this.name.GetHashCode();
-                result = (31 * result) + this.kind.GetHashCode();
-                result = (31 * result) + this.context.GetHashCode();
-                result = (31 * result) + this.parentSpanId.GetHashCode();
-                result = (31 * result) + this.startTimestamp.GetHashCode();
-                result = (31 * result) + this.attributes.GetHashCode();
-                result = (31 * result) + this.events.GetHashCode();
-                result = (31 * result) + this.links.GetHashCode();
-                result = (31 * result) + this.endTimestamp.GetHashCode();
-                result = (31 * result) + this.resource.GetHashCode();
-                result = (31 * result) + this.status.GetHashCode();
-            }
-
+            result = (31 * result) + this.span.GetHashCode();
             return result;
         }
     }

@@ -154,9 +154,9 @@ namespace OpenTelemetry.Tests.Impl.Trace
 
             Assert.Equal(context, spanData.Context);
 
-            Assert.Same(attributes, spanData.Attributes);
-            Assert.Same(events, spanData.Events);
-            Assert.Same(links, spanData.Links);
+            Assert.Equal(attributes, spanData.Attributes);
+            Assert.Equal(events, spanData.Events);
+            Assert.Equal(links, spanData.Links);
         }
 
         [Fact]
@@ -194,66 +194,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         }
 
         [Fact]
-        public void SpanData_FromParameters_Equal_Defaults()
-        {
-            var startTime = DateTimeOffset.UtcNow.AddSeconds(-2);
-            var endTime = DateTimeOffset.UtcNow.AddSeconds(-1);
-            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-
-            var spanData1 = new SpanData("name", context, default, SpanKind.Client, startTime, null, null, null, null, Status.Cancelled, endTime);
-            var spanData2 = new SpanData("name", context, default, SpanKind.Client, startTime, null, null, null, null, Status.Cancelled, endTime);
-
-            Assert.Equal(spanData1, spanData2);
-        }
-
-        [Fact]
-        public void SpanData_FromParameters_Equal()
-        {
-            var resource = new Resource(new[] { new KeyValuePair<string, object>("resourceKey", "resourceValue") });
-
-            var tracestate = new KeyValuePair<string, string>[0];
-            var parentSpanId = ActivitySpanId.CreateRandom();
-            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
-                ActivityTraceFlags.Recorded, true, tracestate);
-
-            var attributes = new Dictionary<string, object> { ["key"] = "value", };
-            var links = new[] { new Link(context) };
-            var events = new[] { new Event("event") };
-
-            var startTime = DateTimeOffset.UtcNow.AddSeconds(-2);
-            var endTime = DateTimeOffset.UtcNow.AddSeconds(-1);
-
-            var spanData1 = new SpanData("name", context, parentSpanId, SpanKind.Client, startTime, attributes, events, links, resource, Status.DataLoss, endTime);
-            var spanData2 = new SpanData("name", context, parentSpanId, SpanKind.Client, startTime, attributes, events, links, resource, Status.DataLoss, endTime);
-
-            Assert.Equal(spanData1, spanData2);
-        }
-
-        [Fact]
         public void SpanData_FromParameters_NotEqual()
-        {
-            var resource = new Resource(new[] { new KeyValuePair<string, object>("resourceKey", "resourceValue") });
-
-            var tracestate = new KeyValuePair<string, string>[0];
-            var parentSpanId = ActivitySpanId.CreateRandom();
-            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
-                ActivityTraceFlags.Recorded, true, tracestate);
-
-            var attributes = new Dictionary<string, object> { ["key"] = "value", };
-            var links = new[] { new Link(context) };
-            var events = new[] { new Event("event") };
-
-            var startTime = DateTimeOffset.UtcNow.AddSeconds(-2);
-            var endTime = DateTimeOffset.UtcNow.AddSeconds(-1);
-
-            var spanData1 = new SpanData("name", context, parentSpanId, SpanKind.Client, startTime, attributes, events, links, resource, Status.DataLoss, endTime);
-            var spanData2 = new SpanData("name", context, parentSpanId, SpanKind.Client, startTime, attributes, events, links, null, Status.DataLoss, endTime);
-
-            Assert.NotEqual(spanData1, spanData2);
-        }
-
-        [Fact]
-        public void SpanData_FromParameters_Equality_Resource()
         {
             var resource = new Resource(new[] { new KeyValuePair<string, object>("resourceKey", "resourceValue") });
             var otherResource = new Resource(new[] { new KeyValuePair<string, object>("resourceKey1", "resourceValue1") });
