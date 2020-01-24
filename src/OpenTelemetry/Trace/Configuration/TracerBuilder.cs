@@ -37,10 +37,6 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal List<SpanProcessorPipelineBuilder> ProcessingPipelines { get; private set; }
 
-        internal IBinaryFormat BinaryFormat { get; private set; }
-
-        internal ITextFormat TextFormat { get; private set; }
-
         internal List<CollectorFactory> CollectorFactories { get; private set; }
 
         /// <summary>
@@ -121,26 +117,6 @@ namespace OpenTelemetry.Trace.Configuration
         public TracerBuilder SetTracerOptions(TracerConfiguration options)
         {
             this.TracerConfigurationOptions = options ?? throw new ArgumentNullException(nameof(options));
-            return this;
-        }
-
-        /// <summary>
-        /// Configures <see cref="ITextFormat"/> on the tracerSdk.
-        /// </summary>
-        /// <param name="textFormat"><see cref="ITextFormat"/> implementation class instance.</param>
-        public TracerBuilder SetTextFormat(ITextFormat textFormat)
-        {
-            this.TextFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
-            return this;
-        }
-
-        /// <summary>
-        /// Configures <see cref="IBinaryFormat"/> on the tracerSdk.
-        /// </summary>
-        /// <param name="binaryFormat"><see cref="IBinaryFormat"/> implementation class instance.</param>
-        public TracerBuilder SetBinaryFormat(IBinaryFormat binaryFormat)
-        {
-            this.BinaryFormat = binaryFormat ?? throw new ArgumentNullException(nameof(binaryFormat));
             return this;
         }
 

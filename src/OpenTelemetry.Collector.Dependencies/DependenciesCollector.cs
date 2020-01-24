@@ -29,7 +29,7 @@ namespace OpenTelemetry.Collector.Dependencies
         /// <summary>
         /// Initializes a new instance of the <see cref="DependenciesCollector"/> class.
         /// </summary>
-        /// <param name="options">Configuraiton options.</param>
+        /// <param name="options">Configuration options.</param>
         /// <param name="tracerFactory">Tracer factory to get a tracer from.</param>
         public DependenciesCollector(HttpClientCollectorOptions options, TracerFactoryBase tracerFactory)
         {

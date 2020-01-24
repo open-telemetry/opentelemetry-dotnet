@@ -23,28 +23,34 @@ namespace OpenTelemetry.Trace.Internal
 {
     internal class EvictingQueue<T> : IEnumerable<T>
     {
-        private readonly int maxNumEvents;
-        private readonly Queue<T> events;
+        private readonly int maxNumItems;
+        private readonly T[] items;
         private int totalRecorded;
+        private int tail;
 
-        public EvictingQueue(int maxNumEvents)
+        public EvictingQueue(int maxNumItems)
         {
-            if (maxNumEvents < 0)
+            if (maxNumItems < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxNumEvents), $"{nameof(maxNumEvents)} must be >= 0.");
+                throw new ArgumentOutOfRangeException(nameof(maxNumItems), $"{nameof(maxNumItems)} must be >= 0.");
             }
 
-            this.maxNumEvents = maxNumEvents;
-            this.events = new Queue<T>(maxNumEvents);
+            this.maxNumItems = maxNumItems;
+            this.tail = 0;
+            this.items = new T[maxNumItems];
         }
 
-        public int Count => this.events.Count;
+        public int Count { get; private set; }
 
-        public int DroppedItems => this.totalRecorded - this.events.Count;
+        public int DroppedItems => this.totalRecorded - this.Count;
 
         public IEnumerator<T> GetEnumerator()
         {
-            return this.events.GetEnumerator();
+            var head = this.tail - this.Count;
+            for (int i = head; i < this.Count + head; i++)
+            {
+                yield return this.items[i % this.maxNumItems];
+            }
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -52,22 +58,23 @@ namespace OpenTelemetry.Trace.Internal
             return this.GetEnumerator();
         }
 
-        internal void Add(T evnt)
+        internal void Add(T item)
         {
-            Debug.Assert(evnt != null, "Event must not be null");
+            Debug.Assert(item != null, "Item must not be null");
 
             this.totalRecorded++;
-            if (this.maxNumEvents == 0)
+            if (this.maxNumItems == 0)
             {
                 return;
             }
 
-            if (this.events.Count == this.maxNumEvents)
+            if (this.Count < this.maxNumItems)
             {
-                this.events.Dequeue();
+                this.Count++;
             }
 
-            this.events.Enqueue(evnt);
+            this.items[this.tail % this.maxNumItems] = item;
+            this.tail++;
         }
     }
 }

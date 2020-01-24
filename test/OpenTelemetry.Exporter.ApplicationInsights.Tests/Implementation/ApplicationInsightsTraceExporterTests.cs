@@ -1750,6 +1750,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("sb://endpoint.com/123 | queueName", request.Source);
 
             Assert.StartsWith("ot:", request.Context.GetInternalContext().SdkVersion);
+
+            Assert.Empty(request.Properties);
         }
 
         [Fact]
@@ -1796,6 +1798,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("sb://endpoint.com/123 | queueName", request.Source);
 
             Assert.StartsWith("ot:", request.Context.GetInternalContext().SdkVersion);
+            Assert.Empty(request.Properties);
         }
 
         [Fact]
@@ -1844,6 +1847,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("Azure Event Hubs", dependency.Type);
 
             Assert.StartsWith("ot:", dependency.Context.GetInternalContext().SdkVersion);
+            Assert.Empty(dependency.Properties);
         }
 
         [Fact]
@@ -1892,6 +1896,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("Azure Event Hubs", dependency.Type);
 
             Assert.StartsWith("ot:", dependency.Context.GetInternalContext().SdkVersion);
+            Assert.Empty(dependency.Properties);
         }
 
         [Fact]
@@ -1937,6 +1942,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("Queue Message", dependency.Type);
 
             Assert.StartsWith("ot:", dependency.Context.GetInternalContext().SdkVersion);
+            Assert.Empty(dependency.Properties);
         }
 
         private static (string, byte[]) GenerateRandomId(int byteCount)

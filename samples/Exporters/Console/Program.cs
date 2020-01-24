@@ -34,7 +34,7 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions, ConsoleOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri),
@@ -44,6 +44,7 @@ namespace Samples
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (StackdriverOptions options) => TestStackdriver.Run(options.ProjectId),
                     (LightStepOptions options) => TestLightstep.Run(options.AccessToken),
+                    (ConsoleOptions options) => TestConsole.Run(options),
                     errs => 1);
 
             Console.ReadLine();
@@ -57,9 +58,8 @@ namespace Samples
         [Option('t', "accessToken", HelpText = "Please specify the access token for your LightStep project", Required = true)]
         public string AccessToken { get; set; }
     }
-    
+
     [Verb("stackdriver", HelpText = "Specify the options required to test Stackdriver exporter", Hidden = false)]
-#pragma warning disable SA1402 // File may only contain a single type
     internal class StackdriverOptions
     {
         [Option('p', "projectId", HelpText = "Please specify the projectId of your GCP project", Required = true)]
@@ -103,6 +103,13 @@ namespace Samples
     {
         [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
         public string Uri { get; set; }
+    }
+
+    [Verb("console", HelpText = "Specify the options required to test console exporter")]
+    internal class ConsoleOptions
+    {
+        [Option('p', "pretty", HelpText = "Specify if the output should be pretty printed (default: false)", Default = false)]
+        public bool Pretty { get; set; }
     }
 
 #pragma warning restore SA1402 // File may only contain a single type

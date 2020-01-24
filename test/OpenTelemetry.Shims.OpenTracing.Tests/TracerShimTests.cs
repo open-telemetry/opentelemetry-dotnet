@@ -31,14 +31,18 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void CtorArgumentValidation()
         {
-            Assert.Throws<ArgumentNullException>(() => TracerShim.Create(null));
+            Assert.Throws<ArgumentNullException>(() => new TracerShim(null, new TraceContextFormat(), new BinaryFormat()));
+
+            var tracerMock = new Mock<Trace.Tracer>();
+            Assert.Throws<ArgumentNullException>(() => new TracerShim(tracerMock.Object, null, new BinaryFormat()));
+            Assert.Throws<ArgumentNullException>(() => new TracerShim(tracerMock.Object, new TraceContextFormat(), null));
         }
 
         [Fact]
         public void ScopeManager_NotNull()
         {
             var tracerMock = new Mock<Trace.Tracer>();
-            var shim = TracerShim.Create(tracerMock.Object);
+            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat(), new BinaryFormat());
 
             // Internals of the ScopeManagerShim tested elsewhere
             Assert.NotNull(shim.ScopeManager as ScopeManagerShim);
@@ -48,7 +52,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void BuildSpan_NotNull()
         {
             var tracerMock = new Mock<Trace.Tracer>();
-            var shim = TracerShim.Create(tracerMock.Object);
+            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat(), new BinaryFormat());
 
             // Internals of the SpanBuilderShim tested elsewhere
             Assert.NotNull(shim.BuildSpan("foo") as SpanBuilderShim);
@@ -58,7 +62,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void Inject_ArgumentValidation()
         {
             var tracerMock = new Mock<Trace.Tracer>();
-            var shim = TracerShim.Create(tracerMock.Object);
+            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat(), new BinaryFormat());
 
             var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
             var mockFormat = new Mock<IFormat<ITextMap>>();
@@ -74,7 +78,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void Inject_UnknownFormatIgnored()
         {
             var tracerMock = new Mock<Trace.Tracer>();
-            var shim = TracerShim.Create(tracerMock.Object);
+            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat(), new BinaryFormat());
 
             var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
 
@@ -90,7 +94,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void Extract_ArgumentValidation()
         {
             var tracerMock = new Mock<Trace.Tracer>();
-            var shim = TracerShim.Create(tracerMock.Object);
+            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat(), new BinaryFormat());
 
             Assert.Throws<ArgumentNullException>(() => shim.Extract(null, new Mock<ITextMap>().Object));
             Assert.Throws<ArgumentNullException>(() => shim.Extract(new Mock<IFormat<ITextMap>>().Object, null));
@@ -100,7 +104,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void Extract_UnknownFormatIgnored()
         {
             var tracerMock = new Mock<Trace.Tracer>();
-            var shim = TracerShim.Create(tracerMock.Object);
+            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat(), new BinaryFormat());
 
             var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
 
@@ -116,7 +120,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void Extract_InvalidTraceParent()
         {
             var tracerMock = new Mock<Trace.Tracer>();
-            var shim = TracerShim.Create(tracerMock.Object);
+            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat(), new BinaryFormat());
 
             var mockCarrier = new Mock<ITextMap>();
 
@@ -146,9 +150,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
 
             var format = new TraceContextFormat();
-            tracerMock.Setup(x => x.TextFormat).Returns(format);
 
-            var shim = TracerShim.Create(tracerMock.Object);
+            var shim = new TracerShim(tracerMock.Object, format, new BinaryFormat());
 
             // first inject
             shim.Inject(spanContextShim, BuiltinFormats.TextMap, carrier);
@@ -169,9 +172,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
 
             var format = new BinaryFormat();
-            tracerMock.Setup(x => x.BinaryFormat).Returns(format);
 
-            var shim = TracerShim.Create(tracerMock.Object);
+            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat(), format);
 
             // first inject
             shim.Inject(spanContextShim, BuiltinFormats.Binary, carrier);

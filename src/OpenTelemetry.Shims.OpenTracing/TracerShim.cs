@@ -17,16 +17,22 @@
 using System;
 using System.Collections.Generic;
 using global::OpenTracing.Propagation;
+using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
     public class TracerShim : global::OpenTracing.ITracer
     {
         private readonly Trace.Tracer tracer;
+        private readonly ITextFormat textFormat;
+        private readonly IBinaryFormat binaryFormat;
 
-        private TracerShim(Trace.Tracer tracer)
+        public TracerShim(Trace.Tracer tracer, ITextFormat textFormat, IBinaryFormat binaryFormat)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            this.textFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
+            this.binaryFormat = binaryFormat ?? throw new ArgumentNullException(nameof(binaryFormat));
+
             this.ScopeManager = new ScopeManagerShim(this.tracer);
         }
 
@@ -35,11 +41,6 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         /// <inheritdoc/>
         public global::OpenTracing.ISpan ActiveSpan => this.ScopeManager.Active?.Span;
-
-        public static global::OpenTracing.ITracer Create(Trace.Tracer tracer)
-        {
-            return new TracerShim(tracer);
-        }
 
         /// <inheritdoc/>
         public global::OpenTracing.ISpanBuilder BuildSpan(string operationName)
@@ -81,17 +82,14 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return value;
                 }
 
-                if (this.tracer.TextFormat != null)
-                {
-                    spanContext = this.tracer.TextFormat.Extract(carrierMap, GetCarrierKeyValue);
-                }
+                spanContext = this.textFormat.Extract(carrierMap, GetCarrierKeyValue);
             }
             else if (format == BuiltinFormats.Binary && carrier is IBinary binaryCarrier)
             {
                 var ms = binaryCarrier.Get();
-                if (ms != null && this.tracer.BinaryFormat != null)
+                if (ms != null)
                 {
-                    spanContext = this.tracer.BinaryFormat.FromByteArray(ms.ToArray());
+                    spanContext = this.binaryFormat.FromByteArray(ms.ToArray());
                 }
             }
 
@@ -126,11 +124,11 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
-                this.tracer.TextFormat?.Inject(shim.SpanContext, textMapCarrier, (adapter, key, value) => adapter.Set(key, value));
+                this.textFormat.Inject(shim.SpanContext, textMapCarrier, (adapter, key, value) => adapter.Set(key, value));
             }
             else if (format == BuiltinFormats.Binary && carrier is IBinary binaryCarrier)
             {
-                var bytes = this.tracer.BinaryFormat?.ToByteArray(shim.SpanContext);
+                var bytes = this.binaryFormat.ToByteArray(shim.SpanContext);
                 if (bytes != null)
                 {
                     binaryCarrier.Set(new System.IO.MemoryStream(bytes));

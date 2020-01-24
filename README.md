@@ -71,6 +71,7 @@ Myget feeds:
 | Jaeger               | [![MyGet Nightly][OpenTelemetry-exporter-jaeger-myget-image]][OpenTelemetry-exporter-jaeger-myget-url]           | [![NuGet release][OpenTelemetry-exporter-jaeger-nuget-image]][OpenTelemetry-exporter-jaeger-nuget-url]           |
 | LightStep            | [![MyGet Nightly][OpenTelemetry-exporter-lightstep-myget-image]][OpenTelemetry-exporter-lightstep-myget-url]     | [![NuGet release][OpenTelemetry-exporter-lightstep-nuget-image]][OpenTelemetry-exporter-lightstep-nuget-url]     |
 | NewRelic             |                                                                                                                  | [![NuGet release][OpenTelemetry-exporter-newrelic-nuget-image]][OpenTelemetry-exporter-newrelic-nuget-url]       |
+| Console              | [![MyGet Nightly][OpenTelemetry-exporter-console-myget-image]][OpenTelemetry-exporter-console-myget-url]         |                                                                                                                  |
 
 
 ## OpenTelemetry Tracing QuickStart: collecting data
@@ -247,7 +248,7 @@ Configuration is done by user application: it should configure exporter and may 
     ```csharp
     using (TracerFactory.Create(builder => builder
             .UseZipkin()
-            .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "http-client-test" } })))
+            .SetResource(Resources.CreateServiceResource("http-client-test")))
     {
         // ...
     }
@@ -272,7 +273,7 @@ Configuration is done by user application: it should configure exporter and may 
             // you may also configure request and dependencies collectors
             .AddRequestCollector()
             .AddDependencyCollector()
-            .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } }))
+            .SetResource(Resources.CreateServiceResource("my-service"))
     });
     ```
 
@@ -292,7 +293,7 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
     using (TracerFactory.Create(b => b
                 .SetSampler(new AlwaysSampleSampler())
                 .UseZipkin()
-                .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } }))
+                .SetResource(Resources.CreateServiceResource("my-service"))
                 .AddCollector(t =>
                 {
                     var collector = new StackExchangeRedisCallsCollector(t);
@@ -314,7 +315,7 @@ You may configure sampler of your choice
  using (TracerFactory.Create(b => b
             .SetSampler(new ProbabilitySampler(0.1))
             .UseZipkin()
-            .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "my-service" } })))
+            .SetResource(Resources.CreateServiceResource("my-service")))
 {
 
 }
@@ -470,7 +471,7 @@ using (var tracerFactory = TracerFactory.Create(builder => builder
         o => o.InstrumentationKey = "your-instrumentation-key",
         p => p.AddProcessor(nextProcessor => new FilteringSpanProcessor(nextProcessor)))
     .AddProcessorPipeline(pipelineBuilder => pipelineBuilder.AddProcessor(_ => new DebuggingSpanProcessor()))))
-    .SetResource(new Resource(new Dictionary<string, string>() { { "service.name", "test-zipkin" } }))
+    .SetResource(Resources.CreateServiceResource("test-zipkin"))
 
 {
     // ...
@@ -651,6 +652,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-exporter-stackdriver-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Stackdriver
 [OpenTelemetry-exporter-lightstep-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.LightStep.svg
 [OpenTelemetry-exporter-lightstep-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.LightStep
+[OpenTelemetry-exporter-console-myget-image]: https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Console.svg
+[OpenTelemetry-exporter-console-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Console
 [OpenTelemetry-collect-aspnetcore-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.AspNetCore.svg
 [OpenTelemetry-collect-aspnetcore-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Collector.AspNetCore
 [OpenTelemetry-collect-deps-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.Dependencies.svg

@@ -26,74 +26,23 @@ namespace OpenTelemetry.Context
     /// </summary>
     public readonly struct DistributedContext : IEquatable<DistributedContext>
     {
+        private static readonly List<DistributedContextEntry> EmptyList = new List<DistributedContextEntry>();
         private static DistributedContextCarrier carrier = NoopDistributedContextCarrier.Instance;
-        private static List<DistributedContextEntry> emptyList = new List<DistributedContextEntry>();
         private readonly IEnumerable<DistributedContextEntry> entries;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DistributedContext"/> struct.
         /// </summary>
         /// <param name="entries">Entries for distributed context.</param>
-        public DistributedContext(IEnumerable<DistributedContextEntry> entries)
+        internal DistributedContext(IEnumerable<DistributedContextEntry> entries)
         {
-            if (carrier is NoopDistributedContextCarrier || entries is null || entries.Count() == 0)
-            {
-                this.entries = emptyList;
-            }
-            else
-            {
-                // Filter the default and duplicate entries.
-                List<DistributedContextEntry> list = new List<DistributedContextEntry>(entries.Count());
-                for (int i = 0; i < entries.Count(); i++)
-                {
-                    DistributedContextEntry entry = entries.ElementAt(i);
-                    if (entry == default)
-                    {
-                        continue;
-                    }
-
-                    int j;
-                    for (j = entries.Count() - 1; j > i; j--)
-                    {
-                        if (entry.Key == entries.ElementAt(j).Key)
-                        {
-                            break;
-                        }
-                    }
-
-                    if (j <= i)
-                    {
-                        list.Add(entry);
-                    }
-                }
-
-                this.entries = list;
-            }
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DistributedContext"/> struct.
-        /// </summary>
-        /// <param name="key">The key of the context entry.</param>
-        /// <param name="value">The value of the context entry.</param>
-        public DistributedContext(string key, string value)
-        {
-            this.entries = carrier is NoopDistributedContextCarrier ? emptyList : new List<DistributedContextEntry>(1) { new DistributedContextEntry(key, value) };
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DistributedContext"/> struct.
-        /// </summary>
-        /// <param name="entry">The distributed context entry.</param>
-        public DistributedContext(DistributedContextEntry entry)
-        {
-            this.entries = carrier is NoopDistributedContextCarrier || entry == default ? emptyList : new List<DistributedContextEntry>(1) { entry };
+            this.entries = entries;
         }
 
         /// <summary>
         /// Gets empty object of <see cref="DistributedContext"/> struct.
         /// </summary>
-        public static DistributedContext Empty { get; } = new DistributedContext(emptyList);
+        public static DistributedContext Empty { get; } = new DistributedContext(EmptyList);
 
         /// <summary>
         /// Gets the current <see cref="DistributedContext"/>.

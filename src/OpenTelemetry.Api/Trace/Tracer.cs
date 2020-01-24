@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Trace
 {
@@ -30,16 +29,6 @@ namespace OpenTelemetry.Trace
         /// Gets the current span from the context.
         /// </summary>
         public abstract ISpan CurrentSpan { get; }
-
-        /// <summary>
-        /// Gets the <see cref="IBinaryFormat"/> for this implementation.
-        /// </summary>
-        public abstract IBinaryFormat BinaryFormat { get; }
-
-        /// <summary>
-        /// Gets the <see cref="ITextFormat"/> for this implementation.
-        /// </summary>
-        public abstract ITextFormat TextFormat { get; }
 
         /// <summary>
         /// Activates the span on the current context.

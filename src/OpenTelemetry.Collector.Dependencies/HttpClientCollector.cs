@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using OpenTelemetry.Collector.Dependencies.Implementation;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Collector.Dependencies

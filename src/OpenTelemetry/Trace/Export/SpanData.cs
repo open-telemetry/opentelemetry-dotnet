@@ -17,14 +17,65 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace.Configuration;
 
 namespace OpenTelemetry.Trace.Export
 {
     public struct SpanData
     {
+        private static readonly TracerConfiguration DefaultConfiguration = new TracerConfiguration();
         private readonly SpanSdk span;
 
+        /// <summary>
+        /// Creates SpanData instance.
+        /// <remarks>This constructor should be used to export out of band spans such as 
+        /// compatible events created without OpenTelemetry API or in a different process</remarks>
+        /// </summary>
+        /// <param name="name">Span name.</param>
+        /// <param name="context">Span context.</param>
+        /// <param name="parentSpanId">Parent span Id.</param>
+        /// <param name="kind">Span kind.</param>
+        /// <param name="startTimestamp">Span start timestamp.</param>
+        /// <param name="attributes">Span attributes.</param>
+        /// <param name="events">Span events.</param>
+        /// <param name="links">Span links.</param>
+        /// <param name="resource">Library resource.</param>
+        /// <param name="status">Span status.</param>
+        /// <param name="endTimestamp">Span end timestamp.</param>
+        public SpanData(
+            string name,
+            in SpanContext context,
+            in ActivitySpanId parentSpanId,
+            SpanKind kind,
+            DateTimeOffset startTimestamp,
+            IEnumerable<KeyValuePair<string, object>> attributes,
+            IEnumerable<Event> events,
+            IEnumerable<Link> links,
+            Resource resource,
+            Status status,
+            DateTimeOffset endTimestamp)
+        {
+            this.span = new SpanSdk(
+                name,
+                context,
+                parentSpanId,
+                kind,
+                startTimestamp,
+                attributes,
+                events, links,
+                resource,
+                status,
+                endTimestamp,
+                DefaultConfiguration);
+        }
+
+        /// <summary>
+        /// Creates SpanData from SpanSdk.
+        /// </summary>
+        /// <param name="span">Span instance.</param>
         internal SpanData(SpanSdk span)
         {
             this.span = span;
@@ -43,7 +94,7 @@ namespace OpenTelemetry.Trace.Export
         /// <summary>
         /// Gets span status.
         /// </summary>
-        public Status Status => this.span.Status;
+        public Status Status => this.span.Status.IsValid ? this.span.Status : Status.Ok;
 
         /// <summary>
         /// Gets parent span id.
@@ -53,17 +104,17 @@ namespace OpenTelemetry.Trace.Export
         /// <summary>
         /// Gets attributes.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, object>> Attributes => this.span.Attributes;
+        public IEnumerable<KeyValuePair<string, object>> Attributes => this.span.Attributes ?? Enumerable.Empty<KeyValuePair<string, object>>();
 
         /// <summary>
         /// Gets events.
         /// </summary>
-        public IEnumerable<Event> Events => this.span.Events;
+        public IEnumerable<Event> Events => this.span.Events ?? Enumerable.Empty<Event>();
 
         /// <summary>
         /// Gets links.
         /// </summary>
-        public IEnumerable<Link> Links => this.span.Links;
+        public IEnumerable<Link> Links => this.span.Links ?? Enumerable.Empty<Link>();
 
         /// <summary>
         /// Gets span start timestamp.
@@ -83,7 +134,7 @@ namespace OpenTelemetry.Trace.Export
         /// <summary>
         /// Gets the "Library Resource" (name + version) associated with the TracerSdk that produced this span.
         /// </summary>
-        public Resource LibraryResource => this.span.LibraryResource;
+        public Resource LibraryResource => this.span.LibraryResource ?? Resource.Empty;
 
         /// <summary>
         /// Compare two <see cref="SpanData"/> for equality.
@@ -109,7 +160,12 @@ namespace OpenTelemetry.Trace.Export
 
             var that = (SpanData)obj;
 
-            return object.ReferenceEquals(this.span, that.span);
+            if (this.span != null && that.span != null)
+            {
+                return object.ReferenceEquals(this.span, that.span);
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>

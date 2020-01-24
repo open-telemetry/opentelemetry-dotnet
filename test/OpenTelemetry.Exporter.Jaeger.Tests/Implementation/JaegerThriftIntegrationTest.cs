@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public async void JaegerThriftIntegrationTest_TAbstractBaseGeneratesConsistentThriftPayload()
         {
-            var validJaegerThriftPayload = Convert.FromBase64String("goEBCWVtaXRCYXRjaBwcGAx0ZXN0IHByb2Nlc3MZHBgQdGVzdF9wcm9jZXNzX3RhZxUAGAp0ZXN0X3ZhbHVlAAAZHBab5cuG2OehhdwBFuPakI2n2cCVLhbUpdv9yJDPo4EBFpjckNKFzqHOsgEYBE5hbWUZHBUAFpvly4bY56GF3AEW49qQjafZwJUuFpCmrOGWyrWcgwEAFQIWgICz3saWvwUWgJycORl8GAlzdHJpbmdLZXkVABgFdmFsdWUAGAdsb25nS2V5FQZGAgAYCGxvbmdLZXkyFQZGAgAYCWRvdWJsZUtleRUCJwAAAAAAAPA/ABgKZG91YmxlS2V5MhUCJwAAAAAAAPA/ABgHYm9vbEtleRUEMQAYCXNwYW4ua2luZBUAGAZjbGllbnQAGSwWgICz3saWvwUZLBgDa2V5FQAYBXZhbHVlABgHbWVzc2FnZRUAGAZFdmVudDEAABaAgLPexpa/BRksGANrZXkVABgFdmFsdWUAGAdtZXNzYWdlFQAYBkV2ZW50MgAAAAAA");
+            var validJaegerThriftPayload = Convert.FromBase64String("goEBCWVtaXRCYXRjaBwcGAx0ZXN0IHByb2Nlc3MZHBgQdGVzdF9wcm9jZXNzX3RhZxUAGAp0ZXN0X3ZhbHVlAAAZHBab5cuG2OehhdwBFuPakI2n2cCVLhaAjfWp6NHt6dQBFrK5moSni5GXGBgETmFtZRkcFQAWm+XLhtjnoYXcARbj2pCNp9nAlS4W/Y6j+bqS9fbuAQAVAhaAgLPexpa/BRaAnJw5GXwYCXN0cmluZ0tleRUAGAV2YWx1ZQAYB2xvbmdLZXkVBkYCABgIbG9uZ0tleTIVBkYCABgJZG91YmxlS2V5FQInAAAAAAAA8D8AGApkb3VibGVLZXkyFQInAAAAAAAA8D8AGAdib29sS2V5FQQxABgJc3Bhbi5raW5kFQAYBmNsaWVudAAZLBaAgLPexpa/BRksGANrZXkVABgFdmFsdWUAGAdtZXNzYWdlFQAYBkV2ZW50MQAAFoCAs97Glr8FGSwYA2tleRUAGAV2YWx1ZQAYB21lc3NhZ2UVABgGRXZlbnQyAAAAAAA=");
             
             using (var memoryTransport = new InMemoryTransport())
             {
@@ -57,16 +57,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
                 var buff = memoryTransport.GetBuffer();
 
-                // all parts except spanId match (we can't control/mock span-id generation)
-                Assert.Equal(validJaegerThriftPayload.AsSpan().Slice(0, 89).ToArray(), buff.AsSpan().Slice(0, 89).ToArray());
-                Assert.Equal(validJaegerThriftPayload.AsSpan().Slice(98).ToArray(), buff.AsSpan().Slice(98).ToArray());
-
-                byte [] spanIdBytes = new byte[8];
-                spanData.Context.SpanId.CopyTo(spanIdBytes);
-
-                Assert.Equal(span.SpanId, BitConverter.ToInt64(spanIdBytes, 0));
-
-                // TODO: validate spanId in thrift payload
+                Assert.Equal(validJaegerThriftPayload, buff);
             }
         }
 
@@ -78,6 +69,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var eventTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
+            var spanId = ActivitySpanId.CreateFromString("6a69db47429ea340".AsSpan());
             var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
             var attributes = new Dictionary<string, object>
             {
@@ -115,14 +107,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     linkedSpanId,
                     ActivityTraceFlags.Recorded));
 
-            return SpanDataHelper.CreateSpanData(
+            return new SpanData(
                 "Name",
-                new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
+                new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded),
+                parentSpanId,
                 SpanKind.Client,
                 startTimestamp,
-                new[] {link},
                 attributes,
                 events,
+                new[] { link, },
+                null,
                 Status.Ok,
                 endTimestamp);
         }

@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
@@ -41,10 +42,11 @@ namespace Samples
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
 
+            var httpServer = new PrometheusExporterMetricsHttpServer(promExporter);
             var defaultContext = default(SpanContext);
             try
             {
-                promExporter.Start();
+                httpServer.Start();
 
                 for (int i = 0; i < 1000; i++)
                 {
@@ -55,7 +57,7 @@ namespace Samples
 
                     if (i % 10 == 0)
                     {
-                        // Collect is called here explicitly as there is 
+                        // Collect is called here explicitly as there is
                         // no controller implementation yet.
                         // TODO: There should be no need to cast to MeterSdk.
                         (meter as MeterSdk).Collect();
@@ -67,7 +69,7 @@ namespace Samples
             finally
             {
                 Task.Delay(3000).Wait();
-                promExporter.Stop();
+                httpServer.Stop();
             }
 
             return null;

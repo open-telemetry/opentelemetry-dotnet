@@ -41,12 +41,6 @@ namespace LoggingTracer
         public override ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
 
         /// <inheritdoc/>
-        public override IBinaryFormat BinaryFormat => new LoggingBinaryFormat();
-
-        /// <inheritdoc/>
-        public override ITextFormat TextFormat => new LoggingTextFormat();
-
-        /// <inheritdoc/>
         public override IDisposable WithSpan(ISpan span, bool endOnDispose)
         {
             Logger.Log($"{this.prefix}.WithSpan {endOnDispose}");
