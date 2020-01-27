@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Trace
 {
     /// <summary>
@@ -31,6 +33,20 @@ namespace OpenTelemetry.Trace
         public static ISpan PutComponentAttribute(this ISpan span, string component)
         {
             span.SetAttribute(SpanAttributeConstants.ComponentKey, component);
+            return span;
+        }
+
+        /// <summary>
+        /// Helper method to populate span properties from an Exception.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="exception">Exception which properties are going to be used.</param>
+        /// <returns>Span with exception attributes filled out.</returns>
+        public static ISpan PutException(this ISpan span, Exception exception)
+        {
+            span.SetAttribute(SpanAttributeConstants.ErrorNameKey, exception.GetType().Name);
+            span.SetAttribute(SpanAttributeConstants.ErrorMessageKey, exception.Message);
+            span.SetAttribute(SpanAttributeConstants.ErrorStackTraceKey, exception.ToString());
             return span;
         }
 
@@ -143,32 +159,6 @@ namespace OpenTelemetry.Trace
         public static ISpan PutHttpPathAttribute(this ISpan span, string path)
         {
             span.SetAttribute(SpanAttributeConstants.HttpPathKey, path);
-            return span;
-        }
-
-        /// <summary>
-        /// Helper method that populates span properties from size according
-        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
-        /// </summary>
-        /// <param name="span">Span to fill out.</param>
-        /// <param name="size">Response size.</param>
-        /// <returns>Span with populated response size properties.</returns>
-        public static ISpan PutHttpResponseSizeAttribute(this ISpan span, long size)
-        {
-            span.SetAttribute(SpanAttributeConstants.HttpResponseSizeKey, size);
-            return span;
-        }
-
-        /// <summary>
-        /// Helper method that populates span properties from request size according
-        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
-        /// </summary>
-        /// <param name="span">Span to fill out.</param>
-        /// <param name="size">Request size.</param>
-        /// <returns>Span with populated request size properties.</returns>
-        public static ISpan PutHttpRequestSizeAttribute(this ISpan span, long size)
-        {
-            span.SetAttribute(SpanAttributeConstants.HttpRequestSizeKey, size);
             return span;
         }
 

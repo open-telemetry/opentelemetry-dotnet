@@ -20,6 +20,10 @@ namespace OpenTelemetry.Trace
     {
         public static readonly string ComponentKey = "component";
 
+        public static readonly string ErrorNameKey = "error.name";
+        public static readonly string ErrorMessageKey = "error.message";
+        public static readonly string ErrorStackTraceKey = "error.stacktrace";
+
         public static readonly string HttpMethodKey = "http.method";
         public static readonly string HttpStatusCodeKey = "http.status_code";
         public static readonly string HttpUserAgentKey = "http.user_agent";
