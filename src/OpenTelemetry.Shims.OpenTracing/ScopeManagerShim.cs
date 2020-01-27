@@ -18,12 +18,13 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using global::OpenTracing;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
     public sealed class ScopeManagerShim : IScopeManager
     {
-        private static readonly ConditionalWeakTable<Trace.ISpan, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<Trace.ISpan, global::OpenTracing.IScope>();
+        private static readonly ConditionalWeakTable<Trace.TelemetrySpan, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<Trace.TelemetrySpan, global::OpenTracing.IScope>();
 
         private readonly Trace.Tracer tracer;
 
@@ -96,7 +97,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             private readonly Action disposeAction;
 
-            public ScopeAdapter(Trace.ISpan span, Action disposeAction = null)
+            public ScopeAdapter(TelemetrySpan span, Action disposeAction = null)
             {
                 this.Span = new SpanShim(span);
                 this.disposeAction = disposeAction;

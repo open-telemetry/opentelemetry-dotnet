@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace
         /// <param name="span">Span to fill out.</param>
         /// <param name="component">Http method.</param>
         /// <returns>Span with populated http method properties.</returns>
-        public static ISpan PutComponentAttribute(this ISpan span, string component)
+        public static TelemetrySpan PutComponentAttribute(this TelemetrySpan span, string component)
         {
             span.SetAttribute(SpanAttributeConstants.ComponentKey, component);
             return span;
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace
         /// <param name="span">Span to fill out.</param>
         /// <param name="method">Http method.</param>
         /// <returns>Span with populated http method properties.</returns>
-        public static ISpan PutHttpMethodAttribute(this ISpan span, string method)
+        public static TelemetrySpan PutHttpMethodAttribute(this TelemetrySpan span, string method)
         {
             span.SetAttribute(SpanAttributeConstants.HttpMethodKey, method);
             return span;
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Trace
         /// <param name="span">Span to fill out.</param>
         /// <param name="statusCode">Http status code.</param>
         /// <returns>Span with populated status code properties.</returns>
-        public static ISpan PutHttpStatusCodeAttribute(this ISpan span, int statusCode)
+        public static TelemetrySpan PutHttpStatusCodeAttribute(this TelemetrySpan span, int statusCode)
         {
             span.SetAttribute(SpanAttributeConstants.HttpStatusCodeKey, statusCode);
             return span;
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Trace
         /// <param name="span">Span to fill out.</param>
         /// <param name="userAgent">Http status code.</param>
         /// <returns>Span with populated user agent code properties.</returns>
-        public static ISpan PutHttpUserAgentAttribute(this ISpan span, string userAgent)
+        public static TelemetrySpan PutHttpUserAgentAttribute(this TelemetrySpan span, string userAgent)
         {
             if (!string.IsNullOrWhiteSpace(userAgent))
             {
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace
         /// <param name="hostName">Hostr name.</param>
         /// <param name="port">Port number.</param>
         /// <returns>Span with populated host properties.</returns>
-        public static ISpan PutHttpHostAttribute(this ISpan span, string hostName, int port)
+        public static TelemetrySpan PutHttpHostAttribute(this TelemetrySpan span, string hostName, int port)
         {
             if (port == 80 || port == 443)
             {
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Trace
         /// <param name="span">Span to fill out.</param>
         /// <param name="route">Route used to resolve url to controller.</param>
         /// <returns>Span with populated route properties.</returns>
-        public static ISpan PutHttpRouteAttribute(this ISpan span, string route)
+        public static TelemetrySpan PutHttpRouteAttribute(this TelemetrySpan span, string route)
         {
             if (!string.IsNullOrEmpty(route))
             {
@@ -123,7 +123,7 @@ namespace OpenTelemetry.Trace
         /// <param name="span">Span to fill out.</param>
         /// <param name="rawUrl">Raw url.</param>
         /// <returns>Span with populated url properties.</returns>
-        public static ISpan PutHttpRawUrlAttribute(this ISpan span, string rawUrl)
+        public static TelemetrySpan PutHttpRawUrlAttribute(this TelemetrySpan span, string rawUrl)
         {
             if (!string.IsNullOrEmpty(rawUrl))
             {
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Trace
         /// <param name="span">Span to fill out.</param>
         /// <param name="path">Url path.</param>
         /// <returns>Span with populated path properties.</returns>
-        public static ISpan PutHttpPathAttribute(this ISpan span, string path)
+        public static TelemetrySpan PutHttpPathAttribute(this TelemetrySpan span, string path)
         {
             span.SetAttribute(SpanAttributeConstants.HttpPathKey, path);
             return span;
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Trace
         /// <param name="statusCode">Http status code.</param>
         /// <param name="reasonPhrase">Http reason phrase.</param>
         /// <returns>Span with populated properties.</returns>
-        public static ISpan PutHttpStatusCode(this ISpan span, int statusCode, string reasonPhrase)
+        public static TelemetrySpan PutHttpStatusCode(this TelemetrySpan span, int statusCode, string reasonPhrase)
         {
             span.PutHttpStatusCodeAttribute(statusCode);
 
@@ -217,7 +217,7 @@ namespace OpenTelemetry.Trace
         /// <param name="span">Span to fill out.</param>
         /// <param name="flavor">HTTP version.</param>
         /// <returns>Span with populated request size properties.</returns>
-        public static ISpan PutHttpFlavorAttribute(this ISpan span, string flavor)
+        public static TelemetrySpan PutHttpFlavorAttribute(this TelemetrySpan span, string flavor)
         {
             span.SetAttribute(SpanAttributeConstants.HttpFlavorKey, flavor);
             return span;

@@ -38,38 +38,38 @@ namespace LoggingTracer
         }
 
         /// <inheritdoc/>
-        public override ISpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
+        public override TelemetrySpan CurrentSpan => CurrentSpanUtils.CurrentSpan;
 
         /// <inheritdoc/>
-        public override IDisposable WithSpan(ISpan span, bool endOnDispose)
+        public override IDisposable WithSpan(TelemetrySpan span, bool endOnDispose)
         {
             Logger.Log($"{this.prefix}.WithSpan {endOnDispose}");
             return new CurrentSpanUtils.LoggingScope(span);
         }
 
         /// <inheritdoc/>
-        public override ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
             Logger.Log($"{this.prefix}.StartRootSpan({operationName}, {kind}, {options.StartTimestamp:o}, {options.LinksFactory}, {options.Links})");
             return new LoggingSpan(operationName, kind);
         }
 
         /// <inheritdoc/>
-        public override ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartSpan(string operationName, TelemetrySpan parent, SpanKind kind, SpanCreationOptions options)
         {
             Logger.Log($"{this.prefix}.StartSpan({operationName}, {parent.GetType().Name}, {kind}, {options.StartTimestamp:o}, {options.LinksFactory}, {options.Links})");
             return new LoggingSpan(operationName, kind);
         }
 
         /// <inheritdoc/>
-        public override ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
             Logger.Log($"{this.prefix}.StartSpan({operationName}, {parent.GetType().Name}, {kind}, {options.StartTimestamp:o}, {options.LinksFactory}, {options.Links})");
             return new LoggingSpan(operationName, kind);
         }
 
         /// <inheritdoc/>
-        public override ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public override TelemetrySpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
             Logger.Log($"{this.prefix}.StartSpanFromActivity({operationName}, {activity.OperationName}, {kind}, {links})");
             return new LoggingSpan(operationName, kind);

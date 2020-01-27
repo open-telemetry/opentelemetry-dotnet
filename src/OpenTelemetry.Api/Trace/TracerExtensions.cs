@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace
         /// <param name="tracer">Tracer instance.</param>
         /// <param name="operationName">Span name.</param>
         /// <returns>Span instance.</returns>
-        public static ISpan StartRootSpan(this Tracer tracer, string operationName)
+        public static TelemetrySpan StartRootSpan(this Tracer tracer, string operationName)
         {
             return tracer.StartRootSpan(operationName, SpanKind.Internal, null);
         }
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace
         /// <param name="operationName">Span name.</param>
         /// <param name="kind">Kind.</param>
         /// <returns>Span instance.</returns>
-        public static ISpan StartRootSpan(this Tracer tracer, string operationName, SpanKind kind)
+        public static TelemetrySpan StartRootSpan(this Tracer tracer, string operationName, SpanKind kind)
         {
             return tracer.StartRootSpan(operationName, kind, null);
         }
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace
         /// <param name="tracer">Tracer instance.</param>
         /// <param name="operationName">Span name.</param>
         /// <returns>Span instance.</returns>
-        public static ISpan StartSpan(this Tracer tracer, string operationName)
+        public static TelemetrySpan StartSpan(this Tracer tracer, string operationName)
         {
             return tracer.StartSpan(operationName, null, SpanKind.Internal, null);
         }
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Trace
         /// <param name="operationName">Span name.</param>
         /// <param name="kind">Kind.</param>
         /// <returns>Span instance.</returns>
-        public static ISpan StartSpan(this Tracer tracer, string operationName, SpanKind kind)
+        public static TelemetrySpan StartSpan(this Tracer tracer, string operationName, SpanKind kind)
         {
             return tracer.StartSpan(operationName, null, kind, null);
         }
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="options">Advanced span creation options.</param>
         /// <returns>Span instance.</returns>
-        public static ISpan StartSpan(this Tracer tracer, string operationName, SpanKind kind, SpanCreationOptions options)
+        public static TelemetrySpan StartSpan(this Tracer tracer, string operationName, SpanKind kind, SpanCreationOptions options)
         {
             return tracer.StartSpan(operationName, null, kind, options);
         }
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Trace
         /// <param name="operationName">Span name.</param>
         /// <param name="parent">Parent for new span.</param>
         /// <returns>Span instance.</returns>
-        public static ISpan StartSpan(this Tracer tracer, string operationName, ISpan parent)
+        public static TelemetrySpan StartSpan(this Tracer tracer, string operationName, TelemetrySpan parent)
         {
             return tracer.StartSpan(operationName, parent, SpanKind.Internal, null);
         }
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Trace
         /// <param name="parent">Parent for new span.</param>
         /// <param name="kind">Kind.</param>
         /// <returns>Span instance.</returns>
-        public static ISpan StartSpan(this Tracer tracer, string operationName, ISpan parent, SpanKind kind)
+        public static TelemetrySpan StartSpan(this Tracer tracer, string operationName, TelemetrySpan parent, SpanKind kind)
         {
             return tracer.StartSpan(operationName, parent, kind, null);
         }
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Trace
         /// <param name="operationName">Span name.</param>
         /// <param name="parent">Parent for new span.</param>
         /// <returns>Span instance.</returns>
-        public static ISpan StartSpan(this Tracer tracer, string operationName, in SpanContext parent)
+        public static TelemetrySpan StartSpan(this Tracer tracer, string operationName, in SpanContext parent)
         {
             return tracer.StartSpan(operationName, parent, SpanKind.Internal, null);
         }
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Trace
         /// <param name="parent">Parent for new span.</param>
         /// <param name="kind">Kind.</param>
         /// <returns>Span instance.</returns>
-        public static ISpan StartSpan(this Tracer tracer, string operationName, in SpanContext parent, SpanKind kind)
+        public static TelemetrySpan StartSpan(this Tracer tracer, string operationName, in SpanContext parent, SpanKind kind)
         {
             return tracer.StartSpan(operationName, parent, kind, null);
         }
@@ -139,7 +139,7 @@ namespace OpenTelemetry.Trace
         /// <param name="operationName">Span name.</param>
         /// <param name="activity">Activity instance to create span from.</param>
         /// <returns>Span scope instance.</returns>
-        public static ISpan StartSpanFromActivity(this Tracer tracer, string operationName, Activity activity)
+        public static TelemetrySpan StartSpanFromActivity(this Tracer tracer, string operationName, Activity activity)
         {
             return tracer.StartSpanFromActivity(operationName, activity, SpanKind.Internal, null);
         }
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Trace
         /// <param name="activity">Activity instance to create span from.</param>
         /// <param name="kind">Kind.</param>
         /// <returns>Span scope instance.</returns>
-        public static ISpan StartSpanFromActivity(this Tracer tracer, string operationName, Activity activity, SpanKind kind)
+        public static TelemetrySpan StartSpanFromActivity(this Tracer tracer, string operationName, Activity activity, SpanKind kind)
         {
             return tracer.StartSpanFromActivity(operationName, activity, kind, null);
         }

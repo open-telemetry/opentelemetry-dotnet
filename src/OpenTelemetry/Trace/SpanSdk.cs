@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Span implementation.
     /// </summary>
-    internal sealed class SpanSdk : ISpan, IDisposable
+    internal sealed class SpanSdk : TelemetrySpan, IDisposable
     {
         internal static readonly SpanSdk Invalid = new SpanSdk();
 
@@ -194,15 +194,13 @@ namespace OpenTelemetry.Trace
             this.isOutOfBand = false;
         }
 
-        public SpanContext Context { get; }
+        public override SpanContext Context { get; }
 
         public string Name { get; private set; }
 
         /// <inheritdoc/>
-        public Status Status
+        public override Status Status
         {
-            get => this.status;
-
             set
             {
                 if (!value.IsValid)
@@ -218,7 +216,7 @@ namespace OpenTelemetry.Trace
         public ActivitySpanId ParentSpanId { get; }
 
         /// <inheritdoc/>
-        public bool IsRecording { get; }
+        public override bool IsRecording { get; }
 
         /// <summary>
         /// Gets attributes.
@@ -276,8 +274,13 @@ namespace OpenTelemetry.Trace
 
         internal Activity Activity { get; }
 
+        public Status GetStatus()
+        {
+            return this.status;
+        }
+
         /// <inheritdoc />
-        public void UpdateName(string name)
+        public override void UpdateName(string name)
         {
             if (this.hasEnded)
             {
@@ -297,7 +300,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void SetAttribute(string key, object value)
+        public override void SetAttribute(string key, object value)
         {
             if (!this.IsRecording)
             {
@@ -330,7 +333,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void SetAttribute(string key, bool value)
+        public override void SetAttribute(string key, bool value)
         {
             if (!this.IsRecording)
             {
@@ -356,7 +359,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void SetAttribute(string key, long value)
+        public override void SetAttribute(string key, long value)
         {
             if (!this.IsRecording)
             {
@@ -382,7 +385,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void SetAttribute(string key, double value)
+        public override void SetAttribute(string key, double value)
         {
             if (!this.IsRecording)
             {
@@ -408,7 +411,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void AddEvent(string name)
+        public override void AddEvent(string name)
         {
             if (!this.IsRecording)
             {
@@ -425,7 +428,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void AddEvent(Event addEvent)
+        public override void AddEvent(Event addEvent)
         {
             if (addEvent == null)
             {
@@ -457,12 +460,12 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public void End()
+        public override void End()
         {
             this.End(PreciseTimestamp.GetUtcNow());
         }
 
-        public void End(DateTimeOffset endTimestamp)
+        public override void End(DateTimeOffset endTimestamp)
         {
             if (this.hasEnded)
             {
@@ -496,7 +499,7 @@ namespace OpenTelemetry.Trace
 
         internal static SpanSdk CreateFromParentSpan(
             string name,
-            ISpan parentSpan,
+            TelemetrySpan parentSpan,
             SpanKind spanKind,
             SpanCreationOptions spanCreationOptions,
             Sampler sampler,
@@ -687,7 +690,7 @@ namespace OpenTelemetry.Trace
             return new ActivityAndTracestate(activity, tracestate);
         }
 
-        private static ActivityAndTracestate FromParentSpan(string spanName, ISpan parentSpan)
+        private static ActivityAndTracestate FromParentSpan(string spanName, TelemetrySpan parentSpan)
         {
             if (parentSpan is SpanSdk parentSpanImpl && parentSpanImpl.Activity == Activity.Current)
             {

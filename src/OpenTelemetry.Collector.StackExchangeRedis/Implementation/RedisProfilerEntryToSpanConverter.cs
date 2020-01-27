@@ -21,7 +21,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 {
     internal static class RedisProfilerEntryToSpanConverter
     {
-        public static ISpan ProfilerCommandToSpan(Tracer tracer, ISpan parentSpan, IProfiledCommand command)
+        public static TelemetrySpan ProfilerCommandToSpan(Tracer tracer, TelemetrySpan parentSpan, IProfiledCommand command)
         {
             var name = command.Command; // Example: SET;
             if (string.IsNullOrEmpty(name))
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
             return span;
         }
 
-        public static void DrainSession(Tracer tracer, ISpan parentSpan, IEnumerable<IProfiledCommand> sessionCommands)
+        public static void DrainSession(Tracer tracer, TelemetrySpan parentSpan, IEnumerable<IProfiledCommand> sessionCommands)
         {
             foreach (var command in sessionCommands)
             {

@@ -43,7 +43,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         private readonly SpanContextShim spanContextShim;
 
-        public SpanShim(Trace.ISpan span)
+        public SpanShim(TelemetrySpan span)
         {
             this.Span = span ?? throw new ArgumentNullException(nameof(span));
 
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public ISpanContext Context => this.spanContextShim;
 
-        public Trace.ISpan Span { get; private set; }
+        public TelemetrySpan Span { get; private set; }
 
         /// <inheritdoc/>
         public void Finish()
