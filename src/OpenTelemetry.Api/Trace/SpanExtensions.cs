@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace
     {
         /// <summary>
         /// Helper method that populates span properties from component
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
         /// <param name="component">Http method.</param>
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Helper method that populates span properties from http method according
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
         /// <param name="method">Http method.</param>
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Helper method that populates span properties from http status code according
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
         /// <param name="statusCode">Http status code.</param>
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Helper method that populates span properties from http user agent according
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
         /// <param name="userAgent">Http status code.</param>
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Helper method that populates span properties from host and port
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
         /// <param name="hostName">Hostr name.</param>
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Helper method that populates span properties from route
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
         /// <param name="route">Route used to resolve url to controller.</param>
@@ -118,7 +118,7 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Helper method that populates span properties from host and port
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
         /// <param name="rawUrl">Raw url.</param>
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Helper method that populates span properties from url path according
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
         /// <param name="path">Url path.</param>
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Helper method that populates span properties from http status code according
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
         /// <param name="statusCode">Http status code.</param>
@@ -212,7 +212,7 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Helper method that populates span properties from request version according
-        /// to https://github.com/open-telemetry/OpenTelemetry-specs/blob/4954074adf815f437534457331178194f6847ff9/trace/HTTP.md.
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
         /// <param name="flavor">HTTP version.</param>
