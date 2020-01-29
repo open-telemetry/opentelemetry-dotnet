@@ -40,7 +40,7 @@ namespace Samples
 
                 using (DistributedContext.SetCurrent(dc))
                 {
-                    using (tracer.StartActiveSpan("/getuser", out ISpan span))
+                    using (tracer.StartActiveSpan("/getuser", out TelemetrySpan span))
                     {
                         span.AddEvent("Processing video.");
                         span.PutHttpMethodAttribute("GET");

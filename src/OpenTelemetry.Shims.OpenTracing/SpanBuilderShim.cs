@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using global::OpenTracing;
+using OpenTelemetry.Trace;
 using SpanCreationOptions = OpenTelemetry.Trace.SpanCreationOptions;
 
 namespace OpenTelemetry.Shims.OpenTracing
@@ -25,7 +26,7 @@ namespace OpenTelemetry.Shims.OpenTracing
     /// Adapts OpenTracing ISpanBuilder to an underlying OpenTelemetry ISpanBuilder.
     /// </summary>
     /// <remarks>Instances of this class are not thread-safe.</remarks>
-    /// <seealso cref="global::OpenTracing.ISpanBuilder" />
+    /// <seealso cref="ISpanBuilder" />
     public sealed class SpanBuilderShim : ISpanBuilder
     {
         /// <summary>
@@ -57,9 +58,9 @@ namespace OpenTelemetry.Shims.OpenTracing
         };
 
         /// <summary>
-        /// The parent as an ISpan, if any.
+        /// The parent as an TelemetrySpan, if any.
         /// </summary>
-        private Trace.ISpan parentSpan;
+        private TelemetrySpan parentSpan;
 
         /// <summary>
         /// The parent as an SpanContext, if any.
@@ -155,7 +156,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpan Start()
         {
-            Trace.ISpan span = null;
+            TelemetrySpan span = null;
 
             SpanCreationOptions options = null;
             if (this.explicitStartTime != null || this.links != null)
@@ -330,12 +331,12 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <summary>
-        /// Gets an implementation of OpenTelemetry ISpan from the OpenTracing ISpan.
+        /// Gets an implementation of OpenTelemetry TelemetrySpan from the OpenTracing ISpan.
         /// </summary>
         /// <param name="span">The span.</param>
-        /// <returns>an implementation of OpenTelemetry ISpan.</returns>
+        /// <returns>an implementation of OpenTelemetry TelemetrySpan.</returns>
         /// <exception cref="ArgumentException">span is not a valid SpanShim object.</exception>
-        private static Trace.ISpan GetOpenTelemetrySpan(ISpan span)
+        private static TelemetrySpan GetOpenTelemetrySpan(ISpan span)
         {
             if (!(span is SpanShim shim))
             {

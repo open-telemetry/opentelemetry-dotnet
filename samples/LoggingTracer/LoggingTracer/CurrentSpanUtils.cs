@@ -24,17 +24,17 @@ namespace LoggingTracer
     /// </summary>
     internal static class CurrentSpanUtils
     {
-        private static AsyncLocal<ISpan> asyncLocalContext = new AsyncLocal<ISpan>();
+        private static AsyncLocal<TelemetrySpan> asyncLocalContext = new AsyncLocal<TelemetrySpan>();
 
-        public static ISpan CurrentSpan => asyncLocalContext.Value;
+        public static TelemetrySpan CurrentSpan => asyncLocalContext.Value;
 
         public class LoggingScope : IDisposable
         {
-            private readonly ISpan origContext;
-            private readonly ISpan span;
+            private readonly TelemetrySpan origContext;
+            private readonly TelemetrySpan span;
             private readonly bool endSpan;
 
-            public LoggingScope(ISpan span, bool endSpan = true)
+            public LoggingScope(TelemetrySpan span, bool endSpan = true)
             {
                 this.span = span;
                 this.endSpan = endSpan;

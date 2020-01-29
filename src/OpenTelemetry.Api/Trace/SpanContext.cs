@@ -21,8 +21,8 @@ namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// A class that represents a span context. A span context contains the state that must propagate to
-    /// child <see cref="ISpan"/> and across process boundaries. It contains the identifiers <see cref="ActivityTraceId"/>
-    /// and <see cref="ActivitySpanId"/> associated with the <see cref="ISpan"/> and a set of <see cref="TraceOptions"/>.
+    /// child <see cref="TelemetrySpan"/> and across process boundaries. It contains the identifiers <see cref="ActivityTraceId"/>
+    /// and <see cref="ActivitySpanId"/> associated with the <see cref="TelemetrySpan"/> and a set of <see cref="TraceOptions"/>.
     /// </summary>
     public readonly struct SpanContext
     {

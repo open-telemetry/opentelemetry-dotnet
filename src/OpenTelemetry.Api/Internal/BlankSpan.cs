@@ -20,7 +20,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Blank span.
     /// </summary>
-    internal sealed class BlankSpan : ISpan
+    internal sealed class BlankSpan : TelemetrySpan
     {
         /// <summary>
         /// Blank span instance.
@@ -32,56 +32,59 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public SpanContext Context => default;
+        public override SpanContext Context => default;
 
         /// <inheritdoc />
-        public bool IsRecording => false;
+        public override bool IsRecording => false;
 
         /// <inheritdoc />
-        public Status Status { get; set; } = Status.Ok;
+        public override Status Status
+        {
+            set { }
+        }
 
         /// <inheritdoc />
-        public void UpdateName(string name)
+        public override void UpdateName(string name)
         {
         }
 
         /// <inheritdoc />
-        public void SetAttribute(string key, object value)
+        public override void SetAttribute(string key, object value)
         {
         }
 
         /// <inheritdoc />
-        public void SetAttribute(string key, bool value)
+        public override void SetAttribute(string key, bool value)
         {
         }
 
         /// <inheritdoc />
-        public void SetAttribute(string key, long value)
+        public override void SetAttribute(string key, long value)
         {
         }
 
         /// <inheritdoc />
-        public void SetAttribute(string key, double value)
+        public override void SetAttribute(string key, double value)
         {
         }
 
         /// <inheritdoc />
-        public void AddEvent(string name)
+        public override void AddEvent(string name)
         {
         }
 
         /// <inheritdoc />
-        public void AddEvent(Event newEvent)
+        public override void AddEvent(Event newEvent)
         {
         }
 
         /// <inheritdoc />
-        public void End()
+        public override void End()
         {
         }
 
         /// <inheritdoc />
-        public void End(DateTimeOffset endTimestamp)
+        public override void End(DateTimeOffset endTimestamp)
         {
         }
     }
