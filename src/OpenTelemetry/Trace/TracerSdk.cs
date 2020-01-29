@@ -55,9 +55,9 @@ namespace OpenTelemetry.Trace
         public Resource LibraryResource { get; }
 
         /// <inheritdoc/>
-        public override ISpan CurrentSpan => SpanSdk.Current;
+        public override TelemetrySpan CurrentSpan => SpanSdk.Current;
 
-        public override IDisposable WithSpan(ISpan span, bool endSpanOnDispose)
+        public override IDisposable WithSpan(TelemetrySpan span, bool endSpanOnDispose)
         {
             if (span == null)
             {
@@ -73,13 +73,13 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override ISpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
             return SpanSdk.CreateRoot(operationName, kind, options, this.sampler, this.tracerConfiguration, this.spanProcessor, this.LibraryResource);
         }
 
         /// <inheritdoc/>
-        public override ISpan StartSpan(string operationName, ISpan parent, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartSpan(string operationName, TelemetrySpan parent, SpanKind kind, SpanCreationOptions options)
         {
             if (parent == null)
             {
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override ISpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
             if (parent.IsValid)
             {
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override ISpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
+        public override TelemetrySpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
             bool isValidActivity = true;
             if (activity == null)

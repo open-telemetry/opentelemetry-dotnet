@@ -65,7 +65,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Implementation
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
-            ISpan span;
+            TelemetrySpan span;
             if (this.hostingSupportsW3C && this.options.TextFormat is TraceContextFormat)
             {
                 this.Tracer.StartActiveSpanFromActivity(path, Activity.Current, SpanKind.Server, out span);

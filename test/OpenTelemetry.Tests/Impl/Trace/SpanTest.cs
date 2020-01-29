@@ -787,7 +787,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Null(span.Attributes);
             Assert.Null(span.Events);
             Assert.Null(span.Links);
-            Assert.Equal(default, span.Status);
+            Assert.Equal(default, span.GetStatus());
             Assert.Equal(spanEndTime, span.EndTimestamp);
         }
 
@@ -853,7 +853,7 @@ namespace OpenTelemetry.Trace.Test
 
             Assert.Equal(startTime, span.StartTimestamp);
 
-            Assert.False(span.Status.IsValid);
+            Assert.False(span.GetStatus().IsValid);
             Assert.Equal(default, span.EndTimestamp);
 
             var startEndMock = Mock.Get(spanProcessor);
@@ -917,7 +917,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Single(span.Links);
             Assert.Equal(link, span.Links.First());
             Assert.Equal(startTime, span.StartTimestamp);
-            Assert.Equal(Status.Cancelled, span.Status);
+            Assert.Equal(Status.Cancelled, span.GetStatus());
             AssertApproxSameTimestamp(spanEndTime, span.EndTimestamp);
 
             var spanData = new SpanData(span);
@@ -931,11 +931,11 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
-            Assert.Equal(default, span.Status);
+            Assert.Equal(default, span.GetStatus());
             span.Status = Status.Cancelled;
-            Assert.Equal(Status.Cancelled, span.Status);
+            Assert.Equal(Status.Cancelled, span.GetStatus());
             span.End();
-            Assert.Equal(Status.Cancelled, span.Status);
+            Assert.Equal(Status.Cancelled, span.GetStatus());
 
             var spanData = new SpanData(span);
             spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
@@ -951,7 +951,7 @@ namespace OpenTelemetry.Trace.Test
             // does not throw
             span.Status = new Status();
 
-            Assert.Equal(default, span.Status);
+            Assert.Equal(default, span.GetStatus());
         }
 
         [Fact]

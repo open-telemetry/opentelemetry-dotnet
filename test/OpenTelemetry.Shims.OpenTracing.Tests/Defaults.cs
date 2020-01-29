@@ -42,13 +42,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         }
 
         /// <summary>
-        /// Gets a mock implementation of OpenTelemtry ISpan suitable for certain kinds of unit tests.
+        /// Gets a mock implementation of OpenTelemetry TelemetrySpan suitable for certain kinds of unit tests.
         /// </summary>
         /// <returns>a mock of the OpenTelemetry ISpan.</returns>
-        public static Mock<ISpan> GetOpenTelemetryMockSpan()
+        public static Mock<TelemetrySpan> GetOpenTelemetryMockSpan()
         {
             var spanContext = GetOpenTelemetrySpanContext();
-            var mock = new Mock<ISpan>();
+            var mock = new Mock<TelemetrySpan>();
             mock.Setup(o => o.Context).Returns(spanContext);
             return mock;
         }

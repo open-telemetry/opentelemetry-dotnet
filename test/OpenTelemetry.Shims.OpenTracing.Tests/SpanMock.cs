@@ -23,9 +23,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
     /// <summary>
     /// A mock ISpan implementation for unit tests. Sometimes an actual Mock is just easier to deal with than objects created with Moq.
     /// </summary>
-    internal class SpanMock : ISpan, IDisposable
+    internal class SpanMock : TelemetrySpan, IDisposable
     {
-        private static readonly ReadOnlyDictionary<string, object> EmptyAttributes = new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
+        private Status status;
 
         public SpanMock(SpanContext spanContext)
         {
@@ -43,55 +43,57 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
         public List<KeyValuePair<string, object>> Attributes { get; }
 
-        public SpanContext Context { get; private set; }
+        public override SpanContext Context { get; }
 
-        public bool IsRecording { get; private set; }
+        public override bool IsRecording { get; }
 
-        public Status Status { get; set; }
+        public override Status Status { set => this.status = value; }
 
-        public bool HasEnded { get; private set; }
+        public Status GetStatus()
+        {
+            return this.status;
+        }
 
-        public void AddEvent(string name)
+        public override void AddEvent(string name)
         {
             this.Events.Add(new Event(name));
         }
 
-        public void AddEvent(Event newEvent)
+        public override void AddEvent(Event newEvent)
         {
             this.Events.Add(newEvent);
         }
 
-        public void End()
+        public override void End()
         {
-            this.HasEnded = true;
         }
 
-        public void End(DateTimeOffset endTimestamp)
+        public override void End(DateTimeOffset endTimestamp)
         {
             this.End();
         }
 
-        public void SetAttribute(string key, object value)
+        public override void SetAttribute(string key, object value)
         {
             this.Attributes.Add(new KeyValuePair<string, object>(key, value));
         }
 
-        public void SetAttribute(string key, long value)
+        public override void SetAttribute(string key, long value)
         {
             this.SetAttribute(key, (object)value);
         }
 
-        public void SetAttribute(string key, bool value)
+        public override void SetAttribute(string key, bool value)
         {
             this.SetAttribute(key, (object)value);
         }
 
-        public void SetAttribute(string key, double value)
+        public override void SetAttribute(string key, double value)
         {
             this.SetAttribute(key, (object)value);
         }
 
-        public void UpdateName(string name)
+        public override void UpdateName(string name)
         {
             this.Name = name;
         }

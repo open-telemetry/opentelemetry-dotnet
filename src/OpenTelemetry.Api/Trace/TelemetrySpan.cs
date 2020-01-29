@@ -1,4 +1,4 @@
-﻿// <copyright file="ISpan.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TelemetrySpan.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,82 +25,82 @@ namespace OpenTelemetry.Trace
     /// <para>This class is mostly write only. Span should not be used to exchange information. Only to add properties
     /// to it for monitoring purposes. It will be converted to SpanData that is readable.</para>
     /// </summary>
-    public interface ISpan
+    public abstract class TelemetrySpan
     {
         /// <summary>
         /// Gets the span context.
         /// </summary>
-        SpanContext Context { get; }
+        public abstract SpanContext Context { get; }
 
         /// <summary>
         /// Gets a value indicating whether this span will be recorded.
         /// </summary>
-        bool IsRecording { get; }
+        public abstract bool IsRecording { get; }
 
         /// <summary>
         /// Sets the status of the span execution.
         /// </summary>
-        Status Status { set; }
+        public abstract Status Status { set; }
 
         /// <summary>
-        /// Updates the <see cref="ISpan"/> name.
+        /// Updates the <see cref="TelemetrySpan"/> name.
         ///
         /// If used, this will override the name provided via StartSpan method overload.
-        /// Upon this update, any sampling behavior based on <see cref="ISpan"/> name will depend on the
+        /// Upon this update, any sampling behavior based on <see cref="TelemetrySpan"/> name will depend on the
         /// implementation.
         /// </summary>
         /// <param name="name">Name of the span.</param>
-        void UpdateName(string name);
+        public abstract void UpdateName(string name);
 
         /// <summary>
         /// Sets a new attribute on the span.
         /// </summary>
         /// <param name="key">Attribute key.</param>
         /// <param name="value">Attribute value.</param>
-        void SetAttribute(string key, object value);
+        public abstract void SetAttribute(string key, object value);
 
         /// <summary>
         /// Sets a new attribute on the span.
         /// </summary>
         /// <param name="key">Attribute key.</param>
         /// <param name="value">Attribute value.</param>
-        void SetAttribute(string key, long value);
+        public abstract void SetAttribute(string key, long value);
 
         /// <summary>
         /// Sets a new attribute on the span.
         /// </summary>
         /// <param name="key">Attribute key.</param>
         /// <param name="value">Attribute value.</param>
-        void SetAttribute(string key, bool value);
+        public abstract void SetAttribute(string key, bool value);
 
         /// <summary>
         /// Sets a new attribute on the span.
         /// </summary>
         /// <param name="key">Attribute key.</param>
         /// <param name="value">Attribute value.</param>
-        void SetAttribute(string key, double value);
+        public abstract void SetAttribute(string key, double value);
 
         /// <summary>
-        /// Adds a single <see cref="Event"/> to the <see cref="ISpan"/>.
+        /// Adds a single <see cref="Event"/> to the <see cref="TelemetrySpan"/>.
         /// </summary>
         /// <param name="name">Name of the <see cref="Event"/>.</param>
-        void AddEvent(string name);
+        public abstract void AddEvent(string name);
 
         /// <summary>
-        /// Adds an <see cref="Event"/> instance to the <see cref="ISpan"/>.
+        /// Adds an <see cref="Event"/> instance to the <see cref="TelemetrySpan"/>.
         /// </summary>
         /// <param name="newEvent"><see cref="Event"/> to add to the span.</param>
-        void AddEvent(Event newEvent);
+        public abstract void AddEvent(Event newEvent);
 
         /// <summary>
         /// End the span.
         /// </summary>
-        void End();
+        public abstract void End();
 
         /// <summary>
         /// End the span.
         /// </summary>
         /// <param name="endTimestamp">End timestamp.</param>
-        void End(DateTimeOffset endTimestamp);
+        public abstract void End(DateTimeOffset endTimestamp);
     }
 }

@@ -17,46 +17,46 @@ using System;
 
 namespace OpenTelemetry.Trace.Test
 {
-    public class TestSpan : ISpan
+    public class TestSpan : TelemetrySpan
     {
-        public SpanContext Context { get; }
-        public bool IsRecording { get; }
-        public Status Status { get; set; }
-        public bool HasEnded { get; }
-        public void UpdateName(string name)
+        private Status status;
+        public override SpanContext Context { get; }
+        public override bool IsRecording { get; }
+        public override Status Status { set => this.status = value; }
+        public override void UpdateName(string name)
         {
             throw new NotImplementedException();
         }
 
-        public void SetAttribute(string key, object value)
+        public override void SetAttribute(string key, object value)
         {
         }
 
-        public void SetAttribute(string key, long value)
+        public override void SetAttribute(string key, long value)
         {
         }
 
-        public void SetAttribute(string key, bool value)
+        public override void SetAttribute(string key, bool value)
         {
         }
 
-        public void SetAttribute(string key, double value)
+        public override void SetAttribute(string key, double value)
         {
         }
 
-        public void AddEvent(string name)
+        public override void AddEvent(string name)
         {
         }
 
-        public void AddEvent(Event newEvent)
+        public override void AddEvent(Event newEvent)
         {
         }
 
-        public void End()
+        public override void End()
         {
         }
 
-        public void End(DateTimeOffset endTimestamp)
+        public override void End(DateTimeOffset endTimestamp)
         {
         }
     }
