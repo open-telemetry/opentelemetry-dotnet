@@ -25,13 +25,16 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 {
     internal static class SpanExtensions
     {
-        private static Dictionary<string, string> httpLabelsToReplace = new Dictionary<string, string>
+        private static Dictionary<string, string> labelsToReplace = new Dictionary<string, string>
         {
+            { "component", "/component" },
             { "http.method", "/http/method" },
             { "http.host", "/http/host" },
             { "http.status_code", "/http/status_code" },
-            { "http.user_agent", "/agent" },
-            { "http.path", "/http/url" },
+            { "http.user_agent", "/http/user_agent" },
+            { "http.path", "/http/path" },
+            { "http.url", "/http/url" },
+            { "http.route", "/http/route" },
         };
 
         /// <summary>
@@ -89,7 +92,7 @@ namespace OpenTelemetry.Exporter.Stackdriver.Implementation
 
             // StackDriver uses different labels that are used to categorize spans
             // replace attribute keys with StackDriver version
-            foreach (var entry in httpLabelsToReplace)
+            foreach (var entry in labelsToReplace)
             {
                 if (span.Attributes.AttributeMap.TryGetValue(entry.Key, out var attrValue))
                 {

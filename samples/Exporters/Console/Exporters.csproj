@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\Common.prod.props" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))/build/OpenTelemetry.prod.loose.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.3.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.0.519" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Collector.Dependencies\OpenTelemetry.Collector.Dependencies.csproj" />
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Collector.StackExchangeRedis\OpenTelemetry.Collector.StackExchangeRedis.csproj" />
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj" />
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.LightStep\OpenTelemetry.Exporter.LightStep.csproj" />
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Stackdriver\OpenTelemetry.Exporter.Stackdriver.csproj" />
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj" />
+    <ProjectReference Include="..\..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj" />
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.ApplicationInsights\OpenTelemetry.Exporter.ApplicationInsights.csproj" />
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
+  </ItemGroup>
+</Project>

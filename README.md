@@ -503,7 +503,7 @@ var metricExporter = new StackdriverExporter(
 metricExporter.Start();
 ```
 
-### Using Application Insights exporter
+### Using Application Insights exporter in Console App
 
 1. Create [Application Insights][ai-get-started] resource.
 2. Set instrumentation key via telemetry configuration object
@@ -524,6 +524,27 @@ using (var tracerFactory = TracerFactory.Create(builder => builder
     await Task.Delay(1000);
     span.End();
 }
+```
+### Using Application Insights exporter in Web App
+
+1. Create [Application Insights][ai-get-started] resource.
+2. In Startup class, ConfigureServices method add a call of AddOpenTelemetry 
+3. Configurate Application Insights inside AddOpenTelemetry with call UseApplicationInsights
+4. Set instrumentation key via telemetry configuration object
+    telemetryConfiguration.InstrumentationKey = instrumentationKey;
+5. See [sample][ai-web-sample] for example use.
+
+``` csharp
+ services.AddOpenTelemetry((sp, builder) =>
+            {
+                    builder.UseApplicationInsights(telemetryConfiguration =>
+                    {
+                        var instrumentationKey = this.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
+                        telemetryConfiguration.InstrumentationKey = instrumentationKey;
+                    })
+                    .AddRequestCollector()
+                    .AddDependencyCollector();
+            });
 ```
 
 ### Using LightStep exporter
@@ -677,12 +698,13 @@ deprecate it for 18 months before removing it, if possible.
 [GKE]: https://codelabs.developers.google.com/codelabs/cloud-kubernetes-aspnetcore/index.html?index=..%2F..index#0
 [gcp-auth]: https://cloud.google.com/docs/authentication/getting-started
 [semver]: http://semver.org/
-[ai-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestApplicationInsights.cs
-[stackdriver-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestStackdriver.cs
-[zipkin-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestZipkin.cs
-[jaeger-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestJaeger.cs
+[ai-web-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Web/Startup.cs
+[ai-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestApplicationInsights.cs
+[stackdriver-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestStackdriver.cs
+[zipkin-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestZipkin.cs
+[jaeger-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestJaeger.cs
 [prometheus-get-started]: https://prometheus.io/docs/introduction/first_steps/
-[prometheus-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestPrometheus.cs
+[prometheus-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestPrometheus.cs
 [lightstep-getting-started]: https://docs.lightstep.com/docs/welcome-to-lightstep
-[lightstep-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/TestLightstep.cs
+[lightstep-sample]: https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestLightstep.cs
 
