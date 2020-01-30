@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc />
         public override void OnStart(SpanData span)
         {
-            Interlocked.Increment(ref spanCount);
+            Interlocked.Increment(ref this.spanCount);
         }
 
         /// <inheritdoc />
