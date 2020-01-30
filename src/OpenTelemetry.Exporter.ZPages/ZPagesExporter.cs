@@ -42,13 +42,13 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <inheritdoc />
         public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
         {
-            return (Task<ExportResult>)Task.CompletedTask;
+            return Task.FromResult(ExportResult.Success);
         }
 
         /// <inheritdoc />
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            return (Task<ExportResult>)Task.CompletedTask;
+            return Task.FromResult(ExportResult.Success);
         }
     }
 }

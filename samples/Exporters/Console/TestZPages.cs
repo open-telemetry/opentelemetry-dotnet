@@ -27,7 +27,7 @@ namespace Samples
     {
         internal static object Run()
         {
-            var zpagesOptions = new ZPagesExporterOptions() { Url = "http://localhost:7284/statsz/" };
+            var zpagesOptions = new ZPagesExporterOptions() { Url = "http://localhost:7284/rpcz/" };
             var zpagesExporter = new ZPagesExporter(zpagesOptions);
             var spanProcessor = new SimpleSpanProcessor(zpagesExporter);
             var httpServer = new ZPagesExporterStatsHttpServer(zpagesExporter, spanProcessor);

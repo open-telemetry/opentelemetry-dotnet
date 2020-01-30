@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.LightStep\OpenTelemetry.Exporter.LightStep.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Stackdriver\OpenTelemetry.Exporter.Stackdriver.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj" />
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.ZPages\OpenTelemetry.Exporter.ZPages.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.ApplicationInsights\OpenTelemetry.Exporter.ApplicationInsights.csproj" />

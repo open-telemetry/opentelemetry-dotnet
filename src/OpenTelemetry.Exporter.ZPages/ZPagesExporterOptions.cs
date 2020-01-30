@@ -22,7 +22,7 @@ namespace OpenTelemetry.Exporter.ZPages
     public class ZPagesExporterOptions
     {
         /// <summary>
-        /// Gets or sets the port to listen to. Typically it ends with /statz like http://localhost:7284/statsz/.
+        /// Gets or sets the port to listen to. Typically it ends with /rpcz like http://localhost:7284/rpcz/.
         /// </summary>
         public string Url { get; set; }
     }
