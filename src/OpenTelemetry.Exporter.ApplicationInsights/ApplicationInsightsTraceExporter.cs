@@ -109,6 +109,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                         Name = name,
                         ResponseCode = resultCode,
                     };
+
+                    result.Context.Operation.Name = name;
                 }
 
                 string component = this.GetComponent(span);
@@ -548,6 +550,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                 }
 
                 request.ResponseCode = resultCode;
+                request.Context.Operation.Name = request.Name;
             }
         }
 

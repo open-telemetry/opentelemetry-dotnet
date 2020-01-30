@@ -98,6 +98,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             var request = sentItems.OfType<RequestTelemetry>().Single();
             Assert.Equal("spanName", request.Name);
+            Assert.Equal("spanName", request.Context.Operation.Name);
             Assert.Equal(startTimestamp, request.Timestamp);
             Assert.Equal(1, request.Duration.TotalSeconds);
 
@@ -665,6 +666,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal(url.ToString(), request.Url.ToString());
             Assert.Equal("POST /path", request.Name);
             Assert.Equal("409", request.ResponseCode);
+            Assert.Equal(request.Name, request.Context.Operation.Name);
         }
 
         [Fact]
@@ -693,6 +695,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("/path", request.Url.ToString()); // This check doesn't match Local Forwarder Assert.Null(request.Url);
             Assert.Equal("POST /path", request.Name);
             Assert.Equal("409", request.ResponseCode);
+            Assert.Equal(request.Name, request.Context.Operation.Name);
         }
 
         [Fact]
@@ -722,6 +725,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal(url.ToString(), request.Url.ToString());
             Assert.Equal("POST route", request.Name);
             Assert.Equal("503", request.ResponseCode);
+            Assert.Equal(request.Name, request.Context.Operation.Name);
         }
 
         [Fact]
@@ -749,6 +753,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal(url.ToString(), request.Url.ToString());
             Assert.Equal("/path", request.Name);
             Assert.Equal("200", request.ResponseCode);
+            Assert.Equal(request.Name, request.Context.Operation.Name);
         }
 
         [Fact]
@@ -780,6 +785,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal(url.ToString(), request.Url.ToString());
             Assert.Equal("POST another path", request.Name); // This check doesn't match Local Forwarder Assert.AreEqual("POST /path", request.Name);
             Assert.Equal("200", request.ResponseCode);
+            Assert.Equal(request.Name, request.Context.Operation.Name);
         }
 
         [Fact]
@@ -808,6 +814,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var request = (RequestTelemetry)sentItems.Single();
 
             Assert.Equal("201", request.ResponseCode);
+            Assert.Equal(request.Name, request.Context.Operation.Name);
         }
 
         [Fact]
@@ -838,6 +845,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("https://host:123/path", request.Url.ToString());
             Assert.Equal("POST path", request.Name);
             Assert.Equal("200", request.ResponseCode);
+            Assert.Equal(request.Name, request.Context.Operation.Name);
         }
 
         [Fact]
@@ -867,6 +875,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("/path", request.Url.ToString());  // This check doesn't match Local Forwarder Assert.IsNull(request.Url);
             Assert.Equal("POST path", request.Name);
             Assert.Equal("200", request.ResponseCode);
+            Assert.Equal(request.Name, request.Context.Operation.Name);
         }
 
         [Fact]
@@ -895,6 +904,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("https://host/path", request.Url.ToString());
             Assert.Equal("POST /path", request.Name);
             Assert.Equal("200", request.ResponseCode);
+            Assert.Equal(request.Name, request.Context.Operation.Name);
         }
 
         [Fact]
@@ -922,6 +932,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal("https://host/", request.Url.ToString());
             Assert.Equal("POST", request.Name);
             Assert.Equal("200", request.ResponseCode);
+            Assert.Equal(request.Name, request.Context.Operation.Name);
         }
 
         [Fact]
@@ -948,6 +959,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Null(request.Url);
             Assert.Equal("POST", request.Name);
             Assert.Equal("200", request.ResponseCode);
+            Assert.Equal(request.Name, request.Context.Operation.Name);
         }
 
         [Fact]
