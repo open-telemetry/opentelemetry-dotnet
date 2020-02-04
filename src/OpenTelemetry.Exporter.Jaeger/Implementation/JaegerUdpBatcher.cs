@@ -164,6 +164,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             {
                 if (disposing)
                 {
+                    this.maxFlushIntervalTimer.Dispose();
                     this.thriftClient.Dispose();
                     this.clientTransport.Dispose();
                 }
