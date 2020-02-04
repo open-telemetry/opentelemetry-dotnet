@@ -17,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.Threading;
 using Thrift.Protocols;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
@@ -32,7 +31,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private readonly int processByteSize;
         private readonly List<JaegerSpan> currentBatch = new List<JaegerSpan>();
 
-        private readonly AsyncSemaphore flushLock = new AsyncSemaphore(1);
+        private readonly SemaphoreSlim flushLock = new SemaphoreSlim(1);
         private readonly TimeSpan maxFlushInterval;
         private readonly System.Timers.Timer maxFlushIntervalTimer;
 
@@ -90,8 +89,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             var flushedSpanCount = 0;
 
-            using (await this.flushLock.EnterAsync().ConfigureAwait(false))
+            try
             {
+                await this.flushLock.WaitAsync().ConfigureAwait(false);
+
                 // flush if current batch size plus new span size equals or exceeds max batch size
                 if (this.batchByteSize + spanSize >= this.maxPacketSize)
                 {
@@ -106,14 +107,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 this.currentBatch.Add(span);
                 this.batchByteSize += spanSize;
             }
+            finally
+            {
+                this.flushLock.Release();
+            }
 
             return flushedSpanCount;
         }
 
         public async Task<int> FlushAsync(CancellationToken cancellationToken)
         {
-            using (await this.flushLock.EnterAsync().ConfigureAwait(false))
+            try
             {
+                await this.flushLock.WaitAsync().ConfigureAwait(false);
+
                 this.maxFlushIntervalTimer.Enabled = false;
 
                 int n = this.currentBatch.Count;
@@ -134,6 +141,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 }
 
                 return n;
+            }
+            finally
+            {
+                this.flushLock.Release();
             }
         }
 

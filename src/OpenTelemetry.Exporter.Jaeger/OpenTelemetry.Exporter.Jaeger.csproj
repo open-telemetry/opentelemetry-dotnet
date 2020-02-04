@@ -13,7 +13,6 @@
     </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="15.5.32" />
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
     <ProjectReference Include="..\..\lib\Thrift\Thrift.csproj" PrivateAssets="All" />
   </ItemGroup>
