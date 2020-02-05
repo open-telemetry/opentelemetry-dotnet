@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Exporter.Jaeger
@@ -28,6 +29,8 @@ namespace OpenTelemetry.Exporter.Jaeger
         public int AgentPort { get; set; } = 6831;
 
         public int? MaxPacketSize { get; set; } = DefaultMaxPacketSize;
+
+        public TimeSpan MaxFlushInterval { get; set; } = TimeSpan.FromSeconds(10);
 
         public Dictionary<string, object> ProcessTags { get; set; }
     }
