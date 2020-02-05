@@ -5,7 +5,7 @@
     <Description>ZPages exporter for OpenTelemetry</Description>
     <PackageTags>$(PackageTags);ZPages;distributed-tracing</PackageTags>
   </PropertyGroup>
-
+    
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>

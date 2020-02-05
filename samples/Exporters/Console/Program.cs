@@ -34,7 +34,7 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions, ConsoleOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions, ZPagesOptions, ConsoleOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri),
@@ -44,6 +44,7 @@ namespace Samples
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (StackdriverOptions options) => TestStackdriver.Run(options.ProjectId),
                     (LightStepOptions options) => TestLightstep.Run(options.AccessToken),
+                    (ZPagesOptions options) => TestZPages.Run(),
                     (ConsoleOptions options) => TestConsole.Run(options),
                     errs => 1);
 
@@ -103,6 +104,11 @@ namespace Samples
     {
         [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
         public string Uri { get; set; }
+    }
+
+    [Verb("zpages", HelpText = "Specify the options required to test ZPages")]
+    internal class ZPagesOptions
+    {
     }
 
     [Verb("console", HelpText = "Specify the options required to test console exporter")]

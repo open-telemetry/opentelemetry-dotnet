@@ -27,6 +27,7 @@ namespace OpenTelemetry.Trace.Export
     {
         private readonly SpanExporter exporter;
         private bool disposed = false;
+        private long spanCount = 0;
 
         /// <summary>
         /// Constructs simple processor.
@@ -37,9 +38,15 @@ namespace OpenTelemetry.Trace.Export
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
+        public long GetSpanCount()
+        {
+            return this.spanCount;
+        }
+
         /// <inheritdoc />
         public override void OnStart(SpanData span)
         {
+            Interlocked.Increment(ref this.spanCount);
         }
 
         /// <inheritdoc />

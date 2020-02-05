@@ -17,6 +17,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Metrics.Export;
+using OpenTelemetry.Metrics.Implementation;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.ZPages
@@ -26,16 +28,27 @@ namespace OpenTelemetry.Exporter.ZPages
     /// </summary>
     public class ZPagesExporter : SpanExporter
     {
+        internal readonly ZPagesExporterOptions Options;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ZPagesExporter"/> class.
+        /// </summary>
+        /// <param name="options">Options for the exporter.</param>
+        public ZPagesExporter(ZPagesExporterOptions options)
+        {
+            this.Options = options;
+        }
+
         /// <inheritdoc />
         public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(ExportResult.Success);
         }
 
         /// <inheritdoc />
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(ExportResult.Success);
         }
     }
 }
