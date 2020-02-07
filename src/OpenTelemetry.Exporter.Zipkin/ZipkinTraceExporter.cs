@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -22,7 +23,11 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+#if NETSTANDARD2_0
+using System.Text.Json;
+#else
 using Newtonsoft.Json;
+#endif
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
@@ -38,13 +43,22 @@ namespace OpenTelemetry.Exporter.Zipkin
         private const long NanosPerMillisecond = 1000 * 1000;
         private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
 
-        private static readonly string StatusCode = "ot.status_code";
-        private static readonly string StatusDescription = "ot.status_description";
+        private const string StatusCode = "ot.status_code";
+        private const string StatusDescription = "ot.status_description";
+
+#if NETSTANDARD2_0
+        private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
+#endif
 
         private readonly ZipkinTraceExporterOptions options;
         private readonly ZipkinEndpoint localEndpoint;
         private readonly HttpClient httpClient;
         private readonly string serviceEndpoint;
+        private readonly ConcurrentDictionary<string, ZipkinEndpoint> localEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
+        private readonly ConcurrentDictionary<string, ZipkinEndpoint> remoteEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZipkinTraceExporter"/> class.
@@ -131,20 +145,51 @@ namespace OpenTelemetry.Exporter.Zipkin
                 spanBuilder.ParentId(this.EncodeSpanId(otelSpan.ParentSpanId));
             }
 
+            string peerService = null; // RemoteEndpoint.ServiceName primary.
+            string peerHostName = null; // RemoteEndpoint.ServiceName alternative.
+            string peerAddress = null; // RemoteEndpoint.ServiceName alternative.
+            string httpHost = null; // RemoteEndpoint.ServiceName for Http.
+            string dbInstance = null; // RemoteEndpoint.ServiceName for Redis.
             foreach (var label in otelSpan.Attributes)
             {
-                spanBuilder.PutTag(label.Key, label.Value.ToString());
+                string key = label.Key;
+                string strVal = label.Value.ToString();
+
+                if (strVal != null)
+                {
+                    if (key == "peer.service")
+                    {
+                        peerService = strVal;
+                    }
+                    else if (key == "peer.hostname")
+                    {
+                        peerHostName = strVal;
+                    }
+                    else if (key == "peer.address")
+                    {
+                        peerAddress = strVal;
+                    }
+                    else if (key == "http.host")
+                    {
+                        httpHost = strVal;
+                    }
+                    else if (key == "db.instance")
+                    {
+                        dbInstance = strVal;
+                    }
+                }
+
+                spanBuilder.PutTag(key, strVal);
             }
 
             // See https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md
             string serviceName = string.Empty;
             string serviceNamespace = string.Empty;
-
             foreach (var label in otelSpan.LibraryResource.Attributes)
             {
                 string key = label.Key;
                 object val = label.Value;
-                string strVal = (string)val;
+                string strVal = val as string;
 
                 if (key == "service.name" && strVal != null)
                 {
@@ -156,7 +201,7 @@ namespace OpenTelemetry.Exporter.Zipkin
                 }
                 else
                 {
-                    spanBuilder.PutTag(key, val?.ToString());
+                    spanBuilder.PutTag(key, strVal ?? val?.ToString());
                 }
             }
 
@@ -168,19 +213,27 @@ namespace OpenTelemetry.Exporter.Zipkin
             var endpoint = defaultLocalEndpoint;
 
             // override default service name
-            // TODO: add caching
             if (serviceName != string.Empty)
             {
-                endpoint = new ZipkinEndpoint()
+                endpoint = this.localEndpointCache.GetOrAdd(serviceName, _ => new ZipkinEndpoint()
                 {
                     Ipv4 = defaultLocalEndpoint.Ipv4,
                     Ipv6 = defaultLocalEndpoint.Ipv6,
                     Port = defaultLocalEndpoint.Port,
                     ServiceName = serviceName,
-                };
+                });
             }
 
             spanBuilder.LocalEndpoint(endpoint);
+
+            string finalPeerService = peerService ?? peerHostName ?? peerAddress ?? httpHost ?? dbInstance;
+            if ((otelSpan.Kind == SpanKind.Client || otelSpan.Kind == SpanKind.Producer) && finalPeerService != null)
+            {
+                spanBuilder.RemoteEndpoint(this.remoteEndpointCache.GetOrAdd(finalPeerService, _ => new ZipkinEndpoint
+                {
+                    ServiceName = finalPeerService,
+                }));
+            }
 
             var status = otelSpan.Status;
 
@@ -273,7 +326,11 @@ namespace OpenTelemetry.Exporter.Zipkin
             var content = string.Empty;
             try
             {
+#if NETSTANDARD2_0
+                content = JsonSerializer.Serialize(toSerialize, Options);
+#else
                 content = JsonConvert.SerializeObject(toSerialize);
+#endif
             }
             catch (Exception)
             {

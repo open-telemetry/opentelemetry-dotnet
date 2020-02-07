@@ -13,16 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+#if !NETSTANDARD2_0
 using Newtonsoft.Json;
+#endif
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     internal class ZipkinAnnotation
     {
+#if NETSTANDARD2_0
+        public long Timestamp { get; set; }
+
+        public string Value { get; set; }
+#else
         [JsonProperty("timestamp")]
         public long Timestamp { get; set; }
 
         [JsonProperty("value")]
         public string Value { get; set; }
+#endif
     }
 }

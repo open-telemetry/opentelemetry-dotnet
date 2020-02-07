@@ -15,13 +15,46 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+#if NETSTANDARD2_0
+using System.Text.Json.Serialization;
+#else
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+#endif
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     internal class ZipkinSpan
     {
+#if NETSTANDARD2_0
+        public string TraceId { get; set; }
+
+        public string ParentId { get; set; }
+
+        public string Id { get; set; }
+
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public ZipkinSpanKind Kind { get; set; }
+
+        public string Name { get; set; }
+
+        public long Timestamp { get; set; }
+
+        public long Duration { get; set; }
+
+        public ZipkinEndpoint LocalEndpoint { get; set; }
+
+        public ZipkinEndpoint RemoteEndpoint { get; set; }
+
+        public IList<ZipkinAnnotation> Annotations { get; set; }
+
+        public Dictionary<string, string> Tags { get; set; }
+
+        public bool Debug { get; set; }
+
+        public bool Shared { get; set; }
+
+#else
         [JsonProperty("traceId")]
         public string TraceId { get; set; }
 
@@ -61,6 +94,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         [JsonProperty("shared")]
         public bool Shared { get; set; }
+#endif
 
         public static Builder NewBuilder()
         {
