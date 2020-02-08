@@ -57,10 +57,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 {
                     switch (key)
                     {
-                        case "service.name":
+                        case Resource.ServiceNameKey:
                             serviceName = strVal;
                             continue;
-                        case "service.namespace":
+                        case Resource.ServiceNamespaceKey:
                             serviceNamespace = strVal;
                             continue;
                     }

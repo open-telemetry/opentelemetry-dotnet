@@ -13,14 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using OpenTelemetry.Trace.Configuration;
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Resources;
 using Xunit;
 
@@ -37,7 +31,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 options,
                 new Resource(new Dictionary<string, object>
                 {
-                    ["service.name"] = "TestService",
+                    [Resource.ServiceNameKey] = "TestService",
                 }));
 
             Assert.Equal("TestService", options.ServiceName);
