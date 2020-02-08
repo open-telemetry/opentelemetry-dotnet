@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
     {
         private const string InProcDependencyType = "InProc";
         private const string QueueMessageDependencyType = "Queue Message";
-        private const string EventHubsDependencyType = "Azure Event Hubs";
+        private const string EventHubsDependencyType = "Microsoft.EventHub";
         private const string HttpDependencyType = "Http";
         private readonly TelemetryClient telemetryClient;
         private readonly string serviceEndpoint;
@@ -135,14 +135,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
 
                         if (result is DependencyTelemetry dependency && component != null)
                         {
-                            if (dependency.Type == null)
-                            {
-                                dependency.Type = component;
-                            }
-                            else if (dependency.Type == InProcDependencyType)
-                            {
-                                dependency.Type = string.Concat(dependency.Type, " | ", component);
-                            }
+                            dependency.Type = string.IsNullOrEmpty(dependency.Type) ? component : string.Concat(dependency.Type, " | ", component);
                         }
 
                         foreach (var attribute in span.Attributes)
@@ -586,22 +579,32 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                 }
             }
 
+            string eventHubsInfo = null;
+
+            // Target/source uniquely identifies the resource, we use both: queueName and endpoint
             if (endpoint != null && queueName != null)
             {
-                if (telemetry is DependencyTelemetry dependency)
+                eventHubsInfo = string.Concat(endpoint, "/", queueName);
+            }
+
+            if (telemetry is DependencyTelemetry dependency)
+            {
+                dependency.Type = dependency.Type == QueueMessageDependencyType ? string.Concat(dependency.Type, " | ", EventHubsDependencyType) : EventHubsDependencyType;
+                if (eventHubsInfo != null)
                 {
-                    // Target uniquely identifies the resource, we use both: queueName and endpoint
-                    // with schema used for SQL-dependencies
-                    dependency.Target = string.Concat(endpoint, "/", queueName);
-                    dependency.Type = EventHubsDependencyType;
+                    dependency.Target = eventHubsInfo;
                 }
-                else if (telemetry is RequestTelemetry request)
+            }
+            else if (telemetry is RequestTelemetry request)
+            {
+                if (eventHubsInfo != null)
                 {
-                    request.Source = string.Concat(endpoint, "/", queueName);
-                    if (this.TryGetAverageTimeInQueueForBatch(span, out long enqueuedTime))
-                    {
-                        request.Metrics["timeSinceEnqueued"] = enqueuedTime;
-                    }
+                    request.Source = eventHubsInfo;
+                }
+
+                if (this.TryGetAverageTimeInQueueForBatch(span, out long enqueuedTime))
+                {
+                    request.Metrics["timeSinceEnqueued"] = enqueuedTime;
                 }
             }
         }

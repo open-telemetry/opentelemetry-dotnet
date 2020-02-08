@@ -2069,7 +2069,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.True(dependency.Success);
             Assert.Equal("Ok", dependency.ResultCode);
             Assert.Equal("sb://endpoint.com/123/queueName", dependency.Target);
-            Assert.Equal("Azure Event Hubs", dependency.Type);
+            Assert.Equal("Microsoft.EventHub", dependency.Type);
 
             Assert.StartsWith("ot:", dependency.Context.GetInternalContext().SdkVersion);
             Assert.Empty(dependency.Properties);
@@ -2118,7 +2118,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.True(dependency.Success);
             Assert.Equal("Ok", dependency.ResultCode);
             Assert.Equal("sb://endpoint.com/123/queueName", dependency.Target);
-            Assert.Equal("Azure Event Hubs", dependency.Type);
+            Assert.Equal("Microsoft.EventHub", dependency.Type);
 
             Assert.StartsWith("ot:", dependency.Context.GetInternalContext().SdkVersion);
             Assert.Empty(dependency.Properties);
@@ -2164,7 +2164,56 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.True(dependency.Success);
             Assert.Equal("Ok", dependency.ResultCode);
-            Assert.Equal("Queue Message", dependency.Type);
+            Assert.Equal("Queue Message | Microsoft.EventHub", dependency.Type);
+
+            Assert.StartsWith("ot:", dependency.Context.GetInternalContext().SdkVersion);
+            Assert.Empty(dependency.Properties);
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_TracksEventHubsDependencyProducerWithTarget()
+        {
+            // ARRANGE
+            GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
+            kind = SpanKind.Producer;
+
+            var endTimestamp = DateTimeOffset.UtcNow;
+            var startTimestamp = endTimestamp.AddSeconds(-1);
+            parentSpanId = default;
+
+            var options = new SpanCreationOptions
+            {
+                StartTimestamp = startTimestamp,
+                Attributes = new Dictionary<string, object>
+                {
+                    ["az.namespace"] = "Microsoft.EventHub",
+                    ["message_bus.destination"] = "queueName",
+                    ["peer.address"] = "sb://endpoint.com/123",
+                },
+            };
+
+            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions, tracestate, kind, status, options, endTimestamp);
+
+            // ACT
+            var sentItems = ConvertSpan(span);
+
+            // ASSERT
+            Assert.Single(sentItems);
+            Assert.True(sentItems.Single() is DependencyTelemetry);
+
+            var dependency = sentItems.OfType<DependencyTelemetry>().Single();
+            Assert.Equal("spanName", dependency.Name);
+            Assert.Equal(startTimestamp, dependency.Timestamp);
+            Assert.Equal(1, dependency.Duration.TotalSeconds);
+
+            Assert.Equal(span.Context.TraceId.ToHexString(), dependency.Context.Operation.Id);
+            Assert.Equal(span.Context.SpanId.ToHexString(), dependency.Id);
+            Assert.Null(dependency.Context.Operation.ParentId);
+
+            Assert.True(dependency.Success);
+            Assert.Equal("Ok", dependency.ResultCode);
+            Assert.Equal("sb://endpoint.com/123/queueName", dependency.Target);
+            Assert.Equal("Queue Message | Microsoft.EventHub", dependency.Type);
 
             Assert.StartsWith("ot:", dependency.Context.GetInternalContext().SdkVersion);
             Assert.Empty(dependency.Properties);
