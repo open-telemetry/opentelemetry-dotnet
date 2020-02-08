@@ -19,7 +19,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Jaeger
@@ -29,10 +29,9 @@ namespace OpenTelemetry.Exporter.Jaeger
         private readonly IJaegerUdpBatcher jaegerAgentUdpBatcher;
         private bool disposedValue = false; // To detect redundant dispose calls
 
-        public JaegerTraceExporter(JaegerExporterOptions options)
+        public JaegerTraceExporter(JaegerExporterOptions options, Resource libraryResource)
         {
-            this.ValidateOptions(options);
-            this.jaegerAgentUdpBatcher = new JaegerUdpBatcher(options);
+            this.jaegerAgentUdpBatcher = new JaegerUdpBatcher(options, libraryResource);
         }
 
         public JaegerTraceExporter(IJaegerUdpBatcher jaegerAgentUdpBatcher)
@@ -76,14 +75,6 @@ namespace OpenTelemetry.Exporter.Jaeger
                 }
 
                 this.disposedValue = true;
-            }
-        }
-
-        private void ValidateOptions(JaegerExporterOptions options)
-        {
-            if (string.IsNullOrWhiteSpace(options.ServiceName))
-            {
-                throw new ArgumentException("Service Name is required", nameof(options.ServiceName));
             }
         }
     }

@@ -53,10 +53,10 @@ namespace OpenTelemetry.Trace.Configuration
             }
             else if (builder.ProcessingPipelines.Count == 1)
             {
-                // if there is only one pipeline - use it's outer processor as a 
+                // if there is only one pipeline - use it's outer processor as a
                 // single processor on the tracerSdk.
                 var processorFactory = builder.ProcessingPipelines[0];
-                this.spanProcessor = processorFactory.Build();
+                this.spanProcessor = processorFactory.Build(this.defaultResource);
             }
             else
             {
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace.Configuration
 
                 for (int i = 0; i < builder.ProcessingPipelines.Count; i++)
                 {
-                    processors[i] = builder.ProcessingPipelines[i].Build();
+                    processors[i] = builder.ProcessingPipelines[i].Build(this.defaultResource);
                 }
 
                 this.spanProcessor = new BroadcastProcessor(processors);

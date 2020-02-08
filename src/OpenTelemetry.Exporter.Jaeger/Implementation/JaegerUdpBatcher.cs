@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Resources;
 using Thrift.Protocols;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
@@ -39,16 +40,53 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         private bool disposedValue = false; // To detect redundant calls
 
-        public JaegerUdpBatcher(JaegerExporterOptions options)
+        public JaegerUdpBatcher(JaegerExporterOptions options, Resource libraryResource)
         {
             if (options is null)
             {
                 throw new ArgumentNullException(nameof(options));
             }
 
+            string serviceName = null;
+            string serviceNamespace = null;
+            foreach (var label in libraryResource?.Attributes ?? Array.Empty<KeyValuePair<string, object>>())
+            {
+                string key = label.Key;
+
+                if (label.Value is string strVal)
+                {
+                    switch (key)
+                    {
+                        case "service.name":
+                            serviceName = strVal;
+                            continue;
+                        case "service.namespace":
+                            serviceNamespace = strVal;
+                            continue;
+                    }
+                }
+
+                if (options.ProcessTags == null)
+                {
+                    options.ProcessTags = new Dictionary<string, object>();
+                }
+
+                options.ProcessTags[key] = label.Value;
+            }
+
             if (string.IsNullOrWhiteSpace(options.ServiceName))
             {
-                throw new ArgumentException("Service Name is required", nameof(options.ServiceName));
+                if (serviceName != null)
+                {
+                    options.ServiceName = serviceNamespace != null
+                        ? serviceNamespace + "." + serviceName
+                        : serviceName;
+                }
+
+                if (string.IsNullOrWhiteSpace(options.ServiceName))
+                {
+                    throw new ArgumentException("Service Name is required", nameof(options.ServiceName));
+                }
             }
 
             if (options.MaxFlushInterval <= TimeSpan.Zero)

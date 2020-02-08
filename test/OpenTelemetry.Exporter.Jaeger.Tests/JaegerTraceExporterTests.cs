@@ -1,4 +1,4 @@
-// <copyright file="JaegerTraceExporterTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerTraceExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,12 +25,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         {
             // Arrange
             var options = new JaegerExporterOptions();
-            
+
             // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => new JaegerTraceExporter(options));
+            var exception = Assert.Throws<ArgumentException>(() => new JaegerTraceExporter(options, null));
             Assert.Equal("ServiceName", exception.ParamName);
         }
-        
+
         [Fact]
         public void Constructor_ValidOptions_ReturnsInstance()
         {
@@ -38,8 +38,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             var options = new JaegerExporterOptions {ServiceName = "test_service"};
 
             // Act
-            var exporter = new JaegerTraceExporter(options);
-            
+            var exporter = new JaegerTraceExporter(options, null);
+
             // Assert
             Assert.NotNull(exporter);
         }

@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace.Configuration
@@ -26,6 +27,7 @@ namespace OpenTelemetry.Trace.Configuration
     public class SpanProcessorPipelineBuilder
     {
         private Func<SpanExporter, SpanProcessor> lastProcessorFactory;
+        private Func<Resource, SpanExporter> exporterFactory;
         private List<Func<SpanProcessor, SpanProcessor>> processorChain;
 
         internal SpanProcessorPipelineBuilder()
@@ -58,12 +60,22 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Configures last processor that invokes exporter. When not set, <see cref="BatchingSpanProcessor"/> is used. 
+        /// Configures last processor that invokes exporter. When not set, <see cref="BatchingSpanProcessor"/> is used.
         /// </summary>
         /// <param name="processorFactory">Factory that creates exporting processor from the exporter.</param>
         public SpanProcessorPipelineBuilder SetExportingProcessor(Func<SpanExporter, SpanProcessor> processorFactory)
         {
             this.lastProcessorFactory = processorFactory ?? throw new ArgumentNullException(nameof(processorFactory));
+            return this;
+        }
+
+        /// <summary>
+        /// Configures exporter.
+        /// </summary>
+        /// <param name="exporter">Factory that creates the exporter instance.</param>
+        public SpanProcessorPipelineBuilder SetExporter(Func<Resource, SpanExporter> exporter)
+        {
+            this.exporterFactory = exporter ?? throw new ArgumentNullException(nameof(exporter));
             return this;
         }
 
@@ -77,12 +89,17 @@ namespace OpenTelemetry.Trace.Configuration
             return this;
         }
 
-        internal SpanProcessor Build()
+        internal SpanProcessor Build(Resource resource = null)
         {
             this.Processors = new List<SpanProcessor>();
-            
+
             SpanProcessor exportingProcessor = null;
-            
+
+            if (this.exporterFactory != null)
+            {
+                this.Exporter = this.exporterFactory(resource);
+            }
+
             // build or create default exporting processor
             if (this.lastProcessorFactory != null)
             {
@@ -94,7 +111,7 @@ namespace OpenTelemetry.Trace.Configuration
                 exportingProcessor = new BatchingSpanProcessor(this.Exporter);
                 this.Processors.Add(exportingProcessor);
             }
-            
+
             if (this.processorChain == null)
             {
                 // if there is no chain, return exporting processor.
