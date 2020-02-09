@@ -38,9 +38,9 @@ namespace OpenTelemetry.Trace
         public abstract bool IsRecording { get; }
 
         /// <summary>
-        /// Sets the status of the span execution.
+        /// Gets or sets the status of the span execution.
         /// </summary>
-        public abstract Status Status { set; }
+        public abstract Status Status { get; set; }
 
         /// <summary>
         /// Updates the <see cref="TelemetrySpan"/> name.

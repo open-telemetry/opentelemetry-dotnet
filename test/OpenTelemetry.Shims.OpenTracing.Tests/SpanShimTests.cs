@@ -214,9 +214,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.True((bool)spanMock.Attributes.First().Value);
 
             // A boolean tag named "error" is a special case that must be checked
-            Assert.Equal(Status.Unknown, spanMock.GetStatus());
+            Assert.Equal(Status.Unknown, spanMock.Status);
             shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
-            Assert.Equal(Status.Ok, spanMock.GetStatus());
+            Assert.Equal(Status.Ok, spanMock.Status);
         }
 
         [Fact]
@@ -265,9 +265,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.True((bool)spanMock.Attributes.First().Value);
 
             // A boolean tag named "error" is a special case that must be checked
-            Assert.Equal(Status.Unknown, spanMock.GetStatus());
+            Assert.Equal(Status.Unknown, spanMock.Status);
             shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
-            Assert.Equal(Status.Ok, spanMock.GetStatus());
+            Assert.Equal(Status.Ok, spanMock.Status);
         }
 
         [Fact]

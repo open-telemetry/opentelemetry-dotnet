@@ -35,7 +35,11 @@ namespace LoggingTracer
         public override SpanContext Context { get; }
 
         /// <inheritdoc/>
-        public override Status Status { set => this.status = value; }
+        public override Status Status
+        {
+            get => this.status;
+            set => this.status = value;
+        }
 
         public SpanKind? Kind { get; set; }
 

@@ -201,10 +201,11 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override Status Status
         {
+            get => this.status;
             set
             {
                 if (!value.IsValid)
-                { 
+                {
                     OpenTelemetrySdkEventSource.Log.InvalidArgument("set_Status", nameof(value), "is null");
                     return;
                 }

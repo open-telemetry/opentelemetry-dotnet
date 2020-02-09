@@ -63,7 +63,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.WithStartTimestamp(startTimestamp);
 
             shim.Start();
-            tracerMock.Verify(o => o.StartSpan("foo", It.IsAny<TelemetrySpan>(), 0, 
+            tracerMock.Verify(o => o.StartSpan("foo", It.IsAny<TelemetrySpan>(), 0,
                 It.Is<SpanCreationOptions>(so => so.StartTimestamp == startTimestamp && !so.Links.Any())), Times.Once);
         }
 
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
                 tracerMock = GetDefaultTracerMock();
                 shim = new SpanBuilderShim(tracerMock.Object, "foo", new List<string> { "bar" });
                 shim.Start();
-                tracerMock.Verify(o => o.StartSpan("foo", It.IsAny<TelemetrySpan>(), 0, 
+                tracerMock.Verify(o => o.StartSpan("foo", It.IsAny<TelemetrySpan>(), 0,
                     It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
             }
             finally
@@ -235,7 +235,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Empty(spanMock.Attributes);
 
             // Span status should be set
-            Assert.Equal(Status.Unknown, spanMock.GetStatus());
+            Assert.Equal(Status.Unknown, spanMock.Status);
         }
 
         [Fact]
@@ -284,7 +284,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Empty(spanMock.Attributes);
 
             // Span status should be set
-            Assert.Equal(Status.Unknown, spanMock.GetStatus());
+            Assert.Equal(Status.Unknown, spanMock.Status);
         }
 
         [Fact]
