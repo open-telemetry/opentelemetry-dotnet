@@ -43,13 +43,46 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
 
+        private static readonly Dictionary<string, int> PeerServiceKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["peer.service"] = 0, // peer.service primary.
+            ["net.peer.name"] = 1, // peer.service first alternative.
+            ["peer.hostname"] = 2, // peer.service second alternative.
+            ["peer.address"] = 2, // peer.service second alternative.
+            ["http.host"] = 3, // peer.service for Http.
+            ["db.instance"] = 4, // peer.service for Redis.
+        };
+
         public static JaegerSpan ToJaegerSpan(this SpanData span)
         {
-            List<JaegerTag> jaegerTags = null;
+            var jaegerTags = new List<JaegerTag>();
 
-            if (span.Attributes is IEnumerable<KeyValuePair<string, object>> attributeMap)
+            Tuple<string, int> peerService = null;
+            foreach (var label in span.Attributes)
             {
-                jaegerTags = attributeMap.Select(a => a.ToJaegerTag()).ToList();
+                var tag = label.ToJaegerTag();
+
+                if (tag.VStr != null
+                    && PeerServiceKeyResolutionDictionary.TryGetValue(label.Key, out int priority)
+                    && (peerService == null || peerService.Item2 > priority))
+                {
+                    peerService = new Tuple<string, int>(tag.VStr, priority);
+                }
+
+                jaegerTags.Add(tag);
+            }
+
+            // Send peer.service for remote calls. If priority = 0 that means peer.service was already included.
+            if ((span.Kind == SpanKind.Client || span.Kind == SpanKind.Producer)
+                && peerService != null
+                && peerService.Item2 > 0)
+            {
+                jaegerTags.Add(new JaegerTag
+                {
+                    Key = "peer.service",
+                    VType = JaegerTagType.STRING,
+                    VStr = peerService.Item1,
+                });
             }
 
             // The Span.Kind must translate into a tag.
