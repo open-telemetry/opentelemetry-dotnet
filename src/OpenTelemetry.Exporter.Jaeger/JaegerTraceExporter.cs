@@ -29,9 +29,9 @@ namespace OpenTelemetry.Exporter.Jaeger
         private readonly IJaegerUdpBatcher jaegerAgentUdpBatcher;
         private bool disposedValue = false; // To detect redundant dispose calls
 
-        public JaegerTraceExporter(JaegerExporterOptions options, Resource libraryResource)
+        public JaegerTraceExporter(JaegerExporterOptions options)
         {
-            this.jaegerAgentUdpBatcher = new JaegerUdpBatcher(options, libraryResource);
+            this.jaegerAgentUdpBatcher = new JaegerUdpBatcher(options);
         }
 
         public JaegerTraceExporter(IJaegerUdpBatcher jaegerAgentUdpBatcher)
@@ -41,6 +41,11 @@ namespace OpenTelemetry.Exporter.Jaeger
 
         public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> otelSpanList, CancellationToken cancellationToken)
         {
+            if (this.jaegerAgentUdpBatcher.ResourceLibrary == null && otelSpanList.Count() > 0)
+            {
+                this.jaegerAgentUdpBatcher.ResourceLibrary = otelSpanList.First().LibraryResource ?? Resource.Empty;
+            }
+
             var jaegerSpans = otelSpanList.Select(sdl => sdl.ToJaegerSpan());
 
             foreach (var s in jaegerSpans)

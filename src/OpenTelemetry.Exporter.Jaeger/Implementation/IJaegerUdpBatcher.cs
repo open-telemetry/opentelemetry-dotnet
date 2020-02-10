@@ -16,11 +16,14 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public interface IJaegerUdpBatcher : IDisposable
     {
+        Resource ResourceLibrary { get; set; }
+
         Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken);
 
         Task<int> CloseAsync(CancellationToken cancellationToken);

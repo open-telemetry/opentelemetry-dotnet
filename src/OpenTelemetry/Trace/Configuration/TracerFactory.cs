@@ -56,7 +56,7 @@ namespace OpenTelemetry.Trace.Configuration
                 // if there is only one pipeline - use it's outer processor as a
                 // single processor on the tracerSdk.
                 var processorFactory = builder.ProcessingPipelines[0];
-                this.spanProcessor = processorFactory.Build(this.defaultResource);
+                this.spanProcessor = processorFactory.Build();
             }
             else
             {
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace.Configuration
 
                 for (int i = 0; i < builder.ProcessingPipelines.Count; i++)
                 {
-                    processors[i] = builder.ProcessingPipelines[i].Build(this.defaultResource);
+                    processors[i] = builder.ProcessingPipelines[i].Build();
                 }
 
                 this.spanProcessor = new BroadcastProcessor(processors);
@@ -149,10 +149,10 @@ namespace OpenTelemetry.Trace.Configuration
 
         private static IEnumerable<KeyValuePair<string, object>> CreateLibraryResourceLabels(string name, string version)
         {
-            var attributes = new Dictionary<string, object> { { "name", name } };
+            var attributes = new Dictionary<string, object> { [Resource.LibraryNameKey] = name };
             if (!string.IsNullOrEmpty(version))
             {
-                attributes.Add("version", version);
+                attributes.Add(Resource.LibraryVersionKey, version);
             }
 
             return attributes;

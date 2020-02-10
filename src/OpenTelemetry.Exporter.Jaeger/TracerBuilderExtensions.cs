@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace.Configuration
             var options = new JaegerExporterOptions();
             configure(options);
             return builder.AddProcessorPipeline(b => b
-                .SetExporter(r => new JaegerTraceExporter(options, r))
+                .SetExporter(new JaegerTraceExporter(options))
                 .SetExportingProcessor(e => new BatchingSpanProcessor(e)));
         }
 
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace.Configuration
             configure(options);
             return builder.AddProcessorPipeline(b =>
             {
-                b.SetExporter(r => new JaegerTraceExporter(options, r));
+                b.SetExporter(new JaegerTraceExporter(options));
                 processorConfigure.Invoke(b);
             });
         }

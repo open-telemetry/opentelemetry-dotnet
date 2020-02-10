@@ -18,7 +18,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
@@ -32,8 +31,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
         public void PipelineBuilder_BadArgs()
         {
             Assert.Throws<ArgumentNullException>(() => new SpanProcessorPipelineBuilder().AddProcessor(null));
-            Assert.Throws<ArgumentNullException>(() => new SpanProcessorPipelineBuilder().SetExporter((SpanExporter)null));
-            Assert.Throws<ArgumentNullException>(() => new SpanProcessorPipelineBuilder().SetExporter((Func<Resource, SpanExporter>)null));
+            Assert.Throws<ArgumentNullException>(() => new SpanProcessorPipelineBuilder().SetExporter(null));
             Assert.Throws<ArgumentNullException>(() => new SpanProcessorPipelineBuilder().SetExportingProcessor(null));
         }
 

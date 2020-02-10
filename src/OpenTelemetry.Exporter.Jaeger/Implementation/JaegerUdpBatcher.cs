@@ -40,53 +40,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         private bool disposedValue = false; // To detect redundant calls
 
-        public JaegerUdpBatcher(JaegerExporterOptions options, Resource libraryResource)
+        public JaegerUdpBatcher(JaegerExporterOptions options)
         {
             if (options is null)
             {
                 throw new ArgumentNullException(nameof(options));
             }
 
-            string serviceName = null;
-            string serviceNamespace = null;
-            foreach (var label in libraryResource?.Attributes ?? Array.Empty<KeyValuePair<string, object>>())
-            {
-                string key = label.Key;
-
-                if (label.Value is string strVal)
-                {
-                    switch (key)
-                    {
-                        case Resource.ServiceNameKey:
-                            serviceName = strVal;
-                            continue;
-                        case Resource.ServiceNamespaceKey:
-                            serviceNamespace = strVal;
-                            continue;
-                    }
-                }
-
-                if (options.ProcessTags == null)
-                {
-                    options.ProcessTags = new Dictionary<string, object>();
-                }
-
-                options.ProcessTags[key] = label.Value;
-            }
-
             if (string.IsNullOrWhiteSpace(options.ServiceName))
             {
-                if (serviceName != null)
-                {
-                    options.ServiceName = serviceNamespace != null
-                        ? serviceNamespace + "." + serviceName
-                        : serviceName;
-                }
-
-                if (string.IsNullOrWhiteSpace(options.ServiceName))
-                {
-                    throw new ArgumentException("Service Name is required", nameof(options.ServiceName));
-                }
+                throw new ArgumentException("Service Name is required", nameof(options.ServiceName));
             }
 
             if (options.MaxFlushInterval <= TimeSpan.Zero)
@@ -114,6 +77,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             {
                 await this.FlushAsync(CancellationToken.None).ConfigureAwait(false);
             };
+        }
+
+        public Resource ResourceLibrary
+        {
+            get => this.process.LibraryResource;
+            set => this.process.ApplyLibraryResource(value);
         }
 
         public async Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken)
