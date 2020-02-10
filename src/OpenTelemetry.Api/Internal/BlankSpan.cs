@@ -40,7 +40,6 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override Status Status
         {
-            get => Status.Ok;
             set { }
         }
 

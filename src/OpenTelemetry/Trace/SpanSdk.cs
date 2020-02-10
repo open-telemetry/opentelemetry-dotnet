@@ -201,7 +201,6 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override Status Status
         {
-            get => this.status;
             set
             {
                 if (!value.IsValid)

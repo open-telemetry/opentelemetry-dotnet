@@ -47,10 +47,11 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
         public override bool IsRecording { get; }
 
-        public override Status Status
+        public override Status Status { set => this.status = value; }
+
+        public Status GetStatus()
         {
-            get => this.status;
-            set => this.status = value;
+            return this.status;
         }
 
         public override void AddEvent(string name)

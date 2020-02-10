@@ -235,7 +235,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Empty(spanMock.Attributes);
 
             // Span status should be set
-            Assert.Equal(Status.Unknown, spanMock.Status);
+            Assert.Equal(Status.Unknown, spanMock.GetStatus());
         }
 
         [Fact]
@@ -284,7 +284,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Empty(spanMock.Attributes);
 
             // Span status should be set
-            Assert.Equal(Status.Unknown, spanMock.Status);
+            Assert.Equal(Status.Unknown, spanMock.GetStatus());
         }
 
         [Fact]

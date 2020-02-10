@@ -22,11 +22,8 @@ namespace OpenTelemetry.Trace.Test
         private Status status;
         public override SpanContext Context { get; }
         public override bool IsRecording { get; }
-        public override Status Status
-        {
-            get => this.status;
-            set => this.status = value;
-        }
+        public override Status Status { set => this.status = value; }
+
         public override void UpdateName(string name)
         {
             throw new NotImplementedException();

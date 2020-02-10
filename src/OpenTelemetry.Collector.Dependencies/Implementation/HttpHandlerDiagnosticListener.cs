@@ -117,9 +117,9 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                         {
                             span.Status = Status.Cancelled;
                         }
-                        else if (span.Status.IsOk)
+                        else if (requestTaskStatus != TaskStatus.Faulted)
                         {
-                            // Check for IsOK so we don't override what is done during OnException.
+                            // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
                             span.Status = Status.Unknown;
                         }
                     }
