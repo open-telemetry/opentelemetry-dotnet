@@ -36,6 +36,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
     /// </summary>
     public class ApplicationInsightsTraceExporter : SpanExporter, IDisposable
     {
+        private const string InProcDependencyType = "InProc";
+        private const string QueueMessageDependencyType = "Queue Message";
+        private const string EventHubsDependencyType = "Microsoft.EventHub";
+        private const string HttpDependencyType = "Http";
         private readonly TelemetryClient telemetryClient;
         private readonly string serviceEndpoint;
 
@@ -98,8 +102,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                     {
                         Name = name,
                         ResultCode = resultCode,
-                        Type = span.Kind == SpanKind.Internal ? "InProc" :
-                               span.Kind == SpanKind.Producer ? "Queue Message" : null,
+                        Type = span.Kind == SpanKind.Internal ? InProcDependencyType :
+                               span.Kind == SpanKind.Producer ? QueueMessageDependencyType : null,
                     };
                 }
                 else
@@ -129,9 +133,9 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                         break;
                     default:
 
-                        if (result is DependencyTelemetry dependency && dependency.Type == null)
+                        if (result is DependencyTelemetry dependency && component != null)
                         {
-                            dependency.Type = component;
+                            dependency.Type = string.IsNullOrEmpty(dependency.Type) ? component : string.Concat(dependency.Type, " | ", component);
                         }
 
                         foreach (var attribute in span.Attributes)
@@ -539,7 +543,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
 
                 if (string.IsNullOrEmpty(dependency.Type))
                 {
-                    dependency.Type = "Http";
+                    dependency.Type = HttpDependencyType;
                 }
             }
             else if (telemetry is RequestTelemetry request)
@@ -575,20 +579,83 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
                 }
             }
 
+            string eventHubsInfo = null;
+
+            // Target/source uniquely identifies the resource, we use both: queueName and endpoint
             if (endpoint != null && queueName != null)
             {
-                if (telemetry is DependencyTelemetry dependency)
+                eventHubsInfo = string.Concat(endpoint, "/", queueName);
+            }
+
+            if (telemetry is DependencyTelemetry dependency)
+            {
+                dependency.Type = dependency.Type == QueueMessageDependencyType ? string.Concat(dependency.Type, " | ", EventHubsDependencyType) : EventHubsDependencyType;
+                if (eventHubsInfo != null)
                 {
-                    // Target uniquely identifies the resource, we use both: queueName and endpoint
-                    // with schema used for SQL-dependencies
-                    dependency.Target = string.Concat(endpoint, " | ", queueName);
-                    dependency.Type = "Azure Event Hubs";
-                }
-                else if (telemetry is RequestTelemetry request)
-                {
-                    request.Source = string.Concat(endpoint, " | ", queueName);
+                    dependency.Target = eventHubsInfo;
                 }
             }
+            else if (telemetry is RequestTelemetry request)
+            {
+                if (eventHubsInfo != null)
+                {
+                    request.Source = eventHubsInfo;
+                }
+
+                if (this.TryGetAverageTimeInQueueForBatch(span, out long enqueuedTime))
+                {
+                    request.Metrics["timeSinceEnqueued"] = enqueuedTime;
+                }
+            }
+        }
+
+        private bool TryGetAverageTimeInQueueForBatch(SpanData span, out long avgTimeInQueue)
+        {
+            avgTimeInQueue = 0;
+            int linksCount = 0;
+            foreach (var link in span.Links)
+            {
+                if (!this.TryGetEnqueuedTime(link, out var msgEnqueuedTime))
+                {
+                    // instrumentation does not consistently report enqueued time, ignoring whole span
+                    return false;
+                }
+
+                avgTimeInQueue += Math.Max(span.StartTimestamp.ToUnixTimeMilliseconds() - msgEnqueuedTime, 0);
+                linksCount++;
+            }
+
+            if (linksCount == 0)
+            {
+                return false;
+            }
+
+            avgTimeInQueue /= linksCount;
+            return true;
+        }
+
+        private bool TryGetEnqueuedTime(Link link, out long enqueuedTime)
+        {
+            enqueuedTime = 0;
+            foreach (var attribute in link.Attributes)
+            {
+                if (attribute.Key == "enqueuedTime")
+                {
+                    if (attribute.Value is string strValue)
+                    {
+                        return long.TryParse(strValue, out enqueuedTime);
+                    }
+
+                    // future case
+                    if (attribute.Value is long longValue)
+                    {
+                        enqueuedTime = longValue;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private string GetComponent(SpanData span)
