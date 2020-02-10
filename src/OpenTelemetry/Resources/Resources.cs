@@ -30,13 +30,7 @@ namespace OpenTelemetry.Resources
         /// <param name="serviceInstanceId">Unique identifier of the service instance.</param>
         /// <param name="serviceNamespace">Optional namespace of the service.</param>
         /// <param name="serviceVersion">Optional version of the service.</param>
-        /// <param name="attributes">Optional additional service attributes.</param>
-        public static Resource CreateServiceResource(
-            string serviceName,
-            string serviceInstanceId = null,
-            string serviceNamespace = null,
-            string serviceVersion = null,
-            IDictionary<string, object> attributes = null)
+        public static Resource CreateServiceResource(string serviceName, string serviceInstanceId = null, string serviceNamespace = null, string serviceVersion = null)
         {
             if (serviceName == null)
             {
@@ -44,30 +38,26 @@ namespace OpenTelemetry.Resources
                 return Resource.Empty;
             }
 
-            var resourceAttributes = attributes != null
-                ? new Dictionary<string, object>(attributes)
-                : new Dictionary<string, object>();
-
-            resourceAttributes[Resource.ServiceNameKey] = serviceName;
+            var attributes = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(Resource.ServiceNameKey, serviceName), };
 
             if (serviceInstanceId == null)
             {
                 serviceInstanceId = Guid.NewGuid().ToString();
             }
 
-            resourceAttributes[Resource.ServiceInstanceIdKey] = serviceInstanceId;
+            attributes.Add(new KeyValuePair<string, object>(Resource.ServiceInstanceIdKey, serviceInstanceId));
 
             if (serviceNamespace != null)
             {
-                resourceAttributes[Resource.ServiceNamespaceKey] = serviceNamespace;
+                attributes.Add(new KeyValuePair<string, object>(Resource.ServiceNamespaceKey, serviceNamespace));
             }
 
             if (serviceVersion != null)
             {
-                resourceAttributes[Resource.ServiceVersionKey] = serviceVersion;
+                attributes.Add(new KeyValuePair<string, object>(Resource.ServiceVersionKey, serviceVersion));
             }
 
-            return new Resource(resourceAttributes);
+            return new Resource(attributes);
         }
     }
 }

@@ -65,15 +65,6 @@ namespace OpenTelemetry.Tests.Impl.Resources
         }
 
         [Fact]
-        public void ServiceResource_AdditionalAttributes()
-        {
-            var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service", attributes: new Dictionary<string, object> { ["service.data"] = "my-extra-attribute" });
-            Assert.Equal(3, resource.Attributes.Count());
-            Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("service.data", "my-extra-attribute"), resource.Attributes);
-        }
-
-        [Fact]
         public void ServiceResource_Empty()
         {
             var resource = OpenTelemetry.Resources.Resources.CreateServiceResource(null);
