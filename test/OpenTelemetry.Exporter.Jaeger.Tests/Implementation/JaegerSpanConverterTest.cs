@@ -15,13 +15,14 @@
 // </copyright>
 
 
-using OpenTelemetry.Trace.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
 
@@ -320,10 +321,28 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("Event2", eventField.VStr);
         }
 
+        [Fact]
+        public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan_LibraryResources()
+        {
+            var span = CreateTestSpan(resource: new Resource(new Dictionary<string, object>
+            {
+                [Resource.LibraryNameKey] = "libname",
+                [Resource.LibraryVersionKey] = "libversion",
+                [Resource.ServiceNameKey] = "MyService",
+            }));
+
+            var jaegerSpan = span.ToJaegerSpan();
+
+            Assert.Contains(jaegerSpan.JaegerTags, t => t.Key == Resource.LibraryNameKey && t.VStr == "libname");
+            Assert.Contains(jaegerSpan.JaegerTags, t => t.Key == Resource.LibraryVersionKey && t.VStr == "libversion");
+            Assert.DoesNotContain(jaegerSpan.JaegerTags, t => t.Key == Resource.ServiceNameKey && t.VStr == "MyService");
+        }
+
         internal SpanData CreateTestSpan(
             bool setAttributes = true,
             bool addEvents = true,
-            bool addLinks = true)
+            bool addLinks = true,
+            Resource resource = null)
         {
             var startTimestamp = DateTime.UtcNow;
             var endTimestamp = startTimestamp.AddSeconds(60);
@@ -375,7 +394,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                         traceId,
                         linkedSpanId,
                         ActivityTraceFlags.Recorded)), } : null,
-                null,
+                resource,
                 Status.Ok,
                 endTimestamp);
         }

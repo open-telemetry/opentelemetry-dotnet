@@ -26,6 +26,7 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.Extensibility.Implementation;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
@@ -342,19 +343,19 @@ namespace OpenTelemetry.Exporter.ApplicationInsights
 
             foreach (var attribute in span.LibraryResource.Attributes)
             {
-                if (attribute.Key == "service.name" && attribute.Value is string)
+                if (attribute.Key == Resource.ServiceNameKey && attribute.Value is string)
                 {
                     serviceName = (string)attribute.Value;
                 }
-                else if (attribute.Key == "service.namespace" && attribute.Value is string)
+                else if (attribute.Key == Resource.ServiceNamespaceKey && attribute.Value is string)
                 {
                     serviceNamespace = (string)attribute.Value;
                 }
-                else if (attribute.Key == "service.version" && attribute.Value is string)
+                else if (attribute.Key == Resource.ServiceVersionKey && attribute.Value is string)
                 {
                     serviceVersion = (string)attribute.Value;
                 }
-                else if (attribute.Key == "service.instance.id" && attribute.Value is string)
+                else if (attribute.Key == Resource.ServiceInstanceIdKey && attribute.Value is string)
                 {
                     roleInstance = (string)attribute.Value;
                 }
