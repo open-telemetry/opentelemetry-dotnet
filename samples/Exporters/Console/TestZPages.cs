@@ -46,7 +46,10 @@ namespace Samples
                 while (true)
                 {
                     // Create a scoped span. It will end automatically when using statement ends
-                    using (tracer.WithSpan(tracer.StartSpan("Main")))
+                    TelemetrySpan telemetrySpan = tracer.StartSpan("Main");
+                    telemetrySpan.Status = Status.Unavailable;
+
+                    using (tracer.WithSpan(telemetrySpan))
                     {
                         Console.WriteLine("Starting Span");
                     }

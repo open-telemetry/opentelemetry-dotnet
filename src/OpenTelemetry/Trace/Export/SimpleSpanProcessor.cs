@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
@@ -28,6 +30,7 @@ namespace OpenTelemetry.Trace.Export
         private readonly SpanExporter exporter;
         private bool disposed = false;
         private long spanCount = 0;
+        private List<SpanData> batch = new List<SpanData>();
 
         /// <summary>
         /// Constructs simple processor.
@@ -43,9 +46,15 @@ namespace OpenTelemetry.Trace.Export
             return this.spanCount;
         }
 
+        public List<SpanData> GetSpanDataBatch()
+        {
+            return this.batch;
+        }
+
         /// <inheritdoc />
         public override void OnStart(SpanData span)
         {
+            this.batch.Add(span);
             Interlocked.Increment(ref this.spanCount);
         }
 
@@ -56,7 +65,7 @@ namespace OpenTelemetry.Trace.Export
             {
                 // do not await, just start export
                 // it can still throw in synchronous part
-                _ = this.exporter.ExportAsync(new[] { span }, CancellationToken.None);
+                _ = this.exporter.ExportAsync(this.batch, CancellationToken.None);
             }
             catch (Exception ex)
             {

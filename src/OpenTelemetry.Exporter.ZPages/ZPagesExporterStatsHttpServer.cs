@@ -121,6 +121,10 @@ namespace OpenTelemetry.Exporter.ZPages
                         using (var writer = new StreamWriter(output))
                         {
                             writer.WriteLine("Span Count : " + this.spanProcessor.GetSpanCount());
+                            foreach (var spanData in this.spanProcessor.GetSpanDataBatch())
+                            {
+                                writer.WriteLine("Span Name : " + spanData.Name + "\t" + "Status : " + spanData.Status.CanonicalCode);
+                            }
                         }
                     }
                 }
