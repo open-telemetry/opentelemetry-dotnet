@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,20 +26,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public class Batch : TAbstractBase
     {
-        public Batch()
+        private readonly ArraySegment<byte> processMessage;
+
+        private readonly IEnumerable<ArraySegment<byte>> spanMessages;
+
+        public Batch(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages)
         {
+            this.processMessage = processMessage;
+            this.spanMessages = spanMessages ?? Enumerable.Empty<ArraySegment<byte>>();
         }
-
-        public Batch(Process process, IEnumerable<JaegerSpan> spans)
-            : this()
-        {
-            this.Process = process;
-            this.Spans = spans ?? Enumerable.Empty<JaegerSpan>();
-        }
-
-        public Process Process { get; set; }
-
-        public IEnumerable<JaegerSpan> Spans { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -57,7 +53,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 };
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await this.Process.WriteAsync(oprot, cancellationToken);
+                await oprot.WriteRawAsync(this.processMessage, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
 
                 field.Name = "spans";
@@ -66,10 +62,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
                 {
-                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Spans.Count()), cancellationToken);
-                    foreach (JaegerSpan s in this.Spans)
+                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.spanMessages.Count()), cancellationToken);
+
+                    foreach (var s in this.spanMessages)
                     {
-                        await s.WriteAsync(oprot, cancellationToken);
+                        await oprot.WriteRawAsync(s, cancellationToken);
                     }
 
                     await oprot.WriteListEndAsync(cancellationToken);
@@ -89,9 +86,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             var sb = new StringBuilder("Batch(");
             sb.Append(", Process: ");
-            sb.Append(this.Process?.ToString() ?? "<null>");
-            sb.Append(", Spans: ");
-            sb.Append(this.Spans);
+            sb.Append(this.processMessage.Count);
+            sb.Append(" bytes, Spans: ");
+            sb.Append(this.spanMessages.Count());
             sb.Append(")");
             return sb.ToString();
         }

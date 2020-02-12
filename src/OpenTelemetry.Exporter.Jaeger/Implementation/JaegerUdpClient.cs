@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerUdpClient : IJaegerUdpClient
+    public class JaegerUdpClient : IJaegerClient
     {
         private readonly UdpClient client;
 
@@ -36,7 +36,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public void Connect(string host, int port) => this.client.Connect(host, port);
 
-        public Task<int> SendAsync(byte[] datagram, int bytes) => this.client.SendAsync(datagram, bytes);
+        public Task<int> SendAsync(byte[] buffer, int offset, int count)
+        {
+            return Task<int>.Factory.FromAsync(
+                (callback, state) => ((Socket)state).BeginSend(buffer, offset, count, SocketFlags.None, callback, state),
+                asyncResult => ((Socket)asyncResult.AsyncState).EndSend(asyncResult),
+                state: this.client.Client);
+        }
 
         public void Dispose() => this.client.Dispose();
     }

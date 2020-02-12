@@ -229,6 +229,31 @@ namespace Thrift.Protocols
 
         public abstract Task WriteBinaryAsync(byte[] bytes, CancellationToken cancellationToken);
 
+        public virtual async Task WriteRawAsync(ArraySegment<byte> bytes)
+        {
+            await WriteRawAsync(bytes, CancellationToken.None).ConfigureAwait(false);
+        }
+
+        public virtual async Task WriteRawAsync(ArraySegment<byte> bytes, CancellationToken cancellationToken)
+        {
+            await Trans.WriteAsync(bytes.Array, bytes.Offset, bytes.Count, cancellationToken).ConfigureAwait(false);
+        }
+
+        public virtual async Task WriteRawAsync(byte[] bytes)
+        {
+            await WriteRawAsync(bytes, CancellationToken.None).ConfigureAwait(false);
+        }
+
+        public virtual async Task WriteRawAsync(byte[] bytes, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken).ConfigureAwait(false);
+        }
+
         public virtual async Task<TMessage> ReadMessageBeginAsync()
         {
             return await ReadMessageBeginAsync(CancellationToken.None).ConfigureAwait(false);

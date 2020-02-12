@@ -1,4 +1,4 @@
-﻿// <copyright file="IJaegerUdpClient.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="IJaegerClient.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public interface IJaegerUdpClient : IDisposable
+    public interface IJaegerClient : IDisposable
     {
         bool Connected { get; }
 
@@ -29,6 +29,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         void Close();
 
-        Task<int> SendAsync(byte[] datagram, int bytes);
+        Task<int> SendAsync(byte[] buffer, int offset, int count);
     }
 }

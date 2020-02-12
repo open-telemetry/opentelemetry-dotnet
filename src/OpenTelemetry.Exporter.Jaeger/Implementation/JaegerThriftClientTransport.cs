@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public class JaegerThriftClientTransport : TClientTransport
     {
-        private readonly IJaegerUdpClient udpClient;
+        private readonly IJaegerClient client;
         private readonly MemoryStream byteStream;
         private bool isDisposed = false;
 
@@ -33,34 +33,33 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
         }
 
-        public JaegerThriftClientTransport(string host, int port, MemoryStream stream, IJaegerUdpClient client)
+        public JaegerThriftClientTransport(string host, int port, MemoryStream stream, IJaegerClient client)
         {
             this.byteStream = stream;
-            this.udpClient = client;
-            this.udpClient.Connect(host, port);
+            this.client = client;
+            this.client.Connect(host, port);
         }
 
-        public override bool IsOpen => this.udpClient.Connected;
+        public override bool IsOpen => this.client.Connected;
 
         public override void Close()
         {
-            this.udpClient.Close();
+            this.client.Close();
         }
 
         public override Task FlushAsync(CancellationToken cancellationToken)
         {
-            var bytes = this.byteStream.ToArray();
+            // GetBuffer returns the underlying storage, which saves an allocation over ToArray.
+            var bytes = this.byteStream.GetBuffer();
 
             if (bytes.Length == 0)
             {
                 return Task.CompletedTask;
             }
 
-            this.byteStream.SetLength(0);
-
             try
             {
-                return this.udpClient.SendAsync(bytes, bytes.Length);
+                return this.client.SendAsync(bytes, 0, (int)this.byteStream.Length);
             }
             catch (SocketException se)
             {
@@ -69,6 +68,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             catch (Exception e)
             {
                 throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush closed transport. {e.Message}");
+            }
+            finally
+            {
+                this.byteStream.SetLength(0);
             }
         }
 
@@ -95,7 +98,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public override string ToString()
         {
-            return $"{nameof(JaegerThriftClientTransport)}(Client={this.udpClient.RemoteEndPoint})";
+            return $"{nameof(JaegerThriftClientTransport)}(Client={this.client.RemoteEndPoint})";
         }
 
         protected override void Dispose(bool disposing)
@@ -103,7 +106,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             if (!this.isDisposed && disposing)
             {
                 this.byteStream?.Dispose();
-                this.udpClient?.Dispose();
+                this.client?.Dispose();
             }
 
             this.isDisposed = true;

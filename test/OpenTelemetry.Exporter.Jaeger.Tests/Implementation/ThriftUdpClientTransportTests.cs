@@ -27,7 +27,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
     public class ThriftUdpClientTransportTests: IDisposable
     {
         private MemoryStream testingMemoryStream = new MemoryStream();
-        private readonly Mock<IJaegerUdpClient> mockClient = new Mock<IJaegerUdpClient>();
+        private readonly Mock<IJaegerClient> mockClient = new Mock<IJaegerClient>();
 
         public void Dispose()
         {

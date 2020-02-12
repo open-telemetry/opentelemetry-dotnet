@@ -13,21 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.IO;
+using System;
+using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Transports;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class InMemoryTransport : TClientTransport
+    internal class InMemoryTransport : TClientTransport
     {
-        private readonly MemoryStream byteStream;
-        private bool isDisposed;
+        private readonly IBufferWriter<byte> bufferWriter;
 
-        public InMemoryTransport()
+        public InMemoryTransport(IBufferWriter<byte> bufferWriter)
         {
-            this.byteStream = new MemoryStream();
+            this.bufferWriter = bufferWriter ?? throw new ArgumentNullException(nameof(bufferWriter));
         }
 
         public override bool IsOpen => true;
@@ -51,11 +51,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             byte[] buffer,
             int offset,
             int length,
-            CancellationToken cancellationToken) => this.byteStream.ReadAsync(buffer, offset, length, cancellationToken);
+            CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
 
-        public override Task WriteAsync(byte[] buffer, CancellationToken cancellationToken) => this.byteStream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
-
-        public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken) => this.byteStream.WriteAsync(buffer, offset, length, cancellationToken);
+        public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+        {
+            this.bufferWriter.Write(new ReadOnlySpan<byte>(buffer, offset, length));
+            return Task.CompletedTask;
+        }
 
         public override Task FlushAsync(CancellationToken cancellationToken)
         {
@@ -67,22 +72,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return Task.CompletedTask;
         }
 
-        public byte[] GetBuffer() => this.byteStream.ToArray();
-
-        public void Reset() => this.byteStream.SetLength(0);
-
-        // IDisposable
         protected override void Dispose(bool disposing)
         {
-            if (!this.isDisposed)
-            {
-                if (disposing)
-                {
-                    this.byteStream?.Dispose();
-                }
-            }
-
-            this.isDisposed = true;
         }
     }
 }

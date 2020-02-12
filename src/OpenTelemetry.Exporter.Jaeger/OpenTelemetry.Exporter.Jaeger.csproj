@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net46;netstandard2.0;netstandard2.1</TargetFrameworks>
     <Authors>OpenTelemetry authors</Authors>
     <PackageIconUrl>https://opentelemetry.io/img/logos/opentelemetry-icon-color.png</PackageIconUrl>
     <PackageProjectUrl>https://OpenTelemetry.io</PackageProjectUrl>
@@ -11,6 +11,10 @@
     <PropertyGroup>
       <NoWarn>$(NoWarn),1591</NoWarn>
     </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Buffers" Version="4.5.0" Condition="'$(TargetFramework)' == 'net46' or '$(TargetFramework)' == 'netstandard2.0'" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />

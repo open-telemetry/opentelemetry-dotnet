@@ -38,10 +38,33 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
 
-            var args = new EmitBatchArgs();
-            args.Batch = batch;
+            this.OutputProtocol.IncrementRecursionDepth();
+            try
+            {
+                var struc = new TStruct("emitBatch_args");
+                await this.OutputProtocol.WriteStructBeginAsync(struc, cancellationToken);
+                if (batch != null)
+                {
+                    var field = new TField
+                    {
+                        Name = "batch",
+                        Type = TType.Struct,
+                        ID = 1,
+                    };
 
-            await args.WriteAsync(this.OutputProtocol, cancellationToken);
+                    await this.OutputProtocol.WriteFieldBeginAsync(field, cancellationToken);
+                    await batch.WriteAsync(this.OutputProtocol, cancellationToken);
+                    await this.OutputProtocol.WriteFieldEndAsync(cancellationToken);
+                }
+
+                await this.OutputProtocol.WriteFieldStopAsync(cancellationToken);
+                await this.OutputProtocol.WriteStructEndAsync(cancellationToken);
+            }
+            finally
+            {
+                this.OutputProtocol.DecrementRecursionDepth();
+            }
+
             await this.OutputProtocol.WriteMessageEndAsync(cancellationToken);
             await this.OutputProtocol.Transport.FlushAsync(cancellationToken);
         }
