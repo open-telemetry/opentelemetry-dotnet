@@ -36,14 +36,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             if (processTags != null)
             {
-                this.Tags = new Dictionary<string, JaegerTag>(
-                    processTags.Select(pt => pt.ToJaegerTag()).ToDictionary(jt => jt.Key, jt => jt));
+                this.Tags = processTags.Select(pt => pt.ToJaegerTag()).ToDictionary(jt => jt.Key, jt => jt);
             }
         }
 
         public string ServiceName { get; set; }
 
-        public Dictionary<string, JaegerTag> Tags { get; set; }
+        public IDictionary<string, JaegerTag> Tags { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
