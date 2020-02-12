@@ -317,6 +317,43 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         }
 
         [Fact]
+        public void OpenTelemetryTelemetryConverterTests_TracksInternalSpanWithAzNamespaceAsDependency()
+        {
+            // ARRANGE
+            GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
+            kind = SpanKind.Internal;
+
+            var endTimestamp = DateTimeOffset.UtcNow;
+            var startTimestamp = endTimestamp.AddSeconds(-1);
+
+            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions, tracestate, kind, status,
+                new SpanCreationOptions { StartTimestamp = startTimestamp, Attributes = new Dictionary<string, object> { ["az.namespace"] = "Microsoft.Storage", } }, endTimestamp);
+
+            // ACT
+            var sentItems = ConvertSpan(span);
+
+            // ASSERT
+            Assert.Single(sentItems);
+            Assert.True(sentItems.Single() is DependencyTelemetry);
+
+            var dependency = sentItems.OfType<DependencyTelemetry>().Single();
+            Assert.Equal("spanName", dependency.Name);
+            Assert.Equal("InProc | Microsoft.Storage", dependency.Type);
+            Assert.Equal(startTimestamp, dependency.Timestamp);
+            Assert.Equal(1, dependency.Duration.TotalSeconds);
+
+            Assert.Equal(TestTraceId, dependency.Context.Operation.Id);
+
+            Assert.Equal(span.Context.SpanId.ToHexString(), dependency.Id);
+            Assert.Equal(parentSpanId.ToHexString(), dependency.Context.Operation.ParentId);
+
+            Assert.Equal("Ok", dependency.ResultCode);
+            Assert.True(dependency.Success.HasValue);
+            Assert.True(dependency.Success);
+
+            // Assert.Equal("lf_unspecified-oc:0.0.0", dependency.Context.GetInternalContext().SdkVersion);
+        }
+        [Fact]
         public void OpenTelemetryTelemetryConverterTests_DoesNotTrackCallToAppInsights()
         {
             // ARRANGE
@@ -1759,11 +1796,12 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.True(request.Success);
             Assert.Equal("Ok", request.ResponseCode);
-            Assert.Equal("sb://endpoint.com/123 | queueName", request.Source);
+            Assert.Equal("sb://endpoint.com/123/queueName", request.Source);
 
             Assert.StartsWith("ot:", request.Context.GetInternalContext().SdkVersion);
 
             Assert.Empty(request.Properties);
+            Assert.Empty(request.Metrics);
         }
 
         [Fact]
@@ -1807,10 +1845,185 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.True(request.Success);
             Assert.Equal("Ok", request.ResponseCode);
-            Assert.Equal("sb://endpoint.com/123 | queueName", request.Source);
+            Assert.Equal("sb://endpoint.com/123/queueName", request.Source);
 
             Assert.StartsWith("ot:", request.Context.GetInternalContext().SdkVersion);
             Assert.Empty(request.Properties);
+            Assert.Empty(request.Metrics);
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_TracksEventHubsRequestWithTimeInQueue()
+        {
+            // ARRANGE
+            GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
+
+            var endTimestamp = DateTimeOffset.UtcNow;
+            var startTimestamp = endTimestamp.AddSeconds(-1);
+            parentSpanId = default;
+
+            var link0Enqueued = startTimestamp.AddMilliseconds(-100).ToUnixTimeMilliseconds();
+            var link1Enqueued = startTimestamp.AddMilliseconds(-200).ToUnixTimeMilliseconds();
+            var link2Enqueued = startTimestamp.AddMilliseconds(-300).ToUnixTimeMilliseconds();
+
+            var link0 = new Link(RandomContext(), new Dictionary<string, object> {["enqueuedTime"] = link0Enqueued });
+            var link1 = new Link(RandomContext(), new Dictionary<string, object> { ["enqueuedTime"] = link1Enqueued });
+            var link2 = new Link(RandomContext(), new Dictionary<string, object> {["enqueuedTime"] = link2Enqueued });
+
+            var options = new SpanCreationOptions
+            {
+                StartTimestamp = startTimestamp,
+                Links = new List<Link> {link0, link1, link2},
+                Attributes = new Dictionary<string, object>
+                {
+                    ["az.namespace"] = "Microsoft.EventHub",
+                    ["message_bus.destination"] = "queueName",
+                    ["peer.address"] = "sb://endpoint.com/123",
+                },
+            };
+
+            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions, tracestate, kind, status, options, endTimestamp);
+
+            // ACT
+            var sentItems = ConvertSpan(span);
+
+            // ASSERT
+            Assert.Single(sentItems);
+            Assert.True(sentItems.Single() is RequestTelemetry);
+
+            var request = sentItems.OfType<RequestTelemetry>().Single();
+            Assert.Single(request.Metrics);
+            Assert.True(request.Metrics.TryGetValue("timeSinceEnqueued", out var timeInQueue));
+
+            var expectedTimeInQueue = 200; // avg diff with request start time across links
+            Assert.Equal(expectedTimeInQueue, timeInQueue);
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_TracksEventHubsRequestWithTimeInQueueString()
+        {
+            // ARRANGE
+            GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
+
+            var endTimestamp = DateTimeOffset.UtcNow;
+            var startTimestamp = endTimestamp.AddSeconds(-1);
+            parentSpanId = default;
+
+            var link0Enqueued = startTimestamp.AddMilliseconds(-1).ToUnixTimeMilliseconds();
+            var link1Enqueued = startTimestamp.AddMilliseconds(-2).ToUnixTimeMilliseconds();
+            var link2Enqueued = startTimestamp.AddMilliseconds(-3).ToUnixTimeMilliseconds();
+
+            var link0 = new Link(RandomContext(), new Dictionary<string, object> { ["enqueuedTime"] = link0Enqueued.ToString() });
+            var link1 = new Link(RandomContext(), new Dictionary<string, object> { ["enqueuedTime"] = link1Enqueued.ToString() });
+            var link2 = new Link(RandomContext(), new Dictionary<string, object> { ["enqueuedTime"] = link2Enqueued.ToString() });
+
+            var options = new SpanCreationOptions
+            {
+                StartTimestamp = startTimestamp,
+                Links = new List<Link> { link0, link1, link2 },
+                Attributes = new Dictionary<string, object>
+                {
+                    ["az.namespace"] = "Microsoft.EventHub",
+                    ["message_bus.destination"] = "queueName",
+                    ["peer.address"] = "sb://endpoint.com/123",
+                },
+            };
+
+            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions, tracestate, kind, status, options, endTimestamp);
+
+            // ACT
+            var sentItems = ConvertSpan(span);
+
+            // ASSERT
+            Assert.Single(sentItems);
+            Assert.True(sentItems.Single() is RequestTelemetry);
+
+            var request = sentItems.OfType<RequestTelemetry>().Single();
+            Assert.Single(request.Metrics);
+            Assert.True(request.Metrics.TryGetValue("timeSinceEnqueued", out var timeInQueue));
+
+            var expectedTimeInQueue = 2; // avg diff with request start time across links
+            Assert.Equal(expectedTimeInQueue, timeInQueue);
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_TracksEventHubsRequestWithTimeInQueueNegative()
+        {
+            // ARRANGE
+            GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
+
+            var endTimestamp = DateTimeOffset.UtcNow;
+            var startTimestamp = endTimestamp.AddSeconds(-1);
+            parentSpanId = default;
+
+            var link0Enqueued = startTimestamp.AddMilliseconds(100).ToUnixTimeMilliseconds();
+
+            var link0 = new Link(RandomContext(), new Dictionary<string, object> { ["enqueuedTime"] = link0Enqueued.ToString() });
+
+            var options = new SpanCreationOptions
+            {
+                StartTimestamp = startTimestamp,
+                Links = new List<Link> { link0 },
+                Attributes = new Dictionary<string, object>
+                {
+                    ["az.namespace"] = "Microsoft.EventHub",
+                    ["message_bus.destination"] = "queueName",
+                    ["peer.address"] = "sb://endpoint.com/123",
+                },
+            };
+
+            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions, tracestate, kind, status, options, endTimestamp);
+
+            // ACT
+            var sentItems = ConvertSpan(span);
+
+            // ASSERT
+            Assert.Single(sentItems);
+            Assert.True(sentItems.Single() is RequestTelemetry);
+
+            var request = sentItems.OfType<RequestTelemetry>().Single();
+            Assert.Single(request.Metrics);
+            Assert.True(request.Metrics.TryGetValue("timeSinceEnqueued", out var timeInQueue));
+
+            var expectedTimeInQueue = 0; // messages were enqueued before request started because of clock difference, ignoring the value
+            Assert.Equal(expectedTimeInQueue, timeInQueue);
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_TracksEventHubsRequestWithTimeInQueueInvalid()
+        {
+            // ARRANGE
+            GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
+
+            var endTimestamp = DateTimeOffset.UtcNow;
+            var startTimestamp = endTimestamp.AddSeconds(-1);
+            parentSpanId = default;
+
+            var link0 = new Link(RandomContext(), new Dictionary<string, object> { ["enqueuedTime"] = "abc" });
+
+            var options = new SpanCreationOptions
+            {
+                StartTimestamp = startTimestamp,
+                Links = new List<Link> { link0 },
+                Attributes = new Dictionary<string, object>
+                {
+                    ["az.namespace"] = "Microsoft.EventHub",
+                    ["message_bus.destination"] = "queueName",
+                    ["peer.address"] = "sb://endpoint.com/123",
+                },
+            };
+
+            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions, tracestate, kind, status, options, endTimestamp);
+
+            // ACT
+            var sentItems = ConvertSpan(span);
+
+            // ASSERT
+            Assert.Single(sentItems);
+            Assert.True(sentItems.Single() is RequestTelemetry);
+
+            var request = sentItems.OfType<RequestTelemetry>().Single();
+            Assert.Empty(request.Metrics);
         }
 
         [Fact]
@@ -1855,8 +2068,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.True(dependency.Success);
             Assert.Equal("Ok", dependency.ResultCode);
-            Assert.Equal("sb://endpoint.com/123 | queueName", dependency.Target);
-            Assert.Equal("Azure Event Hubs", dependency.Type);
+            Assert.Equal("sb://endpoint.com/123/queueName", dependency.Target);
+            Assert.Equal("Microsoft.EventHub", dependency.Type);
 
             Assert.StartsWith("ot:", dependency.Context.GetInternalContext().SdkVersion);
             Assert.Empty(dependency.Properties);
@@ -1904,8 +2117,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.True(dependency.Success);
             Assert.Equal("Ok", dependency.ResultCode);
-            Assert.Equal("sb://endpoint.com/123 | queueName", dependency.Target);
-            Assert.Equal("Azure Event Hubs", dependency.Type);
+            Assert.Equal("sb://endpoint.com/123/queueName", dependency.Target);
+            Assert.Equal("Microsoft.EventHub", dependency.Type);
 
             Assert.StartsWith("ot:", dependency.Context.GetInternalContext().SdkVersion);
             Assert.Empty(dependency.Properties);
@@ -1951,7 +2164,56 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             Assert.True(dependency.Success);
             Assert.Equal("Ok", dependency.ResultCode);
-            Assert.Equal("Queue Message", dependency.Type);
+            Assert.Equal("Queue Message | Microsoft.EventHub", dependency.Type);
+
+            Assert.StartsWith("ot:", dependency.Context.GetInternalContext().SdkVersion);
+            Assert.Empty(dependency.Properties);
+        }
+
+        [Fact]
+        public void OpenTelemetryTelemetryConverterTests_TracksEventHubsDependencyProducerWithTarget()
+        {
+            // ARRANGE
+            GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
+            kind = SpanKind.Producer;
+
+            var endTimestamp = DateTimeOffset.UtcNow;
+            var startTimestamp = endTimestamp.AddSeconds(-1);
+            parentSpanId = default;
+
+            var options = new SpanCreationOptions
+            {
+                StartTimestamp = startTimestamp,
+                Attributes = new Dictionary<string, object>
+                {
+                    ["az.namespace"] = "Microsoft.EventHub",
+                    ["message_bus.destination"] = "queueName",
+                    ["peer.address"] = "sb://endpoint.com/123",
+                },
+            };
+
+            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions, tracestate, kind, status, options, endTimestamp);
+
+            // ACT
+            var sentItems = ConvertSpan(span);
+
+            // ASSERT
+            Assert.Single(sentItems);
+            Assert.True(sentItems.Single() is DependencyTelemetry);
+
+            var dependency = sentItems.OfType<DependencyTelemetry>().Single();
+            Assert.Equal("spanName", dependency.Name);
+            Assert.Equal(startTimestamp, dependency.Timestamp);
+            Assert.Equal(1, dependency.Duration.TotalSeconds);
+
+            Assert.Equal(span.Context.TraceId.ToHexString(), dependency.Context.Operation.Id);
+            Assert.Equal(span.Context.SpanId.ToHexString(), dependency.Id);
+            Assert.Null(dependency.Context.Operation.ParentId);
+
+            Assert.True(dependency.Success);
+            Assert.Equal("Ok", dependency.ResultCode);
+            Assert.Equal("sb://endpoint.com/123/queueName", dependency.Target);
+            Assert.Equal("Queue Message | Microsoft.EventHub", dependency.Type);
 
             Assert.StartsWith("ot:", dependency.Context.GetInternalContext().SdkVersion);
             Assert.Empty(dependency.Properties);
@@ -2043,6 +2305,11 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             }
 
             return (SpanData)processor.Invocations[0].Arguments[0];
+        }
+
+        private SpanContext RandomContext()
+        {
+            return new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, true);
         }
     }
 };
