@@ -23,18 +23,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public class JaegerUdpBatcher : IJaegerUdpBatcher
     {
-        private readonly int? maxPacketSize;
+        private readonly int maxPacketSize;
         private readonly ITProtocolFactory protocolFactory;
         private readonly JaegerThriftClientTransport clientTransport;
         private readonly JaegerThriftClient thriftClient;
-        private readonly Process process;
-        private readonly int processByteSize;
         private readonly List<JaegerSpan> currentBatch = new List<JaegerSpan>();
 
         private readonly SemaphoreSlim flushLock = new SemaphoreSlim(1);
         private readonly TimeSpan maxFlushInterval;
         private readonly System.Timers.Timer maxFlushIntervalTimer;
 
+        private int? processByteSize;
         private int batchByteSize;
 
         private bool disposedValue = false; // To detect redundant calls
@@ -46,23 +45,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 throw new ArgumentNullException(nameof(options));
             }
 
-            if (string.IsNullOrWhiteSpace(options.ServiceName))
-            {
-                throw new ArgumentException("Service Name is required", nameof(options.ServiceName));
-            }
-
             if (options.MaxFlushInterval <= TimeSpan.Zero)
             {
                 options.MaxFlushInterval = TimeSpan.FromSeconds(10);
             }
 
-            this.maxPacketSize = (!options.MaxPacketSize.HasValue || options.MaxPacketSize == 0) ? JaegerExporterOptions.DefaultMaxPacketSize : options.MaxPacketSize;
+            this.maxPacketSize = (!options.MaxPacketSize.HasValue || options.MaxPacketSize == 0) ? JaegerExporterOptions.DefaultMaxPacketSize : options.MaxPacketSize.Value;
             this.protocolFactory = new TCompactProtocol.Factory();
             this.clientTransport = new JaegerThriftClientTransport(options.AgentHost, options.AgentPort);
             this.thriftClient = new JaegerThriftClient(this.protocolFactory.GetProtocol(this.clientTransport));
-            this.process = new Process(options.ServiceName, options.ProcessTags);
-            this.processByteSize = this.GetSize(this.process);
-            this.batchByteSize = this.processByteSize;
+            this.Process = new Process(options.ServiceName, options.ProcessTags);
 
             this.maxFlushInterval = options.MaxFlushInterval;
             this.maxFlushIntervalTimer = new System.Timers.Timer
@@ -78,9 +70,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             };
         }
 
+        public Process Process { get; private set; }
+
         public async Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken)
         {
-            int spanSize = this.GetSize(span);
+            if (!this.processByteSize.HasValue)
+            {
+                this.processByteSize = await this.GetSize(this.Process).ConfigureAwait(false);
+                this.batchByteSize = this.processByteSize.Value;
+            }
+
+            int spanSize = await this.GetSize(span).ConfigureAwait(false);
 
             if (spanSize + this.processByteSize > this.maxPacketSize)
             {
@@ -132,12 +132,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 try
                 {
-                    await this.SendAsync(this.process, this.currentBatch, cancellationToken).ConfigureAwait(false);
+                    await this.SendAsync(this.Process, this.currentBatch, cancellationToken).ConfigureAwait(false);
                 }
                 finally
                 {
                     this.currentBatch.Clear();
-                    this.batchByteSize = this.processByteSize;
+                    this.batchByteSize = this.processByteSize.Value;
                 }
 
                 return n;
@@ -184,11 +184,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        private int GetSize(TAbstractBase thriftBase)
+        private async Task<int> GetSize(TAbstractBase thriftBase)
         {
             using (var memoryTransport = new InMemoryTransport())
             {
-                thriftBase.WriteAsync(this.protocolFactory.GetProtocol(memoryTransport), CancellationToken.None).GetAwaiter().GetResult();
+                await thriftBase.WriteAsync(this.protocolFactory.GetProtocol(memoryTransport), CancellationToken.None).ConfigureAwait(false);
                 return memoryTransport.GetBuffer().Length;
             }
         }

@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Configures last processor that invokes exporter. When not set, <see cref="BatchingSpanProcessor"/> is used. 
+        /// Configures last processor that invokes exporter. When not set, <see cref="BatchingSpanProcessor"/> is used.
         /// </summary>
         /// <param name="processorFactory">Factory that creates exporting processor from the exporter.</param>
         public SpanProcessorPipelineBuilder SetExportingProcessor(Func<SpanExporter, SpanProcessor> processorFactory)
@@ -80,9 +80,9 @@ namespace OpenTelemetry.Trace.Configuration
         internal SpanProcessor Build()
         {
             this.Processors = new List<SpanProcessor>();
-            
+
             SpanProcessor exportingProcessor = null;
-            
+
             // build or create default exporting processor
             if (this.lastProcessorFactory != null)
             {
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Trace.Configuration
                 exportingProcessor = new BatchingSpanProcessor(this.Exporter);
                 this.Processors.Add(exportingProcessor);
             }
-            
+
             if (this.processorChain == null)
             {
                 // if there is no chain, return exporting processor.
