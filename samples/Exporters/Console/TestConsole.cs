@@ -28,6 +28,9 @@ namespace Samples
 
                 using (tracer.StartActiveSpan("parent", out var parent))
                 {
+                    tracer.CurrentSpan.SetAttribute("key", 123);
+                    tracer.CurrentSpan.AddEvent("test-event");
+
                     using (tracer.StartActiveSpan("child", out var child))
                     {
                         child.SetAttribute("key", "value");
