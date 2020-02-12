@@ -21,7 +21,7 @@ using System.Text.Json.Serialization;
 
 namespace OpenTelemetry.Exporter.Console
 {
-    public class ActivitySpanIdConverter : JsonConverter<ActivitySpanId>
+    internal class ActivitySpanIdConverter : JsonConverter<ActivitySpanId>
     {
         public override ActivitySpanId Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
