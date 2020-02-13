@@ -29,13 +29,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private readonly ITProtocolFactory protocolFactory;
         private readonly TClientTransport clientTransport;
         private readonly JaegerThriftClient thriftClient;
+        private readonly InMemoryTransport memoryTransport;
+        private readonly TProtocol memoryProtocol;
         private readonly List<PooledByteBufferWriter> currentBatch = new List<PooledByteBufferWriter>();
 
         private readonly SemaphoreSlim flushLock = new SemaphoreSlim(1);
         private readonly TimeSpan maxFlushInterval;
         private readonly System.Timers.Timer maxFlushIntervalTimer;
 
-        private ArraySegment<byte>? processMessage;
+        private PooledByteBufferWriter processMessage;
         private int processByteSize;
         private int batchByteSize;
 
@@ -57,6 +59,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.protocolFactory = new TCompactProtocol.Factory();
             this.clientTransport = clientTransport ?? new JaegerThriftClientTransport(options.AgentHost, options.AgentPort);
             this.thriftClient = new JaegerThriftClient(this.protocolFactory.GetProtocol(this.clientTransport));
+            this.memoryTransport = new InMemoryTransport();
+            this.memoryProtocol = this.protocolFactory.GetProtocol(this.memoryTransport);
+
             this.Process = new Process(options.ServiceName, options.ProcessTags);
 
             this.maxFlushInterval = options.MaxFlushInterval;
@@ -77,10 +82,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public async Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken)
         {
-            if (!this.processMessage.HasValue)
+            if (this.processMessage == null)
             {
-                this.processMessage = (await this.BuildThriftMessage(this.Process).ConfigureAwait(false)).ToArraySegment();
-                this.processByteSize = this.processMessage.Value.Count;
+                this.processMessage = await this.BuildThriftMessage(this.Process).ConfigureAwait(false);
+                this.processByteSize = this.processMessage.WrittenCount;
                 this.batchByteSize = this.processByteSize;
             }
 
@@ -170,7 +175,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             try
             {
                 await this.thriftClient.EmitBatchAsync(
-                    this.processMessage.Value,
+                    this.processMessage.ToArraySegment(),
                     this.currentBatch.Select(p => p.ToArraySegment()),
                     cancellationToken).ConfigureAwait(false);
             }
@@ -189,6 +194,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     this.maxFlushIntervalTimer.Dispose();
                     this.thriftClient.Dispose();
                     this.clientTransport.Dispose();
+                    this.memoryProtocol.Dispose();
                 }
 
                 this.disposedValue = true;
@@ -196,19 +202,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         }
 
 #if NETSTANDARD2_1
-        private async ValueTask<PooledByteBufferWriter> BuildThriftMessage(TAbstractBase thriftBase, int hintSize = 1024)
+        private async ValueTask<PooledByteBufferWriter> BuildThriftMessage(TAbstractBase thriftBase)
 #else
-        private async Task<PooledByteBufferWriter> BuildThriftMessage(TAbstractBase thriftBase, int hintSize = 1024)
+        private async Task<PooledByteBufferWriter> BuildThriftMessage(TAbstractBase thriftBase)
 #endif
         {
-            var buffer = new PooledByteBufferWriter(hintSize);
+            await thriftBase.WriteAsync(this.memoryProtocol, CancellationToken.None).ConfigureAwait(false);
 
-            using (var memoryTransport = new InMemoryTransport(buffer))
-            {
-                await thriftBase.WriteAsync(this.protocolFactory.GetProtocol(memoryTransport), CancellationToken.None).ConfigureAwait(false);
-            }
-
-            return buffer;
+            return this.memoryTransport.SwapOutBuffer();
         }
     }
 }

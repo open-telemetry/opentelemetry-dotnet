@@ -28,29 +28,26 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         {
             var validJaegerThriftPayload = Convert.FromBase64String(JaegerThriftIntegrationTest.TestPayloadBase64);
 
-            using (var buffer = new PooledByteBufferWriter(1024))
+            var memoryTransport = new InMemoryTransport();
+
+            using (var jaegerUdpBatcher = new JaegerUdpBatcher(new JaegerExporterOptions(), memoryTransport))
             {
-                using (var jaegerUdpBatcher = new JaegerUdpBatcher(new JaegerExporterOptions(), new InMemoryTransport(buffer)))
-                {
-                    jaegerUdpBatcher.Process = JaegerThriftIntegrationTest.TestProcess;
+                jaegerUdpBatcher.Process = JaegerThriftIntegrationTest.TestProcess;
 
-                    await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+                await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
 
-                    await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
-                    Assert.Equal(validJaegerThriftPayload, buffer.ToArraySegment());
+                Assert.Equal(validJaegerThriftPayload, memoryTransport.FlushToArray());
 
-                    buffer.Clear();
+                await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
 
-                    await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+                await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
-                    await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                // SeqNo is the second byte.
+                validJaegerThriftPayload[2]++;
 
-                    // SeqNo is the second byte.
-                    validJaegerThriftPayload[2]++;
-
-                    Assert.Equal(validJaegerThriftPayload, buffer.ToArraySegment());
-                }
+                Assert.Equal(validJaegerThriftPayload, memoryTransport.FlushToArray());
             }
         }
     }

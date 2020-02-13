@@ -23,11 +23,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal class InMemoryTransport : TClientTransport
     {
-        private readonly IBufferWriter<byte> bufferWriter;
+        private readonly int initialCapacity;
+        private PooledByteBufferWriter bufferWriter;
 
-        public InMemoryTransport(IBufferWriter<byte> bufferWriter)
+        public InMemoryTransport(int initialCapacity = 512)
         {
-            this.bufferWriter = bufferWriter ?? throw new ArgumentNullException(nameof(bufferWriter));
+            if (initialCapacity < 0)
+            {
+                throw new ArgumentException(nameof(initialCapacity));
+            }
+
+            this.initialCapacity = initialCapacity;
+            this.bufferWriter = new PooledByteBufferWriter(initialCapacity);
         }
 
         public override bool IsOpen => true;
@@ -58,7 +65,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
-            this.bufferWriter.Write(new ReadOnlySpan<byte>(buffer, offset, length));
+            var span = new ReadOnlySpan<byte>(buffer, offset, length);
+            span.CopyTo(this.bufferWriter.GetSpan(length));
             return Task.CompletedTask;
         }
 
@@ -72,8 +80,26 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return Task.CompletedTask;
         }
 
+        public byte[] FlushToArray()
+        {
+            var array = this.bufferWriter.WrittenMemory.ToArray();
+            this.bufferWriter.Clear();
+            return array;
+        }
+
+        public PooledByteBufferWriter SwapOutBuffer()
+        {
+            var previousBufferWriter = this.bufferWriter;
+            this.bufferWriter = new PooledByteBufferWriter(this.initialCapacity);
+            return previousBufferWriter;
+        }
+
         protected override void Dispose(bool disposing)
         {
+            if (disposing)
+            {
+                this.bufferWriter.Dispose();
+            }
         }
     }
 }

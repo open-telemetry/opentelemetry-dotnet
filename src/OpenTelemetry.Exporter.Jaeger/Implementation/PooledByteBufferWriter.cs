@@ -15,9 +15,6 @@
 // </copyright>
 using System;
 using System.Buffers;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
@@ -34,37 +31,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.WrittenCount = 0;
         }
 
-        public ReadOnlyMemory<byte> WrittenMemory
-        {
-            get
-            {
-                return this.rentedBuffer.AsMemory(0, this.WrittenCount);
-            }
-        }
+        public ReadOnlyMemory<byte> WrittenMemory => this.rentedBuffer.AsMemory(0, this.WrittenCount);
 
         public int WrittenCount { get; private set; }
 
-        public int Capacity
-        {
-            get
-            {
-                return this.rentedBuffer.Length;
-            }
-        }
+        public int Capacity => this.rentedBuffer.Length;
 
-        public int FreeCapacity
-        {
-            get
-            {
-                return this.rentedBuffer.Length - this.WrittenCount;
-            }
-        }
+        public int FreeCapacity => this.rentedBuffer.Length - this.WrittenCount;
 
         public ArraySegment<byte> ToArraySegment() => new ArraySegment<byte>(this.rentedBuffer, 0, this.WrittenCount);
 
         public void Clear()
         {
-            this.ClearHelper();
+            this.WrittenCount = 0;
         }
 
         // Returns the rented buffer back to the pool
@@ -75,7 +54,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 return;
             }
 
-            this.ClearHelper();
             ArrayPool<byte>.Shared.Return(this.rentedBuffer);
             this.rentedBuffer = null;
         }
@@ -97,27 +75,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return this.rentedBuffer.AsSpan(this.WrittenCount);
         }
 
-#if NETSTANDARD2_1
-        internal ValueTask WriteToStreamAsync(Stream destination, CancellationToken cancellationToken)
-        {
-            return destination.WriteAsync(this.WrittenMemory, cancellationToken);
-        }
-#else
-        internal Task WriteToStreamAsync(Stream destination, CancellationToken cancellationToken)
-        {
-            return destination.WriteAsync(this.rentedBuffer, 0, this.WrittenCount, cancellationToken);
-        }
-#endif
-
-        private void ClearHelper()
-        {
-            this.rentedBuffer.AsSpan(0, this.WrittenCount).Clear();
-            this.WrittenCount = 0;
-        }
-
         private void CheckAndResizeBuffer(int sizeHint)
         {
-            if (sizeHint == 0)
+            if (sizeHint <= 0)
             {
                 sizeHint = MinimumBufferSize;
             }
@@ -136,7 +96,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 var previousBuffer = oldBuffer.AsSpan(0, this.WrittenCount);
                 previousBuffer.CopyTo(this.rentedBuffer);
-                previousBuffer.Clear();
                 ArrayPool<byte>.Shared.Return(oldBuffer);
             }
         }

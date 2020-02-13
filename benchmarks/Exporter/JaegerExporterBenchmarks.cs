@@ -23,13 +23,14 @@ using OpenTelemetry.Exporter.Jaeger;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
+using Thrift.Transports;
 
 namespace Benchmarks.Exporter
 {
     [MemoryDiagnoser]
     public class JaegerExporterBenchmarks
     {
-        [Params(1, 10)]
+        [Params(1, 5, 10)]
         public int NumberOfBatches { get; set; }
 
         [Params(1, 50, 100)]
@@ -38,30 +39,78 @@ namespace Benchmarks.Exporter
         [Benchmark]
         public async Task JaegerExporter_Batching()
         {
-            var testSpan = CreateTestSpan().ToJaegerSpan();
+            var testSpan = this.CreateTestSpan().ToJaegerSpan();
 
-            using (var buffer = new PooledByteBufferWriter(1024))
+            using (var jaegerUdpBatcher = new JaegerUdpBatcher(new JaegerExporterOptions(), new BlackHoleTransport()))
             {
-                using (var jaegerUdpBatcher = new JaegerUdpBatcher(new JaegerExporterOptions(), new InMemoryTransport(buffer)))
+                jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Implementation.Process("TestService", null);
+
+                for (int i = 0; i < this.NumberOfBatches; i++)
                 {
-                    jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Implementation.Process("TestService", null);
-
-                    for (int i = 0; i < this.NumberOfBatches; i++)
+                    for (int c = 0; c < this.NumberOfSpans; c++)
                     {
-                        for (int c = 0; c < this.NumberOfSpans; c++)
-                        {
-                            await jaegerUdpBatcher.AppendAsync(testSpan, CancellationToken.None).ConfigureAwait(false);
-                        }
-
-                        await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                        await jaegerUdpBatcher.AppendAsync(testSpan, CancellationToken.None).ConfigureAwait(false);
                     }
 
-                    buffer.Clear();
+                    await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
                 }
             }
         }
 
-        private static SpanData CreateTestSpan()
+        private class BlackHoleTransport : TClientTransport
+        {
+             public override bool IsOpen => true;
+
+            public override Task OpenAsync(CancellationToken cancellationToken)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return Task.FromCanceled(cancellationToken);
+                }
+
+                return Task.CompletedTask;
+            }
+
+            public override void Close()
+            {
+                // do nothing
+            }
+
+            public override Task<int> ReadAsync(
+                byte[] buffer,
+                int offset,
+                int length,
+                CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return Task.FromCanceled(cancellationToken);
+                }
+
+                return Task.CompletedTask;
+            }
+
+            public override Task FlushAsync(CancellationToken cancellationToken)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return Task.FromCanceled(cancellationToken);
+                }
+
+                return Task.CompletedTask;
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+            }
+        }
+
+        private SpanData CreateTestSpan()
         {
             var startTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
             var endTimestamp = startTimestamp.AddSeconds(60);
