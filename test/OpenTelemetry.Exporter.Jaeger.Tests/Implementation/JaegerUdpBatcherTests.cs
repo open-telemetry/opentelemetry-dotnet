@@ -30,21 +30,21 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             using (var buffer = new PooledByteBufferWriter(1024))
             {
-                using (var JaegerUdpBatcher = new JaegerUdpBatcher(new JaegerExporterOptions(), new InMemoryTransport(buffer)))
+                using (var jaegerUdpBatcher = new JaegerUdpBatcher(new JaegerExporterOptions(), new InMemoryTransport(buffer)))
                 {
-                    JaegerUdpBatcher.Process = JaegerThriftIntegrationTest.TestProcess;
+                    jaegerUdpBatcher.Process = JaegerThriftIntegrationTest.TestProcess;
 
-                    await JaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+                    await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
 
-                    await JaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                    await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
                     Assert.Equal(validJaegerThriftPayload, buffer.ToArraySegment());
 
                     buffer.Clear();
 
-                    await JaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+                    await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
 
-                    await JaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                    await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
                     // SeqNo is the second byte.
                     validJaegerThriftPayload[2]++;
