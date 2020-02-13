@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift;
@@ -38,33 +39,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
 
-            this.OutputProtocol.IncrementRecursionDepth();
-            try
+            var args = new EmitBatchArgs
             {
-                var struc = new TStruct("emitBatch_args");
-                await this.OutputProtocol.WriteStructBeginAsync(struc, cancellationToken);
-                if (batch != null)
-                {
-                    var field = new TField
-                    {
-                        Name = "batch",
-                        Type = TType.Struct,
-                        ID = 1,
-                    };
+                Batch = batch,
+            };
 
-                    await this.OutputProtocol.WriteFieldBeginAsync(field, cancellationToken);
-                    await batch.WriteAsync(this.OutputProtocol, cancellationToken);
-                    await this.OutputProtocol.WriteFieldEndAsync(cancellationToken);
-                }
+            await args.WriteAsync(this.OutputProtocol, cancellationToken);
+            await this.OutputProtocol.WriteMessageEndAsync(cancellationToken);
+            await this.OutputProtocol.Transport.FlushAsync(cancellationToken);
+        }
 
-                await this.OutputProtocol.WriteFieldStopAsync(cancellationToken);
-                await this.OutputProtocol.WriteStructEndAsync(cancellationToken);
-            }
-            finally
-            {
-                this.OutputProtocol.DecrementRecursionDepth();
-            }
-
+        internal async Task EmitBatchAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, CancellationToken cancellationToken)
+        {
+            await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
+            await EmitBatchArgs.WriteAsync(processMessage, spanMessages, this.OutputProtocol, cancellationToken);
             await this.OutputProtocol.WriteMessageEndAsync(cancellationToken);
             await this.OutputProtocol.Transport.FlushAsync(cancellationToken);
         }

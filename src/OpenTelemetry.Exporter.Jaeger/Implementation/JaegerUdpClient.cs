@@ -36,6 +36,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public void Connect(string host, int port) => this.client.Connect(host, port);
 
+        public Task<int> SendAsync(byte[] buffer) => this.SendAsync(buffer, 0, buffer?.Length ?? 0);
+
         public Task<int> SendAsync(byte[] buffer, int offset, int count)
         {
             return Task<int>.Factory.FromAsync(

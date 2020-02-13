@@ -26,15 +26,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public class Batch : TAbstractBase
     {
-        private readonly ArraySegment<byte> processMessage;
-
-        private readonly IEnumerable<ArraySegment<byte>> spanMessages;
-
-        public Batch(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages)
+        public Batch()
         {
-            this.processMessage = processMessage;
-            this.spanMessages = spanMessages ?? Enumerable.Empty<ArraySegment<byte>>();
         }
+
+        public Batch(Process process, IEnumerable<JaegerSpan> spans)
+            : this()
+        {
+            this.Process = process;
+            this.Spans = spans;
+        }
+
+        public Process Process { get; set; }
+
+        public IEnumerable<JaegerSpan> Spans { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -53,20 +58,21 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 };
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await oprot.WriteRawAsync(this.processMessage, cancellationToken);
+                await (this.Process ?? new Process()).WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
 
                 field.Name = "spans";
                 field.Type = TType.List;
                 field.ID = 2;
 
+                var spans = this.Spans ?? Enumerable.Empty<JaegerSpan>();
+
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
                 {
-                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.spanMessages.Count()), cancellationToken);
-
-                    foreach (var s in this.spanMessages)
+                    await oprot.WriteListBeginAsync(new TList(TType.Struct, spans.Count()), cancellationToken);
+                    foreach (var s in spans)
                     {
-                        await oprot.WriteRawAsync(s, cancellationToken);
+                        await s.WriteAsync(oprot, cancellationToken);
                     }
 
                     await oprot.WriteListEndAsync(cancellationToken);
@@ -86,11 +92,59 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             var sb = new StringBuilder("Batch(");
             sb.Append(", Process: ");
-            sb.Append(this.processMessage.Count);
-            sb.Append(" bytes, Spans: ");
-            sb.Append(this.spanMessages.Count());
+            sb.Append(this.Process?.ToString() ?? "<null>");
+            sb.Append(", Spans: ");
+            sb.Append(this.Spans);
             sb.Append(")");
             return sb.ToString();
+        }
+
+        internal static async Task WriteAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
+        {
+            oprot.IncrementRecursionDepth();
+            try
+            {
+                var struc = new TStruct("Batch");
+
+                await oprot.WriteStructBeginAsync(struc, cancellationToken);
+
+                var field = new TField
+                {
+                    Name = "process",
+                    Type = TType.Struct,
+                    ID = 1,
+                };
+
+                await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                await oprot.WriteRawAsync(processMessage, cancellationToken);
+                await oprot.WriteFieldEndAsync(cancellationToken);
+
+                field.Name = "spans";
+                field.Type = TType.List;
+                field.ID = 2;
+
+                var spans = spanMessages ?? Enumerable.Empty<ArraySegment<byte>>();
+
+                await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                {
+                    await oprot.WriteListBeginAsync(new TList(TType.Struct, spans.Count()), cancellationToken);
+
+                    foreach (var s in spans)
+                    {
+                        await oprot.WriteRawAsync(s, cancellationToken);
+                    }
+
+                    await oprot.WriteListEndAsync(cancellationToken);
+                }
+
+                await oprot.WriteFieldEndAsync(cancellationToken);
+                await oprot.WriteFieldStopAsync(cancellationToken);
+                await oprot.WriteStructEndAsync(cancellationToken);
+            }
+            finally
+            {
+                oprot.DecrementRecursionDepth();
+            }
         }
     }
 }

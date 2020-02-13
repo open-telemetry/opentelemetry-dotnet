@@ -19,6 +19,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Protocols;
+using Thrift.Transports;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
@@ -26,7 +27,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     {
         private readonly int maxPacketSize;
         private readonly ITProtocolFactory protocolFactory;
-        private readonly JaegerThriftClientTransport clientTransport;
+        private readonly TClientTransport clientTransport;
         private readonly JaegerThriftClient thriftClient;
         private readonly List<PooledByteBufferWriter> currentBatch = new List<PooledByteBufferWriter>();
 
@@ -40,7 +41,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         private bool disposedValue = false; // To detect redundant calls
 
-        public JaegerUdpBatcher(JaegerExporterOptions options)
+        public JaegerUdpBatcher(JaegerExporterOptions options, TClientTransport clientTransport = null)
         {
             if (options is null)
             {
@@ -54,7 +55,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             this.maxPacketSize = (!options.MaxPacketSize.HasValue || options.MaxPacketSize == 0) ? JaegerExporterOptions.DefaultMaxPacketSize : options.MaxPacketSize.Value;
             this.protocolFactory = new TCompactProtocol.Factory();
-            this.clientTransport = new JaegerThriftClientTransport(options.AgentHost, options.AgentPort);
+            this.clientTransport = clientTransport ?? new JaegerThriftClientTransport(options.AgentHost, options.AgentPort);
             this.thriftClient = new JaegerThriftClient(this.protocolFactory.GetProtocol(this.clientTransport));
             this.Process = new Process(options.ServiceName, options.ProcessTags);
 
@@ -72,7 +73,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             };
         }
 
-        public Process Process { get; private set; }
+        public Process Process { get; internal set; }
 
         public async Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken)
         {
@@ -168,8 +169,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             try
             {
-                var batch = new Batch(this.processMessage.Value, this.currentBatch.Select(p => p.ToArraySegment()));
-                await this.thriftClient.EmitBatchAsync(batch, cancellationToken).ConfigureAwait(false);
+                await this.thriftClient.EmitBatchAsync(
+                    this.processMessage.Value,
+                    this.currentBatch.Select(p => p.ToArraySegment()),
+                    cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

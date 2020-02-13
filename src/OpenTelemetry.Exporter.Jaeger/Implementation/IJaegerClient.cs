@@ -29,6 +29,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         void Close();
 
+        Task<int> SendAsync(byte[] buffer);
+
         Task<int> SendAsync(byte[] buffer, int offset, int count);
     }
 }

@@ -50,20 +50,23 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public override Task FlushAsync(CancellationToken cancellationToken)
         {
             // GetBuffer returns the underlying storage, which saves an allocation over ToArray.
-            var bytes = this.byteStream.GetBuffer();
+            if (!this.byteStream.TryGetBuffer(out var buffer))
+            {
+                buffer = new ArraySegment<byte>(this.byteStream.ToArray(), 0, (int)this.byteStream.Length);
+            }
 
-            if (bytes.Length == 0)
+            if (buffer.Count == 0)
             {
                 return Task.CompletedTask;
             }
 
             try
             {
-                return this.client.SendAsync(bytes, 0, (int)this.byteStream.Length);
+                return this.client.SendAsync(buffer.Array, buffer.Offset, buffer.Count);
             }
             catch (SocketException se)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush because of socket exception. UDP Packet size was {bytes.Length}. Exception message: {se.Message}");
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush because of socket exception. UDP Packet size was {buffer.Count}. Exception message: {se.Message}");
             }
             catch (Exception e)
             {

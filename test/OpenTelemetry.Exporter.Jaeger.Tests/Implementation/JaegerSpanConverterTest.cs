@@ -338,7 +338,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.DoesNotContain(jaegerSpan.JaegerTags, t => t.Key == Resource.ServiceNameKey && t.VStr == "MyService");
         }
 
-        internal SpanData CreateTestSpan(
+        internal static SpanData CreateTestSpan(
             bool setAttributes = true,
             bool addEvents = true,
             bool addLinks = true,
