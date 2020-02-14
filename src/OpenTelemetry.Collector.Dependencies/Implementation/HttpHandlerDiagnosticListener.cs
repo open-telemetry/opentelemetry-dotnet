@@ -28,7 +28,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 {
     internal class HttpHandlerDiagnosticListener : ListenerHandler
     {
-        private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled);
+        private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
         private readonly PropertyFetcher stopResponseFetcher = new PropertyFetcher("Response");
