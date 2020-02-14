@@ -21,14 +21,9 @@ using Thrift.Protocols.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerSpanRef : TAbstractBase
+    public struct JaegerSpanRef : TAbstractBase
     {
-        public JaegerSpanRef()
-        {
-        }
-
         public JaegerSpanRef(JaegerSpanRefType refType, long traceIdLow, long traceIdHigh, long spanId)
-            : this()
         {
             this.RefType = refType;
             this.TraceIdLow = traceIdLow;
@@ -44,7 +39,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public long SpanId { get; set; }
 
+#if NETSTANDARD2_1
+        public async ValueTask WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+#else
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+#endif
         {
             oprot.IncrementRecursionDepth();
             try

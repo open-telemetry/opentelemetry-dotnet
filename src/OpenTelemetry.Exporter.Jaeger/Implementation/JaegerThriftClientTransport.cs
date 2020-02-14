@@ -47,7 +47,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.client.Close();
         }
 
-        public override Task FlushAsync(CancellationToken cancellationToken)
+#if NETSTANDARD2_1
+        public override async ValueTask FlushAsync(CancellationToken cancellationToken)
+#else
+        public override async Task FlushAsync(CancellationToken cancellationToken)
+#endif
         {
             // GetBuffer returns the underlying storage, which saves an allocation over ToArray.
             if (!this.byteStream.TryGetBuffer(out var buffer))
@@ -57,12 +61,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             if (buffer.Count == 0)
             {
-                return Task.CompletedTask;
+                return;
             }
 
             try
             {
-                return this.client.SendAsync(buffer.Array, buffer.Offset, buffer.Count);
+                await this.client.SendAsync(buffer.Array, buffer.Offset, buffer.Count).ConfigureAwait(false);
             }
             catch (SocketException se)
             {
@@ -78,26 +82,38 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        public override Task OpenAsync(CancellationToken cancellationToken)
+#if NETSTANDARD2_1
+        public override async ValueTask OpenAsync(CancellationToken cancellationToken)
+#else
+        public override async Task OpenAsync(CancellationToken cancellationToken)
+#endif
         {
-            // Do nothing
-            return Task.CompletedTask;
+            if (cancellationToken.IsCancellationRequested)
+            {
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
+            }
         }
 
+#if NETSTANDARD2_1
+        public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
         public override Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
         {
             throw new NotImplementedException();
         }
 
-        public override Task WriteAsync(byte[] buffer, CancellationToken cancellationToken)
+#if NETSTANDARD2_1
+        public override ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
-            return this.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
+            return this.byteStream.WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, length), cancellationToken);
         }
-
+#else
         public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
             return this.byteStream.WriteAsync(buffer, offset, length, cancellationToken);
         }
+#endif
 
         public override string ToString()
         {

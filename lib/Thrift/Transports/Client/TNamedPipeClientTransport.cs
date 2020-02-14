@@ -14,7 +14,7 @@
 // KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
+using System;
 using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,7 +39,11 @@ namespace Thrift.Transports.Client
 
         public override bool IsOpen => _client != null && _client.IsConnected;
 
+#if NETSTANDARD2_1
+        public override async ValueTask OpenAsync(CancellationToken cancellationToken)
+#else
         public override async Task OpenAsync(CancellationToken cancellationToken)
+#endif
         {
             if (IsOpen)
             {
@@ -58,28 +62,47 @@ namespace Thrift.Transports.Client
             }
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
-            CancellationToken cancellationToken)
+#if NETSTANDARD2_1
+        public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
         {
             if (_client == null)
             {
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
+#if NETSTANDARD2_1
+            return await _client.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
+#else
             return await _client.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
+#endif
         }
 
+#if NETSTANDARD2_1
+        public override async ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
         {
             if (_client == null)
             {
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
+#if NETSTANDARD2_1
+            await _client.WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
+#else
             await _client.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
+#endif
         }
 
+#if NETSTANDARD2_1
+        public override async ValueTask FlushAsync(CancellationToken cancellationToken)
+#else
         public override async Task FlushAsync(CancellationToken cancellationToken)
+#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {

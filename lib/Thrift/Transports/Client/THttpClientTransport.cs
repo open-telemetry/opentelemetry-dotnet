@@ -68,7 +68,11 @@ namespace Thrift.Transports.Client
 
         public override bool IsOpen => true;
 
+#if NETSTANDARD2_1
+        public override async ValueTask OpenAsync(CancellationToken cancellationToken)
+#else
         public override async Task OpenAsync(CancellationToken cancellationToken)
+#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -97,8 +101,11 @@ namespace Thrift.Transports.Client
             }
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
-            CancellationToken cancellationToken)
+#if NETSTANDARD2_1
+        public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -112,7 +119,11 @@ namespace Thrift.Transports.Client
 
             try
             {
+#if NETSTANDARD2_1
+                var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
+#else
                 var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
+#endif
 
                 if (ret == -1)
                 {
@@ -127,14 +138,22 @@ namespace Thrift.Transports.Client
             }
         }
 
+#if NETSTANDARD2_1
+        public override async ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
                 await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
 
+#if NETSTANDARD2_1
+            await _outputStream.WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
+#else
             await _outputStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
+#endif
         }
 
         private HttpClient CreateClient()
@@ -170,7 +189,11 @@ namespace Thrift.Transports.Client
             return httpClient;
         }
 
+#if NETSTANDARD2_1
+        public override async ValueTask FlushAsync(CancellationToken cancellationToken)
+#else
         public override async Task FlushAsync(CancellationToken cancellationToken)
+#endif
         {
             try
             {

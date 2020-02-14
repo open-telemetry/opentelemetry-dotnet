@@ -65,9 +65,9 @@ namespace OpenTelemetry.Exporter.Jaeger
             return ExportResult.Success;
         }
 
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
+        public override async Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            return this.JaegerAgentUdpBatcher.FlushAsync(cancellationToken);
+            await this.JaegerAgentUdpBatcher.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public void Dispose()

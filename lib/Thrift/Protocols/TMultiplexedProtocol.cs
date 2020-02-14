@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -74,7 +74,11 @@ namespace Thrift.Protocols
             _serviceName = serviceName;
         }
 
+#if NETSTANDARD2_1
+        public override async ValueTask WriteMessageBeginAsync(TMessage message, CancellationToken cancellationToken)
+#else
         public override async Task WriteMessageBeginAsync(TMessage message, CancellationToken cancellationToken)
+#endif
         {
             switch (message.Type)
             {

@@ -23,14 +23,9 @@ using Thrift.Protocols.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerSpan : TAbstractBase
+    public struct JaegerSpan : TAbstractBase
     {
-        public JaegerSpan()
-        {
-        }
-
         public JaegerSpan(long traceIdLow, long traceIdHigh, long spanId, long parentSpanId, string operationName, int flags, long startTime, long duration)
-            : this()
         {
             this.TraceIdLow = traceIdLow;
             this.TraceIdHigh = traceIdHigh;
@@ -40,6 +35,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.Flags = flags;
             this.StartTime = startTime;
             this.Duration = duration;
+
+            this.References = null;
+            this.Tags = null;
+            this.Logs = null;
         }
 
         public long TraceIdLow { get; set; }
@@ -60,11 +59,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public long Duration { get; set; }
 
-        public IEnumerable<JaegerTag> JaegerTags { get; set; }
+        public IEnumerable<JaegerTag> Tags { get; set; }
 
         public IEnumerable<JaegerLog> Logs { get; set; }
 
+#if NETSTANDARD2_1
+        public async ValueTask WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+#else
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+#endif
         {
             oprot.IncrementRecursionDepth();
             try
@@ -159,7 +162,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 await oprot.WriteI64Async(this.Duration, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
 
-                if (this.JaegerTags is IEnumerable<JaegerTag> jaegerTags)
+                if (this.Tags is IEnumerable<JaegerTag> jaegerTags)
                 {
                     field.Name = "JaegerTags";
                     field.Type = TType.List;
@@ -234,7 +237,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             sb.Append(this.StartTime);
             sb.Append(", Duration: ");
             sb.Append(this.Duration);
-            if (this.JaegerTags is IEnumerable<JaegerTag> tags)
+            if (this.Tags is IEnumerable<JaegerTag> tags)
             {
                 sb.Append(", JaegerTags: ");
                 sb.Append(tags);

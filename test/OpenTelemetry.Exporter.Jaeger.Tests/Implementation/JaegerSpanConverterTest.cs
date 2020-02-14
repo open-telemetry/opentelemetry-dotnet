@@ -71,7 +71,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
             Assert.Equal((long)((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000), jaegerSpan.Duration);
 
-            var tags = jaegerSpan.JaegerTags.ToArray();
+            var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
             Assert.Equal("stringKey", tag.Key);
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal((long)((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000), jaegerSpan.Duration);
 
             // A single tag representing the span.kind
-            Assert.Single(jaegerSpan.JaegerTags);
+            Assert.Single(jaegerSpan.Tags);
 
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
@@ -213,7 +213,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(span.EndTimestamp.ToEpochMicroseconds()
                          - span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.Duration);
 
-            var tags = jaegerSpan.JaegerTags.ToArray();
+            var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
             Assert.Equal("stringKey", tag.Key);
@@ -265,7 +265,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(span.EndTimestamp.ToEpochMicroseconds()
                          - span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.Duration);
 
-            var tags = jaegerSpan.JaegerTags.ToArray();
+            var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
             Assert.Equal("stringKey", tag.Key);
@@ -333,9 +333,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var jaegerSpan = span.ToJaegerSpan();
 
-            Assert.Contains(jaegerSpan.JaegerTags, t => t.Key == Resource.LibraryNameKey && t.VStr == "libname");
-            Assert.Contains(jaegerSpan.JaegerTags, t => t.Key == Resource.LibraryVersionKey && t.VStr == "libversion");
-            Assert.DoesNotContain(jaegerSpan.JaegerTags, t => t.Key == Resource.ServiceNameKey && t.VStr == "MyService");
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == Resource.LibraryNameKey && t.VStr == "libname");
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == Resource.LibraryVersionKey && t.VStr == "libversion");
+            Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == Resource.ServiceNameKey && t.VStr == "MyService");
         }
 
         internal static SpanData CreateTestSpan(

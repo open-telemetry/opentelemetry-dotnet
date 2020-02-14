@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -14,7 +14,7 @@
 // KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,7 +42,11 @@ namespace Thrift.Transports.Client
 
         public override bool IsOpen => true;
 
+#if NETSTANDARD2_1
+        public override async ValueTask OpenAsync(CancellationToken cancellationToken)
+#else
         public override async Task OpenAsync(CancellationToken cancellationToken)
+#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -65,8 +69,11 @@ namespace Thrift.Transports.Client
             }
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
-            CancellationToken cancellationToken)
+#if NETSTANDARD2_1
+        public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
         {
             if (InputStream == null)
             {
@@ -74,10 +81,18 @@ namespace Thrift.Transports.Client
                     "Cannot read from null inputstream");
             }
 
+#if NETSTANDARD2_1
+            return await InputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
+#else
             return await InputStream.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
+#endif
         }
 
+#if NETSTANDARD2_1
+        public override async ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
         {
             if (OutputStream == null)
             {
@@ -85,12 +100,20 @@ namespace Thrift.Transports.Client
                     "Cannot read from null inputstream");
             }
 
+#if NETSTANDARD2_1
+            await OutputStream.WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
+#else
             await OutputStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
+#endif
         }
 
-        public override Task FlushAsync(CancellationToken cancellationToken)
+#if NETSTANDARD2_1
+        public override async ValueTask FlushAsync(CancellationToken cancellationToken)
+#else
+        public override async Task FlushAsync(CancellationToken cancellationToken)
+#endif
         {
-            return OutputStream.FlushAsync(cancellationToken);
+            await OutputStream.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
         // IDisposable

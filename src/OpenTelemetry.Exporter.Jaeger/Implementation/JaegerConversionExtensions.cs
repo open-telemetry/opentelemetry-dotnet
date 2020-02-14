@@ -94,20 +94,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 }
             }
 
-            IEnumerable<JaegerLog> jaegerLogs = null;
-
-            if (span.Events != null)
-            {
-                jaegerLogs = span.Events.Select(e => e.ToJaegerLog()).AsEnumerable();
-            }
-
-            IEnumerable<JaegerSpanRef> refs = null;
-
-            if (span.Links != null)
-            {
-                refs = span.Links.Select(l => l.ToJaegerSpanRef()).Where(l => l != null).AsEnumerable();
-            }
-
             var traceId = Int128.Empty;
             var spanId = Int128.Empty;
             var parentSpanId = Int128.Empty;
@@ -126,12 +112,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 SpanId = spanId.Low,
                 ParentSpanId = parentSpanId.Low,
                 OperationName = span.Name,
-                References = refs,
+                References = span.Links?.Where(l => l != null).Select(l => l.ToJaegerSpanRef()),
                 Flags = (span.Context.TraceOptions & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
                 StartTime = ToEpochMicroseconds(span.StartTimestamp),
                 Duration = ToEpochMicroseconds(span.EndTimestamp) - ToEpochMicroseconds(span.StartTimestamp),
-                JaegerTags = jaegerTags,
-                Logs = jaegerLogs,
+                Tags = jaegerTags,
+                Logs = span.Events?.Where(e => e != null).Select(e => e.ToJaegerLog()),
             };
         }
 

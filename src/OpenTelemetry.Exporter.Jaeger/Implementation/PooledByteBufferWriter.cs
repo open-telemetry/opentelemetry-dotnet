@@ -22,13 +22,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     internal sealed class PooledByteBufferWriter : IBufferWriter<byte>, IDisposable
     {
         private const int MinimumBufferSize = 256;
-
+        private readonly int initialCapacity;
         private byte[] rentedBuffer;
 
         public PooledByteBufferWriter(int initialCapacity)
         {
-            this.rentedBuffer = ArrayPool<byte>.Shared.Rent(initialCapacity);
-            this.WrittenCount = 0;
+            this.initialCapacity = initialCapacity;
+            this.Initialize();
         }
 
         public ReadOnlyMemory<byte> WrittenMemory => this.rentedBuffer.AsMemory(0, this.WrittenCount);
@@ -39,7 +39,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public int FreeCapacity => this.rentedBuffer.Length - this.WrittenCount;
 
-        public ArraySegment<byte> ToArraySegment() => new ArraySegment<byte>(this.rentedBuffer, 0, this.WrittenCount);
+        public ArraySegment<byte> SwapOutBuffer()
+        {
+            var buffer = new ArraySegment<byte>(this.rentedBuffer, 0, this.WrittenCount);
+            this.Initialize();
+            return buffer;
+        }
 
         public void Clear()
         {
@@ -73,6 +78,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             this.CheckAndResizeBuffer(sizeHint);
             return this.rentedBuffer.AsSpan(this.WrittenCount);
+        }
+
+        private void Initialize()
+        {
+            this.rentedBuffer = ArrayPool<byte>.Shared.Rent(this.initialCapacity);
+            this.Clear();
         }
 
         private void CheckAndResizeBuffer(int sizeHint)

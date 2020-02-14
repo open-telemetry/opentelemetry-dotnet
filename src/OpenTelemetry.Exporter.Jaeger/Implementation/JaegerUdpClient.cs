@@ -13,8 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
@@ -36,8 +38,45 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public void Connect(string host, int port) => this.client.Connect(host, port);
 
-        public Task<int> SendAsync(byte[] buffer) => this.SendAsync(buffer, 0, buffer?.Length ?? 0);
+#if NETSTANDARD2_1
+        public ValueTask<int> SendAsync(byte[] buffer)
+#else
+        public Task<int> SendAsync(byte[] buffer)
+#endif
+        {
+            return this.SendAsync(buffer, 0, buffer?.Length ?? 0);
+        }
 
+#if NETSTANDARD2_1
+        public ValueTask<int> SendAsync(byte[] buffer, int offset, int count)
+        {
+            var socket = this.client.Client;
+
+            var asyncResult = socket.BeginSend(
+                buffer,
+                offset,
+                count,
+                SocketFlags.None,
+                callback: null,
+                state: null);
+
+            if (asyncResult.CompletedSynchronously)
+            {
+                return new ValueTask<int>(socket.EndSend(asyncResult));
+            }
+
+            var tcs = new TaskCompletionSource<int>();
+
+            ThreadPool.RegisterWaitForSingleObject(
+                waitObject: asyncResult.AsyncWaitHandle,
+                callBack: (s, t) => tcs.SetResult(socket.EndSend(asyncResult)),
+                state: null,
+                timeout: TimeSpan.MaxValue,
+                executeOnlyOnce: true);
+
+            return new ValueTask<int>(tcs.Task);
+        }
+#else
         public Task<int> SendAsync(byte[] buffer, int offset, int count)
         {
             return Task<int>.Factory.FromAsync(
@@ -45,6 +84,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 asyncResult => ((Socket)asyncResult.AsyncState).EndSend(asyncResult),
                 state: this.client.Client);
         }
+#endif
 
         public void Dispose() => this.client.Dispose();
     }

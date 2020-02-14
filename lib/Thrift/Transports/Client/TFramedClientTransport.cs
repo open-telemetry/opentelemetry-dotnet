@@ -44,7 +44,11 @@ namespace Thrift.Transports.Client
 
         public override bool IsOpen => !_isDisposed && _transport.IsOpen;
 
+#if NETSTANDARD2_1
+        public override async ValueTask OpenAsync(CancellationToken cancellationToken)
+#else
         public override async Task OpenAsync(CancellationToken cancellationToken)
+#endif
         {
             CheckNotDisposed();
 
@@ -58,8 +62,11 @@ namespace Thrift.Transports.Client
             _transport.Close();
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
-            CancellationToken cancellationToken)
+#if NETSTANDARD2_1
+        public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
         {
             CheckNotDisposed();
 
@@ -70,7 +77,11 @@ namespace Thrift.Transports.Client
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
+#if NETSTANDARD2_1
+            var got = await _readBuffer.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
+#else
             var got = await _readBuffer.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
+#endif
             if (got > 0)
             {
                 return got;
@@ -79,10 +90,18 @@ namespace Thrift.Transports.Client
             // Read another frame of data
             await ReadFrameAsync(cancellationToken).ConfigureAwait(false);
 
+#if NETSTANDARD2_1
+            return await _readBuffer.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
+#else
             return await _readBuffer.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
+#endif
         }
 
+#if NETSTANDARD2_1
+        private async ValueTask ReadFrameAsync(CancellationToken cancellationToken)
+#else
         private async Task ReadFrameAsync(CancellationToken cancellationToken)
+#endif
         {
             await _transport.ReadAllAsync(_headerBuf, 0, HeaderSize, cancellationToken).ConfigureAwait(false);
 
@@ -99,7 +118,11 @@ namespace Thrift.Transports.Client
             await _transport.ReadAllAsync(buff, 0, size, cancellationToken).ConfigureAwait(false);
         }
 
+#if NETSTANDARD2_1
+        public override async ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
         {
             CheckNotDisposed();
 
@@ -115,10 +138,18 @@ namespace Thrift.Transports.Client
                 await FlushAsync(cancellationToken).ConfigureAwait(false);
             }
 
+#if NETSTANDARD2_1
+            await _writeBuffer.WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
+#else
             await _writeBuffer.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
+#endif
         }
 
+#if NETSTANDARD2_1
+        public override async ValueTask FlushAsync(CancellationToken cancellationToken)
+#else
         public override async Task FlushAsync(CancellationToken cancellationToken)
+#endif
         {
             CheckNotDisposed();
 

@@ -146,7 +146,11 @@ namespace Thrift.Transports.Client
             return sslValidationErrors == SslPolicyErrors.None;
         }
 
+#if NETSTANDARD2_1
+        public override async ValueTask OpenAsync(CancellationToken cancellationToken)
+#else
         public override async Task OpenAsync(CancellationToken cancellationToken)
+#endif
         {
             if (IsOpen)
             {

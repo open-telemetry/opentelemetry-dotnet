@@ -14,8 +14,8 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Buffers;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Protocols;
@@ -31,13 +31,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private readonly JaegerThriftClient thriftClient;
         private readonly InMemoryTransport memoryTransport;
         private readonly TProtocol memoryProtocol;
-        private readonly List<PooledByteBufferWriter> currentBatch = new List<PooledByteBufferWriter>();
+        private readonly List<ArraySegment<byte>> currentBatch = new List<ArraySegment<byte>>();
 
         private readonly SemaphoreSlim flushLock = new SemaphoreSlim(1);
         private readonly TimeSpan maxFlushInterval;
         private readonly System.Timers.Timer maxFlushIntervalTimer;
 
-        private PooledByteBufferWriter processMessage;
+        private ArraySegment<byte>? processMessage;
         private int processByteSize;
         private int batchByteSize;
 
@@ -80,20 +80,24 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public Process Process { get; internal set; }
 
+#if NETSTANDARD2_1
+        public async ValueTask<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken)
+#else
         public async Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken)
+#endif
         {
-            if (this.processMessage == null)
+            if (!this.processMessage.HasValue)
             {
                 this.processMessage = await this.BuildThriftMessage(this.Process).ConfigureAwait(false);
-                this.processByteSize = this.processMessage.WrittenCount;
+                this.processByteSize = this.processMessage.Value.Count;
                 this.batchByteSize = this.processByteSize;
             }
 
             var spanMessage = await this.BuildThriftMessage(span).ConfigureAwait(false);
 
-            if (spanMessage.WrittenCount + this.processByteSize > this.maxPacketSize)
+            if (spanMessage.Count + this.processByteSize > this.maxPacketSize)
             {
-                throw new JaegerExporterException($"ThriftSender received a span that was too large, size = {spanMessage.WrittenCount + this.processByteSize}, max = {this.maxPacketSize}", null);
+                throw new JaegerExporterException($"ThriftSender received a span that was too large, size = {spanMessage.Count + this.processByteSize}, max = {this.maxPacketSize}", null);
             }
 
             var flushedSpanCount = 0;
@@ -103,7 +107,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 await this.flushLock.WaitAsync().ConfigureAwait(false);
 
                 // flush if current batch size plus new span size equals or exceeds max batch size
-                if (this.batchByteSize + spanMessage.WrittenCount >= this.maxPacketSize)
+                if (this.batchByteSize + spanMessage.Count >= this.maxPacketSize)
                 {
                     flushedSpanCount = await this.FlushAsync(cancellationToken).ConfigureAwait(false);
                 }
@@ -114,7 +118,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 // add span to batch and wait for more spans
                 this.currentBatch.Add(spanMessage);
-                this.batchByteSize += spanMessage.WrittenCount;
+                this.batchByteSize += spanMessage.Count;
             }
             finally
             {
@@ -124,7 +128,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return flushedSpanCount;
         }
 
+#if NETSTANDARD2_1
+        public async ValueTask<int> FlushAsync(CancellationToken cancellationToken)
+#else
         public async Task<int> FlushAsync(CancellationToken cancellationToken)
+#endif
         {
             try
             {
@@ -147,7 +155,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 {
                     foreach (var p in this.currentBatch)
                     {
-                        p.Dispose();
+                        ArrayPool<byte>.Shared.Return(p.Array);
                     }
 
                     this.currentBatch.Clear();
@@ -162,7 +170,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        public virtual Task<int> CloseAsync(CancellationToken cancellationToken) => this.FlushAsync(cancellationToken);
+#if NETSTANDARD2_1
+        public virtual ValueTask<int> CloseAsync(CancellationToken cancellationToken)
+#else
+        public virtual Task<int> CloseAsync(CancellationToken cancellationToken)
+#endif
+        {
+            return this.FlushAsync(cancellationToken);
+        }
 
         public void Dispose()
         {
@@ -175,8 +190,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             try
             {
                 await this.thriftClient.EmitBatchAsync(
-                    this.processMessage.ToArraySegment(),
-                    this.currentBatch.Select(p => p.ToArraySegment()),
+                    this.processMessage.Value,
+                    this.currentBatch,
                     cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -202,9 +217,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         }
 
 #if NETSTANDARD2_1
-        private async ValueTask<PooledByteBufferWriter> BuildThriftMessage(TAbstractBase thriftBase)
+        private async ValueTask<ArraySegment<byte>> BuildThriftMessage(TAbstractBase thriftBase)
 #else
-        private async Task<PooledByteBufferWriter> BuildThriftMessage(TAbstractBase thriftBase)
+        private async Task<ArraySegment<byte>> BuildThriftMessage(TAbstractBase thriftBase)
 #endif
         {
             await thriftBase.WriteAsync(this.memoryProtocol, CancellationToken.None).ConfigureAwait(false);

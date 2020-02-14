@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
                 await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
-                Assert.Equal(validJaegerThriftPayload, memoryTransport.FlushToArray());
+                Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.FlushToArray()));
 
                 await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
 
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 // SeqNo is the second byte.
                 validJaegerThriftPayload[2]++;
 
-                Assert.Equal(validJaegerThriftPayload, memoryTransport.FlushToArray());
+                Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.FlushToArray()));
             }
         }
     }

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Transports;
@@ -39,14 +38,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public override bool IsOpen => true;
 
-        public override Task OpenAsync(CancellationToken cancellationToken)
+#if NETSTANDARD2_1
+        public override async ValueTask OpenAsync(CancellationToken cancellationToken)
+#else
+        public override async Task OpenAsync(CancellationToken cancellationToken)
+#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
-
-            return Task.CompletedTask;
         }
 
         public override void Close()
@@ -54,30 +55,41 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             // do nothing
         }
 
-        public override Task<int> ReadAsync(
-            byte[] buffer,
-            int offset,
-            int length,
-            CancellationToken cancellationToken)
+#if NETSTANDARD2_1
+        public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
         {
             throw new NotImplementedException();
         }
 
+#if NETSTANDARD2_1
+        public override ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
         public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
         {
             var span = new ReadOnlySpan<byte>(buffer, offset, length);
             span.CopyTo(this.bufferWriter.GetSpan(length));
+            this.bufferWriter.Advance(length);
+#if NETSTANDARD2_1
+            return new ValueTask(Task.CompletedTask);
+#else
             return Task.CompletedTask;
+#endif
         }
 
-        public override Task FlushAsync(CancellationToken cancellationToken)
+#if NETSTANDARD2_1
+        public override async ValueTask FlushAsync(CancellationToken cancellationToken)
+#else
+        public override async Task FlushAsync(CancellationToken cancellationToken)
+#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
-
-            return Task.CompletedTask;
         }
 
         public byte[] FlushToArray()
@@ -87,12 +99,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return array;
         }
 
-        public PooledByteBufferWriter SwapOutBuffer()
-        {
-            var previousBufferWriter = this.bufferWriter;
-            this.bufferWriter = new PooledByteBufferWriter(this.initialCapacity);
-            return previousBufferWriter;
-        }
+        public ArraySegment<byte> SwapOutBuffer() => this.bufferWriter.SwapOutBuffer();
 
         protected override void Dispose(bool disposing)
         {

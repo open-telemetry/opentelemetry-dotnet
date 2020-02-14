@@ -23,14 +23,9 @@ using Thrift.Protocols.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerLog : TAbstractBase
+    public struct JaegerLog : TAbstractBase
     {
-        public JaegerLog()
-        {
-        }
-
         public JaegerLog(long timestamp, IEnumerable<JaegerTag> fields)
-            : this()
         {
             this.Timestamp = timestamp;
             this.Fields = fields ?? Enumerable.Empty<JaegerTag>();
@@ -40,7 +35,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public IEnumerable<JaegerTag> Fields { get; set; }
 
+#if NETSTANDARD2_1
+        public async ValueTask WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+#else
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+#endif
         {
             oprot.IncrementRecursionDepth();
             try

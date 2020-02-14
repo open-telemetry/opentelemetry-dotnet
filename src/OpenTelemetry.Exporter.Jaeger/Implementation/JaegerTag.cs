@@ -21,17 +21,18 @@ using Thrift.Protocols.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerTag : TAbstractBase
+    public struct JaegerTag : TAbstractBase
     {
-        public JaegerTag()
-        {
-        }
-
         public JaegerTag(string key, JaegerTagType vType)
-            : this()
         {
             this.Key = key;
             this.VType = vType;
+
+            this.VStr = null;
+            this.VDouble = null;
+            this.VBool = null;
+            this.VLong = null;
+            this.VBinary = null;
         }
 
         public string Key { get; set; }
@@ -48,7 +49,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public byte[] VBinary { get; set; }
 
+#if NETSTANDARD2_1
+        public async ValueTask WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+#else
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+#endif
         {
             oprot.IncrementRecursionDepth();
             try

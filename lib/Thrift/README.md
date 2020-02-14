@@ -11,3 +11,4 @@ The following changes were made to this fork:
 * ConfigureAwait(false) added to async calls to prevent deadlocks.
 * THttpClientTransport uses WebRequestHandler() in .NET Framework 4.6 builds.
 * WriteRawAsync added to TProtocol to write pre-built buffered messages.
+* ValueTasks used with .NET Standard 2.1.

@@ -28,6 +28,7 @@ using Thrift.Transports;
 namespace Benchmarks.Exporter
 {
     [MemoryDiagnoser]
+    [ThreadingDiagnoser]
     public class JaegerExporterBenchmarks
     {
         [Params(1, 5, 10)]
@@ -36,11 +37,17 @@ namespace Benchmarks.Exporter
         [Params(1, 50, 100)]
         public int NumberOfSpans { get; set; }
 
+        private SpanData testSpan;
+
+        [GlobalSetup]
+        public void GlobalSetup()
+        {
+            this.testSpan = this.CreateTestSpan();
+        }
+
         [Benchmark]
         public async Task JaegerExporter_Batching()
         {
-            var testSpan = this.CreateTestSpan().ToJaegerSpan();
-
             using (var jaegerUdpBatcher = new JaegerUdpBatcher(new JaegerExporterOptions(), new BlackHoleTransport()))
             {
                 jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Implementation.Process("TestService", null);
@@ -49,7 +56,7 @@ namespace Benchmarks.Exporter
                 {
                     for (int c = 0; c < this.NumberOfSpans; c++)
                     {
-                        await jaegerUdpBatcher.AppendAsync(testSpan, CancellationToken.None).ConfigureAwait(false);
+                        await jaegerUdpBatcher.AppendAsync(this.testSpan.ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
                     }
 
                     await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
@@ -59,16 +66,18 @@ namespace Benchmarks.Exporter
 
         private class BlackHoleTransport : TClientTransport
         {
-             public override bool IsOpen => true;
+            public override bool IsOpen => true;
 
-            public override Task OpenAsync(CancellationToken cancellationToken)
+#if !NET462
+            public override async ValueTask OpenAsync(CancellationToken cancellationToken)
+#else
+            public override async Task OpenAsync(CancellationToken cancellationToken)
+#endif
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    return Task.FromCanceled(cancellationToken);
+                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
                 }
-
-                return Task.CompletedTask;
             }
 
             public override void Close()
@@ -76,33 +85,37 @@ namespace Benchmarks.Exporter
                 // do nothing
             }
 
-            public override Task<int> ReadAsync(
-                byte[] buffer,
-                int offset,
-                int length,
-                CancellationToken cancellationToken)
+#if !NET462
+            public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
+            public override Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
             {
                 throw new NotImplementedException();
             }
 
-            public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#if !NET462
+            public override async ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#else
+            public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+#endif
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    return Task.FromCanceled(cancellationToken);
+                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
                 }
-
-                return Task.CompletedTask;
             }
 
-            public override Task FlushAsync(CancellationToken cancellationToken)
+#if !NET462
+            public override async ValueTask FlushAsync(CancellationToken cancellationToken)
+#else
+            public override async Task FlushAsync(CancellationToken cancellationToken)
+#endif
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    return Task.FromCanceled(cancellationToken);
+                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
                 }
-
-                return Task.CompletedTask;
             }
 
             protected override void Dispose(bool disposing)

@@ -126,7 +126,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             this.mockClient.Setup(t => t.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>())).Throws(new Exception("message, yo"));
 
             var transport = new JaegerThriftClientTransport(host, port, this.testingMemoryStream, this.mockClient.Object);
+#if !NET46
+            var ex = await Assert.ThrowsAsync<TTransportException>(() => transport.FlushAsync().AsTask());
+#else
             var ex = await Assert.ThrowsAsync<TTransportException>(() => transport.FlushAsync());
+#endif
 
             Assert.Equal("Cannot flush closed transport. message, yo", ex.Message);
         }
