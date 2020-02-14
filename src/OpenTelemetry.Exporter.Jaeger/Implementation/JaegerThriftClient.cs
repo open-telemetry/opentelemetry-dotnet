@@ -35,7 +35,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
         }
 
+#if NETSTANDARD2_1
+        public async ValueTask EmitBatchAsync(Batch batch, CancellationToken cancellationToken)
+#else
         public async Task EmitBatchAsync(Batch batch, CancellationToken cancellationToken)
+#endif
         {
             await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
 
@@ -49,7 +53,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             await this.OutputProtocol.Transport.FlushAsync(cancellationToken);
         }
 
+#if NETSTANDARD2_1
+        internal async ValueTask EmitBatchAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, CancellationToken cancellationToken)
+#else
         internal async Task EmitBatchAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, CancellationToken cancellationToken)
+#endif
         {
             await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
             await EmitBatchArgs.WriteAsync(processMessage, spanMessages, this.OutputProtocol, cancellationToken);

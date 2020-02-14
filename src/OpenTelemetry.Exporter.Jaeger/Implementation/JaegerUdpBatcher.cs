@@ -185,7 +185,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.Dispose(true);
         }
 
+#if NETSTANDARD2_1
+        protected async ValueTask SendAsync(CancellationToken cancellationToken)
+#else
         protected async Task SendAsync(CancellationToken cancellationToken)
+#endif
         {
             try
             {
