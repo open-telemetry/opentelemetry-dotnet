@@ -13,8 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using Xunit;
 
@@ -23,22 +26,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
     public class JaegerUdpBatcherTests
     {
         [Fact]
-        public void JaegerUdpBatcherTests_BuildBatchesToTransmit_DefaultBatch()
+        public async Task JaegerUdpBatcherTests_BuildBatchesToTransmit_DefaultBatch()
         {
             // Arrange
-            var options = new JaegerExporterOptions { ServiceName = "TestService" };
+            var options = new JaegerExporterOptions { ServiceName = "TestService", MaxFlushInterval = TimeSpan.FromHours(1) };
 
             var jaegerUdpBatcher = new JaegerUdpBatcher(options);
 
-            var spans = new[]
-            {
-                JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(),
-                JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(),
-                JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(),
-            };
-
             // Act
-            var batches = jaegerUdpBatcher.BuildBatchesToTransmit(spans);
+            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+
+            var batches = jaegerUdpBatcher.CurrentBatches.Values;
 
             // Assert
             Assert.Single(batches);
@@ -47,27 +47,26 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public void JaegerUdpBatcherTests_BuildBatchesToTransmit_MultipleBatches()
+        public async Task JaegerUdpBatcherTests_BuildBatchesToTransmit_MultipleBatches()
         {
             // Arrange
-            var options = new JaegerExporterOptions { ServiceName = "TestService" };
+            var options = new JaegerExporterOptions { ServiceName = "TestService", MaxFlushInterval = TimeSpan.FromHours(1) };
 
             var jaegerUdpBatcher = new JaegerUdpBatcher(options);
 
-            var spans = new[]
-            {
-                JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(),
+            // Act
+            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(
                 JaegerSpanConverterTest.CreateTestSpan(
                     additionalAttributes: new Dictionary<string, object>
                     {
                         ["peer.service"] = "MySQL",
                     })
                     .ToJaegerSpan(),
-                JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(),
-            };
+                CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
 
-            // Act
-            var batches = jaegerUdpBatcher.BuildBatchesToTransmit(spans);
+            var batches = jaegerUdpBatcher.CurrentBatches.Values;
 
             // Assert
             Assert.Equal(2, batches.Count());
@@ -79,6 +78,28 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var MySQLBatch = batches.Where(b => b.Process.ServiceName == "MySQL");
             Assert.Single(MySQLBatch);
             Assert.Single(MySQLBatch.First().Spans);
+        }
+
+        [Fact]
+        public async Task JaegerUdpBatcherTests_BuildBatchesToTransmit_FlushedBatch()
+        {
+            // Arrange
+            var options = new JaegerExporterOptions { ServiceName = "TestService", MaxFlushInterval = TimeSpan.FromHours(1), MaxPacketSize = 700 };
+
+            var jaegerUdpBatcher = new JaegerUdpBatcher(options);
+
+            // Act
+            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+            var flushCount = await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+
+            var batches = jaegerUdpBatcher.CurrentBatches.Values;
+
+            // Assert
+            Assert.Equal(2, flushCount);
+            Assert.Single(batches);
+            Assert.Equal("TestService", batches.First().Process.ServiceName);
+            Assert.Single(batches.First().Spans);
         }
     }
 }

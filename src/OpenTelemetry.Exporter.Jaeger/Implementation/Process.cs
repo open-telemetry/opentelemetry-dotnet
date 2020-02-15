@@ -49,6 +49,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public IDictionary<string, JaegerTag> Tags { get; set; }
 
+        internal int ByteSize { get; set; }
+
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
