@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using BenchmarkDotNet.Running;
-using Benchmarks.Exporter;
 
 namespace Benchmarks
 {
@@ -23,16 +22,6 @@ namespace Benchmarks
         public static void Main(string[] args)
         {
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
-
-            /*ZipkinExporterBenchmarks b = new ZipkinExporterBenchmarks();
-
-            b.GlobalSetup();
-
-            b.NumberOfSpans = 1;
-
-            b.ZipkinExporter_ExportAsync().GetAwaiter().GetResult();
-
-            b.GlobalCleanup();*/
         }
     }
 }
