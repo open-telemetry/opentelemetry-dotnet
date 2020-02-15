@@ -15,8 +15,12 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Http;
+#if NETSTANDARD2_0
+using System.Net.Http.Headers;
+#endif
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -149,14 +153,13 @@ namespace OpenTelemetry.Exporter.Zipkin
 
         private HttpContent GetRequestContent(IEnumerable<ZipkinSpan> toSerialize)
         {
+#if NETSTANDARD2_0
+            return new JsonContent(toSerialize, Options);
+#else
             var content = string.Empty;
             try
             {
-#if NETSTANDARD2_0
-                content = JsonSerializer.Serialize(toSerialize, Options);
-#else
                 content = JsonConvert.SerializeObject(toSerialize);
-#endif
             }
             catch (Exception)
             {
@@ -164,6 +167,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             }
 
             return new StringContent(content, Encoding.UTF8, "application/json");
+#endif
         }
 
         private ZipkinEndpoint GetLocalZipkinEndpoint()
@@ -240,5 +244,34 @@ namespace OpenTelemetry.Exporter.Zipkin
 
             return result;
         }
+
+#if NETSTANDARD2_0
+        private class JsonContent : HttpContent
+        {
+            private readonly IEnumerable<ZipkinSpan> spans;
+            private readonly JsonSerializerOptions options;
+
+            public JsonContent(IEnumerable<ZipkinSpan> spans, JsonSerializerOptions options)
+            {
+                this.spans = spans;
+                this.options = options;
+
+                this.Headers.ContentType = new MediaTypeHeaderValue("application/json")
+                {
+                    CharSet = "utf-8",
+                };
+            }
+
+            protected override async Task SerializeToStreamAsync(Stream stream, TransportContext context)
+                => await JsonSerializer.SerializeAsync(stream, this.spans, this.options).ConfigureAwait(false);
+
+            protected override bool TryComputeLength(out long length)
+            {
+                // We can't know the length of the content being pushed to the output stream.
+                length = -1;
+                return false;
+            }
+        }
+#endif
     }
 }
