@@ -52,9 +52,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                 this.libraryResourceApplied = true;
             }
 
-            var jaegerSpans = otelSpanList.Select(sdl => sdl.ToJaegerSpan());
-
-            foreach (var s in jaegerSpans)
+            foreach (var s in otelSpanList)
             {
                 // avoid cancelling here: this is no return point: if we reached this point
                 // and cancellation is requested, it's better if we try to finish sending spans rather than drop it

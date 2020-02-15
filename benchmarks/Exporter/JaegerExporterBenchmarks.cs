@@ -28,13 +28,15 @@ using Thrift.Transports;
 namespace Benchmarks.Exporter
 {
     [MemoryDiagnoser]
+#if !NET462
     [ThreadingDiagnoser]
+#endif
     public class JaegerExporterBenchmarks
     {
-        [Params(1, 5, 10)]
+        [Params(1, 10, 50)]
         public int NumberOfBatches { get; set; }
 
-        [Params(1, 50, 100)]
+        [Params(5000)]
         public int NumberOfSpans { get; set; }
 
         private SpanData testSpan;
@@ -48,7 +50,13 @@ namespace Benchmarks.Exporter
         [Benchmark]
         public async Task JaegerExporter_Batching()
         {
-            using (var jaegerUdpBatcher = new JaegerUdpBatcher(new JaegerExporterOptions(), new BlackHoleTransport()))
+            using (var jaegerUdpBatcher = new JaegerUdpBatcher(
+                new JaegerExporterOptions
+                {
+                    MaxPacketSize = int.MaxValue,
+                    MaxFlushInterval = TimeSpan.FromHours(1)
+                },
+                new BlackHoleTransport()))
             {
                 jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Implementation.Process("TestService", null);
 
@@ -56,7 +64,7 @@ namespace Benchmarks.Exporter
                 {
                     for (int c = 0; c < this.NumberOfSpans; c++)
                     {
-                        await jaegerUdpBatcher.AppendAsync(this.testSpan.ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+                        await jaegerUdpBatcher.AppendAsync(this.testSpan, CancellationToken.None).ConfigureAwait(false);
                     }
 
                     await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);

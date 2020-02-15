@@ -23,9 +23,14 @@ using Thrift.Protocols.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public struct JaegerLog : TAbstractBase
+    public class JaegerLog : TAbstractBase
     {
+        public JaegerLog()
+        {
+        }
+
         public JaegerLog(long timestamp, IEnumerable<JaegerTag> fields)
+            : this()
         {
             this.Timestamp = timestamp;
             this.Fields = fields ?? Enumerable.Empty<JaegerTag>();

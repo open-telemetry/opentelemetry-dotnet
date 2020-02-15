@@ -25,7 +25,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public struct JaegerSpan : TAbstractBase
     {
-        public JaegerSpan(long traceIdLow, long traceIdHigh, long spanId, long parentSpanId, string operationName, int flags, long startTime, long duration)
+        public JaegerSpan(
+            long traceIdLow,
+            long traceIdHigh,
+            long spanId,
+            long parentSpanId,
+            string operationName,
+            int flags,
+            long startTime,
+            long duration,
+            IEnumerable<JaegerSpanRef> references = null,
+            IEnumerable<JaegerTag> tags = null,
+            IEnumerable<JaegerLog> logs = null)
         {
             this.TraceIdLow = traceIdLow;
             this.TraceIdHigh = traceIdHigh;
@@ -35,10 +46,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.Flags = flags;
             this.StartTime = startTime;
             this.Duration = duration;
-
-            this.References = null;
-            this.Tags = null;
-            this.Logs = null;
+            this.References = references;
+            this.Tags = tags;
+            this.Logs = logs;
         }
 
         public long TraceIdLow { get; set; }

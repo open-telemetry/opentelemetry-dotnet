@@ -18,6 +18,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Trace.Export;
 using Thrift.Protocols;
 using Thrift.Transports;
 
@@ -81,9 +82,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public Process Process { get; internal set; }
 
 #if NETSTANDARD2_1
-        public async ValueTask<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken)
+        public async ValueTask<int> AppendAsync(SpanData span, CancellationToken cancellationToken)
 #else
-        public async Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken)
+        public async Task<int> AppendAsync(SpanData span, CancellationToken cancellationToken)
 #endif
         {
             if (!this.processMessage.HasValue)
@@ -227,6 +228,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 #endif
         {
             await thriftBase.WriteAsync(this.memoryProtocol, CancellationToken.None).ConfigureAwait(false);
+
+            return this.memoryTransport.SwapOutBuffer();
+        }
+
+#if NETSTANDARD2_1
+        private async ValueTask<ArraySegment<byte>> BuildThriftMessage(SpanData span)
+#else
+        private async Task<ArraySegment<byte>> BuildThriftMessage(SpanData span)
+#endif
+        {
+            span.ToJaegerSpan(out var jaegerSpan);
+
+            await jaegerSpan.WriteAsync(this.memoryProtocol, CancellationToken.None).ConfigureAwait(false);
 
             return this.memoryTransport.SwapOutBuffer();
         }

@@ -16,6 +16,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
@@ -24,13 +25,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         Process Process { get; }
 
 #if NETSTANDARD2_1
-        ValueTask<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken);
+        ValueTask<int> AppendAsync(SpanData span, CancellationToken cancellationToken);
 
         ValueTask<int> CloseAsync(CancellationToken cancellationToken);
 
         ValueTask<int> FlushAsync(CancellationToken cancellationToken);
 #else
-        Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken);
+        Task<int> AppendAsync(SpanData span, CancellationToken cancellationToken);
 
         Task<int> CloseAsync(CancellationToken cancellationToken);
 

@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
 
-        public static JaegerSpan ToJaegerSpan(this SpanData span)
+        public static void ToJaegerSpan(this SpanData span, out JaegerSpan jaegerSpan)
         {
             var jaegerTags = span.Attributes?.Select(a => a.ToJaegerTag()).ToList() ?? new List<JaegerTag>();
 
@@ -105,20 +105,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 parentSpanId = new Int128(span.ParentSpanId);
             }
 
-            return new JaegerSpan
-            {
-                TraceIdHigh = traceId.High,
-                TraceIdLow = traceId.Low,
-                SpanId = spanId.Low,
-                ParentSpanId = parentSpanId.Low,
-                OperationName = span.Name,
-                References = span.Links?.Select(l => l.ToJaegerSpanRef()),
-                Flags = (span.Context.TraceOptions & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
-                StartTime = ToEpochMicroseconds(span.StartTimestamp),
-                Duration = ToEpochMicroseconds(span.EndTimestamp) - ToEpochMicroseconds(span.StartTimestamp),
-                Tags = jaegerTags,
-                Logs = span.Events?.Where(e => e != null).Select(e => e.ToJaegerLog()),
-            };
+            jaegerSpan = new JaegerSpan(
+                traceIdLow: traceId.Low,
+                traceIdHigh: traceId.High,
+                spanId: spanId.Low,
+                parentSpanId: parentSpanId.Low,
+                operationName: span.Name,
+                flags: (span.Context.TraceOptions & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
+                startTime: ToEpochMicroseconds(span.StartTimestamp),
+                duration: ToEpochMicroseconds(span.EndTimestamp) - ToEpochMicroseconds(span.StartTimestamp),
+                references: span.Links?.Select(l => l.ToJaegerSpanRef()),
+                tags: jaegerTags,
+                logs: span.Events?.Where(e => e != null).Select(e => e.ToJaegerLog()));
         }
 
         public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
@@ -169,13 +167,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 spanId = new Int128(link.Context.SpanId);
             }
 
-            return new JaegerSpanRef
-            {
-                TraceIdHigh = traceId.High,
-                TraceIdLow = traceId.Low,
-                SpanId = spanId.Low,
-                RefType = JaegerSpanRefType.CHILD_OF,
-            };
+            return new JaegerSpanRef(JaegerSpanRefType.CHILD_OF, traceId.Low, traceId.High, spanId.Low);
         }
 
         public static long ToEpochMicroseconds(this DateTimeOffset timestamp)
