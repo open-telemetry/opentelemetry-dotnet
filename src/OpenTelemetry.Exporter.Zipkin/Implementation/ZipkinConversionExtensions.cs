@@ -69,7 +69,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
                 if (strVal != null
                     && RemoteEndpointServiceNameKeyResolutionDictionary.TryGetValue(key, out int priority)
-                    && (remoteEndpointServiceName == null || remoteEndpointServiceName.Item2 > priority))
+                    && (remoteEndpointServiceName == null || priority < remoteEndpointServiceName.Item2))
                 {
                     remoteEndpointServiceName = new Tuple<string, int>(strVal, priority);
                 }
