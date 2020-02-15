@@ -32,7 +32,7 @@ namespace Benchmarks.Exporter
 #endif
     public class ZipkinExporterBenchmarks
     {
-        [Params(1, 50, 100)]
+        [Params(2000, 5000)]
         public int NumberOfSpans { get; set; }
 
         private SpanData testSpan;
