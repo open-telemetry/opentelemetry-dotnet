@@ -16,8 +16,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
@@ -116,6 +116,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                         VType = JaegerTagType.STRING,
                         VStr = spanKind,
                     });
+                }
+            }
+
+            foreach (var label in span.LibraryResource?.Attributes ?? Array.Empty<KeyValuePair<string, object>>())
+            {
+                switch (label.Key)
+                {
+                    case Resource.LibraryNameKey:
+                        jaegerTags.Add(label.ToJaegerTag());
+                        break;
+                    case Resource.LibraryVersionKey:
+                        jaegerTags.Add(label.ToJaegerTag());
+                        break;
                 }
             }
 

@@ -24,6 +24,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
@@ -146,11 +147,11 @@ namespace OpenTelemetry.Exporter.Zipkin
                 object val = label.Value;
                 string strVal = (string)val;
 
-                if (key == "service.name" && strVal != null)
+                if (key == Resource.ServiceNameKey && strVal != null)
                 {
                     serviceName = strVal;
                 }
-                else if (key == "service.namespace" && strVal != null)
+                else if (key == Resource.ServiceNamespaceKey && strVal != null)
                 {
                     serviceNamespace = strVal;
                 }

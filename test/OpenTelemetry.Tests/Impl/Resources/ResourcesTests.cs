@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using OpenTelemetry.Resources;
 using Xunit;
 
 namespace OpenTelemetry.Tests.Impl.Resources
@@ -28,9 +29,9 @@ namespace OpenTelemetry.Tests.Impl.Resources
         {
             var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service");
             Assert.Equal(2, resource.Attributes.Count());
-            Assert.Contains(new KeyValuePair<string ,object>("service.name", "my-service"), resource.Attributes);
-            Assert.Single(resource.Attributes.Where(kvp => kvp.Key == "service.name"));
-            Assert.True(Guid.TryParse((string)resource.Attributes.Single(kvp => kvp.Key == "service.instance.id").Value, out _));
+            Assert.Contains(new KeyValuePair<string ,object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
+            Assert.Single(resource.Attributes.Where(kvp => kvp.Key == Resource.ServiceNameKey));
+            Assert.True(Guid.TryParse((string)resource.Attributes.Single(kvp => kvp.Key == Resource.ServiceInstanceIdKey).Value, out _));
         }
 
         [Fact]
@@ -38,8 +39,8 @@ namespace OpenTelemetry.Tests.Impl.Resources
         {
             var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service", "123");
             Assert.Equal(2, resource.Attributes.Count());
-            Assert.Contains(new KeyValuePair<string, object>("service.name", "my-service"), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("service.instance.id", "123"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceInstanceIdKey, "123"), resource.Attributes);
         }
 
         [Fact]
@@ -47,9 +48,9 @@ namespace OpenTelemetry.Tests.Impl.Resources
         {
             var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service", "123", "my-namespace");
             Assert.Equal(3, resource.Attributes.Count());
-            Assert.Contains(new KeyValuePair<string, object>("service.name", "my-service"), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("service.instance.id", "123"), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("service.namespace", "my-namespace"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceInstanceIdKey, "123"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNamespaceKey, "my-namespace"), resource.Attributes);
         }
 
         [Fact]
@@ -57,10 +58,10 @@ namespace OpenTelemetry.Tests.Impl.Resources
         {
             var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service", "123", "my-namespace", "semVer:1.2.3");
             Assert.Equal(4, resource.Attributes.Count());
-            Assert.Contains(new KeyValuePair<string, object>("service.name", "my-service"), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("service.instance.id", "123"), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("service.namespace", "my-namespace"), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("service.version", "semVer:1.2.3"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceInstanceIdKey, "123"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNamespaceKey, "my-namespace"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceVersionKey, "semVer:1.2.3"), resource.Attributes);
         }
 
         [Fact]

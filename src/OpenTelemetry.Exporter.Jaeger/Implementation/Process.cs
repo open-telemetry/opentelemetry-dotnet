@@ -30,11 +30,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         }
 
         public Process(string serviceName, IDictionary<string, object> processTags)
-            : this(serviceName, processTags?.Select(pt => pt.ToJaegerTag()))
+            : this(serviceName, processTags?.Select(pt => pt.ToJaegerTag()).ToDictionary(pt => pt.Key, pt => pt))
         {
         }
 
-        public Process(string serviceName, IEnumerable<JaegerTag> processTags)
+        internal Process(string serviceName, IDictionary<string, JaegerTag> processTags)
             : this()
         {
             this.ServiceName = serviceName;
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public string ServiceName { get; set; }
 
-        public IEnumerable<JaegerTag> Tags { get; set; }
+        public IDictionary<string, JaegerTag> Tags { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -79,9 +79,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     {
                         await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Tags.Count()), cancellationToken);
 
-                        foreach (JaegerTag jt in this.Tags)
+                        foreach (var jt in this.Tags)
                         {
-                            await jt.WriteAsync(oprot, cancellationToken);
+                            await jt.Value.WriteAsync(oprot, cancellationToken);
                         }
 
                         await oprot.WriteListEndAsync(cancellationToken);
