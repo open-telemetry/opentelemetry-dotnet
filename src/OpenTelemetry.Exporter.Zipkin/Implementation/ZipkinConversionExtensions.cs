@@ -17,6 +17,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
@@ -85,11 +86,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 object val = label.Value;
                 string strVal = val as string;
 
-                if (key == "service.name" && strVal != null)
+                if (key == Resource.ServiceNameKey && strVal != null)
                 {
                     serviceName = strVal;
                 }
-                else if (key == "service.namespace" && strVal != null)
+                else if (key == Resource.ServiceNamespaceKey && strVal != null)
                 {
                     serviceNamespace = strVal;
                 }

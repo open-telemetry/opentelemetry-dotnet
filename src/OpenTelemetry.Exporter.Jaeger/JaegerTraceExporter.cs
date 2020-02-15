@@ -19,36 +19,46 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerTraceExporter : SpanExporter, IDisposable
     {
-        private readonly IJaegerUdpBatcher jaegerAgentUdpBatcher;
+        private bool libraryResourceApplied = false;
         private bool disposedValue = false; // To detect redundant dispose calls
 
         public JaegerTraceExporter(JaegerExporterOptions options)
         {
-            this.ValidateOptions(options);
-            this.jaegerAgentUdpBatcher = new JaegerUdpBatcher(options);
+            this.JaegerAgentUdpBatcher = new JaegerUdpBatcher(options);
         }
 
         public JaegerTraceExporter(IJaegerUdpBatcher jaegerAgentUdpBatcher)
         {
-            this.jaegerAgentUdpBatcher = jaegerAgentUdpBatcher;
+            this.JaegerAgentUdpBatcher = jaegerAgentUdpBatcher;
         }
+
+        internal IJaegerUdpBatcher JaegerAgentUdpBatcher { get; }
 
         public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> otelSpanList, CancellationToken cancellationToken)
         {
+            if (!this.libraryResourceApplied && otelSpanList.Count() > 0)
+            {
+                var libraryResource = otelSpanList.First().LibraryResource;
+
+                this.ApplyLibraryResource(libraryResource ?? Resource.Empty);
+
+                this.libraryResourceApplied = true;
+            }
+
             var jaegerSpans = otelSpanList.Select(sdl => sdl.ToJaegerSpan());
 
             foreach (var s in jaegerSpans)
             {
                 // avoid cancelling here: this is no return point: if we reached this point
                 // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
-                await this.jaegerAgentUdpBatcher.AppendAsync(s, CancellationToken.None);
+                await this.JaegerAgentUdpBatcher.AppendAsync(s, CancellationToken.None);
             }
 
             // TODO jaeger status to ExportResult
@@ -57,7 +67,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            return this.jaegerAgentUdpBatcher.FlushAsync(cancellationToken);
+            return this.JaegerAgentUdpBatcher.FlushAsync(cancellationToken);
         }
 
         public void Dispose()
@@ -66,24 +76,68 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.Dispose(true);
         }
 
+        internal void ApplyLibraryResource(Resource libraryResource)
+        {
+            if (libraryResource is null)
+            {
+                throw new ArgumentNullException(nameof(libraryResource));
+            }
+
+            var process = this.JaegerAgentUdpBatcher.Process;
+
+            string serviceName = null;
+            string serviceNamespace = null;
+            foreach (var label in libraryResource.Attributes)
+            {
+                string key = label.Key;
+
+                if (label.Value is string strVal)
+                {
+                    switch (key)
+                    {
+                        case Resource.ServiceNameKey:
+                            serviceName = strVal;
+                            continue;
+                        case Resource.ServiceNamespaceKey:
+                            serviceNamespace = strVal;
+                            continue;
+                        case Resource.LibraryNameKey:
+                        case Resource.LibraryVersionKey:
+                            continue;
+                    }
+                }
+
+                if (process.Tags == null)
+                {
+                    process.Tags = new Dictionary<string, JaegerTag>();
+                }
+
+                process.Tags[label.Key] = label.ToJaegerTag();
+            }
+
+            if (serviceName != null)
+            {
+                process.ServiceName = serviceNamespace != null
+                    ? serviceNamespace + "." + serviceName
+                    : serviceName;
+            }
+
+            if (string.IsNullOrEmpty(process.ServiceName))
+            {
+                process.ServiceName = JaegerExporterOptions.DefaultServiceName;
+            }
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (!this.disposedValue)
             {
                 if (disposing)
                 {
-                    this.jaegerAgentUdpBatcher.Dispose();
+                    this.JaegerAgentUdpBatcher.Dispose();
                 }
 
                 this.disposedValue = true;
-            }
-        }
-
-        private void ValidateOptions(JaegerExporterOptions options)
-        {
-            if (string.IsNullOrWhiteSpace(options.ServiceName))
-            {
-                throw new ArgumentException("Service Name is required", nameof(options.ServiceName));
             }
         }
     }

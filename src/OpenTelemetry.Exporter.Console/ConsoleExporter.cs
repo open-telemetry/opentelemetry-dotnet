@@ -19,7 +19,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Console
@@ -36,6 +35,8 @@ namespace OpenTelemetry.Exporter.Console
             };
 
             this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
+            this.serializerOptions.Converters.Add(new ActivitySpanIdConverter());
+            this.serializerOptions.Converters.Add(new ActivityTraceIdConverter());
         }
 
         public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
