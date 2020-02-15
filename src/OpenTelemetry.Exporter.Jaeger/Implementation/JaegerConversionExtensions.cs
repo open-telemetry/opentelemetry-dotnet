@@ -64,7 +64,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 if (tag.VStr != null
                     && PeerServiceKeyResolutionDictionary.TryGetValue(label.Key, out int priority)
-                    && (peerService == null || peerService.Item2 > priority))
+                    && (peerService == null || priority < peerService.Item2))
                 {
                     peerService = new Tuple<string, int>(tag.VStr, priority);
                 }
