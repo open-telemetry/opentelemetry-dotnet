@@ -248,6 +248,11 @@ namespace OpenTelemetry.Exporter.Zipkin
 #if NETSTANDARD2_0
         private class JsonContent : HttpContent
         {
+            private static readonly MediaTypeHeaderValue JsonHeader = new MediaTypeHeaderValue("application/json")
+            {
+                CharSet = "utf-8",
+            };
+
             private readonly IEnumerable<ZipkinSpan> spans;
             private readonly JsonSerializerOptions options;
 
@@ -256,10 +261,7 @@ namespace OpenTelemetry.Exporter.Zipkin
                 this.spans = spans;
                 this.options = options;
 
-                this.Headers.ContentType = new MediaTypeHeaderValue("application/json")
-                {
-                    CharSet = "utf-8",
-                };
+                this.Headers.ContentType = JsonHeader;
             }
 
             protected override async Task SerializeToStreamAsync(Stream stream, TransportContext context)
