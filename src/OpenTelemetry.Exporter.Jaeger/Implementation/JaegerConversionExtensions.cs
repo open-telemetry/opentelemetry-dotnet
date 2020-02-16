@@ -114,9 +114,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 flags: (span.Context.TraceOptions & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
                 startTime: ToEpochMicroseconds(span.StartTimestamp),
                 duration: ToEpochMicroseconds(span.EndTimestamp) - ToEpochMicroseconds(span.StartTimestamp),
-                references: span.Links?.Select(l => l.ToJaegerSpanRef()),
-                tags: jaegerTags,
-                logs: span.Events?.Where(e => e != null).Select(e => e.ToJaegerLog()));
+                references: span.Links?.Select(l => l.ToJaegerSpanRef()).ToArray(),
+                tags: jaegerTags.ToArray(),
+                logs: span.Events?.Where(e => e != null).Select(e => e.ToJaegerLog()).ToArray());
         }
 
         public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
@@ -142,12 +142,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public static JaegerLog ToJaegerLog(this Event timedEvent)
         {
-            var tags = timedEvent.Attributes.Select(a => a.ToJaegerTag()).ToList();
+            var tags = new JaegerTag[timedEvent.Attributes.Count + 1];
+
+            int index = 0;
+            foreach (var attribute in timedEvent.Attributes.Select(a => a.ToJaegerTag()))
+            {
+                tags[index++] = attribute;
+            }
 
             // Matches what OpenTracing and OpenTelemetry defines as the event name.
             // https://github.com/opentracing/specification/blob/master/semantic_conventions.md#log-fields-table
             // https://github.com/open-telemetry/opentelemetry-specification/pull/397/files
-            tags.Add(new JaegerTag { Key = "message", VType = JaegerTagType.STRING, VStr = timedEvent.Name });
+            tags[index] = new JaegerTag { Key = "message", VType = JaegerTagType.STRING, VStr = timedEvent.Name };
 
             return new JaegerLog
             {

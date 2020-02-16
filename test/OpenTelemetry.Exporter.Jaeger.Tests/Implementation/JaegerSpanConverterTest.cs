@@ -49,7 +49,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var linkTraceIdAsInt = new Int128(span.Links.Single().Context.TraceId);
             var linkSpanIdAsInt = new Int128(span.Links.Single().Context.SpanId);
 
-            var jaegerSpan = span.ToJaegerSpan();
+            span.ToJaegerSpan(out var jaegerSpan);
 
             Assert.Equal("Name", jaegerSpan.OperationName);
             Assert.Equal(2, jaegerSpan.Logs.Count());
@@ -131,7 +131,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var linkTraceIdAsInt = new Int128(span.Links.Single().Context.TraceId);
             var linkSpanIdAsInt = new Int128(span.Links.Single().Context.SpanId);
 
-            var jaegerSpan = span.ToJaegerSpan();
+            span.ToJaegerSpan(out var jaegerSpan);
 
             Assert.Equal("Name", jaegerSpan.OperationName);
             Assert.Equal(2, jaegerSpan.Logs.Count());
@@ -190,7 +190,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var linkTraceIdAsInt = new Int128(span.Links.Single().Context.TraceId);
             var linkSpanIdAsInt = new Int128(span.Links.Single().Context.SpanId);
 
-            var jaegerSpan = span.ToJaegerSpan();
+            span.ToJaegerSpan(out var jaegerSpan);
 
             Assert.Equal("Name", jaegerSpan.OperationName);
             Assert.Empty(jaegerSpan.Logs);
@@ -247,7 +247,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var traceIdAsInt = new Int128(span.Context.TraceId);
             var spanIdAsInt = new Int128(span.Context.SpanId);
 
-            var jaegerSpan = span.ToJaegerSpan();
+            span.ToJaegerSpan(out var jaegerSpan);
 
             Assert.Equal("Name", jaegerSpan.OperationName);
             Assert.Equal(2, jaegerSpan.Logs.Count());
@@ -331,7 +331,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 [Resource.ServiceNameKey] = "MyService",
             }));
 
-            var jaegerSpan = span.ToJaegerSpan();
+            span.ToJaegerSpan(out var jaegerSpan);
 
             Assert.Contains(jaegerSpan.Tags, t => t.Key == Resource.LibraryNameKey && t.VStr == "libname");
             Assert.Contains(jaegerSpan.Tags, t => t.Key == Resource.LibraryVersionKey && t.VStr == "libversion");

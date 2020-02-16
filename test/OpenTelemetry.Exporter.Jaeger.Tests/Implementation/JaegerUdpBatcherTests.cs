@@ -34,13 +34,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             {
                 jaegerUdpBatcher.Process = JaegerThriftIntegrationTest.TestProcess;
 
-                await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+                await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
 
                 await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
                 Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.FlushToArray()));
 
-                await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan().ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+                await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
 
                 await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 

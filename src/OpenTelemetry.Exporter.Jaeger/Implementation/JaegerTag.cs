@@ -21,12 +21,8 @@ using Thrift.Protocols.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerTag : TAbstractBase
+    public struct JaegerTag : TAbstractBase
     {
-        public JaegerTag()
-        {
-        }
-
         public JaegerTag(string key, JaegerTagType vType)
             : this()
         {

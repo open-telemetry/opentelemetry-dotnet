@@ -13,8 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections.Generic;
-using System.Linq;
+using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,22 +22,18 @@ using Thrift.Protocols.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerLog : TAbstractBase
+    public struct JaegerLog : TAbstractBase
     {
-        public JaegerLog()
-        {
-        }
-
-        public JaegerLog(long timestamp, IEnumerable<JaegerTag> fields)
+        public JaegerLog(long timestamp, JaegerTag[] fields)
             : this()
         {
             this.Timestamp = timestamp;
-            this.Fields = fields ?? Enumerable.Empty<JaegerTag>();
+            this.Fields = fields ?? Array.Empty<JaegerTag>();
         }
 
         public long Timestamp { get; set; }
 
-        public IEnumerable<JaegerTag> Fields { get; set; }
+        public JaegerTag[] Fields { get; set; }
 
 #if NETSTANDARD2_1
         public async ValueTask WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
@@ -69,7 +64,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
                 {
-                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Fields.Count()), cancellationToken);
+                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Fields.Length), cancellationToken);
 
                     foreach (JaegerTag jt in this.Fields)
                     {

@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 var protocolFactory = new TCompactProtocol.Factory();
                 var thriftClient = new JaegerThriftClient(protocolFactory.GetProtocol(memoryTransport));
                 var spanData = CreateTestSpan();
-                var span = spanData.ToJaegerSpan();
+                spanData.ToJaegerSpan(out var span);
                 var process = TestProcess;
                 var batch = new Batch(process, new List<JaegerSpan> { span });
 
