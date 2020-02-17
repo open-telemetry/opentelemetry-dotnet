@@ -994,7 +994,7 @@ namespace OpenTelemetry.Trace.Test
             span.SetAttribute("string", "foo");
             span.SetAttribute("bool", false);
             span.SetAttribute("long", -1L);
-            span.SetAttribute("ulong", (ulong)1);
+            span.SetAttribute("ulong", 1UL);
             span.SetAttribute("uint", 2U);
             span.SetAttribute("int", -2);
             span.SetAttribute("sbyte", (sbyte)-3);
