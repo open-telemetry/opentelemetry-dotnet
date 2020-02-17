@@ -25,6 +25,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public static class JaegerConversionExtensions
     {
+        private const string StatusCode = "ot.status_code";
+        private const string StatusDescription = "ot.status_description";
+
         private const int DaysPerYear = 365;
 
         // Number of days in 4 years
@@ -91,6 +94,28 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     case Resource.LibraryVersionKey:
                         jaegerTags.Add(label.ToJaegerTag());
                         break;
+                }
+            }
+
+            var status = span.Status;
+
+            if (status.IsValid)
+            {
+                jaegerTags.Add(new JaegerTag
+                {
+                    Key = StatusCode,
+                    VType = JaegerTagType.STRING,
+                    VStr = status.CanonicalCode.ToString(),
+                });
+
+                if (status.Description != null)
+                {
+                    jaegerTags.Add(new JaegerTag
+                    {
+                        Key = StatusDescription,
+                        VType = JaegerTagType.STRING,
+                        VStr = status.Description,
+                    });
                 }
             }
 
