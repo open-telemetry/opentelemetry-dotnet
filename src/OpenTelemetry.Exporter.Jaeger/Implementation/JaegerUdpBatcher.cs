@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             this.maxFlushIntervalTimer.Elapsed += async (sender, args) =>
             {
-                await this.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                await this.LockedFlushAsync(CancellationToken.None).ConfigureAwait(false);
             };
         }
 
@@ -89,10 +89,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             var flushedSpanCount = 0;
 
+            await this.flushLock.WaitAsync().ConfigureAwait(false);
             try
             {
-                await this.flushLock.WaitAsync().ConfigureAwait(false);
-
                 // flush if current batch size plus new span size equals or exceeds max batch size
                 if (this.batchByteSize + spanSize >= this.maxPacketSize)
                 {
@@ -117,38 +116,29 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public async Task<int> FlushAsync(CancellationToken cancellationToken)
         {
+            this.maxFlushIntervalTimer.Enabled = false;
+
+            int n = this.currentBatch.Count;
+
+            if (n == 0)
+            {
+                return 0;
+            }
+
             try
             {
-                await this.flushLock.WaitAsync().ConfigureAwait(false);
-
-                this.maxFlushIntervalTimer.Enabled = false;
-
-                int n = this.currentBatch.Count;
-
-                if (n == 0)
-                {
-                    return 0;
-                }
-
-                try
-                {
-                    await this.SendAsync(this.Process, this.currentBatch, cancellationToken).ConfigureAwait(false);
-                }
-                finally
-                {
-                    this.currentBatch.Clear();
-                    this.batchByteSize = this.processByteSize.Value;
-                }
-
-                return n;
+                await this.SendAsync(this.Process, this.currentBatch, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
-                this.flushLock.Release();
+                this.currentBatch.Clear();
+                this.batchByteSize = this.processByteSize.Value;
             }
+
+            return n;
         }
 
-        public virtual Task<int> CloseAsync(CancellationToken cancellationToken) => this.FlushAsync(cancellationToken);
+        public virtual Task<int> CloseAsync(CancellationToken cancellationToken) => this.LockedFlushAsync(cancellationToken);
 
         public void Dispose()
         {
@@ -190,6 +180,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             {
                 await thriftBase.WriteAsync(this.protocolFactory.GetProtocol(memoryTransport), CancellationToken.None).ConfigureAwait(false);
                 return memoryTransport.GetBuffer().Length;
+            }
+        }
+
+        private async Task<int> LockedFlushAsync(CancellationToken cancellationToken)
+        {
+            await this.flushLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                return await this.FlushAsync(cancellationToken);
+            }
+            finally
+            {
+                this.flushLock.Release();
             }
         }
     }
