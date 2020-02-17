@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         private readonly byte[] testTraceIdBytes = { 0xd7, 0x9b, 0xdd, 0xa7, 0xeb, 0x9c, 0x4a, 0x9f, 0xa9, 0xbd, 0xa5, 0x2f, 0xe7, 0xb4, 0x8b, 0x95 };
         private readonly byte[] testParentSpanIdBytes = { 0x9b, 0xa7, 0x9c, 0x9f, 0xbd, 0x2f, 0xb4, 0x95 };
 
-       
+
         private readonly Tracer tracer;
         private readonly JsonSerializerSettings jsonSettingThrowOnError = new JsonSerializerSettings
         {
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var endTimestamp = DateTimeOffset.UtcNow;
             var startTimestamp = endTimestamp.AddSeconds(-1);
             parentSpanId = default;
-            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions, tracestate, kind, status, 
+            var span = CreateSpanData(name, traceId, parentSpanId, traceOptions, tracestate, kind, status,
                  new SpanCreationOptions { StartTimestamp = startTimestamp, }, endTimestamp);
 
             // ACT
@@ -858,7 +858,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void OpenTelemetryTelemetryConverterTests_TracksHttpRequestHostPortPathAttributes()
         {
             GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
-            
+
             name = "HttpIn";
 
             var spanOptions = new SpanCreationOptions
@@ -1456,7 +1456,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             Assert.Equal(link0SpanId, actualLinks[0].id);
             Assert.Equal(link1SpanId, actualLinks[1].id);
             Assert.Equal(link2SpanId, actualLinks[2].id);
-            
+
             Assert.Equal($"[{{\"operation_Id\":\"{link0TraceId}\",\"id\":\"{link0SpanId}\"}},{{\"operation_Id\":\"{link1TraceId}\",\"id\":\"{link1SpanId}\"}},{{\"operation_Id\":\"{link2TraceId}\",\"id\":\"{link2SpanId}\"}}]", linksStr);
         }
 
@@ -1701,8 +1701,8 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             GetDefaults(out var traceId, out var parentSpanId, out var traceOptions, out var tracestate, out var name, out var attributes, out var events, out var links, out var status, out var kind);
             name = "spanName";
-            
-            var resource = new[] { new KeyValuePair<string, object>("service.name", "my-service") };
+
+            var resource = new[] { new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service") };
 
             var span = CreateSpanData(name, traceId, parentSpanId, traceOptions,
                 tracestate, spanKind, status, null, default, new[] { new Event("test message1") }, new Resource(resource));
@@ -1731,10 +1731,10 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             var resource = new[]
             {
-                new KeyValuePair<string, object>("service.name", "my-service"),
-                new KeyValuePair<string, object>("service.namespace", "my-service-namespace"),
-                new KeyValuePair<string, object>("service.instance.id", "my-instance-id"),
-                new KeyValuePair<string, object>("service.version", "my-service-version"),
+                new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"),
+                new KeyValuePair<string, object>(Resource.ServiceNamespaceKey, "my-service-namespace"),
+                new KeyValuePair<string, object>(Resource.ServiceInstanceIdKey, "my-instance-id"),
+                new KeyValuePair<string, object>(Resource.ServiceVersionKey, "my-service-version"),
             };
 
             var span = CreateSpanData(name, traceId, parentSpanId, traceOptions,

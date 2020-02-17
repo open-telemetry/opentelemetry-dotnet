@@ -24,7 +24,7 @@ namespace OpenTelemetry.Resources
     {
         /// <summary>
         /// Creates a new <see cref="Resource"/> from service information following standard convention
-        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md#service. 
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md#service.
         /// </summary>
         /// <param name="serviceName">Name of the service.</param>
         /// <param name="serviceInstanceId">Unique identifier of the service instance.</param>
@@ -38,23 +38,23 @@ namespace OpenTelemetry.Resources
                 return Resource.Empty;
             }
 
-            var attributes = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("service.name", serviceName), };
+            var attributes = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(Resource.ServiceNameKey, serviceName), };
 
             if (serviceInstanceId == null)
             {
                 serviceInstanceId = Guid.NewGuid().ToString();
             }
 
-            attributes.Add(new KeyValuePair<string, object>("service.instance.id", serviceInstanceId));
+            attributes.Add(new KeyValuePair<string, object>(Resource.ServiceInstanceIdKey, serviceInstanceId));
 
             if (serviceNamespace != null)
             {
-                attributes.Add(new KeyValuePair<string, object>("service.namespace", serviceNamespace));
+                attributes.Add(new KeyValuePair<string, object>(Resource.ServiceNamespaceKey, serviceNamespace));
             }
 
             if (serviceVersion != null)
             {
-                attributes.Add(new KeyValuePair<string, object>("service.version", serviceVersion));
+                attributes.Add(new KeyValuePair<string, object>(Resource.ServiceVersionKey, serviceVersion));
             }
 
             return new Resource(attributes);

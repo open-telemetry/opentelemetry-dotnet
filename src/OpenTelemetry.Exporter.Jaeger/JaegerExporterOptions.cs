@@ -20,18 +20,38 @@ namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerExporterOptions
     {
+        internal const string DefaultServiceName = "Open Telemetry Exporter";
+
         internal const int DefaultMaxPacketSize = 65000;
 
-        public string ServiceName { get; set; }
+        /// <summary>
+        /// Gets or sets the name of the service reporting telemetry. Default value: Open Telemetry Exporter.
+        /// </summary>
+        public string ServiceName { get; set; } = DefaultServiceName;
 
+        /// <summary>
+        /// Gets or sets the Jaeger agent host. Default value: localhost.
+        /// </summary>
         public string AgentHost { get; set; } = "localhost";
 
+        /// <summary>
+        /// Gets or sets the Jaeger agent "compact thrift protocol" port. Default value: 6831.
+        /// </summary>
         public int AgentPort { get; set; } = 6831;
 
+        /// <summary>
+        /// Gets or sets the maximum packet size in bytes. Default value: 65000.
+        /// </summary>
         public int? MaxPacketSize { get; set; } = DefaultMaxPacketSize;
 
+        /// <summary>
+        /// Gets or sets the maximum time that should elapse between flushing the internal buffer to the configured Jaeger agent. Default value: 00:00:10.
+        /// </summary>
         public TimeSpan MaxFlushInterval { get; set; } = TimeSpan.FromSeconds(10);
 
+        /// <summary>
+        /// Gets or sets the tags that should be sent with telemetry.
+        /// </summary>
         public Dictionary<string, object> ProcessTags { get; set; }
     }
 }
