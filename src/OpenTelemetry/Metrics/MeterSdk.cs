@@ -27,8 +27,6 @@ namespace OpenTelemetry.Metrics
         private readonly MetricProcessor metricProcessor;
         private readonly IDictionary<string, CounterSdk<long>> longCounters = new ConcurrentDictionary<string, CounterSdk<long>>();
         private readonly IDictionary<string, CounterSdk<double>> doubleCounters = new ConcurrentDictionary<string, CounterSdk<double>>();
-        private readonly IDictionary<string, GaugeSDK<long>> longGauges = new ConcurrentDictionary<string, GaugeSDK<long>>();
-        private readonly IDictionary<string, GaugeSDK<double>> doubleGauges = new ConcurrentDictionary<string, GaugeSDK<double>>();
         private readonly IDictionary<string, MeasureSdk<long>> longMeasures = new ConcurrentDictionary<string, MeasureSdk<long>>();
         private readonly IDictionary<string, MeasureSdk<double>> doubleMeasures = new ConcurrentDictionary<string, MeasureSdk<double>>();
         private readonly object collectLock = new object();
@@ -36,7 +34,7 @@ namespace OpenTelemetry.Metrics
         internal MeterSdk(string meterName, MetricProcessor metricProcessor)
         {
             this.meterName = meterName;
-            this.metricProcessor = metricProcessor;            
+            this.metricProcessor = metricProcessor;
         }
 
         public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)
@@ -73,32 +71,6 @@ namespace OpenTelemetry.Metrics
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
                         this.metricProcessor.ProcessCounter(this.meterName, metricName, labelSet, aggregator);
-                    }
-                }
-
-                foreach (var longGauge in this.longGauges)
-                {
-                    var metricName = longGauge.Key;
-                    var gaugeInstrument = longGauge.Value;
-                    foreach (var handle in gaugeInstrument.GetAllHandles())
-                    {
-                        var labelSet = handle.Key;
-                        var aggregator = handle.Value.GetAggregator();
-                        aggregator.Checkpoint();
-                        this.metricProcessor.ProcessGauge(this.meterName, metricName, labelSet, aggregator);
-                    }
-                }
-
-                foreach (var doubleGauge in this.doubleGauges)
-                {
-                    var metricName = doubleGauge.Key;
-                    var gaugeInstrument = doubleGauge.Value;
-                    foreach (var handle in gaugeInstrument.GetAllHandles())
-                    {
-                        var labelSet = handle.Key;
-                        var aggregator = handle.Value.GetAggregator();
-                        aggregator.Checkpoint();
-                        this.metricProcessor.ProcessGauge(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
 
@@ -151,30 +123,6 @@ namespace OpenTelemetry.Metrics
             }
 
             return counter;
-        }
-
-        public override Gauge<long> CreateInt64Gauge(string name, bool monotonic = true)
-        {
-            if (!this.longGauges.TryGetValue(name, out var gauge))
-            {
-                gauge = new GaugeSDK<long>(name);
-
-                this.longGauges.Add(name, gauge);
-            }
-
-            return gauge;
-        }
-
-        public override Gauge<double> CreateDoubleGauge(string name, bool monotonic = true)
-        {
-            if (!this.doubleGauges.TryGetValue(name, out var gauge))
-            {
-                gauge = new GaugeSDK<double>(name);
-
-                this.doubleGauges.Add(name, gauge);
-            }
-
-            return gauge;
         }
 
         public override Measure<double> CreateDoubleMeasure(string name, bool absolute = true)

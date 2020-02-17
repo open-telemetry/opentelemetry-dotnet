@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics.Test
             var testProcessor = new TestMetricProcessor();
             var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
             var testCounter = meter.CreateInt64Counter("testCounter");
-            
+
             var labels1 = new List<KeyValuePair<string, string>>();
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
 
@@ -54,39 +54,6 @@ namespace OpenTelemetry.Metrics.Test
             Assert.Equal(110, testProcessor.counters[1].Item3);
             Assert.Equal(210, testProcessor.counters[0].Item3);
         }
-
-        [Fact(Skip = "TODO: Make robust tests. These are just basic tests to see metric in action.")]
-        public void GaugeSendsAggregateToRegisteredProcessor()
-        {
-            var testProcessor = new TestMetricProcessor();
-            var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
-            var testGauge = meter.CreateInt64Gauge("testGauge");
-
-            var labels1 = new List<KeyValuePair<string, string>>();
-            labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
-
-            var labels2 = new List<KeyValuePair<string, string>>();
-            labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
-
-            var context = default(SpanContext);
-            testGauge.Set(context, 100, meter.GetLabelSet(labels1));
-            testGauge.Set(context, 10, meter.GetLabelSet(labels1));
-            testGauge.Set(context, 200, meter.GetLabelSet(labels2));
-            testGauge.Set(context, 20, meter.GetLabelSet(labels2));
-
-            meter.Collect();
-
-            Assert.Equal(2, testProcessor.gauges.Count);
-            Assert.Equal("testGauge", testProcessor.gauges[1].Item1);
-            Assert.Equal("testGauge", testProcessor.gauges[0].Item1);
-
-            Assert.Equal(meter.GetLabelSet(labels1), testProcessor.gauges[1].Item2);
-            Assert.Equal(meter.GetLabelSet(labels2), testProcessor.gauges[0].Item2);
-
-            Assert.Equal(10, testProcessor.gauges[1].Item3.Item1);
-            Assert.Equal(20, testProcessor.gauges[0].Item3.Item1);
-        }
-
 
         [Fact(Skip = "TODO: Make robust tests. These are just basic tests to see metric in action.")]
         public void MeasureSendsAggregateToRegisteredProcessor()

@@ -40,22 +40,6 @@ namespace OpenTelemetry.Metrics
         public abstract Counter<double> CreateDoubleCounter(string name, bool monotonic = true);
 
         /// <summary>
-        /// Creates Int64 Gauge with given name.
-        /// </summary>
-        /// <param name="name">The name of the counter.</param>
-        /// <param name="monotonic">indicates if only positive values are expected.</param>
-        /// <returns>The Gauge instance.</returns>
-        public abstract Gauge<long> CreateInt64Gauge(string name, bool monotonic = false);
-
-        /// <summary>
-        /// Creates double Gauge with given name.
-        /// </summary>
-        /// <param name="name">The name of the counter.</param>
-        /// <param name="monotonic">indicates if only positive values are expected.</param>
-        /// <returns>The Gauge instance.</returns>
-        public abstract Gauge<double> CreateDoubleGauge(string name, bool monotonic = false);
-
-        /// <summary>
         /// Creates Int64 Measure with given name.
         /// </summary>
         /// <param name="name">The name of the measure.</param>

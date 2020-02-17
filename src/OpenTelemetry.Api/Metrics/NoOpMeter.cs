@@ -29,11 +29,6 @@ namespace OpenTelemetry.Metrics
             return NoOpCounter<double>.Instance;
         }
 
-        public override Gauge<double> CreateDoubleGauge(string name, bool monotonic = false)
-        {
-            return NoOpGauge<double>.Instance;
-        }
-
         public override Measure<double> CreateDoubleMeasure(string name, bool absolute = true)
         {
             return NoOpMeasure<double>.Instance;
@@ -42,11 +37,6 @@ namespace OpenTelemetry.Metrics
         public override Counter<long> CreateInt64Counter(string name, bool monotonic = true)
         {
             return NoOpCounter<long>.Instance;
-        }
-
-        public override Gauge<long> CreateInt64Gauge(string name, bool monotonic = false)
-        {
-            return NoOpGauge<long>.Instance;
         }
 
         public override Measure<long> CreateInt64Measure(string name, bool absolute = true)
