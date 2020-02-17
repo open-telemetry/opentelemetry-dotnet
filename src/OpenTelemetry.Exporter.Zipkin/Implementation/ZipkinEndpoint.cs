@@ -13,15 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if !NETSTANDARD2_0
-using Newtonsoft.Json;
-#endif
-
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     internal class ZipkinEndpoint
     {
-#if NETSTANDARD2_0
         public string ServiceName { get; set; }
 
         public string Ipv4 { get; set; }
@@ -29,18 +24,5 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         public string Ipv6 { get; set; }
 
         public int Port { get; set; }
-#else
-        [JsonProperty("serviceName")]
-        public string ServiceName { get; set; }
-
-        [JsonProperty("ipv4")]
-        public string Ipv4 { get; set; }
-
-        [JsonProperty("ipv6")]
-        public string Ipv6 { get; set; }
-
-        [JsonProperty("port")]
-        public int Port { get; set; }
-#endif
     }
 }

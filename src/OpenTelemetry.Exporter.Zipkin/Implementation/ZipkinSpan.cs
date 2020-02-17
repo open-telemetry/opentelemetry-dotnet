@@ -15,18 +15,12 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
-#if NETSTANDARD2_0
 using System.Text.Json.Serialization;
-#else
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-#endif
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     internal class ZipkinSpan
     {
-#if NETSTANDARD2_0
         public string TraceId { get; set; }
 
         public string ParentId { get; set; }
@@ -53,48 +47,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         public bool Debug { get; set; }
 
         public bool Shared { get; set; }
-
-#else
-        [JsonProperty("traceId")]
-        public string TraceId { get; set; }
-
-        [JsonProperty("parentId")]
-        public string ParentId { get; set; }
-
-        [JsonProperty("id")]
-        public string Id { get; set; }
-
-        [JsonProperty("kind")]
-        [JsonConverter(typeof(StringEnumConverter))]
-        public ZipkinSpanKind Kind { get; set; }
-
-        [JsonProperty("name")]
-        public string Name { get; set; }
-
-        [JsonProperty("timestamp")]
-        public long Timestamp { get; set; }
-
-        [JsonProperty("duration")]
-        public long Duration { get; set; }
-
-        [JsonProperty("localEndpoint")]
-        public ZipkinEndpoint LocalEndpoint { get; set; }
-
-        [JsonProperty("remoteEndpoint")]
-        public ZipkinEndpoint RemoteEndpoint { get; set; }
-
-        [JsonProperty("annotations")]
-        public IList<ZipkinAnnotation> Annotations { get; set; }
-
-        [JsonProperty("tags")]
-        public Dictionary<string, string> Tags { get; set; }
-
-        [JsonProperty("debug")]
-        public bool Debug { get; set; }
-
-        [JsonProperty("shared")]
-        public bool Shared { get; set; }
-#endif
 
         public static Builder NewBuilder()
         {

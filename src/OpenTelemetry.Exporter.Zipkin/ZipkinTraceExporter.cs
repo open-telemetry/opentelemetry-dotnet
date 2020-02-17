@@ -18,18 +18,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
-#if NETSTANDARD2_0
 using System.Net.Http.Headers;
-#endif
 using System.Net.Sockets;
-using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-#if NETSTANDARD2_0
-using System.Text.Json;
-#else
-using Newtonsoft.Json;
-#endif
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Trace.Export;
 
@@ -44,12 +37,10 @@ namespace OpenTelemetry.Exporter.Zipkin
         private const long NanosPerMillisecond = 1000 * 1000;
         private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
 
-#if NETSTANDARD2_0
         private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
-#endif
 
         private readonly ZipkinTraceExporterOptions options;
         private readonly ZipkinEndpoint localEndpoint;
@@ -153,21 +144,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
         private HttpContent GetRequestContent(IEnumerable<ZipkinSpan> toSerialize)
         {
-#if NETSTANDARD2_0
             return new JsonContent(toSerialize, Options);
-#else
-            var content = string.Empty;
-            try
-            {
-                content = JsonConvert.SerializeObject(toSerialize);
-            }
-            catch (Exception)
-            {
-                // Ignored
-            }
-
-            return new StringContent(content, Encoding.UTF8, "application/json");
-#endif
         }
 
         private ZipkinEndpoint GetLocalZipkinEndpoint()
@@ -245,7 +222,6 @@ namespace OpenTelemetry.Exporter.Zipkin
             return result;
         }
 
-#if NETSTANDARD2_0
         private class JsonContent : HttpContent
         {
             private static readonly MediaTypeHeaderValue JsonHeader = new MediaTypeHeaderValue("application/json")
@@ -274,6 +250,5 @@ namespace OpenTelemetry.Exporter.Zipkin
                 return false;
             }
         }
-#endif
     }
 }
