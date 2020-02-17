@@ -19,6 +19,7 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.Versioning;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
@@ -27,6 +28,8 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 {
     internal class HttpHandlerDiagnosticListener : ListenerHandler
     {
+        private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
         private readonly PropertyFetcher stopResponseFetcher = new PropertyFetcher("Response");
         private readonly PropertyFetcher stopExceptionFetcher = new PropertyFetcher("Exception");
@@ -45,9 +48,11 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             // Depending on the .NET version/flavor this will look like
             // '.NETCoreApp,Version=v3.0', '.NETCoreApp,Version = v2.2' or '.NETFramework,Version = v4.7.1'
 
-            if (framework != null && framework.Contains("Version=v3"))
+            if (framework != null)
             {
-                this.httpClientSupportsW3C = true;
+                var match = CoreAppMajorVersionCheckRegex.Match(framework);
+
+                this.httpClientSupportsW3C = match.Success && int.Parse(match.Groups[1].Value) >= 3;
             }
 
             this.options = options;
@@ -108,11 +113,14 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 {
                     if (requestTaskStatus != TaskStatus.RanToCompletion)
                     {
-                        span.Status = Status.Unknown;
-
                         if (requestTaskStatus == TaskStatus.Canceled)
                         {
                             span.Status = Status.Cancelled;
+                        }
+                        else if (requestTaskStatus != TaskStatus.Faulted)
+                        {
+                            // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
+                            span.Status = Status.Unknown;
                         }
                     }
                 }

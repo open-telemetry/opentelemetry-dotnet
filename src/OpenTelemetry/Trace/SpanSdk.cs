@@ -204,7 +204,7 @@ namespace OpenTelemetry.Trace
             set
             {
                 if (!value.IsValid)
-                { 
+                {
                     OpenTelemetrySdkEventSource.Log.InvalidArgument("set_Status", nameof(value), "is null");
                     return;
                 }
