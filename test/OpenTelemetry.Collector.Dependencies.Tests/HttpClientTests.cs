@@ -49,6 +49,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             public string SpanStatus { get; set; }
 
+            public bool? SpanStatusHasDescription { get; set; }
+
             public Dictionary<string, string> SpanAttributes { get; set; }
 
             public bool SetHttpFlavor { get; set; }
@@ -89,7 +91,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     ctx.Response.StatusCode = tc.ResponseCode == 0 ? 200 : tc.ResponseCode;
                     ctx.Response.OutputStream.Close();
                 },
-                out var host, 
+                out var host,
                 out var port);
 
             var spanProcessor = new Mock<SpanProcessor>();
@@ -158,6 +160,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             };
 
             Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
+            if (tc.SpanStatusHasDescription.HasValue)
+                Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(span.Status.Description));
 
             var normalizedAttributes = span.Attributes.ToDictionary(x => x.Key, x => x.Value.ToString());
             tc.SpanAttributes = tc.SpanAttributes.ToDictionary(x => x.Key, x => NormalizeValues(x.Value, host, port));
