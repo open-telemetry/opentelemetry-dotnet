@@ -34,6 +34,11 @@ namespace OpenTelemetry.Metrics
             return NoOpMeasure<double>.Instance;
         }
 
+        public override Observer<double> CreateDoubleObserver(string name, bool monotonic = true)
+        {
+            return NoOpObserver<double>.Instance;
+        }
+
         public override Counter<long> CreateInt64Counter(string name, bool monotonic = true)
         {
             return NoOpCounter<long>.Instance;
@@ -42,6 +47,11 @@ namespace OpenTelemetry.Metrics
         public override Measure<long> CreateInt64Measure(string name, bool absolute = true)
         {
             return NoOpMeasure<long>.Instance;
+        }
+
+        public override Observer<long> CreateInt64Observer(string name, bool absolute = true)
+        {
+            return NoOpObserver<long>.Instance;
         }
 
         public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)

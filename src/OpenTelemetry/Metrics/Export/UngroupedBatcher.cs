@@ -80,6 +80,16 @@ namespace OpenTelemetry.Metrics.Export
             throw new NotImplementedException();
         }
 
+        public override void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<long> lastValueAggregator)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<double> lastValueAggregator)
+        {
+            throw new NotImplementedException();
+        }
+
         private async Task Worker(CancellationToken cancellationToken)
         {
             try

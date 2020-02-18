@@ -29,6 +29,8 @@ namespace OpenTelemetry.Metrics
         private readonly IDictionary<string, CounterSdk<double>> doubleCounters = new ConcurrentDictionary<string, CounterSdk<double>>();
         private readonly IDictionary<string, MeasureSdk<long>> longMeasures = new ConcurrentDictionary<string, MeasureSdk<long>>();
         private readonly IDictionary<string, MeasureSdk<double>> doubleMeasures = new ConcurrentDictionary<string, MeasureSdk<double>>();
+        private readonly IDictionary<string, ObserverSdk<long>> longObservers = new ConcurrentDictionary<string, ObserverSdk<long>>();
+        private readonly IDictionary<string, ObserverSdk<double>> doubleObservers = new ConcurrentDictionary<string, ObserverSdk<double>>();
         private readonly object collectLock = new object();
 
         internal MeterSdk(string meterName, MetricProcessor metricProcessor)
@@ -99,6 +101,32 @@ namespace OpenTelemetry.Metrics
                         this.metricProcessor.ProcessMeasure(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
+
+                foreach (var doubleObserver in this.doubleObservers)
+                {
+                    var metricName = doubleObserver.Key;
+                    var measureInstrument = doubleObserver.Value;
+                    foreach (var handle in measureInstrument.GetAllHandles())
+                    {
+                        var labelSet = handle.Key;
+                        var aggregator = handle.Value.GetAggregator();
+                        aggregator.Checkpoint();
+                        this.metricProcessor.ProcessObserver(this.meterName, metricName, labelSet, aggregator);
+                    }
+                }
+
+                foreach (var longObserver in this.longObservers)
+                {
+                    var metricName = longObserver.Key;
+                    var measureInstrument = longObserver.Value;
+                    foreach (var handle in measureInstrument.GetAllHandles())
+                    {
+                        var labelSet = handle.Key;
+                        var aggregator = handle.Value.GetAggregator();
+                        aggregator.Checkpoint();
+                        this.metricProcessor.ProcessObserver(this.meterName, metricName, labelSet, aggregator);
+                    }
+                }
             }
         }
 
@@ -147,6 +175,32 @@ namespace OpenTelemetry.Metrics
             }
 
             return measure;
+        }
+
+        /// <inheritdoc/>
+        public override Observer<long> CreateInt64Observer(string name, bool absolute = true)
+        {
+            if (!this.longObservers.TryGetValue(name, out var observer))
+            {
+                observer = new ObserverSdk<long>(name);
+
+                this.longObservers.Add(name, observer);
+            }
+
+            return observer;
+        }
+
+        /// <inheritdoc/>
+        public override Observer<double> CreateDoubleObserver(string name, bool absolute = true)
+        {
+            if (!this.doubleObservers.TryGetValue(name, out var observer))
+            {
+                observer = new ObserverSdk<double>(name);
+
+                this.doubleObservers.Add(name, observer);
+            }
+
+            return observer;
         }
     }
 }

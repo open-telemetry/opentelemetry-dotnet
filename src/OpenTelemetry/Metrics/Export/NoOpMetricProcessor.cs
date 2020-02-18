@@ -35,5 +35,13 @@ namespace OpenTelemetry.Metrics.Export
         public override void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<double> measureAggregator)
         {
         }
+
+        public override void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<long> lastValueAggregator)
+        {
+        }
+
+        public override void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<double> lastValueAggregator)
+        {
+        }
     }
 }

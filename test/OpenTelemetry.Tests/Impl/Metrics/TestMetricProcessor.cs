@@ -25,6 +25,7 @@ namespace OpenTelemetry.Metrics.Test
     {
         public List<Tuple<string, LabelSet, long>> counters = new List<Tuple<string, LabelSet, long>>();
         public List<Tuple<string, LabelSet, List<long>>> measures = new List<Tuple<string, LabelSet, List<long>>>();
+        public List<Tuple<string, LabelSet, long>> observations = new List<Tuple<string, LabelSet, long>>();
 
         public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<long> sumAggregator)
         {
@@ -41,6 +42,15 @@ namespace OpenTelemetry.Metrics.Test
         }
 
         public override void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<double> measureAggregator)
+        {
+        }
+
+        public override void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<long> lastValueAggregator)
+        {
+            observations.Add(new Tuple<string, LabelSet, long>(metricName, labelSet, lastValueAggregator.ValueFromLastCheckpoint()));
+        }
+
+        public override void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<double> lastValueAggregator)
         {
         }
     }

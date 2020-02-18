@@ -56,6 +56,22 @@ namespace OpenTelemetry.Metrics
         public abstract Measure<double> CreateDoubleMeasure(string name, bool absolute = true);
 
         /// <summary>
+        /// Creates Int64 Observer with given name.
+        /// </summary>
+        /// <param name="name">The name of the observer.</param>
+        /// <param name="absolute">indicates if only positive values are expected.</param>
+        /// <returns>The observer instance.</returns>
+        public abstract Observer<long> CreateInt64Observer(string name, bool absolute = true);
+
+        /// <summary>
+        /// Creates a double Observer with given name.
+        /// </summary>
+        /// <param name="name">The name of the observer.</param>
+        /// <param name="absolute">indicates if only positive values are expected.</param>
+        /// <returns>The observer instance.</returns>
+        public abstract Observer<double> CreateDoubleObserver(string name, bool absolute = true);
+
+        /// <summary>
         /// Constructs or retrieves the <see cref="LabelSet"/> from the given label key-value pairs.
         /// </summary>
         /// <param name="labels">Label key value pairs.</param>
