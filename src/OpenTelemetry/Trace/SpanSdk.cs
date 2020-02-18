@@ -827,7 +827,26 @@ namespace OpenTelemetry.Trace
                 return true;
             }
 
-            // TODO add array support
+            if (attributeValue is Array array)
+            {
+                Type entryType = null;
+                for (int i = 0; i < array.Length; i++)
+                {
+                    var entry = array.GetValue(i);
+
+                    if (i == 0)
+                    {
+                        entryType = entry.GetType();
+                    }
+
+                    if (!this.IsNumericBoolOrString(entry) || entryType != entry.GetType())
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
 
             return false;
         }
