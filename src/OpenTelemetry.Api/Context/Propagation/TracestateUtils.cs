@@ -197,8 +197,7 @@ namespace OpenTelemetry.Context.Propagation
 
             if (key.IsEmpty
                 || key.Length > KeyMaxSize
-                || key[i] < 'a'
-                || key[i] > 'z')
+                || ((!(key[i] >= 'a' && key[i] <= 'z')) && (!(key[i] >= '0' && key[i] <= '9'))))
             {
                 return false;
             }
