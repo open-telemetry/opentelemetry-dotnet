@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\lib\Thrift\Thrift.csproj" />
     <ProjectReference Include="..\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
+    <ProjectReference Include="..\src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj" />
     <ProjectReference Include="..\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 

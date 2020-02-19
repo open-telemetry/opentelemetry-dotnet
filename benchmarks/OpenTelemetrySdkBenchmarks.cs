@@ -15,7 +15,6 @@
 // </copyright>
 
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
 using Benchmarks.Tracing;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
