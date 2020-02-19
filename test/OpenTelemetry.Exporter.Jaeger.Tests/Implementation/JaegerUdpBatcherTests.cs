@@ -84,7 +84,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         public async Task JaegerUdpBatcherTests_BuildBatchesToTransmit_FlushedBatch()
         {
             // Arrange
-            var options = new JaegerExporterOptions { ServiceName = "TestService", MaxFlushInterval = TimeSpan.FromHours(1), MaxPacketSize = 700 };
+            var options = new JaegerExporterOptions { ServiceName = "TestService", MaxFlushInterval = TimeSpan.FromHours(1), MaxPacketSize = 750 };
 
             var jaegerUdpBatcher = new JaegerUdpBatcher(options);
 
