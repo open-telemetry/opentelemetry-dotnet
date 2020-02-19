@@ -238,9 +238,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private async Task<ArraySegment<byte>> BuildThriftMessage(SpanData span)
 #endif
         {
-            span.ToJaegerSpan(out var jaegerSpan);
-
-            await jaegerSpan.WriteAsync(this.memoryProtocol, CancellationToken.None).ConfigureAwait(false);
+            await span.ToJaegerSpan().WriteAsync(this.memoryProtocol, CancellationToken.None).ConfigureAwait(false);
 
             return this.memoryTransport.SwapOutBuffer();
         }

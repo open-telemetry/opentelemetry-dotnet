@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
 
-        public static void ToJaegerSpan(this SpanData span, out JaegerSpan jaegerSpan)
+        public static JaegerSpan ToJaegerSpan(this SpanData span)
         {
             var jaegerTags = span.Attributes?.Select(a => a.ToJaegerTag()).ToList() ?? new List<JaegerTag>();
 
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 parentSpanId = new Int128(span.ParentSpanId);
             }
 
-            jaegerSpan = new JaegerSpan(
+            return new JaegerSpan(
                 traceIdLow: traceId.Low,
                 traceIdHigh: traceId.High,
                 spanId: spanId.Low,
