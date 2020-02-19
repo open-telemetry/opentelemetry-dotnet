@@ -1078,6 +1078,21 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
+        public void SetAttribute_Array_IEnumerable()
+        {
+            var tracer = tracerFactory.GetTracer(null);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
+
+            IEnumerable<int> array = new List<int> {1,2,3};
+            span.SetAttribute("array", array);
+
+            Assert.Equal(1, span.Attributes.Count());
+
+            var attribute = span.Attributes.Single(kvp => kvp.Key == "array");
+            Assert.Equal(array, attribute.Value);
+        }
+
+        [Fact]
         public void SetAttribute_Array_Cant_Mix_Types()
         {
             var tracer = tracerFactory.GetTracer(null);

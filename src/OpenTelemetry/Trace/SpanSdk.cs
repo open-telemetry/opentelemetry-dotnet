@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -827,14 +828,12 @@ namespace OpenTelemetry.Trace
                 return true;
             }
 
-            if (attributeValue is Array array)
+            if (attributeValue is IEnumerable enumerable)
             {
                 Type entryType = null;
-                for (int i = 0; i < array.Length; i++)
+                foreach (var entry in enumerable)
                 {
-                    var entry = array.GetValue(i);
-
-                    if (i == 0)
+                    if (entryType == null)
                     {
                         entryType = entry.GetType();
                     }
