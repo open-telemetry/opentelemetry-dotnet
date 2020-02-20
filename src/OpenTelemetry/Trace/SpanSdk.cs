@@ -322,7 +322,7 @@ namespace OpenTelemetry.Trace
             else if (!this.IsAttributeValueTypeSupported(value))
             {
                 OpenTelemetrySdkEventSource.Log.InvalidArgument("SetAttribute", nameof(value), $"Type '{value.GetType()}' of attribute '{key}' is not supported");
-                sanitizedValue = value.ToString();
+                sanitizedValue = string.Empty;
             }
 
             lock (this.lck)
