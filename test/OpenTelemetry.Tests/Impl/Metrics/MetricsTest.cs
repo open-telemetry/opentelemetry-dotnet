@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics.Test
 {
     public class MetricsTest
     {
-        [Fact(Skip = "TODO: Make robust tests. These are just basic tests to see metric in action.")]
+        [Fact]
         public void CounterSendsAggregateToRegisteredProcessor()
         {
             var testProcessor = new TestMetricProcessor();
@@ -45,17 +45,17 @@ namespace OpenTelemetry.Metrics.Test
             meter.Collect();
 
             Assert.Equal(2, testProcessor.counters.Count);
-            Assert.Equal("testCounter", testProcessor.counters[1].Item1);
             Assert.Equal("testCounter", testProcessor.counters[0].Item1);
+            Assert.Equal("testCounter", testProcessor.counters[1].Item1);
 
-            Assert.Equal(meter.GetLabelSet(labels1), testProcessor.counters[1].Item2);
-            Assert.Equal(meter.GetLabelSet(labels2), testProcessor.counters[0].Item2);
+            Assert.Equal(meter.GetLabelSet(labels1), testProcessor.counters[0].Item2);
+            Assert.Equal(meter.GetLabelSet(labels2), testProcessor.counters[1].Item2);
 
-            Assert.Equal(110, testProcessor.counters[1].Item3);
-            Assert.Equal(210, testProcessor.counters[0].Item3);
+            Assert.Equal(110, testProcessor.counters[0].Item3);
+            Assert.Equal(210, testProcessor.counters[1].Item3);
         }
 
-        [Fact(Skip = "TODO: Make robust tests. These are just basic tests to see metric in action.")]
+        [Fact]
         public void MeasureSendsAggregateToRegisteredProcessor()
         {
             var testProcessor = new TestMetricProcessor();
@@ -77,18 +77,49 @@ namespace OpenTelemetry.Metrics.Test
             meter.Collect();
 
             Assert.Equal(2, testProcessor.measures.Count);
-            Assert.Equal("testMeasure", testProcessor.measures[1].Item1);
             Assert.Equal("testMeasure", testProcessor.measures[0].Item1);
+            Assert.Equal("testMeasure", testProcessor.measures[1].Item1);
 
-            Assert.Equal(meter.GetLabelSet(labels1), testProcessor.measures[1].Item2);
-            Assert.Equal(meter.GetLabelSet(labels2), testProcessor.measures[0].Item2);
+            Assert.Equal(meter.GetLabelSet(labels1), testProcessor.measures[0].Item2);
+            Assert.Equal(meter.GetLabelSet(labels2), testProcessor.measures[1].Item2);
 
-            Assert.Contains(100, testProcessor.measures[1].Item3);
-            Assert.Contains(10, testProcessor.measures[1].Item3);
+            Assert.Contains(100, testProcessor.measures[0].Item3);
+            Assert.Contains(10, testProcessor.measures[0].Item3);
 
+            Assert.Contains(200, testProcessor.measures[1].Item3);
+            Assert.Contains(20, testProcessor.measures[1].Item3);
+        }
 
-            Assert.Contains(200, testProcessor.measures[0].Item3);
-            Assert.Contains(20, testProcessor.measures[0].Item3);
+        [Fact]
+        public void ObserverSendsAggregateToRegisteredProcessor()
+        {
+            var testProcessor = new TestMetricProcessor();
+            var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
+            var testObserver = meter.CreateInt64Observer("testObserver");
+
+            var labels1 = new List<KeyValuePair<string, string>>();
+            labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
+
+            var labels2 = new List<KeyValuePair<string, string>>();
+            labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
+
+            var context = default(SpanContext);
+            testObserver.Observe(context, 100, meter.GetLabelSet(labels1));
+            testObserver.Observe(context, 10, meter.GetLabelSet(labels1));
+            testObserver.Observe(context, 200, meter.GetLabelSet(labels2));
+            testObserver.Observe(context, 20, meter.GetLabelSet(labels2));
+
+            meter.Collect();
+
+            Assert.Equal(2, testProcessor.observations.Count);
+            Assert.Equal("testObserver", testProcessor.observations[0].Item1);
+            Assert.Equal("testObserver", testProcessor.observations[1].Item1);
+
+            Assert.Equal(meter.GetLabelSet(labels1), testProcessor.observations[0].Item2);
+            Assert.Equal(meter.GetLabelSet(labels2), testProcessor.observations[1].Item2);
+
+            Assert.Equal(10, testProcessor.observations[0].Item3);
+            Assert.Equal(20, testProcessor.observations[1].Item3);
         }
     }
 }
