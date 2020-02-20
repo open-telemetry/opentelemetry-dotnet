@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections;
 
 namespace OpenTelemetry.Trace
 {
