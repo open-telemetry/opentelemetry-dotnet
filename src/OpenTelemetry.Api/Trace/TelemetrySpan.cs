@@ -54,6 +54,7 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Sets a new attribute on the span.
+        /// <para>The value may be an <see cref="IEnumerable"/> of primetive types. Note the enumeration may be iterated multiple times.</para>
         /// </summary>
         /// <param name="key">Attribute key.</param>
         /// <param name="value">Attribute value.</param>
