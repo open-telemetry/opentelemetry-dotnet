@@ -36,12 +36,12 @@ namespace OpenTelemetry.Metrics
 
         public override void Observe(in SpanContext context, T value)
         {
-            // this.sumAggregator.Update(value);
+            this.aggregator.Update(value);
         }
 
         public override void Observe(in DistributedContext context, T value)
         {
-            // this.sumAggregator.Update(value);
+            this.aggregator.Update(value);
         }
 
         internal LastValueAggregator<T> GetAggregator()
