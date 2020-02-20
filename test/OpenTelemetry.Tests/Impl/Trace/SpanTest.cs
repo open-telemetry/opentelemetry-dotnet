@@ -1040,7 +1040,7 @@ namespace OpenTelemetry.Trace.Test
 
             span.SetAttribute("intArray", array);
 
-            Assert.Equal(1, span.Attributes.Count());
+            Assert.Single(span.Attributes);
 
             var attribute = span.Attributes.Single(kvp => kvp.Key == "intArray");
             Assert.Equal(array, attribute.Value);
@@ -1055,7 +1055,7 @@ namespace OpenTelemetry.Trace.Test
             var array = new string[] {"1","2","3"};
             span.SetAttribute("array", array);
 
-            Assert.Equal(1, span.Attributes.Count());
+            Assert.Single(span.Attributes);
 
             var attribute = span.Attributes.Single(kvp => kvp.Key == "array");
             Assert.Equal(array, attribute.Value);
@@ -1071,7 +1071,7 @@ namespace OpenTelemetry.Trace.Test
             var array = new Decimal[] {1.1M, 2.2M, 3.3M};
             span.SetAttribute("array", array);
 
-            Assert.Equal(1, span.Attributes.Count());
+            Assert.Single(span.Attributes);
 
             var attribute = span.Attributes.Single(kvp => kvp.Key == "array");
             Assert.Equal(array, attribute.Value);
@@ -1086,7 +1086,7 @@ namespace OpenTelemetry.Trace.Test
             IEnumerable<int> array = new List<int> {1,2,3};
             span.SetAttribute("array", array);
 
-            Assert.Equal(1, span.Attributes.Count());
+            Assert.Single(span.Attributes);
 
             var attribute = span.Attributes.Single(kvp => kvp.Key == "array");
             Assert.Equal(array, attribute.Value);
@@ -1101,10 +1101,9 @@ namespace OpenTelemetry.Trace.Test
             var array = new object[] {1, "2", false};
             span.SetAttribute("array", array);
 
-            Assert.Equal(1, span.Attributes.Count());
+            Assert.Single(span.Attributes);
 
             var attribute = span.Attributes.Single(kvp => kvp.Key == "array");
-            Assert.NotNull(attribute);
             Assert.Equal("array", attribute.Key);
             Assert.Equal(string.Empty, attribute.Value);
         }
@@ -1118,10 +1117,9 @@ namespace OpenTelemetry.Trace.Test
             var array = new object[0];
             span.SetAttribute("array", array);
 
-            Assert.Equal(1, span.Attributes.Count());
+            Assert.Single(span.Attributes);
 
             var attribute = span.Attributes.Single(kvp => kvp.Key == "array");
-            Assert.NotNull(attribute);
             Assert.Equal("array", attribute.Key);
             Assert.Equal(string.Empty, attribute.Value);
         }
