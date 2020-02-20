@@ -834,18 +834,25 @@ namespace OpenTelemetry.Trace
 
             if (attributeValue is IEnumerable enumerable)
             {
-                Type entryType = null;
-                foreach (var entry in enumerable)
+                try
                 {
-                    if (entryType == null)
+                    Type entryType = null;
+                    foreach (var entry in enumerable)
                     {
-                        entryType = entry.GetType();
-                    }
+                        if (entryType == null)
+                        {
+                            entryType = entry.GetType();
+                        }
 
-                    if (!this.IsNumericBoolOrString(entry) || entryType != entry.GetType())
-                    {
-                        return false;
+                        if (!this.IsNumericBoolOrString(entry) || entryType != entry.GetType())
+                        {
+                            return false;
+                        }
                     }
+                }
+                catch
+                {
+                    return false;
                 }
 
                 return true;
