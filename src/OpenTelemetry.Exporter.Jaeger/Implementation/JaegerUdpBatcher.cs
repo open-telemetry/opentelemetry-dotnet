@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Protocols;
@@ -27,13 +28,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private readonly ITProtocolFactory protocolFactory;
         private readonly JaegerThriftClientTransport clientTransport;
         private readonly JaegerThriftClient thriftClient;
-        private readonly List<JaegerSpan> currentBatch = new List<JaegerSpan>();
 
         private readonly SemaphoreSlim flushLock = new SemaphoreSlim(1);
         private readonly TimeSpan maxFlushInterval;
         private readonly System.Timers.Timer maxFlushIntervalTimer;
 
-        private int? processByteSize;
+        private Dictionary<string, Process> processCache;
         private int batchByteSize;
 
         private bool disposedValue = false; // To detect redundant calls
@@ -66,37 +66,64 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             this.maxFlushIntervalTimer.Elapsed += async (sender, args) =>
             {
-                await this.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                await this.FlushAsyncInternal(false, CancellationToken.None).ConfigureAwait(false);
             };
         }
 
         public Process Process { get; private set; }
 
+        internal IDictionary<string, Batch> CurrentBatches { get; } = new Dictionary<string, Batch>();
+
         public async Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken)
         {
-            if (!this.processByteSize.HasValue)
+            if (this.processCache == null)
             {
-                this.processByteSize = await this.GetSize(this.Process).ConfigureAwait(false);
-                this.batchByteSize = this.processByteSize.Value;
+                this.Process.ByteSize = await this.GetSize(this.Process).ConfigureAwait(false);
+                this.processCache = new Dictionary<string, Process>
+                {
+                    [this.Process.ServiceName] = this.Process,
+                };
             }
 
-            int spanSize = await this.GetSize(span).ConfigureAwait(false);
+            string spanServiceName = span.JaegerTags?.FirstOrDefault(t => t.Key == "peer.service")?.VStr ?? this.Process.ServiceName;
 
-            if (spanSize + this.processByteSize > this.maxPacketSize)
+            if (!this.processCache.TryGetValue(spanServiceName, out var spanProcess))
             {
-                throw new JaegerExporterException($"ThriftSender received a span that was too large, size = {spanSize + this.processByteSize}, max = {this.maxPacketSize}", null);
+                spanProcess = new Process(spanServiceName, this.Process.Tags);
+                spanProcess.ByteSize = await this.GetSize(spanProcess).ConfigureAwait(false);
+                this.processCache.Add(spanServiceName, spanProcess);
+            }
+
+            int spanByteSize = await this.GetSize(span).ConfigureAwait(false);
+
+            if (spanByteSize + spanProcess.ByteSize > this.maxPacketSize)
+            {
+                throw new JaegerExporterException($"ThriftSender received a span that was too large, size = {spanByteSize + spanProcess.ByteSize}, max = {this.maxPacketSize}", null);
+            }
+
+            int spanTotalBytesNeeded = spanByteSize;
+            if (!this.CurrentBatches.TryGetValue(spanServiceName, out var spanBatch))
+            {
+                spanBatch = new Batch(spanProcess);
+                this.CurrentBatches.Add(spanServiceName, spanBatch);
+
+                spanTotalBytesNeeded += spanProcess.ByteSize;
             }
 
             var flushedSpanCount = 0;
 
+            await this.flushLock.WaitAsync().ConfigureAwait(false);
             try
             {
-                await this.flushLock.WaitAsync().ConfigureAwait(false);
-
                 // flush if current batch size plus new span size equals or exceeds max batch size
-                if (this.batchByteSize + spanSize >= this.maxPacketSize)
+                if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPacketSize)
                 {
-                    flushedSpanCount = await this.FlushAsync(cancellationToken).ConfigureAwait(false);
+                    flushedSpanCount = await this.FlushAsyncInternal(true, cancellationToken).ConfigureAwait(false);
+
+                    // Flushing effectively erases the spanBatch we were working on, so we have to rebuild it.
+                    spanBatch.Spans.Clear();
+                    spanTotalBytesNeeded = spanByteSize + spanProcess.ByteSize;
+                    this.CurrentBatches.Add(spanServiceName, spanBatch);
                 }
                 else
                 {
@@ -104,8 +131,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 }
 
                 // add span to batch and wait for more spans
-                this.currentBatch.Add(span);
-                this.batchByteSize += spanSize;
+                spanBatch.Spans.Add(span);
+                this.batchByteSize += spanTotalBytesNeeded;
             }
             finally
             {
@@ -115,40 +142,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return flushedSpanCount;
         }
 
-        public async Task<int> FlushAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                await this.flushLock.WaitAsync().ConfigureAwait(false);
+        public Task<int> FlushAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(false, cancellationToken);
 
-                this.maxFlushIntervalTimer.Enabled = false;
-
-                int n = this.currentBatch.Count;
-
-                if (n == 0)
-                {
-                    return 0;
-                }
-
-                try
-                {
-                    await this.SendAsync(this.Process, this.currentBatch, cancellationToken).ConfigureAwait(false);
-                }
-                finally
-                {
-                    this.currentBatch.Clear();
-                    this.batchByteSize = this.processByteSize.Value;
-                }
-
-                return n;
-            }
-            finally
-            {
-                this.flushLock.Release();
-            }
-        }
-
-        public virtual Task<int> CloseAsync(CancellationToken cancellationToken) => this.FlushAsync(cancellationToken);
+        public Task<int> CloseAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(false, cancellationToken);
 
         public void Dispose()
         {
@@ -156,16 +152,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.Dispose(true);
         }
 
-        protected async Task SendAsync(Process process, List<JaegerSpan> spans, CancellationToken cancellationToken)
+        protected async Task SendAsync(IEnumerable<Batch> batches, CancellationToken cancellationToken)
         {
             try
             {
-                var batch = new Batch(process, spans);
-                await this.thriftClient.EmitBatchAsync(batch, cancellationToken).ConfigureAwait(false);
+                foreach (var batch in batches)
+                {
+                    await this.thriftClient.EmitBatchAsync(batch, cancellationToken).ConfigureAwait(false);
+                }
             }
             catch (Exception ex)
             {
-                throw new JaegerExporterException($"Could not send {spans.Count} spans", ex);
+                throw new JaegerExporterException($"Could not send {batches.Select(b => b.Spans.Count()).Sum()} spans", ex);
             }
         }
 
@@ -181,6 +179,45 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 }
 
                 this.disposedValue = true;
+            }
+        }
+
+        private async Task<int> FlushAsyncInternal(bool lockAlreadyHeld, CancellationToken cancellationToken)
+        {
+            if (!lockAlreadyHeld)
+            {
+                await this.flushLock.WaitAsync().ConfigureAwait(false);
+            }
+
+            try
+            {
+                this.maxFlushIntervalTimer.Enabled = false;
+
+                int n = this.CurrentBatches.Values.Sum(b => b.Spans.Count);
+
+                if (n == 0)
+                {
+                    return 0;
+                }
+
+                try
+                {
+                    await this.SendAsync(this.CurrentBatches.Values, cancellationToken).ConfigureAwait(false);
+                }
+                finally
+                {
+                    this.CurrentBatches.Clear();
+                    this.batchByteSize = 0;
+                }
+
+                return n;
+            }
+            finally
+            {
+                if (!lockAlreadyHeld)
+                {
+                    this.flushLock.Release();
+                }
             }
         }
 
