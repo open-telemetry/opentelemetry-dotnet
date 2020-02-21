@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace.Export
     /// <summary>
     /// Implements simple span processor that exports spans in OnEnd call without batching.
     /// </summary>
-    public class SimpleSpanProcessor : SpanProcessor
+    public class SimpleSpanProcessor : SpanProcessor, IDisposable
     {
         private readonly SpanExporter exporter;
         private bool disposed = false;
@@ -74,6 +74,29 @@ namespace OpenTelemetry.Trace.Export
             }
 
             return Task.CompletedTask;
+        }
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+        }
+
+        protected virtual void Dispose(bool isDisposing)
+        {
+            if (isDisposing)
+            {
+                if (this.exporter is IDisposable disposableExporter)
+                {
+                    try
+                    {
+                        disposableExporter.Dispose();
+                    }
+                    catch (Exception e)
+                    {
+                        OpenTelemetrySdkEventSource.Log.SpanProcessorException("Dispose", e);
+                    }
+                }
+            }
         }
     }
 }

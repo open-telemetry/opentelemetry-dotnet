@@ -207,6 +207,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         protected virtual void Dispose(bool disposing)
         {
+            try
+            {
+                this.CloseAsync(CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch
+            {
+            }
+
             if (!this.disposedValue)
             {
                 if (disposing)
