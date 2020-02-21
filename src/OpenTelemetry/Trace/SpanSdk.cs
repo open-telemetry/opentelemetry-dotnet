@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -314,9 +315,13 @@ namespace OpenTelemetry.Trace
             }
 
             object sanitizedValue = value;
-            if (value == null || !this.IsAttributeValueTypeSupported(value))
+            if (value == null)
             {
-                OpenTelemetrySdkEventSource.Log.InvalidArgument("SetAttribute", nameof(value), $"Type '{value?.GetType()}' of attribute '{key}' is not supported");
+                sanitizedValue = string.Empty;
+            }
+            else if (!this.IsAttributeValueTypeSupported(value))
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("SetAttribute", nameof(value), $"Type '{value.GetType()}' of attribute '{key}' is not supported");
                 sanitizedValue = string.Empty;
             }
 
@@ -827,7 +832,31 @@ namespace OpenTelemetry.Trace
                 return true;
             }
 
-            // TODO add array support
+            if (attributeValue is IEnumerable enumerable)
+            {
+                try
+                {
+                    Type entryType = null;
+                    foreach (var entry in enumerable)
+                    {
+                        if (entryType == null)
+                        {
+                            entryType = entry.GetType();
+                        }
+
+                        if (!this.IsNumericBoolOrString(entry) || entryType != entry.GetType())
+                        {
+                            return false;
+                        }
+                    }
+                }
+                catch
+                {
+                    return false;
+                }
+
+                return true;
+            }
 
             return false;
         }
