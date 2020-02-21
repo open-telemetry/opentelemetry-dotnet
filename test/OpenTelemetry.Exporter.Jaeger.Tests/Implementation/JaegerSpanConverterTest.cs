@@ -328,6 +328,61 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
+        public void JaegerSpanConverterTest_GenerateSpan_RemoteEndpointOmittedByDefault()
+        {
+            // Arrange
+            var span = CreateTestSpan();
+
+            // Act
+            var jaegerSpan = span.ToJaegerSpan();
+
+            // Assert
+            Assert.Null(jaegerSpan.JaegerTags.FirstOrDefault(t => t.Key == "peer.service"));
+        }
+
+        [Fact]
+        public void JaegerSpanConverterTest_GenerateSpan_RemoteEndpointResolution()
+        {
+            // Arrange
+            var span = CreateTestSpan(
+                additionalAttributes: new Dictionary<string, object>
+                {
+                    ["net.peer.name"] = "RemoteServiceName",
+                });
+
+            // Act
+            var jaegerSpan = span.ToJaegerSpan();
+
+            // Assert
+            var tag = jaegerSpan.JaegerTags.FirstOrDefault(t => t.Key == "peer.service");
+            Assert.NotNull(tag);
+            Assert.Equal("RemoteServiceName", tag.VStr);
+        }
+
+        [Fact]
+        public void JaegerSpanConverterTest_GenerateSpan_RemoteEndpointResolutionPriority()
+        {
+            // Arrange
+            var span = CreateTestSpan(
+                additionalAttributes: new Dictionary<string, object>
+                {
+                    ["http.host"] = "DiscardedRemoteServiceName",
+                    ["peer.service"] = "RemoteServiceName",
+                    ["peer.hostname"] = "DiscardedRemoteServiceName",
+                });
+
+            // Act
+            var jaegerSpan = span.ToJaegerSpan();
+
+            // Assert
+            var tags = jaegerSpan.JaegerTags.Where(t => t.Key == "peer.service");
+            Assert.Single(tags);
+            var tag = tags.First();
+            Assert.NotNull(tag);
+            Assert.Equal("RemoteServiceName", tag.VStr);
+        }
+
+        [Fact]
         public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan_LibraryResources()
         {
             var span = CreateTestSpan(resource: new Resource(new Dictionary<string, object>
@@ -344,8 +399,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.DoesNotContain(jaegerSpan.JaegerTags, t => t.Key == Resource.ServiceNameKey && t.VStr == "MyService");
         }
 
-        internal SpanData CreateTestSpan(
+        internal static SpanData CreateTestSpan(
             bool setAttributes = true,
+            Dictionary<string, object> additionalAttributes = null,
             bool addEvents = true,
             bool addLinks = true,
             Resource resource = null)
@@ -357,6 +413,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var spanId = ActivitySpanId.CreateRandom();
             var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
+
             var attributes = new Dictionary<string, object>
             {
                 { "stringKey", "value"},
@@ -366,6 +423,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 { "doubleKey2", 1F},
                 { "boolKey", true},
             };
+            if (additionalAttributes != null)
+            {
+                foreach (var attribute in additionalAttributes)
+                {
+                    attributes.Add(attribute.Key, attribute.Value);
+                }
+            }
+
             var events = new List<Event>
             {
                 new Event(
