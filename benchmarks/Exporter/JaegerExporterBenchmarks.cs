@@ -36,7 +36,7 @@ namespace Benchmarks.Exporter
         [Params(1, 10, 50)]
         public int NumberOfBatches { get; set; }
 
-        [Params(5000)]
+        [Params(10000)]
         public int NumberOfSpans { get; set; }
 
         private SpanData testSpan;
