@@ -26,20 +26,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public class Batch : TUnionBase
     {
-        public Batch()
+        public Batch(Process process, IEnumerable<JaegerSpan> spans = null)
         {
-        }
-
-        public Batch(Process process, IEnumerable<JaegerSpan> spans)
-            : this()
-        {
-            this.Process = process;
+            this.Process = process ?? throw new ArgumentNullException(nameof(process));
             this.Spans = spans;
         }
 
-        public Process Process { get; set; }
+        public Process Process { get; }
 
         public IEnumerable<JaegerSpan> Spans { get; set; }
+
+        internal List<ArraySegment<byte>> SpanMessages { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -58,7 +55,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 };
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await (this.Process ?? new Process()).WriteAsync(oprot, cancellationToken);
+                await this.Process.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
 
                 field.Name = "spans";

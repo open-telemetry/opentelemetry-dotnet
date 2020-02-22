@@ -453,7 +453,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k1" && pair.Value == "v1");
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k2" && pair.Value == "v2");
 
-            // activity is not a parent and sampling decision is made 
+            // activity is not a parent and sampling decision is made
             // based on sampler alone
             Assert.True(span.IsRecording);
             Assert.Equal(SpanKind.Internal, span.Kind);
@@ -542,7 +542,7 @@ namespace OpenTelemetry.Trace.Test
         public void StartSpan_Recorded_FromActivity_Null_Kind_Links()
         {
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-                    
+
             var tracer = tracerFactory.GetTracer(null);
 
             var startTime = DateTimeOffset.UtcNow;
@@ -637,7 +637,7 @@ namespace OpenTelemetry.Trace.Test
         public void StartSpanFrom_Recorded_ImplicitParentActivity()
         {
             var tracer = tracerFactory.GetTracer(null);
-            
+
             var parentActivity = new Activity("foo").SetIdFormat(ActivityIdFormat.W3C).Start();
             parentActivity.TraceStateString = "k1=v1,k2=v2";
             parentActivity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -658,7 +658,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(SpanKind.Internal, span.Kind);
             AssertApproxSameTimestamp(startTimestamp, span.StartTimestamp);
             Assert.Null(span.Links);
-            
+
             parentActivity.Stop();
         }
 
@@ -1021,6 +1021,109 @@ namespace OpenTelemetry.Trace.Test
             Assert.Single(span.Attributes.Where(kvp => kvp.Key == "decimal" && kvp.Value is decimal dv && dv == 0.3M));
         }
 
+        [Theory]
+        [InlineData(new bool[] {true, false, true})]
+        [InlineData(new long[] {1L, 2L, 3L})]
+        [InlineData(new ulong[] {1UL, 2UL, 3UL})]
+        [InlineData(new uint[] {1U, 2U, 3U})]
+        [InlineData(new int[] {1, 2, 3})]
+        [InlineData(new sbyte[] {(sbyte)1, (sbyte)2, (sbyte)3})]
+        [InlineData(new byte[] {(byte)1, (byte)2, (byte)3})]
+        [InlineData(new short[] {(short)1, (short)2, (short)3})]
+        [InlineData(new ushort[] {(ushort)1, (ushort)2, (ushort)3})]
+        [InlineData(new double[] {1.1d,2.2d,3.3d})]
+        [InlineData(new float[] {1.1f,2.2f,3.3f})]
+        public void SetAttribute_Array(object array)
+        {
+            var tracer = tracerFactory.GetTracer(null);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
+
+            span.SetAttribute("intArray", array);
+
+            Assert.Single(span.Attributes);
+
+            var attribute = span.Attributes.Single(kvp => kvp.Key == "intArray");
+            Assert.Equal(array, attribute.Value);
+        }
+
+        [Fact]
+        public void SetAttribute_Array_String()
+        {
+            var tracer = tracerFactory.GetTracer(null);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
+
+            var array = new string[] {"1","2","3"};
+            span.SetAttribute("array", array);
+
+            Assert.Single(span.Attributes);
+
+            var attribute = span.Attributes.Single(kvp => kvp.Key == "array");
+            Assert.Equal(array, attribute.Value);
+
+        }
+
+        [Fact]
+        public void SetAttribute_Array_Decimal()
+        {
+            var tracer = tracerFactory.GetTracer(null);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
+
+            var array = new Decimal[] {1.1M, 2.2M, 3.3M};
+            span.SetAttribute("array", array);
+
+            Assert.Single(span.Attributes);
+
+            var attribute = span.Attributes.Single(kvp => kvp.Key == "array");
+            Assert.Equal(array, attribute.Value);
+        }
+
+        [Fact]
+        public void SetAttribute_Array_IEnumerable()
+        {
+            var tracer = tracerFactory.GetTracer(null);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
+
+            IEnumerable<int> array = new List<int> {1,2,3};
+            span.SetAttribute("array", array);
+
+            Assert.Single(span.Attributes);
+
+            var attribute = span.Attributes.Single(kvp => kvp.Key == "array");
+            Assert.Equal(array, attribute.Value);
+        }
+
+        [Fact]
+        public void SetAttribute_Array_Cant_Mix_Types()
+        {
+            var tracer = tracerFactory.GetTracer(null);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
+
+            var array = new object[] {1, "2", false};
+            span.SetAttribute("array", array);
+
+            Assert.Single(span.Attributes);
+
+            var attribute = span.Attributes.Single(kvp => kvp.Key == "array");
+            Assert.Equal("array", attribute.Key);
+            Assert.Equal(string.Empty, attribute.Value);
+        }
+
+        [Fact]
+        public void SetAttribute_Array_Sets_Empty_String_For_Emtpy_Array()
+        {
+            var tracer = tracerFactory.GetTracer(null);
+            var span = (SpanSdk)tracer.StartRootSpan(SpanName);
+
+            var array = new object[0];
+            span.SetAttribute("array", array);
+
+            Assert.Single(span.Attributes);
+
+            var attribute = span.Attributes.Single(kvp => kvp.Key == "array");
+            Assert.Equal("array", attribute.Key);
+            Assert.Equal(string.Empty, attribute.Value);
+        }
+
         [Fact]
         public void BadArguments_SetAttribute_NullOrEmptyValue()
         {
@@ -1194,7 +1297,7 @@ namespace OpenTelemetry.Trace.Test
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var parentSpan = (SpanSdk)tracer.StartSpan(SpanName);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp }, 
+            using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp },
                 out var ispan))
             {
                 Assert.NotNull(scope);
@@ -1313,7 +1416,7 @@ namespace OpenTelemetry.Trace.Test
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentContext, SpanKind.Producer, 
+            using (var scope = tracer.StartActiveSpan(SpanName, parentContext, SpanKind.Producer,
                 new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan))
             {
                 Assert.NotNull(scope);
@@ -1383,7 +1486,7 @@ namespace OpenTelemetry.Trace.Test
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentspan))
-            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer, 
+            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer,
                 new SpanCreationOptions { StartTimestamp = startTimestamp }, out var childSpan))
             {
                 Assert.NotNull(scope);
@@ -1409,7 +1512,7 @@ namespace OpenTelemetry.Trace.Test
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             using (var parentScope = tracer.StartActiveSpan(SpanName, out _))
-            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer, 
+            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer,
                 new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan))
             {
                 Assert.NotNull(scope);

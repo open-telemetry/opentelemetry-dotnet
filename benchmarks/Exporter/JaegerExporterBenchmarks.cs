@@ -58,7 +58,7 @@ namespace Benchmarks.Exporter
                 },
                 new InMemoryTransport()))
             {
-                jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Implementation.Process("TestService", null);
+                jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Implementation.Process("TestService");
 
                 for (int i = 0; i < this.NumberOfBatches; i++)
                 {

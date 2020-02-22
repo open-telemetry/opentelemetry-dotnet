@@ -22,7 +22,6 @@ using System.Linq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
 
@@ -30,16 +29,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
     public class JaegerSpanConverterTest
     {
-        private const long MillisPerSecond = 1000L;
-        private const long NanosPerMillisecond = 1000 * 1000;
-        private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
-        private readonly Tracer tracer;
-
-        public JaegerSpanConverterTest()
-        {
-            tracer = TracerFactory.Create(b => { }).GetTracer(null);
-        }
-
         [Fact]
         public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan_AllPropertiesSet()
         {
@@ -328,6 +317,59 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
+        public void JaegerSpanConverterTest_GenerateSpan_RemoteEndpointOmittedByDefault()
+        {
+            // Arrange
+            var span = CreateTestSpan();
+
+            // Act
+            var jaegerSpan = span.ToJaegerSpan();
+
+            // Assert
+            Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == "peer.service");
+        }
+
+        [Fact]
+        public void JaegerSpanConverterTest_GenerateSpan_RemoteEndpointResolution()
+        {
+            // Arrange
+            var span = CreateTestSpan(
+                additionalAttributes: new Dictionary<string, object>
+                {
+                    ["net.peer.name"] = "RemoteServiceName",
+                });
+
+            // Act
+            var jaegerSpan = span.ToJaegerSpan();
+
+            // Assert
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == "peer.service");
+            Assert.Equal("RemoteServiceName", jaegerSpan.Tags.First(t => t.Key == "peer.service").VStr);
+        }
+
+        [Fact]
+        public void JaegerSpanConverterTest_GenerateSpan_RemoteEndpointResolutionPriority()
+        {
+            // Arrange
+            var span = CreateTestSpan(
+                additionalAttributes: new Dictionary<string, object>
+                {
+                    ["http.host"] = "DiscardedRemoteServiceName",
+                    ["peer.service"] = "RemoteServiceName",
+                    ["peer.hostname"] = "DiscardedRemoteServiceName",
+                });
+
+            // Act
+            var jaegerSpan = span.ToJaegerSpan();
+
+            // Assert
+            var tags = jaegerSpan.Tags.Where(t => t.Key == "peer.service");
+            Assert.Single(tags);
+            var tag = tags.First();
+            Assert.Equal("RemoteServiceName", tag.VStr);
+        }
+
+        [Fact]
         public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan_LibraryResources()
         {
             var span = CreateTestSpan(resource: new Resource(new Dictionary<string, object>
@@ -346,6 +388,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
         internal static SpanData CreateTestSpan(
             bool setAttributes = true,
+            Dictionary<string, object> additionalAttributes = null,
             bool addEvents = true,
             bool addLinks = true,
             Resource resource = null)
@@ -357,6 +400,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var spanId = ActivitySpanId.CreateRandom();
             var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
+
             var attributes = new Dictionary<string, object>
             {
                 { "stringKey", "value"},
@@ -366,6 +410,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 { "doubleKey2", 1F},
                 { "boolKey", true},
             };
+            if (additionalAttributes != null)
+            {
+                foreach (var attribute in additionalAttributes)
+                {
+                    attributes.Add(attribute.Key, attribute.Value);
+                }
+            }
+
             var events = new List<Event>
             {
                 new Event(
