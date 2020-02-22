@@ -22,27 +22,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal class InMemoryTransport : TClientTransport
     {
-        private readonly int initialCapacity;
-        private PooledByteBufferWriter bufferWriter;
+        private readonly PooledByteBufferWriter bufferWriter;
 
         public InMemoryTransport(int initialCapacity = 512)
         {
-            if (initialCapacity < 0)
-            {
-                throw new ArgumentException(nameof(initialCapacity));
-            }
-
-            this.initialCapacity = initialCapacity;
             this.bufferWriter = new PooledByteBufferWriter(initialCapacity);
         }
 
         public override bool IsOpen => true;
 
-#if NETSTANDARD2_1
         public override async ValueTask OpenAsync(CancellationToken cancellationToken)
-#else
-        public override async Task OpenAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -55,36 +44,21 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             // do nothing
         }
 
-#if NETSTANDARD2_1
         public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#else
-        public override Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#endif
         {
             throw new NotImplementedException();
         }
 
-#if NETSTANDARD2_1
         public override ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#else
-        public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#endif
         {
             var span = new ReadOnlySpan<byte>(buffer, offset, length);
             span.CopyTo(this.bufferWriter.GetSpan(length));
             this.bufferWriter.Advance(length);
-#if NETSTANDARD2_1
+
             return new ValueTask(Task.CompletedTask);
-#else
-            return Task.CompletedTask;
-#endif
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask FlushAsync(CancellationToken cancellationToken)
-#else
-        public override async Task FlushAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {

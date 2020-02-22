@@ -50,11 +50,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public byte[] VBinary { get; set; }
 
-#if NETSTANDARD2_1
         public async ValueTask WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
-#else
-        public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
-#endif
         {
             oprot.IncrementRecursionDepth();
             try

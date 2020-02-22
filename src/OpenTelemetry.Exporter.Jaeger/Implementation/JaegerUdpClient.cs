@@ -38,16 +38,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public void Connect(string host, int port) => this.client.Connect(host, port);
 
-#if NETSTANDARD2_1
         public ValueTask<int> SendAsync(byte[] buffer)
-#else
-        public Task<int> SendAsync(byte[] buffer)
-#endif
         {
             return this.SendAsync(buffer, 0, buffer?.Length ?? 0);
         }
 
-#if NETSTANDARD2_1
         public ValueTask<int> SendAsync(byte[] buffer, int offset, int count)
         {
             var socket = this.client.Client;
@@ -76,15 +71,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             return new ValueTask<int>(tcs.Task);
         }
-#else
-        public Task<int> SendAsync(byte[] buffer, int offset, int count)
-        {
-            return Task<int>.Factory.FromAsync(
-                (callback, state) => ((Socket)state).BeginSend(buffer, offset, count, SocketFlags.None, callback, state),
-                asyncResult => ((Socket)asyncResult.AsyncState).EndSend(asyncResult),
-                state: this.client.Client);
-        }
-#endif
 
         public void Dispose() => this.client.Dispose();
     }

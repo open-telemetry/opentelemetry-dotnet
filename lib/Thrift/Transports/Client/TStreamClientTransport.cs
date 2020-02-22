@@ -42,11 +42,7 @@ namespace Thrift.Transports.Client
 
         public override bool IsOpen => true;
 
-#if NETSTANDARD2_1
         public override async ValueTask OpenAsync(CancellationToken cancellationToken)
-#else
-        public override async Task OpenAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -69,11 +65,7 @@ namespace Thrift.Transports.Client
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#else
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#endif
         {
             if (InputStream == null)
             {
@@ -88,11 +80,7 @@ namespace Thrift.Transports.Client
 #endif
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#else
-        public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#endif
         {
             if (OutputStream == null)
             {
@@ -107,11 +95,7 @@ namespace Thrift.Transports.Client
 #endif
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask FlushAsync(CancellationToken cancellationToken)
-#else
-        public override async Task FlushAsync(CancellationToken cancellationToken)
-#endif
         {
             await OutputStream.FlushAsync(cancellationToken).ConfigureAwait(false);
         }

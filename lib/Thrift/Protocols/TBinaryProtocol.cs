@@ -49,11 +49,7 @@ namespace Thrift.Protocols
             StrictWrite = strictWrite;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteMessageBeginAsync(TMessage message, CancellationToken cancellationToken)
-#else
-        public override async Task WriteMessageBeginAsync(TMessage message, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -75,11 +71,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteMessageEndAsync(CancellationToken cancellationToken)
-#else
-        public override async Task WriteMessageEndAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -87,11 +79,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteStructBeginAsync(TStruct @struct, CancellationToken cancellationToken)
-#else
-        public override async Task WriteStructBeginAsync(TStruct @struct, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -99,11 +87,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteStructEndAsync(CancellationToken cancellationToken)
-#else
-        public override async Task WriteStructEndAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -111,11 +95,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteFieldBeginAsync(TField field, CancellationToken cancellationToken)
-#else
-        public override async Task WriteFieldBeginAsync(TField field, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -126,11 +106,7 @@ namespace Thrift.Protocols
             await WriteI16Async(field.ID, cancellationToken).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteFieldEndAsync(CancellationToken cancellationToken)
-#else
-        public override async Task WriteFieldEndAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -138,11 +114,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteFieldStopAsync(CancellationToken cancellationToken)
-#else
-        public override async Task WriteFieldStopAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -152,11 +124,7 @@ namespace Thrift.Protocols
             await WriteByteAsync((sbyte)TType.Stop, cancellationToken).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteMapBeginAsync(TMap map, CancellationToken cancellationToken)
-#else
-        public override async Task WriteMapBeginAsync(TMap map, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -168,11 +136,7 @@ namespace Thrift.Protocols
             await WriteI32Async(map.Count, cancellationToken).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteMapEndAsync(CancellationToken cancellationToken)
-#else
-        public override async Task WriteMapEndAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -180,11 +144,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteListBeginAsync(TList list, CancellationToken cancellationToken)
-#else
-        public override async Task WriteListBeginAsync(TList list, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -195,11 +155,7 @@ namespace Thrift.Protocols
             await WriteI32Async(list.Count, cancellationToken).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteListEndAsync(CancellationToken cancellationToken)
-#else
-        public override async Task WriteListEndAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -207,11 +163,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteSetBeginAsync(TSet set, CancellationToken cancellationToken)
-#else
-        public override async Task WriteSetBeginAsync(TSet set, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -222,11 +174,7 @@ namespace Thrift.Protocols
             await WriteI32Async(set.Count, cancellationToken).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteSetEndAsync(CancellationToken cancellationToken)
-#else
-        public override async Task WriteSetEndAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -234,11 +182,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteBoolAsync(bool b, CancellationToken cancellationToken)
-#else
-        public override async Task WriteBoolAsync(bool b, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -257,11 +201,7 @@ namespace Thrift.Protocols
             return bout;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteByteAsync(sbyte b, CancellationToken cancellationToken)
-#else
-        public override async Task WriteByteAsync(sbyte b, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -282,11 +222,7 @@ namespace Thrift.Protocols
             return i16Out;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteI16Async(short i16, CancellationToken cancellationToken)
-#else
-        public override async Task WriteI16Async(short i16, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -309,11 +245,7 @@ namespace Thrift.Protocols
             return i32Out;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteI32Async(int i32, CancellationToken cancellationToken)
-#else
-        public override async Task WriteI32Async(int i32, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -340,11 +272,7 @@ namespace Thrift.Protocols
             return i64Out;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteI64Async(long i64, CancellationToken cancellationToken)
-#else
-        public override async Task WriteI64Async(long i64, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -355,11 +283,7 @@ namespace Thrift.Protocols
             await Trans.WriteAsync(i64Out, 0, 8, cancellationToken).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteDoubleAsync(double d, CancellationToken cancellationToken)
-#else
-        public override async Task WriteDoubleAsync(double d, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -369,11 +293,7 @@ namespace Thrift.Protocols
             await WriteI64Async(BitConverter.DoubleToInt64Bits(d), cancellationToken).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteBinaryAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-#else
-        public override async Task WriteBinaryAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -384,11 +304,7 @@ namespace Thrift.Protocols
             await Trans.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
-#else
-        public override async Task<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -423,11 +339,7 @@ namespace Thrift.Protocols
             return message;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask ReadMessageEndAsync(CancellationToken cancellationToken)
-#else
-        public override async Task ReadMessageEndAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -435,11 +347,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken)
-#else
-        public override async Task<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -450,11 +358,7 @@ namespace Thrift.Protocols
             return new TStruct();
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask ReadStructEndAsync(CancellationToken cancellationToken)
-#else
-        public override async Task ReadStructEndAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -462,11 +366,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<TField> ReadFieldBeginAsync(CancellationToken cancellationToken)
-#else
-        public override async Task<TField> ReadFieldBeginAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -486,11 +386,7 @@ namespace Thrift.Protocols
             return field;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask ReadFieldEndAsync(CancellationToken cancellationToken)
-#else
-        public override async Task ReadFieldEndAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -498,11 +394,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<TMap> ReadMapBeginAsync(CancellationToken cancellationToken)
-#else
-        public override async Task<TMap> ReadMapBeginAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -519,11 +411,7 @@ namespace Thrift.Protocols
             return map;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask ReadMapEndAsync(CancellationToken cancellationToken)
-#else
-        public override async Task ReadMapEndAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -531,11 +419,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<TList> ReadListBeginAsync(CancellationToken cancellationToken)
-#else
-        public override async Task<TList> ReadListBeginAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -551,11 +435,7 @@ namespace Thrift.Protocols
             return list;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask ReadListEndAsync(CancellationToken cancellationToken)
-#else
-        public override async Task ReadListEndAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -563,11 +443,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<TSet> ReadSetBeginAsync(CancellationToken cancellationToken)
-#else
-        public override async Task<TSet> ReadSetBeginAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -583,11 +459,7 @@ namespace Thrift.Protocols
             return set;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask ReadSetEndAsync(CancellationToken cancellationToken)
-#else
-        public override async Task ReadSetEndAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -595,11 +467,7 @@ namespace Thrift.Protocols
             }
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<bool> ReadBoolAsync(CancellationToken cancellationToken)
-#else
-        public override async Task<bool> ReadBoolAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -609,11 +477,7 @@ namespace Thrift.Protocols
             return (await ReadByteAsync(cancellationToken).ConfigureAwait(false)) == 1;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<sbyte> ReadByteAsync(CancellationToken cancellationToken)
-#else
-        public override async Task<sbyte> ReadByteAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -625,11 +489,7 @@ namespace Thrift.Protocols
             return (sbyte)bin[0];
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<short> ReadI16Async(CancellationToken cancellationToken)
-#else
-        public override async Task<short> ReadI16Async(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -642,11 +502,7 @@ namespace Thrift.Protocols
             return result;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<int> ReadI32Async(CancellationToken cancellationToken)
-#else
-        public override async Task<int> ReadI32Async(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -684,11 +540,7 @@ namespace Thrift.Protocols
 
 #pragma warning restore 675
 
-#if NETSTANDARD2_1
         public override async ValueTask<long> ReadI64Async(CancellationToken cancellationToken)
-#else
-        public override async Task<long> ReadI64Async(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -700,11 +552,7 @@ namespace Thrift.Protocols
             return CreateReadI64(i64In);
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<double> ReadDoubleAsync(CancellationToken cancellationToken)
-#else
-        public override async Task<double> ReadDoubleAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -715,11 +563,7 @@ namespace Thrift.Protocols
             return BitConverter.Int64BitsToDouble(d);
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<byte[]> ReadBinaryAsync(CancellationToken cancellationToken)
-#else
-        public override async Task<byte[]> ReadBinaryAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -732,11 +576,7 @@ namespace Thrift.Protocols
             return buf;
         }
 
-#if NETSTANDARD2_1
         private async ValueTask<string> ReadStringBodyAsync(int size, CancellationToken cancellationToken)
-#else
-        private async Task<string> ReadStringBodyAsync(int size, CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {

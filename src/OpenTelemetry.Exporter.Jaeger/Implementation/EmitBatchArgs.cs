@@ -31,11 +31,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public Batch Batch { get; set; }
 
-#if NETSTANDARD2_1
         public async ValueTask WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
-#else
-        public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
-#endif
         {
             oprot.IncrementRecursionDepth();
             try
@@ -79,11 +75,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return sb.ToString();
         }
 
-#if NETSTANDARD2_1
         internal static async ValueTask WriteAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
-#else
-        internal static async Task WriteAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
-#endif
         {
             oprot.IncrementRecursionDepth();
             try

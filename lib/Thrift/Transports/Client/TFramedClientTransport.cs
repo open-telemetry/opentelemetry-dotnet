@@ -44,11 +44,7 @@ namespace Thrift.Transports.Client
 
         public override bool IsOpen => !_isDisposed && _transport.IsOpen;
 
-#if NETSTANDARD2_1
         public override async ValueTask OpenAsync(CancellationToken cancellationToken)
-#else
-        public override async Task OpenAsync(CancellationToken cancellationToken)
-#endif
         {
             CheckNotDisposed();
 
@@ -62,11 +58,7 @@ namespace Thrift.Transports.Client
             _transport.Close();
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#else
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#endif
         {
             CheckNotDisposed();
 
@@ -97,11 +89,7 @@ namespace Thrift.Transports.Client
 #endif
         }
 
-#if NETSTANDARD2_1
         private async ValueTask ReadFrameAsync(CancellationToken cancellationToken)
-#else
-        private async Task ReadFrameAsync(CancellationToken cancellationToken)
-#endif
         {
             await _transport.ReadAllAsync(_headerBuf, 0, HeaderSize, cancellationToken).ConfigureAwait(false);
 
@@ -118,11 +106,7 @@ namespace Thrift.Transports.Client
             await _transport.ReadAllAsync(buff, 0, size, cancellationToken).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#else
-        public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#endif
         {
             CheckNotDisposed();
 
@@ -145,11 +129,7 @@ namespace Thrift.Transports.Client
 #endif
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask FlushAsync(CancellationToken cancellationToken)
-#else
-        public override async Task FlushAsync(CancellationToken cancellationToken)
-#endif
         {
             CheckNotDisposed();
 

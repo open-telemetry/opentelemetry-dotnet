@@ -37,11 +37,7 @@ namespace Thrift.Transports
             GC.SuppressFinalize(this);
         }
 
-#if NETSTANDARD2_1
         public async ValueTask<bool> PeekAsync(CancellationToken cancellationToken)
-#else
-        public async Task<bool> PeekAsync(CancellationToken cancellationToken)
-#endif
         {
             //If we already have a byte read but not consumed, do nothing.
             if (_hasPeekByte)
@@ -73,20 +69,12 @@ namespace Thrift.Transports
             return true;
         }
 
-#if NETSTANDARD2_1
         public virtual async ValueTask OpenAsync()
-#else
-        public virtual async Task OpenAsync()
-#endif
         {
             await OpenAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public abstract ValueTask OpenAsync(CancellationToken cancellationToken);
-#else
-        public abstract Task OpenAsync(CancellationToken cancellationToken);
-#endif
 
         public abstract void Close();
 
@@ -113,37 +101,20 @@ namespace Thrift.Transports
             }
         }
 
-#if NETSTANDARD2_1
         public virtual async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length)
-#else
-        public virtual async Task<int> ReadAsync(byte[] buffer, int offset, int length)
-#endif
         {
             return await ReadAsync(buffer, offset, length, CancellationToken.None).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public abstract ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken);
-#else
-        public abstract Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken);
-#endif
 
-#if NETSTANDARD2_1
         public virtual async ValueTask<int> ReadAllAsync(byte[] buffer, int offset, int length)
-#else
-        public virtual async Task<int> ReadAllAsync(byte[] buffer, int offset, int length)
-#endif
         {
             return await ReadAllAsync(buffer, offset, length, CancellationToken.None).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public virtual async ValueTask<int> ReadAllAsync(byte[] buffer, int offset, int length,
             CancellationToken cancellationToken)
-#else
-        public virtual async Task<int> ReadAllAsync(byte[] buffer, int offset, int length,
-            CancellationToken cancellationToken)
-#endif
         {
             ValidateBufferArgs(buffer, offset, length);
 
@@ -179,53 +150,30 @@ namespace Thrift.Transports
             return retrieved;
         }
 
-#if NETSTANDARD2_1
         public virtual async ValueTask WriteAsync(byte[] buffer)
-#else
-        public virtual async Task WriteAsync(byte[] buffer)
-#endif
         {
             await WriteAsync(buffer, CancellationToken.None).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public virtual async ValueTask WriteAsync(byte[] buffer, CancellationToken cancellationToken)
-#else
-        public virtual async Task WriteAsync(byte[] buffer, CancellationToken cancellationToken)
-#endif
         {
             await WriteAsync(buffer, 0, buffer.Length, CancellationToken.None).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public virtual async ValueTask WriteAsync(byte[] buffer, int offset, int length)
-#else
-        public virtual async Task WriteAsync(byte[] buffer, int offset, int length)
-#endif
         {
             await WriteAsync(buffer, offset, length, CancellationToken.None).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public abstract ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken);
-#else
-        public abstract Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken);
-#endif
 
-#if NETSTANDARD2_1
+
         public virtual async ValueTask FlushAsync()
-#else
-        public virtual async Task FlushAsync()
-#endif
         {
             await FlushAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
-#if NETSTANDARD2_1
         public abstract ValueTask FlushAsync(CancellationToken cancellationToken);
-#else
-        public abstract Task FlushAsync(CancellationToken cancellationToken);
-#endif
 
         protected abstract void Dispose(bool disposing);
     }

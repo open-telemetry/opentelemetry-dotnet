@@ -39,11 +39,7 @@ namespace Thrift.Transports.Client
 
         public override bool IsOpen => true;
 
-#if NETSTANDARD2_1
         public override async ValueTask OpenAsync(CancellationToken cancellationToken)
-#else
-        public override async Task OpenAsync(CancellationToken cancellationToken)
-#endif
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -56,35 +52,25 @@ namespace Thrift.Transports.Client
             // do nothing
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
-            return await _byteStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
-        }
-#else
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-        {
-            return await _byteStream.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
-        }
-#endif
-
 #if NETSTANDARD2_1
+            return await _byteStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
+#else
+            return await _byteStream.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
+#endif
+        }
+
         public override async ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
-            await _byteStream.WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
-        }
-#else
-        public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-        {
-            await _byteStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
-        }
-#endif
-
 #if NETSTANDARD2_1
-        public override async ValueTask FlushAsync(CancellationToken cancellationToken)
+            await _byteStream.WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
 #else
-        public override async Task FlushAsync(CancellationToken cancellationToken)
+            await _byteStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
 #endif
+        }
+
+        public override async ValueTask FlushAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {

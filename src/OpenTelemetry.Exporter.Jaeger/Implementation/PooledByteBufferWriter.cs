@@ -27,6 +27,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public PooledByteBufferWriter(int initialCapacity)
         {
+            if (initialCapacity < 0)
+            {
+                throw new ArgumentException(nameof(initialCapacity));
+            }
+
             this.initialCapacity = initialCapacity;
             this.Initialize();
         }

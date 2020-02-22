@@ -74,11 +74,7 @@ namespace Thrift.Protocols
             _serviceName = serviceName;
         }
 
-#if NETSTANDARD2_1
         public override async ValueTask WriteMessageBeginAsync(TMessage message, CancellationToken cancellationToken)
-#else
-        public override async Task WriteMessageBeginAsync(TMessage message, CancellationToken cancellationToken)
-#endif
         {
             switch (message.Type)
             {

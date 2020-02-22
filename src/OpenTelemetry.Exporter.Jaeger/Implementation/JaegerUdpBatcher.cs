@@ -81,11 +81,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public Process Process { get; internal set; }
 
-#if NETSTANDARD2_1
         public async ValueTask<int> AppendAsync(SpanData span, CancellationToken cancellationToken)
-#else
-        public async Task<int> AppendAsync(SpanData span, CancellationToken cancellationToken)
-#endif
         {
             if (!this.processMessage.HasValue)
             {
@@ -129,11 +125,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return flushedSpanCount;
         }
 
-#if NETSTANDARD2_1
         public async ValueTask<int> FlushAsync(CancellationToken cancellationToken)
-#else
-        public async Task<int> FlushAsync(CancellationToken cancellationToken)
-#endif
         {
             try
             {
@@ -171,11 +163,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-#if NETSTANDARD2_1
         public virtual ValueTask<int> CloseAsync(CancellationToken cancellationToken)
-#else
-        public virtual Task<int> CloseAsync(CancellationToken cancellationToken)
-#endif
         {
             return this.FlushAsync(cancellationToken);
         }
@@ -186,11 +174,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.Dispose(true);
         }
 
-#if NETSTANDARD2_1
         protected async ValueTask SendAsync(CancellationToken cancellationToken)
-#else
-        protected async Task SendAsync(CancellationToken cancellationToken)
-#endif
         {
             try
             {
@@ -229,22 +213,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-#if NETSTANDARD2_1
         private async ValueTask<ArraySegment<byte>> BuildThriftMessage(TAbstractBase thriftBase)
-#else
-        private async Task<ArraySegment<byte>> BuildThriftMessage(TAbstractBase thriftBase)
-#endif
         {
             await thriftBase.WriteAsync(this.memoryProtocol, CancellationToken.None).ConfigureAwait(false);
 
             return this.memoryTransport.SwapOutBuffer();
         }
 
-#if NETSTANDARD2_1
         private async ValueTask<ArraySegment<byte>> BuildThriftMessage(SpanData span)
-#else
-        private async Task<ArraySegment<byte>> BuildThriftMessage(SpanData span)
-#endif
         {
             await span.ToJaegerSpan().WriteAsync(this.memoryProtocol, CancellationToken.None).ConfigureAwait(false);
 

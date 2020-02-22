@@ -76,11 +76,7 @@ namespace Benchmarks.Exporter
         {
             public override bool IsOpen => true;
 
-#if !NET462
             public override async ValueTask OpenAsync(CancellationToken cancellationToken)
-#else
-            public override async Task OpenAsync(CancellationToken cancellationToken)
-#endif
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -93,20 +89,12 @@ namespace Benchmarks.Exporter
                 // do nothing
             }
 
-#if !NET462
             public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#else
-            public override Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#endif
             {
                 throw new NotImplementedException();
             }
 
-#if !NET462
             public override async ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#else
-            public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#endif
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -114,11 +102,7 @@ namespace Benchmarks.Exporter
                 }
             }
 
-#if !NET462
             public override async ValueTask FlushAsync(CancellationToken cancellationToken)
-#else
-            public override async Task FlushAsync(CancellationToken cancellationToken)
-#endif
             {
                 if (cancellationToken.IsCancellationRequested)
                 {

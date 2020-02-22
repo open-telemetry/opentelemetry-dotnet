@@ -23,10 +23,6 @@ namespace Thrift.Protocols
     // ReSharper disable once InconsistentNaming
     public interface TBase : TAbstractBase
     {
-#if NETSTANDARD2_1
         ValueTask ReadAsync(TProtocol tProtocol, CancellationToken cancellationToken);
-#else
-        Task ReadAsync(TProtocol tProtocol, CancellationToken cancellationToken);
-#endif
     }
 }

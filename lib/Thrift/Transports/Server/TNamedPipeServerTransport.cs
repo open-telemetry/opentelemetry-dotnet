@@ -139,11 +139,7 @@ namespace Thrift.Transports.Server
 
             public override bool IsOpen => _stream != null && _stream.IsConnected;
 
-#if NETSTANDARD2_1
             public override async ValueTask OpenAsync(CancellationToken cancellationToken)
-#else
-            public override async Task OpenAsync(CancellationToken cancellationToken)
-#endif
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -156,11 +152,7 @@ namespace Thrift.Transports.Server
                 _stream?.Dispose();
             }
 
-#if NETSTANDARD2_1
             public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#else
-            public override async Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#endif
             {
                 if (_stream == null)
                 {
@@ -174,11 +166,7 @@ namespace Thrift.Transports.Server
 #endif
             }
 
-#if NETSTANDARD2_1
             public override async ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#else
-            public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-#endif
             {
                 if (_stream == null)
                 {
@@ -192,11 +180,7 @@ namespace Thrift.Transports.Server
 #endif
             }
 
-#if NETSTANDARD2_1
             public override async ValueTask FlushAsync(CancellationToken cancellationToken)
-#else
-            public override async Task FlushAsync(CancellationToken cancellationToken)
-#endif
             {
                 if (cancellationToken.IsCancellationRequested)
                 {

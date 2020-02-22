@@ -129,11 +129,7 @@ namespace Thrift
                 _msgBegin = messageBegin;
             }
 
-#if NETSTANDARD2_1
             public override async ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
-#else
-            public override async Task<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
-#endif
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
