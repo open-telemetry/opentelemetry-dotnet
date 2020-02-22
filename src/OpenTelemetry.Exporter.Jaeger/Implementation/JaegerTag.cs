@@ -16,12 +16,12 @@
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Protocols;
-using Thrift.Protocols.Entities;
+using Thrift.Protocol;
+using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public struct JaegerTag : TAbstractBase
+    public struct JaegerTag : TUnionBase
     {
         public JaegerTag(string key, JaegerTagType vType)
             : this()
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public byte[] VBinary { get; set; }
 
-        public async ValueTask WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+        public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
             try

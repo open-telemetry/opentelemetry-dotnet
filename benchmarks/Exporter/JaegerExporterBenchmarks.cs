@@ -23,7 +23,7 @@ using OpenTelemetry.Exporter.Jaeger;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
-using Thrift.Transports;
+using Thrift.Transport;
 
 namespace Benchmarks.Exporter
 {
@@ -56,7 +56,7 @@ namespace Benchmarks.Exporter
                     MaxPacketSize = int.MaxValue,
                     MaxFlushInterval = TimeSpan.FromHours(1)
                 },
-                new BlackHoleTransport()))
+                new InMemoryTransport()))
             {
                 jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Implementation.Process("TestService", null);
 
@@ -72,11 +72,11 @@ namespace Benchmarks.Exporter
             }
         }
 
-        private class BlackHoleTransport : TClientTransport
+        private class BlackHoleTransport : TTransport
         {
             public override bool IsOpen => true;
 
-            public override async ValueTask OpenAsync(CancellationToken cancellationToken)
+            public override async Task OpenAsync(CancellationToken cancellationToken)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -94,7 +94,7 @@ namespace Benchmarks.Exporter
                 throw new NotImplementedException();
             }
 
-            public override async ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+            public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -102,7 +102,7 @@ namespace Benchmarks.Exporter
                 }
             }
 
-            public override async ValueTask FlushAsync(CancellationToken cancellationToken)
+            public override async Task FlushAsync(CancellationToken cancellationToken)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {

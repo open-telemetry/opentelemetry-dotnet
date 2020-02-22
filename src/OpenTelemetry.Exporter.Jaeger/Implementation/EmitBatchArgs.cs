@@ -18,12 +18,12 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Protocols;
-using Thrift.Protocols.Entities;
+using Thrift.Protocol;
+using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class EmitBatchArgs : TAbstractBase
+    public class EmitBatchArgs : TUnionBase
     {
         public EmitBatchArgs()
         {
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public Batch Batch { get; set; }
 
-        public async ValueTask WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+        public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
             try
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return sb.ToString();
         }
 
-        internal static async ValueTask WriteAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
+        internal static async Task WriteAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
             try

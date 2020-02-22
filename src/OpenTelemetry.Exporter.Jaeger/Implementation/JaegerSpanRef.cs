@@ -16,12 +16,12 @@
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Protocols;
-using Thrift.Protocols.Entities;
+using Thrift.Protocol;
+using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public struct JaegerSpanRef : TAbstractBase
+    public struct JaegerSpanRef : TUnionBase
     {
         public JaegerSpanRef(JaegerSpanRefType refType, long traceIdLow, long traceIdHigh, long spanId)
         {
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public long SpanId { get; set; }
 
-        public async ValueTask WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+        public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
             try

@@ -19,7 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
-using Thrift.Transports;
+using Thrift.Transport;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var transport = new JaegerThriftClientTransport(host, port, this.testingMemoryStream, this.mockClient.Object);
 
-            var ex = await Assert.ThrowsAsync<TTransportException>(() => transport.FlushAsync().AsTask());
+            var ex = await Assert.ThrowsAsync<TTransportException>(() => transport.FlushAsync());
 
             Assert.Equal("Cannot flush closed transport. message, yo", ex.Message);
         }

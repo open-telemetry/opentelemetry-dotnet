@@ -19,16 +19,16 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Trace.Export;
-using Thrift.Protocols;
-using Thrift.Transports;
+using Thrift.Protocol;
+using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public class JaegerUdpBatcher : IJaegerUdpBatcher
     {
         private readonly int maxPacketSize;
-        private readonly ITProtocolFactory protocolFactory;
-        private readonly TClientTransport clientTransport;
+        private readonly TProtocolFactory protocolFactory;
+        private readonly TTransport clientTransport;
         private readonly JaegerThriftClient thriftClient;
         private readonly InMemoryTransport memoryTransport;
         private readonly TProtocol memoryProtocol;
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         private bool disposedValue = false; // To detect redundant calls
 
-        public JaegerUdpBatcher(JaegerExporterOptions options, TClientTransport clientTransport = null)
+        public JaegerUdpBatcher(JaegerExporterOptions options, TTransport clientTransport = null)
         {
             if (options is null)
             {
@@ -174,7 +174,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.Dispose(true);
         }
 
-        protected async ValueTask SendAsync(CancellationToken cancellationToken)
+        protected async Task SendAsync(CancellationToken cancellationToken)
         {
             try
             {
@@ -213,7 +213,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        private async ValueTask<ArraySegment<byte>> BuildThriftMessage(TAbstractBase thriftBase)
+        private async ValueTask<ArraySegment<byte>> BuildThriftMessage(TUnionBase thriftBase)
         {
             await thriftBase.WriteAsync(this.memoryProtocol, CancellationToken.None).ConfigureAwait(false);
 

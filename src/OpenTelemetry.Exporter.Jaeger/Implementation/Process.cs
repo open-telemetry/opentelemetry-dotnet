@@ -18,12 +18,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Protocols;
-using Thrift.Protocols.Entities;
+using Thrift.Protocol;
+using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class Process : TAbstractBase
+    public class Process : TUnionBase
     {
         public Process()
         {
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public IDictionary<string, JaegerTag> Tags { get; set; }
 
-        public async ValueTask WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+        public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
 

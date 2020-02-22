@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
-using Thrift.Protocols;
+using Thrift.Protocol;
 using Xunit;
 using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 

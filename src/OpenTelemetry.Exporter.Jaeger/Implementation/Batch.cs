@@ -19,12 +19,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Protocols;
-using Thrift.Protocols.Entities;
+using Thrift.Protocol;
+using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class Batch : TAbstractBase
+    public class Batch : TUnionBase
     {
         public Batch()
         {
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public IEnumerable<JaegerSpan> Spans { get; set; }
 
-        public async ValueTask WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+        public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
             try
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return sb.ToString();
         }
 
-        internal static async ValueTask WriteAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
+        internal static async Task WriteAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
             try
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 };
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await oprot.WriteRawAsync(processMessage, cancellationToken);
+                await oprot.Transport.WriteAsync(processMessage.Array, processMessage.Offset, processMessage.Count, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
 
                 field.Name = "spans";
@@ -131,7 +131,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                     foreach (var s in spans)
                     {
-                        await oprot.WriteRawAsync(s, cancellationToken);
+                        await oprot.Transport.WriteAsync(s.Array, s.Offset, s.Count, cancellationToken);
                     }
 
                     await oprot.WriteListEndAsync(cancellationToken);

@@ -16,11 +16,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Transports;
+using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    internal class InMemoryTransport : TClientTransport
+    internal class InMemoryTransport : TTransport
     {
         private readonly PooledByteBufferWriter bufferWriter;
 
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public override bool IsOpen => true;
 
-        public override async ValueTask OpenAsync(CancellationToken cancellationToken)
+        public override async Task OpenAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -49,16 +49,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             throw new NotImplementedException();
         }
 
-        public override ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+        public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
             var span = new ReadOnlySpan<byte>(buffer, offset, length);
             span.CopyTo(this.bufferWriter.GetSpan(length));
             this.bufferWriter.Advance(length);
 
-            return new ValueTask(Task.CompletedTask);
+            return Task.CompletedTask;
         }
 
-        public override async ValueTask FlushAsync(CancellationToken cancellationToken)
+        public override async Task FlushAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {

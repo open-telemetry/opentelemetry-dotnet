@@ -18,11 +18,11 @@ using System.IO;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Transports;
+using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerThriftClientTransport : TClientTransport
+    public class JaegerThriftClientTransport : TTransport
     {
         private readonly IJaegerClient client;
         private readonly MemoryStream byteStream;
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.client.Close();
         }
 
-        public override async ValueTask FlushAsync(CancellationToken cancellationToken)
+        public override async Task FlushAsync(CancellationToken cancellationToken)
         {
             // GetBuffer returns the underlying storage, which saves an allocation over ToArray.
             if (!this.byteStream.TryGetBuffer(out var buffer))
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        public override async ValueTask OpenAsync(CancellationToken cancellationToken)
+        public override async Task OpenAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -91,12 +91,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             throw new NotImplementedException();
         }
 
-        public override async ValueTask WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+        public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
 #if NETSTANDARD2_1
             await this.byteStream.WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
 #else
-            await this.byteStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
+            await this.byteStream.WriteAsync(buffer, offset, length).ConfigureAwait(false);
 #endif
         }
 

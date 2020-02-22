@@ -18,8 +18,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift;
-using Thrift.Protocols;
-using Thrift.Protocols.Entities;
+using Thrift.Protocol;
+using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
         }
 
-        public async ValueTask EmitBatchAsync(Batch batch, CancellationToken cancellationToken)
+        public async Task EmitBatchAsync(Batch batch, CancellationToken cancellationToken)
         {
             await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
 
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             await this.OutputProtocol.Transport.FlushAsync(cancellationToken);
         }
 
-        internal async ValueTask EmitBatchAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, CancellationToken cancellationToken)
+        internal async Task EmitBatchAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, CancellationToken cancellationToken)
         {
             await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
             await EmitBatchArgs.WriteAsync(processMessage, spanMessages, this.OutputProtocol, cancellationToken);
