@@ -94,7 +94,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             var jaegerSpan = span.ToJaegerSpan();
 
-            var peerServiceTags = jaegerSpan.Tags?.Where(t => t.Key == "peer.service");
+            var peerServiceTags = jaegerSpan.Tags?.Where(t => t.Key == "peer.service") ?? Array.Empty<JaegerTag>();
             string spanServiceName = peerServiceTags.Any() ? peerServiceTags.First().VStr : this.Process.ServiceName;
 
             if (!this.processCache.TryGetValue(spanServiceName, out var spanProcess))

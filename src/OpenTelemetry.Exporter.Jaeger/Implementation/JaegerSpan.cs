@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,7 +34,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             long startTime,
             long duration,
             JaegerSpanRef[] references = null,
-            JaegerTag[] tags = null,
+            IList<JaegerTag> tags = null,
             JaegerLog[] logs = null)
         {
             this.TraceIdLow = traceIdLow;
@@ -67,7 +68,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public long Duration { get; set; }
 
-        public JaegerTag[] Tags { get; set; }
+        public IList<JaegerTag> Tags { get; set; }
 
         public JaegerLog[] Logs { get; set; }
 
@@ -174,7 +175,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                     await oprot.WriteFieldBeginAsync(field, cancellationToken);
                     {
-                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Tags.Length), cancellationToken);
+                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Tags.Count), cancellationToken);
 
                         foreach (var jt in this.Tags)
                         {

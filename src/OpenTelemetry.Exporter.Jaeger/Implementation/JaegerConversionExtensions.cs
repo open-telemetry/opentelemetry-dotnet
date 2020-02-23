@@ -178,7 +178,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 startTime: ToEpochMicroseconds(span.StartTimestamp),
                 duration: ToEpochMicroseconds(span.EndTimestamp) - ToEpochMicroseconds(span.StartTimestamp),
                 references: span.Links?.Select(l => l.ToJaegerSpanRef()).ToArray(),
-                tags: jaegerTags.ToArray(),
+                tags: jaegerTags,
                 logs: span.Events?.Where(e => e != null).Select(e => e.ToJaegerLog()).ToArray());
         }
 
