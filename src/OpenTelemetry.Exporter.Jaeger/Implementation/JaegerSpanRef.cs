@@ -21,7 +21,7 @@ using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public struct JaegerSpanRef : TUnionBase
+    public readonly struct JaegerSpanRef : TUnionBase
     {
         public JaegerSpanRef(JaegerSpanRefType refType, long traceIdLow, long traceIdHigh, long spanId)
         {
@@ -31,13 +31,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.SpanId = spanId;
         }
 
-        public JaegerSpanRefType RefType { get; set; }
+        public JaegerSpanRefType RefType { get; }
 
-        public long TraceIdLow { get; set; }
+        public long TraceIdLow { get; }
 
-        public long TraceIdHigh { get; set; }
+        public long TraceIdHigh { get; }
 
-        public long SpanId { get; set; }
+        public long SpanId { get; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {

@@ -17,7 +17,7 @@ using System;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    internal struct BufferWriterMemory
+    internal readonly struct BufferWriterMemory
     {
         public BufferWriterMemory(BufferWriter bufferWriter, int offset, int count)
         {

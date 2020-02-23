@@ -80,12 +80,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 && peerService != null
                 && peerService.Item2 > 0)
             {
-                jaegerTags.Add(new JaegerTag
-                {
-                    Key = "peer.service",
-                    VType = JaegerTagType.STRING,
-                    VStr = peerService.Item1,
-                });
+                jaegerTags.Add(new JaegerTag("peer.service", JaegerTagType.STRING, vStr: peerService.Item1));
             }
 
             // The Span.Kind must translate into a tag.
@@ -113,12 +108,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 if (spanKind != null)
                 {
-                    jaegerTags.Add(new JaegerTag
-                    {
-                        Key = "span.kind",
-                        VType = JaegerTagType.STRING,
-                        VStr = spanKind,
-                    });
+                    jaegerTags.Add(new JaegerTag("span.kind", JaegerTagType.STRING, vStr: spanKind));
                 }
             }
 
@@ -139,21 +129,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             if (status.IsValid)
             {
-                jaegerTags.Add(new JaegerTag
-                {
-                    Key = StatusCode,
-                    VType = JaegerTagType.STRING,
-                    VStr = status.CanonicalCode.ToString(),
-                });
+                jaegerTags.Add(new JaegerTag(StatusCode, JaegerTagType.STRING, vStr: status.CanonicalCode.ToString()));
 
                 if (status.Description != null)
                 {
-                    jaegerTags.Add(new JaegerTag
-                    {
-                        Key = StatusDescription,
-                        VType = JaegerTagType.STRING,
-                        VStr = status.Description,
-                    });
+                    jaegerTags.Add(new JaegerTag(StatusDescription, JaegerTagType.STRING, vStr: status.Description));
                 }
             }
 
@@ -187,20 +167,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             switch (attribute.Value)
             {
                 case string s:
-                    return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.STRING, VStr = s };
+                    return new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: s);
                 case int i:
-                    return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.LONG, VLong = Convert.ToInt64(i) };
+                    return new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(i));
                 case long l:
-                    return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.LONG, VLong = l };
+                    return new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: l);
                 case float f:
-                    return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.DOUBLE, VDouble = Convert.ToDouble(f) };
+                    return new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: Convert.ToDouble(f));
                 case double d:
-                    return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.DOUBLE, VDouble = d };
+                    return new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: d);
                 case bool b:
-                    return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.BOOL, VBool = b };
+                    return new JaegerTag(attribute.Key, JaegerTagType.BOOL, vBool: b);
             }
 
-            return new JaegerTag { Key = attribute.Key, VType = JaegerTagType.STRING, VStr = attribute.Value.ToString() };
+            return new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: attribute.Value.ToString());
         }
 
         public static JaegerLog ToJaegerLog(this Event timedEvent)
@@ -216,13 +196,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             // Matches what OpenTracing and OpenTelemetry defines as the event name.
             // https://github.com/opentracing/specification/blob/master/semantic_conventions.md#log-fields-table
             // https://github.com/open-telemetry/opentelemetry-specification/pull/397/files
-            tags[index] = new JaegerTag { Key = "message", VType = JaegerTagType.STRING, VStr = timedEvent.Name };
+            tags[index] = new JaegerTag("message", JaegerTagType.STRING, vStr: timedEvent.Name);
 
-            return new JaegerLog
-            {
-                Timestamp = timedEvent.Timestamp.ToEpochMicroseconds(),
-                Fields = tags,
-            };
+            return new JaegerLog(timedEvent.Timestamp.ToEpochMicroseconds(), tags);
         }
 
         public static JaegerSpanRef ToJaegerSpanRef(this Link link)

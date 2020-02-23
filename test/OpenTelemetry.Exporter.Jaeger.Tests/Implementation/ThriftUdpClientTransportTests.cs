@@ -97,7 +97,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var tInfo = transport.FlushAsync();
 
             Assert.True(tInfo.IsCompleted);
-            this.mockClient.Verify(t => t.SendAsync(It.IsAny<byte[]>()), Times.Never);
+            this.mockClient.Verify(t => t.SendAsync(It.IsAny<byte[]>(), CancellationToken.None), Times.Never);
         }
 
         [Fact]
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var tInfo = transport.FlushAsync();
 
             Assert.True(tInfo.IsCompleted);
-            this.mockClient.Verify(t => t.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>()), Times.Once);
+            this.mockClient.Verify(t => t.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), CancellationToken.None), Times.Once);
         }
 
         [Fact]
@@ -123,7 +123,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var streamBytes = new byte[] { 0x20, 0x10, 0x40, 0x30, 0x18, 0x14, 0x10, 0x28 };
             this.testingMemoryStream = new MemoryStream(streamBytes);
 
-            this.mockClient.Setup(t => t.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>())).Throws(new Exception("message, yo"));
+            this.mockClient.Setup(t => t.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), CancellationToken.None)).Throws(new Exception("message, yo"));
 
             var transport = new JaegerThriftClientTransport(host, port, this.testingMemoryStream, this.mockClient.Object);
 

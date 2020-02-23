@@ -25,10 +25,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public class EmitBatchArgs : TUnionBase
     {
-        public EmitBatchArgs()
-        {
-        }
-
         public Batch Batch { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)

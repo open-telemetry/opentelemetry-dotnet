@@ -21,34 +21,40 @@ using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public struct JaegerTag : TUnionBase
+    public readonly struct JaegerTag : TUnionBase
     {
-        public JaegerTag(string key, JaegerTagType vType)
-            : this()
+        public JaegerTag(
+            string key,
+            JaegerTagType vType,
+            string vStr = null,
+            double? vDouble = null,
+            bool? vBool = null,
+            long? vLong = null,
+            byte[] vBinary = null)
         {
             this.Key = key;
             this.VType = vType;
 
-            this.VStr = null;
-            this.VDouble = null;
-            this.VBool = null;
-            this.VLong = null;
-            this.VBinary = null;
+            this.VStr = vStr;
+            this.VDouble = vDouble;
+            this.VBool = vBool;
+            this.VLong = vLong;
+            this.VBinary = vBinary;
         }
 
-        public string Key { get; set; }
+        public string Key { get; }
 
-        public JaegerTagType VType { get; set; }
+        public JaegerTagType VType { get; }
 
-        public string VStr { get; set; }
+        public string VStr { get; }
 
-        public double? VDouble { get; set; }
+        public double? VDouble { get; }
 
-        public bool? VBool { get; set; }
+        public bool? VBool { get; }
 
-        public long? VLong { get; set; }
+        public long? VLong { get; }
 
-        public byte[] VBinary { get; set; }
+        public byte[] VBinary { get; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {

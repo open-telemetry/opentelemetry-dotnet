@@ -22,7 +22,7 @@ using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public struct JaegerSpan : TUnionBase
+    public readonly struct JaegerSpan : TUnionBase
     {
         public JaegerSpan(
             long traceIdLow,
@@ -50,27 +50,27 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.Logs = logs;
         }
 
-        public long TraceIdLow { get; set; }
+        public long TraceIdLow { get; }
 
-        public long TraceIdHigh { get; set; }
+        public long TraceIdHigh { get; }
 
-        public long SpanId { get; set; }
+        public long SpanId { get; }
 
-        public long ParentSpanId { get; set; }
+        public long ParentSpanId { get; }
 
-        public string OperationName { get; set; }
+        public string OperationName { get; }
 
-        public JaegerSpanRef[] References { get; set; }
+        public JaegerSpanRef[] References { get; }
 
-        public int Flags { get; set; }
+        public int Flags { get; }
 
-        public long StartTime { get; set; }
+        public long StartTime { get; }
 
-        public long Duration { get; set; }
+        public long Duration { get; }
 
-        public IList<JaegerTag> Tags { get; set; }
+        public IList<JaegerTag> Tags { get; }
 
-        public JaegerLog[] Logs { get; set; }
+        public JaegerLog[] Logs { get; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {

@@ -38,12 +38,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public void Connect(string host, int port) => this.client.Connect(host, port);
 
-        public ValueTask<int> SendAsync(byte[] buffer)
+        public ValueTask<int> SendAsync(byte[] buffer, CancellationToken cancellationToken = default)
         {
             return this.SendAsync(buffer, 0, buffer?.Length ?? 0);
         }
 
-        public ValueTask<int> SendAsync(byte[] buffer, int offset, int count)
+        public ValueTask<int> SendAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken = default)
         {
             var socket = this.client.Client;
 

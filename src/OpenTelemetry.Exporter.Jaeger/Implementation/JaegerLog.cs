@@ -22,18 +22,17 @@ using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public struct JaegerLog : TUnionBase
+    public readonly struct JaegerLog : TUnionBase
     {
         public JaegerLog(long timestamp, JaegerTag[] fields)
-            : this()
         {
             this.Timestamp = timestamp;
             this.Fields = fields ?? Array.Empty<JaegerTag>();
         }
 
-        public long Timestamp { get; set; }
+        public long Timestamp { get; }
 
-        public JaegerTag[] Fields { get; set; }
+        public JaegerTag[] Fields { get; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
