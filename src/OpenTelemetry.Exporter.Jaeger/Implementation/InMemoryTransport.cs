@@ -22,11 +22,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal class InMemoryTransport : TTransport
     {
-        private readonly PooledByteBufferWriter bufferWriter;
+        private readonly BufferWriter bufferWriter;
+        private BufferWriterMemory? buffer;
 
         public InMemoryTransport(int initialCapacity = 512)
         {
-            this.bufferWriter = new PooledByteBufferWriter(initialCapacity);
+            this.bufferWriter = new BufferWriter(initialCapacity);
         }
 
         public override bool IsOpen => true;
@@ -51,9 +52,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
+            var memory = this.bufferWriter.GetMemory(length);
+
             var span = new ReadOnlySpan<byte>(buffer, offset, length);
-            span.CopyTo(this.bufferWriter.GetSpan(length));
-            this.bufferWriter.Advance(length);
+            span.CopyTo(new Span<byte>(memory.BufferWriter.Buffer, memory.Offset, memory.Count));
+
+            if (!this.buffer.HasValue)
+            {
+                this.buffer = memory;
+            }
+            else
+            {
+                // Resize if we already had a window into the current buffer.
+                this.buffer = this.buffer.Value.Expand(memory.Count);
+            }
 
             return Task.CompletedTask;
         }
@@ -66,21 +78,38 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        public byte[] FlushToArray()
+        public byte[] ToArray()
         {
-            var array = this.bufferWriter.WrittenMemory.ToArray();
-            this.bufferWriter.Clear();
-            return array;
+            if (!this.buffer.HasValue)
+            {
+                return Array.Empty<byte>();
+            }
+
+            var buffer = this.buffer.Value.ToArray();
+            this.buffer = null;
+            return buffer;
         }
 
-        public ArraySegment<byte> SwapOutBuffer() => this.bufferWriter.SwapOutBuffer();
+        public BufferWriterMemory ToBuffer()
+        {
+            if (!this.buffer.HasValue)
+            {
+                return new BufferWriterMemory(this.bufferWriter, 0, 0);
+            }
+
+            var buffer = this.buffer.Value;
+            this.buffer = null;
+            return buffer;
+        }
+
+        public void Reset()
+        {
+            this.buffer = null;
+            this.bufferWriter.Clear();
+        }
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
-            {
-                this.bufferWriter.Dispose();
-            }
         }
     }
 }

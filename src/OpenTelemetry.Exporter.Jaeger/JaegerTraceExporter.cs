@@ -26,6 +26,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerTraceExporter : SpanExporter, IDisposable
     {
+        private readonly SemaphoreSlim exportLock = new SemaphoreSlim(1);
         private bool libraryResourceApplied = false;
         private bool disposedValue = false; // To detect redundant dispose calls
 
@@ -43,24 +44,32 @@ namespace OpenTelemetry.Exporter.Jaeger
 
         public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> otelSpanList, CancellationToken cancellationToken)
         {
-            if (!this.libraryResourceApplied && otelSpanList.Count() > 0)
+            await this.exportLock.WaitAsync().ConfigureAwait(false);
+            try
             {
-                var libraryResource = otelSpanList.First().LibraryResource;
+                if (!this.libraryResourceApplied && otelSpanList.Count() > 0)
+                {
+                    var libraryResource = otelSpanList.First().LibraryResource;
 
-                this.ApplyLibraryResource(libraryResource ?? Resource.Empty);
+                    this.ApplyLibraryResource(libraryResource ?? Resource.Empty);
 
-                this.libraryResourceApplied = true;
+                    this.libraryResourceApplied = true;
+                }
+
+                foreach (var s in otelSpanList)
+                {
+                    // avoid cancelling here: this is no return point: if we reached this point
+                    // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
+                    await this.JaegerAgentUdpBatcher.AppendAsync(s, CancellationToken.None).ConfigureAwait(false);
+                }
+
+                // TODO jaeger status to ExportResult
+                return ExportResult.Success;
             }
-
-            foreach (var s in otelSpanList)
+            finally
             {
-                // avoid cancelling here: this is no return point: if we reached this point
-                // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
-                await this.JaegerAgentUdpBatcher.AppendAsync(s, CancellationToken.None);
+                this.exportLock.Release();
             }
-
-            // TODO jaeger status to ExportResult
-            return ExportResult.Success;
         }
 
         public override async Task ShutdownAsync(CancellationToken cancellationToken)
@@ -133,6 +142,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                 if (disposing)
                 {
                     this.JaegerAgentUdpBatcher.Dispose();
+                    this.exportLock.Dispose();
                 }
 
                 this.disposedValue = true;

@@ -49,7 +49,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public IDictionary<string, JaegerTag> Tags { get; set; }
 
-        internal ArraySegment<byte> Message { get; set; }
+        internal byte[] Message { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {

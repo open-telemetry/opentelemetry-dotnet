@@ -75,7 +75,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return sb.ToString();
         }
 
-        internal static async Task WriteAsync(ArraySegment<byte> processMessage, IEnumerable<ArraySegment<byte>> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
+        internal static async Task WriteAsync(byte[] processMessage, IEnumerable<BufferWriterMemory> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
             try

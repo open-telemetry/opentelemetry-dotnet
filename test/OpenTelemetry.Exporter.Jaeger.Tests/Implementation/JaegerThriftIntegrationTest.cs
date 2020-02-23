@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
                 await thriftClient.EmitBatchAsync(batch, CancellationToken.None);
 
-                Assert.Equal(validJaegerThriftPayload, memoryTransport.FlushToArray());
+                Assert.Equal(validJaegerThriftPayload, memoryTransport.ToArray());
             }
         }
 

@@ -33,7 +33,7 @@ namespace Benchmarks.Exporter
 #endif
     public class JaegerExporterBenchmarks
     {
-        [Params(1, 10, 50)]
+        [Params(1, 10, 100)]
         public int NumberOfBatches { get; set; }
 
         [Params(10000)]
@@ -51,12 +51,8 @@ namespace Benchmarks.Exporter
         public async Task JaegerExporter_Batching()
         {
             using (var jaegerUdpBatcher = new JaegerUdpBatcher(
-                new JaegerExporterOptions
-                {
-                    MaxPacketSize = int.MaxValue,
-                    MaxFlushInterval = TimeSpan.FromHours(1)
-                },
-                new InMemoryTransport()))
+                new JaegerExporterOptions(),
+                new BlackHoleTransport()))
             {
                 jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Implementation.Process("TestService");
 

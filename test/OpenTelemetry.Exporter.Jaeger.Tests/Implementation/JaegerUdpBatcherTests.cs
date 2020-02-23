@@ -108,7 +108,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var memoryTransport = new InMemoryTransport();
 
-            using (var jaegerUdpBatcher = new JaegerUdpBatcher(new JaegerExporterOptions(), memoryTransport))
+            using (var jaegerUdpBatcher = new JaegerUdpBatcher(
+                new JaegerExporterOptions { MaxFlushInterval = TimeSpan.FromHours(1) },
+                memoryTransport))
             {
                 jaegerUdpBatcher.Process = JaegerThriftIntegrationTest.TestProcess;
 
@@ -116,7 +118,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
                 await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
-                Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.FlushToArray()));
+                Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.ToArray()));
+
+                memoryTransport.Reset();
 
                 await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
 
@@ -125,7 +129,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 // SeqNo is the second byte.
                 validJaegerThriftPayload[2]++;
 
-                Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.FlushToArray()));
+                Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.ToArray()));
             }
         }
     }
