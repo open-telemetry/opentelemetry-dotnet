@@ -41,10 +41,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         object ICollection.SyncRoot => this;
 
-        public T this[int index]
+        public ref T this[int index]
         {
-            get => this.buffer[index];
-            set => this.buffer[index] = value;
+            get => ref this.buffer[index];
         }
 
         public static PooledList<T> Create()
