@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerUdpClient : IJaegerClient
+    internal class JaegerUdpClient : IJaegerClient
     {
         private readonly UdpClient client;
 

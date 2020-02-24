@@ -23,7 +23,6 @@ using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using Thrift.Protocol;
 using Xunit;
-using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {

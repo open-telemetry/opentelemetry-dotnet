@@ -24,7 +24,7 @@ using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class Batch : TUnionBase
+    internal class Batch : TUnionBase
     {
         public Batch(Process process, IEnumerable<JaegerSpan> spans = null)
         {

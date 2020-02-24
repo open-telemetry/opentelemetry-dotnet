@@ -20,7 +20,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public readonly struct PooledList<T> : IEnumerable<T>, ICollection
+    internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
     {
         private static readonly ArrayPool<T> Pool = ArrayPool<T>.Create(4096, 64);
         private static int lastAllocatedSize = 64;

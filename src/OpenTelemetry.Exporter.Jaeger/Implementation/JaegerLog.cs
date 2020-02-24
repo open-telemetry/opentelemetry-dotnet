@@ -22,7 +22,7 @@ using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public readonly struct JaegerLog : TUnionBase
+    internal readonly struct JaegerLog : TUnionBase
     {
         public JaegerLog(long timestamp, in PooledList<JaegerTag> fields)
         {

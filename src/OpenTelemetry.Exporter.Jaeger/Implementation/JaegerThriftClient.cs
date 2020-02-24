@@ -23,7 +23,7 @@ using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerThriftClient : TBaseClient, IDisposable
+    internal class JaegerThriftClient : TBaseClient, IDisposable
     {
         public JaegerThriftClient(TProtocol protocol)
             : this(protocol, protocol)

@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public interface IJaegerClient : IDisposable
+    internal interface IJaegerClient : IDisposable
     {
         bool Connected { get; }
 

@@ -18,10 +18,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Trace.Export;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger
 {
     public interface IJaegerUdpBatcher : IDisposable
     {
+        // TODO: Internal Thrift type shouldn't really be on public interface.
         Process Process { get; }
 
         ValueTask<int> AppendAsync(SpanData span, CancellationToken cancellationToken);

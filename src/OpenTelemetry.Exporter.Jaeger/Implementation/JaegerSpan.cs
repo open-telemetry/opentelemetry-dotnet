@@ -21,7 +21,7 @@ using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public readonly struct JaegerSpan : TUnionBase
+    internal readonly struct JaegerSpan : TUnionBase
     {
         public JaegerSpan(
             string peerServiceName,

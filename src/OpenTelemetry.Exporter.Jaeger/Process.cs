@@ -13,16 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Exporter.Jaeger.Implementation;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger
 {
     public class Process : TUnionBase
     {
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public string ServiceName { get; internal set; }
 
-        public IDictionary<string, JaegerTag> Tags { get; set; }
+        internal IDictionary<string, JaegerTag> Tags { get; set; }
 
         internal byte[] Message { get; set; }
 

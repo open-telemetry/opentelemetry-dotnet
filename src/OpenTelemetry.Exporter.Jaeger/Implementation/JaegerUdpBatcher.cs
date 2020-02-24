@@ -24,7 +24,7 @@ using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerUdpBatcher : IJaegerUdpBatcher
+    internal class JaegerUdpBatcher : IJaegerUdpBatcher
     {
         private readonly int maxPacketSize;
         private readonly TProtocolFactory protocolFactory;

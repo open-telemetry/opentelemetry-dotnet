@@ -23,7 +23,7 @@ using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class EmitBatchArgs : TUnionBase
+    internal class EmitBatchArgs : TUnionBase
     {
         public Batch Batch { get; set; }
 

@@ -23,7 +23,7 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public static class JaegerConversionExtensions
+    internal static class JaegerConversionExtensions
     {
         private const string StatusCode = "ot.status_code";
         private const string StatusDescription = "ot.status_description";

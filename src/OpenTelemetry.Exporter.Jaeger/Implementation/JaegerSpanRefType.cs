@@ -19,7 +19,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     /// <summary>
     /// Represents the different types of Jaeger Spans.
     /// </summary>
-    public enum JaegerSpanRefType
+    internal enum JaegerSpanRefType
     {
         /// <summary>
         /// A child span

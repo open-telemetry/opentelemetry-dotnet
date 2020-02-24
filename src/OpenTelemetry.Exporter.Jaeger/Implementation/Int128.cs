@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public readonly struct Int128
+    internal readonly struct Int128
     {
         public static Int128 Empty = default;
 
