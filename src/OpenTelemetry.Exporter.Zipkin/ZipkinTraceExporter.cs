@@ -15,17 +15,15 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Sockets;
-using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Zipkin
@@ -39,8 +37,10 @@ namespace OpenTelemetry.Exporter.Zipkin
         private const long NanosPerMillisecond = 1000 * 1000;
         private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
 
-        private static readonly string StatusCode = "ot.status_code";
-        private static readonly string StatusDescription = "ot.status_description";
+        private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
 
         private readonly ZipkinTraceExporterOptions options;
         private readonly ZipkinEndpoint localEndpoint;
@@ -84,7 +84,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 if (shouldExport)
                 {
-                    var zipkinSpan = this.GenerateSpan(data, this.localEndpoint);
+                    var zipkinSpan = data.ToZipkinSpan(this.localEndpoint, this.options.UseShortTraceIds);
                     zipkinSpans.Add(zipkinSpan);
                 }
             }
@@ -110,133 +110,6 @@ namespace OpenTelemetry.Exporter.Zipkin
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
-        }
-
-        internal ZipkinSpan GenerateSpan(SpanData otelSpan, ZipkinEndpoint defaultLocalEndpoint)
-        {
-            var context = otelSpan.Context;
-            var startTimestamp = this.ToEpochMicroseconds(otelSpan.StartTimestamp);
-            var endTimestamp = this.ToEpochMicroseconds(otelSpan.EndTimestamp);
-
-            var spanBuilder =
-                ZipkinSpan.NewBuilder()
-                    .TraceId(this.EncodeTraceId(context.TraceId))
-                    .Id(this.EncodeSpanId(context.SpanId))
-                    .Kind(this.ToSpanKind(otelSpan))
-                    .Name(otelSpan.Name)
-                    .Timestamp(this.ToEpochMicroseconds(otelSpan.StartTimestamp))
-                    .Duration(endTimestamp - startTimestamp);
-
-            if (otelSpan.ParentSpanId != default)
-            {
-                spanBuilder.ParentId(this.EncodeSpanId(otelSpan.ParentSpanId));
-            }
-
-            foreach (var label in otelSpan.Attributes)
-            {
-                spanBuilder.PutTag(label.Key, label.Value.ToString());
-            }
-
-            // See https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md
-            string serviceName = string.Empty;
-            string serviceNamespace = string.Empty;
-
-            foreach (var label in otelSpan.LibraryResource.Attributes)
-            {
-                string key = label.Key;
-                object val = label.Value;
-                string strVal = (string)val;
-
-                if (key == Resource.ServiceNameKey && strVal != null)
-                {
-                    serviceName = strVal;
-                }
-                else if (key == Resource.ServiceNamespaceKey && strVal != null)
-                {
-                    serviceNamespace = strVal;
-                }
-                else
-                {
-                    spanBuilder.PutTag(key, val?.ToString());
-                }
-            }
-
-            if (serviceNamespace != string.Empty)
-            {
-                serviceName = serviceNamespace + "." + serviceName;
-            }
-
-            var endpoint = defaultLocalEndpoint;
-
-            // override default service name
-            // TODO: add caching
-            if (serviceName != string.Empty)
-            {
-                endpoint = new ZipkinEndpoint()
-                {
-                    Ipv4 = defaultLocalEndpoint.Ipv4,
-                    Ipv6 = defaultLocalEndpoint.Ipv6,
-                    Port = defaultLocalEndpoint.Port,
-                    ServiceName = serviceName,
-                };
-            }
-
-            spanBuilder.LocalEndpoint(endpoint);
-
-            var status = otelSpan.Status;
-
-            if (status.IsValid)
-            {
-                spanBuilder.PutTag(StatusCode, status.CanonicalCode.ToString());
-
-                if (status.Description != null)
-                {
-                    spanBuilder.PutTag(StatusDescription, status.Description);
-                }
-            }
-
-            foreach (var annotation in otelSpan.Events)
-            {
-                spanBuilder.AddAnnotation(this.ToEpochMicroseconds(annotation.Timestamp), annotation.Name);
-            }
-
-            return spanBuilder.Build();
-        }
-
-        private long ToEpochMicroseconds(DateTimeOffset timestamp)
-        {
-            return timestamp.ToUnixTimeMilliseconds() * 1000;
-        }
-
-        private string EncodeTraceId(ActivityTraceId traceId)
-        {
-            var id = traceId.ToHexString();
-
-            if (id.Length > 16 && this.options.UseShortTraceIds)
-            {
-                id = id.Substring(id.Length - 16, 16);
-            }
-
-            return id;
-        }
-
-        private string EncodeSpanId(ActivitySpanId spanId)
-        {
-            return spanId.ToHexString();
-        }
-
-        private ZipkinSpanKind ToSpanKind(SpanData otelSpan)
-        {
-            if (otelSpan.Kind == SpanKind.Server)
-            {
-                return ZipkinSpanKind.SERVER;
-            }
-            else if (otelSpan.Kind == SpanKind.Client)
-            {
-                return ZipkinSpanKind.CLIENT;
-            }
-
-            return ZipkinSpanKind.CLIENT;
         }
 
         private Task SendSpansAsync(IEnumerable<ZipkinSpan> spans, CancellationToken cancellationToken)
@@ -271,17 +144,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
         private HttpContent GetRequestContent(IEnumerable<ZipkinSpan> toSerialize)
         {
-            var content = string.Empty;
-            try
-            {
-                content = JsonConvert.SerializeObject(toSerialize);
-            }
-            catch (Exception)
-            {
-                // Ignored
-            }
-
-            return new StringContent(content, Encoding.UTF8, "application/json");
+            return new JsonContent(toSerialize, Options);
         }
 
         private ZipkinEndpoint GetLocalZipkinEndpoint()
@@ -357,6 +220,35 @@ namespace OpenTelemetry.Exporter.Zipkin
             }
 
             return result;
+        }
+
+        private class JsonContent : HttpContent
+        {
+            private static readonly MediaTypeHeaderValue JsonHeader = new MediaTypeHeaderValue("application/json")
+            {
+                CharSet = "utf-8",
+            };
+
+            private readonly IEnumerable<ZipkinSpan> spans;
+            private readonly JsonSerializerOptions options;
+
+            public JsonContent(IEnumerable<ZipkinSpan> spans, JsonSerializerOptions options)
+            {
+                this.spans = spans;
+                this.options = options;
+
+                this.Headers.ContentType = JsonHeader;
+            }
+
+            protected override async Task SerializeToStreamAsync(Stream stream, TransportContext context)
+                => await JsonSerializer.SerializeAsync(stream, this.spans, this.options).ConfigureAwait(false);
+
+            protected override bool TryComputeLength(out long length)
+            {
+                // We can't know the length of the content being pushed to the output stream.
+                length = -1;
+                return false;
+            }
         }
     }
 }

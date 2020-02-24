@@ -75,21 +75,22 @@ namespace OpenTelemetry.Tests.Impl.Trace.Propagation
         }
 
         [Theory]
-        [InlineData("k=v")]
-        [InlineData(" k=v ")]
-        [InlineData("\tk=v")]
-        [InlineData(" k= v ")]
-        [InlineData(",k=v,")]
-        [InlineData(", k= v, ")]
-        [InlineData("k=\tv")]
-        [InlineData("k=v\t")]
-        public void ValidPair(string pair)
+        [InlineData("k=v", "k", "v")]
+        [InlineData(" k=v ", "k", "v")]
+        [InlineData("\tk=v", "k", "v")]
+        [InlineData(" k= v ", "k", "v")]
+        [InlineData(",k=v,", "k", "v")]
+        [InlineData(", k= v, ", "k", "v")]
+        [InlineData("k=\tv", "k", "v")]
+        [InlineData("k=v\t", "k", "v")]
+        [InlineData("1k=v", "1k", "v")]
+        public void ValidPair(string pair, string expectedKey, string expectedValue)
         {
             var tracestateEntries = new List<KeyValuePair<string, string>>();
             Assert.True(TracestateUtils.AppendTracestate(pair, tracestateEntries));
             Assert.Single(tracestateEntries);
-            Assert.Equal(new KeyValuePair<string, string>("k", "v"), tracestateEntries.Single());
-            Assert.Equal("k=v", TracestateUtils.GetString(tracestateEntries));
+            Assert.Equal(new KeyValuePair<string, string>(expectedKey, expectedValue), tracestateEntries.Single());
+            Assert.Equal($"{expectedKey}={expectedValue}", TracestateUtils.GetString(tracestateEntries));
         }
 
         [Theory]

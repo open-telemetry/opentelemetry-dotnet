@@ -30,19 +30,26 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         }
 
         public Process(string serviceName, IDictionary<string, object> processTags)
+            : this(serviceName, processTags?.Select(pt => pt.ToJaegerTag()).ToDictionary(pt => pt.Key, pt => pt))
+        {
+        }
+
+        internal Process(string serviceName, IDictionary<string, JaegerTag> processTags)
             : this()
         {
             this.ServiceName = serviceName;
 
             if (processTags != null)
             {
-                this.Tags = processTags.Select(pt => pt.ToJaegerTag()).ToDictionary(jt => jt.Key, jt => jt);
+                this.Tags = processTags;
             }
         }
 
         public string ServiceName { get; set; }
 
         public IDictionary<string, JaegerTag> Tags { get; set; }
+
+        internal int ByteSize { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -72,7 +79,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                     await oprot.WriteFieldBeginAsync(field, cancellationToken);
                     {
-                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Tags.Count), cancellationToken);
+                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Tags.Count()), cancellationToken);
 
                         foreach (var jt in this.Tags)
                         {

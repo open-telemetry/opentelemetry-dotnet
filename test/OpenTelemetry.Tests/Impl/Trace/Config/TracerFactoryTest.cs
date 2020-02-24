@@ -95,7 +95,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(span.IsRecording);
             Assert.Equal(1, exporterCalledCount);
             Assert.Single(((SpanSdk)span).LibraryResource.Attributes);
-            Assert.Single(((SpanSdk)span).LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value == "my-app"));
+            Assert.Single(((SpanSdk)span).LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value.ToString() == "my-app"));
 
             Assert.NotNull(collector1);
             Assert.NotNull(collector2);

@@ -51,6 +51,7 @@
     "url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/",
     "spanName": "/",
     "spanStatus": "UNKNOWN",
+    "spanStatusHasDescription": true,
     "spanKind": "Client",
     "spanAttributes": {
       "component": "http",

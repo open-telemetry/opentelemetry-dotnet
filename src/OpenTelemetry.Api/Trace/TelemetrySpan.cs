@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections;
 
 namespace OpenTelemetry.Trace
 {
@@ -56,7 +57,7 @@ namespace OpenTelemetry.Trace
         /// Sets a new attribute on the span.
         /// </summary>
         /// <param name="key">Attribute key.</param>
-        /// <param name="value">Attribute value.</param>
+        /// <param name="value">Attribute value. The value may be an <see cref="IEnumerable"/> of primitive types. An enumeration may be iterated multiple times.</param>
         public abstract void SetAttribute(string key, object value);
 
         /// <summary>
