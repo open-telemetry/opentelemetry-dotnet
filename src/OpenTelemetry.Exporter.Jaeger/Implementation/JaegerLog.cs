@@ -24,15 +24,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public readonly struct JaegerLog : TUnionBase
     {
-        public JaegerLog(long timestamp, JaegerTag[] fields)
+        public JaegerLog(long timestamp, in PooledList<JaegerTag> fields)
         {
             this.Timestamp = timestamp;
-            this.Fields = fields ?? Array.Empty<JaegerTag>();
+            this.Fields = fields;
         }
 
         public long Timestamp { get; }
 
-        public JaegerTag[] Fields { get; }
+        public PooledList<JaegerTag> Fields { get; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -59,11 +59,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
                 {
-                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Fields.Length), cancellationToken);
+                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Fields.Count), cancellationToken);
 
-                    foreach (JaegerTag jt in this.Fields)
+                    for (int i = 0; i < this.Fields.Count; i++)
                     {
-                        await jt.WriteAsync(oprot, cancellationToken);
+                        await this.Fields[i].WriteAsync(oprot, cancellationToken);
                     }
 
                     await oprot.WriteListEndAsync(cancellationToken);

@@ -56,9 +56,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             ["db.instance"] = 4, // peer.service for Redis.
         };
 
+        private static readonly Dictionary<CanonicalCode, string> CanonicalCodeDictionary = new Dictionary<CanonicalCode, string>();
+
         public static JaegerSpan ToJaegerSpan(this SpanData span)
         {
-            var jaegerTags = new List<JaegerTag>();
+            var jaegerTags = PooledList<JaegerTag>.Create();
 
             Tuple<string, int> peerService = null;
             foreach (var label in span.Attributes)
@@ -72,7 +74,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     peerService = new Tuple<string, int>(tag.VStr, priority);
                 }
 
-                jaegerTags.Add(tag);
+                PooledList<JaegerTag>.Add(ref jaegerTags, tag);
             }
 
             // Send peer.service for remote calls. If priority = 0 that means peer.service was already included.
@@ -80,7 +82,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 && peerService != null
                 && peerService.Item2 > 0)
             {
-                jaegerTags.Add(new JaegerTag("peer.service", JaegerTagType.STRING, vStr: peerService.Item1));
+                PooledList<JaegerTag>.Add(ref jaegerTags, new JaegerTag("peer.service", JaegerTagType.STRING, vStr: peerService.Item1));
             }
 
             // The Span.Kind must translate into a tag.
@@ -108,7 +110,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 if (spanKind != null)
                 {
-                    jaegerTags.Add(new JaegerTag("span.kind", JaegerTagType.STRING, vStr: spanKind));
+                    PooledList<JaegerTag>.Add(ref jaegerTags, new JaegerTag("span.kind", JaegerTagType.STRING, vStr: spanKind));
                 }
             }
 
@@ -117,10 +119,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 switch (label.Key)
                 {
                     case Resource.LibraryNameKey:
-                        jaegerTags.Add(label.ToJaegerTag());
+                        PooledList<JaegerTag>.Add(ref jaegerTags, label.ToJaegerTag());
                         break;
                     case Resource.LibraryVersionKey:
-                        jaegerTags.Add(label.ToJaegerTag());
+                        PooledList<JaegerTag>.Add(ref jaegerTags, label.ToJaegerTag());
                         break;
                 }
             }
@@ -129,11 +131,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             if (status.IsValid)
             {
-                jaegerTags.Add(new JaegerTag(StatusCode, JaegerTagType.STRING, vStr: status.CanonicalCode.ToString()));
+                if (!CanonicalCodeDictionary.TryGetValue(status.CanonicalCode, out string statusCode))
+                {
+                    statusCode = status.CanonicalCode.ToString();
+                    CanonicalCodeDictionary.Add(status.CanonicalCode, statusCode);
+                }
+
+                PooledList<JaegerTag>.Add(ref jaegerTags, new JaegerTag(StatusCode, JaegerTagType.STRING, vStr: statusCode));
 
                 if (status.Description != null)
                 {
-                    jaegerTags.Add(new JaegerTag(StatusDescription, JaegerTagType.STRING, vStr: status.Description));
+                    PooledList<JaegerTag>.Add(ref jaegerTags, new JaegerTag(StatusDescription, JaegerTagType.STRING, vStr: status.Description));
                 }
             }
 
@@ -149,6 +157,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
 
             return new JaegerSpan(
+                peerServiceName: peerService?.Item1,
                 traceIdLow: traceId.Low,
                 traceIdHigh: traceId.High,
                 spanId: spanId.Low,
@@ -157,9 +166,52 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 flags: (span.Context.TraceOptions & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
                 startTime: ToEpochMicroseconds(span.StartTimestamp),
                 duration: ToEpochMicroseconds(span.EndTimestamp) - ToEpochMicroseconds(span.StartTimestamp),
-                references: span.Links?.Select(l => l.ToJaegerSpanRef()).ToArray(),
+                references: span.Links.ToJaegerSpanRefs(),
                 tags: jaegerTags,
-                logs: span.Events?.Where(e => e != null).Select(e => e.ToJaegerLog()).ToArray());
+                logs: span.Events.ToJaegerLogs());
+        }
+
+        public static PooledList<JaegerSpanRef> ToJaegerSpanRefs(this IEnumerable<Link> links)
+        {
+            bool created = false;
+            PooledList<JaegerSpanRef> references = default;
+
+            foreach (var link in links ?? Array.Empty<Link>())
+            {
+                if (!created)
+                {
+                    references = PooledList<JaegerSpanRef>.Create();
+                    created = true;
+                }
+
+                PooledList<JaegerSpanRef>.Add(ref references, link.ToJaegerSpanRef());
+            }
+
+            return references;
+        }
+
+        public static PooledList<JaegerLog> ToJaegerLogs(this IEnumerable<Event> events)
+        {
+            bool created = false;
+            PooledList<JaegerLog> logs = default;
+
+            foreach (var e in events ?? Array.Empty<Event>())
+            {
+                if (e == null)
+                {
+                    continue;
+                }
+
+                if (!created)
+                {
+                    logs = PooledList<JaegerLog>.Create();
+                    created = true;
+                }
+
+                PooledList<JaegerLog>.Add(ref logs, e.ToJaegerLog());
+            }
+
+            return logs;
         }
 
         public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
@@ -185,18 +237,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public static JaegerLog ToJaegerLog(this Event timedEvent)
         {
-            var tags = new JaegerTag[timedEvent.Attributes.Count + 1];
+            var tags = PooledList<JaegerTag>.Create();
 
-            int index = 0;
-            foreach (var attribute in timedEvent.Attributes.Select(a => a.ToJaegerTag()))
+            foreach (var attribute in timedEvent.Attributes)
             {
-                tags[index++] = attribute;
+                PooledList<JaegerTag>.Add(ref tags, attribute.ToJaegerTag());
             }
 
             // Matches what OpenTracing and OpenTelemetry defines as the event name.
             // https://github.com/opentracing/specification/blob/master/semantic_conventions.md#log-fields-table
             // https://github.com/open-telemetry/opentelemetry-specification/pull/397/files
-            tags[index] = new JaegerTag("message", JaegerTagType.STRING, vStr: timedEvent.Name);
+            PooledList<JaegerTag>.Add(ref tags, new JaegerTag("message", JaegerTagType.STRING, vStr: timedEvent.Name));
 
             return new JaegerLog(timedEvent.Timestamp.ToEpochMicroseconds(), tags);
         }

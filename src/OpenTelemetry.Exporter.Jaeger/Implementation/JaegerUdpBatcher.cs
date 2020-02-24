@@ -85,7 +85,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             if (this.processCache == null)
             {
-                this.Process.Message = (await this.BuildThriftMessage(this.Process).ConfigureAwait(false)).ToArray();
+                this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();
                 this.processCache = new Dictionary<string, Process>
                 {
                     [this.Process.ServiceName] = this.Process,
@@ -94,17 +94,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             var jaegerSpan = span.ToJaegerSpan();
 
-            var peerServiceTags = jaegerSpan.Tags?.Where(t => t.Key == "peer.service") ?? Array.Empty<JaegerTag>();
-            string spanServiceName = peerServiceTags.Any() ? peerServiceTags.First().VStr : this.Process.ServiceName;
+            string spanServiceName = jaegerSpan.PeerServiceName ?? this.Process.ServiceName;
 
             if (!this.processCache.TryGetValue(spanServiceName, out var spanProcess))
             {
                 spanProcess = new Process(spanServiceName, this.Process.Tags);
-                spanProcess.Message = (await this.BuildThriftMessage(spanProcess).ConfigureAwait(false)).ToArray();
+                spanProcess.Message = this.BuildThriftMessage(spanProcess).ToArray();
                 this.processCache.Add(spanServiceName, spanProcess);
             }
 
-            var spanMessage = await this.BuildThriftMessage(jaegerSpan).ConfigureAwait(false);
+            var spanMessage = this.BuildThriftMessage(jaegerSpan);
+
+            jaegerSpan.Return();
 
             if (spanMessage.Count + spanProcess.Message.Length > this.maxPacketSize)
             {
@@ -245,9 +246,27 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        private async ValueTask<BufferWriterMemory> BuildThriftMessage(TUnionBase thriftBase)
+        private BufferWriterMemory BuildThriftMessage(Process process)
         {
-            await thriftBase.WriteAsync(this.memoryProtocol, CancellationToken.None).ConfigureAwait(false);
+            var task = process.WriteAsync(this.memoryProtocol, CancellationToken.None);
+
+            if (task.Status != TaskStatus.RanToCompletion)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return this.memoryTransport.ToBuffer();
+        }
+
+        // Prevents boxing of JaegerSpan struct.
+        private BufferWriterMemory BuildThriftMessage(in JaegerSpan jaegerSpan)
+        {
+            var task = jaegerSpan.WriteAsync(this.memoryProtocol, CancellationToken.None);
+
+            if (task.Status != TaskStatus.RanToCompletion)
+            {
+                throw new InvalidOperationException();
+            }
 
             return this.memoryTransport.ToBuffer();
         }
