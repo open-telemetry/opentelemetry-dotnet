@@ -13,9 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System.Linq;
 using System.Collections.Generic;
 using OpenTelemetry.Metrics.Configuration;
-using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -45,14 +46,13 @@ namespace OpenTelemetry.Metrics.Test
             meter.Collect();
 
             Assert.Equal(2, testProcessor.counters.Count);
-            Assert.Equal("testCounter", testProcessor.counters[0].Item1);
-            Assert.Equal("testCounter", testProcessor.counters[1].Item1);
+            Assert.Equal(2, testProcessor.counters.Count(kvp => kvp.Item1 == "testCounter"));
 
-            Assert.Equal(meter.GetLabelSet(labels1), testProcessor.counters[0].Item2);
-            Assert.Equal(meter.GetLabelSet(labels2), testProcessor.counters[1].Item2);
+            Assert.Single(testProcessor.counters.Where(kvp => kvp.Item2.Equals(meter.GetLabelSet(labels1))));
+            Assert.Single(testProcessor.counters.Where(kvp => kvp.Item2.Equals(meter.GetLabelSet(labels2))));
 
-            Assert.Equal(110, testProcessor.counters[0].Item3);
-            Assert.Equal(210, testProcessor.counters[1].Item3);
+            Assert.Single(testProcessor.counters.Where(kvp => kvp.Item3 == 110));
+            Assert.Single(testProcessor.counters.Where(kvp => kvp.Item3 == 210));
         }
 
         [Fact]
@@ -77,17 +77,13 @@ namespace OpenTelemetry.Metrics.Test
             meter.Collect();
 
             Assert.Equal(2, testProcessor.measures.Count);
-            Assert.Equal("testMeasure", testProcessor.measures[0].Item1);
-            Assert.Equal("testMeasure", testProcessor.measures[1].Item1);
+            Assert.Equal(2, testProcessor.measures.Count(kvp => kvp.Item1 == "testMeasure"));
 
-            Assert.Equal(meter.GetLabelSet(labels1), testProcessor.measures[0].Item2);
-            Assert.Equal(meter.GetLabelSet(labels2), testProcessor.measures[1].Item2);
+            Assert.Single(testProcessor.measures.Where(kvp => kvp.Item2.Equals(meter.GetLabelSet(labels1))));
+            Assert.Single(testProcessor.measures.Where(kvp => kvp.Item2.Equals(meter.GetLabelSet(labels2))));
 
-            Assert.Contains(100, testProcessor.measures[0].Item3);
-            Assert.Contains(10, testProcessor.measures[0].Item3);
-
-            Assert.Contains(200, testProcessor.measures[1].Item3);
-            Assert.Contains(20, testProcessor.measures[1].Item3);
+            Assert.Single(testProcessor.measures.Where(kvp => kvp.Item3.Contains(100) && kvp.Item3.Contains(10)));
+            Assert.Single(testProcessor.measures.Where(kvp => kvp.Item3.Contains(200) && kvp.Item3.Contains(20)));
         }
 
         [Fact]
@@ -112,14 +108,13 @@ namespace OpenTelemetry.Metrics.Test
             meter.Collect();
 
             Assert.Equal(2, testProcessor.observations.Count);
-            Assert.Equal("testObserver", testProcessor.observations[0].Item1);
-            Assert.Equal("testObserver", testProcessor.observations[1].Item1);
+            Assert.Equal(2, testProcessor.observations.Count(kvp => kvp.Item1 == "testObserver"));
 
-            Assert.Equal(meter.GetLabelSet(labels1), testProcessor.observations[0].Item2);
-            Assert.Equal(meter.GetLabelSet(labels2), testProcessor.observations[1].Item2);
+            Assert.Single(testProcessor.observations.Where(kvp => kvp.Item2.Equals(meter.GetLabelSet(labels1))));
+            Assert.Single(testProcessor.observations.Where(kvp => kvp.Item2.Equals(meter.GetLabelSet(labels2))));
 
-            Assert.Equal(10, testProcessor.observations[0].Item3);
-            Assert.Equal(20, testProcessor.observations[1].Item3);
+            Assert.Single(testProcessor.observations.Where(kvp => kvp.Item3 == 10));
+            Assert.Single(testProcessor.observations.Where(kvp => kvp.Item3 == 20));
         }
     }
 }
