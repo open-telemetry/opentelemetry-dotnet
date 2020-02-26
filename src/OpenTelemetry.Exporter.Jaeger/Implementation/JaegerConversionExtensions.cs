@@ -252,16 +252,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return new JaegerLog(timedEvent.Timestamp.ToEpochMicroseconds(), tags);
         }
 
-        public static JaegerSpanRef ToJaegerSpanRef(this Link link)
+        public static JaegerSpanRef ToJaegerSpanRef(this in Link link)
         {
-            var traceId = Int128.Empty;
-            var spanId = Int128.Empty;
-
-            if (link != default)
-            {
-                traceId = new Int128(link.Context.TraceId);
-                spanId = new Int128(link.Context.SpanId);
-            }
+            var traceId = new Int128(link.Context.TraceId);
+            var spanId = new Int128(link.Context.SpanId);
 
             return new JaegerSpanRef(JaegerSpanRefType.CHILD_OF, traceId.Low, traceId.High, spanId.Low);
         }
