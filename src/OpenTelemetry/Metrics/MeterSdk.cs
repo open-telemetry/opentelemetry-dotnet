@@ -25,18 +25,18 @@ namespace OpenTelemetry.Metrics
     {
         private readonly string meterName;
         private readonly MetricProcessor metricProcessor;
-        private readonly IDictionary<string, CounterSdk<long>> longCounters = new ConcurrentDictionary<string, CounterSdk<long>>();
-        private readonly IDictionary<string, CounterSdk<double>> doubleCounters = new ConcurrentDictionary<string, CounterSdk<double>>();
-        private readonly IDictionary<string, GaugeSDK<long>> longGauges = new ConcurrentDictionary<string, GaugeSDK<long>>();
-        private readonly IDictionary<string, GaugeSDK<double>> doubleGauges = new ConcurrentDictionary<string, GaugeSDK<double>>();
-        private readonly IDictionary<string, MeasureSdk<long>> longMeasures = new ConcurrentDictionary<string, MeasureSdk<long>>();
-        private readonly IDictionary<string, MeasureSdk<double>> doubleMeasures = new ConcurrentDictionary<string, MeasureSdk<double>>();
+        private readonly IDictionary<string, CounterMetricSdk<long>> longCounters = new ConcurrentDictionary<string, CounterMetricSdk<long>>();
+        private readonly IDictionary<string, CounterMetricSdk<double>> doubleCounters = new ConcurrentDictionary<string, CounterMetricSdk<double>>();
+        private readonly IDictionary<string, MeasureMetricSdk<long>> longMeasures = new ConcurrentDictionary<string, MeasureMetricSdk<long>>();
+        private readonly IDictionary<string, MeasureMetricSdk<double>> doubleMeasures = new ConcurrentDictionary<string, MeasureMetricSdk<double>>();
+        private readonly IDictionary<string, ObserverMetricSdk<long>> longObservers = new ConcurrentDictionary<string, ObserverMetricSdk<long>>();
+        private readonly IDictionary<string, ObserverMetricSdk<double>> doubleObservers = new ConcurrentDictionary<string, ObserverMetricSdk<double>>();
         private readonly object collectLock = new object();
 
         internal MeterSdk(string meterName, MetricProcessor metricProcessor)
         {
             this.meterName = meterName;
-            this.metricProcessor = metricProcessor;            
+            this.metricProcessor = metricProcessor;
         }
 
         public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)
@@ -76,32 +76,6 @@ namespace OpenTelemetry.Metrics
                     }
                 }
 
-                foreach (var longGauge in this.longGauges)
-                {
-                    var metricName = longGauge.Key;
-                    var gaugeInstrument = longGauge.Value;
-                    foreach (var handle in gaugeInstrument.GetAllHandles())
-                    {
-                        var labelSet = handle.Key;
-                        var aggregator = handle.Value.GetAggregator();
-                        aggregator.Checkpoint();
-                        this.metricProcessor.ProcessGauge(this.meterName, metricName, labelSet, aggregator);
-                    }
-                }
-
-                foreach (var doubleGauge in this.doubleGauges)
-                {
-                    var metricName = doubleGauge.Key;
-                    var gaugeInstrument = doubleGauge.Value;
-                    foreach (var handle in gaugeInstrument.GetAllHandles())
-                    {
-                        var labelSet = handle.Key;
-                        var aggregator = handle.Value.GetAggregator();
-                        aggregator.Checkpoint();
-                        this.metricProcessor.ProcessGauge(this.meterName, metricName, labelSet, aggregator);
-                    }
-                }
-
                 foreach (var longMeasure in this.longMeasures)
                 {
                     var metricName = longMeasure.Key;
@@ -127,14 +101,40 @@ namespace OpenTelemetry.Metrics
                         this.metricProcessor.ProcessMeasure(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
+
+                foreach (var doubleObserver in this.doubleObservers)
+                {
+                    var metricName = doubleObserver.Key;
+                    var measureInstrument = doubleObserver.Value;
+                    foreach (var handle in measureInstrument.GetAllHandles())
+                    {
+                        var labelSet = handle.Key;
+                        var aggregator = handle.Value.GetAggregator();
+                        aggregator.Checkpoint();
+                        this.metricProcessor.ProcessObserver(this.meterName, metricName, labelSet, aggregator);
+                    }
+                }
+
+                foreach (var longObserver in this.longObservers)
+                {
+                    var metricName = longObserver.Key;
+                    var measureInstrument = longObserver.Value;
+                    foreach (var handle in measureInstrument.GetAllHandles())
+                    {
+                        var labelSet = handle.Key;
+                        var aggregator = handle.Value.GetAggregator();
+                        aggregator.Checkpoint();
+                        this.metricProcessor.ProcessObserver(this.meterName, metricName, labelSet, aggregator);
+                    }
+                }
             }
         }
 
-        public override Counter<long> CreateInt64Counter(string name, bool monotonic = true)
+        public override CounterMetric<long> CreateInt64Counter(string name, bool monotonic = true)
         {
             if (!this.longCounters.TryGetValue(name, out var counter))
             {
-                counter = new CounterSdk<long>(name);
+                counter = new CounterMetricSdk<long>(name);
 
                 this.longCounters.Add(name, counter);
             }
@@ -142,46 +142,22 @@ namespace OpenTelemetry.Metrics
             return counter;
         }
 
-        public override Counter<double> CreateDoubleCounter(string name, bool monotonic = true)
+        public override CounterMetric<double> CreateDoubleCounter(string name, bool monotonic = true)
         {
             if (!this.doubleCounters.TryGetValue(name, out var counter))
             {
-                counter = new CounterSdk<double>(name);
+                counter = new CounterMetricSdk<double>(name);
                 this.doubleCounters.Add(name, counter);
             }
 
             return counter;
         }
 
-        public override Gauge<long> CreateInt64Gauge(string name, bool monotonic = true)
-        {
-            if (!this.longGauges.TryGetValue(name, out var gauge))
-            {
-                gauge = new GaugeSDK<long>(name);
-
-                this.longGauges.Add(name, gauge);
-            }
-
-            return gauge;
-        }
-
-        public override Gauge<double> CreateDoubleGauge(string name, bool monotonic = true)
-        {
-            if (!this.doubleGauges.TryGetValue(name, out var gauge))
-            {
-                gauge = new GaugeSDK<double>(name);
-
-                this.doubleGauges.Add(name, gauge);
-            }
-
-            return gauge;
-        }
-
-        public override Measure<double> CreateDoubleMeasure(string name, bool absolute = true)
+        public override MeasureMetric<double> CreateDoubleMeasure(string name, bool absolute = true)
         {
             if (!this.doubleMeasures.TryGetValue(name, out var measure))
             {
-                measure = new MeasureSdk<double>(name);
+                measure = new MeasureMetricSdk<double>(name);
 
                 this.doubleMeasures.Add(name, measure);
             }
@@ -189,16 +165,42 @@ namespace OpenTelemetry.Metrics
             return measure;
         }
 
-        public override Measure<long> CreateInt64Measure(string name, bool absolute = true)
+        public override MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true)
         {
             if (!this.longMeasures.TryGetValue(name, out var measure))
             {
-                measure = new MeasureSdk<long>(name);
+                measure = new MeasureMetricSdk<long>(name);
 
                 this.longMeasures.Add(name, measure);
             }
 
             return measure;
+        }
+
+        /// <inheritdoc/>
+        public override ObserverMetric<long> CreateInt64Observer(string name, bool absolute = true)
+        {
+            if (!this.longObservers.TryGetValue(name, out var observer))
+            {
+                observer = new ObserverMetricSdk<long>(name);
+
+                this.longObservers.Add(name, observer);
+            }
+
+            return observer;
+        }
+
+        /// <inheritdoc/>
+        public override ObserverMetric<double> CreateDoubleObserver(string name, bool absolute = true)
+        {
+            if (!this.doubleObservers.TryGetValue(name, out var observer))
+            {
+                observer = new ObserverMetricSdk<double>(name);
+
+                this.doubleObservers.Add(name, observer);
+            }
+
+            return observer;
         }
     }
 }

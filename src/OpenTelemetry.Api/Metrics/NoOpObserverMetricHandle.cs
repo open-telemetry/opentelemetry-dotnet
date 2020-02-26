@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMeasureHandle.cs" company="OpenTelemetry Authors">
+// <copyright file="NoOpObserverMetricHandle.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,24 +20,24 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// No op measure handle.
+    /// No-Op observer handle.
     /// </summary>
-    /// <typeparam name="T">The type of Measure. Only long and double are supported now.</typeparam>
-    public sealed class NoOpMeasureHandle<T> : MeasureHandle<T>
+    /// <typeparam name="T">The type of observer. Only long and double are supported now.</typeparam>
+    public sealed class NoOpObserverMetricHandle<T> : ObserverMetricHandle<T>
         where T : struct
     {
         /// <summary>
-        /// No op measure handle instance.
+        /// No op observer handle instance.
         /// </summary>
-        public static readonly NoOpMeasureHandle<T> Instance = new NoOpMeasureHandle<T>();
+        public static readonly NoOpObserverMetricHandle<T> Instance = new NoOpObserverMetricHandle<T>();
 
         /// <inheritdoc/>
-        public override void Record(in SpanContext context, T value)
+        public override void Observe(in SpanContext context, T value)
         {
         }
 
         /// <inheritdoc/>
-        public override void Record(in DistributedContext context, T value)
+        public override void Observe(in DistributedContext context, T value)
         {
         }
     }

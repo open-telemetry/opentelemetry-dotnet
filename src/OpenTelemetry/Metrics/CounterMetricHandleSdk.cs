@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpCounterHandle.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CounterMetricHandleSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,31 +14,39 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using OpenTelemetry.Context;
+using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
-    /// <summary>
-    /// No-Op handle.
-    /// </summary>
-    /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
-    public sealed class NoOpCounterHandle<T> : CounterHandle<T>
+    internal class CounterMetricHandleSdk<T> : CounterMetricHandle<T>
         where T : struct
     {
-        /// <summary>
-        /// No op counter handle instance.
-        /// </summary>
-        public static readonly NoOpCounterHandle<T> Instance = new NoOpCounterHandle<T>();
+        private readonly CounterSumAggregator<T> sumAggregator = new CounterSumAggregator<T>();
 
-        /// <inheritdoc/>
-        public override void Add(in SpanContext context, T value)
+        internal CounterMetricHandleSdk()
         {
+            if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
+            {
+                throw new Exception("Invalid Type");
+            }
         }
 
-        /// <inheritdoc/>
+        public override void Add(in SpanContext context, T value)
+        {
+            this.sumAggregator.Update(value);
+        }
+
         public override void Add(in DistributedContext context, T value)
         {
+            this.sumAggregator.Update(value);
+        }
+
+        internal CounterSumAggregator<T> GetAggregator()
+        {
+            return this.sumAggregator;
         }
     }
 }

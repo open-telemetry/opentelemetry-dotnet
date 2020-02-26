@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics.Export
     /// </summary>
     public class UngroupedBatcher : MetricProcessor
     {
-        private readonly MetricExporter exporter;        
+        private readonly MetricExporter exporter;
         private readonly Task worker;
         private readonly TimeSpan aggregationInterval;
         private CancellationTokenSource cts;
@@ -70,16 +70,6 @@ namespace OpenTelemetry.Metrics.Export
             throw new NotImplementedException();
         }
 
-        public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<long> gaugeAggregator)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void ProcessGauge(string meterName, string metricName, LabelSet labelSet, GaugeAggregator<double> gaugeAggregator)
-        {
-            throw new NotImplementedException();
-        }
-
         public override void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<long> measureAggregator)
         {
             throw new NotImplementedException();
@@ -90,9 +80,19 @@ namespace OpenTelemetry.Metrics.Export
             throw new NotImplementedException();
         }
 
+        public override void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<long> lastValueAggregator)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<double> lastValueAggregator)
+        {
+            throw new NotImplementedException();
+        }
+
         private async Task Worker(CancellationToken cancellationToken)
         {
-            try 
+            try
             {
                 await Task.Delay(this.aggregationInterval, cancellationToken).ConfigureAwait(false);
                 while (!cancellationToken.IsCancellationRequested)

@@ -1,4 +1,4 @@
-﻿// <copyright file="GaugeSdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CounterMetricSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,13 +20,13 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class GaugeSDK<T> : Gauge<T>
+    internal class CounterMetricSdk<T> : CounterMetric<T>
         where T : struct
-    {        
-        private readonly IDictionary<LabelSet, GaugeHandleSdk<T>> gaugeHandles = new ConcurrentDictionary<LabelSet, GaugeHandleSdk<T>>();
+    {
+        private readonly IDictionary<LabelSet, CounterMetricHandleSdk<T>> counterHandles = new ConcurrentDictionary<LabelSet, CounterMetricHandleSdk<T>>();
         private string metricName;
 
-        public GaugeSDK()
+        public CounterMetricSdk()
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {
@@ -34,31 +34,31 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public GaugeSDK(string name) : this()
+        public CounterMetricSdk(string name) : this()
         {
             this.metricName = name;
         }
 
-        public override GaugeHandle<T> GetHandle(LabelSet labelset)
+        public override CounterMetricHandle<T> GetHandle(LabelSet labelset)
         {
-            if (!this.gaugeHandles.TryGetValue(labelset, out var handle))
+            if (!this.counterHandles.TryGetValue(labelset, out var handle))
             {
-                handle = new GaugeHandleSdk<T>();
+                handle = new CounterMetricHandleSdk<T>();
 
-                this.gaugeHandles.Add(labelset, handle);
+                this.counterHandles.Add(labelset, handle);
             }
 
             return handle;
         }
 
-        public override GaugeHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
+        public override CounterMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
         {
             return this.GetHandle(new LabelSetSdk(labels));
         }
 
-        internal IDictionary<LabelSet, GaugeHandleSdk<T>> GetAllHandles()
+        internal IDictionary<LabelSet, CounterMetricHandleSdk<T>> GetAllHandles()
         {
-            return this.gaugeHandles;
+            return this.counterHandles;
         }
     }
 }

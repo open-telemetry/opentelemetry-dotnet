@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpGauge.cs" company="OpenTelemetry Authors">
+// <copyright file="NoOpObserverMetric.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,27 +21,27 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// A no-op gauge instrument.
+    /// A no-op observer instrument.
     /// </summary>
-    /// <typeparam name="T">The type of gauge. Only long and double are supported now.</typeparam>
-    public sealed class NoOpGauge<T> : Gauge<T>
+    /// <typeparam name="T">The type of observer. Only long and double are supported now.</typeparam>
+    public sealed class NoOpObserverMetric<T> : ObserverMetric<T>
         where T : struct
     {
         /// <summary>
-        /// No op gauge instance.
+        /// No op observer instance.
         /// </summary>
-        public static readonly NoOpGauge<T> Instance = new NoOpGauge<T>();
+        public static readonly NoOpObserverMetric<T> Instance = new NoOpObserverMetric<T>();
 
         /// <inheritdoc/>
-        public override GaugeHandle<T> GetHandle(LabelSet labelset)
+        public override ObserverMetricHandle<T> GetHandle(LabelSet labelset)
         {
-            return NoOpGaugeHandle<T>.Instance;
+            return NoOpObserverMetricHandle<T>.Instance;
         }
 
         /// <inheritdoc/>
-        public override GaugeHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
+        public override ObserverMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            return NoOpGaugeHandle<T>.Instance;
+            return NoOpObserverMetricHandle<T>.Instance;
         }
     }
 }
