@@ -1,4 +1,4 @@
-// <copyright file="NoOpObserverHandle.cs" company="OpenTelemetry Authors">
+// <copyright file="NoOpObserverMetric.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,31 +14,34 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// No-Op observer handle.
+    /// A no-op observer instrument.
     /// </summary>
     /// <typeparam name="T">The type of observer. Only long and double are supported now.</typeparam>
-    public sealed class NoOpObserverHandle<T> : ObserverHandle<T>
+    public sealed class NoOpObserverMetric<T> : ObserverMetric<T>
         where T : struct
     {
         /// <summary>
-        /// No op observer handle instance.
+        /// No op observer instance.
         /// </summary>
-        public static readonly NoOpObserverHandle<T> Instance = new NoOpObserverHandle<T>();
+        public static readonly NoOpObserverMetric<T> Instance = new NoOpObserverMetric<T>();
 
         /// <inheritdoc/>
-        public override void Observe(in SpanContext context, T value)
+        public override ObserverMetricHandle<T> GetHandle(LabelSet labelset)
         {
+            return NoOpObserverMetricHandle<T>.Instance;
         }
 
         /// <inheritdoc/>
-        public override void Observe(in DistributedContext context, T value)
+        public override ObserverMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
         {
+            return NoOpObserverMetricHandle<T>.Instance;
         }
     }
 }

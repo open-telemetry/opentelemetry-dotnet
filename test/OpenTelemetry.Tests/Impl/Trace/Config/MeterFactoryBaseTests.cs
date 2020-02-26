@@ -36,12 +36,12 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             Assert.Same(defaultMeter, namedMeter);
 
             var counter = defaultMeter.CreateDoubleCounter("somename");
-            Assert.IsType<NoOpCounter<double>>(counter);
+            Assert.IsType<NoOpCounterMetric<double>>(counter);
 
             var labels1 = new List<KeyValuePair<string, string>>();
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
             var counterHandle = counter.GetHandle(labels1);
-            Assert.IsType<NoOpCounterHandle<double>>(counterHandle);
+            Assert.IsType<NoOpCounterMetricHandle<double>>(counterHandle);
         }
     }
 }

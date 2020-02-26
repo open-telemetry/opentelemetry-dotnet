@@ -1,4 +1,4 @@
-// <copyright file="Observer.cs" company="OpenTelemetry Authors">
+// <copyright file="ObserverMetric.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ namespace OpenTelemetry.Metrics
     /// Observer instrument.
     /// </summary>
     /// <typeparam name="T">The type of observer. Only long and double are supported now.</typeparam>
-    public abstract class Observer<T>
+    public abstract class ObserverMetric<T>
         where T : struct
     {
         /// <summary>
@@ -64,13 +64,13 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="labelset">The labelset from which handle should be constructed.</param>
         /// <returns>The handle.</returns>
-        public abstract ObserverHandle<T> GetHandle(LabelSet labelset);
+        public abstract ObserverMetricHandle<T> GetHandle(LabelSet labelset);
 
         /// <summary>
         /// Gets the handle with given labelset.
         /// </summary>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
         /// <returns>The handle.</returns>
-        public abstract ObserverHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels);
+        public abstract ObserverMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels);
     }
 }

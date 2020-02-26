@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpCounter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoOpMeasureMetric.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,27 +21,27 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// A no-op counter instrument.
+    /// No op measure instrument.
     /// </summary>
     /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
-    public sealed class NoOpCounter<T> : Counter<T>
+    public sealed class NoOpMeasureMetric<T> : MeasureMetric<T>
         where T : struct
     {
         /// <summary>
-        /// No op counter instance.
+        /// No op measure instance.
         /// </summary>
-        public static readonly NoOpCounter<T> Instance = new NoOpCounter<T>();
+        public static readonly NoOpMeasureMetric<T> Instance = new NoOpMeasureMetric<T>();
 
         /// <inheritdoc/>
-        public override CounterHandle<T> GetHandle(LabelSet labelset)
+        public override MeasureMetricHandle<T> GetHandle(LabelSet labelset)
         {
-            return NoOpCounterHandle<T>.Instance;
+            return NoOpMeasureMetricHandle<T>.Instance;
         }
 
         /// <inheritdoc/>
-        public override CounterHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
+        public override MeasureMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            return NoOpCounterHandle<T>.Instance;
+            return NoOpMeasureMetricHandle<T>.Instance;
         }
     }
 }

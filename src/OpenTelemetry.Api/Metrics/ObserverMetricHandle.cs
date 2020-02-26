@@ -1,4 +1,4 @@
-// <copyright file="ObserverHandle.cs" company="OpenTelemetry Authors">
+// <copyright file="ObserverMetricHandle.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
     /// Handle to the metrics observer with the defined <see cref="LabelSet"/>.
     /// </summary>
     /// <typeparam name="T">The type of observer. Only long and double are supported now.</typeparam>
-    public abstract class ObserverHandle<T>
+    public abstract class ObserverMetricHandle<T>
         where T : struct
     {
         /// <summary>

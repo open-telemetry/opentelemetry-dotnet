@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMeasure.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoOpMeasureMetricHandle.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,34 +14,31 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// No op measure instrument.
+    /// No op measure handle.
     /// </summary>
-    /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
-    public sealed class NoOpMeasure<T> : Measure<T>
+    /// <typeparam name="T">The type of Measure. Only long and double are supported now.</typeparam>
+    public sealed class NoOpMeasureMetricHandle<T> : MeasureMetricHandle<T>
         where T : struct
     {
         /// <summary>
-        /// No op measure instance.
+        /// No op measure handle instance.
         /// </summary>
-        public static readonly NoOpMeasure<T> Instance = new NoOpMeasure<T>();
+        public static readonly NoOpMeasureMetricHandle<T> Instance = new NoOpMeasureMetricHandle<T>();
 
         /// <inheritdoc/>
-        public override MeasureHandle<T> GetHandle(LabelSet labelset)
+        public override void Record(in SpanContext context, T value)
         {
-            return NoOpMeasureHandle<T>.Instance;
         }
 
         /// <inheritdoc/>
-        public override MeasureHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
+        public override void Record(in DistributedContext context, T value)
         {
-            return NoOpMeasureHandle<T>.Instance;
         }
     }
 }

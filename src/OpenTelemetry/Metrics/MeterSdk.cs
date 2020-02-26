@@ -25,12 +25,12 @@ namespace OpenTelemetry.Metrics
     {
         private readonly string meterName;
         private readonly MetricProcessor metricProcessor;
-        private readonly IDictionary<string, CounterSdk<long>> longCounters = new ConcurrentDictionary<string, CounterSdk<long>>();
-        private readonly IDictionary<string, CounterSdk<double>> doubleCounters = new ConcurrentDictionary<string, CounterSdk<double>>();
-        private readonly IDictionary<string, MeasureSdk<long>> longMeasures = new ConcurrentDictionary<string, MeasureSdk<long>>();
-        private readonly IDictionary<string, MeasureSdk<double>> doubleMeasures = new ConcurrentDictionary<string, MeasureSdk<double>>();
-        private readonly IDictionary<string, ObserverSdk<long>> longObservers = new ConcurrentDictionary<string, ObserverSdk<long>>();
-        private readonly IDictionary<string, ObserverSdk<double>> doubleObservers = new ConcurrentDictionary<string, ObserverSdk<double>>();
+        private readonly IDictionary<string, CounterMetricSdk<long>> longCounters = new ConcurrentDictionary<string, CounterMetricSdk<long>>();
+        private readonly IDictionary<string, CounterMetricSdk<double>> doubleCounters = new ConcurrentDictionary<string, CounterMetricSdk<double>>();
+        private readonly IDictionary<string, MeasureMetricSdk<long>> longMeasures = new ConcurrentDictionary<string, MeasureMetricSdk<long>>();
+        private readonly IDictionary<string, MeasureMetricSdk<double>> doubleMeasures = new ConcurrentDictionary<string, MeasureMetricSdk<double>>();
+        private readonly IDictionary<string, ObserverMetricSdk<long>> longObservers = new ConcurrentDictionary<string, ObserverMetricSdk<long>>();
+        private readonly IDictionary<string, ObserverMetricSdk<double>> doubleObservers = new ConcurrentDictionary<string, ObserverMetricSdk<double>>();
         private readonly object collectLock = new object();
 
         internal MeterSdk(string meterName, MetricProcessor metricProcessor)
@@ -130,11 +130,11 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public override Counter<long> CreateInt64Counter(string name, bool monotonic = true)
+        public override CounterMetric<long> CreateInt64Counter(string name, bool monotonic = true)
         {
             if (!this.longCounters.TryGetValue(name, out var counter))
             {
-                counter = new CounterSdk<long>(name);
+                counter = new CounterMetricSdk<long>(name);
 
                 this.longCounters.Add(name, counter);
             }
@@ -142,22 +142,22 @@ namespace OpenTelemetry.Metrics
             return counter;
         }
 
-        public override Counter<double> CreateDoubleCounter(string name, bool monotonic = true)
+        public override CounterMetric<double> CreateDoubleCounter(string name, bool monotonic = true)
         {
             if (!this.doubleCounters.TryGetValue(name, out var counter))
             {
-                counter = new CounterSdk<double>(name);
+                counter = new CounterMetricSdk<double>(name);
                 this.doubleCounters.Add(name, counter);
             }
 
             return counter;
         }
 
-        public override Measure<double> CreateDoubleMeasure(string name, bool absolute = true)
+        public override MeasureMetric<double> CreateDoubleMeasure(string name, bool absolute = true)
         {
             if (!this.doubleMeasures.TryGetValue(name, out var measure))
             {
-                measure = new MeasureSdk<double>(name);
+                measure = new MeasureMetricSdk<double>(name);
 
                 this.doubleMeasures.Add(name, measure);
             }
@@ -165,11 +165,11 @@ namespace OpenTelemetry.Metrics
             return measure;
         }
 
-        public override Measure<long> CreateInt64Measure(string name, bool absolute = true)
+        public override MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true)
         {
             if (!this.longMeasures.TryGetValue(name, out var measure))
             {
-                measure = new MeasureSdk<long>(name);
+                measure = new MeasureMetricSdk<long>(name);
 
                 this.longMeasures.Add(name, measure);
             }
@@ -178,11 +178,11 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
-        public override Observer<long> CreateInt64Observer(string name, bool absolute = true)
+        public override ObserverMetric<long> CreateInt64Observer(string name, bool absolute = true)
         {
             if (!this.longObservers.TryGetValue(name, out var observer))
             {
-                observer = new ObserverSdk<long>(name);
+                observer = new ObserverMetricSdk<long>(name);
 
                 this.longObservers.Add(name, observer);
             }
@@ -191,11 +191,11 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
-        public override Observer<double> CreateDoubleObserver(string name, bool absolute = true)
+        public override ObserverMetric<double> CreateDoubleObserver(string name, bool absolute = true)
         {
             if (!this.doubleObservers.TryGetValue(name, out var observer))
             {
-                observer = new ObserverSdk<double>(name);
+                observer = new ObserverMetricSdk<double>(name);
 
                 this.doubleObservers.Add(name, observer);
             }
