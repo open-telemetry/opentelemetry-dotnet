@@ -15,7 +15,6 @@
 // </copyright>
 
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
 using Benchmarks.Tracing;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
@@ -39,11 +38,6 @@ namespace Benchmarks
                 .Create(b => b.SetSampler(new NeverSampleSampler()))
                 .GetTracer(null);
             this.noopTracer = TracerFactoryBase.Default.GetTracer(null);
-        }
-
-        public static void Main(string[] args)
-        {
-            var summary = BenchmarkRunner.Run<OpenTelemetrySdkBenchmarks>();
         }
 
         [Benchmark]

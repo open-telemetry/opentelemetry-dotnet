@@ -13,16 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using Newtonsoft.Json;
-
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     internal class ZipkinAnnotation
     {
-        [JsonProperty("timestamp")]
         public long Timestamp { get; set; }
 
-        [JsonProperty("value")]
         public string Value { get; set; }
     }
 }

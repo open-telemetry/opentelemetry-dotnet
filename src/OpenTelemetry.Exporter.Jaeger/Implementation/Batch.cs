@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,20 +26,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     public class Batch : TAbstractBase
     {
-        public Batch()
+        public Batch(Process process, List<JaegerSpan> spans = null)
         {
+            this.Process = process ?? throw new ArgumentNullException(nameof(process));
+            this.Spans = spans ?? new List<JaegerSpan>();
         }
 
-        public Batch(Process process, IEnumerable<JaegerSpan> spans)
-            : this()
-        {
-            this.Process = process;
-            this.Spans = spans ?? Enumerable.Empty<JaegerSpan>();
-        }
+        public Process Process { get; }
 
-        public Process Process { get; set; }
-
-        public IEnumerable<JaegerSpan> Spans { get; set; }
+        public List<JaegerSpan> Spans { get; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
