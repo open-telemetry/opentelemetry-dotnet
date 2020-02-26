@@ -122,11 +122,12 @@ namespace OpenTelemetry.Exporter.ZPages
                         {
                             writer.WriteLine("Span Count : " + this.spanProcessor.GetSpanCount());
                             writer.WriteLine("Error Count : " + this.spanProcessor.GetErrorCount());
-                            writer.WriteLine("Span Name\tStatus\t \tStart Timestamp\t \t \tEnd Timestamp");
+                            writer.WriteLine("Span Name\tStatus\t \tStart Timestamp\t \t \tEnd Timestamp\t \t \tLatency");
                             foreach (var spanData in this.spanProcessor.GetSpanDataBatch())
                             {
+                                long latency = spanData.EndTimestamp.ToUnixTimeMilliseconds() > spanData.StartTimestamp.ToUnixTimeMilliseconds() ? spanData.EndTimestamp.ToUnixTimeMilliseconds() - spanData.StartTimestamp.ToUnixTimeMilliseconds() : 0;
                                 writer.WriteLine(spanData.Name + "\t \t" + spanData.Status.CanonicalCode + "\t" + spanData.StartTimestamp +
-                                                 "\t" + spanData.EndTimestamp);
+                                                 "\t" + spanData.EndTimestamp + "\t" + latency);
                             }
                         }
                     }

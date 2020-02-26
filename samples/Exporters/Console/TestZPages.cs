@@ -55,6 +55,8 @@ namespace Samples
                     }
 
                     Thread.Sleep(500);
+
+                    telemetrySpan.End();
                 }
             }
         }
