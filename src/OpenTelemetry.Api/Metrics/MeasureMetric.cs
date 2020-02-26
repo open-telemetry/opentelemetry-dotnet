@@ -1,4 +1,4 @@
-﻿// <copyright file="Counter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MeasureMetric.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,56 +21,56 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Counter instrument.
+    /// Measure instrument.
     /// </summary>
     /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
-    public abstract class Counter<T>
+    public abstract class MeasureMetric<T>
         where T : struct
     {
         /// <summary>
-        /// Adds or Increments the counter.
+        /// Records a measure.
         /// </summary>
         /// <param name="context">the associated span context.</param>
-        /// <param name="value">value by which the counter should be incremented.</param>
+        /// <param name="value">value to record.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public void Add(in SpanContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Add(context, value);
+        public void Record(in SpanContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Record(context, value);
 
         /// <summary>
-        /// Adds or Increments the counter.
+        /// Records a measure.
         /// </summary>
         /// <param name="context">the associated span context.</param>
-        /// <param name="value">value by which the counter should be incremented.</param>
+        /// <param name="value">value to record.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public void Add(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Add(context, value);
+        public void Record(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Record(context, value);
 
         /// <summary>
-        /// Adds or Increments the counter.
+        /// Records a measure.
         /// </summary>
         /// <param name="context">the associated distributed context.</param>
-        /// <param name="value">value by which the counter should be incremented.</param>
+        /// <param name="value">value to record.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public void Add(in DistributedContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Add(context, value);
+        public void Record(in DistributedContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Record(context, value);
 
         /// <summary>
-        /// Adds or Increments the counter.
+        /// Records a measure.
         /// </summary>
         /// <param name="context">the associated distributed context.</param>
-        /// <param name="value">value by which the counter should be incremented.</param>
+        /// <param name="value">value to record.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public void Add(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Add(context, value);
+        public void Record(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Record(context, value);
 
         /// <summary>
         /// Gets the handle with given labelset.
         /// </summary>
         /// <param name="labelset">The labelset from which handle should be constructed.</param>
         /// <returns>The handle.</returns>
-        public abstract CounterHandle<T> GetHandle(LabelSet labelset);
+        public abstract MeasureMetricHandle<T> GetHandle(LabelSet labelset);
 
         /// <summary>
-        /// Gets the handle with given labels.
+        /// Gets the handle with given labelset.
         /// </summary>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
         /// <returns>The handle.</returns>
-        public abstract CounterHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels);
+        public abstract MeasureMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels);
     }
 }

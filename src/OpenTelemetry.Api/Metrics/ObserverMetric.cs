@@ -1,4 +1,4 @@
-﻿// <copyright file="Gauge.cs" company="OpenTelemetry Authors">
+// <copyright file="ObserverMetric.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,56 +21,56 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Gauge instrument.
+    /// Observer instrument.
     /// </summary>
-    /// <typeparam name="T">The type of gauge. Only long and double are supported now.</typeparam>
-    public abstract class Gauge<T>
+    /// <typeparam name="T">The type of observer. Only long and double are supported now.</typeparam>
+    public abstract class ObserverMetric<T>
         where T : struct
     {
         /// <summary>
-        /// Sets the value of the Gauge.
+        /// Observes a value.
         /// </summary>
         /// <param name="context">the associated span context.</param>
-        /// <param name="value">value to which the Gauge should be set.</param>
+        /// <param name="value">value to record.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public void Set(in SpanContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Set(context, value);
+        public void Observe(in SpanContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Observe(context, value);
 
         /// <summary>
-        /// Sets the Gauge.
+        /// Observes a value.
         /// </summary>
         /// <param name="context">the associated span context.</param>
-        /// <param name="value">value to which the Gauge should be set.</param>
+        /// <param name="value">value to record.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public void Set(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Set(context, value);
+        public void Observe(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Observe(context, value);
 
         /// <summary>
-        /// Sets the value of the Gauge.
+        /// Observes a value.
         /// </summary>
         /// <param name="context">the associated distributed context.</param>
-        /// <param name="value">value to which the Gauge should be set.</param>
+        /// <param name="value">value to record.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public void Set(in DistributedContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Set(context, value);
+        public void Observe(in DistributedContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Observe(context, value);
 
         /// <summary>
-        /// Sets the Gauge.
+        /// Observes a value.
         /// </summary>
         /// <param name="context">the associated distributed context.</param>
-        /// <param name="value">value to which the Gauge should be set.</param>
+        /// <param name="value">value to record.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public void Set(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Set(context, value);
+        public void Observe(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Observe(context, value);
 
         /// <summary>
         /// Gets the handle with given labelset.
         /// </summary>
         /// <param name="labelset">The labelset from which handle should be constructed.</param>
         /// <returns>The handle.</returns>
-        public abstract GaugeHandle<T> GetHandle(LabelSet labelset);
+        public abstract ObserverMetricHandle<T> GetHandle(LabelSet labelset);
 
         /// <summary>
-        /// Gets the handle with given labels.
+        /// Gets the handle with given labelset.
         /// </summary>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
         /// <returns>The handle.</returns>
-        public abstract GaugeHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels);
+        public abstract ObserverMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels);
     }
 }

@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="name">The name of the counter.</param>
         /// <param name="monotonic">indicates if only positive values are expected.</param>
         /// <returns>The counter instance.</returns>
-        public abstract Counter<long> CreateInt64Counter(string name, bool monotonic = true);
+        public abstract CounterMetric<long> CreateInt64Counter(string name, bool monotonic = true);
 
         /// <summary>
         /// Creates double counter with given name.
@@ -37,23 +37,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="name">indicates if only positive values are expected.</param>
         /// <param name="monotonic">The name of the counter.</param>
         /// <returns>The counter instance.</returns>
-        public abstract Counter<double> CreateDoubleCounter(string name, bool monotonic = true);
-
-        /// <summary>
-        /// Creates Int64 Gauge with given name.
-        /// </summary>
-        /// <param name="name">The name of the counter.</param>
-        /// <param name="monotonic">indicates if only positive values are expected.</param>
-        /// <returns>The Gauge instance.</returns>
-        public abstract Gauge<long> CreateInt64Gauge(string name, bool monotonic = false);
-
-        /// <summary>
-        /// Creates double Gauge with given name.
-        /// </summary>
-        /// <param name="name">The name of the counter.</param>
-        /// <param name="monotonic">indicates if only positive values are expected.</param>
-        /// <returns>The Gauge instance.</returns>
-        public abstract Gauge<double> CreateDoubleGauge(string name, bool monotonic = false);
+        public abstract CounterMetric<double> CreateDoubleCounter(string name, bool monotonic = true);
 
         /// <summary>
         /// Creates Int64 Measure with given name.
@@ -61,7 +45,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="name">The name of the measure.</param>
         /// <param name="absolute">indicates if only positive values are expected.</param>
         /// <returns>The measure instance.</returns>
-        public abstract Measure<long> CreateInt64Measure(string name, bool absolute = true);
+        public abstract MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true);
 
         /// <summary>
         /// Creates double Measure with given name.
@@ -69,7 +53,23 @@ namespace OpenTelemetry.Metrics
         /// <param name="name">The name of the measure.</param>
         /// <param name="absolute">indicates if only positive values are expected.</param>
         /// <returns>The measure instance.</returns>
-        public abstract Measure<double> CreateDoubleMeasure(string name, bool absolute = true);
+        public abstract MeasureMetric<double> CreateDoubleMeasure(string name, bool absolute = true);
+
+        /// <summary>
+        /// Creates Int64 Observer with given name.
+        /// </summary>
+        /// <param name="name">The name of the observer.</param>
+        /// <param name="absolute">indicates if only positive values are expected.</param>
+        /// <returns>The observer instance.</returns>
+        public abstract ObserverMetric<long> CreateInt64Observer(string name, bool absolute = true);
+
+        /// <summary>
+        /// Creates a double Observer with given name.
+        /// </summary>
+        /// <param name="name">The name of the observer.</param>
+        /// <param name="absolute">indicates if only positive values are expected.</param>
+        /// <returns>The observer instance.</returns>
+        public abstract ObserverMetric<double> CreateDoubleObserver(string name, bool absolute = true);
 
         /// <summary>
         /// Constructs or retrieves the <see cref="LabelSet"/> from the given label key-value pairs.

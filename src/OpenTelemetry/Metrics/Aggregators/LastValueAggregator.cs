@@ -1,4 +1,4 @@
-﻿// <copyright file="GaugeAggregator.cs" company="OpenTelemetry Authors">
+// <copyright file="LastValueAggregator.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +14,21 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Metrics.Aggregators
 {
     /// <summary>
-    /// Basic aggregator which keeps the last recorded value and timestamp.
+    /// Simple aggregator that only keeps the last value.
     /// </summary>
-    /// <typeparam name="T">Type of gauge.</typeparam>
-    public class GaugeAggregator<T> : Aggregator<T>
+    /// <typeparam name="T">Type of measure instrument.</typeparam>
+    public class LastValueAggregator<T> : Aggregator<T>
         where T : struct
     {
         private T value;
-        private DateTime timestamp;
-        private Tuple<T, DateTime> checkpoint;
+        private T checkpoint;
 
         public override void Checkpoint()
         {
-            this.checkpoint = new Tuple<T, DateTime>(this.value, this.timestamp);
+            this.checkpoint = this.value;
         }
 
         public override void Update(T value)
@@ -44,11 +41,9 @@ namespace OpenTelemetry.Metrics.Aggregators
             {
                 this.value = (T)(object)((long)(object)value);
             }
-
-            this.timestamp = DateTime.UtcNow;
         }
 
-        public Tuple<T, DateTime> ValueFromLastCheckpoint()
+        internal T ValueFromLastCheckpoint()
         {
             return this.checkpoint;
         }

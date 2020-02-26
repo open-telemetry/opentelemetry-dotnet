@@ -1,4 +1,4 @@
-﻿// <copyright file="CounterHandle.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoOpMeasureMetric.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,30 +14,34 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Handle to the metrics counter with the defined <see cref="LabelSet"/>.
+    /// No op measure instrument.
     /// </summary>
     /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
-    public abstract class CounterHandle<T>
+    public sealed class NoOpMeasureMetric<T> : MeasureMetric<T>
         where T : struct
     {
         /// <summary>
-        /// Add, Set or Record the value of the counter handle.
+        /// No op measure instance.
         /// </summary>
-        /// <param name="context">the associated span context.</param>
-        /// <param name="value">value by which the counter handle should be added.</param>
-        public abstract void Add(in SpanContext context, T value);
+        public static readonly NoOpMeasureMetric<T> Instance = new NoOpMeasureMetric<T>();
 
-        /// <summary>
-        /// Add, Set or Record the value of the counter handle.
-        /// </summary>
-        /// <param name="context">the associated distributed context.</param>
-        /// <param name="value">value by which the counter handle should be added.</param>
-        public abstract void Add(in DistributedContext context, T value);
+        /// <inheritdoc/>
+        public override MeasureMetricHandle<T> GetHandle(LabelSet labelset)
+        {
+            return NoOpMeasureMetricHandle<T>.Instance;
+        }
+
+        /// <inheritdoc/>
+        public override MeasureMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
+        {
+            return NoOpMeasureMetricHandle<T>.Instance;
+        }
     }
 }

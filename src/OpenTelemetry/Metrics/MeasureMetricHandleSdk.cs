@@ -1,4 +1,4 @@
-﻿// <copyright file="GaugeHandleSdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MeasureMetricHandleSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,12 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class GaugeHandleSdk<T> : GaugeHandle<T>
+    internal class MeasureMetricHandleSdk<T> : MeasureMetricHandle<T>
         where T : struct
     {
-        private readonly GaugeAggregator<T> gaugeAggregator = new GaugeAggregator<T>();
+        private readonly MeasureExactAggregator<T> measureExactAggregator = new MeasureExactAggregator<T>();
 
-        internal GaugeHandleSdk()
+        internal MeasureMetricHandleSdk()
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {
@@ -34,19 +34,19 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public override void Set(in SpanContext context, T value)
+        public override void Record(in SpanContext context, T value)
         {
-            this.gaugeAggregator.Update(value);
+            this.measureExactAggregator.Update(value);
         }
 
-        public override void Set(in DistributedContext context, T value)
+        public override void Record(in DistributedContext context, T value)
         {
-            this.gaugeAggregator.Update(value);
+            this.measureExactAggregator.Update(value);
         }
 
-        internal GaugeAggregator<T> GetAggregator()
+        internal MeasureExactAggregator<T> GetAggregator()
         {
-            return this.gaugeAggregator;
+            return this.measureExactAggregator;
         }
     }
 }

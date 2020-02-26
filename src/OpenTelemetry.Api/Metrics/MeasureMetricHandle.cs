@@ -1,4 +1,4 @@
-﻿// <copyright file="GaugeHandle.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MeasureMetricHandle.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,24 +20,24 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Handle to the metrics gauge with the defined <see cref="LabelSet"/>.
+    /// Handle to the metrics Measure with the defined <see cref="LabelSet"/>.
     /// </summary>
-    /// <typeparam name="T">The type of gauge. Only long and double are supported now.</typeparam>
-    public abstract class GaugeHandle<T>
+    /// <typeparam name="T">The type of Measure. Only long and double are supported now.</typeparam>
+    public abstract class MeasureMetricHandle<T>
         where T : struct
     {
         /// <summary>
-        /// Sets the value of the guague.
+        /// Record the value of the Measure handle.
         /// </summary>
         /// <param name="context">the associated span context.</param>
-        /// <param name="value">value by which the gauge handle should be set.</param>
-        public abstract void Set(in SpanContext context, T value);
+        /// <param name="value">value by which the Measure handle should be Recorded.</param>
+        public abstract void Record(in SpanContext context, T value);
 
         /// <summary>
         /// Sets the value of the guague handle.
         /// </summary>
         /// <param name="context">the associated distributed context.</param>
-        /// <param name="value">value by which the gauge handle should be set.</param>
-        public abstract void Set(in DistributedContext context, T value);
+        /// <param name="value">value by which the Measure handle should be Recorded.</param>
+        public abstract void Record(in DistributedContext context, T value);
     }
 }
