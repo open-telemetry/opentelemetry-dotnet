@@ -17,7 +17,7 @@ using System;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerExporterException : Exception
+    internal class JaegerExporterException : Exception
     {
         public JaegerExporterException(string message, Exception originalException)
             : base(message, originalException)

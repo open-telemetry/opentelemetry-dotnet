@@ -1,4 +1,4 @@
-﻿// <copyright file="IJaegerUdpClient.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="IJaegerUdpBatcher.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,21 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Trace.Export;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger
 {
-    public interface IJaegerUdpClient : IDisposable
+    public interface IJaegerUdpBatcher : IDisposable
     {
-        bool Connected { get; }
+        // TODO: Internal Thrift type shouldn't really be on public interface.
+        Process Process { get; }
 
-        EndPoint RemoteEndPoint { get; }
+        ValueTask<int> AppendAsync(SpanData span, CancellationToken cancellationToken);
 
-        void Connect(string host, int port);
+        ValueTask<int> CloseAsync(CancellationToken cancellationToken);
 
-        void Close();
-
-        Task<int> SendAsync(byte[] datagram, int bytes);
+        ValueTask<int> FlushAsync(CancellationToken cancellationToken);
     }
 }

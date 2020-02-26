@@ -26,7 +26,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj" />
-    <ProjectReference Include="..\..\lib\Thrift\Thrift.csproj" />
   </ItemGroup>
 
 </Project>

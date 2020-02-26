@@ -1,4 +1,4 @@
-﻿// <copyright file="IJaegerUdpBatcher.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="IJaegerClient.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,19 +14,24 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public interface IJaegerUdpBatcher : IDisposable
+    internal interface IJaegerClient : IDisposable
     {
-        Process Process { get; }
+        bool Connected { get; }
 
-        Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken);
+        EndPoint RemoteEndPoint { get; }
 
-        Task<int> CloseAsync(CancellationToken cancellationToken);
+        void Connect(string host, int port);
 
-        Task<int> FlushAsync(CancellationToken cancellationToken);
+        void Close();
+
+        ValueTask<int> SendAsync(byte[] buffer, CancellationToken cancellationToken = default);
+
+        ValueTask<int> SendAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken = default);
     }
 }

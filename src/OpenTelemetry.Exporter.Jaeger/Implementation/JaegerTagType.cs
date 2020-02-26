@@ -19,7 +19,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     /// <summary>
     /// Indicates the data type of a Jaeger tag.
     /// </summary>
-    public enum JaegerTagType
+    internal enum JaegerTagType
     {
         /// <summary>
         /// Tag contains a string

@@ -13,13 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerUdpClient : IJaegerUdpClient
+    internal class JaegerUdpClient : IJaegerClient
     {
         private readonly UdpClient client;
 
@@ -36,7 +38,39 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public void Connect(string host, int port) => this.client.Connect(host, port);
 
-        public Task<int> SendAsync(byte[] datagram, int bytes) => this.client.SendAsync(datagram, bytes);
+        public ValueTask<int> SendAsync(byte[] buffer, CancellationToken cancellationToken = default)
+        {
+            return this.SendAsync(buffer, 0, buffer?.Length ?? 0);
+        }
+
+        public ValueTask<int> SendAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken = default)
+        {
+            var socket = this.client.Client;
+
+            var asyncResult = socket.BeginSend(
+                buffer,
+                offset,
+                count,
+                SocketFlags.None,
+                callback: null,
+                state: null);
+
+            if (asyncResult.CompletedSynchronously)
+            {
+                return new ValueTask<int>(socket.EndSend(asyncResult));
+            }
+
+            var tcs = new TaskCompletionSource<int>();
+
+            ThreadPool.RegisterWaitForSingleObject(
+                waitObject: asyncResult.AsyncWaitHandle,
+                callBack: (s, t) => tcs.SetResult(socket.EndSend(asyncResult)),
+                state: null,
+                timeout: TimeSpan.MaxValue,
+                executeOnlyOnce: true);
+
+            return new ValueTask<int>(tcs.Task);
+        }
 
         public void Dispose() => this.client.Dispose();
     }

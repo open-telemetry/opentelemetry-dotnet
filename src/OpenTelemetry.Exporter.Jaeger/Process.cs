@@ -18,15 +18,17 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Protocols;
-using Thrift.Protocols.Entities;
+using OpenTelemetry.Exporter.Jaeger.Implementation;
+using Thrift.Protocol;
+using Thrift.Protocol.Entities;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class Process : TAbstractBase
+    public class Process : TUnionBase
     {
-        public Process()
+        public Process(string serviceName)
         {
+            this.ServiceName = serviceName;
         }
 
         public Process(string serviceName, IDictionary<string, object> processTags)
@@ -35,21 +37,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         }
 
         internal Process(string serviceName, IDictionary<string, JaegerTag> processTags)
-            : this()
+            : this(serviceName)
         {
-            this.ServiceName = serviceName;
-
             if (processTags != null)
             {
                 this.Tags = processTags;
             }
         }
 
-        public string ServiceName { get; set; }
+        public string ServiceName { get; internal set; }
 
-        public IDictionary<string, JaegerTag> Tags { get; set; }
+        internal IDictionary<string, JaegerTag> Tags { get; set; }
 
-        internal int ByteSize { get; set; }
+        internal byte[] Message { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {

@@ -13,33 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.IO;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Transports;
+using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class InMemoryTransport : TClientTransport
+    internal class InMemoryTransport : TTransport
     {
-        private readonly MemoryStream byteStream;
-        private bool isDisposed;
+        private readonly BufferWriter bufferWriter;
+        private BufferWriterMemory? buffer;
 
-        public InMemoryTransport()
+        public InMemoryTransport(int initialCapacity = 512)
         {
-            this.byteStream = new MemoryStream();
+            this.bufferWriter = new BufferWriter(initialCapacity);
         }
 
         public override bool IsOpen => true;
 
-        public override Task OpenAsync(CancellationToken cancellationToken)
+        public override async Task OpenAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return Task.FromCanceled(cancellationToken);
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
             }
-
-            return Task.CompletedTask;
         }
 
         public override void Close()
@@ -47,42 +45,71 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             // do nothing
         }
 
-        public override Task<int> ReadAsync(
-            byte[] buffer,
-            int offset,
-            int length,
-            CancellationToken cancellationToken) => this.byteStream.ReadAsync(buffer, offset, length, cancellationToken);
-
-        public override Task WriteAsync(byte[] buffer, CancellationToken cancellationToken) => this.byteStream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
-
-        public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken) => this.byteStream.WriteAsync(buffer, offset, length, cancellationToken);
-
-        public override Task FlushAsync(CancellationToken cancellationToken)
+        public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
+            throw new NotImplementedException();
+        }
+
+        public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+        {
+            var memory = this.bufferWriter.GetMemory(length);
+
+            var span = new ReadOnlySpan<byte>(buffer, offset, length);
+            span.CopyTo(new Span<byte>(memory.BufferWriter.Buffer, memory.Offset, memory.Count));
+
+            if (!this.buffer.HasValue)
             {
-                return Task.FromCanceled(cancellationToken);
+                this.buffer = memory;
+            }
+            else
+            {
+                // Resize if we already had a window into the current buffer.
+                this.buffer = this.buffer.Value.Expand(memory.Count);
             }
 
             return Task.CompletedTask;
         }
 
-        public byte[] GetBuffer() => this.byteStream.ToArray();
-
-        public void Reset() => this.byteStream.SetLength(0);
-
-        // IDisposable
-        protected override void Dispose(bool disposing)
+        public override async Task FlushAsync(CancellationToken cancellationToken)
         {
-            if (!this.isDisposed)
+            if (cancellationToken.IsCancellationRequested)
             {
-                if (disposing)
-                {
-                    this.byteStream?.Dispose();
-                }
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        public byte[] ToArray()
+        {
+            if (!this.buffer.HasValue)
+            {
+                return Array.Empty<byte>();
             }
 
-            this.isDisposed = true;
+            var buffer = this.buffer.Value.ToArray();
+            this.buffer = null;
+            return buffer;
+        }
+
+        public BufferWriterMemory ToBuffer()
+        {
+            if (!this.buffer.HasValue)
+            {
+                return new BufferWriterMemory(this.bufferWriter, 0, 0);
+            }
+
+            var buffer = this.buffer.Value;
+            this.buffer = null;
+            return buffer;
+        }
+
+        public void Reset()
+        {
+            this.buffer = null;
+            this.bufferWriter.Clear();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
         }
     }
 }

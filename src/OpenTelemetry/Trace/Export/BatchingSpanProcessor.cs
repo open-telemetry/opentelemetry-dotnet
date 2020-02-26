@@ -35,7 +35,6 @@ namespace OpenTelemetry.Trace.Export
         private readonly int maxQueueSize;
         private readonly int maxExportBatchSize;
         private readonly TimeSpan scheduleDelay;
-        private readonly Task worker;
         private readonly SpanExporter exporter;
         private CancellationTokenSource cts;
         private volatile int currentQueueSize;
@@ -58,7 +57,6 @@ namespace OpenTelemetry.Trace.Export
         /// <param name="exporter">Exporter instance.</param>
         public BatchingSpanProcessor(SpanExporter exporter) : this(exporter, DefaultMaxQueueSize, DefaultScheduleDelay, DefaultMaxExportBatchSize)
         {
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
         /// <summary>
@@ -80,7 +78,7 @@ namespace OpenTelemetry.Trace.Export
                 throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize));
             }
 
-            this.exporter = exporter;
+            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
             this.maxQueueSize = maxQueueSize;
             this.scheduleDelay = scheduleDelay;
             this.maxExportBatchSize = maxExportBatchSize;
@@ -91,7 +89,7 @@ namespace OpenTelemetry.Trace.Export
             // worker task that will last for lifetime of processor.
             // No need to specify long running - it is useless if any async calls are made internally.
             // Threads are also useless as exporter tasks run in thread pool threads.
-            this.worker = Task.Factory.StartNew(s => this.Worker((CancellationToken)s), this.cts.Token);
+            Task.Factory.StartNew(s => this.Worker((CancellationToken)s), this.cts.Token);
         }
 
         public override void OnStart(SpanData span)
@@ -124,7 +122,7 @@ namespace OpenTelemetry.Trace.Export
             if (!this.stopping)
             {
                 this.stopping = true;
-                
+
                 // This will stop the loop after current batch finishes.
                 this.cts.Cancel(false);
                 this.cts.Dispose();
@@ -149,9 +147,29 @@ namespace OpenTelemetry.Trace.Export
 
         public void Dispose()
         {
+            this.Dispose(true);
+        }
+
+        protected virtual void Dispose(bool isDisposing)
+        {
             if (!this.stopping)
             {
                 this.ShutdownAsync(CancellationToken.None).ContinueWith(_ => { }).GetAwaiter().GetResult();
+            }
+
+            if (isDisposing)
+            {
+                if (this.exporter is IDisposable disposableExporter)
+                {
+                    try
+                    {
+                        disposableExporter.Dispose();
+                    }
+                    catch (Exception e)
+                    {
+                        OpenTelemetrySdkEventSource.Log.SpanProcessorException("Dispose", e);
+                    }
+                }
             }
         }
 

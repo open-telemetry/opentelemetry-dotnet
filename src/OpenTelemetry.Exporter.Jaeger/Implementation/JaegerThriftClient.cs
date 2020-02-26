@@ -14,15 +14,16 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift;
-using Thrift.Protocols;
-using Thrift.Protocols.Entities;
+using Thrift.Protocol;
+using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerThriftClient : TBaseClient, IDisposable
+    internal class JaegerThriftClient : TBaseClient, IDisposable
     {
         public JaegerThriftClient(TProtocol protocol)
             : this(protocol, protocol)
@@ -38,10 +39,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
 
-            var args = new EmitBatchArgs();
-            args.Batch = batch;
+            var args = new EmitBatchArgs
+            {
+                Batch = batch,
+            };
 
             await args.WriteAsync(this.OutputProtocol, cancellationToken);
+            await this.OutputProtocol.WriteMessageEndAsync(cancellationToken);
+            await this.OutputProtocol.Transport.FlushAsync(cancellationToken);
+        }
+
+        internal async Task EmitBatchAsync(byte[] processMessage, IEnumerable<BufferWriterMemory> spanMessages, CancellationToken cancellationToken)
+        {
+            await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
+            await EmitBatchArgs.WriteAsync(processMessage, spanMessages, this.OutputProtocol, cancellationToken);
             await this.OutputProtocol.WriteMessageEndAsync(cancellationToken);
             await this.OutputProtocol.Transport.FlushAsync(cancellationToken);
         }

@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerThriftIntegrationTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerExporterBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,41 +18,100 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using BenchmarkDotNet.Attributes;
+using OpenTelemetry.Exporter.Jaeger;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
-using Thrift.Protocol;
-using Xunit;
+using Thrift.Transport;
 
-namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
+namespace Benchmarks.Exporter
 {
-    public class JaegerThriftIntegrationTest
+    [MemoryDiagnoser]
+#if !NET462
+    [ThreadingDiagnoser]
+#endif
+    public class JaegerExporterBenchmarks
     {
-        public const string TestPayloadBase64 = "goEBCWVtaXRCYXRjaBwcGAx0ZXN0IHByb2Nlc3MZHBgQdGVzdF9wcm9jZXNzX3RhZxUAGAp0ZXN0X3ZhbHVlAAAZHBab5cuG2OehhdwBFuPakI2n2cCVLhaAjfWp6NHt6dQBFrK5moSni5GXGBgETmFtZRkcFQAWm+XLhtjnoYXcARbj2pCNp9nAlS4W/Y6j+bqS9fbuAQAVAhaAgLPexpa/BRaAnJw5GYwYCXN0cmluZ0tleRUAGAV2YWx1ZQAYB2xvbmdLZXkVBkYCABgIbG9uZ0tleTIVBkYCABgJZG91YmxlS2V5FQInAAAAAAAA8D8AGApkb3VibGVLZXkyFQInAAAAAAAA8D8AGAdib29sS2V5FQQxABgJc3Bhbi5raW5kFQAYBmNsaWVudAAYDm90LnN0YXR1c19jb2RlFQAYAk9rABksFoCAs97Glr8FGSwYA2tleRUAGAV2YWx1ZQAYB21lc3NhZ2UVABgGRXZlbnQxAAAWgICz3saWvwUZLBgDa2V5FQAYBXZhbHVlABgHbWVzc2FnZRUAGAZFdmVudDIAAAAAAA==";
+        [Params(1, 10, 100)]
+        public int NumberOfBatches { get; set; }
 
-        [Fact]
-        public async Task JaegerThriftIntegrationTest_TAbstractBaseGeneratesConsistentThriftPayload()
+        [Params(10000)]
+        public int NumberOfSpans { get; set; }
+
+        private SpanData testSpan;
+
+        [GlobalSetup]
+        public void GlobalSetup()
         {
-            var validJaegerThriftPayload = Convert.FromBase64String(TestPayloadBase64);
+            this.testSpan = this.CreateTestSpan();
+        }
 
-            using (var memoryTransport = new InMemoryTransport())
+        [Benchmark]
+        public async Task JaegerExporter_Batching()
+        {
+            using (var jaegerUdpBatcher = new JaegerUdpBatcher(
+                new JaegerExporterOptions(),
+                new BlackHoleTransport()))
             {
-                var protocolFactory = new TCompactProtocol.Factory();
-                var thriftClient = new JaegerThriftClient(protocolFactory.GetProtocol(memoryTransport));
-                var spanData = CreateTestSpan();
-                var span = spanData.ToJaegerSpan();
-                var process = TestProcess;
-                var batch = new Batch(process, new List<JaegerSpan> { span });
+                jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Process("TestService");
 
-                await thriftClient.EmitBatchAsync(batch, CancellationToken.None);
+                for (int i = 0; i < this.NumberOfBatches; i++)
+                {
+                    for (int c = 0; c < this.NumberOfSpans; c++)
+                    {
+                        await jaegerUdpBatcher.AppendAsync(this.testSpan, CancellationToken.None).ConfigureAwait(false);
+                    }
 
-                Assert.Equal(validJaegerThriftPayload, memoryTransport.ToArray());
+                    await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                }
             }
         }
 
-        internal static Process TestProcess { get; } = new Process("test process", new Dictionary<string, object> { { "test_process_tag", "test_value" } });
+        private class BlackHoleTransport : TTransport
+        {
+            public override bool IsOpen => true;
 
-        internal static SpanData CreateTestSpan()
+            public override async Task OpenAsync(CancellationToken cancellationToken)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            public override void Close()
+            {
+                // do nothing
+            }
+
+            public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            public override async Task FlushAsync(CancellationToken cancellationToken)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+            }
+        }
+
+        private SpanData CreateTestSpan()
         {
             var startTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
             var endTimestamp = startTimestamp.AddSeconds(60);

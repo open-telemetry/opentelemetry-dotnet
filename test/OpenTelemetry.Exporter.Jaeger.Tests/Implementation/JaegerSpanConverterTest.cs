@@ -22,7 +22,6 @@ using System.Linq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
 
@@ -30,16 +29,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
     public class JaegerSpanConverterTest
     {
-        private const long MillisPerSecond = 1000L;
-        private const long NanosPerMillisecond = 1000 * 1000;
-        private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
-        private readonly Tracer tracer;
-
-        public JaegerSpanConverterTest()
-        {
-            tracer = TracerFactory.Create(b => { }).GetTracer(null);
-        }
-
         [Fact]
         public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan_AllPropertiesSet()
         {
@@ -52,14 +41,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var jaegerSpan = span.ToJaegerSpan();
 
             Assert.Equal("Name", jaegerSpan.OperationName);
-            Assert.Equal(2, jaegerSpan.Logs.Count());
+            Assert.Equal(2, jaegerSpan.Logs.Count);
 
             Assert.Equal(traceIdAsInt.High, jaegerSpan.TraceIdHigh);
             Assert.Equal(traceIdAsInt.Low, jaegerSpan.TraceIdLow);
             Assert.Equal(spanIdAsInt.Low, jaegerSpan.SpanId);
             Assert.Equal(new Int128(span.ParentSpanId).Low, jaegerSpan.ParentSpanId);
 
-            Assert.Equal(span.Links.Count(), jaegerSpan.References.Count());
+            Assert.Equal(span.Links.Count(), jaegerSpan.References.Count);
             var references = jaegerSpan.References.ToArray();
             var jaegerRef = references[0];
             Assert.Equal(linkTraceIdAsInt.High, jaegerRef.TraceIdHigh);
@@ -71,7 +60,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
             Assert.Equal((long)((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000), jaegerSpan.Duration);
 
-            var tags = jaegerSpan.JaegerTags.ToArray();
+            var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
             Assert.Equal("stringKey", tag.Key);
@@ -134,14 +123,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var jaegerSpan = span.ToJaegerSpan();
 
             Assert.Equal("Name", jaegerSpan.OperationName);
-            Assert.Equal(2, jaegerSpan.Logs.Count());
+            Assert.Equal(2, jaegerSpan.Logs.Count);
 
             Assert.Equal(traceIdAsInt.High, jaegerSpan.TraceIdHigh);
             Assert.Equal(traceIdAsInt.Low, jaegerSpan.TraceIdLow);
             Assert.Equal(spanIdAsInt.Low, jaegerSpan.SpanId);
             Assert.Equal(new Int128(span.ParentSpanId).Low, jaegerSpan.ParentSpanId);
 
-            Assert.Equal(span.Links.Count(), jaegerSpan.References.Count());
+            Assert.Equal(span.Links.Count(), jaegerSpan.References.Count);
             var references = jaegerSpan.References.ToArray();
             var jaegerRef = references[0];
             Assert.Equal(linkTraceIdAsInt.High, jaegerRef.TraceIdHigh);
@@ -154,7 +143,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal((long)((span.EndTimestamp - span.StartTimestamp).TotalMilliseconds * 1000), jaegerSpan.Duration);
 
             // 2 tags: span.kind & ot.status_code.
-            Assert.Equal(2, jaegerSpan.JaegerTags.Count());
+            Assert.Equal(2, jaegerSpan.Tags.Count);
 
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
@@ -200,7 +189,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(spanIdAsInt.Low, jaegerSpan.SpanId);
             Assert.Equal(new Int128(span.ParentSpanId).Low, jaegerSpan.ParentSpanId);
 
-            Assert.Equal(span.Links.Count(), jaegerSpan.References.Count());
+            Assert.Equal(span.Links.Count(), jaegerSpan.References.Count);
             var references = jaegerSpan.References.ToArray();
             var jaegerRef = references[0];
             Assert.Equal(linkTraceIdAsInt.High, jaegerRef.TraceIdHigh);
@@ -213,7 +202,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(span.EndTimestamp.ToEpochMicroseconds()
                          - span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.Duration);
 
-            var tags = jaegerSpan.JaegerTags.ToArray();
+            var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
             Assert.Equal("stringKey", tag.Key);
@@ -250,7 +239,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var jaegerSpan = span.ToJaegerSpan();
 
             Assert.Equal("Name", jaegerSpan.OperationName);
-            Assert.Equal(2, jaegerSpan.Logs.Count());
+            Assert.Equal(2, jaegerSpan.Logs.Count);
 
             Assert.Equal(traceIdAsInt.High, jaegerSpan.TraceIdHigh);
             Assert.Equal(traceIdAsInt.Low, jaegerSpan.TraceIdLow);
@@ -265,7 +254,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(span.EndTimestamp.ToEpochMicroseconds()
                          - span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.Duration);
 
-            var tags = jaegerSpan.JaegerTags.ToArray();
+            var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
             Assert.Equal("stringKey", tag.Key);
@@ -337,7 +326,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var jaegerSpan = span.ToJaegerSpan();
 
             // Assert
-            Assert.Null(jaegerSpan.JaegerTags.FirstOrDefault(t => t.Key == "peer.service"));
+            Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == "peer.service");
         }
 
         [Fact]
@@ -354,9 +343,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var jaegerSpan = span.ToJaegerSpan();
 
             // Assert
-            var tag = jaegerSpan.JaegerTags.FirstOrDefault(t => t.Key == "peer.service");
-            Assert.NotNull(tag);
-            Assert.Equal("RemoteServiceName", tag.VStr);
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == "peer.service");
+            Assert.Equal("RemoteServiceName", jaegerSpan.Tags.First(t => t.Key == "peer.service").VStr);
         }
 
         [Fact]
@@ -375,10 +363,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var jaegerSpan = span.ToJaegerSpan();
 
             // Assert
-            var tags = jaegerSpan.JaegerTags.Where(t => t.Key == "peer.service");
+            var tags = jaegerSpan.Tags.Where(t => t.Key == "peer.service");
             Assert.Single(tags);
             var tag = tags.First();
-            Assert.NotNull(tag);
             Assert.Equal("RemoteServiceName", tag.VStr);
         }
 
@@ -394,9 +381,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var jaegerSpan = span.ToJaegerSpan();
 
-            Assert.Contains(jaegerSpan.JaegerTags, t => t.Key == Resource.LibraryNameKey && t.VStr == "libname");
-            Assert.Contains(jaegerSpan.JaegerTags, t => t.Key == Resource.LibraryVersionKey && t.VStr == "libversion");
-            Assert.DoesNotContain(jaegerSpan.JaegerTags, t => t.Key == Resource.ServiceNameKey && t.VStr == "MyService");
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == Resource.LibraryNameKey && t.VStr == "libname");
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == Resource.LibraryVersionKey && t.VStr == "libversion");
+            Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == Resource.ServiceNameKey && t.VStr == "MyService");
         }
 
         internal static SpanData CreateTestSpan(

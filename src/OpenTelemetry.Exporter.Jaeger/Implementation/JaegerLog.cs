@@ -13,32 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections.Generic;
-using System.Linq;
+using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Protocols;
-using Thrift.Protocols.Entities;
+using Thrift.Protocol;
+using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerLog : TAbstractBase
+    internal readonly struct JaegerLog : TUnionBase
     {
-        public JaegerLog()
-        {
-        }
-
-        public JaegerLog(long timestamp, IEnumerable<JaegerTag> fields)
-            : this()
+        public JaegerLog(long timestamp, in PooledList<JaegerTag> fields)
         {
             this.Timestamp = timestamp;
-            this.Fields = fields ?? Enumerable.Empty<JaegerTag>();
+            this.Fields = fields;
         }
 
-        public long Timestamp { get; set; }
+        public long Timestamp { get; }
 
-        public IEnumerable<JaegerTag> Fields { get; set; }
+        public PooledList<JaegerTag> Fields { get; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
@@ -65,11 +59,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
                 {
-                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Fields.Count()), cancellationToken);
+                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Fields.Count), cancellationToken);
 
-                    foreach (JaegerTag jt in this.Fields)
+                    for (int i = 0; i < this.Fields.Count; i++)
                     {
-                        await jt.WriteAsync(oprot, cancellationToken);
+                        await this.Fields[i].WriteAsync(oprot, cancellationToken);
                     }
 
                     await oprot.WriteListEndAsync(cancellationToken);
