@@ -46,6 +46,11 @@ namespace OpenTelemetry.Trace.Export
             return this.spanCount;
         }
 
+        public long GetErrorCount()
+        {
+            return this.batch.LongCount(span => !span.Status.IsOk);
+        }
+
         public List<SpanData> GetSpanDataBatch()
         {
             return this.batch;
@@ -65,7 +70,7 @@ namespace OpenTelemetry.Trace.Export
             {
                 // do not await, just start export
                 // it can still throw in synchronous part
-                _ = this.exporter.ExportAsync(this.batch, CancellationToken.None);
+                _ = this.exporter.ExportAsync(new[] { span }, CancellationToken.None);
             }
             catch (Exception ex)
             {
