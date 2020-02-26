@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace.Test
             var @event = new Event("MyEventText");
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(0, @event.Attributes.Count);
-            Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 20);
+            Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 50);
         }
 
         [Fact]
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace.Test
             var @event = new Event("MyEventText", (DateTimeOffset)default);
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(0, @event.Attributes.Count);
-            Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 20);
+            Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 50);
         }
 
         [Fact]
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Trace.Test
             var @event = new Event("MyEventText", default, attributes);
             Assert.Equal("MyEventText", @event.Name);
             Assert.Equal(attributes, @event.Attributes);
-            Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 20);
+            Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 50);
         }
 
         [Fact]
