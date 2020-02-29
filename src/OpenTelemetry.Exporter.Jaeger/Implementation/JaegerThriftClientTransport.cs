@@ -18,13 +18,13 @@ using System.IO;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Transports;
+using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerThriftClientTransport : TClientTransport
+    internal class JaegerThriftClientTransport : TTransport
     {
-        private readonly IJaegerUdpClient udpClient;
+        private readonly IJaegerClient client;
         private readonly MemoryStream byteStream;
         private bool isDisposed = false;
 
@@ -33,69 +33,76 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
         }
 
-        public JaegerThriftClientTransport(string host, int port, MemoryStream stream, IJaegerUdpClient client)
+        public JaegerThriftClientTransport(string host, int port, MemoryStream stream, IJaegerClient client)
         {
             this.byteStream = stream;
-            this.udpClient = client;
-            this.udpClient.Connect(host, port);
+            this.client = client;
+            this.client.Connect(host, port);
         }
 
-        public override bool IsOpen => this.udpClient.Connected;
+        public override bool IsOpen => this.client.Connected;
 
         public override void Close()
         {
-            this.udpClient.Close();
+            this.client.Close();
         }
 
-        public override Task FlushAsync(CancellationToken cancellationToken)
+        public override async Task FlushAsync(CancellationToken cancellationToken)
         {
-            var bytes = this.byteStream.ToArray();
-
-            if (bytes.Length == 0)
+            // GetBuffer returns the underlying storage, which saves an allocation over ToArray.
+            if (!this.byteStream.TryGetBuffer(out var buffer))
             {
-                return Task.CompletedTask;
+                buffer = new ArraySegment<byte>(this.byteStream.ToArray(), 0, (int)this.byteStream.Length);
             }
 
-            this.byteStream.SetLength(0);
+            if (buffer.Count == 0)
+            {
+                return;
+            }
 
             try
             {
-                return this.udpClient.SendAsync(bytes, bytes.Length);
+                await this.client.SendAsync(buffer.Array, buffer.Offset, buffer.Count).ConfigureAwait(false);
             }
             catch (SocketException se)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush because of socket exception. UDP Packet size was {bytes.Length}. Exception message: {se.Message}");
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush because of socket exception. UDP Packet size was {buffer.Count}. Exception message: {se.Message}");
             }
             catch (Exception e)
             {
                 throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush closed transport. {e.Message}");
             }
+            finally
+            {
+                this.byteStream.SetLength(0);
+            }
         }
 
-        public override Task OpenAsync(CancellationToken cancellationToken)
+        public override async Task OpenAsync(CancellationToken cancellationToken)
         {
-            // Do nothing
-            return Task.CompletedTask;
+            if (cancellationToken.IsCancellationRequested)
+            {
+                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
+            }
         }
 
-        public override Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+        public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public override Task WriteAsync(byte[] buffer, CancellationToken cancellationToken)
+        public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
-            return this.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
-        }
-
-        public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-        {
-            return this.byteStream.WriteAsync(buffer, offset, length, cancellationToken);
+#if NETSTANDARD2_1
+            await this.byteStream.WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
+#else
+            await this.byteStream.WriteAsync(buffer, offset, length).ConfigureAwait(false);
+#endif
         }
 
         public override string ToString()
         {
-            return $"{nameof(JaegerThriftClientTransport)}(Client={this.udpClient.RemoteEndPoint})";
+            return $"{nameof(JaegerThriftClientTransport)}(Client={this.client.RemoteEndPoint})";
         }
 
         protected override void Dispose(bool disposing)
@@ -103,7 +110,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             if (!this.isDisposed && disposing)
             {
                 this.byteStream?.Dispose();
-                this.udpClient?.Dispose();
+                this.client?.Dispose();
             }
 
             this.isDisposed = true;

@@ -4,6 +4,9 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp3.1;net462</TargetFrameworks>
     <IsPackable>false</IsPackable>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)/../build/debug.snk</AssemblyOriginatorKeyFile>
+    <DefineConstants>$(DefineConstants);SIGNED</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -19,8 +22,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
     <ProjectReference Include="..\src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj" />
     <ProjectReference Include="..\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <PackageReference Include="ApacheThrift" Version="0.13.0.1" ExcludeAssets="Compile" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ApacheThrift">
+      <HintPath>$(PkgApacheThrift)\lib\netstandard2.0\Thrift.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

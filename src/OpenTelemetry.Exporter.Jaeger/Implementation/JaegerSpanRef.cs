@@ -16,19 +16,14 @@
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Protocols;
-using Thrift.Protocols.Entities;
+using Thrift.Protocol;
+using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerSpanRef : TAbstractBase
+    internal readonly struct JaegerSpanRef : TUnionBase
     {
-        public JaegerSpanRef()
-        {
-        }
-
         public JaegerSpanRef(JaegerSpanRefType refType, long traceIdLow, long traceIdHigh, long spanId)
-            : this()
         {
             this.RefType = refType;
             this.TraceIdLow = traceIdLow;
@@ -36,13 +31,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.SpanId = spanId;
         }
 
-        public JaegerSpanRefType RefType { get; set; }
+        public JaegerSpanRefType RefType { get; }
 
-        public long TraceIdLow { get; set; }
+        public long TraceIdLow { get; }
 
-        public long TraceIdHigh { get; set; }
+        public long TraceIdHigh { get; }
 
-        public long SpanId { get; set; }
+        public long SpanId { get; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {

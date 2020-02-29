@@ -18,16 +18,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Protocols;
+using OpenTelemetry.Trace.Export;
+using Thrift.Protocol;
+using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class JaegerUdpBatcher : IJaegerUdpBatcher
+    internal class JaegerUdpBatcher : IJaegerUdpBatcher
     {
         private readonly int maxPacketSize;
-        private readonly ITProtocolFactory protocolFactory;
-        private readonly JaegerThriftClientTransport clientTransport;
+        private readonly TProtocolFactory protocolFactory;
+        private readonly TTransport clientTransport;
         private readonly JaegerThriftClient thriftClient;
+        private readonly InMemoryTransport memoryTransport;
+        private readonly TProtocol memoryProtocol;
 
         private readonly SemaphoreSlim flushLock = new SemaphoreSlim(1);
         private readonly TimeSpan maxFlushInterval;
@@ -38,7 +42,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         private bool disposedValue = false; // To detect redundant calls
 
-        public JaegerUdpBatcher(JaegerExporterOptions options)
+        public JaegerUdpBatcher(JaegerExporterOptions options, TTransport clientTransport = null)
         {
             if (options is null)
             {
@@ -50,10 +54,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 options.MaxFlushInterval = TimeSpan.FromSeconds(10);
             }
 
-            this.maxPacketSize = (!options.MaxPacketSize.HasValue || options.MaxPacketSize == 0) ? JaegerExporterOptions.DefaultMaxPacketSize : options.MaxPacketSize.Value;
+            this.maxPacketSize = (!options.MaxPacketSize.HasValue || options.MaxPacketSize <= 0) ? JaegerExporterOptions.DefaultMaxPacketSize : options.MaxPacketSize.Value;
             this.protocolFactory = new TCompactProtocol.Factory();
-            this.clientTransport = new JaegerThriftClientTransport(options.AgentHost, options.AgentPort);
+            this.clientTransport = clientTransport ?? new JaegerThriftClientTransport(options.AgentHost, options.AgentPort);
             this.thriftClient = new JaegerThriftClient(this.protocolFactory.GetProtocol(this.clientTransport));
+            this.memoryTransport = new InMemoryTransport(16000);
+            this.memoryProtocol = this.protocolFactory.GetProtocol(this.memoryTransport);
+
             this.Process = new Process(options.ServiceName, options.ProcessTags);
 
             this.maxFlushInterval = options.MaxFlushInterval;
@@ -70,44 +77,51 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             };
         }
 
-        public Process Process { get; private set; }
+        public Process Process { get; internal set; }
 
         internal IDictionary<string, Batch> CurrentBatches { get; } = new Dictionary<string, Batch>();
 
-        public async Task<int> AppendAsync(JaegerSpan span, CancellationToken cancellationToken)
+        public async ValueTask<int> AppendAsync(SpanData span, CancellationToken cancellationToken)
         {
             if (this.processCache == null)
             {
-                this.Process.ByteSize = await this.GetSize(this.Process).ConfigureAwait(false);
+                this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();
                 this.processCache = new Dictionary<string, Process>
                 {
                     [this.Process.ServiceName] = this.Process,
                 };
             }
 
-            string spanServiceName = span.JaegerTags?.FirstOrDefault(t => t.Key == "peer.service")?.VStr ?? this.Process.ServiceName;
+            var jaegerSpan = span.ToJaegerSpan();
+
+            string spanServiceName = jaegerSpan.PeerServiceName ?? this.Process.ServiceName;
 
             if (!this.processCache.TryGetValue(spanServiceName, out var spanProcess))
             {
                 spanProcess = new Process(spanServiceName, this.Process.Tags);
-                spanProcess.ByteSize = await this.GetSize(spanProcess).ConfigureAwait(false);
+                spanProcess.Message = this.BuildThriftMessage(spanProcess).ToArray();
                 this.processCache.Add(spanServiceName, spanProcess);
             }
 
-            int spanByteSize = await this.GetSize(span).ConfigureAwait(false);
+            var spanMessage = this.BuildThriftMessage(jaegerSpan);
 
-            if (spanByteSize + spanProcess.ByteSize > this.maxPacketSize)
+            jaegerSpan.Return();
+
+            if (spanMessage.Count + spanProcess.Message.Length > this.maxPacketSize)
             {
-                throw new JaegerExporterException($"ThriftSender received a span that was too large, size = {spanByteSize + spanProcess.ByteSize}, max = {this.maxPacketSize}", null);
+                throw new JaegerExporterException($"ThriftSender received a span that was too large, size = {spanMessage.Count + spanProcess.Message.Length}, max = {this.maxPacketSize}", null);
             }
 
-            int spanTotalBytesNeeded = spanByteSize;
+            int spanTotalBytesNeeded = spanMessage.Count;
             if (!this.CurrentBatches.TryGetValue(spanServiceName, out var spanBatch))
             {
-                spanBatch = new Batch(spanProcess);
+                spanBatch = new Batch(spanProcess)
+                {
+                    SpanMessages = new List<BufferWriterMemory>(),
+                };
                 this.CurrentBatches.Add(spanServiceName, spanBatch);
 
-                spanTotalBytesNeeded += spanProcess.ByteSize;
+                spanTotalBytesNeeded += spanProcess.Message.Length;
             }
 
             var flushedSpanCount = 0;
@@ -121,8 +135,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     flushedSpanCount = await this.FlushAsyncInternal(true, cancellationToken).ConfigureAwait(false);
 
                     // Flushing effectively erases the spanBatch we were working on, so we have to rebuild it.
-                    spanBatch.Spans.Clear();
-                    spanTotalBytesNeeded = spanByteSize + spanProcess.ByteSize;
+                    spanBatch.SpanMessages.Clear();
+                    spanTotalBytesNeeded = spanMessage.Count + spanProcess.Message.Length;
                     this.CurrentBatches.Add(spanServiceName, spanBatch);
                 }
                 else
@@ -131,7 +145,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 }
 
                 // add span to batch and wait for more spans
-                spanBatch.Spans.Add(span);
+                spanBatch.SpanMessages.Add(spanMessage);
                 this.batchByteSize += spanTotalBytesNeeded;
             }
             finally
@@ -142,9 +156,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return flushedSpanCount;
         }
 
-        public Task<int> FlushAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(false, cancellationToken);
+        public ValueTask<int> FlushAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(false, cancellationToken);
 
-        public Task<int> CloseAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(false, cancellationToken);
+        public ValueTask<int> CloseAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(false, cancellationToken);
 
         public void Dispose()
         {
@@ -158,17 +172,25 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             {
                 foreach (var batch in batches)
                 {
-                    await this.thriftClient.EmitBatchAsync(batch, cancellationToken).ConfigureAwait(false);
+                    await this.thriftClient.EmitBatchAsync(batch.Process.Message, batch.SpanMessages, cancellationToken).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
             {
-                throw new JaegerExporterException($"Could not send {batches.Select(b => b.Spans.Count()).Sum()} spans", ex);
+                throw new JaegerExporterException($"Could not send {batches.Select(b => b.SpanMessages.Count()).Sum()} spans", ex);
             }
         }
 
         protected virtual void Dispose(bool disposing)
         {
+            try
+            {
+                this.CloseAsync(CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch
+            {
+            }
+
             if (!this.disposedValue)
             {
                 if (disposing)
@@ -176,13 +198,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     this.maxFlushIntervalTimer.Dispose();
                     this.thriftClient.Dispose();
                     this.clientTransport.Dispose();
+                    this.memoryProtocol.Dispose();
+                    this.flushLock.Dispose();
                 }
 
                 this.disposedValue = true;
             }
         }
 
-        private async Task<int> FlushAsyncInternal(bool lockAlreadyHeld, CancellationToken cancellationToken)
+        private async ValueTask<int> FlushAsyncInternal(bool lockAlreadyHeld, CancellationToken cancellationToken)
         {
             if (!lockAlreadyHeld)
             {
@@ -193,7 +217,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             {
                 this.maxFlushIntervalTimer.Enabled = false;
 
-                int n = this.CurrentBatches.Values.Sum(b => b.Spans.Count);
+                int n = this.CurrentBatches.Values.Sum(b => b.SpanMessages.Count);
 
                 if (n == 0)
                 {
@@ -208,6 +232,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 {
                     this.CurrentBatches.Clear();
                     this.batchByteSize = 0;
+                    this.memoryTransport.Reset();
                 }
 
                 return n;
@@ -221,13 +246,29 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        private async Task<int> GetSize(TAbstractBase thriftBase)
+        private BufferWriterMemory BuildThriftMessage(Process process)
         {
-            using (var memoryTransport = new InMemoryTransport())
+            var task = process.WriteAsync(this.memoryProtocol, CancellationToken.None);
+
+            if (task.Status != TaskStatus.RanToCompletion)
             {
-                await thriftBase.WriteAsync(this.protocolFactory.GetProtocol(memoryTransport), CancellationToken.None).ConfigureAwait(false);
-                return memoryTransport.GetBuffer().Length;
+                throw new InvalidOperationException();
             }
+
+            return this.memoryTransport.ToBuffer();
+        }
+
+        // Prevents boxing of JaegerSpan struct.
+        private BufferWriterMemory BuildThriftMessage(in JaegerSpan jaegerSpan)
+        {
+            var task = jaegerSpan.WriteAsync(this.memoryProtocol, CancellationToken.None);
+
+            if (task.Status != TaskStatus.RanToCompletion)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return this.memoryTransport.ToBuffer();
         }
     }
 }

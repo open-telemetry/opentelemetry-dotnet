@@ -19,7 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
-using Thrift.Transports;
+using Thrift.Transport;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
@@ -27,7 +27,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
     public class ThriftUdpClientTransportTests: IDisposable
     {
         private MemoryStream testingMemoryStream = new MemoryStream();
-        private readonly Mock<IJaegerUdpClient> mockClient = new Mock<IJaegerUdpClient>();
+        private readonly Mock<IJaegerClient> mockClient = new Mock<IJaegerClient>();
 
         public void Dispose()
         {
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var tInfo = transport.FlushAsync();
 
             Assert.True(tInfo.IsCompleted);
-            this.mockClient.Verify(t => t.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>()), Times.Never);
+            this.mockClient.Verify(t => t.SendAsync(It.IsAny<byte[]>(), CancellationToken.None), Times.Never);
         }
 
         [Fact]
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var tInfo = transport.FlushAsync();
 
             Assert.True(tInfo.IsCompleted);
-            this.mockClient.Verify(t => t.SendAsync(It.IsAny<byte[]>(), 8), Times.Once);
+            this.mockClient.Verify(t => t.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), CancellationToken.None), Times.Once);
         }
 
         [Fact]
@@ -123,10 +123,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var streamBytes = new byte[] { 0x20, 0x10, 0x40, 0x30, 0x18, 0x14, 0x10, 0x28 };
             this.testingMemoryStream = new MemoryStream(streamBytes);
 
-            //this.mockClient.Setup(t => t.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>())).Throws<Exception>("message, yo");
-            this.mockClient.Setup(t => t.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>())).Throws(new Exception("message, yo"));
+            this.mockClient.Setup(t => t.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), CancellationToken.None)).Throws(new Exception("message, yo"));
 
             var transport = new JaegerThriftClientTransport(host, port, this.testingMemoryStream, this.mockClient.Object);
+
             var ex = await Assert.ThrowsAsync<TTransportException>(() => transport.FlushAsync());
 
             Assert.Equal("Cannot flush closed transport. message, yo", ex.Message);

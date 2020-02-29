@@ -13,20 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Protocols;
-using Thrift.Protocols.Entities;
+using Thrift.Protocol;
+using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class EmitBatchArgs : TAbstractBase
+    internal class EmitBatchArgs : TUnionBase
     {
-        public EmitBatchArgs()
-        {
-        }
-
         public Batch Batch { get; set; }
 
         public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
@@ -71,6 +69,34 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             sb.Append(")");
             return sb.ToString();
+        }
+
+        internal static async Task WriteAsync(byte[] processMessage, IEnumerable<BufferWriterMemory> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
+        {
+            oprot.IncrementRecursionDepth();
+            try
+            {
+                var struc = new TStruct("emitBatch_args");
+                await oprot.WriteStructBeginAsync(struc, cancellationToken);
+
+                var field = new TField
+                {
+                    Name = "batch",
+                    Type = TType.Struct,
+                    ID = 1,
+                };
+
+                await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                await Batch.WriteAsync(processMessage, spanMessages, oprot, cancellationToken);
+                await oprot.WriteFieldEndAsync(cancellationToken);
+
+                await oprot.WriteFieldStopAsync(cancellationToken);
+                await oprot.WriteStructEndAsync(cancellationToken);
+            }
+            finally
+            {
+                oprot.DecrementRecursionDepth();
+            }
         }
     }
 }

@@ -13,36 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-
-
-using OpenTelemetry.Trace.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using Moq;
+using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
-using Thrift.Protocols;
+using Thrift.Protocol;
 using Xunit;
-using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
     public class JaegerThriftIntegrationTest
     {
-        private readonly Tracer tracer;
-
-        public JaegerThriftIntegrationTest()
-        {
-            tracer = TracerFactory.Create(b => { }).GetTracer(null);
-        }
+        public const string TestPayloadBase64 = "goEBCWVtaXRCYXRjaBwcGAx0ZXN0IHByb2Nlc3MZHBgQdGVzdF9wcm9jZXNzX3RhZxUAGAp0ZXN0X3ZhbHVlAAAZHBab5cuG2OehhdwBFuPakI2n2cCVLhaAjfWp6NHt6dQBFrK5moSni5GXGBgETmFtZRkcFQAWm+XLhtjnoYXcARbj2pCNp9nAlS4W/Y6j+bqS9fbuAQAVAhaAgLPexpa/BRaAnJw5GYwYCXN0cmluZ0tleRUAGAV2YWx1ZQAYB2xvbmdLZXkVBkYCABgIbG9uZ0tleTIVBkYCABgJZG91YmxlS2V5FQInAAAAAAAA8D8AGApkb3VibGVLZXkyFQInAAAAAAAA8D8AGAdib29sS2V5FQQxABgJc3Bhbi5raW5kFQAYBmNsaWVudAAYDm90LnN0YXR1c19jb2RlFQAYAk9rABksFoCAs97Glr8FGSwYA2tleRUAGAV2YWx1ZQAYB21lc3NhZ2UVABgGRXZlbnQxAAAWgICz3saWvwUZLBgDa2V5FQAYBXZhbHVlABgHbWVzc2FnZRUAGAZFdmVudDIAAAAAAA==";
 
         [Fact]
-        public async void JaegerThriftIntegrationTest_TAbstractBaseGeneratesConsistentThriftPayload()
+        public async Task JaegerThriftIntegrationTest_TAbstractBaseGeneratesConsistentThriftPayload()
         {
-            var validJaegerThriftPayload = Convert.FromBase64String("goEBCWVtaXRCYXRjaBwcGAx0ZXN0IHByb2Nlc3MZHBgQdGVzdF9wcm9jZXNzX3RhZxUAGAp0ZXN0X3ZhbHVlAAAZHBab5cuG2OehhdwBFuPakI2n2cCVLhaAjfWp6NHt6dQBFrK5moSni5GXGBgETmFtZRkcFQAWm+XLhtjnoYXcARbj2pCNp9nAlS4W/Y6j+bqS9fbuAQAVAhaAgLPexpa/BRaAnJw5GYwYCXN0cmluZ0tleRUAGAV2YWx1ZQAYB2xvbmdLZXkVBkYCABgIbG9uZ0tleTIVBkYCABgJZG91YmxlS2V5FQInAAAAAAAA8D8AGApkb3VibGVLZXkyFQInAAAAAAAA8D8AGAdib29sS2V5FQQxABgJc3Bhbi5raW5kFQAYBmNsaWVudAAYDm90LnN0YXR1c19jb2RlFQAYAk9rABksFoCAs97Glr8FGSwYA2tleRUAGAV2YWx1ZQAYB21lc3NhZ2UVABgGRXZlbnQxAAAWgICz3saWvwUZLBgDa2V5FQAYBXZhbHVlABgHbWVzc2FnZRUAGAZFdmVudDIAAAAAAA==");
+            var validJaegerThriftPayload = Convert.FromBase64String(TestPayloadBase64);
 
             using (var memoryTransport = new InMemoryTransport())
             {
@@ -50,18 +41,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 var thriftClient = new JaegerThriftClient(protocolFactory.GetProtocol(memoryTransport));
                 var spanData = CreateTestSpan();
                 var span = spanData.ToJaegerSpan();
-                var process = new Process("test process", new Dictionary<string, object> { { "test_process_tag", "test_value" } });
+                var process = TestProcess;
                 var batch = new Batch(process, new List<JaegerSpan> { span });
 
                 await thriftClient.EmitBatchAsync(batch, CancellationToken.None);
 
-                var buff = memoryTransport.GetBuffer();
-
-                Assert.Equal(validJaegerThriftPayload, buff);
+                Assert.Equal(validJaegerThriftPayload, memoryTransport.ToArray());
             }
         }
 
-        private SpanData CreateTestSpan()
+        internal static Process TestProcess { get; } = new Process("test process", new Dictionary<string, object> { { "test_process_tag", "test_value" } });
+
+        internal static SpanData CreateTestSpan()
         {
             var startTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
             var endTimestamp = startTimestamp.AddSeconds(60);

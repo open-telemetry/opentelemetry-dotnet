@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public struct Int128
+    internal readonly struct Int128
     {
         public static Int128 Empty = default;
 
@@ -57,8 +57,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.Low = BitConverter.IsLittleEndian ? longs[0] : longs[1];
         }
 
-        public long High { get; set; }
+        public long High { get; }
 
-        public long Low { get; set; }
+        public long Low { get; }
     }
 }

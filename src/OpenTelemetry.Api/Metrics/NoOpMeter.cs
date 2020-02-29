@@ -24,34 +24,34 @@ namespace OpenTelemetry.Metrics
         {
         }
 
-        public override Counter<double> CreateDoubleCounter(string name, bool monotonic = true)
+        public override CounterMetric<double> CreateDoubleCounter(string name, bool monotonic = true)
         {
-            return NoOpCounter<double>.Instance;
+            return NoOpCounterMetric<double>.Instance;
         }
 
-        public override Gauge<double> CreateDoubleGauge(string name, bool monotonic = false)
+        public override MeasureMetric<double> CreateDoubleMeasure(string name, bool absolute = true)
         {
-            return NoOpGauge<double>.Instance;
+            return NoOpMeasureMetric<double>.Instance;
         }
 
-        public override Measure<double> CreateDoubleMeasure(string name, bool absolute = true)
+        public override ObserverMetric<double> CreateDoubleObserver(string name, bool monotonic = true)
         {
-            return NoOpMeasure<double>.Instance;
+            return NoOpObserverMetric<double>.Instance;
         }
 
-        public override Counter<long> CreateInt64Counter(string name, bool monotonic = true)
+        public override CounterMetric<long> CreateInt64Counter(string name, bool monotonic = true)
         {
-            return NoOpCounter<long>.Instance;
+            return NoOpCounterMetric<long>.Instance;
         }
 
-        public override Gauge<long> CreateInt64Gauge(string name, bool monotonic = false)
+        public override MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true)
         {
-            return NoOpGauge<long>.Instance;
+            return NoOpMeasureMetric<long>.Instance;
         }
 
-        public override Measure<long> CreateInt64Measure(string name, bool absolute = true)
+        public override ObserverMetric<long> CreateInt64Observer(string name, bool absolute = true)
         {
-            return NoOpMeasure<long>.Instance;
+            return NoOpObserverMetric<long>.Instance;
         }
 
         public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)
