@@ -57,11 +57,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         private static readonly Dictionary<CanonicalCode, string> CanonicalCodeDictionary = new Dictionary<CanonicalCode, string>();
 
-        private static readonly EnumerationHelper<IEnumerable<KeyValuePair<string, object>>, KeyValuePair<string, object>, TagState>.ForEachDelegate ProcessAttributeRef = ProcessAttribute;
-        private static readonly EnumerationHelper<IEnumerable<KeyValuePair<string, object>>, KeyValuePair<string, object>, TagState>.ForEachDelegate ProcessLibraryAttributeRef = ProcessLibraryAttribute;
-        private static readonly EnumerationHelper<IEnumerable<Link>, Link, PooledListState<JaegerSpanRef>>.ForEachDelegate ProcessLinkRef = ProcessLink;
-        private static readonly EnumerationHelper<IEnumerable<Event>, Event, PooledListState<JaegerLog>>.ForEachDelegate ProcessEventRef = ProcessEvent;
-        private static readonly EnumerationHelper<IDictionary<string, object>, KeyValuePair<string, object>, PooledListState<JaegerTag>>.ForEachDelegate ProcessTagRef = ProcessTag;
+        private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessAttributeRef = ProcessAttribute;
+        private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessLibraryAttributeRef = ProcessLibraryAttribute;
+        private static readonly ListEnumerator<Link, PooledListState<JaegerSpanRef>>.ForEachDelegate ProcessLinkRef = ProcessLink;
+        private static readonly ListEnumerator<Event, PooledListState<JaegerLog>>.ForEachDelegate ProcessEventRef = ProcessEvent;
+        private static readonly DictionaryEnumerator<string, object, PooledListState<JaegerTag>>.ForEachDelegate ProcessTagRef = ProcessTag;
 
         public static JaegerSpan ToJaegerSpan(this SpanData span)
         {
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 Tags = PooledList<JaegerTag>.Create(),
             };
 
-            EnumerationHelper<IEnumerable<KeyValuePair<string, object>>, KeyValuePair<string, object>, TagState>.AllocationFreeForEach(
+            DictionaryEnumerator<string, object, TagState>.AllocationFreeForEach(
                 span.Attributes,
                 ref jaegerTags,
                 ProcessAttributeRef);
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 }
             }
 
-            EnumerationHelper<IEnumerable<KeyValuePair<string, object>>, KeyValuePair<string, object>, TagState>.AllocationFreeForEach(
+            DictionaryEnumerator<string, object, TagState>.AllocationFreeForEach(
                 span.LibraryResource?.Attributes ?? Array.Empty<KeyValuePair<string, object>>(),
                 ref jaegerTags,
                 ProcessLibraryAttributeRef);
@@ -170,7 +170,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 return references.List;
             }
 
-            EnumerationHelper<IEnumerable<Link>, Link, PooledListState<JaegerSpanRef>>.AllocationFreeForEach(
+            ListEnumerator<Link, PooledListState<JaegerSpanRef>>.AllocationFreeForEach(
                 links,
                 ref references,
                 ProcessLinkRef);
@@ -187,7 +187,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 return logs.List;
             }
 
-            EnumerationHelper<IEnumerable<Event>, Event, PooledListState<JaegerLog>>.AllocationFreeForEach(
+            ListEnumerator<Event, PooledListState<JaegerLog>>.AllocationFreeForEach(
                 events,
                 ref logs,
                 ProcessEventRef);
@@ -224,7 +224,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 List = PooledList<JaegerTag>.Create(),
             };
 
-            EnumerationHelper<IDictionary<string, object>, KeyValuePair<string, object>, PooledListState<JaegerTag>>.AllocationFreeForEach(
+            DictionaryEnumerator<string, object, PooledListState<JaegerTag>>.AllocationFreeForEach(
                 timedEvent.Attributes,
                 ref tags,
                 ProcessTagRef);

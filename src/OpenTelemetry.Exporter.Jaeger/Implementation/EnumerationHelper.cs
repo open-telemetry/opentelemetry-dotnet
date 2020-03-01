@@ -24,8 +24,30 @@ using System.Reflection.Emit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
+    internal class DictionaryEnumerator<TKey, TValue, TState> : Enumerator
+        <IEnumerable<KeyValuePair<TKey, TValue>>,
+        KeyValuePair<TKey, TValue>,
+        TState>
+        where TState : struct
+    {
+        protected DictionaryEnumerator()
+        {
+        }
+    }
+
+    internal class ListEnumerator<TValue, TState> : Enumerator
+        <IEnumerable<TValue>,
+        TValue,
+        TState>
+        where TState : struct
+    {
+        protected ListEnumerator()
+        {
+        }
+    }
+
     // A helper class for enumerating over IEnumerable<TItem> without allocation if a struct enumerator is available.
-    internal static class EnumerationHelper<TEnumerable, TItem, TState>
+    internal class Enumerator<TEnumerable, TItem, TState>
         where TEnumerable : IEnumerable<TItem>
         where TState : struct
     {
@@ -39,6 +61,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private delegate void AllocationFreeForEachDelegate(TEnumerable instance, ref TState state, ForEachDelegate itemCallback);
 
         public delegate bool ForEachDelegate(ref TState state, TItem item);
+
+        protected Enumerator()
+        {
+        }
 
         public static void AllocationFreeForEach(TEnumerable instance, ref TState state, ForEachDelegate itemCallback)
         {
