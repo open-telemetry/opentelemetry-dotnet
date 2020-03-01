@@ -25,7 +25,7 @@ using System.Reflection.Emit;
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     // A helper class for enumerating over IEnumerable<TItem> without allocation if a struct enumerator is available.
-    internal static class EnumerationHelper<TEnumerable, TState, TItem>
+    internal static class EnumerationHelper<TEnumerable, TItem, TState>
         where TEnumerable : IEnumerable<TItem>
         where TState : struct
     {
