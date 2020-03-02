@@ -147,7 +147,7 @@ span.End();
 
 ### Span with links
 
-[Links](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md#links-between-spans) allow to create relationships between different traces i.e. allow spans to have multiple relatives. They are typically used to tracer batching scenarios where multiple traces are merged into another one.
+[Links](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md#links-between-spans) allow to create relationships between different traces i.e. allow spans to have multiple relatives. They are typically used to trace batching scenarios where multiple traces are merged into another one.
 
 Links affect sampling decision and should be added before sampling decision is made (i.e. before span starts).
 
