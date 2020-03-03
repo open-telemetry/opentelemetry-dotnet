@@ -15,8 +15,10 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Metrics.Implementation;
 using OpenTelemetry.Trace.Export;
@@ -29,6 +31,8 @@ namespace OpenTelemetry.Exporter.ZPages
     public class ZPagesExporter : SpanExporter
     {
         internal readonly ZPagesExporterOptions Options;
+        private Dictionary<string, ZPagesSpanInformation> spanList = new Dictionary<string, ZPagesSpanInformation>();
+        private IEnumerable<SpanData> batch = new List<SpanData>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZPagesExporter"/> class.
@@ -42,6 +46,30 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <inheritdoc />
         public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
         {
+            var spanDatas = batch as SpanData[] ?? batch.ToArray();
+            this.batch = spanDatas;
+
+            foreach (var spanData in this.batch)
+            {
+                if (!this.spanList.ContainsKey(spanData.Name))
+                {
+                    this.spanList.Add(spanData.Name, new ZPagesSpanInformation(spanData));
+                    int count = this.spanList.Count;
+                }
+                else
+                {
+                    ZPagesSpanInformation spanInformation;
+                    this.spanList.TryGetValue(spanData.Name, out spanInformation);
+                    if (spanInformation != null)
+                    {
+                        spanInformation.SpanDataList.Add(spanData);
+                        spanInformation.CountHour++;
+                        spanInformation.CountMinute++;
+                        spanInformation.CountTotal++;
+                    }
+                }
+            }
+
             return Task.FromResult(ExportResult.Success);
         }
 
