@@ -35,7 +35,6 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             var tracerMock = new Mock<Trace.Tracer>();
             Assert.Throws<ArgumentNullException>(() => new TracerShim(tracerMock.Object, null));
-            Assert.Throws<ArgumentNullException>(() => new TracerShim(tracerMock.Object, new TraceContextFormat()));
         }
 
         [Fact]
