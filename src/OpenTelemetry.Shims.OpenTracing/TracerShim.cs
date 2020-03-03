@@ -25,13 +25,11 @@ namespace OpenTelemetry.Shims.OpenTracing
     {
         private readonly Trace.Tracer tracer;
         private readonly ITextFormat textFormat;
-        private readonly IBinaryFormat binaryFormat;
 
-        public TracerShim(Trace.Tracer tracer, ITextFormat textFormat, IBinaryFormat binaryFormat)
+        public TracerShim(Trace.Tracer tracer, ITextFormat textFormat)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             this.textFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
-            this.binaryFormat = binaryFormat ?? throw new ArgumentNullException(nameof(binaryFormat));
 
             this.ScopeManager = new ScopeManagerShim(this.tracer);
         }
@@ -84,14 +82,6 @@ namespace OpenTelemetry.Shims.OpenTracing
 
                 spanContext = this.textFormat.Extract(carrierMap, GetCarrierKeyValue);
             }
-            else if (format == BuiltinFormats.Binary && carrier is IBinary binaryCarrier)
-            {
-                var ms = binaryCarrier.Get();
-                if (ms != null)
-                {
-                    spanContext = this.binaryFormat.FromByteArray(ms.ToArray());
-                }
-            }
 
             return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
         }
@@ -125,14 +115,6 @@ namespace OpenTelemetry.Shims.OpenTracing
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
                 this.textFormat.Inject(shim.SpanContext, textMapCarrier, (adapter, key, value) => adapter.Set(key, value));
-            }
-            else if (format == BuiltinFormats.Binary && carrier is IBinary binaryCarrier)
-            {
-                var bytes = this.binaryFormat.ToByteArray(shim.SpanContext);
-                if (bytes != null)
-                {
-                    binaryCarrier.Set(new System.IO.MemoryStream(bytes));
-                }
             }
         }
     }
