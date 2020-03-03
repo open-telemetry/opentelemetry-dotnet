@@ -158,13 +158,9 @@ namespace OpenTelemetry.Trace
         {
             span.PutHttpStatusCodeAttribute(statusCode);
 
-            Status newStatus;
+            var newStatus = Status.Unknown;
 
-            if (statusCode < 200)
-            {
-                newStatus = Status.Unknown;
-            }
-            else if (statusCode >= 200 && statusCode <= 399)
+            if (statusCode >= 200 && statusCode <= 399)
             {
                 newStatus = Status.Ok;
             }
@@ -199,10 +195,6 @@ namespace OpenTelemetry.Trace
             else if (statusCode == 504)
             {
                 newStatus = Status.DeadlineExceeded;
-            }
-            else
-            {
-                newStatus = Status.Unknown;
             }
 
             span.Status = newStatus.WithDescription(reasonPhrase);
