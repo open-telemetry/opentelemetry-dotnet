@@ -31,8 +31,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void CtorArgumentValidation()
         {
+            // null tracer and text format
+            Assert.Throws<ArgumentNullException>(() => new TracerShim(null, null));
+
+            // null tracer
             Assert.Throws<ArgumentNullException>(() => new TracerShim(null, new TraceContextFormat()));
 
+            // null context format
             var tracerMock = new Mock<Trace.Tracer>();
             Assert.Throws<ArgumentNullException>(() => new TracerShim(tracerMock.Object, null));
         }
