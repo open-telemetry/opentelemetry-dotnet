@@ -147,7 +147,7 @@ span.End();
 
 ### Span with links
 
-[Links](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md#links-between-spans) allow to create relationships between different traces i.e. allow spans to have multiple relatives. They are typically used to tracer batching scenarios where multiple traces are merged into another one.
+[Links](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md#links-between-spans) allow to create relationships between different traces i.e. allow spans to have multiple relatives. They are typically used to trace batching scenarios where multiple traces are merged into another one.
 
 Links affect sampling decision and should be added before sampling decision is made (i.e. before span starts).
 
@@ -247,7 +247,7 @@ Configuration is done by user application: it should configure exporter and may 
 
     ```csharp
     using (TracerFactory.Create(builder => builder
-            .UseZipkin()
+            .UseZipkin(options => {})
             .SetResource(Resources.CreateServiceResource("http-client-test")))
     {
         // ...
@@ -268,7 +268,7 @@ Configuration is done by user application: it should configure exporter and may 
     {
         builder
             .SetSampler(new AlwaysSampleSampler())
-            .UseZipkin()
+            .UseZipkin(options => {})
 
             // you may also configure request and dependencies collectors
             .AddRequestCollector()
@@ -292,7 +292,7 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
 
     using (TracerFactory.Create(b => b
                 .SetSampler(new AlwaysSampleSampler())
-                .UseZipkin()
+                .UseZipkin(options => {})
                 .SetResource(Resources.CreateServiceResource("my-service"))
                 .AddCollector(t =>
                 {
@@ -314,7 +314,7 @@ You may configure sampler of your choice
 ```csharp
  using (TracerFactory.Create(b => b
             .SetSampler(new ProbabilitySampler(0.1))
-            .UseZipkin()
+            .UseZipkin(options => {})
             .SetResource(Resources.CreateServiceResource("my-service")))
 {
 
