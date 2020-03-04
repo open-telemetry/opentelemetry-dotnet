@@ -14,7 +14,7 @@ jobs:
   pool: Hosted VS2017
   steps:
   
-  - task: DotNetCoreInstaller@0
+  - task: UseDotNet@2
     displayName: force use of desired dotnet version
     inputs:
       version: $(DotNetVersion)
@@ -40,7 +40,7 @@ jobs:
 - job: Linux
   pool: Hosted Ubuntu 1604
   steps:
-  - task: DotNetCoreInstaller@0
+  - task: UseDotNet@2
     displayName: force use of desired dotnet version
     inputs:
       version: $(DotNetVersion)
