@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         }
 
         [Fact]
-        public void AlwaysSampleSampler_AlwaysReturnTrue()
+        public void AlwaysOnSampler_AlwaysReturnTrue()
         {
             // Sampled parent.
             Assert.True(
@@ -72,13 +72,13 @@ namespace OpenTelemetry.Trace.Samplers.Test
         }
 
         [Fact]
-        public void AlwaysSampleSampler_GetDescription()
+        public void AlwaysOnSampler_GetDescription()
         {
-            Assert.Equal("AlwaysSampleSampler", new AlwaysOnSampler().Description);
+            Assert.Equal("AlwaysOnSampler", new AlwaysOnSampler().Description);
         }
 
         [Fact]
-        public void NeverSampleSampler_AlwaysReturnFalse()
+        public void NeverOffSampler_AlwaysReturnFalse()
         {
             // Sampled parent.
             Assert.False(
