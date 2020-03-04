@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
     internal class CounterMetricSdk<T> : CounterMetric<T>
         where T : struct
     {
-        private readonly IDictionary<LabelSet, CounterMetricHandleSdk<T>> counterHandles = new ConcurrentDictionary<LabelSet, CounterMetricHandleSdk<T>>();
+        private readonly IDictionary<LabelSet, BoundCounterMetricSdk<T>> counterBoundInstruments = new ConcurrentDictionary<LabelSet, BoundCounterMetricSdk<T>>();
         private string metricName;
 
         public CounterMetricSdk()
@@ -39,26 +39,26 @@ namespace OpenTelemetry.Metrics
             this.metricName = name;
         }
 
-        public override CounterMetricHandle<T> GetHandle(LabelSet labelset)
+        public override BoundCounterMetric<T> Bind(LabelSet labelset)
         {
-            if (!this.counterHandles.TryGetValue(labelset, out var handle))
+            if (!this.counterBoundInstruments.TryGetValue(labelset, out var boundInstrument))
             {
-                handle = new CounterMetricHandleSdk<T>();
+                boundInstrument = new BoundCounterMetricSdk<T>();
 
-                this.counterHandles.Add(labelset, handle);
+                this.counterBoundInstruments.Add(labelset, boundInstrument);
             }
 
-            return handle;
+            return boundInstrument;
         }
 
-        public override CounterMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
+        public override BoundCounterMetric<T> Bind(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            return this.GetHandle(new LabelSetSdk(labels));
+            return this.Bind(new LabelSetSdk(labels));
         }
 
-        internal IDictionary<LabelSet, CounterMetricHandleSdk<T>> GetAllHandles()
+        internal IDictionary<LabelSet, BoundCounterMetricSdk<T>> GetAllHandles()
         {
-            return this.counterHandles;
+            return this.counterBoundInstruments;
         }
     }
 }

@@ -33,15 +33,15 @@ namespace OpenTelemetry.Metrics
         public static readonly NoOpCounterMetric<T> Instance = new NoOpCounterMetric<T>();
 
         /// <inheritdoc/>
-        public override CounterMetricHandle<T> GetHandle(LabelSet labelset)
+        public override BoundCounterMetric<T> Bind(LabelSet labelset)
         {
-            return NoOpCounterMetricHandle<T>.Instance;
+            return NoOpBoundCounterMetric<T>.Instance;
         }
 
         /// <inheritdoc/>
-        public override CounterMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
+        public override BoundCounterMetric<T> Bind(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            return NoOpCounterMetricHandle<T>.Instance;
+            return NoOpBoundCounterMetric<T>.Instance;
         }
     }
 }
