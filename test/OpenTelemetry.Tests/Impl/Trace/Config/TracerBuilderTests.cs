@@ -94,7 +94,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Equal("semver:" + typeof(TestCollector).Assembly.GetName().Version, collectorFactory.Version);
 
             Assert.NotNull(collectorFactory.Factory);
-            collectorFactory.Factory(new TracerSdk(new SimpleSpanProcessor(exporter), new AlwaysSampleSampler(), options, Resource.Empty));
+            collectorFactory.Factory(new TracerSdk(new SimpleSpanProcessor(exporter), new AlwaysOnSampler(), options, Resource.Empty));
 
             Assert.True(collectorFactoryCalled);
         }

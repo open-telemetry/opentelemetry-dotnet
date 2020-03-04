@@ -57,13 +57,13 @@ namespace OpenTelemetry.Trace.Samplers
         public override string Description { get; }
 
         /// <inheritdoc />
-        public override Decision ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IDictionary<string, object> attributes, IEnumerable<Link> links)
+        public override SamplingResult ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IDictionary<string, object> attributes, IEnumerable<Link> links)
         {
             // If the parent is sampled keep the sampling decision.
             if (parentContext.IsValid &&
                 (parentContext.TraceOptions & ActivityTraceFlags.Recorded) != 0)
             {
-                return new Decision(true);
+                return new SamplingResult(true);
             }
 
             if (links != null)
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace.Samplers
                 {
                     if ((parentLink.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
                     {
-                        return new Decision(true);
+                        return new SamplingResult(true);
                     }
                 }
             }
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Trace.Samplers
             // code is executed in-line for every Span creation).
             Span<byte> traceIdBytes = stackalloc byte[16];
             traceId.CopyTo(traceIdBytes);
-            return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.idUpperBound ? new Decision(true) : new Decision(false);
+            return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.idUpperBound ? new SamplingResult(true) : new SamplingResult(false);
         }
 
         private long GetLowerLong(ReadOnlySpan<byte> bytes)

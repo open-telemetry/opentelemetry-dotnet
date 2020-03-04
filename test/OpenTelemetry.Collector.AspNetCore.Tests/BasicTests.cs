@@ -63,7 +63,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             {
                 services.AddSingleton<TracerFactory>(_ =>
                     TracerFactory.Create(b => b
-                        .SetSampler(new AlwaysSampleSampler())
+                        .SetSampler(new AlwaysOnSampler())
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                         .AddRequestCollector()));
             }

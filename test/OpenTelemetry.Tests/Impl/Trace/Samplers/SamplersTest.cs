@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         {
             // Sampled parent.
             Assert.True(
-                    new AlwaysSampleSampler()
+                    new AlwaysOnSampler()
                         .ShouldSample(
                             sampledSpanContext,
                             traceId,
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
 
             // Not sampled parent.
             Assert.True(
-                    new AlwaysSampleSampler()
+                    new AlwaysOnSampler()
                         .ShouldSample(
                             notSampledSpanContext,
                             traceId,
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         [Fact]
         public void AlwaysSampleSampler_GetDescription()
         {
-            Assert.Equal("AlwaysSampleSampler", new AlwaysSampleSampler().Description);
+            Assert.Equal("AlwaysSampleSampler", new AlwaysOnSampler().Description);
         }
 
         [Fact]
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         {
             // Sampled parent.
             Assert.False(
-                    new NeverSampleSampler()
+                    new AlwaysOffSampler()
                         .ShouldSample(
                             sampledSpanContext,
                             traceId,
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                             null).IsSampled);
             // Not sampled parent.
             Assert.False(
-                    new NeverSampleSampler()
+                    new AlwaysOffSampler()
                         .ShouldSample(
                             notSampledSpanContext,
                             traceId,
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         [Fact]
         public void NeverSampleSampler_GetDescription()
         {
-            Assert.Equal("NeverSampleSampler", new NeverSampleSampler().Description);
+            Assert.Equal("AlwaysOffSampler", new AlwaysOffSampler().Description);
         }
 
         [Fact]
