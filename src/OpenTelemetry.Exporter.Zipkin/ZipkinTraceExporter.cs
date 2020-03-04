@@ -127,11 +127,7 @@ namespace OpenTelemetry.Exporter.Zipkin
         {
             using (var response = await client.SendAsync(request).ConfigureAwait(false))
             {
-                if (response.StatusCode != HttpStatusCode.OK &&
-                    response.StatusCode != HttpStatusCode.Accepted)
-                {
-                    var statusCode = (int)response.StatusCode;
-                }
+                // disposing response
             }
         }
 
