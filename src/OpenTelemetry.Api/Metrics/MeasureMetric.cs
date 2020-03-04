@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// Measure instrument.
     /// </summary>
-    /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
+    /// <typeparam name="T">The type of measure. Only long and double are supported now.</typeparam>
     public abstract class MeasureMetric<T>
         where T : struct
     {
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="context">the associated span context.</param>
         /// <param name="value">value to record.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public void Record(in SpanContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Record(context, value);
+        public void Record(in SpanContext context, T value, LabelSet labelset) => this.Bind(labelset).Record(context, value);
 
         /// <summary>
         /// Records a measure.
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="context">the associated span context.</param>
         /// <param name="value">value to record.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public void Record(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Record(context, value);
+        public void Record(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.Bind(labels).Record(context, value);
 
         /// <summary>
         /// Records a measure.
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="context">the associated distributed context.</param>
         /// <param name="value">value to record.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public void Record(in DistributedContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Record(context, value);
+        public void Record(in DistributedContext context, T value, LabelSet labelset) => this.Bind(labelset).Record(context, value);
 
         /// <summary>
         /// Records a measure.
@@ -57,20 +57,20 @@ namespace OpenTelemetry.Metrics
         /// <param name="context">the associated distributed context.</param>
         /// <param name="value">value to record.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public void Record(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Record(context, value);
+        public void Record(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.Bind(labels).Record(context, value);
 
         /// <summary>
-        /// Gets the handle with given labelset.
+        /// Gets the bound measure metric with given labelset.
         /// </summary>
-        /// <param name="labelset">The labelset from which handle should be constructed.</param>
-        /// <returns>The handle.</returns>
-        public abstract MeasureMetricHandle<T> GetHandle(LabelSet labelset);
+        /// <param name="labelset">The labelset from which bound instrument should be constructed.</param>
+        /// <returns>The bound measure metric.</returns>
+        public abstract BoundMeasureMetric<T> Bind(LabelSet labelset);
 
         /// <summary>
-        /// Gets the handle with given labelset.
+        /// Gets the bound measure metric with given labelset.
         /// </summary>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        /// <returns>The handle.</returns>
-        public abstract MeasureMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels);
+        /// <returns>The bound measure metric.</returns>
+        public abstract BoundMeasureMetric<T> Bind(IEnumerable<KeyValuePair<string, string>> labels);
     }
 }
