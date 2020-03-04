@@ -33,7 +33,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="context">the associated span context.</param>
         /// <param name="value">value by which the counter should be incremented.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public void Add(in SpanContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Add(context, value);
+        public void Add(in SpanContext context, T value, LabelSet labelset) => this.Bind(labelset).Add(context, value);
 
         /// <summary>
         /// Adds or Increments the counter.
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="context">the associated span context.</param>
         /// <param name="value">value by which the counter should be incremented.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public void Add(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Add(context, value);
+        public void Add(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.Bind(labels).Add(context, value);
 
         /// <summary>
         /// Adds or Increments the counter.
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="context">the associated distributed context.</param>
         /// <param name="value">value by which the counter should be incremented.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public void Add(in DistributedContext context, T value, LabelSet labelset) => this.GetHandle(labelset).Add(context, value);
+        public void Add(in DistributedContext context, T value, LabelSet labelset) => this.Bind(labelset).Add(context, value);
 
         /// <summary>
         /// Adds or Increments the counter.
@@ -57,20 +57,20 @@ namespace OpenTelemetry.Metrics
         /// <param name="context">the associated distributed context.</param>
         /// <param name="value">value by which the counter should be incremented.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public void Add(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.GetHandle(labels).Add(context, value);
+        public void Add(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.Bind(labels).Add(context, value);
 
         /// <summary>
-        /// Gets the handle with given labelset.
+        /// Gets the bound counter metric with given labelset.
         /// </summary>
-        /// <param name="labelset">The labelset from which handle should be constructed.</param>
-        /// <returns>The handle.</returns>
-        public abstract CounterMetricHandle<T> GetHandle(LabelSet labelset);
+        /// <param name="labelset">The labelset from which bound instrument should be constructed.</param>
+        /// <returns>The bound counter metric.</returns>
+        public abstract BoundCounterMetric<T> Bind(LabelSet labelset);
 
         /// <summary>
-        /// Gets the handle with given labels.
+        /// Gets the bound counter metric with given labels.
         /// </summary>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        /// <returns>The handle.</returns>
-        public abstract CounterMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels);
+        /// <returns>The bound counter metric.</returns>
+        public abstract BoundCounterMetric<T> Bind(IEnumerable<KeyValuePair<string, string>> labels);
     }
 }
