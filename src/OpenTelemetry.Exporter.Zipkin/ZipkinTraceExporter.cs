@@ -125,7 +125,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
         private async Task DoPostAsync(HttpClient client, HttpRequestMessage request)
         {
-            using (var response = await client.SendAsync(request).ConfigureAwait(false))
+            using (await client.SendAsync(request).ConfigureAwait(false))
             {
                 // disposing response
             }
