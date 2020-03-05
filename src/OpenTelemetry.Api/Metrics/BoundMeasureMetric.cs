@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMeasureMetricHandle.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="BoundMeasureMetric.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,25 +20,24 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// No op measure handle.
+    /// Bound measure metric with the defined <see cref="LabelSet"/>.
     /// </summary>
     /// <typeparam name="T">The type of Measure. Only long and double are supported now.</typeparam>
-    public sealed class NoOpMeasureMetricHandle<T> : MeasureMetricHandle<T>
+    public abstract class BoundMeasureMetric<T>
         where T : struct
     {
         /// <summary>
-        /// No op measure handle instance.
+        /// Record the given value to the bound measure metric.
         /// </summary>
-        public static readonly NoOpMeasureMetricHandle<T> Instance = new NoOpMeasureMetricHandle<T>();
+        /// <param name="context">the associated span context.</param>
+        /// <param name="value">the measurement to be recorded.</param>
+        public abstract void Record(in SpanContext context, T value);
 
-        /// <inheritdoc/>
-        public override void Record(in SpanContext context, T value)
-        {
-        }
-
-        /// <inheritdoc/>
-        public override void Record(in DistributedContext context, T value)
-        {
-        }
+        /// <summary>
+        /// Record the given value to the bound measure metric.
+        /// </summary>
+        /// <param name="context">the associated distributed context.</param>
+        /// <param name="value">the measurement to be recorded.</param>
+        public abstract void Record(in DistributedContext context, T value);
     }
 }

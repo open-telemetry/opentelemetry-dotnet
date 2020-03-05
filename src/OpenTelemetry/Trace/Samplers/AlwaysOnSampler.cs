@@ -1,4 +1,4 @@
-﻿// <copyright file="NeverSampleSampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AlwaysOnSampler.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,14 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Trace.Samplers
 {
-    public sealed class NeverSampleSampler : Sampler
+    public sealed class AlwaysOnSampler : Sampler
     {
-        public override string Description { get; } = nameof(NeverSampleSampler);
+        public override string Description { get; } = nameof(AlwaysOnSampler);
 
         /// <inheritdoc />
-        public override Decision ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IDictionary<string, object> attributes, IEnumerable<Link> links)
+        public override SamplingResult ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IDictionary<string, object> attributes, IEnumerable<Link> parentLinks)
         {
-            return new Decision(false);
+            return new SamplingResult(true);
         }
     }
 }

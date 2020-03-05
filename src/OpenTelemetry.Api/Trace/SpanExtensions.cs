@@ -158,51 +158,43 @@ namespace OpenTelemetry.Trace
         {
             span.PutHttpStatusCodeAttribute(statusCode);
 
-            var newStatus = Status.Ok;
+            var newStatus = Status.Unknown;
 
-            if ((int)statusCode < 200)
-            {
-                newStatus = Status.Unknown;
-            }
-            else if ((int)statusCode >= 200 && (int)statusCode <= 399)
+            if (statusCode >= 200 && statusCode <= 399)
             {
                 newStatus = Status.Ok;
             }
-            else if ((int)statusCode == 400)
+            else if (statusCode == 400)
             {
                 newStatus = Status.InvalidArgument;
             }
-            else if ((int)statusCode == 401)
+            else if (statusCode == 401)
             {
                 newStatus = Status.Unauthenticated;
             }
-            else if ((int)statusCode == 403)
+            else if (statusCode == 403)
             {
                 newStatus = Status.PermissionDenied;
             }
-            else if ((int)statusCode == 404)
+            else if (statusCode == 404)
             {
                 newStatus = Status.NotFound;
             }
-            else if ((int)statusCode == 429)
+            else if (statusCode == 429)
             {
                 newStatus = Status.ResourceExhausted;
             }
-            else if ((int)statusCode == 501)
+            else if (statusCode == 501)
             {
                 newStatus = Status.Unimplemented;
             }
-            else if ((int)statusCode == 503)
+            else if (statusCode == 503)
             {
                 newStatus = Status.Unavailable;
             }
-            else if ((int)statusCode == 504)
+            else if (statusCode == 504)
             {
                 newStatus = Status.DeadlineExceeded;
-            }
-            else
-            {
-                newStatus = Status.Unknown;
             }
 
             span.Status = newStatus.WithDescription(reasonPhrase);

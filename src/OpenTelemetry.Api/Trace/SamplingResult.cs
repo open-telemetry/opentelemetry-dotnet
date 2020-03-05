@@ -1,4 +1,4 @@
-﻿// <copyright file="Decision.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SamplingResult.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,25 +21,25 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Sampling decision.
     /// </summary>
-    public readonly struct Decision
+    public readonly struct SamplingResult
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Decision"/> struct.
+        /// Initializes a new instance of the <see cref="SamplingResult"/> struct.
         /// </summary>
         /// <param name="isSampled">True if sampled, false otherwise.</param>
-        public Decision(bool isSampled)
+        public SamplingResult(bool isSampled)
         {
             this.IsSampled = isSampled;
             this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Decision"/> struct.
+        /// Initializes a new instance of the <see cref="SamplingResult"/> struct.
         /// </summary>
         /// <param name="isSampled">True if sampled, false otherwise.</param>
         /// <param name="attributes">Attributes associated with the sampling decision. Attributes list passed to
         /// this method must be immutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
-        public Decision(bool isSampled, IEnumerable<KeyValuePair<string, object>> attributes)
+        public SamplingResult(bool isSampled, IEnumerable<KeyValuePair<string, object>> attributes)
         {
             this.IsSampled = isSampled;
 
@@ -61,28 +61,28 @@ namespace OpenTelemetry.Trace
         public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
 
         /// <summary>
-        /// Compare two <see cref="Decision"/> for equality.
+        /// Compare two <see cref="SamplingResult"/> for equality.
         /// </summary>
         /// <param name="decision1">First Decision to compare.</param>
         /// <param name="decision2">Second Decision to compare.</param>
-        public static bool operator ==(Decision decision1, Decision decision2) => decision1.Equals(decision2);
+        public static bool operator ==(SamplingResult decision1, SamplingResult decision2) => decision1.Equals(decision2);
 
         /// <summary>
-        /// Compare two <see cref="Decision"/> for not equality.
+        /// Compare two <see cref="SamplingResult"/> for not equality.
         /// </summary>
         /// <param name="decision1">First Decision to compare.</param>
         /// <param name="decision2">Second Decision to compare.</param>
-        public static bool operator !=(Decision decision1, Decision decision2) => !decision1.Equals(decision2);
+        public static bool operator !=(SamplingResult decision1, SamplingResult decision2) => !decision1.Equals(decision2);
 
         /// <inheritdoc/>
         public override bool Equals(object obj)
         {
-            if (!(obj is Decision))
+            if (!(obj is SamplingResult))
             {
                 return false;
             }
 
-            var that = (Decision)obj;
+            var that = (SamplingResult)obj;
             return this.IsSampled == that.IsSampled && this.Attributes == that.Attributes;
         }
 
