@@ -14,7 +14,7 @@ pr: none
 queue: Hosted VS2017
 
 steps:
-- task: DotNetCoreInstaller@0
+- task: UseDotNet@2
   displayName: force use of desired dotnet version
   inputs:
     version: $(DotNetVersion)

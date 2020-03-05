@@ -43,11 +43,11 @@ namespace OpenTelemetry.Trace.Samplers.Test
         }
 
         [Fact]
-        public void AlwaysSampleSampler_AlwaysReturnTrue()
+        public void AlwaysOnSampler_AlwaysReturnTrue()
         {
             // Sampled parent.
             Assert.True(
-                    new AlwaysSampleSampler()
+                    new AlwaysOnSampler()
                         .ShouldSample(
                             sampledSpanContext,
                             traceId,
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
 
             // Not sampled parent.
             Assert.True(
-                    new AlwaysSampleSampler()
+                    new AlwaysOnSampler()
                         .ShouldSample(
                             notSampledSpanContext,
                             traceId,
@@ -72,17 +72,17 @@ namespace OpenTelemetry.Trace.Samplers.Test
         }
 
         [Fact]
-        public void AlwaysSampleSampler_GetDescription()
+        public void AlwaysOnSampler_GetDescription()
         {
-            Assert.Equal("AlwaysSampleSampler", new AlwaysSampleSampler().Description);
+            Assert.Equal("AlwaysOnSampler", new AlwaysOnSampler().Description);
         }
 
         [Fact]
-        public void NeverSampleSampler_AlwaysReturnFalse()
+        public void NeverOffSampler_AlwaysReturnFalse()
         {
             // Sampled parent.
             Assert.False(
-                    new NeverSampleSampler()
+                    new AlwaysOffSampler()
                         .ShouldSample(
                             sampledSpanContext,
                             traceId,
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                             null).IsSampled);
             // Not sampled parent.
             Assert.False(
-                    new NeverSampleSampler()
+                    new AlwaysOffSampler()
                         .ShouldSample(
                             notSampledSpanContext,
                             traceId,
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         [Fact]
         public void NeverSampleSampler_GetDescription()
         {
-            Assert.Equal("NeverSampleSampler", new NeverSampleSampler().Description);
+            Assert.Equal("AlwaysOffSampler", new AlwaysOffSampler().Description);
         }
 
         [Fact]

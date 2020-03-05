@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private SpanSdk CreateSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
         {
             var tracer = TracerFactory.Create(b => b
-                .SetSampler(new AlwaysSampleSampler())
+                .SetSampler(new AlwaysOnSampler())
                 .AddProcessorPipeline(p => p.AddProcessor(e => spanProcessor))
                 .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
 
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace.Export.Test
         private SpanSdk CreateNotSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
         {
             var tracer = TracerFactory.Create(b => b
-                .SetSampler(new NeverSampleSampler())
+                .SetSampler(new AlwaysOffSampler())
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor))
                 .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
