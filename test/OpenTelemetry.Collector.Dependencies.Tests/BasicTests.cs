@@ -77,8 +77,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
             using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
-            using (var c = new HttpClient())
             {
+                using var c = new HttpClient();
                 await c.SendAsync(request);
             }
 
@@ -128,8 +128,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
             using (new HttpClientCollector(tracer, new HttpClientCollectorOptions {TextFormat = textFormat.Object}))
-            using (var c = new HttpClient())
             {
+                using var c = new HttpClient();
                 await c.SendAsync(request);
             }
 
@@ -159,10 +159,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
                 .AddCollector(t => new HttpClientCollector(t))))
             {
-                using (var c = new HttpClient())
-                {
-                    await c.GetAsync(url);
-                }
+                using var c = new HttpClient();
+                await c.GetAsync(this.url);
             }
 
             Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnStart"));
@@ -179,10 +177,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
                 .AddDependencyCollector()))
             {
-                using (var c = new HttpClient())
-                {
-                    await c.GetAsync(url);
-                }
+                using var c = new HttpClient();
+                await c.GetAsync(this.url);
             }
 
 
@@ -208,8 +204,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
             using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
-            using (var c = new HttpClient())
             {
+                using var c = new HttpClient();
                 await c.SendAsync(request);
             }
 
@@ -230,9 +226,9 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                                                                                         request.RequestUri.OriginalString.Contains(url)));
 
             using (new HttpClientCollector(tracer, options))
-            using (var c = new HttpClient())
             {
-                await c.GetAsync(url);
+                using var c = new HttpClient();
+                await c.GetAsync(this.url);
             }
 
             Assert.Equal(0, spanProcessor.Invocations.Count);
@@ -251,9 +247,9 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             var options = new HttpClientCollectorOptions();
 
             using (new HttpClientCollector(tracer, options))
-            using (var c = new HttpClient())
-            using (var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100)))
             {
+                using var c = new HttpClient();
+                using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
                 try
                 {
                     await c.PostAsync("https://dc.services.visualstudio.com/", new StringContent(""), cts.Token);

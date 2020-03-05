@@ -116,13 +116,9 @@ namespace OpenTelemetry.Exporter.ZPages
                     ctx.Response.StatusCode = 200;
                     ctx.Response.ContentType = ZPagesStatsBuilder.ContentType;
 
-                    using (var output = ctx.Response.OutputStream)
-                    {
-                        using (var writer = new StreamWriter(output))
-                        {
-                            writer.WriteLine("Span Count : " + this.spanProcessor.GetSpanCount());
-                        }
-                    }
+                    using var output = ctx.Response.OutputStream;
+                    using var writer = new StreamWriter(output);
+                    writer.WriteLine("Span Count : " + this.spanProcessor.GetSpanCount());
                 }
             }
             catch (OperationCanceledException)

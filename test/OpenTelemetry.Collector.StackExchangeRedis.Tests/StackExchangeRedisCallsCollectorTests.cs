@@ -33,18 +33,16 @@ namespace OpenTelemetry.Collector.StackExchangeRedis
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            using (var collector = new StackExchangeRedisCallsCollector(tracer))
-            {
-                var profilerFactory = collector.GetProfilerSessionsFactory();
-                var first = profilerFactory();
-                var second = profilerFactory();
+            using var collector = new StackExchangeRedisCallsCollector(tracer);
+            var profilerFactory = collector.GetProfilerSessionsFactory();
+            var first = profilerFactory();
+            var second = profilerFactory();
 
-                ProfilingSession third = null;
-                await Task.Delay(1).ContinueWith((t) => { third = profilerFactory(); });
+            ProfilingSession third = null;
+            await Task.Delay(1).ContinueWith((t) => { third = profilerFactory(); });
 
-                Assert.Equal(first, second);
-                Assert.Equal(second, third);
-            }
+            Assert.Equal(first, second);
+            Assert.Equal(second, third);
         }
     }
 }

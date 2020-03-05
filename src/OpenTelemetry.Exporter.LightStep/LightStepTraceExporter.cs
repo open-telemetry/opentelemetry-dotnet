@@ -91,12 +91,10 @@ namespace OpenTelemetry.Exporter.LightStep
 
         private async Task PostSpansAsync(HttpClient client, HttpRequestMessage request)
         {
-            using (var res = await client.SendAsync(request).ConfigureAwait(false))
+            using var res = await client.SendAsync(request).ConfigureAwait(false);
+            if (res.StatusCode != HttpStatusCode.OK && res.StatusCode != HttpStatusCode.Accepted)
             {
-                if (res.StatusCode != HttpStatusCode.OK && res.StatusCode != HttpStatusCode.Accepted)
-                {
-                    var sc = (int)res.StatusCode;
-                }
+                var sc = (int)res.StatusCode;
             }
         }
     }

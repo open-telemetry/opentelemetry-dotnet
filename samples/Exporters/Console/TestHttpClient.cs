@@ -26,24 +26,20 @@ namespace Samples
         {
             Console.WriteLine("Hello World!");
 
-            using (var tracerFactory = TracerFactory.Create(builder => builder
+            using var tracerFactory = TracerFactory.Create(builder => builder
                 .UseZipkin(o => o.ServiceName = "http-client-test")
-                .AddDependencyCollector()))
+                .AddDependencyCollector());
+            var tracer = tracerFactory.GetTracer("http-client-test");
+
+            using (tracer.StartActiveSpan("incoming request", out _))
             {
-                var tracer = tracerFactory.GetTracer("http-client-test");
-
-                using (tracer.StartActiveSpan("incoming request", out _))
-                {
-                    using (var client = new HttpClient())
-                    {
-                        client.GetStringAsync("http://bing.com").GetAwaiter().GetResult();
-                    }
-                }
-
-                Console.ReadLine();
-
-                return null;
+                using var client = new HttpClient();
+                client.GetStringAsync("http://bing.com").GetAwaiter().GetResult();
             }
+
+            Console.ReadLine();
+
+            return null;
         }
     }
 }

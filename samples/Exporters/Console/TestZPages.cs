@@ -36,23 +36,21 @@ namespace Samples
             httpServer.Start();
 
             // Configure exporter
-            using (var tracerFactory = TracerFactory.Create(builder => builder
+            using var tracerFactory = TracerFactory.Create(builder => builder
                 .AddProcessorPipeline(b => b
                     .SetExporter(zpagesExporter)
-                    .SetExportingProcessor(e => spanProcessor))))
+                    .SetExportingProcessor(e => spanProcessor)));
+            var tracer = tracerFactory.GetTracer("zpages-test");
+
+            while (true)
             {
-                var tracer = tracerFactory.GetTracer("zpages-test");
-
-                while (true)
+                // Create a scoped span. It will end automatically when using statement ends
+                using (tracer.WithSpan(tracer.StartSpan("Main")))
                 {
-                    // Create a scoped span. It will end automatically when using statement ends
-                    using (tracer.WithSpan(tracer.StartSpan("Main")))
-                    {
-                        Console.WriteLine("Starting Span");
-                    }
-
-                    Thread.Sleep(500);
+                    Console.WriteLine("Starting Span");
                 }
+
+                Thread.Sleep(500);
             }
         }
     }
