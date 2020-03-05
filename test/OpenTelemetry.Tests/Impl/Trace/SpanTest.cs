@@ -742,7 +742,7 @@ namespace OpenTelemetry.Trace.Test
         public void NotRecordedSpan_NoAttributesOrEventsAdded()
         {
             var tracer = TracerFactory.Create(b => b
-                    .SetSampler(new NeverSampleSampler()))
+                    .SetSampler(new AlwaysOffSampler()))
                 .GetTracer(null);
 
             var span = (SpanSdk)tracer.StartRootSpan(SpanName, SpanKind.Client);
@@ -1615,7 +1615,7 @@ namespace OpenTelemetry.Trace.Test
                 It.IsAny<string>(),
                 It.IsAny<SpanKind>(),
                 It.IsAny<IDictionary<string, object>>(),
-                It.IsAny<IEnumerable<Link>>())).Returns(new Decision(true));
+                It.IsAny<IEnumerable<Link>>())).Returns(new SamplingResult(true));
 
             var span = (SpanSdk)tracer.StartSpan("test", SpanKind.Client, new SpanCreationOptions { Attributes = this.attributes, });
             span.Attributes.AssertAreSame(this.attributes);
@@ -1646,7 +1646,7 @@ namespace OpenTelemetry.Trace.Test
                 It.IsAny<string>(),
                 It.IsAny<SpanKind>(),
                 It.IsAny<IDictionary<string, object>>(),
-                It.IsAny<IEnumerable<Link>>())).Returns(new Decision(false));
+                It.IsAny<IEnumerable<Link>>())).Returns(new SamplingResult(false));
 
             var span = (SpanSdk)tracer.StartSpan("test", SpanKind.Client, new SpanCreationOptions { Attributes = this.attributes, });
             Assert.Null(span.Attributes);
