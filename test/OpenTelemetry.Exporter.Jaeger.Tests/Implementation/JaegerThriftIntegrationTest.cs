@@ -35,19 +35,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         {
             var validJaegerThriftPayload = Convert.FromBase64String(TestPayloadBase64);
 
-            using (var memoryTransport = new InMemoryTransport())
-            {
-                var protocolFactory = new TCompactProtocol.Factory();
-                var thriftClient = new JaegerThriftClient(protocolFactory.GetProtocol(memoryTransport));
-                var spanData = CreateTestSpan();
-                var span = spanData.ToJaegerSpan();
-                var process = TestProcess;
-                var batch = new Batch(process, new List<JaegerSpan> { span });
+            using var memoryTransport = new InMemoryTransport();
+            var protocolFactory = new TCompactProtocol.Factory();
+            var thriftClient = new JaegerThriftClient(protocolFactory.GetProtocol(memoryTransport));
+            var spanData = CreateTestSpan();
+            var span = spanData.ToJaegerSpan();
+            var process = TestProcess;
+            var batch = new Batch(process, new List<JaegerSpan> { span });
 
-                await thriftClient.EmitBatchAsync(batch, CancellationToken.None);
+            await thriftClient.EmitBatchAsync(batch, CancellationToken.None);
 
-                Assert.Equal(validJaegerThriftPayload, memoryTransport.ToArray());
-            }
+            Assert.Equal(validJaegerThriftPayload, memoryTransport.ToArray());
         }
 
         internal static Process TestProcess { get; } = new Process("test process", new Dictionary<string, object> { { "test_process_tag", "test_value" } });

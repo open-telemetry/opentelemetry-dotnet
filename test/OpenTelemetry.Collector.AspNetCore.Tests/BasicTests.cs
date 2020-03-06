@@ -109,8 +109,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                                 .AddRequestCollector()));
                     })))
-            using (var client = testFactory.CreateClient())
             {
+                using var client = testFactory.CreateClient();
                 var request = new HttpRequestMessage(HttpMethod.Get, "/api/values/2");
                 request.Headers.Add("traceparent", $"00-{expectedTraceId}-{expectedSpanId}-01");
 
@@ -159,8 +159,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                                 .AddRequestCollector(o => o.TextFormat = textFormat.Object)));
                     })))
-            using (var client = testFactory.CreateClient())
             {
+                using var client = testFactory.CreateClient();
                 var response = await client.GetAsync("/api/values/2");
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
@@ -196,9 +196,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             using (var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(ConfigureTestServices)))
-            using (var client = testFactory.CreateClient())
             {
-
+                using var client = testFactory.CreateClient();
                 // Act
                 var response1 = await client.GetAsync("/api/values");
                 var response2 = await client.GetAsync("/api/values/2");

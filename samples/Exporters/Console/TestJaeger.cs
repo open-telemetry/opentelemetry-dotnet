@@ -26,29 +26,27 @@ namespace Samples
         internal static object Run(string host, int port)
         {
             // Create a tracer.
-            using (var tracerFactory = TracerFactory.Create(
+            using var tracerFactory = TracerFactory.Create(
                 builder => builder.UseJaeger(o =>
                 {
                     o.ServiceName = "jaeger-test";
                     o.AgentHost = host;
                     o.AgentPort = port;
-                })))
+                }));
+            var tracer = tracerFactory.GetTracer("jaeger-test");
+
+            // Create a scoped span. It will end automatically when using statement ends
+            using (tracer.StartActiveSpan("Main", out var span))
             {
-                var tracer = tracerFactory.GetTracer("jaeger-test");
-
-                // Create a scoped span. It will end automatically when using statement ends
-                using (tracer.StartActiveSpan("Main", out var span))
+                span.SetAttribute("custom-attribute", 55);
+                Console.WriteLine("About to do a busy work");
+                for (int i = 0; i < 10; i++)
                 {
-                    span.SetAttribute("custom-attribute", 55);
-                    Console.WriteLine("About to do a busy work");
-                    for (int i = 0; i < 10; i++)
-                    {
-                        DoWork(i, tracer);
-                    }
+                    DoWork(i, tracer);
                 }
-
-                return null;
             }
+
+            return null;
         }
 
         private static void DoWork(int i, Tracer tracer)

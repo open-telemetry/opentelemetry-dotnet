@@ -1440,8 +1440,8 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentSpan))
-            using (var scope = tracer.StartActiveSpan(SpanName, out var childSpan))
             {
+                using var scope = tracer.StartActiveSpan(SpanName, out var childSpan);
                 Assert.NotNull(scope);
 
                 var span = tracer.CurrentSpan;
@@ -1461,8 +1461,8 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentSpan))
-            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer, out var childSpan))
             {
+                using var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer, out var childSpan);
                 Assert.NotNull(scope);
 
                 var span = (SpanSdk)tracer.CurrentSpan;
@@ -1486,9 +1486,9 @@ namespace OpenTelemetry.Trace.Test
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentspan))
-            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer,
-                new SpanCreationOptions { StartTimestamp = startTimestamp }, out var childSpan))
             {
+                using var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer,
+                    new SpanCreationOptions { StartTimestamp = startTimestamp }, out var childSpan);
                 Assert.NotNull(scope);
 
                 var span = (SpanSdk)tracer.CurrentSpan;
@@ -1512,9 +1512,9 @@ namespace OpenTelemetry.Trace.Test
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             using (var parentScope = tracer.StartActiveSpan(SpanName, out _))
-            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer,
-                new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan))
             {
+                using var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer,
+                    new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan);
                 Assert.NotNull(scope);
 
                 var span = (SpanSdk)tracer.CurrentSpan;

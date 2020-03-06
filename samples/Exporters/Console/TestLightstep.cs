@@ -16,27 +16,25 @@ namespace Samples
         internal static object Run(string accessToken)
         {
             // Create a tracer.
-            using (var tracerFactory = TracerFactory.Create(
+            using var tracerFactory = TracerFactory.Create(
                 builder => builder.UseLightStep(o =>
                 {
                     o.AccessToken = accessToken;
                     o.ServiceName = "lightstep-test";
-                })))
+                }));
+            var tracer = tracerFactory.GetTracer("lightstep-test");
+            using (tracer.StartActiveSpan("Main", out var span))
             {
-                var tracer = tracerFactory.GetTracer("lightstep-test");
-                using (tracer.StartActiveSpan("Main", out var span))
+                span.SetAttribute("custom-attribute", 55);
+                Console.WriteLine("About to do a busy work");
+                for (int i = 0; i < 10; i++)
                 {
-                    span.SetAttribute("custom-attribute", 55);
-                    Console.WriteLine("About to do a busy work");
-                    for (int i = 0; i < 10; i++)
-                    {
-                        DoWork(i, tracer);
-                    }
+                    DoWork(i, tracer);
                 }
-
-                Thread.Sleep(10000);
-                return null;
             }
+
+            Thread.Sleep(10000);
+            return null;
         }
 
         private static void DoWork(int i, Tracer tracer)
