@@ -44,18 +44,19 @@ namespace OpenTelemetry.Trace.Internal
 
         public int DroppedItems => this.totalRecorded - this.Count;
 
-        public IEnumerator<T> GetEnumerator()
+        public Enumerator GetEnumerator()
         {
-            var head = this.tail - this.Count;
-            for (int i = head; i < this.Count + head; i++)
-            {
-                yield return this.items[i % this.maxNumItems];
-            }
+            return new Enumerator(this);
+        }
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
+            return new Enumerator(this);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return this.GetEnumerator();
+            return new Enumerator(this);
         }
 
         internal void Add(T item)
@@ -75,6 +76,49 @@ namespace OpenTelemetry.Trace.Internal
 
             this.items[this.tail % this.maxNumItems] = item;
             this.tail++;
+        }
+
+        public struct Enumerator : IEnumerator<T>, IEnumerator
+        {
+            private readonly EvictingQueue<T> evictingQueue;
+            private readonly int head;
+            private int index;
+            private T current;
+
+            internal Enumerator(EvictingQueue<T> evictingQueue)
+            {
+                this.evictingQueue = evictingQueue;
+                this.head = this.evictingQueue.tail - this.evictingQueue.Count;
+                this.index = this.head;
+                this.current = default;
+            }
+
+            public T Current { get => this.current; }
+
+            object IEnumerator.Current { get => this.Current; }
+
+            public void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                if (this.index < this.evictingQueue.Count + this.head)
+                {
+                    this.current = this.evictingQueue.items[this.index++ % this.evictingQueue.maxNumItems];
+                    return true;
+                }
+
+                this.index = this.evictingQueue.tail + 1;
+                this.current = default;
+                return false;
+            }
+
+            void IEnumerator.Reset()
+            {
+                this.index = this.head;
+                this.current = default;
+            }
         }
     }
 }
