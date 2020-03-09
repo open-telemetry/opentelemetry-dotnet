@@ -96,7 +96,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return sb.ToString();
         }
 
-        internal static async Task WriteAsync(byte[] processMessage, IEnumerable<BufferWriterMemory> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
+        internal static async Task WriteAsync(byte[] processMessage, List<BufferWriterMemory> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
             try
@@ -120,15 +120,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 field.Type = TType.List;
                 field.ID = 2;
 
-                var spans = spanMessages ?? Enumerable.Empty<BufferWriterMemory>();
-
                 await oprot.WriteFieldBeginAsync(field, cancellationToken);
                 {
-                    await oprot.WriteListBeginAsync(new TList(TType.Struct, spans.Count()), cancellationToken);
+                    await oprot.WriteListBeginAsync(new TList(TType.Struct, spanMessages?.Count ?? 0), cancellationToken);
 
-                    foreach (var s in spans)
+                    if (spanMessages != null)
                     {
-                        await oprot.Transport.WriteAsync(s.BufferWriter.Buffer, s.Offset, s.Count, cancellationToken);
+                        foreach (var s in spanMessages)
+                        {
+                            await oprot.Transport.WriteAsync(s.BufferWriter.Buffer, s.Offset, s.Count, cancellationToken);
+                        }
                     }
 
                     await oprot.WriteListEndAsync(cancellationToken);

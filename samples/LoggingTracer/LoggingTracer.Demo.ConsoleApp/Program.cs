@@ -43,10 +43,8 @@ namespace LoggingTracer.Demo.ConsoleApp
         {
             Logger.Log("*** RunFooWithLoggingExporter ***");
             var exporter = new LoggingExporter();
-            using (var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(exporter))))
-            {
-                await Foo(tracerFactory);
-            }
+            using var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(exporter)));
+            await Foo(tracerFactory);
         }
 
         private static async Task Foo(TracerFactoryBase tracerFactory)

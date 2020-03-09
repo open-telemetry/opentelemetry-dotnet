@@ -108,29 +108,27 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var memoryTransport = new InMemoryTransport();
 
-            using (var jaegerUdpBatcher = new JaegerUdpBatcher(
+            using var jaegerUdpBatcher = new JaegerUdpBatcher(
                 new JaegerExporterOptions { MaxFlushInterval = TimeSpan.FromHours(1) },
-                memoryTransport))
-            {
-                jaegerUdpBatcher.Process = JaegerThriftIntegrationTest.TestProcess;
+                memoryTransport);
+            jaegerUdpBatcher.Process = JaegerThriftIntegrationTest.TestProcess;
 
-                await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
 
-                await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
-                Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.ToArray()));
+            Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.ToArray()));
 
-                memoryTransport.Reset();
+            memoryTransport.Reset();
 
-                await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(JaegerThriftIntegrationTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
 
-                await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
-                // SeqNo is the second byte.
-                validJaegerThriftPayload[2]++;
+            // SeqNo is the second byte.
+            validJaegerThriftPayload[2]++;
 
-                Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.ToArray()));
-            }
+            Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.ToArray()));
         }
     }
 }

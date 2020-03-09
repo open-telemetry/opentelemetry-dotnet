@@ -125,14 +125,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
         private async Task DoPostAsync(HttpClient client, HttpRequestMessage request)
         {
-            using (var response = await client.SendAsync(request).ConfigureAwait(false))
-            {
-                if (response.StatusCode != HttpStatusCode.OK &&
-                    response.StatusCode != HttpStatusCode.Accepted)
-                {
-                    var statusCode = (int)response.StatusCode;
-                }
-            }
+            await client.SendAsync(request).ConfigureAwait(false);
         }
 
         private HttpRequestMessage GetHttpRequestMessage(HttpMethod method, Uri requestUri)

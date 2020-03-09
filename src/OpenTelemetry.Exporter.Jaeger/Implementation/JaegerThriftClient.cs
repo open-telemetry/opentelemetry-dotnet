@@ -49,7 +49,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             await this.OutputProtocol.Transport.FlushAsync(cancellationToken);
         }
 
-        internal async Task EmitBatchAsync(byte[] processMessage, IEnumerable<BufferWriterMemory> spanMessages, CancellationToken cancellationToken)
+        internal async Task EmitBatchAsync(byte[] processMessage, List<BufferWriterMemory> spanMessages, CancellationToken cancellationToken)
         {
             await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
             await EmitBatchArgs.WriteAsync(processMessage, spanMessages, this.OutputProtocol, cancellationToken);

@@ -52,9 +52,9 @@ namespace OpenTelemetry.Trace.Test
         public void BadConstructorArgumentsThrow()
         {
             var noopProc = new SimpleSpanProcessor(new TestExporter(null));
-            Assert.Throws<ArgumentNullException>(() => new TracerSdk(null, new AlwaysSampleSampler(), new TracerConfiguration(), Resource.Empty));
-            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysSampleSampler(), null, Resource.Empty));
-            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysSampleSampler(), new TracerConfiguration(), null));
+            Assert.Throws<ArgumentNullException>(() => new TracerSdk(null, new AlwaysOnSampler(), new TracerConfiguration(), Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysOnSampler(), null, Resource.Empty));
+            Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysOnSampler(), new TracerConfiguration(), null));
         }
 
         [Fact]
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Trace.Test
         public void CreateSpan_NotSampled()
         {
             var tracer = TracerFactory.Create(b => b
-                    .SetSampler(new NeverSampleSampler())
+                    .SetSampler(new AlwaysOffSampler())
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor)))
                 .GetTracer(null);
 
@@ -192,7 +192,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
                     .SetTracerOptions(traceConfig)
-                    .SetSampler(new AlwaysSampleSampler()))
+                    .SetSampler(new AlwaysOnSampler()))
                 .GetTracer(null);
 
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
@@ -244,7 +244,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
                     .SetTracerOptions(traceConfig)
-                    .SetSampler(new AlwaysSampleSampler()))
+                    .SetSampler(new AlwaysOnSampler()))
                 .GetTracer(null);
 
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
@@ -283,7 +283,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
                     .SetTracerOptions(traceConfig)
-                    .SetSampler(new AlwaysSampleSampler()))
+                    .SetSampler(new AlwaysOnSampler()))
                 .GetTracer(null);
 
             var overflowedLinks = new List<Link>();
@@ -325,7 +325,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
                     .SetTracerOptions(traceConfig)
-                    .SetSampler(new AlwaysSampleSampler()))
+                    .SetSampler(new AlwaysOnSampler()))
                 .GetTracer(null);
 
             var overflowedLinks = new List<Link>();
@@ -364,7 +364,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(_ => this.spanProcessor))
                     .SetTracerOptions(traceConfig)
-                    .SetSampler(new AlwaysSampleSampler()))
+                    .SetSampler(new AlwaysOnSampler()))
                 .GetTracer(null);
 
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);

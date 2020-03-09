@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         private TracerFactory(TracerBuilder builder)
         {
-            this.sampler = builder.Sampler ?? new AlwaysSampleSampler();
+            this.sampler = builder.Sampler ?? new AlwaysOnSampler();
             this.defaultResource = builder.Resource;
 
             this.configurationOptions =

@@ -50,21 +50,19 @@ namespace Benchmarks.Exporter
         [Benchmark]
         public async Task JaegerExporter_Batching()
         {
-            using (var jaegerUdpBatcher = new JaegerUdpBatcher(
+            using var jaegerUdpBatcher = new JaegerUdpBatcher(
                 new JaegerExporterOptions(),
-                new BlackHoleTransport()))
+                new BlackHoleTransport());
+            jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Process("TestService");
+
+            for (int i = 0; i < this.NumberOfBatches; i++)
             {
-                jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Process("TestService");
-
-                for (int i = 0; i < this.NumberOfBatches; i++)
+                for (int c = 0; c < this.NumberOfSpans; c++)
                 {
-                    for (int c = 0; c < this.NumberOfSpans; c++)
-                    {
-                        await jaegerUdpBatcher.AppendAsync(this.testSpan, CancellationToken.None).ConfigureAwait(false);
-                    }
-
-                    await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                    await jaegerUdpBatcher.AppendAsync(this.testSpan, CancellationToken.None).ConfigureAwait(false);
                 }
+
+                await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 

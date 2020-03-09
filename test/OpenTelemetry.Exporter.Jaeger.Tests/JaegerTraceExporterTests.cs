@@ -26,92 +26,82 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public void JaegerTraceExporter_ctor_NullServiceNameAllowed()
         {
-            using (var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions
+            using var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions
             {
                 ServiceName = null,
-            }))
-            {
-                Assert.NotNull(jaegerTraceExporter);
-            }
+            });
+            Assert.NotNull(jaegerTraceExporter);
         }
 
         [Fact]
         public void JaegerTraceExporter_ApplyLibraryResource_UpdatesServiceName()
         {
-            using (var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions()))
-            {
-                var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
+            using var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions());
+            var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
 
-                process.ServiceName = "TestService";
+            process.ServiceName = "TestService";
 
-                jaegerTraceExporter.ApplyLibraryResource(Resource.Empty);
+            jaegerTraceExporter.ApplyLibraryResource(Resource.Empty);
 
-                Assert.Equal("TestService", process.ServiceName);
+            Assert.Equal("TestService", process.ServiceName);
 
-                jaegerTraceExporter.ApplyLibraryResource(Resources.Resources.CreateServiceResource("MyService"));
+            jaegerTraceExporter.ApplyLibraryResource(Resources.Resources.CreateServiceResource("MyService"));
 
-                Assert.Equal("MyService", process.ServiceName);
+            Assert.Equal("MyService", process.ServiceName);
 
-                jaegerTraceExporter.ApplyLibraryResource(Resources.Resources.CreateServiceResource("MyService", serviceNamespace: "MyNamespace"));
+            jaegerTraceExporter.ApplyLibraryResource(Resources.Resources.CreateServiceResource("MyService", serviceNamespace: "MyNamespace"));
 
-                Assert.Equal("MyNamespace.MyService", process.ServiceName);
-            }
+            Assert.Equal("MyNamespace.MyService", process.ServiceName);
         }
 
         [Fact]
         public void JaegerTraceExporter_ApplyLibraryResource_CreatesTags()
         {
-            using (var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions()))
+            using var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions());
+            var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
+
+            jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
             {
-                var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
+                ["Tag"] = "value",
+            }));
 
-                jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
-                {
-                    ["Tag"] = "value",
-                }));
-
-                Assert.NotNull(process.Tags);
-                Assert.Single(process.Tags);
-                Assert.Equal("value", process.Tags["Tag"].VStr);
-            }
+            Assert.NotNull(process.Tags);
+            Assert.Single(process.Tags);
+            Assert.Equal("value", process.Tags["Tag"].VStr);
         }
 
         [Fact]
         public void JaegerTraceExporter_ApplyLibraryResource_CombinesTags()
         {
-            using (var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions()))
+            using var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions());
+            var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
+
+            process.Tags = new Dictionary<string, JaegerTag> { ["Tag1"] = new KeyValuePair<string, object>("Tag1", "value1").ToJaegerTag() };
+
+            jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
             {
-                var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
+                ["Tag2"] = "value2",
+            }));
 
-                process.Tags = new Dictionary<string, JaegerTag> { ["Tag1"] = new KeyValuePair<string, object>("Tag1", "value1").ToJaegerTag() };
-
-                jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
-                {
-                    ["Tag2"] = "value2",
-                }));
-
-                Assert.NotNull(process.Tags);
-                Assert.Equal(2, process.Tags.Count);
-                Assert.Equal("value1", process.Tags["Tag1"].VStr);
-                Assert.Equal("value2", process.Tags["Tag2"].VStr);
-            }
+            Assert.NotNull(process.Tags);
+            Assert.Equal(2, process.Tags.Count);
+            Assert.Equal("value1", process.Tags["Tag1"].VStr);
+            Assert.Equal("value2", process.Tags["Tag2"].VStr);
         }
 
         [Fact]
         public void JaegerTraceExporter_ApplyLibraryResource_IgnoreLibraryResources()
         {
-            using (var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions()))
+            using var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions());
+            var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
+
+            jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
             {
-                var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
+                [Resource.LibraryNameKey] = "libname",
+                [Resource.LibraryVersionKey] = "libversion",
+            }));
 
-                jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
-                {
-                    [Resource.LibraryNameKey] = "libname",
-                    [Resource.LibraryVersionKey] = "libversion",
-                }));
-
-                Assert.Null(process.Tags);
-            }
+            Assert.Null(process.Tags);
         }
     }
 }
