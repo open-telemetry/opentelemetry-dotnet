@@ -16,6 +16,7 @@
 using System;
 using System.Threading;
 using OpenTelemetry.Metrics.Aggregators;
+using OpenTelemetry.Metrics.Export;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Test
@@ -59,10 +60,10 @@ namespace OpenTelemetry.Metrics.Test
         {
             // create an aggregator
             CounterSumAggregator<long> aggregator = new CounterSumAggregator<long>();
-            var sum = aggregator.ValueFromLastCheckpoint();
+            var sum = aggregator.ToMetricData() as SumData<long>;
 
             // we start with 0.
-            Assert.Equal(0, sum);
+            Assert.Equal(0, sum.Sum);
 
             // setup args to threads.
             var mre = new ManualResetEvent(false);
@@ -95,10 +96,10 @@ namespace OpenTelemetry.Metrics.Test
 
             // check point.
             aggregator.Checkpoint();
-            sum = aggregator.ValueFromLastCheckpoint();
+            sum = aggregator.ToMetricData() as SumData<long>;
 
             // 1000000 times 10 by each thread. times 10 as there are 10 threads
-            Assert.Equal(100000000, sum);
+            Assert.Equal(100000000, sum.Sum);
         }
 
         [Fact]
@@ -106,10 +107,10 @@ namespace OpenTelemetry.Metrics.Test
         {
             // create an aggregator
             CounterSumAggregator<double> aggregator = new CounterSumAggregator<double>();
-            var sum = aggregator.ValueFromLastCheckpoint();
+            var sum = aggregator.ToMetricData() as SumData<double>;
 
             // we start with 0.0
-            Assert.Equal(0.0, sum);
+            Assert.Equal(0.0, sum.Sum);
 
             // setup args to threads.
             var mre = new ManualResetEvent(false);
@@ -142,10 +143,10 @@ namespace OpenTelemetry.Metrics.Test
 
             // check point.
             aggregator.Checkpoint();
-            sum = aggregator.ValueFromLastCheckpoint();
+            sum = aggregator.ToMetricData() as SumData<double>;
 
             // 1000000 times 10.5 by each thread. times 10 as there are 10 threads
-            Assert.Equal(105000000, sum);
+            Assert.Equal(105000000, sum.Sum);
         }
 
 

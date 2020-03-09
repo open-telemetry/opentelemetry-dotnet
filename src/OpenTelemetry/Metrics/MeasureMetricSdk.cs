@@ -56,7 +56,7 @@ namespace OpenTelemetry.Metrics
             return this.Bind(new LabelSetSdk(labels));
         }
 
-        internal IDictionary<LabelSet, BoundMeasureMetricSdk<T>> GetAllHandles()
+        internal IDictionary<LabelSet, BoundMeasureMetricSdk<T>> GetAllBoundInstruments()
         {
             return this.measureBoundInstruments;
         }

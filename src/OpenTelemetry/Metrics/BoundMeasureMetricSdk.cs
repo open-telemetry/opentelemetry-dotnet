@@ -24,7 +24,7 @@ namespace OpenTelemetry.Metrics
     internal class BoundMeasureMetricSdk<T> : BoundMeasureMetric<T>
         where T : struct
     {
-        private readonly MeasureExactAggregator<T> measureExactAggregator = new MeasureExactAggregator<T>();
+        private readonly MeasureMinMaxSumCountAggregator<T> measureAggregator = new MeasureMinMaxSumCountAggregator<T>();
 
         internal BoundMeasureMetricSdk()
         {
@@ -36,17 +36,17 @@ namespace OpenTelemetry.Metrics
 
         public override void Record(in SpanContext context, T value)
         {
-            this.measureExactAggregator.Update(value);
+            this.measureAggregator.Update(value);
         }
 
         public override void Record(in DistributedContext context, T value)
         {
-            this.measureExactAggregator.Update(value);
+            this.measureAggregator.Update(value);
         }
 
-        internal MeasureExactAggregator<T> GetAggregator()
+        internal MeasureMinMaxSumCountAggregator<T> GetAggregator()
         {
-            return this.measureExactAggregator;
+            return this.measureAggregator;
         }
     }
 }

@@ -14,12 +14,18 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Metrics.Export;
+
 namespace OpenTelemetry.Metrics.Aggregators
 {
     public abstract class Aggregator<T> where T : struct
     {
         public abstract void Update(T value);
 
-        public abstract void Checkpoint();        
+        public abstract void Checkpoint();
+
+        public abstract MetricData<T> ToMetricData();
+
+        public abstract AggregationType GetAggregationType();
     }
 }
