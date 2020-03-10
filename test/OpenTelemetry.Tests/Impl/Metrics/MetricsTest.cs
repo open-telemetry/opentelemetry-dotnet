@@ -20,6 +20,7 @@ using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Trace;
 using Xunit;
 using OpenTelemetry.Metrics.Export;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics.Test
 {
@@ -95,27 +96,24 @@ namespace OpenTelemetry.Metrics.Test
         {
             var testProcessor = new TestMetricProcessor();
             var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
-            var testObserver = meter.CreateInt64Observer("testObserver");
-
-            var labels1 = new List<KeyValuePair<string, string>>();
-            labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
-
-            var labels2 = new List<KeyValuePair<string, string>>();
-            labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
-
-            var context = default(SpanContext);
-            testObserver.Observe(context, 100, meter.GetLabelSet(labels1));
-            testObserver.Observe(context, 10, meter.GetLabelSet(labels1));
-            testObserver.Observe(context, 200, meter.GetLabelSet(labels2));
-            testObserver.Observe(context, 20, meter.GetLabelSet(labels2));
+            var testObserver = meter.CreateInt64Observer("testObserver", MemorySizeObserver);
 
             meter.Collect();
 
-            Assert.Equal(2, testProcessor.longMetrics.Count);
-            Assert.Equal(2, testProcessor.longMetrics.Count(m => m.MetricName == "testObserver"));
+            Assert.Equal(1, testProcessor.longMetrics.Count);
+            Assert.Equal(1, testProcessor.longMetrics.Count(m => m.MetricName == "testObserver"));
 
             Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 10));
             Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 20));
+        }
+
+        private void MemorySizeObserver(Int64ObserverMetric observerMetric)
+        {
+            var labels2 = new List<KeyValuePair<string, string>>();
+            labels2.Add(new KeyValuePair<string, string>("dim1", "value1"));
+
+            var mem = Process.GetCurrentProcess().WorkingSet64;
+            observerMetric.Observe(mem, labels2);
         }
     }
 }

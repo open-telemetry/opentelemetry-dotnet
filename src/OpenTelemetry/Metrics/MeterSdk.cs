@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using OpenTelemetry.Metrics.Export;
@@ -29,8 +30,7 @@ namespace OpenTelemetry.Metrics
         private readonly IDictionary<string, CounterMetricSdk<double>> doubleCounters = new ConcurrentDictionary<string, CounterMetricSdk<double>>();
         private readonly IDictionary<string, MeasureMetricSdk<long>> longMeasures = new ConcurrentDictionary<string, MeasureMetricSdk<long>>();
         private readonly IDictionary<string, MeasureMetricSdk<double>> doubleMeasures = new ConcurrentDictionary<string, MeasureMetricSdk<double>>();
-        private readonly IDictionary<string, ObserverMetricSdk<long>> longObservers = new ConcurrentDictionary<string, ObserverMetricSdk<long>>();
-        private readonly IDictionary<string, ObserverMetricSdk<double>> doubleObservers = new ConcurrentDictionary<string, ObserverMetricSdk<double>>();
+        private readonly IDictionary<string, Int64ObserverMetricSdk> longObservers = new ConcurrentDictionary<string, Int64ObserverMetricSdk>();
         private readonly object collectLock = new object();
 
         internal MeterSdk(string meterName, MetricProcessor metricProcessor)
@@ -102,24 +102,12 @@ namespace OpenTelemetry.Metrics
                     }
                 }
 
-                foreach (var doubleObserver in this.doubleObservers)
-                {
-                    var metricName = doubleObserver.Key;
-                    var measureInstrument = doubleObserver.Value;
-                    foreach (var handle in measureInstrument.GetAllHandles())
-                    {
-                        var labelSet = handle.Key;
-                        var aggregator = handle.Value.GetAggregator();
-                        aggregator.Checkpoint();
-                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
-                    }
-                }
-
                 foreach (var longObserver in this.longObservers)
                 {
                     var metricName = longObserver.Key;
-                    var measureInstrument = longObserver.Value;
-                    foreach (var handle in measureInstrument.GetAllHandles())
+                    var observerInstrument = longObserver.Value;
+                    observerInstrument.InvokeCallback();
+                    foreach (var handle in observerInstrument.GetAllHandles())
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
@@ -178,26 +166,12 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
-        public override ObserverMetric<long> CreateInt64Observer(string name, bool absolute = true)
+        public override Int64ObserverMetric CreateInt64Observer(string name, Action<Int64ObserverMetric> callback, bool absolute = true)
         {
             if (!this.longObservers.TryGetValue(name, out var observer))
             {
-                observer = new ObserverMetricSdk<long>(name);
-
+                observer = new Int64ObserverMetricSdk(name, callback);
                 this.longObservers.Add(name, observer);
-            }
-
-            return observer;
-        }
-
-        /// <inheritdoc/>
-        public override ObserverMetric<double> CreateDoubleObserver(string name, bool absolute = true)
-        {
-            if (!this.doubleObservers.TryGetValue(name, out var observer))
-            {
-                observer = new ObserverMetricSdk<double>(name);
-
-                this.doubleObservers.Add(name, observer);
             }
 
             return observer;

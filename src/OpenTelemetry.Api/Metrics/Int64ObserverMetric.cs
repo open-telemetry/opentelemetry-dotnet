@@ -1,4 +1,4 @@
-// <copyright file="NoOpObserverMetric.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Int64ObserverMetric.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,27 +21,22 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// A no-op observer instrument.
+    /// Observer instrument.
     /// </summary>
-    /// <typeparam name="T">The type of observer. Only long and double are supported now.</typeparam>
-    public sealed class NoOpObserverMetric<T> : ObserverMetric<T>
-        where T : struct
+    public abstract class Int64ObserverMetric
     {
         /// <summary>
-        /// No op observer instance.
+        /// Observes a value.
         /// </summary>
-        public static readonly NoOpObserverMetric<T> Instance = new NoOpObserverMetric<T>();
+        /// <param name="value">value to record.</param>
+        /// <param name="labelset">The labelset associated with this value.</param>
+        public abstract void Observe(long value, LabelSet labelset);
 
-        /// <inheritdoc/>
-        public override ObserverMetricHandle<T> GetHandle(LabelSet labelset)
-        {
-            return NoOpObserverMetricHandle<T>.Instance;
-        }
-
-        /// <inheritdoc/>
-        public override ObserverMetricHandle<T> GetHandle(IEnumerable<KeyValuePair<string, string>> labels)
-        {
-            return NoOpObserverMetricHandle<T>.Instance;
-        }
+        /// <summary>
+        /// Observes a value.
+        /// </summary>
+        /// <param name="value">value to record.</param>
+        /// <param name="labels">The labels or dimensions associated with this value.</param>
+        public abstract void Observe(long value, IEnumerable<KeyValuePair<string, string>> labels);
     }
 }
