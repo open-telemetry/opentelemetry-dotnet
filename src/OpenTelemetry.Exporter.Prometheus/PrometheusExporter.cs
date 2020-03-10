@@ -40,9 +40,9 @@ namespace OpenTelemetry.Exporter.Prometheus
             this.DoubleMetrics = new List<Metric<double>>();
         }
 
-        internal List<Metric<long>> LongMetrics { get; private set; }
+        private List<Metric<long>> LongMetrics { get; set; }
 
-        internal List<Metric<double>> DoubleMetrics { get; private set; }
+        private List<Metric<double>> DoubleMetrics { get; set; }
 
         /// <inheritdoc/>
         public override Task<ExportResult> ExportAsync<T>(List<Metric<T>> metrics, CancellationToken cancellationToken)

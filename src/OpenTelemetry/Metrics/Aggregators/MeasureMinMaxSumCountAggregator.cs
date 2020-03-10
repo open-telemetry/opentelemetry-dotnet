@@ -27,9 +27,20 @@ namespace OpenTelemetry.Metrics.Aggregators
     public class MeasureMinMaxSumCountAggregator<T> : Aggregator<T> 
         where T : struct
     {
-        private Summary<T> summary = new Summary<T>();
+        private Summary<T> summary;
         private Summary<T> checkPoint;
         private object updateLock = new object();
+
+        public MeasureMinMaxSumCountAggregator()
+        {
+            if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
+            {
+                throw new Exception("Invalid Type");
+            }
+
+            this.summary = new Summary<T>();
+            this.checkPoint = new Summary<T>();
+        }
 
         public override void Checkpoint()
         {
