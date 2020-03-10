@@ -33,8 +33,8 @@ namespace OpenTelemetry.Context.Propagation
         internal static readonly string XB3ParentSpanId = "X-B3-ParentSpanId";
         internal static readonly string XB3Sampled = "X-B3-Sampled";
         internal static readonly string XB3Flags = "X-B3-Flags";
-        internal static readonly string XB3 = "b3";
-        internal static readonly char XB3Delimiter = '-';
+        internal static readonly string XB3Combined = "b3";
+        internal static readonly char XB3CombinedDelimiter = '-';
 
         // Used as the upper ActivityTraceId.SIZE hex characters of the traceID. B3-propagation used to send
         // ActivityTraceId.SIZE hex characters (8-bytes traceId) in the past.
@@ -121,15 +121,15 @@ namespace OpenTelemetry.Context.Propagation
             {
                 var sb = new StringBuilder();
                 sb.Append(spanContext.TraceId.ToHexString());
-                sb.Append(XB3Delimiter);
+                sb.Append(XB3CombinedDelimiter);
                 sb.Append(spanContext.SpanId.ToHexString());
                 if ((spanContext.TraceOptions & ActivityTraceFlags.Recorded) != 0)
                 {
-                    sb.Append(XB3Delimiter);
+                    sb.Append(XB3CombinedDelimiter);
                     sb.Append(SampledValue);
                 }
 
-                setter(carrier, XB3, sb.ToString());
+                setter(carrier, XB3Combined, sb.ToString());
             }
             else
             {
@@ -194,13 +194,13 @@ namespace OpenTelemetry.Context.Propagation
         {
             try
             {
-                var header = getter(carrier, XB3)?.FirstOrDefault();
+                var header = getter(carrier, XB3Combined)?.FirstOrDefault();
                 if (string.IsNullOrWhiteSpace(header))
                 {
                     return RemoteInvalidContext;
                 }
 
-                var parts = header.Split(XB3Delimiter);
+                var parts = header.Split(XB3CombinedDelimiter);
                 if (parts.Length < 2 || parts.Length > 4)
                 {
                     return RemoteInvalidContext;
