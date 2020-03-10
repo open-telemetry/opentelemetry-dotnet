@@ -73,6 +73,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
         internal List<Metric<long>> GetAndClearLongMetrics()
         {
+            // TODO harden this so as to not lose data if Export fails.
             List<Metric<long>> current = this.LongMetrics;
             this.LongMetrics = new List<Metric<long>>();
             return current;
@@ -80,6 +81,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
         internal List<Metric<double>> GetAndClearDoubleMetrics()
         {
+            // TODO harden this so as to not lose data if Export fails.
             List<Metric<double>> current = this.DoubleMetrics;
             this.DoubleMetrics = new List<Metric<double>>();
             return current;
