@@ -23,35 +23,21 @@ namespace OpenTelemetry.Metrics.Test
 {
     internal class TestMetricProcessor : MetricProcessor
     {
-        public List<Tuple<string, LabelSet, long>> counters = new List<Tuple<string, LabelSet, long>>();
-        public List<Tuple<string, LabelSet, List<long>>> measures = new List<Tuple<string, LabelSet, List<long>>>();
-        public List<Tuple<string, LabelSet, long>> observations = new List<Tuple<string, LabelSet, long>>();
+        public List<Metric<long>> longMetrics = new List<Metric<long>>();
+        public List<Metric<double>> doubleMetrics = new List<Metric<double>>();
 
-        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<long> sumAggregator)
+        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
         {
-            counters.Add(new Tuple<string, LabelSet, long>(metricName, labelSet, sumAggregator.ValueFromLastCheckpoint()));
+            var metric = new Metric<long>(meterName, metricName, meterName + metricName, labelSet.Labels, aggregator.GetAggregationType());
+            metric.Data = aggregator.ToMetricData();
+            this.longMetrics.Add(metric);
         }
 
-        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<double> sumAggregator)
+        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator)
         {
-        }
-
-        public override void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<long> measureAggregator)
-        {
-            measures.Add(new Tuple<string, LabelSet, List<long>>(metricName, labelSet, measureAggregator.ValueFromLastCheckpoint()));
-        }
-
-        public override void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<double> measureAggregator)
-        {
-        }
-
-        public override void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<long> lastValueAggregator)
-        {
-            observations.Add(new Tuple<string, LabelSet, long>(metricName, labelSet, lastValueAggregator.ValueFromLastCheckpoint()));
-        }
-
-        public override void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<double> lastValueAggregator)
-        {
+            var metric = new Metric<double>(meterName, metricName, meterName + metricName, labelSet.Labels, aggregator.GetAggregationType());
+            metric.Data = aggregator.ToMetricData();
+            this.doubleMetrics.Add(metric);
         }
     }
 }

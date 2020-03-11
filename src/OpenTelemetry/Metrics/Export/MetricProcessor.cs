@@ -21,57 +21,21 @@ namespace OpenTelemetry.Metrics.Export
     public abstract class MetricProcessor
     {
         /// <summary>
-        /// Process the counter metric.
+        /// Process the metric.
         /// </summary>
         /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
         /// <param name="metricName">the name of the counter.</param>
         /// <param name="labelSet">the labelSet associated with counter value.</param>
-        /// <param name="sumAggregator">the aggregator from which sum can be obtained.</param>
-        public abstract void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<long> sumAggregator);
+        /// <param name="aggregator">the aggregator used.</param>
+        public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator);
 
         /// <summary>
-        /// Process the counter metric.
+        /// Process the metric.
         /// </summary>
         /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
         /// <param name="metricName">the name of the counter.</param>
         /// <param name="labelSet">the labelSet associated with counter value.</param>
-        /// <param name="sumAggregator">the aggregator from which sum can be obtained.</param>
-        public abstract void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<double> sumAggregator);
-
-        /// <summary>
-        /// Process the measure metric.
-        /// </summary>
-        /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
-        /// <param name="metricName">the name of the counter.</param>
-        /// <param name="labelSet">the labelSet associated with counter value.</param>
-        /// <param name="measureAggregator">the aggregator from which raw values can be obtained.</param>
-        public abstract void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<long> measureAggregator);
-
-        /// <summary>
-        /// Process the measure metric.
-        /// </summary>
-        /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
-        /// <param name="metricName">the name of the counter.</param>
-        /// <param name="labelSet">the labelSet associated with counter value.</param>
-        /// <param name="measureAggregator">the aggregator from which raw values can be obtained.</param>
-        public abstract void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<double> measureAggregator);
-
-        /// <summary>
-        /// Process the observer metric.
-        /// </summary>
-        /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
-        /// <param name="metricName">the name of the observer.</param>
-        /// <param name="labelSet">the labelSet associated with observer value.</param>
-        /// <param name="lastValueAggregator">the aggregator from which raw values can be obtained.</param>
-        public abstract void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<long> lastValueAggregator);
-
-        /// <summary>
-        /// Process the observer metric.
-        /// </summary>
-        /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
-        /// <param name="metricName">the name of the observer.</param>
-        /// <param name="labelSet">the labelSet associated with observer value.</param>
-        /// <param name="lastValueAggregator">the aggregator from which raw values can be obtained.</param>
-        public abstract void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<double> lastValueAggregator);
+        /// <param name="aggregator">the aggregator used.</param>
+        public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator);        
     }
 }

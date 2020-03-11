@@ -14,24 +14,27 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace OpenTelemetry.Metrics.Implementation
+namespace OpenTelemetry.Metrics.Export
 {
-    public class Metric
+    /// <summary>
+    /// This class would evolve to become the export record.
+    /// </summary>
+    /// <typeparam name="T">Type of the metric - long or double currently.</typeparam>
+    public class Metric<T>
     {
-        public Metric(string metricNamespace, string metricName, string desc, IEnumerable<KeyValuePair<string, string>> labels, long value)
+        public Metric(string metricNamespace,
+            string metricName,
+            string desc,
+            IEnumerable<KeyValuePair<string, string>> labels,
+            AggregationType type)
         {
             this.MetricNamespace = metricNamespace;
             this.MetricName = metricName;
             this.MetricDescription = desc;
             this.Labels = labels;
-            this.Value = value;
+            this.AggregationType = type;
         }
 
         public string MetricNamespace { get; private set; }
@@ -40,8 +43,10 @@ namespace OpenTelemetry.Metrics.Implementation
 
         public string MetricDescription { get; private set; }
 
-        public IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
+        public AggregationType AggregationType { get; private set; }
 
-        public long Value { get; set; }
+        public IEnumerable<KeyValuePair<string, string>> Labels { get; private set; }
+
+        public MetricData<T> Data { get; internal set; }
     }
 }

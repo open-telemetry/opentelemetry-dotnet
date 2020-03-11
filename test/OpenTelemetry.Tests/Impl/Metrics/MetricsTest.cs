@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Trace;
 using Xunit;
+using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Test
 {
@@ -45,14 +46,11 @@ namespace OpenTelemetry.Metrics.Test
 
             meter.Collect();
 
-            Assert.Equal(2, testProcessor.counters.Count);
-            Assert.Equal(2, testProcessor.counters.Count(kvp => kvp.Item1 == "testCounter"));
+            Assert.Equal(2, testProcessor.longMetrics.Count);
+            Assert.Equal(2, testProcessor.longMetrics.Count(m => m.MetricName == "testCounter"));
 
-            Assert.Single(testProcessor.counters.Where(kvp => kvp.Item2.Equals(meter.GetLabelSet(labels1))));
-            Assert.Single(testProcessor.counters.Where(kvp => kvp.Item2.Equals(meter.GetLabelSet(labels2))));
-
-            Assert.Single(testProcessor.counters.Where(kvp => kvp.Item3 == 110));
-            Assert.Single(testProcessor.counters.Where(kvp => kvp.Item3 == 210));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 110 ));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 210));
         }
 
         [Fact]
@@ -71,19 +69,25 @@ namespace OpenTelemetry.Metrics.Test
             var context = default(SpanContext);
             testMeasure.Record(context, 100, meter.GetLabelSet(labels1));
             testMeasure.Record(context, 10, meter.GetLabelSet(labels1));
+            testMeasure.Record(context, 1, meter.GetLabelSet(labels1));
             testMeasure.Record(context, 200, meter.GetLabelSet(labels2));
             testMeasure.Record(context, 20, meter.GetLabelSet(labels2));
 
             meter.Collect();
 
-            Assert.Equal(2, testProcessor.measures.Count);
-            Assert.Equal(2, testProcessor.measures.Count(kvp => kvp.Item1 == "testMeasure"));
+            Assert.Equal(2, testProcessor.longMetrics.Count);
+            Assert.Equal(2, testProcessor.longMetrics.Count(m => m.MetricName == "testMeasure"));
 
-            Assert.Single(testProcessor.measures.Where(kvp => kvp.Item2.Equals(meter.GetLabelSet(labels1))));
-            Assert.Single(testProcessor.measures.Where(kvp => kvp.Item2.Equals(meter.GetLabelSet(labels2))));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Sum == 111));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Count == 3));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Min == 1));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Max == 100));
 
-            Assert.Single(testProcessor.measures.Where(kvp => kvp.Item3.Contains(100) && kvp.Item3.Contains(10)));
-            Assert.Single(testProcessor.measures.Where(kvp => kvp.Item3.Contains(200) && kvp.Item3.Contains(20)));
+
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Sum == 220));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Count == 2));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Min == 20));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Max == 200));
         }
 
         [Fact]
@@ -107,14 +111,11 @@ namespace OpenTelemetry.Metrics.Test
 
             meter.Collect();
 
-            Assert.Equal(2, testProcessor.observations.Count);
-            Assert.Equal(2, testProcessor.observations.Count(kvp => kvp.Item1 == "testObserver"));
+            Assert.Equal(2, testProcessor.longMetrics.Count);
+            Assert.Equal(2, testProcessor.longMetrics.Count(m => m.MetricName == "testObserver"));
 
-            Assert.Single(testProcessor.observations.Where(kvp => kvp.Item2.Equals(meter.GetLabelSet(labels1))));
-            Assert.Single(testProcessor.observations.Where(kvp => kvp.Item2.Equals(meter.GetLabelSet(labels2))));
-
-            Assert.Single(testProcessor.observations.Where(kvp => kvp.Item3 == 10));
-            Assert.Single(testProcessor.observations.Where(kvp => kvp.Item3 == 20));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 10));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 20));
         }
     }
 }

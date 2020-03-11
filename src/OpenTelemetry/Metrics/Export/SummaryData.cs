@@ -1,4 +1,4 @@
-﻿// <copyright file="MetricExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SummaryData.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,34 +15,22 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics.Export
 {
-    public abstract class MetricExporter
+    public class SummaryData<T> : MetricData<T>
     {
-        public enum ExportResult
-        {
-            /// <summary>
-            /// Batch is successfully exported.
-            /// </summary>
-            Success = 0,
+        public long Count { get; set; }
 
-            /// <summary>
-            /// Batch export failed. Caller must not retry.
-            /// </summary>
-            FailedNotRetryable = 1,
+        public T Sum { get; set; }
 
-            /// <summary>
-            /// Batch export failed transiently. Caller should record error and may retry.
-            /// </summary>
-            FailedRetryable = 2,
-        }
+        public T Min { get; set; }
 
-        public abstract Task<ExportResult> ExportAsync<T>(List<Metric<T>> metrics, CancellationToken cancellationToken);
+        public T Max { get; set; }
     }
 }

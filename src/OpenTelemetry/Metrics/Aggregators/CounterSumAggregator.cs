@@ -17,6 +17,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Aggregators
 {
@@ -51,6 +52,26 @@ namespace OpenTelemetry.Metrics.Aggregators
             }
         }
 
+        public override MetricData<T> ToMetricData()
+        {
+            var sumData = new SumData<T>();
+            sumData.Sum = this.checkPoint;
+            sumData.Timestamp = DateTime.UtcNow;
+            return sumData;
+        }
+
+        public override AggregationType GetAggregationType()
+        {
+            if (typeof(T) == typeof(double))
+            {
+                return AggregationType.DoubleSum;
+            }
+            else
+            {
+                return AggregationType.LongSum;
+            }            
+        }
+
         public override void Update(T value)
         {
             // Adds value to the running total in a thread safe manner.
@@ -68,11 +89,6 @@ namespace OpenTelemetry.Metrics.Aggregators
             {
                 Interlocked.Add(ref Unsafe.As<T, long>(ref this.sum), (long)(object)value);
             }
-        }
-
-        public T ValueFromLastCheckpoint()
-        {
-            return this.checkPoint;
         }
     }
 }

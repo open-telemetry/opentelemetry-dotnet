@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AggregationType.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,23 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Metrics.Aggregators;
-
 namespace OpenTelemetry.Metrics.Export
 {
-    internal class NoOpMetricProcessor : MetricProcessor
+    public enum AggregationType
     {
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
-        {
-        }
+        /// <summary>
+        /// Sum of type Double which is reported with <see cref="SumData{T}"/>
+        /// </summary>
+        DoubleSum,
 
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator)
-        {
-        }
+        /// <summary>
+        /// Sum of type Long which is reported with <see cref="SumData{T}"/>
+        /// </summary>
+        LongSum,
+
+        /// <summary>
+        /// Summary of measurements (Min, Max, Sum, Count), which is reported with <see cref="SummaryData{T}"/>
+        /// </summary>
+        Summary,
     }
 }
