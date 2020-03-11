@@ -96,24 +96,31 @@ namespace OpenTelemetry.Metrics.Test
         {
             var testProcessor = new TestMetricProcessor();
             var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
-            var testObserver = meter.CreateInt64Observer("testObserver", MemorySizeObserver);
+            var testObserver = meter.CreateInt64Observer("testObserver", TestCallback);
 
             meter.Collect();
 
-            Assert.Equal(1, testProcessor.longMetrics.Count);
-            Assert.Equal(1, testProcessor.longMetrics.Count(m => m.MetricName == "testObserver"));
-
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 10));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 20));
+            Assert.Equal(2, testProcessor.longMetrics.Count);
+            Assert.Equal(2, testProcessor.longMetrics.Count(m => m.MetricName == "testObserver"));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 30));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 300));
         }
 
-        private void MemorySizeObserver(Int64ObserverMetric observerMetric)
+        private void TestCallback(Int64ObserverMetric observerMetric)
         {
-            var labels2 = new List<KeyValuePair<string, string>>();
-            labels2.Add(new KeyValuePair<string, string>("dim1", "value1"));
+            var labels1 = new List<KeyValuePair<string, string>>();
+            labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
 
-            var mem = Process.GetCurrentProcess().WorkingSet64;
-            observerMetric.Observe(mem, labels2);
+            var labels2 = new List<KeyValuePair<string, string>>();
+            labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
+            
+            observerMetric.Observe(10, labels1);
+            observerMetric.Observe(20, labels1);
+            observerMetric.Observe(30, labels1);
+
+            observerMetric.Observe(100, labels2);
+            observerMetric.Observe(200, labels2);
+            observerMetric.Observe(300, labels2);
         }
     }
 }
