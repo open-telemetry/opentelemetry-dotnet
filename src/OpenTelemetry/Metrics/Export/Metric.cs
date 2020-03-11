@@ -45,8 +45,8 @@ namespace OpenTelemetry.Metrics.Export
 
         public AggregationType AggregationType { get; private set; }
 
-        public IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
+        public IEnumerable<KeyValuePair<string, string>> Labels { get; private set; }
 
-        public MetricData<T> Data { get; set; }
+        public MetricData<T> Data { get; internal set; }
     }
 }

@@ -40,9 +40,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 metricsHttpServer.Start();
                 var label1 = new List<KeyValuePair<string, string>>();
                 label1.Add(new KeyValuePair<string, string>("dim1", "value1"));
-                metrics.Add(new Metric<long>("ns", "metric1", "desc", label1, AggregationType.LONGSUM));
-                metrics.Add(new Metric<long>("ns", "metric1", "desc", label1, AggregationType.LONGSUM));
-                metrics.Add(new Metric<long>("ns", "metric1", "desc", label1, AggregationType.LONGSUM));
+                metrics.Add(new Metric<long>("ns", "metric1", "desc", label1, AggregationType.LongSum));
+                metrics.Add(new Metric<long>("ns", "metric1", "desc", label1, AggregationType.LongSum));
+                metrics.Add(new Metric<long>("ns", "metric1", "desc", label1, AggregationType.LongSum));
 
                 promExporter.ExportAsync(metrics, CancellationToken.None);
             }

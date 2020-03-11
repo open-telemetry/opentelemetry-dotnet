@@ -64,11 +64,11 @@ namespace OpenTelemetry.Metrics.Aggregators
         {
             if (typeof(T) == typeof(double))
             {
-                return AggregationType.DOUBLESUM;
+                return AggregationType.DoubleSum;
             }
             else
             {
-                return AggregationType.LONGSUM;
+                return AggregationType.LongSum;
             }            
         }
 

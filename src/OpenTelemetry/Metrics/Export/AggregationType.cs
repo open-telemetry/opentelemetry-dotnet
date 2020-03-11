@@ -14,13 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace OpenTelemetry.Metrics.Export
 {
     public enum AggregationType
@@ -28,16 +21,16 @@ namespace OpenTelemetry.Metrics.Export
         /// <summary>
         /// Sum of type Double which is reported with <see cref="SumData{T}"/>
         /// </summary>
-        DOUBLESUM,
+        DoubleSum,
 
         /// <summary>
         /// Sum of type Long which is reported with <see cref="SumData{T}"/>
         /// </summary>
-        LONGSUM,
+        LongSum,
 
         /// <summary>
         /// Summary of measurements (Min, Max, Sum, Count), which is reported with <see cref="SummaryData{T}"/>
         /// </summary>
-        SUMMARY,
+        Summary,
     }
 }

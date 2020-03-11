@@ -124,7 +124,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                         switch (metric.AggregationType)
                         {
-                            case AggregationType.DOUBLESUM:
+                            case AggregationType.DoubleSum:
                                 {
                                     var doubleSum = metric.Data as SumData<double>;
                                     var doubleValue = doubleSum.Sum;
@@ -142,14 +142,14 @@ namespace OpenTelemetry.Exporter.Prometheus
                                     break;
                                 }
 
-                            case AggregationType.LONGSUM:
+                            case AggregationType.LongSum:
                                 {
                                     // This cannot occcur as we are iterating Double metrics.
                                     // TODO: report error
                                     break;
                                 }
 
-                            case AggregationType.SUMMARY:
+                            case AggregationType.Summary:
                                 {
                                     // Not supported yet.
                                     break;
@@ -166,14 +166,14 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                         switch (metric.AggregationType)
                         {
-                            case AggregationType.DOUBLESUM:
+                            case AggregationType.DoubleSum:
                                 {
                                     // This cannot occcur as we are iterating Long metrics.
                                     // TODO: report error
                                     break;
                                 }
 
-                            case AggregationType.LONGSUM:
+                            case AggregationType.LongSum:
                                 {
                                     var longSum = metric.Data as SumData<long>;
                                     var longValue = longSum.Sum;
@@ -190,7 +190,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                                     break;
                                 }
 
-                            case AggregationType.SUMMARY:
+                            case AggregationType.Summary:
                                 {
                                     // Not supported yet.
                                     break;

@@ -49,7 +49,7 @@ namespace OpenTelemetry.Metrics.Aggregators
 
         public override AggregationType GetAggregationType()
         {
-            return AggregationType.SUMMARY;
+            return AggregationType.Summary;
         }
 
         public override MetricData<T> ToMetricData()
