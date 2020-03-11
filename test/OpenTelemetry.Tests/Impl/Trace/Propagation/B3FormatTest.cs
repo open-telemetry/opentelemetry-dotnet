@@ -33,6 +33,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
         private static readonly ActivityTraceFlags TraceOptions = ActivityTraceFlags.Recorded;
         private readonly B3Format b3Format = new B3Format();
+        private readonly B3Format b3FormatSingleHeader = new B3Format(true);
 
 
         private static readonly Action<IDictionary<string, string>, string, string> setter = (d, k, v) => d[k] = v;
@@ -189,6 +190,150 @@ namespace OpenTelemetry.Context.Propagation.Test
         {
             var invalidHeaders = new Dictionary<string, string> {{B3Format.XB3TraceId, TraceIdBase16}};
             Assert.Equal(SpanContext.BlankRemote, b3Format.Extract(invalidHeaders, getter));
+        }
+
+        [Fact]
+        public void Serialize_SampledContext_SingleHeader()
+        {
+            var carrier = new Dictionary<string, string>();
+            b3FormatSingleHeader.Inject(new SpanContext(TraceId, SpanId, TraceOptions), carrier, setter);
+            ContainsExactly(carrier, new Dictionary<string, string>() { { B3Format.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}-1" } });
+        }
+
+        [Fact]
+        public void Serialize_NotSampledContext_SingleHeader()
+        {
+            var carrier = new Dictionary<string, string>();
+            var context = new SpanContext(TraceId, SpanId, ActivityTraceFlags.None);
+            _output.WriteLine(context.ToString());
+            b3FormatSingleHeader.Inject(context, carrier, setter);
+            ContainsExactly(carrier, new Dictionary<string, string>() { { B3Format.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}" } });
+        }
+
+        [Fact]
+        public void ParseMissingSampledAndMissingFlag_SingleHeader()
+        {
+            var headersNotSampled = new Dictionary<string, string>
+            {
+                {B3Format.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}"},
+            };
+            var spanContext = new SpanContext(TraceId, SpanId, ActivityTraceFlags.None);
+            Assert.Equal(spanContext, b3FormatSingleHeader.Extract(headersNotSampled, getter));
+        }
+
+        [Fact]
+        public void ParseSampled_SingleHeader()
+        {
+            var headersSampled = new Dictionary<string, string>
+            {
+                {B3Format.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}-1"},
+            };
+            Assert.Equal(new SpanContext(TraceId, SpanId, TraceOptions), b3FormatSingleHeader.Extract(headersSampled, getter));
+        }
+
+        [Fact]
+        public void ParseZeroSampled_SingleHeader()
+        {
+            var headersNotSampled = new Dictionary<string, string>
+            {
+                {B3Format.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}-0"},
+            };
+            Assert.Equal(new SpanContext(TraceId, SpanId, ActivityTraceFlags.None), b3FormatSingleHeader.Extract(headersNotSampled, getter));
+        }
+
+        [Fact]
+        public void ParseFlag_SingleHeader()
+        {
+            var headersFlagSampled = new Dictionary<string, string>
+            {
+                {B3Format.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}-1"},
+            };
+            Assert.Equal(new SpanContext(TraceId, SpanId, TraceOptions), b3FormatSingleHeader.Extract(headersFlagSampled, getter));
+        }
+
+        [Fact]
+        public void ParseZeroFlag_SingleHeader()
+        {
+            var headersFlagNotSampled = new Dictionary<string, string>
+            {
+                {B3Format.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}-0"},
+            };
+            Assert.Equal(new SpanContext(TraceId, SpanId, ActivityTraceFlags.None), b3FormatSingleHeader.Extract(headersFlagNotSampled, getter));
+        }
+
+        [Fact]
+        public void ParseEightBytesTraceId_SingleHeader()
+        {
+            var headersEightBytes = new Dictionary<string, string>
+            {
+                {B3Format.XB3Combined, $"{TraceIdBase16EightBytes}-{SpanIdBase16}-1"},
+            };
+            Assert.Equal(new SpanContext(TraceIdEightBytes, SpanId, TraceOptions), b3FormatSingleHeader.Extract(headersEightBytes, getter));
+        }
+
+        [Fact]
+        public void ParseEightBytesTraceId_NotSampledSpanContext_SingleHeader()
+        {
+            var headersEightBytes = new Dictionary<string, string>
+            {
+                {B3Format.XB3Combined, $"{TraceIdBase16EightBytes}-{SpanIdBase16}"},
+            };
+            Assert.Equal(new SpanContext(TraceIdEightBytes, SpanId, ActivityTraceFlags.None), b3FormatSingleHeader.Extract(headersEightBytes, getter));
+        }
+
+        [Fact]
+        public void ParseInvalidTraceId_SingleHeader()
+        {
+            var invalidHeaders = new Dictionary<string, string>
+            {
+                {B3Format.XB3Combined, $"abcdefghijklmnop-{SpanIdBase16}"},
+            };
+            Assert.Equal(SpanContext.BlankRemote, b3FormatSingleHeader.Extract(invalidHeaders, getter));
+        }
+
+        [Fact]
+        public void ParseInvalidTraceId_Size_SingleHeader()
+        {
+            var invalidHeaders = new Dictionary<string, string>
+            {
+                {B3Format.XB3Combined, $"0123456789abcdef00-{SpanIdBase16}"},
+            };
+
+            Assert.Equal(SpanContext.BlankRemote, b3FormatSingleHeader.Extract(invalidHeaders, getter));
+        }
+
+        [Fact]
+        public void ParseMissingTraceId_SingleHeader()
+        {
+            var invalidHeaders = new Dictionary<string, string> {{B3Format.XB3Combined, $"-{SpanIdBase16}"}};
+            Assert.Equal(SpanContext.BlankRemote, b3FormatSingleHeader.Extract(invalidHeaders, getter));
+        }
+
+        [Fact]
+        public void ParseInvalidSpanId_SingleHeader()
+        {
+            var invalidHeaders = new Dictionary<string, string>
+            {
+                {B3Format.XB3Combined, $"{TraceIdBase16}-abcdefghijklmnop"},
+            };
+            Assert.Equal(SpanContext.BlankRemote, b3FormatSingleHeader.Extract(invalidHeaders, getter));
+        }
+
+        [Fact]
+        public void ParseInvalidSpanId_Size_SingleHeader()
+        {
+            var invalidHeaders = new Dictionary<string, string>
+            {
+                {B3Format.XB3Combined, $"{TraceIdBase16}-0123456789abcdef00"},
+            };
+            Assert.Equal(SpanContext.BlankRemote, b3FormatSingleHeader.Extract(invalidHeaders, getter));
+        }
+
+        [Fact]
+        public void ParseMissingSpanId_SingleHeader()
+        {
+            var invalidHeaders = new Dictionary<string, string> {{B3Format.XB3Combined, $"{TraceIdBase16}-"}};
+            Assert.Equal(SpanContext.BlankRemote, b3FormatSingleHeader.Extract(invalidHeaders, getter));
         }
 
         [Fact]
