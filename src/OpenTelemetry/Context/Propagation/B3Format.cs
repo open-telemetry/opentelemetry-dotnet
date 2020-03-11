@@ -88,7 +88,7 @@ namespace OpenTelemetry.Context.Propagation
 
             if (this.singleHeader)
             {
-                return ExtractFromSongleHeader(carrier, getter);
+                return ExtractFromSingleHeader(carrier, getter);
             }
             else
             {
@@ -190,7 +190,7 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
-        private static SpanContext ExtractFromSongleHeader<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        private static SpanContext ExtractFromSingleHeader<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
