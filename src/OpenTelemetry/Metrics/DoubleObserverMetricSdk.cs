@@ -1,4 +1,4 @@
-﻿// <copyright file="Int64ObserverMetricSdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DoubleObserverMetricSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,23 +20,23 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class Int64ObserverMetricSdk : Int64ObserverMetric
+    internal class DoubleObserverMetricSdk : DoubleObserverMetric
     {
-        private readonly IDictionary<LabelSet, Int64ObserverMetricHandleSdk> observerHandles = new ConcurrentDictionary<LabelSet, Int64ObserverMetricHandleSdk>();
+        private readonly IDictionary<LabelSet, DoubleObserverMetricHandleSdk> observerHandles = new ConcurrentDictionary<LabelSet, DoubleObserverMetricHandleSdk>();
         private string metricName;
-        private Action<Int64ObserverMetric> callback;
+        private Action<DoubleObserverMetric> callback;
 
-        public Int64ObserverMetricSdk(string name, Action<Int64ObserverMetric> callback)
+        public DoubleObserverMetricSdk(string name, Action<DoubleObserverMetric> callback)
         {
             this.metricName = name;
             this.callback = callback;
         }
 
-        public override void Observe(long value, LabelSet labelset)
+        public override void Observe(double value, LabelSet labelset)
         {
             if (!this.observerHandles.TryGetValue(labelset, out var boundInstrument))
             {
-                boundInstrument = new Int64ObserverMetricHandleSdk();
+                boundInstrument = new DoubleObserverMetricHandleSdk();
                 // TODO cleanup of handle/aggregator.   Issue #530
                 this.observerHandles.Add(labelset, boundInstrument);
             }
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Metrics
             boundInstrument.Observe(value);
         }
 
-        public override void Observe(long value, IEnumerable<KeyValuePair<string, string>> labels)
+        public override void Observe(double value, IEnumerable<KeyValuePair<string, string>> labels)
         {
             this.Observe(value, new LabelSetSdk(labels));
         }
@@ -54,9 +54,9 @@ namespace OpenTelemetry.Metrics
             this.callback(this);
         }
 
-        internal IDictionary<LabelSet, Int64ObserverMetricHandleSdk> GetAllHandles()
+        internal IDictionary<LabelSet, DoubleObserverMetricHandleSdk> GetAllHandles()
         {
             return this.observerHandles;
-        }    
+        }
     }
 }

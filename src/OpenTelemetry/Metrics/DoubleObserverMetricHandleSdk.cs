@@ -1,4 +1,4 @@
-﻿// <copyright file="Int64ObserverMetricHandleSdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DoubleObserverMetricHandleSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,18 +18,18 @@ using OpenTelemetry.Metrics.Aggregators;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class Int64ObserverMetricHandleSdk : Int64ObserverMetricHandle
+    internal class DoubleObserverMetricHandleSdk : DoubleObserverMetricHandle
     {
-        private readonly LastValueAggregator<long> aggregator = new LastValueAggregator<long>();
+        private readonly LastValueAggregator<double> aggregator = new LastValueAggregator<double>();
 
-        public override void Observe(long value)
+        public override void Observe(double value)
         {
             this.aggregator.Update(value);
         }
 
-        internal LastValueAggregator<long> GetAggregator()
+        internal LastValueAggregator<double> GetAggregator()
         {
             return this.aggregator;
-        }        
+        }
     }
 }

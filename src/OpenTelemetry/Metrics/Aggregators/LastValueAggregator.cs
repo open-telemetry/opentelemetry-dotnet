@@ -29,6 +29,14 @@ namespace OpenTelemetry.Metrics.Aggregators
         private T value;
         private T checkpoint;
 
+        public LastValueAggregator()
+        {
+            if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
+            {
+                throw new Exception("Invalid Type");
+            }
+        }
+
         public override void Checkpoint()
         {
             this.checkpoint = this.value;

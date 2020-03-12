@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics
     public abstract class Int64ObserverMetricHandle
     {
         /// <summary>
-        /// Sets the value of the observer handle.
+        /// Observes the given value.
         /// </summary>
         /// <param name="value">value by which the observer handle should be Recorded.</param>
         public abstract void Observe(long value);

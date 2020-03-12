@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics
@@ -31,6 +32,7 @@ namespace OpenTelemetry.Metrics
         private readonly IDictionary<string, MeasureMetricSdk<long>> longMeasures = new ConcurrentDictionary<string, MeasureMetricSdk<long>>();
         private readonly IDictionary<string, MeasureMetricSdk<double>> doubleMeasures = new ConcurrentDictionary<string, MeasureMetricSdk<double>>();
         private readonly IDictionary<string, Int64ObserverMetricSdk> longObservers = new ConcurrentDictionary<string, Int64ObserverMetricSdk>();
+        private readonly IDictionary<string, DoubleObserverMetricSdk> doubleObservers = new ConcurrentDictionary<string, DoubleObserverMetricSdk>();
         private readonly object collectLock = new object();
 
         internal MeterSdk(string meterName, MetricProcessor metricProcessor)
@@ -106,7 +108,39 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = longObserver.Key;
                     var observerInstrument = longObserver.Value;
-                    observerInstrument.InvokeCallback();
+                    try
+                    {
+                        // TODO: Decide if we want to enforce a timeout.
+                        observerInstrument.InvokeCallback();
+                    }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MetricObserverCallbackException(metricName, ex);
+                    }
+
+                    foreach (var handle in observerInstrument.GetAllHandles())
+                    {
+                        var labelSet = handle.Key;
+                        var aggregator = handle.Value.GetAggregator();
+                        aggregator.Checkpoint();
+                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
+                    }
+                }
+
+                foreach (var doubleObserver in this.doubleObservers)
+                {
+                    var metricName = doubleObserver.Key;
+                    var observerInstrument = doubleObserver.Value;
+                    try
+                    {
+                        // TODO: Decide if we want to enforce a timeout.
+                        observerInstrument.InvokeCallback();
+                    }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MetricObserverCallbackException(metricName, ex);
+                    }
+
                     foreach (var handle in observerInstrument.GetAllHandles())
                     {
                         var labelSet = handle.Key;

@@ -1,4 +1,4 @@
-﻿// <copyright file="Int64ObserverMetricHandleSdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DoubleObserverMetricHandle.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Metrics.Aggregators;
-
 namespace OpenTelemetry.Metrics
 {
-    internal class Int64ObserverMetricHandleSdk : Int64ObserverMetricHandle
+    /// <summary>
+    /// Handle to the metrics observer with the defined <see cref="LabelSet"/>.
+    /// </summary>
+    public abstract class DoubleObserverMetricHandle
     {
-        private readonly LastValueAggregator<long> aggregator = new LastValueAggregator<long>();
-
-        public override void Observe(long value)
-        {
-            this.aggregator.Update(value);
-        }
-
-        internal LastValueAggregator<long> GetAggregator()
-        {
-            return this.aggregator;
-        }        
+        /// <summary>
+        /// Observes the given value.
+        /// </summary>
+        /// <param name="value">value by which the observer handle should be Recorded.</param>
+        public abstract void Observe(double value);
     }
 }

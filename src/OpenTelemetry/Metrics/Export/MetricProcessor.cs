@@ -24,8 +24,8 @@ namespace OpenTelemetry.Metrics.Export
         /// Process the metric.
         /// </summary>
         /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
-        /// <param name="metricName">the name of the counter.</param>
-        /// <param name="labelSet">the labelSet associated with counter value.</param>
+        /// <param name="metricName">the name of the instrument.</param>
+        /// <param name="labelSet">the labelSet associated with the instrument.</param>
         /// <param name="aggregator">the aggregator used.</param>
         public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator);
 
@@ -33,8 +33,8 @@ namespace OpenTelemetry.Metrics.Export
         /// Process the metric.
         /// </summary>
         /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
-        /// <param name="metricName">the name of the counter.</param>
-        /// <param name="labelSet">the labelSet associated with counter value.</param>
+        /// <param name="metricName">the name of the instrument.</param>
+        /// <param name="labelSet">the labelSet associated with the instrument.</param>
         /// <param name="aggregator">the aggregator used.</param>
         public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator);        
     }

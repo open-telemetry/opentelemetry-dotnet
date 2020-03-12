@@ -1,4 +1,4 @@
-﻿// <copyright file="Int64ObserverMetric.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DoubleObserverMetric.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,20 +21,20 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// Observer instrument for Int64 values.
     /// </summary>
-    public abstract class Int64ObserverMetric
+    public abstract class DoubleObserverMetric
     {
         /// <summary>
         /// Observes a value.
         /// </summary>
         /// <param name="value">value to observe.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public abstract void Observe(long value, LabelSet labelset);
+        public abstract void Observe(double value, LabelSet labelset);
 
         /// <summary>
         /// Observes a value.
         /// </summary>
         /// <param name="value">value to observe.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public abstract void Observe(long value, IEnumerable<KeyValuePair<string, string>> labels);
+        public abstract void Observe(double value, IEnumerable<KeyValuePair<string, string>> labels);
     }
 }
