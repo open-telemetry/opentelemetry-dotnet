@@ -45,9 +45,17 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         }
 
         [Theory]
-        [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataAfterExecuteCommand)]
-        [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand)]
-        public void SqlClientCallsAreCollectedSuccessfully(string beforeCommand, string afterCommand)
+        [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataAfterExecuteCommand, CommandType.StoredProcedure, "SP_GetOrders", true, false)]
+        [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataAfterExecuteCommand, CommandType.Text, "select * from sys.databases", true, false)]
+        [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand, CommandType.StoredProcedure, "SP_GetOrders", false, true)]
+        [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand, CommandType.Text, "select * from sys.databases", false, true)]
+        public void SqlClientCallsAreCollectedSuccessfully(
+            string beforeCommand,
+            string afterCommand,
+            CommandType commandType,
+            string commandText,
+            bool captureStoredProcedureCommandContent,
+            bool captureTextCommandContent)
         {
             var activity = new Activity("Current").AddBaggage("Stuff", "123");
             activity.Start();
@@ -57,19 +65,25 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            using (new SqlClientCollector(tracer))
+            using (new SqlClientCollector(
+                tracer,
+                new SqlClientCollectorOptions
+                {
+                    CaptureStoredProcedureCommandContent = captureStoredProcedureCommandContent,
+                    CaptureTextCommandContent = captureTextCommandContent,
+                }))
             {
                 var operationId = Guid.NewGuid();
                 var sqlConnection = new SqlConnection(TestConnectionString);
                 var sqlCommand = sqlConnection.CreateCommand();
-                sqlCommand.CommandText = "SP_GetOrders";
-                sqlCommand.CommandType = CommandType.StoredProcedure;
+                sqlCommand.CommandType = commandType;
+                sqlCommand.CommandText = commandText;
 
                 var beforeExecuteEventData = new
                 {
                     OperationId = operationId,
                     Command = sqlCommand,
-                    Timestamp = (long?)1000000L
+                    Timestamp = (long?)1000000L,
                 };
 
                 this.fakeSqlClientDiagnosticSource.Write(
@@ -80,7 +94,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 {
                     OperationId = operationId,
                     Command = sqlCommand,
-                    Timestamp = 2000000L
+                    Timestamp = 2000000L,
                 };
 
                 this.fakeSqlClientDiagnosticSource.Write(
@@ -103,8 +117,38 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 i.Key == SpanAttributeConstants.DatabaseTypeKey).Value as string);
             Assert.Equal("master", span.Attributes.FirstOrDefault(i =>
                 i.Key == SpanAttributeConstants.DatabaseInstanceKey).Value as string);
-            Assert.Equal("SP_GetOrders", span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+
+            switch (commandType)
+            {
+                case CommandType.StoredProcedure:
+                    if (captureStoredProcedureCommandContent)
+                    {
+                        Assert.Equal(commandText, span.Attributes.FirstOrDefault(i =>
+                            i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+                    }
+                    else
+                    {
+                        Assert.Null(span.Attributes.FirstOrDefault(i =>
+                            i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+                    }
+
+                    break;
+
+                case CommandType.Text:
+                    if (captureTextCommandContent)
+                    {
+                        Assert.Equal(commandText, span.Attributes.FirstOrDefault(i =>
+                            i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+                    }
+                    else
+                    {
+                        Assert.Null(span.Attributes.FirstOrDefault(i =>
+                            i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+                    }
+
+                    break;
+            }
+
             Assert.Equal("(localdb)\\MSSQLLocalDB", span.Attributes.FirstOrDefault(i =>
                 i.Key == SpanAttributeConstants.PeerServiceKey).Value as string);
 
@@ -136,7 +180,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 {
                     OperationId = operationId,
                     Command = sqlCommand,
-                    Timestamp = (long?)1000000L
+                    Timestamp = (long?)1000000L,
                 };
 
                 this.fakeSqlClientDiagnosticSource.Write(
@@ -148,7 +192,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     OperationId = operationId,
                     Command = sqlCommand,
                     Exception = new Exception("Boom!"),
-                    Timestamp = 2000000L
+                    Timestamp = 2000000L,
                 };
 
                 this.fakeSqlClientDiagnosticSource.Write(

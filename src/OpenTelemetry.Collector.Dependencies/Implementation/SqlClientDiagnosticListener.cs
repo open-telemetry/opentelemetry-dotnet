@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Data;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
 
@@ -34,12 +35,15 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         private readonly PropertyFetcher connectionFetcher = new PropertyFetcher("Connection");
         private readonly PropertyFetcher dataSourceFetcher = new PropertyFetcher("DataSource");
         private readonly PropertyFetcher databaseFetcher = new PropertyFetcher("Database");
+        private readonly PropertyFetcher commandTypeFetcher = new PropertyFetcher("CommandType");
         private readonly PropertyFetcher commandTextFetcher = new PropertyFetcher("CommandText");
         private readonly PropertyFetcher exceptionFetcher = new PropertyFetcher("Exception");
+        private readonly SqlClientCollectorOptions options;
 
-        public SqlClientDiagnosticListener(string sourceName, Tracer tracer)
+        public SqlClientDiagnosticListener(string sourceName, Tracer tracer, SqlClientCollectorOptions options)
             : base(sourceName, tracer)
         {
+            this.options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -74,9 +78,32 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                             span.PutComponentAttribute("sql");
 
                             span.PutDatabaseTypeAttribute("sql");
-                            span.PutDatabaseInstanceAttribute((string)database);
-                            span.PutDatabaseStatementAttribute((string)commandText);
                             span.PutPeerServiceAttribute((string)dataSource);
+                            span.PutDatabaseInstanceAttribute((string)database);
+
+                            if (this.commandTypeFetcher.Fetch(command) is CommandType commandType)
+                            {
+                                span.SetAttribute("db.statementType", commandType.ToString());
+
+                                switch (commandType)
+                                {
+                                    case CommandType.StoredProcedure:
+                                        if (this.options.CaptureStoredProcedureCommandContent)
+                                        {
+                                            span.PutDatabaseStatementAttribute((string)commandText);
+                                        }
+
+                                        break;
+
+                                    case CommandType.Text:
+                                        if (this.options.CaptureTextCommandContent)
+                                        {
+                                            span.PutDatabaseStatementAttribute((string)commandText);
+                                        }
+
+                                        break;
+                                }
+                            }
                         }
                     }
 
