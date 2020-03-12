@@ -57,7 +57,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
                         if (command == null)
                         {
-                            CollectorEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener) + name);
+                            CollectorEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
                             return;
                         }
 
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
                         if (span == null || !span.Context.IsValid)
                         {
-                            CollectorEventSource.Log.NullOrBlankSpan(nameof(SqlClientDiagnosticListener) + name);
+                            CollectorEventSource.Log.NullOrBlankSpan($"{nameof(SqlClientDiagnosticListener)}-{name}");
                             return;
                         }
 
@@ -103,19 +103,20 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
                         if (span == null || !span.Context.IsValid)
                         {
-                            CollectorEventSource.Log.NullOrBlankSpan(nameof(SqlClientDiagnosticListener) + name);
+                            CollectorEventSource.Log.NullOrBlankSpan($"{nameof(SqlClientDiagnosticListener)}-{name}");
                             return;
                         }
 
                         if (span.IsRecording)
                         {
-                            if (!(this.exceptionFetcher.Fetch(payload) is Exception exception))
+                            if (this.exceptionFetcher.Fetch(payload) is Exception exception)
                             {
-                                CollectorEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener) + name);
-                                return;
+                                span.Status = Status.Unknown.WithDescription(exception.Message);
                             }
-
-                            span.Status = Status.Unknown.WithDescription(exception.Message);
+                            else
+                            {
+                                CollectorEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
+                            }
                         }
                     }
 

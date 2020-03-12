@@ -242,7 +242,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Helper method that populates database type
+        /// Helper method that populates database instance
         /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-database.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
@@ -259,7 +259,7 @@ namespace OpenTelemetry.Trace
         /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-database.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
-        /// <param name="statement">Database type.</param>
+        /// <param name="statement">Database statement.</param>
         /// <returns>Span with populated properties.</returns>
         public static TelemetrySpan PutDatabaseStatementAttribute(this TelemetrySpan span, string statement)
         {
