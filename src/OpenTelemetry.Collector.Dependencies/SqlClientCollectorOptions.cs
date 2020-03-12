@@ -30,12 +30,12 @@ namespace OpenTelemetry.Collector.Dependencies
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientCollector"/> should capture the text of a <see cref="CommandType.StoredProcedure"/> command. Default value: True.
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientCollector"/> should capture the names of <see cref="CommandType.StoredProcedure"/> commands. Default value: True.
         /// </summary>
-        public bool CaptureStoredProcedureCommandContent { get; set; } = true;
+        public bool CaptureStoredProcedureCommandName { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientCollector"/> should capture the text of a <see cref="CommandType.Text"/> command. Default value: False.
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientCollector"/> should capture the text of <see cref="CommandType.Text"/> commands. Default value: False.
         /// </summary>
         public bool CaptureTextCommandContent { get; set; }
     }

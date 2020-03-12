@@ -54,7 +54,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             string afterCommand,
             CommandType commandType,
             string commandText,
-            bool captureStoredProcedureCommandContent,
+            bool captureStoredProcedureCommandName,
             bool captureTextCommandContent)
         {
             var activity = new Activity("Current").AddBaggage("Stuff", "123");
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 tracer,
                 new SqlClientCollectorOptions
                 {
-                    CaptureStoredProcedureCommandContent = captureStoredProcedureCommandContent,
+                    CaptureStoredProcedureCommandName = captureStoredProcedureCommandName,
                     CaptureTextCommandContent = captureTextCommandContent,
                 }))
             {
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             switch (commandType)
             {
                 case CommandType.StoredProcedure:
-                    if (captureStoredProcedureCommandContent)
+                    if (captureStoredProcedureCommandName)
                     {
                         Assert.Equal(commandText, span.Attributes.FirstOrDefault(i =>
                             i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);

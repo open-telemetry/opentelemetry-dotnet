@@ -88,7 +88,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                                 switch (commandType)
                                 {
                                     case CommandType.StoredProcedure:
-                                        if (this.options.CaptureStoredProcedureCommandContent)
+                                        if (this.options.CaptureStoredProcedureCommandName)
                                         {
                                             span.PutDatabaseStatementAttribute((string)commandText);
                                         }
