@@ -13,7 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+#if NETSTANDARD2_1
 using System;
+#else
+using System.Diagnostics;
+#endif
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -45,31 +49,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public ValueTask<int> SendAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken = default)
         {
-            var socket = this.client.Client;
-
-            var asyncResult = socket.BeginSend(
-                buffer,
-                offset,
-                count,
-                SocketFlags.None,
-                callback: null,
-                state: null);
-
-            if (asyncResult.CompletedSynchronously)
-            {
-                return new ValueTask<int>(socket.EndSend(asyncResult));
-            }
-
-            var tcs = new TaskCompletionSource<int>();
-
-            ThreadPool.RegisterWaitForSingleObject(
-                waitObject: asyncResult.AsyncWaitHandle,
-                callBack: (s, t) => tcs.SetResult(socket.EndSend(asyncResult)),
-                state: null,
-                millisecondsTimeOutInterval: -1,
-                executeOnlyOnce: true);
-
-            return new ValueTask<int>(tcs.Task);
+#if NETSTANDARD2_1
+            return this.client.Client.SendAsync(new ReadOnlyMemory<byte>(buffer, offset, count), SocketFlags.None, cancellationToken);
+#else
+            Debug.Assert(offset == 0, "Offset isn't supported in .NET Standard 2.0.");
+            return new ValueTask<int>(this.client.SendAsync(buffer, count));
+#endif
         }
 
         public void Dispose() => this.client.Dispose();
