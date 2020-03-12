@@ -34,6 +34,11 @@ namespace OpenTelemetry.Metrics
             return NoOpMeasureMetric<double>.Instance;
         }
 
+        public override DoubleObserverMetric CreateDoubleObserver(string name, Action<DoubleObserverMetric> callback, bool absolute = true)
+        {
+            return NoOpDoubleObserverMetric.Instance;
+        }
+
         public override CounterMetric<long> CreateInt64Counter(string name, bool monotonic = true)
         {
             return NoOpCounterMetric<long>.Instance;

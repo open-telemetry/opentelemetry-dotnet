@@ -66,6 +66,15 @@ namespace OpenTelemetry.Metrics
         public abstract Int64ObserverMetric CreateInt64Observer(string name, Action<Int64ObserverMetric> callback, bool absolute = true);
 
         /// <summary>
+        /// Creates Double Observer with given name.
+        /// </summary>
+        /// <param name="name">The name of the observer.</param>
+        /// <param name="callback">The callback to be called to observe metric value.</param>
+        /// <param name="absolute">indicates if only positive values are expected.</param>
+        /// <returns>The observer instance.</returns>
+        public abstract DoubleObserverMetric CreateDoubleObserver(string name, Action<DoubleObserverMetric> callback, bool absolute = true);
+
+        /// <summary>
         /// Constructs or retrieves the <see cref="LabelSet"/> from the given label key-value pairs.
         /// </summary>
         /// <param name="labels">Label key value pairs.</param>

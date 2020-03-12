@@ -210,5 +210,17 @@ namespace OpenTelemetry.Metrics
 
             return observer;
         }
+
+        /// <inheritdoc/>
+        public override DoubleObserverMetric CreateDoubleObserver(string name, Action<DoubleObserverMetric> callback, bool absolute = true)
+        {
+            if (!this.doubleObservers.TryGetValue(name, out var observer))
+            {
+                observer = new DoubleObserverMetricSdk(name, callback);
+                this.doubleObservers.Add(name, observer);
+            }
+
+            return observer;
+        }
     }
 }
