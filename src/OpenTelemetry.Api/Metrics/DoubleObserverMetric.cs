@@ -19,7 +19,7 @@ using System.Collections.Generic;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Observer instrument for Int64 values.
+    /// Observer instrument for Double values.
     /// </summary>
     public abstract class DoubleObserverMetric
     {

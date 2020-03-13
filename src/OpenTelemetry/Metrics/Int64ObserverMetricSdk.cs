@@ -23,8 +23,8 @@ namespace OpenTelemetry.Metrics
     internal class Int64ObserverMetricSdk : Int64ObserverMetric
     {
         private readonly IDictionary<LabelSet, Int64ObserverMetricHandleSdk> observerHandles = new ConcurrentDictionary<LabelSet, Int64ObserverMetricHandleSdk>();
-        private string metricName;
-        private Action<Int64ObserverMetric> callback;
+        private readonly string metricName;
+        private readonly Action<Int64ObserverMetric> callback;
 
         public Int64ObserverMetricSdk(string name, Action<Int64ObserverMetric> callback)
         {

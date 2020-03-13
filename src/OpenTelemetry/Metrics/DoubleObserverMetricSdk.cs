@@ -23,8 +23,8 @@ namespace OpenTelemetry.Metrics
     internal class DoubleObserverMetricSdk : DoubleObserverMetric
     {
         private readonly IDictionary<LabelSet, DoubleObserverMetricHandleSdk> observerHandles = new ConcurrentDictionary<LabelSet, DoubleObserverMetricHandleSdk>();
-        private string metricName;
-        private Action<DoubleObserverMetric> callback;
+        private readonly string metricName;
+        private readonly Action<DoubleObserverMetric> callback;
 
         public DoubleObserverMetricSdk(string name, Action<DoubleObserverMetric> callback)
         {

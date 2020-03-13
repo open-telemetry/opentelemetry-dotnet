@@ -110,7 +110,7 @@ namespace OpenTelemetry.Metrics
                     var observerInstrument = longObserver.Value;
                     try
                     {
-                        // TODO: Decide if we want to enforce a timeout.
+                        // TODO: Decide if we want to enforce a timeout. Issue # 542
                         observerInstrument.InvokeCallback();
                     }
                     catch (Exception ex)
@@ -133,7 +133,7 @@ namespace OpenTelemetry.Metrics
                     var observerInstrument = doubleObserver.Value;
                     try
                     {
-                        // TODO: Decide if we want to enforce a timeout.
+                        // TODO: Decide if we want to enforce a timeout. Issue # 542
                         observerInstrument.InvokeCallback();
                     }
                     catch (Exception ex)
