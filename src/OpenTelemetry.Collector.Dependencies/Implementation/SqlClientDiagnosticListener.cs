@@ -31,6 +31,8 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         internal const string SqlDataWriteCommandError = "System.Data.SqlClient.WriteCommandError";
         internal const string SqlMicrosoftWriteCommandError = "Microsoft.Data.SqlClient.WriteCommandError";
 
+        private const string DatabaseStatementTypeSpanAttributeKey = "db.statementType";
+
         private readonly PropertyFetcher commandFetcher = new PropertyFetcher("Command");
         private readonly PropertyFetcher connectionFetcher = new PropertyFetcher("Connection");
         private readonly PropertyFetcher dataSourceFetcher = new PropertyFetcher("DataSource");
@@ -83,7 +85,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
                             if (this.commandTypeFetcher.Fetch(command) is CommandType commandType)
                             {
-                                span.SetAttribute("db.statementType", commandType.ToString());
+                                span.SetAttribute(DatabaseStatementTypeSpanAttributeKey, commandType.ToString());
 
                                 switch (commandType)
                                 {
