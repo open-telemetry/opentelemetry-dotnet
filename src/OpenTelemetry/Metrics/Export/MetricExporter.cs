@@ -20,7 +20,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Metrics.Export
 {
@@ -44,6 +43,6 @@ namespace OpenTelemetry.Metrics.Export
             FailedRetryable = 2,
         }
 
-        public abstract Task<ExportResult> ExportAsync(List<Metric> metrics, CancellationToken cancellationToken);
+        public abstract Task<ExportResult> ExportAsync<T>(List<Metric<T>> metrics, CancellationToken cancellationToken);
     }
 }

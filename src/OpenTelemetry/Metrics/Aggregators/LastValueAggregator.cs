@@ -1,4 +1,4 @@
-// <copyright file="LastValueAggregator.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="LastValueAggregator.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System;
+using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Aggregators
 {
@@ -31,21 +34,29 @@ namespace OpenTelemetry.Metrics.Aggregators
             this.checkpoint = this.value;
         }
 
-        public override void Update(T value)
+        public override MetricData<T> ToMetricData()
+        {
+            var sumData = new SumData<T>();
+            sumData.Sum = this.checkpoint;
+            sumData.Timestamp = DateTime.UtcNow;
+            return sumData;
+        }
+
+        public override AggregationType GetAggregationType()
         {
             if (typeof(T) == typeof(double))
             {
-                this.value = (T)(object)((double)(object)value);
+                return AggregationType.DoubleSum;
             }
             else
             {
-                this.value = (T)(object)((long)(object)value);
+                return AggregationType.LongSum;
             }
         }
 
-        internal T ValueFromLastCheckpoint()
+        public override void Update(T newValue)
         {
-            return this.checkpoint;
+            this.value = newValue;
         }
     }
 }

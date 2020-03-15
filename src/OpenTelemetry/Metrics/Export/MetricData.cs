@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MetricData.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Metrics.Aggregators;
+using System;
 
 namespace OpenTelemetry.Metrics.Export
 {
-    internal class NoOpMetricProcessor : MetricProcessor
+    public abstract class MetricData<T>
     {
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
-        {
-        }
-
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator)
-        {
-        }
+        public DateTime Timestamp { get; set; }
     }
 }

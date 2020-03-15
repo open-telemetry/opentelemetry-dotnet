@@ -31,12 +31,10 @@ namespace OpenTelemetry.Exporter.Stackdriver.Utils
         /// <returns><see cref="IEnumerable{T}"/>.</returns>
         public static IEnumerable<IEnumerable<T>> Partition<T>(this IEnumerable<T> source, int size)
         {
-            using (var enumerator = source.GetEnumerator())
+            using var enumerator = source.GetEnumerator();
+            while (enumerator.MoveNext())
             {
-                while (enumerator.MoveNext())
-                {
-                    yield return WalkPartition(enumerator, size - 1);
-                }
+                yield return WalkPartition(enumerator, size - 1);
             }
         }
 

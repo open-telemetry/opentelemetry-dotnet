@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AlwaysOnSampler.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
+using System.Diagnostics;
 
-using OpenTelemetry.Metrics.Aggregators;
-
-namespace OpenTelemetry.Metrics.Export
+namespace OpenTelemetry.Trace.Samplers
 {
-    internal class NoOpMetricProcessor : MetricProcessor
+    public sealed class AlwaysOnSampler : Sampler
     {
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
-        {
-        }
+        public override string Description { get; } = nameof(AlwaysOnSampler);
 
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator)
+        /// <inheritdoc />
+        public override SamplingResult ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IDictionary<string, object> attributes, IEnumerable<Link> parentLinks)
         {
+            return new SamplingResult(true);
         }
     }
 }

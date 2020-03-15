@@ -1,4 +1,4 @@
-﻿// <copyright file="MeasureMetricHandleSdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="BoundCounterMetricSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,12 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class MeasureMetricHandleSdk<T> : MeasureMetricHandle<T>
+    internal class BoundCounterMetricSdk<T> : BoundCounterMetric<T>
         where T : struct
     {
-        private readonly MeasureExactAggregator<T> measureExactAggregator = new MeasureExactAggregator<T>();
+        private readonly CounterSumAggregator<T> sumAggregator = new CounterSumAggregator<T>();
 
-        internal MeasureMetricHandleSdk()
+        internal BoundCounterMetricSdk()
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {
@@ -34,19 +34,19 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public override void Record(in SpanContext context, T value)
+        public override void Add(in SpanContext context, T value)
         {
-            this.measureExactAggregator.Update(value);
+            this.sumAggregator.Update(value);
         }
 
-        public override void Record(in DistributedContext context, T value)
+        public override void Add(in DistributedContext context, T value)
         {
-            this.measureExactAggregator.Update(value);
+            this.sumAggregator.Update(value);
         }
 
-        internal MeasureExactAggregator<T> GetAggregator()
+        internal CounterSumAggregator<T> GetAggregator()
         {
-            return this.measureExactAggregator;
+            return this.sumAggregator;
         }
     }
 }

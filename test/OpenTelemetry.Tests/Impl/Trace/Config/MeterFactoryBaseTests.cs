@@ -40,8 +40,8 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
 
             var labels1 = new List<KeyValuePair<string, string>>();
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
-            var counterHandle = counter.GetHandle(labels1);
-            Assert.IsType<NoOpCounterMetricHandle<double>>(counterHandle);
+            var counterBoundIntrument = counter.Bind(labels1);
+            Assert.IsType<NoOpBoundCounterMetric<double>>(counterBoundIntrument);
         }
     }
 }

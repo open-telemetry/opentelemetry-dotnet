@@ -1,4 +1,4 @@
-﻿// <copyright file="AlwaysSampleSampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SummaryData.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace OpenTelemetry.Trace.Samplers
+namespace OpenTelemetry.Metrics.Export
 {
-    public sealed class AlwaysSampleSampler : Sampler
+    public class SummaryData<T> : MetricData<T>
     {
-        public override string Description { get; } = nameof(AlwaysSampleSampler);
+        public long Count { get; set; }
 
-        /// <inheritdoc />
-        public override Decision ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IDictionary<string, object> attributes, IEnumerable<Link> parentLinks)
-        {
-            return new Decision(true);
-        }
+        public T Sum { get; set; }
+
+        public T Min { get; set; }
+
+        public T Max { get; set; }
     }
 }

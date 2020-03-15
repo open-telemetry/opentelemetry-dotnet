@@ -106,25 +106,23 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             {
                 try
                 {
-                    using (var c = new HttpClient())
+                    using var c = new HttpClient();
+                    var request = new HttpRequestMessage
                     {
-                        var request = new HttpRequestMessage
-                        {
-                            RequestUri = new Uri(tc.Url),
-                            Method = new HttpMethod(tc.Method),
-                            Version = new Version(2, 0),
-                        };
+                        RequestUri = new Uri(tc.Url),
+                        Method = new HttpMethod(tc.Method),
+                        Version = new Version(2, 0),
+                    };
 
-                        if (tc.Headers != null)
+                    if (tc.Headers != null)
+                    {
+                        foreach (var header in tc.Headers)
                         {
-                            foreach (var header in tc.Headers)
-                            {
-                                request.Headers.Add(header.Key, header.Value);
-                            }
+                            request.Headers.Add(header.Key, header.Value);
                         }
-
-                        await c.SendAsync(request);
                     }
+
+                    await c.SendAsync(request);
                 }
                 catch (Exception)
                 {

@@ -286,8 +286,8 @@ namespace OpenTelemetry.Trace.Test
             var span = (SpanSdk)tracer.StartRootSpan("foo");
 
             using(var scope1 = this.tracer.WithSpan(span))
-            using(var scope2 = this.tracer.WithSpan(span))
             {
+                using var scope2 = this.tracer.WithSpan(span);
                 Assert.IsNotType<NoopDisposable>(scope1);
                 Assert.IsType<NoopDisposable>(scope2);
                 Assert.Same(span.Activity, Activity.Current);

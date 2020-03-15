@@ -742,7 +742,7 @@ namespace OpenTelemetry.Trace.Test
         public void NotRecordedSpan_NoAttributesOrEventsAdded()
         {
             var tracer = TracerFactory.Create(b => b
-                    .SetSampler(new NeverSampleSampler()))
+                    .SetSampler(new AlwaysOffSampler()))
                 .GetTracer(null);
 
             var span = (SpanSdk)tracer.StartRootSpan(SpanName, SpanKind.Client);
@@ -1440,8 +1440,8 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentSpan))
-            using (var scope = tracer.StartActiveSpan(SpanName, out var childSpan))
             {
+                using var scope = tracer.StartActiveSpan(SpanName, out var childSpan);
                 Assert.NotNull(scope);
 
                 var span = tracer.CurrentSpan;
@@ -1461,8 +1461,8 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
 
             using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentSpan))
-            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer, out var childSpan))
             {
+                using var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer, out var childSpan);
                 Assert.NotNull(scope);
 
                 var span = (SpanSdk)tracer.CurrentSpan;
@@ -1486,9 +1486,9 @@ namespace OpenTelemetry.Trace.Test
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentspan))
-            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer,
-                new SpanCreationOptions { StartTimestamp = startTimestamp }, out var childSpan))
             {
+                using var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer,
+                    new SpanCreationOptions { StartTimestamp = startTimestamp }, out var childSpan);
                 Assert.NotNull(scope);
 
                 var span = (SpanSdk)tracer.CurrentSpan;
@@ -1512,9 +1512,9 @@ namespace OpenTelemetry.Trace.Test
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             using (var parentScope = tracer.StartActiveSpan(SpanName, out _))
-            using (var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer,
-                new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan))
             {
+                using var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer,
+                    new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan);
                 Assert.NotNull(scope);
 
                 var span = (SpanSdk)tracer.CurrentSpan;
@@ -1615,7 +1615,7 @@ namespace OpenTelemetry.Trace.Test
                 It.IsAny<string>(),
                 It.IsAny<SpanKind>(),
                 It.IsAny<IDictionary<string, object>>(),
-                It.IsAny<IEnumerable<Link>>())).Returns(new Decision(true));
+                It.IsAny<IEnumerable<Link>>())).Returns(new SamplingResult(true));
 
             var span = (SpanSdk)tracer.StartSpan("test", SpanKind.Client, new SpanCreationOptions { Attributes = this.attributes, });
             span.Attributes.AssertAreSame(this.attributes);
@@ -1646,7 +1646,7 @@ namespace OpenTelemetry.Trace.Test
                 It.IsAny<string>(),
                 It.IsAny<SpanKind>(),
                 It.IsAny<IDictionary<string, object>>(),
-                It.IsAny<IEnumerable<Link>>())).Returns(new Decision(false));
+                It.IsAny<IEnumerable<Link>>())).Returns(new SamplingResult(false));
 
             var span = (SpanSdk)tracer.StartSpan("test", SpanKind.Client, new SpanCreationOptions { Attributes = this.attributes, });
             Assert.Null(span.Attributes);

@@ -54,12 +54,12 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = longCounter.Key;
                     var counterInstrument = longCounter.Value;
-                    foreach (var handle in counterInstrument.GetAllHandles())
+                    foreach (var handle in counterInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.ProcessCounter(this.meterName, metricName, labelSet, aggregator);
+                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
 
@@ -67,12 +67,12 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = doubleCounter.Key;
                     var counterInstrument = doubleCounter.Value;
-                    foreach (var handle in counterInstrument.GetAllHandles())
+                    foreach (var handle in counterInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.ProcessCounter(this.meterName, metricName, labelSet, aggregator);
+                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
 
@@ -80,12 +80,12 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = longMeasure.Key;
                     var measureInstrument = longMeasure.Value;
-                    foreach (var handle in measureInstrument.GetAllHandles())
+                    foreach (var handle in measureInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.ProcessMeasure(this.meterName, metricName, labelSet, aggregator);
+                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
 
@@ -93,12 +93,12 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = doubleMeasure.Key;
                     var measureInstrument = doubleMeasure.Value;
-                    foreach (var handle in measureInstrument.GetAllHandles())
+                    foreach (var handle in measureInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.ProcessMeasure(this.meterName, metricName, labelSet, aggregator);
+                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
 
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Metrics
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.ProcessObserver(this.meterName, metricName, labelSet, aggregator);
+                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
 
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Metrics
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.ProcessObserver(this.meterName, metricName, labelSet, aggregator);
+                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
             }

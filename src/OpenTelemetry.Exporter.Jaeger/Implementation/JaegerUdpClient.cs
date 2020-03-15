@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 waitObject: asyncResult.AsyncWaitHandle,
                 callBack: (s, t) => tcs.SetResult(socket.EndSend(asyncResult)),
                 state: null,
-                timeout: TimeSpan.MaxValue,
+                millisecondsTimeOutInterval: -1,
                 executeOnlyOnce: true);
 
             return new ValueTask<int>(tcs.Task);

@@ -1,4 +1,4 @@
-﻿// <copyright file="CounterAggregatorTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MinMaxSumCountAggregatorTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,56 +21,57 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Test
 {
-    public class CounterAggregatorTest
+    public class MinMaxSumCountAggregatorTest
     {
         private class UpdateThreadArguments<T> where T: struct
         {
             public ManualResetEvent mreToBlockUpdateThread;
             public ManualResetEvent mreToEnsureAllThreadsStart;
             public int threadsStartedCount;
-            public CounterSumAggregator<T> counterSumAggregator;
+            public MeasureMinMaxSumCountAggregator<T> minMaxSumCountAggregator;
         }
 
         [Fact]
-        public void CounterAggregatorSupportsLong()
-        {            
-            CounterSumAggregator<long> aggregator = new CounterSumAggregator<long>();            
-        }
-
-        [Fact]
-        public void CounterAggregatorSupportsDouble()
+        public void MeasureAggregatorSupportsLong()
         {
-            CounterSumAggregator<double> aggregator = new CounterSumAggregator<double>();
+            MeasureMinMaxSumCountAggregator<long> aggregator = new MeasureMinMaxSumCountAggregator<long>();            
         }
 
         [Fact]
-        public void CounterAggregatorConstructorThrowsForUnSupportedTypeInt()
+        public void MeasureAggregatorSupportsDouble()
         {
-            Assert.Throws<Exception>(() => new CounterSumAggregator<int>());            
+            MeasureMinMaxSumCountAggregator<double> aggregator = new MeasureMinMaxSumCountAggregator<double>();
         }
 
         [Fact]
-        public void CounterAggregatorConstructorThrowsForUnSupportedTypeByte()
+        public void MeasureAggregatorConstructorThrowsForUnSupportedTypeInt()
         {
-            Assert.Throws<Exception>(() => new CounterSumAggregator<byte>());
+            Assert.Throws<Exception>(() => new MeasureMinMaxSumCountAggregator<int>());            
         }
 
         [Fact]
-        public void CounterAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdatesLong()
+        public void MeasureAggregatorConstructorThrowsForUnSupportedTypeByte()
+        {
+            Assert.Throws<Exception>(() => new MeasureMinMaxSumCountAggregator<byte>());
+        }
+
+        [Fact]
+        public void MeasureAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdatesLong()
         {
             // create an aggregator
-            CounterSumAggregator<long> aggregator = new CounterSumAggregator<long>();
-            var sum = aggregator.ToMetricData() as SumData<long>;
+            MeasureMinMaxSumCountAggregator<long> aggregator = new MeasureMinMaxSumCountAggregator<long>();
+            var summary = aggregator.ToMetricData() as SummaryData<long>;
 
             // we start with 0.
-            Assert.Equal(0, sum.Sum);
+            Assert.Equal(0, summary.Sum);
+            Assert.Equal(0, summary.Count);
 
             // setup args to threads.
             var mre = new ManualResetEvent(false);
             var mreToEnsureAllThreadsStart = new ManualResetEvent(false);
 
             var argToThread = new UpdateThreadArguments<long>();
-            argToThread.counterSumAggregator = aggregator;
+            argToThread.minMaxSumCountAggregator = aggregator;
             argToThread.threadsStartedCount = 0;
             argToThread.mreToBlockUpdateThread = mre;
             argToThread.mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
@@ -96,28 +97,36 @@ namespace OpenTelemetry.Metrics.Test
 
             // check point.
             aggregator.Checkpoint();
-            sum = aggregator.ToMetricData() as SumData<long>;
+            summary = aggregator.ToMetricData() as SummaryData<long>;
 
-            // 1000000 times 10 by each thread. times 10 as there are 10 threads
-            Assert.Equal(100000000, sum.Sum);
+            // 1000000 times (10+50+100) by each thread. times 10 as there are 10 threads
+            Assert.Equal(1600000000, summary.Sum);
+
+            // 1000000 times 3 by each thread, times 10 as there are 10 threads.
+            Assert.Equal(30000000, summary.Count);
+
+            // Min and Max are 10 and 100
+            Assert.Equal(10, summary.Min);
+            Assert.Equal(100, summary.Max);
         }
 
         [Fact]
-        public void CounterAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdatesDouble()
+        public void MeasureAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdatesDouble()
         {
             // create an aggregator
-            CounterSumAggregator<double> aggregator = new CounterSumAggregator<double>();
-            var sum = aggregator.ToMetricData() as SumData<double>;
+            MeasureMinMaxSumCountAggregator<double> aggregator = new MeasureMinMaxSumCountAggregator<double>();
+            var summary = aggregator.ToMetricData() as SummaryData<double>;
 
-            // we start with 0.0
-            Assert.Equal(0.0, sum.Sum);
+            // we start with 0.
+            Assert.Equal(0, summary.Sum);
+            Assert.Equal(0, summary.Count);
 
             // setup args to threads.
             var mre = new ManualResetEvent(false);
-            var mreToEnsureAllThreadsStart = new ManualResetEvent(false);            
+            var mreToEnsureAllThreadsStart = new ManualResetEvent(false);
 
             var argToThread = new UpdateThreadArguments<double>();
-            argToThread.counterSumAggregator = aggregator;
+            argToThread.minMaxSumCountAggregator = aggregator;
             argToThread.threadsStartedCount = 0;
             argToThread.mreToBlockUpdateThread = mre;
             argToThread.mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
@@ -143,10 +152,17 @@ namespace OpenTelemetry.Metrics.Test
 
             // check point.
             aggregator.Checkpoint();
-            sum = aggregator.ToMetricData() as SumData<double>;
+            summary = aggregator.ToMetricData() as SummaryData<double>;
 
-            // 1000000 times 10.5 by each thread. times 10 as there are 10 threads
-            Assert.Equal(105000000, sum.Sum);
+            // 1000000 times (10+50+100) by each thread. times 10 as there are 10 threads
+            Assert.Equal(1600000000, summary.Sum);
+
+            // 1000000 times 3 by each thread, times 10 as there are 10 threads.
+            Assert.Equal(30000000, summary.Count);
+
+            // Min and Max are 10 and 100
+            Assert.Equal(10, summary.Min);
+            Assert.Equal(100, summary.Max);
         }
 
 
@@ -155,7 +171,7 @@ namespace OpenTelemetry.Metrics.Test
             var arguments = obj as UpdateThreadArguments<long>;
             var mre = arguments.mreToBlockUpdateThread;
             var mreToEnsureAllThreadsStart = arguments.mreToEnsureAllThreadsStart;
-            var agg = arguments.counterSumAggregator;
+            var agg = arguments.minMaxSumCountAggregator;
 
             if (Interlocked.Increment(ref arguments.threadsStartedCount) == 10)
             {
@@ -168,6 +184,8 @@ namespace OpenTelemetry.Metrics.Test
             for (int i = 0; i < 1000000; i++)
             {
                 agg.Update(10);
+                agg.Update(50);
+                agg.Update(100);
             }
         }
 
@@ -176,7 +194,7 @@ namespace OpenTelemetry.Metrics.Test
             var arguments = obj as UpdateThreadArguments<double>;
             var mre = arguments.mreToBlockUpdateThread;
             var mreToEnsureAllThreadsStart = arguments.mreToEnsureAllThreadsStart;
-            var agg = arguments.counterSumAggregator;
+            var agg = arguments.minMaxSumCountAggregator;
 
             if (Interlocked.Increment(ref arguments.threadsStartedCount) == 10)
             {
@@ -188,7 +206,9 @@ namespace OpenTelemetry.Metrics.Test
 
             for (int i = 0; i < 1000000; i++)
             {
-                agg.Update(10.5);
+                agg.Update(10.0);
+                agg.Update(50.0);
+                agg.Update(100.0);
             }
         }
     }

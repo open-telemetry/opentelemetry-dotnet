@@ -31,35 +31,33 @@ namespace Samples
         {
             var spanExporter = new StackdriverTraceExporter(projectId);
 
-            using (var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(spanExporter))))
+            using var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(spanExporter)));
+            var tracer = tracerFactory.GetTracer("stackdriver-test");
+
+            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance; // Enable asynclocal carrier for the context
+            DistributedContext dc = DistributedContextBuilder.CreateContext(FrontendKey, "mobile-ios9.3.5");
+
+            using (DistributedContext.SetCurrent(dc))
             {
-                var tracer = tracerFactory.GetTracer("stackdriver-test");
-
-                DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance; // Enable asynclocal carrier for the context
-                DistributedContext dc = DistributedContextBuilder.CreateContext(FrontendKey, "mobile-ios9.3.5");
-
-                using (DistributedContext.SetCurrent(dc))
+                using (tracer.StartActiveSpan("/getuser", out TelemetrySpan span))
                 {
-                    using (tracer.StartActiveSpan("/getuser", out TelemetrySpan span))
-                    {
-                        span.AddEvent("Processing video.");
-                        span.PutHttpMethodAttribute("GET");
-                        span.PutHttpHostAttribute("localhost", 8080);
-                        span.PutHttpPathAttribute("/resource");
-                        span.PutHttpStatusCodeAttribute(200);
-                        span.PutHttpUserAgentAttribute("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0");
+                    span.AddEvent("Processing video.");
+                    span.PutHttpMethodAttribute("GET");
+                    span.PutHttpHostAttribute("localhost", 8080);
+                    span.PutHttpPathAttribute("/resource");
+                    span.PutHttpStatusCodeAttribute(200);
+                    span.PutHttpUserAgentAttribute("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0");
 
-                        Thread.Sleep(TimeSpan.FromMilliseconds(10));
-                    }
+                    Thread.Sleep(TimeSpan.FromMilliseconds(10));
                 }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(5100));
-
-                Console.WriteLine("Done... wait for events to arrive to backend!");
-                Console.ReadLine();
-
-                return null;
             }
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(5100));
+
+            Console.WriteLine("Done... wait for events to arrive to backend!");
+            Console.ReadLine();
+
+            return null;
         }
     }
 }

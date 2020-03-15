@@ -79,7 +79,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public Process Process { get; internal set; }
 
-        internal IDictionary<string, Batch> CurrentBatches { get; } = new Dictionary<string, Batch>();
+        internal Dictionary<string, Batch> CurrentBatches { get; } = new Dictionary<string, Batch>();
 
         public async ValueTask<int> AppendAsync(SpanData span, CancellationToken cancellationToken)
         {
@@ -166,18 +166,21 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.Dispose(true);
         }
 
-        protected async Task SendAsync(IEnumerable<Batch> batches, CancellationToken cancellationToken)
+        protected async Task SendAsync(Dictionary<string, Batch> batches, CancellationToken cancellationToken)
         {
             try
             {
                 foreach (var batch in batches)
                 {
-                    await this.thriftClient.EmitBatchAsync(batch.Process.Message, batch.SpanMessages, cancellationToken).ConfigureAwait(false);
+                    await this.thriftClient.EmitBatchAsync(
+                        batch.Value.Process.Message,
+                        batch.Value.SpanMessages,
+                        cancellationToken).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
             {
-                throw new JaegerExporterException($"Could not send {batches.Select(b => b.SpanMessages.Count()).Sum()} spans", ex);
+                throw new JaegerExporterException($"Could not send {batches.Select(b => b.Value.SpanMessages.Count()).Sum()} spans", ex);
             }
         }
 
@@ -217,7 +220,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             {
                 this.maxFlushIntervalTimer.Enabled = false;
 
-                int n = this.CurrentBatches.Values.Sum(b => b.SpanMessages.Count);
+                int n = this.CurrentBatches.Sum(b => b.Value.SpanMessages.Count);
 
                 if (n == 0)
                 {
@@ -226,7 +229,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 try
                 {
-                    await this.SendAsync(this.CurrentBatches.Values, cancellationToken).ConfigureAwait(false);
+                    await this.SendAsync(this.CurrentBatches, cancellationToken).ConfigureAwait(false);
                 }
                 finally
                 {
