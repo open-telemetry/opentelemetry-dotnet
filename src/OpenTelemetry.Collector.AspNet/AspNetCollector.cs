@@ -24,6 +24,8 @@ namespace OpenTelemetry.Collector.AspNet
     /// </summary>
     public class AspNetCollector : IDisposable
     {
+        internal const string AspNetDiagnosticListenerName = "Microsoft.AspNet.TelemetryCorrelation";
+
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         /// <summary>
@@ -44,7 +46,7 @@ namespace OpenTelemetry.Collector.AspNet
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
                 name => new HttpInListener(name, tracer, options),
-                listener => listener.Name == "Microsoft.AspNet.TelemetryCorrelation",
+                listener => listener.Name == AspNetDiagnosticListenerName,
                 null);
             this.diagnosticSourceSubscriber.Subscribe();
         }

@@ -57,10 +57,6 @@ namespace OpenTelemetry.Collector.AspNet.Implementation
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
             var path = request.Path;
 
-            var ctx = this.options.TextFormat.Extract<HttpRequest>(
-                request,
-                (r, name) => r.Headers.GetValues(name));
-
             TelemetrySpan span;
             if (this.options.TextFormat is TraceContextFormat)
             {
@@ -68,6 +64,10 @@ namespace OpenTelemetry.Collector.AspNet.Implementation
             }
             else
             {
+                var ctx = this.options.TextFormat.Extract<HttpRequest>(
+                    request,
+                    (r, name) => r.Headers.GetValues(name));
+
                 this.Tracer.StartActiveSpan(path, ctx, SpanKind.Server, out span);
             }
 
@@ -106,11 +106,7 @@ namespace OpenTelemetry.Collector.AspNet.Implementation
 
                 span.PutHttpStatusCode(response.StatusCode, response.StatusDescription);
 
-                var routeData = HttpContext.Current.Request.RequestContext?.RouteData;
-                if (routeData == null)
-                {
-                    return;
-                }
+                var routeData = context.Request.RequestContext.RouteData;
 
                 string template = null;
                 if (routeData.Values.TryGetValue("MS_SubRoutes", out object msSubRoutes))
@@ -134,7 +130,7 @@ namespace OpenTelemetry.Collector.AspNet.Implementation
 
                 if (!string.IsNullOrEmpty(template))
                 {
-                    // override the span name that was previously set to the path part of URL.
+                    // Override the span name that was previously set to the path part of URL.
                     span.UpdateName(template);
 
                     span.PutHttpRouteAttribute(template);

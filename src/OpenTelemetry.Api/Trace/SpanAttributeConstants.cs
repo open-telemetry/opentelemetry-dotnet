@@ -16,17 +16,22 @@
 
 namespace OpenTelemetry.Trace
 {
-    internal static class SpanAttributeConstants
+    /// <summary>
+    /// Defines well-known span attribute keys.
+    /// </summary>
+    public static class SpanAttributeConstants
     {
-        public static readonly string ComponentKey = "component";
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+        public const string ComponentKey = "component";
 
-        public static readonly string HttpMethodKey = "http.method";
-        public static readonly string HttpStatusCodeKey = "http.status_code";
-        public static readonly string HttpUserAgentKey = "http.user_agent";
-        public static readonly string HttpPathKey = "http.path";
-        public static readonly string HttpHostKey = "http.host";
-        public static readonly string HttpUrlKey = "http.url";
-        public static readonly string HttpRouteKey = "http.route";
-        public static readonly string HttpFlavorKey = "http.flavor";
+        public const string HttpMethodKey = "http.method";
+        public const string HttpStatusCodeKey = "http.status_code";
+        public const string HttpUserAgentKey = "http.user_agent";
+        public const string HttpPathKey = "http.path";
+        public const string HttpHostKey = "http.host";
+        public const string HttpUrlKey = "http.url";
+        public const string HttpRouteKey = "http.route";
+        public const string HttpFlavorKey = "http.flavor";
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
