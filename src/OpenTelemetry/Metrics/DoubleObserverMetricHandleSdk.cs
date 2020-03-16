@@ -1,4 +1,4 @@
-// <copyright file="ObserverMetricHandleSdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DoubleObserverMetricHandleSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,37 +14,20 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using OpenTelemetry.Context;
 using OpenTelemetry.Metrics.Aggregators;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class ObserverMetricHandleSdk<T> : ObserverMetricHandle<T>
-        where T : struct
+    internal class DoubleObserverMetricHandleSdk : DoubleObserverMetricHandle
     {
-        private readonly LastValueAggregator<T> aggregator = new LastValueAggregator<T>();
+        private readonly LastValueAggregator<double> aggregator = new LastValueAggregator<double>();
 
-        internal ObserverMetricHandleSdk()
-        {
-            if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
-            {
-                throw new Exception("Invalid Type");
-            }
-        }
-
-        public override void Observe(in SpanContext context, T value)
+        public override void Observe(double value)
         {
             this.aggregator.Update(value);
         }
 
-        public override void Observe(in DistributedContext context, T value)
-        {
-            this.aggregator.Update(value);
-        }
-
-        internal LastValueAggregator<T> GetAggregator()
+        internal LastValueAggregator<double> GetAggregator()
         {
             return this.aggregator;
         }

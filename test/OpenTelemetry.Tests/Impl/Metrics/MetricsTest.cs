@@ -20,6 +20,7 @@ using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Trace;
 using Xunit;
 using OpenTelemetry.Metrics.Export;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics.Test
 {
@@ -91,31 +92,67 @@ namespace OpenTelemetry.Metrics.Test
         }
 
         [Fact]
-        public void ObserverSendsAggregateToRegisteredProcessor()
+        public void LongObserverSendsAggregateToRegisteredProcessor()
         {
             var testProcessor = new TestMetricProcessor();
             var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
-            var testObserver = meter.CreateInt64Observer("testObserver");
+            var testObserver = meter.CreateInt64Observer("testObserver", TestCallbackLong);
 
+            meter.Collect();
+
+            Assert.Equal(2, testProcessor.longMetrics.Count);
+            Assert.Equal(2, testProcessor.longMetrics.Count(m => m.MetricName == "testObserver"));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 30));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 300));
+        }
+
+        [Fact]
+        public void DoubleObserverSendsAggregateToRegisteredProcessor()
+        {
+            var testProcessor = new TestMetricProcessor();
+            var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
+            var testObserver = meter.CreateDoubleObserver("testObserver", TestCallbackDouble);
+
+            meter.Collect();
+
+            Assert.Equal(2, testProcessor.doubleMetrics.Count);
+            Assert.Equal(2, testProcessor.doubleMetrics.Count(m => m.MetricName == "testObserver"));
+            Assert.Single(testProcessor.doubleMetrics.Where(m => (m.Data as SumData<double>).Sum == 30.5));
+            Assert.Single(testProcessor.doubleMetrics.Where(m => (m.Data as SumData<double>).Sum == 300.5));
+        }
+
+        private void TestCallbackLong(Int64ObserverMetric observerMetric)
+        {
+            var labels1 = new List<KeyValuePair<string, string>>();
+            labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
+
+            var labels2 = new List<KeyValuePair<string, string>>();
+            labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
+            
+            observerMetric.Observe(10, labels1);
+            observerMetric.Observe(20, labels1);
+            observerMetric.Observe(30, labels1);
+
+            observerMetric.Observe(100, labels2);
+            observerMetric.Observe(200, labels2);
+            observerMetric.Observe(300, labels2);
+        }
+
+        private void TestCallbackDouble(DoubleObserverMetric observerMetric)
+        {
             var labels1 = new List<KeyValuePair<string, string>>();
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
 
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
 
-            var context = default(SpanContext);
-            testObserver.Observe(context, 100, meter.GetLabelSet(labels1));
-            testObserver.Observe(context, 10, meter.GetLabelSet(labels1));
-            testObserver.Observe(context, 200, meter.GetLabelSet(labels2));
-            testObserver.Observe(context, 20, meter.GetLabelSet(labels2));
+            observerMetric.Observe(10.5, labels1);
+            observerMetric.Observe(20.5, labels1);
+            observerMetric.Observe(30.5, labels1);
 
-            meter.Collect();
-
-            Assert.Equal(2, testProcessor.longMetrics.Count);
-            Assert.Equal(2, testProcessor.longMetrics.Count(m => m.MetricName == "testObserver"));
-
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 10));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 20));
+            observerMetric.Observe(100.5, labels2);
+            observerMetric.Observe(200.5, labels2);
+            observerMetric.Observe(300.5, labels2);
         }
     }
 }
