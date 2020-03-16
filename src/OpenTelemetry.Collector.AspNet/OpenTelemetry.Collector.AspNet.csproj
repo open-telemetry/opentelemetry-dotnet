@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net46</TargetFramework>
+    <Description>OpenTelemetry collector for ASP.NET requests</Description>
+    <PackageTags>$(PackageTags);distributed-tracing;AspNet;MVC;WebAPI</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNet.TelemetryCorrelation" Version="1.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+  </ItemGroup>
+
+</Project>
