@@ -20,6 +20,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Prometheus.Implementation;
+using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
@@ -114,25 +115,87 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     using var output = ctx.Response.OutputStream;
                     using var writer = new StreamWriter(output);
-                    foreach (var metric in this.exporter.Metrics)
+                    foreach (var metric in this.exporter.GetAndClearDoubleMetrics())
                     {
                         var labels = metric.Labels;
-                        var value = metric.Value;
-
                         var builder = new PrometheusMetricBuilder()
                             .WithName(metric.MetricName)
                             .WithDescription(metric.MetricDescription);
 
-                        builder = builder.WithType("counter");
-
-                        foreach (var label in labels)
+                        switch (metric.AggregationType)
                         {
-                            var metricValueBuilder = builder.AddValue();
-                            metricValueBuilder = metricValueBuilder.WithValue(value);
-                            metricValueBuilder.WithLabel(label.Key, label.Value);
-                        }
+                            case AggregationType.DoubleSum:
+                                {
+                                    var doubleSum = metric.Data as SumData<double>;
+                                    var doubleValue = doubleSum.Sum;
 
-                        builder.Write(writer);
+                                    builder = builder.WithType("counter");
+
+                                    foreach (var label in labels)
+                                    {
+                                        var metricValueBuilder = builder.AddValue();
+                                        metricValueBuilder = metricValueBuilder.WithValue(doubleValue);
+                                        metricValueBuilder.WithLabel(label.Key, label.Value);
+                                    }
+
+                                    builder.Write(writer);
+                                    break;
+                                }
+
+                            case AggregationType.LongSum:
+                                {
+                                    // This cannot occcur as we are iterating Double metrics.
+                                    // TODO: report error
+                                    break;
+                                }
+
+                            case AggregationType.Summary:
+                                {
+                                    // Not supported yet.
+                                    break;
+                                }
+                        }
+                    }
+
+                    foreach (var metric in this.exporter.GetAndClearLongMetrics())
+                    {
+                        var labels = metric.Labels;
+                        var builder = new PrometheusMetricBuilder()
+                            .WithName(metric.MetricName)
+                            .WithDescription(metric.MetricDescription);
+
+                        switch (metric.AggregationType)
+                        {
+                            case AggregationType.DoubleSum:
+                                {
+                                    // This cannot occcur as we are iterating Long metrics.
+                                    // TODO: report error
+                                    break;
+                                }
+
+                            case AggregationType.LongSum:
+                                {
+                                    var longSum = metric.Data as SumData<long>;
+                                    var longValue = longSum.Sum;
+                                    builder = builder.WithType("counter");
+
+                                    foreach (var label in labels)
+                                    {
+                                        var metricValueBuilder = builder.AddValue();
+                                        metricValueBuilder = metricValueBuilder.WithValue(longValue);
+                                        metricValueBuilder.WithLabel(label.Key, label.Value);
+                                    }
+
+                                    builder.Write(writer);
+                                    break;
+                                }
+
+                            case AggregationType.Summary:
+                                {
+                                    // Not supported yet.
+                                    break;
+                                }
+                        }
                     }
                 }
             }

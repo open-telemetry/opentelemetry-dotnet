@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Int64ObserverMetricHandleSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +16,20 @@
 
 using OpenTelemetry.Metrics.Aggregators;
 
-namespace OpenTelemetry.Metrics.Export
+namespace OpenTelemetry.Metrics
 {
-    internal class NoOpMetricProcessor : MetricProcessor
+    internal class Int64ObserverMetricHandleSdk : Int64ObserverMetricHandle
     {
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
+        private readonly LastValueAggregator<long> aggregator = new LastValueAggregator<long>();
+
+        public override void Observe(long value)
         {
+            this.aggregator.Update(value);
         }
 
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator)
+        internal LastValueAggregator<long> GetAggregator()
         {
-        }
+            return this.aggregator;
+        }        
     }
 }

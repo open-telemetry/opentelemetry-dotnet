@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Int64ObserverMetricHandle.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Metrics.Aggregators;
-
-namespace OpenTelemetry.Metrics.Export
+namespace OpenTelemetry.Metrics
 {
-    internal class NoOpMetricProcessor : MetricProcessor
+    /// <summary>
+    /// Handle to the metrics observer with the defined <see cref="LabelSet"/>.
+    /// </summary>
+    public abstract class Int64ObserverMetricHandle
     {
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
-        {
-        }
-
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator)
-        {
-        }
+        /// <summary>
+        /// Observes the given value.
+        /// </summary>
+        /// <param name="value">value by which the observer handle should be Recorded.</param>
+        public abstract void Observe(long value);
     }
 }

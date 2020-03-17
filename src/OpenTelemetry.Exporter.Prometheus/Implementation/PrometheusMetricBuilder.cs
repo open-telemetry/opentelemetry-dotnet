@@ -341,6 +341,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 this.Value = metricValue;
                 return this;
             }
+
+            public PrometheusMetricValueBuilder WithValue(double metricValue)
+            {
+                this.Value = metricValue;
+                return this;
+            }
         }
     }
 }

@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Metrics.Aggregators;
-using OpenTelemetry.Metrics.Implementation;
 
 namespace OpenTelemetry.Metrics.Export
 {
@@ -33,7 +32,8 @@ namespace OpenTelemetry.Metrics.Export
         private readonly Task worker;
         private readonly TimeSpan aggregationInterval;
         private CancellationTokenSource cts;
-        private List<Metric> metrics;
+        private List<Metric<long>> longMetrics;
+        private List<Metric<double>> doubleMetrics;
 
         /// <summary>
         /// Constructs UngroupedBatcher.
@@ -44,7 +44,8 @@ namespace OpenTelemetry.Metrics.Export
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
             // TODO make this thread safe.
-            this.metrics = new List<Metric>();
+            this.longMetrics = new List<Metric<long>>();
+            this.doubleMetrics = new List<Metric<double>>();
             this.aggregationInterval = aggregationInterval;
             this.cts = new CancellationTokenSource();
             this.worker = Task.Factory.StartNew(
@@ -59,35 +60,18 @@ namespace OpenTelemetry.Metrics.Export
         {
         }
 
-        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<long> sumAggregator)
+        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
         {
-            var metric = new Metric(meterName, metricName, meterName + metricName, labelSet.Labels, sumAggregator.ValueFromLastCheckpoint());
-            this.metrics.Add(metric);
+            var metric = new Metric<long>(meterName, metricName, meterName + metricName, labelSet.Labels, aggregator.GetAggregationType());
+            metric.Data = aggregator.ToMetricData();
+            this.longMetrics.Add(metric);
         }
 
-        public override void ProcessCounter(string meterName, string metricName, LabelSet labelSet, CounterSumAggregator<double> sumAggregator)
+        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator)
         {
-            throw new NotImplementedException();
-        }
-
-        public override void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<long> measureAggregator)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void ProcessMeasure(string meterName, string metricName, LabelSet labelSet, MeasureExactAggregator<double> measureAggregator)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<long> lastValueAggregator)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void ProcessObserver(string meterName, string metricName, LabelSet labelSet, LastValueAggregator<double> lastValueAggregator)
-        {
-            throw new NotImplementedException();
+            var metric = new Metric<double>(meterName, metricName, meterName + metricName, labelSet.Labels, aggregator.GetAggregationType());
+            metric.Data = aggregator.ToMetricData();
+            this.doubleMetrics.Add(metric);
         }
 
         private async Task Worker(CancellationToken cancellationToken)
@@ -99,11 +83,18 @@ namespace OpenTelemetry.Metrics.Export
                 {
                     var sw = Stopwatch.StartNew();
 
-                    if (this.metrics.Count > 0)
+                    if (this.longMetrics.Count > 0)
                     {
-                        var metricToExport = this.metrics;
-                        this.metrics = new List<Metric>();
-                        await this.exporter.ExportAsync(metricToExport, cancellationToken);
+                        var metricToExport = this.longMetrics;
+                        this.longMetrics = new List<Metric<long>>();
+                        await this.exporter.ExportAsync<long>(metricToExport, cancellationToken);
+                    }
+
+                    if (this.doubleMetrics.Count > 0)
+                    {
+                        var metricToExport = this.doubleMetrics;
+                        this.doubleMetrics = new List<Metric<double>>();
+                        await this.exporter.ExportAsync<double>(metricToExport, cancellationToken);
                     }
 
                     if (cancellationToken.IsCancellationRequested)

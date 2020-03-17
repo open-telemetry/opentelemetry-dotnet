@@ -20,7 +20,6 @@ using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Metrics.Export;
-using OpenTelemetry.Metrics.Implementation;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -32,7 +31,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         public void PrometheusExporterTest1()
         {
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
-            List<Metric> metrics = new List<Metric>();
+            List<Metric<long>> metrics = new List<Metric<long>>();
             var promExporter = new PrometheusExporter(promOptions);
             var metricsHttpServer = new PrometheusExporterMetricsHttpServer(promExporter);
 
@@ -41,9 +40,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 metricsHttpServer.Start();
                 var label1 = new List<KeyValuePair<string, string>>();
                 label1.Add(new KeyValuePair<string, string>("dim1", "value1"));
-                metrics.Add(new Metric("ns", "metric1", "desc", label1, 100));
-                metrics.Add(new Metric("ns", "metric1", "desc", label1, 100));
-                metrics.Add(new Metric("ns", "metric1", "desc", label1, 100));
+                metrics.Add(new Metric<long>("ns", "metric1", "desc", label1, AggregationType.LongSum));
+                metrics.Add(new Metric<long>("ns", "metric1", "desc", label1, AggregationType.LongSum));
+                metrics.Add(new Metric<long>("ns", "metric1", "desc", label1, AggregationType.LongSum));
 
                 promExporter.ExportAsync(metrics, CancellationToken.None);
             }
@@ -92,7 +91,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
                     // Change delay to higher value to manually check Promtheus.
                     // These tests are just to temporarily validate export to prometheus.
-                    // Task.Delay(1).Wait();
+                    // Task.Delay(100).Wait();
                 }
             }
             finally
