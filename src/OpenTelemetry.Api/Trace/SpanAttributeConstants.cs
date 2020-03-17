@@ -23,6 +23,7 @@ namespace OpenTelemetry.Trace
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public const string ComponentKey = "component";
+        public const string PeerServiceKey = "peer.service";
 
         public const string HttpMethodKey = "http.method";
         public const string HttpStatusCodeKey = "http.status_code";
@@ -32,6 +33,10 @@ namespace OpenTelemetry.Trace
         public const string HttpUrlKey = "http.url";
         public const string HttpRouteKey = "http.route";
         public const string HttpFlavorKey = "http.flavor";
+
+        public const string DatabaseTypeKey = "db.type";
+        public const string DatabaseInstanceKey = "db.instance";
+        public const string DatabaseStatementKey = "db.statement";
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
