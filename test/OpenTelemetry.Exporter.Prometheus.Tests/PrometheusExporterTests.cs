@@ -20,6 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Metrics.Export;
@@ -83,17 +84,19 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         [Fact]
         public async Task E2ETestMiddleware()
         {
-            var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
+            var promOptions = new PrometheusExporterOptions() { Url = "/metrics" };
             var promExporter = new PrometheusExporter(promOptions);
             var simpleProcessor = new UngroupedBatcher(promExporter, new System.TimeSpan(100));
 
             var builder = new WebHostBuilder()
                 .Configure(app =>
                 {
-                    app.Use((d) => new PrometheusExporterMiddleware(d, promExporter).InvokeAsync);
+                    app.UsePrometheus();
                 })
                 .ConfigureServices(services =>
                 {
+                    services.AddSingleton(promOptions);
+                    services.AddSingleton(promExporter); //Temporary till we figure out metrics configuration
                 });
 
             var server = new TestServer(builder);
@@ -105,8 +108,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             }
             finally
             {
+
+                var response = await client.GetAsync("/foo");
+                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
                 Task.Delay(200).Wait();
-                var response = await client.GetAsync("anyurl");
+                response = await client.GetAsync("/metrics");
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.Contains("testCounter{dim1=\"value1\"}", response.Content.ReadAsStringAsync().Result);
                 Assert.Contains("testCounter{dim1=\"value2\"}", response.Content.ReadAsStringAsync().Result);

@@ -64,13 +64,6 @@ namespace OpenTelemetry.Exporter.Prometheus
                             break;
                         }
 
-                    case AggregationType.LongSum:
-                        {
-                            // This cannot occcur as we are iterating Double metrics.
-                            // TODO: report error
-                            break;
-                        }
-
                     case AggregationType.Summary:
                         {
                             // Not supported yet.
@@ -88,13 +81,6 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                 switch (metric.AggregationType)
                 {
-                    case AggregationType.DoubleSum:
-                        {
-                            // This cannot occcur as we are iterating Long metrics.
-                            // TODO: report error
-                            break;
-                        }
-
                     case AggregationType.LongSum:
                         {
                             var longSum = metric.Data as SumData<long>;

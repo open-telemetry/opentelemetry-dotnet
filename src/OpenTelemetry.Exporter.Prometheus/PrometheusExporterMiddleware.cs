@@ -37,12 +37,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
         public PrometheusExporterMiddleware(RequestDelegate next, PrometheusExporter exporter)
         {
-            if (next is null)
-            {
-                throw new ArgumentNullException(nameof(next));
-            }
-
-            this.next = next;
+            this.next = next ?? throw new ArgumentNullException(nameof(next));
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
