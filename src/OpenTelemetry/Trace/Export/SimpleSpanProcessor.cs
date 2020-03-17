@@ -29,8 +29,6 @@ namespace OpenTelemetry.Trace.Export
     {
         private readonly SpanExporter exporter;
         private bool disposed = false;
-        private long spanCount = 0;
-        private List<SpanData> batch = new List<SpanData>();
 
         /// <summary>
         /// Constructs simple processor.
@@ -41,26 +39,10 @@ namespace OpenTelemetry.Trace.Export
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
-        public long GetSpanCount()
-        {
-            return this.spanCount;
-        }
-
-        public long GetErrorCount()
-        {
-            return this.batch.LongCount(span => !span.Status.IsOk);
-        }
-
-        public List<SpanData> GetSpanDataBatch()
-        {
-            return this.batch;
-        }
-
         /// <inheritdoc />
         public override void OnStart(SpanData span)
         {
-            this.batch.Add(span);
-            Interlocked.Increment(ref this.spanCount);
+            _ = this.exporter.ExportAsync(new[] { span }, CancellationToken.None);
         }
 
         /// <inheritdoc />

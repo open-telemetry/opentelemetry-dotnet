@@ -19,8 +19,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.ZPages.Implementation;
-using OpenTelemetry.Metrics.Export;
-using OpenTelemetry.Metrics.Implementation;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.ZPages
@@ -43,6 +41,15 @@ namespace OpenTelemetry.Exporter.ZPages
             this.Options = options;
         }
 
+        /// <summary>
+        /// Returns the stored list of span information aggregated by span name.
+        /// </summary>
+        /// <returns>Return span list.</returns>
+        public Dictionary<string, ZPagesSpanInformation> GetSpanList()
+        {
+            return this.spanList;
+        }
+
         /// <inheritdoc />
         public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
         {
@@ -51,10 +58,10 @@ namespace OpenTelemetry.Exporter.ZPages
 
             foreach (var spanData in this.batch)
             {
+                // If the span name is not in the list, add it to the span list
                 if (!this.spanList.ContainsKey(spanData.Name))
                 {
                     this.spanList.Add(spanData.Name, new ZPagesSpanInformation(spanData));
-                    int count = this.spanList.Count;
                 }
                 else
                 {
@@ -62,10 +69,42 @@ namespace OpenTelemetry.Exporter.ZPages
                     this.spanList.TryGetValue(spanData.Name, out spanInformation);
                     if (spanInformation != null)
                     {
-                        spanInformation.SpanDataList.Add(spanData);
-                        spanInformation.CountHour++;
-                        spanInformation.CountMinute++;
-                        spanInformation.CountTotal++;
+                        // Do the following if the span has not ended yet:
+                        if (spanData.EndTimestamp.ToUnixTimeMilliseconds() <
+                            spanData.StartTimestamp.ToUnixTimeMilliseconds())
+                        {
+                            // Update the count and the last updated timestamp.
+                            spanInformation.CountHour++;
+                            spanInformation.CountMinute++;
+                            spanInformation.CountTotal++;
+                            spanInformation.LastUpdated = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
+                        }
+
+                        // Do the following if the span has ended:
+                        if (spanData.EndTimestamp.ToUnixTimeMilliseconds() >
+                            spanData.StartTimestamp.ToUnixTimeMilliseconds())
+                        {
+                            // Add the span data to the span data list.
+                            spanInformation.SpanDataList.Add(spanData);
+
+                            // Increment the count of ended spans and calculate the average latency values.
+                            spanInformation.EndedCount++;
+                            spanInformation.TotalLatency += spanData.EndTimestamp.ToUnixTimeMilliseconds() - spanData.StartTimestamp.ToUnixTimeMilliseconds();
+                            spanInformation.GetTotalAverageLatency();
+                            spanInformation.GetAverageLatencyInLastHour();
+                            spanInformation.GetAverageLatencyInLastMinute();
+
+                            // Increment the error count, if it applies and calculate the error count in the last minute and hour.
+                            if (!spanData.Status.IsOk)
+                            {
+                                spanInformation.ErrorTotal++;
+                                spanInformation.GetErrorCountInLastHour();
+                                spanInformation.GetErrorCountInLastMinute();
+                            }
+
+                            // Set the last updated timestamp.
+                            spanInformation.LastUpdated = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
+                        }
                     }
                 }
             }
