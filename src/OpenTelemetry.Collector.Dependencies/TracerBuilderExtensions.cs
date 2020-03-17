@@ -39,34 +39,38 @@ namespace OpenTelemetry.Trace.Configuration
             return builder
                 .AddCollector((t) => new AzureClientsCollector(t))
                 .AddCollector((t) => new AzurePipelineCollector(t))
-                .AddCollector((t) => new HttpClientCollector(t));
+                .AddCollector((t) => new HttpClientCollector(t))
+                .AddCollector((t) => new SqlClientCollector(t));
         }
 
         /// <summary>
         /// Enables the outgoing requests automatic data collection.
         /// </summary>
         /// <param name="builder">Trace builder to use.</param>
-        /// <param name="configure">Configuration options.</param>
+        /// <param name="configureHttpCollectorOptions">Http configuration options.</param>
+        /// <param name="configureSqlCollectorOptions">Sql configuration options.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder AddDependencyCollector(this TracerBuilder builder, Action<HttpClientCollectorOptions> configure)
+        public static TracerBuilder AddDependencyCollector(
+            this TracerBuilder builder,
+            Action<HttpClientCollectorOptions> configureHttpCollectorOptions = null,
+            Action<SqlClientCollectorOptions> configureSqlCollectorOptions = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
+            var httpOptions = new HttpClientCollectorOptions();
+            configureHttpCollectorOptions?.Invoke(httpOptions);
 
-            var options = new HttpClientCollectorOptions();
-            configure(options);
+            var sqlOptions = new SqlClientCollectorOptions();
+            configureSqlCollectorOptions?.Invoke(sqlOptions);
 
             return builder
                 .AddCollector((t) => new AzureClientsCollector(t))
                 .AddCollector((t) => new AzurePipelineCollector(t))
-                .AddCollector((t) => new HttpClientCollector(t, options));
+                .AddCollector((t) => new HttpClientCollector(t, httpOptions))
+                .AddCollector((t) => new SqlClientCollector(t, sqlOptions));
         }
     }
 }
