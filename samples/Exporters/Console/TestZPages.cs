@@ -54,7 +54,7 @@ namespace Samples
                         Console.WriteLine("Starting Span");
                     }
 
-                    Thread.Sleep(500);
+                    Thread.Sleep(3000);
 
                     telemetrySpan.End();
                 }

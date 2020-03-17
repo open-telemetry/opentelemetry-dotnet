@@ -18,8 +18,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Trace.Export;
+using Timer = System.Timers.Timer;
 
 namespace OpenTelemetry.Exporter.ZPages
 {
@@ -31,6 +33,7 @@ namespace OpenTelemetry.Exporter.ZPages
         internal readonly ZPagesExporterOptions Options;
         private Dictionary<string, ZPagesSpanInformation> spanList = new Dictionary<string, ZPagesSpanInformation>();
         private IEnumerable<SpanData> batch = new List<SpanData>();
+        private Timer timer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZPagesExporter"/> class.
@@ -39,6 +42,10 @@ namespace OpenTelemetry.Exporter.ZPages
         public ZPagesExporter(ZPagesExporterOptions options)
         {
             this.Options = options;
+
+            // Create a timer with one minute interval
+            this.timer = new Timer(60000);
+            this.timer.Elapsed += new ElapsedEventHandler(this.TriggerCalculations);
         }
 
         /// <summary>
@@ -62,11 +69,11 @@ namespace OpenTelemetry.Exporter.ZPages
                 if (!this.spanList.ContainsKey(spanData.Name))
                 {
                     this.spanList.Add(spanData.Name, new ZPagesSpanInformation(spanData));
+                    this.timer.Enabled = true;
                 }
                 else
                 {
-                    ZPagesSpanInformation spanInformation;
-                    this.spanList.TryGetValue(spanData.Name, out spanInformation);
+                    this.spanList.TryGetValue(spanData.Name, out var spanInformation);
                     if (spanInformation != null)
                     {
                         // Do the following if the span has not ended yet:
@@ -74,9 +81,9 @@ namespace OpenTelemetry.Exporter.ZPages
                             spanData.StartTimestamp.ToUnixTimeMilliseconds())
                         {
                             // Update the count and the last updated timestamp.
+                            spanInformation.CountTotal++;
                             spanInformation.CountHour++;
                             spanInformation.CountMinute++;
-                            spanInformation.CountTotal++;
                             spanInformation.LastUpdated = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
                         }
 
@@ -116,6 +123,27 @@ namespace OpenTelemetry.Exporter.ZPages
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             return Task.FromResult(ExportResult.Success);
+        }
+
+        private void TriggerCalculations(object source, ElapsedEventArgs e)
+        {
+            foreach (var spanName in this.spanList.Keys)
+            {
+                this.spanList.TryGetValue(spanName, out var spanInformation);
+
+                if (spanInformation != null)
+                {
+                    spanInformation.GetCountInLastHour();
+                    spanInformation.GetCountInLastMinute();
+
+                    spanInformation.GetTotalAverageLatency();
+                    spanInformation.GetAverageLatencyInLastHour();
+                    spanInformation.GetAverageLatencyInLastMinute();
+
+                    spanInformation.GetErrorCountInLastHour();
+                    spanInformation.GetErrorCountInLastMinute();
+                }
+            }
         }
     }
 }
