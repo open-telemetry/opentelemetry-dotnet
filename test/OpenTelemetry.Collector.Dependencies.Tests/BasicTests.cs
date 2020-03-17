@@ -54,7 +54,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         {
             TracerBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddDependencyCollector());
-            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddDependencyCollector(null)));
+            Assert.Throws<ArgumentNullException>(() => builder.AddDependencyCollector(null, null));
         }
 
         [Fact]
@@ -209,7 +209,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(0, spanProcessor.Invocations.Count); 
+            Assert.Equal(0, spanProcessor.Invocations.Count);
         }
 
         [Fact]

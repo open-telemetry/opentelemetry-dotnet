@@ -57,6 +57,15 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        [NonEvent]
+        public void MetricObserverCallbackException(string metricName, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.MetricObserverCallbackError(metricName, ToInvariantString(ex));
+            }
+        }
+
         [Event(1, Message = "Span processor queue size reached maximum. Throttling spans.", Level = EventLevel.Warning)]
         public void SpanProcessorQueueIsExhausted()
         {
@@ -145,6 +154,12 @@ namespace OpenTelemetry.Internal
         public void AttemptToActivateOobSpan(string spanName)
         {
             this.WriteEvent(15, spanName);
+        }
+
+        [Event(16, Message = "Exception occuring while invoking Metric Observer callback. '{0}' Exception: '{1}'", Level = EventLevel.Warning)]
+        public void MetricObserverCallbackError(string metricName, string exception)
+        {
+            this.WriteEvent(16, metricName, exception);
         }
 
         /// <summary>

@@ -35,6 +35,19 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Helper method that populates span properties from component
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-span-general.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="peerService">Peer service.</param>
+        /// <returns>Span with populated http method properties.</returns>
+        public static TelemetrySpan PutPeerServiceAttribute(this TelemetrySpan span, string peerService)
+        {
+            span.SetAttribute(SpanAttributeConstants.PeerServiceKey, peerService);
+            return span;
+        }
+
+        /// <summary>
         /// Helper method that populates span properties from http method according
         /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>
@@ -208,10 +221,49 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="span">Span to fill out.</param>
         /// <param name="flavor">HTTP version.</param>
-        /// <returns>Span with populated request size properties.</returns>
+        /// <returns>Span with populated properties.</returns>
         public static TelemetrySpan PutHttpFlavorAttribute(this TelemetrySpan span, string flavor)
         {
             span.SetAttribute(SpanAttributeConstants.HttpFlavorKey, flavor);
+            return span;
+        }
+
+        /// <summary>
+        /// Helper method that populates database type
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-database.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="type">Database type.</param>
+        /// <returns>Span with populated properties.</returns>
+        public static TelemetrySpan PutDatabaseTypeAttribute(this TelemetrySpan span, string type)
+        {
+            span.SetAttribute(SpanAttributeConstants.DatabaseTypeKey, type);
+            return span;
+        }
+
+        /// <summary>
+        /// Helper method that populates database instance
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-database.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="instance">Database instance.</param>
+        /// <returns>Span with populated properties.</returns>
+        public static TelemetrySpan PutDatabaseInstanceAttribute(this TelemetrySpan span, string instance)
+        {
+            span.SetAttribute(SpanAttributeConstants.DatabaseInstanceKey, instance);
+            return span;
+        }
+
+        /// <summary>
+        /// Helper method that populates database statement
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-database.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="statement">Database statement.</param>
+        /// <returns>Span with populated properties.</returns>
+        public static TelemetrySpan PutDatabaseStatementAttribute(this TelemetrySpan span, string statement)
+        {
+            span.SetAttribute(SpanAttributeConstants.DatabaseStatementKey, statement);
             return span;
         }
     }
