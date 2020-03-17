@@ -15,8 +15,12 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Metrics.Export;
@@ -56,11 +60,68 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void E2ETest1()
+        public void E2ETestMetricsHttpServer()
         {
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
             var promExporter = new PrometheusExporter(promOptions);
             var simpleProcessor = new UngroupedBatcher(promExporter);
+            
+            var metricsHttpServer = new PrometheusExporterMetricsHttpServer(promExporter);
+            try
+            {
+                metricsHttpServer.Start();
+                CollectMetrics(simpleProcessor);
+            }
+            finally
+            {
+                // Change delay to higher value to manually check Promtheus.
+                // These tests are just to temporarily validate export to prometheus.
+                Task.Delay(100).Wait();
+                metricsHttpServer.Stop();
+            }
+        }
+
+        [Fact]
+        public async Task E2ETestMiddleware()
+        {
+            var promOptions = new PrometheusExporterOptions() { Url = "/metrics" };
+            var promExporter = new PrometheusExporter(promOptions);
+            var simpleProcessor = new UngroupedBatcher(promExporter, new System.TimeSpan(100));
+
+            var builder = new WebHostBuilder()
+                .Configure(app =>
+                {
+                    app.UsePrometheus();
+                })
+                .ConfigureServices(services =>
+                {
+                    services.AddSingleton(promOptions);
+                    services.AddSingleton(promExporter); //Temporary till we figure out metrics configuration
+                });
+
+            var server = new TestServer(builder);
+            var client = server.CreateClient();
+
+            try
+            {
+                CollectMetrics(simpleProcessor);
+            }
+            finally
+            {
+
+                var response = await client.GetAsync("/foo");
+                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+                Task.Delay(200).Wait();
+                response = await client.GetAsync("/metrics");
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Contains("testCounter{dim1=\"value1\"}", response.Content.ReadAsStringAsync().Result);
+                Assert.Contains("testCounter{dim1=\"value2\"}", response.Content.ReadAsStringAsync().Result);
+            }
+        }
+
+        private static void CollectMetrics(UngroupedBatcher simpleProcessor)
+        {
             var meter = MeterFactory.Create(simpleProcessor).GetMeter("library1") as MeterSdk;
             var testCounter = meter.CreateInt64Counter("testCounter");
 
@@ -70,34 +131,20 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
 
-            var metricsHttpServer = new PrometheusExporterMetricsHttpServer(promExporter);
-            try
+
+            var defaultContext = default(SpanContext);
+
+            for (int i = 0; i < 1000; i++)
             {
-                metricsHttpServer.Start();
+                testCounter.Add(defaultContext, 100, meter.GetLabelSet(labels1));
+                testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels1));
+                testCounter.Add(defaultContext, 200, meter.GetLabelSet(labels2));
+                testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels2));
 
-                var defaultContext = default(SpanContext);
-
-                for (int i = 0; i < 1000; i++)
+                if (i % 10 == 0)
                 {
-                    testCounter.Add(defaultContext, 100, meter.GetLabelSet(labels1));
-                    testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels1));
-                    testCounter.Add(defaultContext, 200, meter.GetLabelSet(labels2));
-                    testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels2));
-
-                    if (i % 10 == 0)
-                    {
-                        meter.Collect();
-                    }
-
-                    // Change delay to higher value to manually check Promtheus.
-                    // These tests are just to temporarily validate export to prometheus.
-                    // Task.Delay(100).Wait();
+                    meter.Collect();
                 }
-            }
-            finally
-            {
-                Task.Delay(100).Wait();
-                metricsHttpServer.Stop();
             }
         }
     }
