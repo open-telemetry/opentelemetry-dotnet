@@ -53,9 +53,10 @@ namespace OpenTelemetry.Collector.AspNet.Implementation
             }
 
             var request = context.Request;
+            var requestValues = request.Unvalidated;
 
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
-            var path = request.Path;
+            var path = requestValues.Path;
 
             TelemetrySpan span;
             if (this.options.TextFormat is TraceContextFormat)
@@ -66,7 +67,7 @@ namespace OpenTelemetry.Collector.AspNet.Implementation
             {
                 var ctx = this.options.TextFormat.Extract<HttpRequest>(
                     request,
-                    (r, name) => r.Headers.GetValues(name));
+                    (r, name) => requestValues.Headers.GetValues(name));
 
                 this.Tracer.StartActiveSpan(path, ctx, SpanKind.Server, out span);
             }
