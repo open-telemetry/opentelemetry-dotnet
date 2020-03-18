@@ -8,9 +8,9 @@
     <PackageTags>Tracing;OpenTelemetry;Management;Monitoring;Jaeger;distributed-tracing</PackageTags>
   </PropertyGroup>
 
-    <PropertyGroup>
-      <NoWarn>$(NoWarn),1591</NoWarn>
-    </PropertyGroup>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn),1591</NoWarn>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ApacheThrift" Version="0.13.0.1" ExcludeAssets="all" GeneratePathProperty="true" />
