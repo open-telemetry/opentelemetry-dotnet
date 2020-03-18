@@ -8,18 +8,24 @@
     <PackageTags>Tracing;OpenTelemetry;Management;Monitoring;Jaeger;distributed-tracing</PackageTags>
   </PropertyGroup>
 
-    <PropertyGroup>
-      <NoWarn>$(NoWarn),1591</NoWarn>
-    </PropertyGroup>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn),1591</NoWarn>
+  </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ApacheThrift" Version="0.13.0.1" PrivateAssets="All" />
+    <PackageReference Include="ApacheThrift" Version="0.13.0.1" ExcludeAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" Condition="'$(TargetFramework)' != 'netstandard2.1'" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ApacheThrift">
+      <HintPath>$(PkgApacheThrift)\lib\netstandard2.0\Thrift.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
