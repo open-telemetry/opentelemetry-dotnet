@@ -3,17 +3,17 @@
 
   <ItemGroup>
     <SolutionProjects Include="**\*.csproj" />
-    <SolutionProjects Exclude="samples\Exporters\AspNet\OpenTelemetry.Exporter.AspNet.csproj" Condition="$(OS)' != 'Windows_NT'" />
+    <SolutionProjects Remove="samples\Exporters\AspNet\OpenTelemetry.Exporter.AspNet.csproj" Condition="$(OS)' != 'Windows_NT'" />
   </ItemGroup>
 
   <!-- The only need for this file is to synchronize the PreReleaseVersion -->
 
   <Target Name="Build">
-    <MSBuild Projects="@(Solution)" Targets="Restore;Build" ContinueOnError="ErrorAndStop" Properties="PreReleaseVersion=$(PreReleaseVersion)"/>
+    <MSBuild Projects="@(SolutionProjects)" Targets="Restore;Build" ContinueOnError="ErrorAndStop" Properties="PreReleaseVersion=$(PreReleaseVersion)"/>
   </Target>
 
   <Target Name="Pack">
-    <MSBuild Projects="@(Solution)" Targets="Restore;Build;Pack" ContinueOnError="ErrorAndStop" Properties="PreReleaseVersion=$(PreReleaseVersion)"/>
+    <MSBuild Projects="@(SolutionProjects)" Targets="Restore;Build;Pack" ContinueOnError="ErrorAndStop" Properties="PreReleaseVersion=$(PreReleaseVersion)"/>
   </Target>
 
 </Project>
