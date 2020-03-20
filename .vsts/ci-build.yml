@@ -25,8 +25,9 @@ jobs:
     inputs:
       solution: OpenTelemetry.proj
       vsVersion: "latest"
-      platform: "any cpu"
-      configuration: "release"
+      platform: "AnyCPU"
+      configuration: "Release"
+      msbuildArgs: "/p:OS=$(Agent.OS)"
 
   # consider switch to https://docs.microsoft.com/vsts/pipelines/tasks/test/vstest?view=vsts
   - task: DotNetCoreCLI@2
@@ -53,7 +54,7 @@ jobs:
     inputs:
       command: "build"
       projects: OpenTelemetry.proj
-      arguments: "--configuration Release"
+      arguments: "/p:OS=$(Agent.OS) --configuration Release"
 
   - task: DotNetCoreCLI@2
     displayName: test using CLI
