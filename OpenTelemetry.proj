@@ -13,7 +13,7 @@
   </Target>
 
   <Target Name="Pack">
-    <MSBuild Projects="@(SolutionProjects)" Targets="Restore;Build;Pack" ContinueOnError="ErrorAndStop" Properties="PreReleaseVersion=$(PreReleaseVersion)"/>
+    <MSBuild Projects="@(SolutionProjects)" Targets="Pack" ContinueOnError="ErrorAndStop" Properties="PreReleaseVersion=$(PreReleaseVersion)"/>
   </Target>
 
 </Project>
