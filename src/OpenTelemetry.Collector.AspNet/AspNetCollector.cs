@@ -41,7 +41,7 @@ namespace OpenTelemetry.Collector.AspNet
         /// Initializes a new instance of the <see cref="AspNetCollector"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        /// <param name="options">Configuration options for dependencies collector.</param>
+        /// <param name="options">Configuration options for ASP.NET collector.</param>
         public AspNetCollector(Tracer tracer, AspNetCollectorOptions options)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
