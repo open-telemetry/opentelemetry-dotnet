@@ -20,16 +20,17 @@ jobs:
       version: $(DotNetVersion)
 
   # "restore" is run automatically by "build"
-  - task: DotNetCoreCLI@2
-    displayName: build solution (Release)
+  - task: VSBuild@1
+    displayName: build solution using VS (Release)
     inputs:
-      command: "build"
-      projects: OpenTelemetry.proj
-      arguments: "--configuration Release"
+      solution: OpenTelemetry.proj
+      vsVersion: "latest"
+      platform: "any cpu"
+      configuration: "release"
 
   # consider switch to https://docs.microsoft.com/vsts/pipelines/tasks/test/vstest?view=vsts
   - task: DotNetCoreCLI@2
-    displayName: test
+    displayName: test using CLI
     inputs:
       command: "test"
       projects: "test/**/*.Tests.csproj"
@@ -48,14 +49,14 @@ jobs:
 
   # "restore" is run automatically by "build"
   - task: DotNetCoreCLI@2
-    displayName: build
+    displayName: build solution using CLI (Release)
     inputs:
       command: "build"
       projects: OpenTelemetry.proj
       arguments: "--configuration Release"
 
   - task: DotNetCoreCLI@2
-    displayName: test
+    displayName: test using CLI
     inputs:
       command: "test"
       projects: "test/**/*.Tests.csproj"
