@@ -52,6 +52,7 @@ namespace OpenTelemetry.Metrics
             {
                 // collect all pending metric updates and send to batcher.
                 // must sync to prevent multiple Collect occuring at same time.
+                var boundInstrumentsToRemove = new List<LabelSet>();
                 foreach (var longCounter in this.longCounters)
                 {
                     var metricName = longCounter.Key;
@@ -62,7 +63,24 @@ namespace OpenTelemetry.Metrics
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
                         this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
+
+                        if (handle.Value.Status == RecordStatus.CandidateForRemoval)
+                        {
+                            boundInstrumentsToRemove.Add(labelSet);
+                        }                            
+
+                        if (handle.Value.Status == RecordStatus.UpdatePending)
+                        {
+                            handle.Value.Status = RecordStatus.CandidateForRemoval;
+                        }                        
                     }
+
+                    foreach (var boundInstrumentToRemove in boundInstrumentsToRemove)
+                    {
+                        counterInstrument.UnBind(boundInstrumentToRemove);
+                    }
+
+                    boundInstrumentsToRemove.Clear();
                 }
 
                 foreach (var doubleCounter in this.doubleCounters)
@@ -156,7 +174,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.longCounters.TryGetValue(name, out var counter))
             {
-                counter = new CounterMetricSdk<long>(name);
+                counter = new CounterMetricSdk<long>(name, this.collectLock);
 
                 this.longCounters.Add(name, counter);
             }
@@ -168,7 +186,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.doubleCounters.TryGetValue(name, out var counter))
             {
-                counter = new CounterMetricSdk<double>(name);
+                counter = new CounterMetricSdk<double>(name, this.collectLock);
                 this.doubleCounters.Add(name, counter);
             }
 

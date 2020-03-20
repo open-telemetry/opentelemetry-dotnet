@@ -24,14 +24,20 @@ namespace OpenTelemetry.Metrics
     internal class BoundCounterMetricSdk<T> : BoundCounterMetric<T>
         where T : struct
     {
+        public RecordStatus Status;
         private readonly CounterSumAggregator<T> sumAggregator = new CounterSumAggregator<T>();
-
+        
         internal BoundCounterMetricSdk()
         {
             if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
             {
                 throw new Exception("Invalid Type");
             }
+        }
+
+        internal BoundCounterMetricSdk(RecordStatus recordStatus) : this()
+        {
+            this.Status = recordStatus;
         }
 
         public override void Add(in SpanContext context, T value)
@@ -48,5 +54,5 @@ namespace OpenTelemetry.Metrics
         {
             return this.sumAggregator;
         }
-    }
+    }   
 }
