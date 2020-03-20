@@ -279,7 +279,7 @@ Configuration is done by user application: it should configure exporter and may 
     });
     ```
 
-### Configuration with ASP.NET (Full .NET Framework) running in IIS
+### Configuration with ASP.NET (Full .NET Framework) running in IIS or IIS Express (if supported)
 
 1. Add a reference to the `OpenTelemetry.Collector.AspNet` package. Add any other collectors & exporters you will need.
 
