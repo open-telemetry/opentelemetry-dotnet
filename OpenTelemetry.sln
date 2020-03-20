@@ -114,11 +114,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Web"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Zipkin.Tests", "test\OpenTelemetry.Exporter.Zipkin.Tests\OpenTelemetry.Exporter.Zipkin.Tests.csproj", "{1D778D2E-9523-450E-A6E0-A36897C7E78E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.AspNet", "samples\Exporters\AspNet\OpenTelemetry.Exporter.AspNet.csproj", "{9A4E3A68-904B-4835-A3C8-F664B73098DB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.AspNet.Win", "samples\Exporters\AspNet\OpenTelemetry.Exporter.AspNet.Win.csproj", "{9A4E3A68-904B-4835-A3C8-F664B73098DB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.AspNet", "src\OpenTelemetry.Collector.AspNet\OpenTelemetry.Collector.AspNet.csproj", "{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.AspNet.Win", "src\OpenTelemetry.Collector.AspNet\OpenTelemetry.Collector.AspNet.Win.csproj", "{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.AspNet.Tests", "test\OpenTelemetry.Collector.AspNet.Tests\OpenTelemetry.Collector.AspNet.Tests.csproj", "{55CBAADE-7040-46D6-A845-F207B4F0E281}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.AspNet.Tests.Win", "test\OpenTelemetry.Collector.AspNet.Tests\OpenTelemetry.Collector.AspNet.Tests.Win.csproj", "{55CBAADE-7040-46D6-A845-F207B4F0E281}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

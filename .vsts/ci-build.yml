@@ -34,7 +34,7 @@ jobs:
     displayName: test using CLI
     inputs:
       command: "test"
-      projects: "test/**/*.Tests.csproj"
+      projects: "test/**/*.Tests.csproj;test/**/*.Tests.Win.csproj"
       arguments: "--configuration Release"
 
   - task: PublishTestResults@2

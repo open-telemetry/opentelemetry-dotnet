@@ -83,9 +83,9 @@
       <Project>{99f8a331-05e9-45a5-89ba-4c54e825e5b2}</Project>
       <Name>OpenTelemetry.Api</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\src\OpenTelemetry.Collector.AspNet\OpenTelemetry.Collector.AspNet.csproj">
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Collector.AspNet\OpenTelemetry.Collector.AspNet.Win.csproj">
       <Project>{b9eeacdd-cafa-4b75-a18d-898e7de21b17}</Project>
-      <Name>OpenTelemetry.Collector.AspNet</Name>
+      <Name>OpenTelemetry.Collector.AspNet.Win</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Collector.Dependencies\OpenTelemetry.Collector.Dependencies.csproj">
       <Project>{d3ffbc59-2486-4f8f-bff1-fa95c84929e1}</Project>
