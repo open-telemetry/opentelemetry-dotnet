@@ -46,6 +46,8 @@ namespace OpenTelemetry.Collector.AspNet.Tests
         [Theory]
         [InlineData("http://localhost/", 0, null)]
         [InlineData("https://localhost/", 0, null)]
+        [InlineData("http://localhost:443/", 0, null)] // Test http over 443
+        [InlineData("https://localhost:80/", 0, null)] // Test https over 80
         [InlineData("http://localhost:80/Index", 1, "{controller}/{action}/{id}")]
         [InlineData("https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}")]
         [InlineData("http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}")]
@@ -136,20 +138,28 @@ namespace OpenTelemetry.Collector.AspNet.Tests
             var actualUrl = (string)span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value;
 
             Assert.Equal(expectedUri.ToString(), actualUrl);
+            // Url strips 80 or 443 if the scheme matches.
+            if ((expectedUri.Port == 80 && expectedUri.Scheme == "http") || (expectedUri.Port == 443 && expectedUri.Scheme == "https"))
+            {
+                Assert.DoesNotContain($":{expectedUri.Port}", actualUrl);
+            }
+            else
+            {
+                Assert.Contains($":{expectedUri.Port}", actualUrl);
+            }
 
+            // Host includes port if it isn't 80 or 443.
             if (expectedUri.Port == 80 || expectedUri.Port == 443)
             {
                 Assert.Equal(
                     expectedUri.Host,
                     span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value as string);
-                Assert.DoesNotContain($":{expectedUri.Port}", actualUrl);
             }
             else
             {
                 Assert.Equal(
                     $"{expectedUri.Host}:{expectedUri.Port}",
                     span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value as string);
-                Assert.Contains($":{expectedUri.Port}", actualUrl);
             }
 
             Assert.Equal(
