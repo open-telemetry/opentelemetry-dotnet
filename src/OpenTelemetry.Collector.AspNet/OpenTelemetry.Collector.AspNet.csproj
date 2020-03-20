@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFrameworks>net46</TargetFrameworks>
     <Description>OpenTelemetry collector for ASP.NET requests</Description>
     <PackageTags>$(PackageTags);distributed-tracing;AspNet;MVC;WebAPI</PackageTags>
   </PropertyGroup>
