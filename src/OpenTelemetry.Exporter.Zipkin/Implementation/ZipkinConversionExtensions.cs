@@ -30,12 +30,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private static readonly Dictionary<string, int> RemoteEndpointServiceNameKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
-            ["net.peer.name"] = 0, // RemoteEndpoint.ServiceName primary.
-            ["peer.service"] = 0, // RemoteEndpoint.ServiceName primary.
-            ["peer.hostname"] = 1, // RemoteEndpoint.ServiceName alternative.
-            ["peer.address"] = 1, // RemoteEndpoint.ServiceName alternative.
-            ["http.host"] = 2, // RemoteEndpoint.ServiceName for Http.
-            ["db.instance"] = 2, // RemoteEndpoint.ServiceName for Redis.
+            [SpanAttributeConstants.PeerServiceKey] = 0, // RemoteEndpoint.ServiceName primary.
+            ["net.peer.name"] = 1, // RemoteEndpoint.ServiceName first alternative.
+            ["peer.hostname"] = 2, // RemoteEndpoint.ServiceName second alternative.
+            ["peer.address"] = 2, // RemoteEndpoint.ServiceName second alternative.
+            ["http.host"] = 3, // RemoteEndpoint.ServiceName for Http.
+            ["db.instance"] = 4, // RemoteEndpoint.ServiceName for Redis.
         };
 
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> LocalEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();

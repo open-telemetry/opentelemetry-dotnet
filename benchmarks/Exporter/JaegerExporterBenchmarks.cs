@@ -16,6 +16,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
@@ -33,18 +35,46 @@ namespace Benchmarks.Exporter
 #endif
     public class JaegerExporterBenchmarks
     {
+        private readonly byte[] Buffer = new byte[1024];
+
         [Params(1, 10, 100)]
         public int NumberOfBatches { get; set; }
 
         [Params(10000)]
         public int NumberOfSpans { get; set; }
 
+        private UdpClient jaegerServer;
+        private JaegerUdpClient jaegerClient;
         private SpanData testSpan;
 
         [GlobalSetup]
         public void GlobalSetup()
         {
             this.testSpan = this.CreateTestSpan();
+
+            this.jaegerServer = new UdpClient(new IPEndPoint(IPAddress.Any, 10018));
+            ThreadPool.QueueUserWorkItem(this.ReceivedData);
+
+            this.jaegerClient = new JaegerUdpClient();
+            this.jaegerClient.Connect("localhost", 10018);
+        }
+
+        [GlobalCleanup]
+        public void GlobalCleanup()
+        {
+            this.jaegerServer.Dispose();
+            this.jaegerClient.Dispose();
+        }
+
+        private void ReceivedData(object state)
+        {
+            var buffer = new byte[1024];
+
+            while (true)
+            {
+                if (this.jaegerServer.Client.Receive(buffer) == 0)
+                    return;
+            }
         }
 
         [Benchmark]
@@ -63,6 +93,15 @@ namespace Benchmarks.Exporter
                 }
 
                 await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+
+        [Benchmark]
+        public async Task JaegerUdpClient_SendAsync()
+        {
+            for (int i = 0; i < this.NumberOfSpans * this.NumberOfBatches; i++)
+            {
+                await this.jaegerClient.SendAsync(this.Buffer).ConfigureAwait(false);
             }
         }
 
