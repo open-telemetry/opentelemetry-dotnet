@@ -44,11 +44,12 @@ namespace OpenTelemetry.Collector.AspNet.Tests
         }
 
         [Theory]
-        [InlineData("https://localhost:443/", 0, null)]
-        [InlineData("https://localhost:443/Index", 1, "{controller}/{action}/{id}")]
+        [InlineData("http://localhost/", 0, null)]
+        [InlineData("https://localhost/", 0, null)]
+        [InlineData("http://localhost:80/Index", 1, "{controller}/{action}/{id}")]
         [InlineData("https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}")]
-        [InlineData("https://localhost:443/api/weatherforecast", 3, "api/{controller}/{id}")]
-        [InlineData("https://localhost:443/subroute/10", 4, "subroute/{customerId}")]
+        [InlineData("http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}")]
+        [InlineData("https://localhost:1843/subroute/10", 4, "subroute/{customerId}")]
         public void AspNetRequestsAreCollectedSuccessfully(string url, int routeType, string routeTemplate)
         {
             RouteData routeData;
@@ -131,16 +132,35 @@ namespace OpenTelemetry.Collector.AspNet.Tests
             Assert.Equal(CanonicalCode.Ok, span.Status.CanonicalCode);
             Assert.Equal("OK", span.Status.Description);
 
-            Assert.Equal(HttpContext.Current.Request.Url.Host, span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.HttpHostKey).Value as string);
-            Assert.Equal(HttpContext.Current.Request.HttpMethod, span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.HttpMethodKey).Value as string);
-            Assert.Equal(HttpContext.Current.Request.Path, span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.HttpPathKey).Value as string);
-            Assert.Equal(HttpContext.Current.Request.UserAgent, span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.HttpUserAgentKey).Value as string);
-            Assert.Equal(HttpContext.Current.Request.Url.ToString(), span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.HttpUrlKey).Value as string);
+            var expectedUri = new Uri(url);
+            var actualUrl = (string)span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value;
+
+            Assert.Equal(expectedUri.ToString(), actualUrl);
+
+            if (expectedUri.Port == 80 || expectedUri.Port == 443)
+            {
+                Assert.Equal(
+                    expectedUri.Host,
+                    span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value as string);
+                Assert.DoesNotContain($":{expectedUri.Port}", actualUrl);
+            }
+            else
+            {
+                Assert.Equal(
+                    $"{expectedUri.Host}:{expectedUri.Port}",
+                    span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value as string);
+                Assert.Contains($":{expectedUri.Port}", actualUrl);
+            }
+
+            Assert.Equal(
+                HttpContext.Current.Request.HttpMethod,
+                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpMethodKey).Value as string);
+            Assert.Equal(
+                HttpContext.Current.Request.Path,
+                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value as string);
+            Assert.Equal(
+                HttpContext.Current.Request.UserAgent,
+                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUserAgentKey).Value as string);
 
             activity.Stop();
         }
