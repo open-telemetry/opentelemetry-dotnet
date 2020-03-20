@@ -54,7 +54,7 @@ jobs:
     inputs:
       command: "build"
       projects: OpenTelemetry.proj
-      arguments: "/p:OS=$(Agent.OS) --configuration Release"
+      arguments: "-p:OS=$(Agent.OS) --configuration Release"
 
   - task: DotNetCoreCLI@2
     displayName: test using CLI
