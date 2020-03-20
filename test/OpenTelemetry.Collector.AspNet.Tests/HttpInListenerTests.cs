@@ -52,7 +52,10 @@ namespace OpenTelemetry.Collector.AspNet.Tests
         [InlineData("https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}")]
         [InlineData("http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}")]
         [InlineData("https://localhost:1843/subroute/10", 4, "subroute/{customerId}")]
-        public void AspNetRequestsAreCollectedSuccessfully(string url, int routeType, string routeTemplate)
+        [InlineData("http://localhost/api/value", 0, null, "/api/value")] // Request will be filtered
+        [InlineData("http://localhost/api/value/2", 0, null, "/api/value")] // Request will not be filtered
+        [InlineData("http://localhost/api/value", 0, null, "{ThrowException}")] // Filter user code will throw an exception
+        public void AspNetRequestsAreCollectedSuccessfully(string url, int routeType, string routeTemplate, string filter = null)
         {
             RouteData routeData;
             switch (routeType)
@@ -108,71 +111,95 @@ namespace OpenTelemetry.Collector.AspNet.Tests
 
             var activity = new Activity("Current").AddBaggage("Stuff", "123");
             activity.Start();
-
-            var spanProcessor = new Mock<SpanProcessor>();
-            var tracer = TracerFactory.Create(b => b
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
-
-            using (new AspNetCollector(tracer))
+            try
             {
-                this.fakeAspNetDiagnosticSource.Write(
-                    "Start",
-                    null);
+                var spanProcessor = new Mock<SpanProcessor>();
+                var tracer = TracerFactory.Create(b => b
+                        .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
+                    .GetTracer(null);
 
-                this.fakeAspNetDiagnosticSource.Write(
-                    "Stop",
-                    null);
-            }
+                using (new AspNetCollector(
+                    tracer,
+                    new AspNetCollectorOptions
+                    {
+                        RequestFilter = httpContext =>
+                        {
+                            if (string.IsNullOrEmpty(filter))
+                                return true;
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin was called
+                            if (filter == "{ThrowException}")
+                                throw new InvalidOperationException();
 
-            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
+                            return httpContext.Request.Path != filter;
+                        },
+                    }))
+                {
+                    this.fakeAspNetDiagnosticSource.Write(
+                        "Start",
+                        null);
 
-            Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.Name);
-            Assert.Equal(SpanKind.Server, span.Kind);
-            Assert.Equal(CanonicalCode.Ok, span.Status.CanonicalCode);
-            Assert.Equal("OK", span.Status.Description);
+                    this.fakeAspNetDiagnosticSource.Write(
+                        "Stop",
+                        null);
+                }
 
-            var expectedUri = new Uri(url);
-            var actualUrl = (string)span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value;
+                if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
+                {
+                    Assert.Equal(0, spanProcessor.Invocations.Count); // Nothing was called because request was filtered.
+                    return;
+                }
 
-            Assert.Equal(expectedUri.ToString(), actualUrl);
-            // Url strips 80 or 443 if the scheme matches.
-            if ((expectedUri.Port == 80 && expectedUri.Scheme == "http") || (expectedUri.Port == 443 && expectedUri.Scheme == "https"))
-            {
-                Assert.DoesNotContain($":{expectedUri.Port}", actualUrl);
-            }
-            else
-            {
-                Assert.Contains($":{expectedUri.Port}", actualUrl);
-            }
+                Assert.Equal(2, spanProcessor.Invocations.Count);
 
-            // Host includes port if it isn't 80 or 443.
-            if (expectedUri.Port == 80 || expectedUri.Port == 443)
-            {
+                var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
+
+                Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.Name);
+                Assert.Equal(SpanKind.Server, span.Kind);
+                Assert.Equal(CanonicalCode.Ok, span.Status.CanonicalCode);
+                Assert.Equal("OK", span.Status.Description);
+
+                var expectedUri = new Uri(url);
+                var actualUrl = (string)span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value;
+
+                Assert.Equal(expectedUri.ToString(), actualUrl);
+                // Url strips 80 or 443 if the scheme matches.
+                if ((expectedUri.Port == 80 && expectedUri.Scheme == "http") || (expectedUri.Port == 443 && expectedUri.Scheme == "https"))
+                {
+                    Assert.DoesNotContain($":{expectedUri.Port}", actualUrl);
+                }
+                else
+                {
+                    Assert.Contains($":{expectedUri.Port}", actualUrl);
+                }
+
+                // Host includes port if it isn't 80 or 443.
+                if (expectedUri.Port == 80 || expectedUri.Port == 443)
+                {
+                    Assert.Equal(
+                        expectedUri.Host,
+                        span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value as string);
+                }
+                else
+                {
+                    Assert.Equal(
+                        $"{expectedUri.Host}:{expectedUri.Port}",
+                        span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value as string);
+                }
+
                 Assert.Equal(
-                    expectedUri.Host,
-                    span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value as string);
-            }
-            else
-            {
+                    HttpContext.Current.Request.HttpMethod,
+                    span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpMethodKey).Value as string);
                 Assert.Equal(
-                    $"{expectedUri.Host}:{expectedUri.Port}",
-                    span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value as string);
+                    HttpContext.Current.Request.Path,
+                    span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value as string);
+                Assert.Equal(
+                    HttpContext.Current.Request.UserAgent,
+                    span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUserAgentKey).Value as string);
             }
-
-            Assert.Equal(
-                HttpContext.Current.Request.HttpMethod,
-                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpMethodKey).Value as string);
-            Assert.Equal(
-                HttpContext.Current.Request.Path,
-                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value as string);
-            Assert.Equal(
-                HttpContext.Current.Request.UserAgent,
-                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUserAgentKey).Value as string);
-
-            activity.Stop();
+            finally
+            {
+                activity.Stop();
+            }
         }
 
         private class FakeAspNetDiagnosticSource : IDisposable
