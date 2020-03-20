@@ -27,6 +27,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly IDictionary<LabelSet, BoundCounterMetricSdk<T>> counterBoundInstruments = new ConcurrentDictionary<LabelSet, BoundCounterMetricSdk<T>>();
         private string metricName;
+        // Lock used to sync with MeterSDK.Collect.
         private object collectLock;
 
         public CounterMetricSdk()
@@ -45,31 +46,41 @@ namespace OpenTelemetry.Metrics
 
         public override void Add(in SpanContext context, T value, LabelSet labelset)
         {
+            // user not using bound instrument. Hence create a
+            // short-lived bound intrument.
             this.Bind(labelset, true).Add(context, value);
         }
 
         public override void Add(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels)
-        {            
+        {
+            // user not using bound instrument. Hence create a
+            // short-lived bound intrument.
             this.Bind(new LabelSetSdk(labels), true).Add(context, value);
         }
 
         public override void Add(in DistributedContext context, T value, LabelSet labelset)
         {
+            // user not using bound instrument. Hence create a
+            // short-lived bound intrument.
             this.Bind(labelset, true).Add(context, value);
         }
 
         public override void Add(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels)
         {
+            // user not using bound instrument. Hence create a
+            // short-lived bound intrument.
             this.Bind(new LabelSetSdk(labels), true).Add(context, value);
         }
 
         public override BoundCounterMetric<T> Bind(LabelSet labelset)
         {
+            // user making Bind call means record is not shortlived.
             return this.Bind(labelset, false);
         }
 
         public override BoundCounterMetric<T> Bind(IEnumerable<KeyValuePair<string, string>> labels)
         {
+            // user making Bind call means record is not shortlived.
             return this.Bind(new LabelSetSdk(labels), false);
         }
 
@@ -83,9 +94,12 @@ namespace OpenTelemetry.Metrics
             }
 
             // if boundInstrument is marked for removal, then take the
-            // lock and re-add. As Collect() might have removed this.
+            // lock to sync with Collect() and re-add. As Collect() might have removed this.
             if (boundInstrument.Status == RecordStatus.CandidateForRemoval)
             {
+                // If MeterSDK.Collect gets the lock first, then it'd have removed the record.
+                // If this method gets this lock first, it'd promote record to UpdatePending, so that
+                // when Collect finally gets to execute, this record will not get deleted.
                 lock (this.collectLock)
                 {
                     boundInstrument.Status = RecordStatus.UpdatePending;
@@ -97,7 +111,7 @@ namespace OpenTelemetry.Metrics
             }
 
             return boundInstrument;
-        }        
+        }
 
         internal void UnBind(LabelSet labelSet)
         {
@@ -107,6 +121,6 @@ namespace OpenTelemetry.Metrics
         internal IDictionary<LabelSet, BoundCounterMetricSdk<T>> GetAllBoundInstruments()
         {
             return this.counterBoundInstruments;
-        }        
+        }
     }
 }
