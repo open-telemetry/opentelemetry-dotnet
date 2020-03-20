@@ -1,7 +1,7 @@
-# CI build. No publioshing of artifacts
+# CI build. No publishing of artifacts.
 
 variables:
-  DotNetVersion: "3.1.100"
+  DotNetVersion: "3.1.101"
 
 # A pipeline with no CI trigger
 trigger: none
@@ -11,9 +11,9 @@ pr: [ 'master' ]
 jobs:
 
 - job: Windows
-  pool: Hosted VS2017
+  pool:
+    vmImage: 'windows-latest'
   steps:
-  
   - task: UseDotNet@2
     displayName: force use of desired dotnet version
     inputs:
@@ -38,7 +38,8 @@ jobs:
   - task: PublishTestResults@2
 
 - job: Linux
-  pool: Hosted Ubuntu 1604
+  pool:
+    vmImage: 'ubuntu-latest'
   steps:
   - task: UseDotNet@2
     displayName: force use of desired dotnet version
