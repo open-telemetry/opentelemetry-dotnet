@@ -35,8 +35,8 @@ jobs:
     inputs:
       command: "test"
       projects: |
-        "test/**/*.Tests.csproj"
-        "test/**/*.Tests.Win.csproj"
+        test/**/*.Tests.csproj
+        test/**/*.Tests.Win.csproj
       arguments: "--configuration Release"
 
   - task: PublishTestResults@2
