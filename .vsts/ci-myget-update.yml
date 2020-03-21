@@ -11,9 +11,8 @@ trigger:
 # no PR builds
 pr: none
 
-queue:
-  pool:
-    vmImage: 'windows-latest'
+pool:
+  vmImage: 'windows-latest'
 
 steps:
 - task: UseDotNet@2
