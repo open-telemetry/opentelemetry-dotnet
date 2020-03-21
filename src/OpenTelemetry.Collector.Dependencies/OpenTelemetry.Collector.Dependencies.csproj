@@ -9,8 +9,4 @@
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
-    <Reference Include="System.Net.Http" />
-  </ItemGroup>
-
 </Project>

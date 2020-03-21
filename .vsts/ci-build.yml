@@ -1,7 +1,7 @@
-# CI build. No publioshing of artifacts
+# CI build. No publishing of artifacts.
 
 variables:
-  DotNetVersion: "3.1.100"
+  DotNetVersion: "3.1.101"
 
 # A pipeline with no CI trigger
 trigger: none
@@ -11,34 +11,39 @@ pr: [ 'master' ]
 jobs:
 
 - job: Windows
-  pool: Hosted VS2017
+  pool:
+    vmImage: 'windows-latest'
   steps:
-  
   - task: UseDotNet@2
     displayName: force use of desired dotnet version
     inputs:
       version: $(DotNetVersion)
 
   # "restore" is run automatically by "build"
-  - task: DotNetCoreCLI@2
-    displayName: build solution (Release)
+  - task: VSBuild@1
+    displayName: build solution using VS (Release)
     inputs:
-      command: "build"
-      projects: OpenTelemetry.proj
-      arguments: "--configuration Release"
+      solution: OpenTelemetry.proj
+      vsVersion: "latest"
+      platform: "AnyCPU"
+      configuration: "Release"
+      msbuildArgs: "/p:OS=$(Agent.OS)"
 
   # consider switch to https://docs.microsoft.com/vsts/pipelines/tasks/test/vstest?view=vsts
   - task: DotNetCoreCLI@2
-    displayName: test
+    displayName: test using CLI
     inputs:
       command: "test"
-      projects: "test/**/*.Tests.csproj"
+      projects: |
+        test/**/*.Tests.csproj
+        test/**/*.Tests.Win.csproj
       arguments: "--configuration Release"
 
   - task: PublishTestResults@2
 
 - job: Linux
-  pool: Hosted Ubuntu 1604
+  pool:
+    vmImage: 'ubuntu-latest'
   steps:
   - task: UseDotNet@2
     displayName: force use of desired dotnet version
@@ -47,14 +52,14 @@ jobs:
 
   # "restore" is run automatically by "build"
   - task: DotNetCoreCLI@2
-    displayName: build
+    displayName: build solution using CLI (Release)
     inputs:
       command: "build"
       projects: OpenTelemetry.proj
-      arguments: "--configuration Release"
+      arguments: "-p:OS=$(Agent.OS) --configuration Release"
 
   - task: DotNetCoreCLI@2
-    displayName: test
+    displayName: test using CLI
     inputs:
       command: "test"
       projects: "test/**/*.Tests.csproj"
