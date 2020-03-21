@@ -2,17 +2,18 @@
 <Project ToolsVersion="16.4" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <ItemGroup>
-     <Solution Include="OpenTelemetry.sln" />    
+    <SolutionProjects Include="**\*.csproj" />
+    <SolutionProjects Remove="**\*.Win.csproj" Condition="'$(OS)' != 'Windows_NT'" />
   </ItemGroup>
 
   <!-- The only need for this file is to synchronize the PreReleaseVersion -->
 
   <Target Name="Build">
-    <MSBuild Projects="@(Solution)" Targets="Restore;Build" ContinueOnError="ErrorAndStop" Properties="PreReleaseVersion=$(PreReleaseVersion)"/> 	
+    <MSBuild Projects="@(SolutionProjects)" Targets="Restore;Build" ContinueOnError="ErrorAndStop" Properties="PreReleaseVersion=$(PreReleaseVersion)"/>
   </Target>
 
   <Target Name="Pack">
-    <MSBuild Projects="@(Solution)" Targets="Restore;Build;Pack" ContinueOnError="ErrorAndStop" Properties="PreReleaseVersion=$(PreReleaseVersion)"/> 	
+    <MSBuild Projects="@(SolutionProjects)" Targets="Pack" ContinueOnError="ErrorAndStop" Properties="PreReleaseVersion=$(PreReleaseVersion)"/>
   </Target>
 
 </Project>

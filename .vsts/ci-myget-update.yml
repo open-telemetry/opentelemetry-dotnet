@@ -1,7 +1,7 @@
 # CI build with the upload to MyGet
 
 variables:
-  DotNetVersion: "3.1.100"
+  DotNetVersion: "3.1.101"
 
 trigger:
   branches:
@@ -11,7 +11,8 @@ trigger:
 # no PR builds
 pr: none
 
-queue: Hosted VS2017
+queue:
+  vmImage: 'windows-latest'
 
 steps:
 - task: UseDotNet@2
@@ -19,24 +20,36 @@ steps:
   inputs:
     version: $(DotNetVersion)
 
-# "build" and "restore" are run by "pack".
+# "restore" is run automatically by "build"
+- task: VSBuild@1
+  displayName: build solution using VS (Release)
+  inputs:
+    solution: OpenTelemetry.proj
+    vsVersion: "latest"
+    platform: "AnyCPU"
+    configuration: "Release"
+    msbuildArgs: "/p:OS=$(Agent.OS)"
+
+- task: DotNetCoreCLI@2
+  displayName: test using CLI
+  inputs:
+    command: "test"
+    projects: |
+      test/**/*.Tests.csproj
+      test/**/*.Tests.Win.csproj
+    arguments: "--configuration Release"
+
+- task: PublishTestResults@2
+
 - task: DotNetCoreCLI@2
   displayName: pack solution with symbols (Release)
   inputs:
     command: "pack"
     projects: OpenTelemetry.proj
-    configuration: 'Release'
+    configurationToPack: 'Release'
     packDirectory: '$(build.artifactStagingDirectory)'
     buildProperties: "SymbolPackageFormat=snupkg"
-
-- task: DotNetCoreCLI@2
-  displayName: test
-  inputs:
-    command: "test"
-    projects: "test/**/*.Tests.csproj"
-    arguments: "--configuration Release"
-
-- task: PublishTestResults@2
+    arguments: "-p:OS=$(Agent.OS)"
 
 - task: NuGetCommand@2
   displayName: 'Publish nugets to MyGet'
