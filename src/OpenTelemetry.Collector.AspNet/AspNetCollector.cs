@@ -1,4 +1,4 @@
-﻿// <copyright file="AspNetCoreCollector.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AspNetCollector.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,35 +14,40 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.Collector.AspNetCore.Implementation;
+using OpenTelemetry.Collector.AspNet.Implementation;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.AspNetCore
+namespace OpenTelemetry.Collector.AspNet
 {
     /// <summary>
     /// Requests collector.
     /// </summary>
-    public class AspNetCoreCollector : IDisposable
+    public class AspNetCollector : IDisposable
     {
+        internal const string AspNetDiagnosticListenerName = "Microsoft.AspNet.TelemetryCorrelation";
+
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AspNetCoreCollector"/> class.
+        /// Initializes a new instance of the <see cref="AspNetCollector"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public AspNetCoreCollector(Tracer tracer)
-            : this(tracer, new AspNetCoreCollectorOptions())
+        public AspNetCollector(Tracer tracer)
+            : this(tracer, new AspNetCollectorOptions())
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AspNetCoreCollector"/> class.
+        /// Initializes a new instance of the <see cref="AspNetCollector"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        /// <param name="options">Configuration options for ASP.NET Core collector.</param>
-        public AspNetCoreCollector(Tracer tracer, AspNetCoreCollectorOptions options)
+        /// <param name="options">Configuration options for ASP.NET collector.</param>
+        public AspNetCollector(Tracer tracer, AspNetCollectorOptions options)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInListener("Microsoft.AspNetCore", tracer, options), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
+                name => new HttpInListener(name, tracer, options),
+                listener => listener.Name == AspNetDiagnosticListenerName,
+                null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
