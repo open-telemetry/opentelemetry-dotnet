@@ -27,13 +27,13 @@ namespace OpenTelemetry.Context
     public readonly struct CorrelationContext : IEquatable<CorrelationContext>
     {
         private static readonly List<CorrelationContextEntry> EmptyList = new List<CorrelationContextEntry>();
-        private readonly IEnumerable<CorrelationContextEntry> entries;
+        private readonly List<CorrelationContextEntry> entries;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CorrelationContext"/> struct.
         /// </summary>
-        /// <param name="entries">Entries for distributed context.</param>
-        internal CorrelationContext(IEnumerable<CorrelationContextEntry> entries)
+        /// <param name="entries">Entries for correlation context.</param>
+        internal CorrelationContext(List<CorrelationContextEntry> entries)
         {
             this.entries = entries;
         }

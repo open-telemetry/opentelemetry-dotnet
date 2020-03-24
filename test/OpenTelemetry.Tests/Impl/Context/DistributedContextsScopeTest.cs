@@ -55,8 +55,8 @@ namespace OpenTelemetry.Context.Test
             DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
             List<CorrelationContextEntry> list = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(KEY_1, VALUE_1), new CorrelationContextEntry(KEY_2, VALUE_2), };
 
-            DistributedContext dc1 = DistributedContextBuilder.CreateContext(KEY_1, VALUE_1);
-            DistributedContext dc2 = DistributedContextBuilder.CreateContext(list);
+            var dc1 = DistributedContextBuilder.CreateContext(KEY_1, VALUE_1);
+            var dc2 = DistributedContextBuilder.CreateContext(list);
 
             DistributedContext.SetCurrent(DistributedContext.Empty);
             Assert.Equal(DistributedContext.Empty, DistributedContext.Current);
@@ -85,8 +85,8 @@ namespace OpenTelemetry.Context.Test
         public async void TestContextInheritance()
         {
             DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
-            var list1 = new List<CorrelationContextEntry>(1) { new CorrelationContextEntry(KEY_1, VALUE_1)};
-            var list2 = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(KEY_1, VALUE_1), new CorrelationContextEntry(KEY_2, VALUE_2), };
+            var list1 = new List<CorrelationContextEntry>(1) {new CorrelationContextEntry(KEY_1, VALUE_1)};
+            var list2 = new List<CorrelationContextEntry>(2) {new CorrelationContextEntry(KEY_1, VALUE_1), new CorrelationContextEntry(KEY_2, VALUE_2)};
 
             DistributedContext.SetCurrent(DistributedContext.Empty);
             await Task.Run(() => Assert.Equal(DistributedContext.Empty, DistributedContext.Current));

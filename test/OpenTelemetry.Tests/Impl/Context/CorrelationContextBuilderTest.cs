@@ -29,7 +29,7 @@ namespace OpenTelemetry.Context.Test
         private const string VALUE_2 = "value 2";
 
         private static readonly List<CorrelationContextEntry> List1 = new List<CorrelationContextEntry>(1)
-            { new CorrelationContextEntry(KEY_1, VALUE_1) };
+            {new CorrelationContextEntry(KEY_1, VALUE_1)};
 
         private static readonly List<CorrelationContextEntry> List2 = new List<CorrelationContextEntry>(2)
         {

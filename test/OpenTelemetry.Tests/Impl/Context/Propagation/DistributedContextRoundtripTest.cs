@@ -44,7 +44,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             this.TestRoundtripSerialization(CorrelationContext.Empty);
             this.TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(K1, V1));
 
-            CorrelationContext expected = CorrelationContextBuilder.CreateContext(
+            var expected = CorrelationContextBuilder.CreateContext(
                 new List<CorrelationContextEntry>(3)
                 {
                     new CorrelationContextEntry(K1, V1),
