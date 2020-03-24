@@ -1,4 +1,4 @@
-﻿// <copyright file="DistributedContextTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CorrelationContextTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ using Xunit;
 
 namespace OpenTelemetry.Context.Test
 {
-    public class DistributedContextTest
+    public class CorrelationContextTest
     {
         private static readonly string K1 = "k1";
         private static readonly string K2 = "k2";
@@ -27,7 +27,7 @@ namespace OpenTelemetry.Context.Test
         private static readonly string V1 = "v1";
         private static readonly string V2 = "v2";
 
-        public DistributedContextTest()
+        public CorrelationContextTest()
         {
             CorrelationContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
         }

@@ -1,4 +1,4 @@
-﻿// <copyright file="DistributedContextsScopeTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CorrelationContextsScopeTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ using Xunit;
 
 namespace OpenTelemetry.Context.Test
 {
-    public class DistributedContextsScopeTest
+    public class CorrelationContextsScopeTest
     {
         private static readonly string KEY_1 = "key 1";
         private static readonly string KEY_2 = "key 2";
