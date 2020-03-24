@@ -12,7 +12,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 		CHANGELOG.md = CHANGELOG.md
 		CONTRIBUTING.md = CONTRIBUTING.md
+		Directory.Build.props = Directory.Build.props
+		Directory.Build.targets = Directory.Build.targets
 		NuGet.config = NuGet.config
+		OpenTelemetry.proj = OpenTelemetry.proj
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -110,6 +113,12 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Web", "samples\Exporters\Web\OpenTelemetry.Exporter.Web.csproj", "{25C06046-C7D0-46B4-AAAC-90C50C43DE7A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Zipkin.Tests", "test\OpenTelemetry.Exporter.Zipkin.Tests\OpenTelemetry.Exporter.Zipkin.Tests.csproj", "{1D778D2E-9523-450E-A6E0-A36897C7E78E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.AspNet.Win", "samples\Exporters\AspNet\OpenTelemetry.Exporter.AspNet.Win.csproj", "{9A4E3A68-904B-4835-A3C8-F664B73098DB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.AspNet.Win", "src\OpenTelemetry.Collector.AspNet\OpenTelemetry.Collector.AspNet.Win.csproj", "{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.AspNet.Tests.Win", "test\OpenTelemetry.Collector.AspNet.Tests\OpenTelemetry.Collector.AspNet.Tests.Win.csproj", "{55CBAADE-7040-46D6-A845-F207B4F0E281}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -257,6 +266,18 @@ Global
 		{1D778D2E-9523-450E-A6E0-A36897C7E78E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1D778D2E-9523-450E-A6E0-A36897C7E78E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1D778D2E-9523-450E-A6E0-A36897C7E78E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A4E3A68-904B-4835-A3C8-F664B73098DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A4E3A68-904B-4835-A3C8-F664B73098DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A4E3A68-904B-4835-A3C8-F664B73098DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A4E3A68-904B-4835-A3C8-F664B73098DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55CBAADE-7040-46D6-A845-F207B4F0E281}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55CBAADE-7040-46D6-A845-F207B4F0E281}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55CBAADE-7040-46D6-A845-F207B4F0E281}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55CBAADE-7040-46D6-A845-F207B4F0E281}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -270,6 +291,7 @@ Global
 		{CEB7F146-81DC-41DB-8015-140EC6A64E6C} = {0169B149-FB8B-46F4-9EF7-8A0E69F8FAAF}
 		{47318988-CA8B-4C81-B55D-2FA11D295A49} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{25C06046-C7D0-46B4-AAAC-90C50C43DE7A} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
+		{9A4E3A68-904B-4835-A3C8-F664B73098DB} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}
