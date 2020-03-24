@@ -35,7 +35,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
         public DistributedContextRoundtripTest()
         {
-            CorrelationContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
+            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
             serializer = new DistributedContextBinarySerializer();
         }
 

@@ -24,7 +24,7 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Context
 {
     /// <summary>
-    /// Distributed context Builder.
+    /// Correlation context Builder.
     /// </summary>
     public struct CorrelationContextBuilder
     {
@@ -38,14 +38,14 @@ namespace OpenTelemetry.Context
         {
             this.entries = null;
 
-            if (CorrelationContext.Carrier is NoopDistributedContextCarrier)
+            if (DistributedContext.Carrier is NoopDistributedContextCarrier)
             {
                 return;
             }
 
             if (inheritCurrentContext)
             {
-                this.entries = new List<CorrelationContextEntry>(CorrelationContext.Current.Entries);
+                this.entries = new List<CorrelationContextEntry>(DistributedContext.Current.CorrelationContext.Entries);
             }
         }
 
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Context
         /// <param name="context">Initial context.</param>
         public CorrelationContextBuilder(CorrelationContext context)
         {
-            if (CorrelationContext.Carrier is NoopDistributedContextCarrier)
+            if (DistributedContext.Carrier is NoopDistributedContextCarrier)
             {
                 this.entries = null;
                 return;
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Context
         /// <returns>The current <see cref="CorrelationContextBuilder"/> instance.</returns>
         public CorrelationContextBuilder Add(CorrelationContextEntry entry)
         {
-            if (CorrelationContext.Carrier is NoopDistributedContextCarrier || entry == default)
+            if (DistributedContext.Carrier is NoopDistributedContextCarrier || entry == default)
             {
                 return this;
             }
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Context
         /// <returns>The current <see cref="CorrelationContextBuilder"/> instance.</returns>
         public CorrelationContextBuilder Add(IEnumerable<CorrelationContextEntry> entries)
         {
-            if (CorrelationContext.Carrier is NoopDistributedContextCarrier || entries == null)
+            if (DistributedContext.Carrier is NoopDistributedContextCarrier || entries == null)
             {
                 return this;
             }
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Context
         /// <returns>The current <see cref="CorrelationContextBuilder"/> instance.</returns>
         public CorrelationContextBuilder Remove(string key)
         {
-            if (key == null || CorrelationContext.Carrier is NoopDistributedContextCarrier || this.entries == null)
+            if (key == null || DistributedContext.Carrier is NoopDistributedContextCarrier || this.entries == null)
             {
                 return this;
             }
@@ -186,12 +186,12 @@ namespace OpenTelemetry.Context
         }
 
         /// <summary>
-        /// Build a Distributed Context from current builder.
+        /// Build a Correlation Context from current builder.
         /// </summary>
         /// <returns><see cref="CorrelationContext"/> instance.</returns>
         public CorrelationContext Build()
         {
-            if (CorrelationContext.Carrier is NoopDistributedContextCarrier || this.entries == null)
+            if (DistributedContext.Carrier is NoopDistributedContextCarrier || this.entries == null)
             {
                 return CorrelationContext.Empty;
             }

@@ -25,11 +25,11 @@ namespace OpenTelemetry.Context
     /// </summary>
     public sealed class AsyncLocalDistributedContextCarrier : DistributedContextCarrier
     {
-        private static AsyncLocal<CorrelationContext> carrier = new AsyncLocal<CorrelationContext>();
+        private static AsyncLocal<DistributedContext> carrier = new AsyncLocal<DistributedContext>();
 
         private AsyncLocalDistributedContextCarrier()
         {
-            this.OverwriteCurrent(CorrelationContext.Empty);
+            this.OverwriteCurrent(DistributedContext.Empty);
         }
 
         /// <summary>
@@ -38,17 +38,17 @@ namespace OpenTelemetry.Context
         public static DistributedContextCarrier Instance { get; } = new AsyncLocalDistributedContextCarrier();
 
         /// <summary>
-        /// Gets the current <see cref="CorrelationContext"/>.
+        /// Gets the current <see cref="DistributedContext"/>.
         /// </summary>
-        public override CorrelationContext Current => carrier.Value;
+        public override DistributedContext Current => carrier.Value;
 
         /// <summary>
-        /// Sets the current <see cref="CorrelationContext"/>.
+        /// Sets the current <see cref="DistributedContext"/>.
         /// </summary>
         /// <param name="context">Context to set as current.</param>
         /// <returns>Scope object. On disposal - original context will be restored.</returns>
-        public override IDisposable SetCurrent(in CorrelationContext context) => new DistributedContextState(in context);
+        public override IDisposable SetCurrent(in DistributedContext context) => new DistributedContextState(in context);
 
-        internal void OverwriteCurrent(in CorrelationContext context) => carrier.Value = context;
+        internal void OverwriteCurrent(in DistributedContext context) => carrier.Value = context;
     }
 }

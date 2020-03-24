@@ -19,20 +19,20 @@ using System;
 namespace OpenTelemetry.Context
 {
     /// <summary>
-    /// Abstraction to the carrier of the CorrelationContext current object.
+    /// Abstraction to the carrier of the DistributedContext.Current object.
     /// </summary>
     public abstract class DistributedContextCarrier
     {
         /// <summary>
-        /// Gets the current <see cref="CorrelationContext"/>.
+        /// Gets the current <see cref="DistributedContext"/>.
         /// </summary>
-        public abstract CorrelationContext Current { get; }
+        public abstract DistributedContext Current { get; }
 
         /// <summary>
-        /// Sets the current <see cref="CorrelationContext"/>.
+        /// Sets the current <see cref="DistributedContext"/>.
         /// </summary>
         /// <param name="context">Context to set as current.</param>
         /// <returns>Scope object. On disposal - original context will be restored.</returns>
-        public abstract IDisposable SetCurrent(in CorrelationContext context);
+        public abstract IDisposable SetCurrent(in DistributedContext context);
     }
 }

@@ -22,12 +22,11 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Context
 {
     /// <summary>
-    /// Distributed context.
+    /// Correlation context.
     /// </summary>
     public readonly struct CorrelationContext : IEquatable<CorrelationContext>
     {
         private static readonly List<CorrelationContextEntry> EmptyList = new List<CorrelationContextEntry>();
-        private static DistributedContextCarrier carrier = NoopDistributedContextCarrier.Instance;
         private readonly IEnumerable<CorrelationContextEntry> entries;
 
         /// <summary>
@@ -45,39 +44,9 @@ namespace OpenTelemetry.Context
         public static CorrelationContext Empty { get; } = new CorrelationContext(EmptyList);
 
         /// <summary>
-        /// Gets the current <see cref="CorrelationContext"/>.
-        /// </summary>
-        public static CorrelationContext Current => carrier.Current;
-
-        /// <summary>
-        /// Gets or sets the default carrier instance of the <see cref="DistributedContextCarrier"/> class.
-        /// SDK will need to override the value to AsyncLocalDistributedContextCarrier.Instance.
-        /// </summary>
-        public static DistributedContextCarrier Carrier
-        {
-            get => carrier;
-            set
-            {
-                if (value is null)
-                {
-                    OpenTelemetryApiEventSource.Log.InvalidArgument("set_Carrier", nameof(value), "is null");
-                }
-
-                carrier = value ?? NoopDistributedContextCarrier.Instance;
-            }
-        }
-
-        /// <summary>
         /// Gets all the <see cref="CorrelationContextEntry"/> in this <see cref="CorrelationContext"/>.
         /// </summary>
         public IEnumerable<CorrelationContextEntry> Entries => this.entries;
-
-        /// <summary>
-        /// Sets the current <see cref="CorrelationContext"/>.
-        /// </summary>
-        /// <param name="context">Context to set as current.</param>
-        /// <returns>Scope object. On disposal - original context will be restored.</returns>
-        public static IDisposable SetCurrent(in CorrelationContext context) => carrier.SetCurrent(context);
 
         /// <summary>
         /// Gets the <see cref="CorrelationContextEntry"/> with the specified name.

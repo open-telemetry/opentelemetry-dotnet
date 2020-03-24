@@ -29,7 +29,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
         public DistributedContextDeserializationTest()
         {
-            CorrelationContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
+            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
             serializer = new DistributedContextBinarySerializer();
         }
 

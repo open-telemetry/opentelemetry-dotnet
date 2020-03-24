@@ -29,7 +29,7 @@ namespace OpenTelemetry.Context.Test
 
         public CorrelationContextTest()
         {
-            CorrelationContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
+            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
         }
 
         [Fact]
