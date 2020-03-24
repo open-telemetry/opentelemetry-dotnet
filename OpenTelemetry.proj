@@ -4,7 +4,6 @@
   <ItemGroup>
     <SolutionProjects Include="**\*.csproj" />
     <SolutionProjects Remove="**\*.Win.csproj" Condition="'$(OS)' != 'Windows_NT'" />
-
     <PackProjects Include="src\**\*.csproj" />
     <PackProjects Remove="**\*.Win.csproj" Condition="'$(OS)' != 'Windows_NT'" />
   </ItemGroup>
