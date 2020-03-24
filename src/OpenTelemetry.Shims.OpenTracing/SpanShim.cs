@@ -139,7 +139,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(key));
             }
 
-            // TODO Revisit once DistributedContext is finalized
+            // TODO Revisit once CorrelationContext is finalized
             throw new NotImplementedException();
         }
 

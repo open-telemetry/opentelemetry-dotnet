@@ -18,8 +18,8 @@ namespace OpenTelemetry.Context.Propagation
 {
     public abstract class DistributedContextBinarySerializerBase
     {
-        public abstract DistributedContext FromByteArray(byte[] bytes);
+        public abstract CorrelationContext FromByteArray(byte[] bytes);
 
-        public abstract byte[] ToByteArray(DistributedContext tags);
+        public abstract byte[] ToByteArray(CorrelationContext tags);
     }
 }

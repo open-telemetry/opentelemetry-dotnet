@@ -38,6 +38,6 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="context">the associated distributed context.</param>
         /// <param name="value">the measurement to be recorded.</param>
-        public abstract void Record(in DistributedContext context, T value);
+        public abstract void Record(in CorrelationContext context, T value);
     }
 }

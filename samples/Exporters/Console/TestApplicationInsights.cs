@@ -29,15 +29,15 @@ namespace Samples
 
         internal static object Run()
         {
-            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance; // Enable asynclocal carrier for the context
-            DistributedContext dc = DistributedContextBuilder.CreateContext(FrontendKey, "mobile-ios9.3.5");
+            CorrelationContext.Carrier = AsyncLocalDistributedContextCarrier.Instance; // Enable asynclocal carrier for the context
+            CorrelationContext dc = CorrelationContextBuilder.CreateContext(FrontendKey, "mobile-ios9.3.5");
 
             using var tracerFactory = TracerFactory.Create(builder => builder
                 .SetResource(Resources.CreateServiceResource("my-service"))
                 .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key"));
             var tracer = tracerFactory.GetTracer("application-insights-test");
 
-            using (DistributedContext.SetCurrent(dc))
+            using (CorrelationContext.SetCurrent(dc))
             using (tracer.StartActiveSpan("incoming request", out var span))
             {
                 span.AddEvent("Start processing video.");

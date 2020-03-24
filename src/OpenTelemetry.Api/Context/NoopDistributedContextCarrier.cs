@@ -36,16 +36,16 @@ namespace OpenTelemetry.Context
         public static NoopDistributedContextCarrier Instance { get; } = new NoopDistributedContextCarrier();
 
         /// <summary>
-        /// Gets the current <see cref="DistributedContext"/>.
+        /// Gets the current <see cref="CorrelationContext"/>.
         /// </summary>
-        public override DistributedContext Current => DistributedContext.Empty;
+        public override CorrelationContext Current => CorrelationContext.Empty;
 
         /// <summary>
-        /// Sets the current <see cref="DistributedContext"/>.
+        /// Sets the current <see cref="CorrelationContext"/>.
         /// </summary>
         /// <param name="context">Context to set as current.</param>
         /// <returns>Scope object. On disposal - original context will be restored.</returns>
-        public override IDisposable SetCurrent(in DistributedContext context) => EmptyDisposable.Instance;
+        public override IDisposable SetCurrent(in CorrelationContext context) => EmptyDisposable.Instance;
 
         private class EmptyDisposable : IDisposable
         {

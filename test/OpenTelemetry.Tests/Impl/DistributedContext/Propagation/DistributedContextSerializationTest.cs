@@ -36,16 +36,16 @@ namespace OpenTelemetry.Context.Propagation.Test
         private static readonly string V3 = "v3";
         private static readonly string V4 = "v4";
 
-        private static readonly DistributedContextEntry T1 = new DistributedContextEntry(K1, V1);
-        private static readonly DistributedContextEntry T2 = new DistributedContextEntry(K2, V2);
-        private static readonly DistributedContextEntry T3 = new DistributedContextEntry(K3, V3);
-        private static readonly DistributedContextEntry T4 = new DistributedContextEntry(K4, V4);
+        private static readonly CorrelationContextEntry T1 = new CorrelationContextEntry(K1, V1);
+        private static readonly CorrelationContextEntry T2 = new CorrelationContextEntry(K2, V2);
+        private static readonly CorrelationContextEntry T3 = new CorrelationContextEntry(K3, V3);
+        private static readonly CorrelationContextEntry T4 = new CorrelationContextEntry(K4, V4);
 
         private readonly DistributedContextBinarySerializer serializer;
 
         public DistributedContextSerializationTest()
         {
-            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
+            CorrelationContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
             serializer = new DistributedContextBinarySerializer();
         }
 
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void TestSerializeTooLargeTagContext()
         {
-            List<DistributedContextEntry> list = new List<DistributedContextEntry>();
+            List<CorrelationContextEntry> list = new List<CorrelationContextEntry>();
 
             for (var i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8 - 1; i++) {
                 // Each tag will be with format {key : "0123", value : "0123"}, so the length of it is 8.
@@ -91,31 +91,31 @@ namespace OpenTelemetry.Context.Propagation.Test
                 {
                     str = i.ToString();
                 }
-                list.Add(new DistributedContextEntry(str, str));
+                list.Add(new CorrelationContextEntry(str, str));
             }
             // The last tag will be of size 9, so the total size of the TagContext (8193) will be one byte
             // more than limit.
-            list.Add(new DistributedContextEntry("last", "last1"));
+            list.Add(new CorrelationContextEntry("last", "last1"));
 
-            DistributedContext dc = DistributedContextBuilder.CreateContext(list);
+            CorrelationContext dc = CorrelationContextBuilder.CreateContext(list);
 
             Assert.Empty(serializer.ToByteArray(dc));
         }
 
-        private void TestSerialize(params DistributedContextEntry[] tags)
+        private void TestSerialize(params CorrelationContextEntry[] tags)
         {
-            List<DistributedContextEntry> list = new List<DistributedContextEntry>();
+            List<CorrelationContextEntry> list = new List<CorrelationContextEntry>();
 
             foreach (var tag in tags)
             {
                 list.Add(tag);
             }
 
-            var actual = serializer.ToByteArray(DistributedContextBuilder.CreateContext(list));
+            var actual = serializer.ToByteArray(CorrelationContextBuilder.CreateContext(list));
             var tagsList = tags.ToList();
             var tagPermutation = Permutate(tagsList, tagsList.Count);
             ISet<String> possibleOutPuts = new HashSet<String>();
-            foreach (List<DistributedContextEntry> l in tagPermutation) {
+            foreach (List<CorrelationContextEntry> l in tagPermutation) {
                 var expected = new MemoryStream();
                 expected.WriteByte(SerializationUtils.VersionId);
                 foreach (var tag in l) {
@@ -137,14 +137,14 @@ namespace OpenTelemetry.Context.Propagation.Test
             byteArrayOutPutStream.Write(inpBytes, 0, inpBytes.Length);
         }
 
-        internal static void RotateRight(IList<DistributedContextEntry> sequence, int count)
+        internal static void RotateRight(IList<CorrelationContextEntry> sequence, int count)
         {
             var tmp = sequence[count - 1];
             sequence.RemoveAt(count - 1);
             sequence.Insert(0, tmp);
         }
 
-        internal static IEnumerable<IList<DistributedContextEntry>> Permutate(IList<DistributedContextEntry> sequence, int count)
+        internal static IEnumerable<IList<CorrelationContextEntry>> Permutate(IList<CorrelationContextEntry> sequence, int count)
         {
             if (count == 0)
             {

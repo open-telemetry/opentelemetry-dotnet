@@ -20,9 +20,9 @@ namespace OpenTelemetry.Context
 {
     internal struct DistributedContextState : IDisposable
     {
-        private DistributedContext context;
+        private CorrelationContext context;
 
-        internal DistributedContextState(in DistributedContext context)
+        internal DistributedContextState(in CorrelationContext context)
         {
             this.context = AsyncLocalDistributedContextCarrier.Instance.Current;
             ((AsyncLocalDistributedContextCarrier)AsyncLocalDistributedContextCarrier.Instance).OverwriteCurrent(in context);

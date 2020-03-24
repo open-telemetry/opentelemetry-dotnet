@@ -34,10 +34,10 @@ namespace Samples
             using var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(spanExporter)));
             var tracer = tracerFactory.GetTracer("stackdriver-test");
 
-            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance; // Enable asynclocal carrier for the context
-            DistributedContext dc = DistributedContextBuilder.CreateContext(FrontendKey, "mobile-ios9.3.5");
+            CorrelationContext.Carrier = AsyncLocalDistributedContextCarrier.Instance; // Enable asynclocal carrier for the context
+            CorrelationContext dc = CorrelationContextBuilder.CreateContext(FrontendKey, "mobile-ios9.3.5");
 
-            using (DistributedContext.SetCurrent(dc))
+            using (CorrelationContext.SetCurrent(dc))
             {
                 using (tracer.StartActiveSpan("/getuser", out TelemetrySpan span))
                 {

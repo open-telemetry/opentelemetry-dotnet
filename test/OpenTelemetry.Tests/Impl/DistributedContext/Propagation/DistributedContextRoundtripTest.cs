@@ -35,30 +35,30 @@ namespace OpenTelemetry.Context.Propagation.Test
 
         public DistributedContextRoundtripTest()
         {
-            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
+            CorrelationContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
             serializer = new DistributedContextBinarySerializer();
         }
 
         [Fact]
         public void TestRoundtripSerialization_NormalTagContext()
         {
-            TestRoundtripSerialization(DistributedContext.Empty);
-            TestRoundtripSerialization(DistributedContextBuilder.CreateContext(K1, V1));
+            TestRoundtripSerialization(CorrelationContext.Empty);
+            TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(K1, V1));
 
-            DistributedContext expected = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(3) {
-                                                                          new DistributedContextEntry(K1, V1),
-                                                                          new DistributedContextEntry(K2, V2),
-                                                                          new DistributedContextEntry(K3, V3),
+            CorrelationContext expected = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(3) {
+                                                                          new CorrelationContextEntry(K1, V1),
+                                                                          new CorrelationContextEntry(K2, V2),
+                                                                          new CorrelationContextEntry(K3, V3),
                                                                  });
             TestRoundtripSerialization(expected);
 
-            TestRoundtripSerialization(DistributedContextBuilder.CreateContext(K1, V_EMPTY));
+            TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(K1, V_EMPTY));
         }
 
         [Fact]
         public void TestRoundtrip_TagContextWithMaximumSize()
         {
-            List<DistributedContextEntry> list = new List<DistributedContextEntry>();
+            List<CorrelationContextEntry> list = new List<CorrelationContextEntry>();
             for (var i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8; i++)
             {
                 // Each tag will be with format {key : "0123", value : "0123"}, so the length of it is 8.
@@ -81,13 +81,13 @@ namespace OpenTelemetry.Context.Propagation.Test
                     str = "" + i;
                 }
 
-                list.Add(new DistributedContextEntry(str, str));
+                list.Add(new CorrelationContextEntry(str, str));
             }
 
-            TestRoundtripSerialization(DistributedContextBuilder.CreateContext(list));
+            TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(list));
         }
 
-        private void TestRoundtripSerialization(DistributedContext expected)
+        private void TestRoundtripSerialization(CorrelationContext expected)
         {
             var bytes = serializer.ToByteArray(expected);
             var actual = serializer.FromByteArray(bytes);

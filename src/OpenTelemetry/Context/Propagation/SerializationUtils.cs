@@ -31,9 +31,9 @@ namespace OpenTelemetry.Context.Propagation
 
         private static readonly byte[] InvalidContext = new byte[0];
 
-        // Serializes a DistributedContext to the on-the-wire format.
+        // Serializes a CorrelationContext to the on-the-wire format.
         // Encoded tags are of the form: <version_id><encoded_tags>
-        internal static byte[] SerializeBinary(DistributedContext dc)
+        internal static byte[] SerializeBinary(CorrelationContext dc)
         {
             // Use a ByteArrayDataOutput to avoid needing to handle IOExceptions.
             // ByteArrayDataOutput byteArrayDataOutput = ByteStreams.newDataOutput();
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Context.Propagation
             // }
             if (totalChars > TagContextSerializedSizeLimit)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("Size of DistributedContext exceeds the maximum serialized size "
+                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("Size of CorrelationContext exceeds the maximum serialized size "
                                                                           + TagContextSerializedSizeLimit);
                 return InvalidContext;
             }
@@ -64,14 +64,14 @@ namespace OpenTelemetry.Context.Propagation
             return byteArrayDataOutput.ToArray();
         }
 
-        // Deserializes input to DistributedContext based on the binary format standard.
+        // Deserializes input to CorrelationContext based on the binary format standard.
         // The encoded tags are of the form: <version_id><encoded_tags>
-        internal static DistributedContext DeserializeBinary(byte[] bytes)
+        internal static CorrelationContext DeserializeBinary(byte[] bytes)
         {
             if (bytes.Length == 0)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToExtractContext("Input byte[] can not be empty.");
-                return DistributedContext.Empty;
+                return CorrelationContext.Empty;
             }
 
             try
@@ -81,12 +81,12 @@ namespace OpenTelemetry.Context.Propagation
                 if (versionId > VersionId || versionId < 0)
                 {
                     OpenTelemetrySdkEventSource.Log.FailedToExtractContext("Wrong Version ID: " + versionId + ". Currently supports version up to: " + VersionId);
-                    return DistributedContext.Empty;
+                    return CorrelationContext.Empty;
                 }
 
                 if (TryParseTags(buffer, out var tags))
                 {
-                    return DistributedContextBuilder.CreateContext(tags);
+                    return CorrelationContextBuilder.CreateContext(tags);
                 }
             }
             catch (Exception e)
@@ -94,12 +94,12 @@ namespace OpenTelemetry.Context.Propagation
                 OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
             }
 
-            return DistributedContext.Empty;
+            return CorrelationContext.Empty;
         }
 
-        internal static bool TryParseTags(MemoryStream buffer, out List<DistributedContextEntry> tags)
+        internal static bool TryParseTags(MemoryStream buffer, out List<CorrelationContextEntry> tags)
         {
-            tags = new List<DistributedContextEntry>();
+            tags = new List<CorrelationContextEntry>();
             var limit = buffer.Length;
             var totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
             while (buffer.Position < limit)
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Context.Propagation
                     var val = CreateTagValue(key, DecodeString(buffer));
                     totalChars += key.Length;
                     totalChars += val.Length;
-                    tags.Add(new DistributedContextEntry(key, val));
+                    tags.Add(new CorrelationContextEntry(key, val));
                 }
                 else
                 {
@@ -147,7 +147,7 @@ namespace OpenTelemetry.Context.Propagation
             return value;
         }
 
-        private static void EncodeTag(DistributedContextEntry tag, MemoryStream byteArrayDataOutput)
+        private static void EncodeTag(CorrelationContextEntry tag, MemoryStream byteArrayDataOutput)
         {
             byteArrayDataOutput.WriteByte(TagFieldId);
             EncodeString(tag.Key, byteArrayDataOutput);

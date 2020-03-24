@@ -39,7 +39,7 @@ namespace OpenTelemetry.Metrics
             this.measureAggregator.Update(value);
         }
 
-        public override void Record(in DistributedContext context, T value)
+        public override void Record(in CorrelationContext context, T value)
         {
             this.measureAggregator.Update(value);
         }

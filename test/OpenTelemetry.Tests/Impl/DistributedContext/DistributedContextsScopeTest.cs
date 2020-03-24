@@ -30,92 +30,92 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void NoopContextCarrier()
         {
-            DistributedContext.Carrier = NoopDistributedContextCarrier.Instance;
-            List<DistributedContextEntry> list = new List<DistributedContextEntry>(2)
+            CorrelationContext.Carrier = NoopDistributedContextCarrier.Instance;
+            List<CorrelationContextEntry> list = new List<CorrelationContextEntry>(2)
             {
-                new DistributedContextEntry(KEY_1, VALUE_1), new DistributedContextEntry(KEY_2, VALUE_2),
+                new CorrelationContextEntry(KEY_1, VALUE_1), new CorrelationContextEntry(KEY_2, VALUE_2),
             };
-            Assert.Equal(DistributedContext.Empty, DistributedContext.Current);
+            Assert.Equal(CorrelationContext.Empty, CorrelationContext.Current);
 
-            using (DistributedContext.SetCurrent(DistributedContextBuilder.CreateContext(KEY_1, VALUE_1)))
+            using (CorrelationContext.SetCurrent(CorrelationContextBuilder.CreateContext(KEY_1, VALUE_1)))
             {
-                Assert.Equal(DistributedContext.Empty, DistributedContext.Current);
-                using (DistributedContext.SetCurrent(DistributedContextBuilder.CreateContext(list)))
+                Assert.Equal(CorrelationContext.Empty, CorrelationContext.Current);
+                using (CorrelationContext.SetCurrent(CorrelationContextBuilder.CreateContext(list)))
                 {
-                    Assert.Equal(DistributedContext.Empty, DistributedContext.Current);
+                    Assert.Equal(CorrelationContext.Empty, CorrelationContext.Current);
                 }
             }
 
-            Assert.Equal(DistributedContext.Empty, DistributedContext.Current);
+            Assert.Equal(CorrelationContext.Empty, CorrelationContext.Current);
         }
 
         [Fact]
         public async void AsyncContextCarrier()
         {
-            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
-            List<DistributedContextEntry> list = new List<DistributedContextEntry>(2) { new DistributedContextEntry(KEY_1, VALUE_1), new DistributedContextEntry(KEY_2, VALUE_2), };
+            CorrelationContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
+            List<CorrelationContextEntry> list = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(KEY_1, VALUE_1), new CorrelationContextEntry(KEY_2, VALUE_2), };
 
-            DistributedContext dc1 = DistributedContextBuilder.CreateContext(KEY_1, VALUE_1);
-            DistributedContext dc2 = DistributedContextBuilder.CreateContext(list);
+            CorrelationContext dc1 = CorrelationContextBuilder.CreateContext(KEY_1, VALUE_1);
+            CorrelationContext dc2 = CorrelationContextBuilder.CreateContext(list);
 
-            DistributedContext.SetCurrent(DistributedContext.Empty);
-            Assert.Equal(DistributedContext.Empty, DistributedContext.Current);
+            CorrelationContext.SetCurrent(CorrelationContext.Empty);
+            Assert.Equal(CorrelationContext.Empty, CorrelationContext.Current);
 
-            using (DistributedContext.SetCurrent(dc1))
+            using (CorrelationContext.SetCurrent(dc1))
             {
-                Assert.Equal(dc1, DistributedContext.Current);
-                using (DistributedContext.SetCurrent(dc2))
+                Assert.Equal(dc1, CorrelationContext.Current);
+                using (CorrelationContext.SetCurrent(dc2))
                 {
-                    Assert.Equal(dc2, DistributedContext.Current);
+                    Assert.Equal(dc2, CorrelationContext.Current);
                 }
 
-                Assert.Equal(dc1, DistributedContext.Current);
+                Assert.Equal(dc1, CorrelationContext.Current);
 
-                using (DistributedContext.SetCurrent(dc2))
+                using (CorrelationContext.SetCurrent(dc2))
                 {
-                    await Task.Run(() => Assert.Equal(dc2, DistributedContext.Current));
+                    await Task.Run(() => Assert.Equal(dc2, CorrelationContext.Current));
                 }
-                await Task.Run(() => Assert.Equal(dc1, DistributedContext.Current));
+                await Task.Run(() => Assert.Equal(dc1, CorrelationContext.Current));
             }
-            Assert.Equal(DistributedContext.Empty, DistributedContext.Current);
-            await Task.Run(() => Assert.Equal(DistributedContext.Empty, DistributedContext.Current));
+            Assert.Equal(CorrelationContext.Empty, CorrelationContext.Current);
+            await Task.Run(() => Assert.Equal(CorrelationContext.Empty, CorrelationContext.Current));
         }
 
         [Fact]
         public async void TestContextInheritance()
         {
-            DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
-            List<DistributedContextEntry> list1 = new List<DistributedContextEntry>(1) { new DistributedContextEntry(KEY_1, VALUE_1)};
-            List<DistributedContextEntry> list2 = new List<DistributedContextEntry>(2) { new DistributedContextEntry(KEY_1, VALUE_1), new DistributedContextEntry(KEY_2, VALUE_2), };
+            CorrelationContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
+            List<CorrelationContextEntry> list1 = new List<CorrelationContextEntry>(1) { new CorrelationContextEntry(KEY_1, VALUE_1)};
+            List<CorrelationContextEntry> list2 = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(KEY_1, VALUE_1), new CorrelationContextEntry(KEY_2, VALUE_2), };
 
-            DistributedContext.SetCurrent(DistributedContext.Empty);
-            await Task.Run(() => Assert.Equal(DistributedContext.Empty, DistributedContext.Current));
+            CorrelationContext.SetCurrent(CorrelationContext.Empty);
+            await Task.Run(() => Assert.Equal(CorrelationContext.Empty, CorrelationContext.Current));
 
-            using (DistributedContext.SetCurrent(DistributedContextBuilder.CreateContext(list1)))
+            using (CorrelationContext.SetCurrent(CorrelationContextBuilder.CreateContext(list1)))
             {
-                await Task.Run(() => Assert.Equal(DistributedContextBuilder.CreateContext(list1), DistributedContext.Current));
+                await Task.Run(() => Assert.Equal(CorrelationContextBuilder.CreateContext(list1), CorrelationContext.Current));
 
-                using (DistributedContext.SetCurrent(new DistributedContextBuilder(inheritCurrentContext: true).Build()))
+                using (CorrelationContext.SetCurrent(new CorrelationContextBuilder(inheritCurrentContext: true).Build()))
                 {
-                    await Task.Run(() => Assert.Equal(DistributedContextBuilder.CreateContext(list1), DistributedContext.Current));
+                    await Task.Run(() => Assert.Equal(CorrelationContextBuilder.CreateContext(list1), CorrelationContext.Current));
 
-                    using (DistributedContext.SetCurrent(new DistributedContextBuilder(inheritCurrentContext: true).Add(KEY_2, VALUE_2).Build()))
+                    using (CorrelationContext.SetCurrent(new CorrelationContextBuilder(inheritCurrentContext: true).Add(KEY_2, VALUE_2).Build()))
                     {
-                        await Task.Run(() => Assert.Equal(DistributedContextBuilder.CreateContext(list2), DistributedContext.Current));
-                        using (DistributedContext.SetCurrent(new DistributedContextBuilder(inheritCurrentContext: true).Remove(KEY_2).Build()))
+                        await Task.Run(() => Assert.Equal(CorrelationContextBuilder.CreateContext(list2), CorrelationContext.Current));
+                        using (CorrelationContext.SetCurrent(new CorrelationContextBuilder(inheritCurrentContext: true).Remove(KEY_2).Build()))
                         {
-                            await Task.Run(() => Assert.Equal(DistributedContextBuilder.CreateContext(list1), DistributedContext.Current));
+                            await Task.Run(() => Assert.Equal(CorrelationContextBuilder.CreateContext(list1), CorrelationContext.Current));
                         }
                     }
 
-                    await Task.Run(() => Assert.Equal(DistributedContextBuilder.CreateContext(list1), DistributedContext.Current));
+                    await Task.Run(() => Assert.Equal(CorrelationContextBuilder.CreateContext(list1), CorrelationContext.Current));
 
-                    using (DistributedContext.SetCurrent(new DistributedContextBuilder(inheritCurrentContext: false).Build()))
+                    using (CorrelationContext.SetCurrent(new CorrelationContextBuilder(inheritCurrentContext: false).Build()))
                     {
-                        await Task.Run(() => Assert.Equal(DistributedContext.Empty, DistributedContext.Current));
+                        await Task.Run(() => Assert.Equal(CorrelationContext.Empty, CorrelationContext.Current));
                     }
 
-                    await Task.Run(() => Assert.Equal(DistributedContextBuilder.CreateContext(list1), DistributedContext.Current));
+                    await Task.Run(() => Assert.Equal(CorrelationContextBuilder.CreateContext(list1), CorrelationContext.Current));
                 }
             }
         }

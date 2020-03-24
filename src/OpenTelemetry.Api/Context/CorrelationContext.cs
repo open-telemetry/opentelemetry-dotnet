@@ -1,4 +1,4 @@
-﻿// <copyright file="DistributedContext.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CorrelationContext.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,30 +24,30 @@ namespace OpenTelemetry.Context
     /// <summary>
     /// Distributed context.
     /// </summary>
-    public readonly struct DistributedContext : IEquatable<DistributedContext>
+    public readonly struct CorrelationContext : IEquatable<CorrelationContext>
     {
-        private static readonly List<DistributedContextEntry> EmptyList = new List<DistributedContextEntry>();
+        private static readonly List<CorrelationContextEntry> EmptyList = new List<CorrelationContextEntry>();
         private static DistributedContextCarrier carrier = NoopDistributedContextCarrier.Instance;
-        private readonly IEnumerable<DistributedContextEntry> entries;
+        private readonly IEnumerable<CorrelationContextEntry> entries;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DistributedContext"/> struct.
+        /// Initializes a new instance of the <see cref="CorrelationContext"/> struct.
         /// </summary>
         /// <param name="entries">Entries for distributed context.</param>
-        internal DistributedContext(IEnumerable<DistributedContextEntry> entries)
+        internal CorrelationContext(IEnumerable<CorrelationContextEntry> entries)
         {
             this.entries = entries;
         }
 
         /// <summary>
-        /// Gets empty object of <see cref="DistributedContext"/> struct.
+        /// Gets empty object of <see cref="CorrelationContext"/> struct.
         /// </summary>
-        public static DistributedContext Empty { get; } = new DistributedContext(EmptyList);
+        public static CorrelationContext Empty { get; } = new CorrelationContext(EmptyList);
 
         /// <summary>
-        /// Gets the current <see cref="DistributedContext"/>.
+        /// Gets the current <see cref="CorrelationContext"/>.
         /// </summary>
-        public static DistributedContext Current => carrier.Current;
+        public static CorrelationContext Current => carrier.Current;
 
         /// <summary>
         /// Gets or sets the default carrier instance of the <see cref="DistributedContextCarrier"/> class.
@@ -68,33 +68,33 @@ namespace OpenTelemetry.Context
         }
 
         /// <summary>
-        /// Gets all the <see cref="DistributedContextEntry"/> in this <see cref="DistributedContext"/>.
+        /// Gets all the <see cref="CorrelationContextEntry"/> in this <see cref="CorrelationContext"/>.
         /// </summary>
-        public IEnumerable<DistributedContextEntry> Entries => this.entries;
+        public IEnumerable<CorrelationContextEntry> Entries => this.entries;
 
         /// <summary>
-        /// Sets the current <see cref="DistributedContext"/>.
+        /// Sets the current <see cref="CorrelationContext"/>.
         /// </summary>
         /// <param name="context">Context to set as current.</param>
         /// <returns>Scope object. On disposal - original context will be restored.</returns>
-        public static IDisposable SetCurrent(in DistributedContext context) => carrier.SetCurrent(context);
+        public static IDisposable SetCurrent(in CorrelationContext context) => carrier.SetCurrent(context);
 
         /// <summary>
-        /// Gets the <see cref="DistributedContextEntry"/> with the specified name.
+        /// Gets the <see cref="CorrelationContextEntry"/> with the specified name.
         /// </summary>
-        /// <param name="key">Name of the <see cref="DistributedContextEntry"/> to get.</param>
-        /// <returns>The <see cref="DistributedContextEntry"/> with the specified name. If not found - null.</returns>
+        /// <param name="key">Name of the <see cref="CorrelationContextEntry"/> to get.</param>
+        /// <returns>The <see cref="CorrelationContextEntry"/> with the specified name. If not found - null.</returns>
         public string GetEntryValue(string key) => this.entries.LastOrDefault(x => x.Key == key).Value;
 
         /// <inheritdoc/>
-        public bool Equals(DistributedContext other)
+        public bool Equals(CorrelationContext other)
         {
             if (this.entries.Count() != other.entries.Count())
             {
                 return false;
             }
 
-            foreach (DistributedContextEntry entry in this.entries)
+            foreach (CorrelationContextEntry entry in this.entries)
             {
                 if (other.GetEntryValue(entry.Key) != entry.Value)
                 {
