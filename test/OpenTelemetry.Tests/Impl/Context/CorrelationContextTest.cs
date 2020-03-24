@@ -21,11 +21,11 @@ namespace OpenTelemetry.Context.Test
 {
     public class CorrelationContextTest
     {
-        private static readonly string K1 = "k1";
-        private static readonly string K2 = "k2";
+        private const string K1 = "k1";
+        private const string K2 = "k2";
 
-        private static readonly string V1 = "v1";
-        private static readonly string V2 = "v2";
+        private const string V1 = "v1";
+        private const string V2 = "v2";
 
         public CorrelationContextTest()
         {
@@ -35,7 +35,7 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void EmptyContext()
         {
-            CorrelationContext dc = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>());
+            var dc = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>());
             Assert.Empty(dc.Entries);
             Assert.Equal(CorrelationContext.Empty, dc);
         }
@@ -43,28 +43,28 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void NonEmptyContext()
         {
-            List<CorrelationContextEntry> list = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) };
-            CorrelationContext dc = CorrelationContextBuilder.CreateContext(list);
+            var list = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) };
+            var dc = CorrelationContextBuilder.CreateContext(list);
             Assert.Equal(list, dc.Entries);
         }
 
         [Fact]
         public void AddExtraKey()
         {
-            List<CorrelationContextEntry> list = new List<CorrelationContextEntry>(1) { new CorrelationContextEntry(K1, V1)};
-            CorrelationContext dc = CorrelationContextBuilder.CreateContext(list);
+            var list = new List<CorrelationContextEntry>(1) { new CorrelationContextEntry(K1, V1)};
+            var dc = CorrelationContextBuilder.CreateContext(list);
             Assert.Equal(list, dc.Entries);
 
             list.Add(new CorrelationContextEntry(K2, V2));
-            CorrelationContext dc1 = CorrelationContextBuilder.CreateContext(list);
+            var dc1 = CorrelationContextBuilder.CreateContext(list);
             Assert.Equal(list, dc1.Entries);
         }
 
         [Fact]
         public void AddExistingKey()
         {
-            List<CorrelationContextEntry> list = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K1, V2) };
-            CorrelationContext dc = CorrelationContextBuilder.CreateContext(list);
+            var list = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K1, V2) };
+            var dc = CorrelationContextBuilder.CreateContext(list);
             Assert.Equal(new List<CorrelationContextEntry>(1) { new CorrelationContextEntry(K1, V2) }, dc.Entries);
         }
 
@@ -78,8 +78,8 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void RemoveExistingKey()
         {
-            List<CorrelationContextEntry> list = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) };
-            CorrelationContext dc = CorrelationContextBuilder.CreateContext(list);
+            var list = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) };
+            var dc = CorrelationContextBuilder.CreateContext(list);
             Assert.Equal(list, dc.Entries);
 
             list.RemoveAt(0);
@@ -95,8 +95,8 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void TestIterator()
         {
-            List<CorrelationContextEntry> list = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) };
-            CorrelationContext dc = CorrelationContextBuilder.CreateContext(list);
+            var list = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) };
+            var dc = CorrelationContextBuilder.CreateContext(list);
 
             var i = dc.Entries.GetEnumerator();
             Assert.True(i.MoveNext());
@@ -104,17 +104,17 @@ namespace OpenTelemetry.Context.Test
             Assert.True(i.MoveNext());
             var tag2 = i.Current;
             Assert.False(i.MoveNext());
-            Assert.Equal(new List<CorrelationContextEntry>() { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2)}, new List<CorrelationContextEntry>() { tag1, tag2 });
+            Assert.Equal(new List<CorrelationContextEntry> { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2)}, new List<CorrelationContextEntry> { tag1, tag2 });
         }
 
         [Fact]
         public void TestEquals()
         {
-            CorrelationContext dc1 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) });
-            CorrelationContext dc2 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) });
-            CorrelationContext dc3 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K2, V2), new CorrelationContextEntry(K1, V1) });
-            CorrelationContext dc4 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V1) });
-            CorrelationContext dc5 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V2), new CorrelationContextEntry(K2, V1) });
+            var dc1 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) });
+            var dc2 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) });
+            var dc3 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K2, V2), new CorrelationContextEntry(K1, V1) });
+            var dc4 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V1) });
+            var dc5 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V2), new CorrelationContextEntry(K2, V1) });
 
             Assert.True(dc1.Equals(dc2));
             Assert.True(dc1.Equals(dc3));
