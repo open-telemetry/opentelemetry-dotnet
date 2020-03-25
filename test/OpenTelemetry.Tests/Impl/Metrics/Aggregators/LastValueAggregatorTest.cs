@@ -23,18 +23,10 @@ namespace OpenTelemetry.Metrics.Test
 {
     public class LastValueAggregatorTest
     {
-        private class UpdateThreadArguments<T> where T: struct
-        {
-            public ManualResetEvent mreToBlockUpdateThread;
-            public ManualResetEvent mreToEnsureAllThreadsStart;
-            public int threadsStartedCount;
-            public LastValueAggregator<T> LastValueAggregator;
-        }
-
         [Fact]
         public void LastValueAggregatorSupportsLong()
         {
-            LastValueAggregator<long> aggregator = new LastValueAggregator<long>();            
+            LastValueAggregator<long> aggregator = new LastValueAggregator<long>();
         }
 
         [Fact]
@@ -46,7 +38,7 @@ namespace OpenTelemetry.Metrics.Test
         [Fact]
         public void LastValueAggregatorConstructorThrowsForUnSupportedTypeInt()
         {
-            Assert.Throws<Exception>(() => new LastValueAggregator<int>());            
+            Assert.Throws<Exception>(() => new LastValueAggregator<int>());
         }
 
         [Fact]
