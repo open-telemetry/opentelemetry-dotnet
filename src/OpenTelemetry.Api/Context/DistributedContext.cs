@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context
@@ -22,7 +23,7 @@ namespace OpenTelemetry.Context
     /// <summary>
     /// Distributed context.
     /// </summary>
-    public readonly struct DistributedContext
+    public readonly struct DistributedContext : IEquatable<DistributedContext>
     {
         private static DistributedContextCarrier carrier = NoopDistributedContextCarrier.Instance;
         private readonly CorrelationContext correlationContext;
@@ -75,5 +76,16 @@ namespace OpenTelemetry.Context
         /// <param name="context">Context to set as current.</param>
         /// <returns>Scope object. On disposal - original context will be restored.</returns>
         public static IDisposable SetCurrent(in DistributedContext context) => carrier.SetCurrent(context);
+
+        /// <inheritdoc/>
+        public bool Equals(DistributedContext other)
+        {
+            if (!this.correlationContext.Equals(other.CorrelationContext))
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }
