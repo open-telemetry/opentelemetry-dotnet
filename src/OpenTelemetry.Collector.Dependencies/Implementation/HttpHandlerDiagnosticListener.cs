@@ -15,8 +15,8 @@
 // </copyright>
 using System;
 using System.Diagnostics;
-using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
@@ -156,13 +156,17 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
                 if (exc is HttpRequestException)
                 {
-                    // TODO: on netstandard this will be System.Net.Http.WinHttpException: The server name or address could not be resolved
-                    if (exc.InnerException is WebException exception &&
-                        exception.Status == WebExceptionStatus.NameResolutionFailure)
+                    if (exc.InnerException is SocketException exception)
                     {
-                        span.Status = Status.InvalidArgument;
+                        switch (exception.SocketErrorCode)
+                        {
+                            case SocketError.HostNotFound:
+                                span.Status = Status.InvalidArgument.WithDescription(exc.Message);
+                                return;
+                        }
                     }
-                    else if (exc.InnerException != null)
+
+                    if (exc.InnerException != null)
                     {
                         span.Status = Status.Unknown.WithDescription(exc.Message);
                     }
