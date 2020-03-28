@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpClientTests.Basic.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpWebRequestTests.Basic.net461.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,28 +13,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NETCOREAPP3_1
-using OpenTelemetry.Trace.Configuration;
-using Moq;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
+#if NET461
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Collector.Dependencies.Tests
 {
-    public partial class HttpClientTests : IDisposable
+    public partial class HttpWebRequestTests : IDisposable
     {
         private readonly IDisposable serverLifeTime;
         private readonly string url;
 
-        public HttpClientTests()
+        public HttpWebRequestTests()
         {
             this.serverLifeTime = TestServer.RunServer(
                 (ctx) =>
@@ -48,12 +48,10 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             this.url = $"http://{host}:{port}/";
         }
 
-        [Fact]
-        public void AddDependencyCollector_BadArgs()
+        public void Dispose()
         {
-            TracerBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.AddDependencyCollector());
-            Assert.Throws<ArgumentNullException>(() => builder.AddDependencyCollector(null, null));
+            this.serverLifeTime?.Dispose();
+            Activity.Current = null;
         }
 
         [Fact]
@@ -63,11 +61,9 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             var tracer = TracerFactory.Create(b => b.AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            var request = new HttpRequestMessage
-            {
-                RequestUri = new Uri(this.url),
-                Method = new HttpMethod("GET"),
-            };
+            var request = (HttpWebRequest)WebRequest.Create(this.url);
+
+            request.Method = "GET";
 
             var parent = new Activity("parent")
                 .SetIdFormat(ActivityIdFormat.W3C)
@@ -75,10 +71,9 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
+            using (new HttpWebRequestCollector(tracer, new HttpClientCollectorOptions()))
             {
-                using var c = new HttpClient();
-                await c.SendAsync(request);
+                using var response = await request.GetResponseAsync();
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
@@ -89,21 +84,19 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             Assert.NotEqual(parent.SpanId, span.Context.SpanId);
             Assert.NotEqual(default, span.Context.SpanId);
 
-            Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
-            Assert.True(request.Headers.TryGetValues("tracestate", out var tracestates));
-            Assert.Single(traceparents);
-            Assert.Single(tracestates);
+            string traceparent = request.Headers.Get("traceparent");
+            string tracestate = request.Headers.Get("tracestate");
 
-            Assert.Equal($"00-{span.Context.TraceId}-{span.Context.SpanId}-01", traceparents.Single());
-            Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+            Assert.Equal($"00-{span.Context.TraceId}-{span.Context.SpanId}-01", traceparent);
+            Assert.Equal("k1=v1,k2=v2", tracestate);
         }
 
         [Fact]
         public async Task HttpDependenciesCollectorInjectsHeadersAsync_CustomFormat()
         {
             var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<SpanContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<SpanContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+            textFormat.Setup(m => m.Inject<HttpWebRequest>(It.IsAny<SpanContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
+                .Callback<SpanContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
                 {
                     action(message, "custom_traceparent", $"00/{context.TraceId}/{context.SpanId}/01");
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);
@@ -114,11 +107,9 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            var request = new HttpRequestMessage
-            {
-                RequestUri = new Uri(this.url),
-                Method = new HttpMethod("GET"),
-            };
+            var request = (HttpWebRequest)WebRequest.Create(this.url);
+
+            request.Method = "GET";
 
             var parent = new Activity("parent")
                 .SetIdFormat(ActivityIdFormat.W3C)
@@ -126,13 +117,13 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions {TextFormat = textFormat.Object}))
+            using (new HttpWebRequestCollector(tracer, new HttpClientCollectorOptions { TextFormat = textFormat.Object }))
             {
-                using var c = new HttpClient();
-                await c.SendAsync(request);
+                using var response = await request.GetResponseAsync();
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+
             var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(parent.TraceId, span.Context.TraceId);
@@ -140,13 +131,11 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             Assert.NotEqual(parent.SpanId, span.Context.SpanId);
             Assert.NotEqual(default, span.Context.SpanId);
 
-            Assert.True(request.Headers.TryGetValues("custom_traceparent", out var traceparents));
-            Assert.True(request.Headers.TryGetValues("custom_tracestate", out var tracestates));
-            Assert.Single(traceparents);
-            Assert.Single(tracestates);
+            string traceparent = request.Headers.Get("custom_traceparent");
+            string tracestate = request.Headers.Get("custom_tracestate");
 
-            Assert.Equal($"00/{span.Context.TraceId}/{span.Context.SpanId}/01", traceparents.Single());
-            Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+            Assert.Equal($"00/{span.Context.TraceId}/{span.Context.SpanId}/01", traceparent);
+            Assert.Equal("k1=v1,k2=v2", tracestate);
         }
 
         [Fact]
@@ -156,7 +145,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             using (TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
-                .AddCollector(t => new HttpClientCollector(t))))
+                .AddCollector(t => new HttpWebRequestCollector(t))))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -201,7 +190,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
+            using (new HttpWebRequestCollector(tracer, new HttpClientCollectorOptions()))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -219,52 +208,18 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            var options = new HttpClientCollectorOptions((activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
-                                                                                        arg1 is HttpRequestMessage request &&
-                                                                                        request.RequestUri.OriginalString.Contains(this.url)));
+            var options = new HttpClientCollectorOptions((activityName, arg1, _)
+                => !(activityName == "System.Net.Http.OpenTelemetry.HttpRequestOut" &&
+                arg1 is HttpWebRequest request &&
+                request.RequestUri.OriginalString.Contains(this.url)));
 
-            using (new HttpClientCollector(tracer, options))
+            using (new HttpWebRequestCollector(tracer, options))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
             }
 
             Assert.Equal(0, spanProcessor.Invocations.Count);
-        }
-
-        [Fact]
-        public async Task HttpDependenciesCollectorFiltersOutRequestsToExporterEndpoints()
-        {
-            var spanProcessor = new Mock<SpanProcessor>();
-
-            var tracer = TracerFactory.Create(b => b
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
-
-            var options = new HttpClientCollectorOptions();
-
-            using (new HttpClientCollector(tracer, options))
-            {
-                using var c = new HttpClient();
-                using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
-                try
-                {
-                    await c.PostAsync("https://dc.services.visualstudio.com/", new StringContent(""), cts.Token);
-                    await c.PostAsync("https://localhost:9411/api/v2/spans", new StringContent(""), cts.Token);
-                }
-                catch
-                {
-                    // ignore all, whatever response is, we don't want anything tracked
-                }
-            }
-
-            Assert.Equal(0, spanProcessor.Invocations.Count);
-        }
-
-        public void Dispose()
-        {
-            this.serverLifeTime?.Dispose();
-            Activity.Current = null;
         }
     }
 }

@@ -38,8 +38,4 @@
     <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Web" Condition="'$(TargetFramework)' == 'net461'" />
-  </ItemGroup>
 </Project>
