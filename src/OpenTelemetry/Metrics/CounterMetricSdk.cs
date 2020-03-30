@@ -48,40 +48,40 @@ namespace OpenTelemetry.Metrics
         {
             // user not using bound instrument. Hence create a
             // short-lived bound intrument.
-            this.Bind(labelset, true).Add(context, value);
+            this.Bind(labelset, isShortLived: true).Add(context, value);
         }
 
         public override void Add(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels)
         {
             // user not using bound instrument. Hence create a
             // short-lived bound intrument.
-            this.Bind(new LabelSetSdk(labels), true).Add(context, value);
+            this.Bind(new LabelSetSdk(labels), isShortLived: true).Add(context, value);
         }
 
         public override void Add(in DistributedContext context, T value, LabelSet labelset)
         {
             // user not using bound instrument. Hence create a
             // short-lived bound intrument.
-            this.Bind(labelset, true).Add(context, value);
+            this.Bind(labelset, isShortLived: true).Add(context, value);
         }
 
         public override void Add(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels)
         {
             // user not using bound instrument. Hence create a
             // short-lived bound intrument.
-            this.Bind(new LabelSetSdk(labels), true).Add(context, value);
+            this.Bind(new LabelSetSdk(labels), isShortLived: true).Add(context, value);
         }
 
         public override BoundCounterMetric<T> Bind(LabelSet labelset)
         {
             // user making Bind call means record is not shortlived.
-            return this.Bind(labelset, false);
+            return this.Bind(labelset, isShortLived: false);
         }
 
         public override BoundCounterMetric<T> Bind(IEnumerable<KeyValuePair<string, string>> labels)
         {
             // user making Bind call means record is not shortlived.
-            return this.Bind(new LabelSetSdk(labels), false);
+            return this.Bind(new LabelSetSdk(labels), isShortLived: false);
         }
 
         internal BoundCounterMetric<T> Bind(LabelSet labelset, bool isShortLived)

@@ -93,7 +93,24 @@ namespace OpenTelemetry.Metrics
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
                         this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
+
+                        if (handle.Value.Status == RecordStatus.CandidateForRemoval)
+                        {
+                            boundInstrumentsToRemove.Add(labelSet);
+                        }
+
+                        if (handle.Value.Status == RecordStatus.UpdatePending)
+                        {
+                            handle.Value.Status = RecordStatus.CandidateForRemoval;
+                        }
                     }
+
+                    foreach (var boundInstrumentToRemove in boundInstrumentsToRemove)
+                    {
+                        counterInstrument.UnBind(boundInstrumentToRemove);
+                    }
+
+                    boundInstrumentsToRemove.Clear();
                 }
 
                 foreach (var longMeasure in this.longMeasures)
