@@ -11,7 +11,7 @@ trigger:
 # no PR builds
 pr: none
 
-queue:
+pool:
   vmImage: 'windows-latest'
 
 steps:
@@ -41,15 +41,14 @@ steps:
 
 - task: PublishTestResults@2
 
-- task: DotNetCoreCLI@2
+- task: VSBuild@1
   displayName: pack solution with symbols (Release)
   inputs:
-    command: "pack"
-    projects: OpenTelemetry.proj
-    configurationToPack: 'Release'
-    packDirectory: '$(build.artifactStagingDirectory)'
-    buildProperties: "SymbolPackageFormat=snupkg"
-    arguments: "-p:OS=$(Agent.OS)"
+    solution: OpenTelemetry.proj
+    vsVersion: "latest"
+    platform: "AnyCPU"
+    configuration: "Release"
+    msbuildArgs: "/p:OS=$(Agent.OS) /p:SymbolPackageFormat=snupkg /target:pack /p:OutDir=$(build.artifactStagingDirectory)"
 
 - task: NuGetCommand@2
   displayName: 'Publish nugets to MyGet'
