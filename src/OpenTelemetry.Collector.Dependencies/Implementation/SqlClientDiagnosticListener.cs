@@ -114,14 +114,18 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 case SqlMicrosoftAfterExecuteCommand:
                     {
                         var span = this.Tracer.CurrentSpan;
-
-                        if (span == null || !span.Context.IsValid)
+                        try
                         {
-                            CollectorEventSource.Log.NullOrBlankSpan($"{nameof(SqlClientDiagnosticListener)}-{name}");
-                            return;
+                            if (span == null || !span.Context.IsValid)
+                            {
+                                CollectorEventSource.Log.NullOrBlankSpan($"{nameof(SqlClientDiagnosticListener)}-{name}");
+                                return;
+                            }
                         }
-
-                        span.End();
+                        finally
+                        {
+                            span?.End();
+                        }
                     }
 
                     break;
@@ -129,23 +133,29 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 case SqlMicrosoftWriteCommandError:
                     {
                         var span = this.Tracer.CurrentSpan;
-
-                        if (span == null || !span.Context.IsValid)
+                        try
                         {
-                            CollectorEventSource.Log.NullOrBlankSpan($"{nameof(SqlClientDiagnosticListener)}-{name}");
-                            return;
+                            if (span == null || !span.Context.IsValid)
+                            {
+                                CollectorEventSource.Log.NullOrBlankSpan($"{nameof(SqlClientDiagnosticListener)}-{name}");
+                                return;
+                            }
+
+                            if (span.IsRecording)
+                            {
+                                if (this.exceptionFetcher.Fetch(payload) is Exception exception)
+                                {
+                                    span.Status = Status.Unknown.WithDescription(exception.Message);
+                                }
+                                else
+                                {
+                                    CollectorEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
+                                }
+                            }
                         }
-
-                        if (span.IsRecording)
+                        finally
                         {
-                            if (this.exceptionFetcher.Fetch(payload) is Exception exception)
-                            {
-                                span.Status = Status.Unknown.WithDescription(exception.Message);
-                            }
-                            else
-                            {
-                                CollectorEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
-                            }
+                            span?.End();
                         }
                     }
 

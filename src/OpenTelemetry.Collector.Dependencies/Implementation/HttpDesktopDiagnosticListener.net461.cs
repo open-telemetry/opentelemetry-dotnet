@@ -69,47 +69,55 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         {
             const string EventNameSuffix = ".OnStopActivity";
             var span = this.Tracer.CurrentSpan;
-
-            if (span == null || !span.Context.IsValid)
+            try
             {
-                CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpDesktopDiagnosticListener) + EventNameSuffix);
-                return;
-            }
-
-            if (span.IsRecording)
-            {
-                if (this.stopResponseFetcher.Fetch(payload) is HttpWebResponse response)
+                if (span == null || !span.Context.IsValid)
                 {
-                    span.PutHttpStatusCode((int)response.StatusCode, response.StatusDescription);
+                    CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpDesktopDiagnosticListener) + EventNameSuffix);
+                    return;
+                }
+
+                if (span.IsRecording)
+                {
+                    if (this.stopResponseFetcher.Fetch(payload) is HttpWebResponse response)
+                    {
+                        span.PutHttpStatusCode((int)response.StatusCode, response.StatusDescription);
+                    }
                 }
             }
-
-            span.End();
+            finally
+            {
+                span?.End();
+            }
         }
 
         public override void OnException(Activity activity, object payload)
         {
             const string EventNameSuffix = ".OnException";
             var span = this.Tracer.CurrentSpan;
-
-            if (span == null || !span.Context.IsValid)
+            try
             {
-                CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpDesktopDiagnosticListener) + EventNameSuffix);
-                return;
-            }
-
-            if (span.IsRecording)
-            {
-                if (!(this.stopExceptionFetcher.Fetch(payload) is Exception exc))
+                if (span == null || !span.Context.IsValid)
                 {
-                    CollectorEventSource.Log.NullPayload(nameof(HttpDesktopDiagnosticListener) + EventNameSuffix);
+                    CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpDesktopDiagnosticListener) + EventNameSuffix);
                     return;
                 }
 
-                ProcessException(span, exc);
-            }
+                if (span.IsRecording)
+                {
+                    if (!(this.stopExceptionFetcher.Fetch(payload) is Exception exc))
+                    {
+                        CollectorEventSource.Log.NullPayload(nameof(HttpDesktopDiagnosticListener) + EventNameSuffix);
+                        return;
+                    }
 
-            span.End();
+                    ProcessException(span, exc);
+                }
+            }
+            finally
+            {
+                span?.End();
+            }
         }
 
         private static void ProcessException(TelemetrySpan span, Exception exception)

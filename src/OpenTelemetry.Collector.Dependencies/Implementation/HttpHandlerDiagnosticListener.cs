@@ -98,41 +98,45 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         {
             const string EventNameSuffix = ".OnStopActivity";
             var span = this.Tracer.CurrentSpan;
-
-            if (span == null || !span.Context.IsValid)
+            try
             {
-                CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
-                return;
-            }
-
-            if (span.IsRecording)
-            {
-                var requestTaskStatus = this.stopRequestStatusFetcher.Fetch(payload) as TaskStatus?;
-
-                if (requestTaskStatus.HasValue)
+                if (span == null || !span.Context.IsValid)
                 {
-                    if (requestTaskStatus != TaskStatus.RanToCompletion)
+                    CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
+                    return;
+                }
+
+                if (span.IsRecording)
+                {
+                    var requestTaskStatus = this.stopRequestStatusFetcher.Fetch(payload) as TaskStatus?;
+
+                    if (requestTaskStatus.HasValue)
                     {
-                        if (requestTaskStatus == TaskStatus.Canceled)
+                        if (requestTaskStatus != TaskStatus.RanToCompletion)
                         {
-                            span.Status = Status.Cancelled;
-                        }
-                        else if (requestTaskStatus != TaskStatus.Faulted)
-                        {
-                            // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
-                            span.Status = Status.Unknown;
+                            if (requestTaskStatus == TaskStatus.Canceled)
+                            {
+                                span.Status = Status.Cancelled;
+                            }
+                            else if (requestTaskStatus != TaskStatus.Faulted)
+                            {
+                                // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
+                                span.Status = Status.Unknown;
+                            }
                         }
                     }
-                }
 
-                if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
-                {
-                    // response could be null for DNS issues, timeouts, etc...
-                    span.PutHttpStatusCode((int)response.StatusCode, response.ReasonPhrase);
+                    if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
+                    {
+                        // response could be null for DNS issues, timeouts, etc...
+                        span.PutHttpStatusCode((int)response.StatusCode, response.ReasonPhrase);
+                    }
                 }
             }
-
-            span.End();
+            finally
+            {
+                span?.End();
+            }
         }
 
         public override void OnException(Activity activity, object payload)
@@ -172,6 +176,8 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                     }
                 }
             }
+
+            // Note: Span.End() is not called here on purpose, OnStopActivity is called after OnException for this listener.
         }
     }
 }
