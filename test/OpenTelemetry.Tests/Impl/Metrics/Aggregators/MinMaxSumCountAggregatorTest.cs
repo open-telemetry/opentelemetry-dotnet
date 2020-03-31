@@ -28,38 +28,14 @@ namespace OpenTelemetry.Metrics.Test
             public ManualResetEvent mreToBlockUpdateThread;
             public ManualResetEvent mreToEnsureAllThreadsStart;
             public int threadsStartedCount;
-            public MeasureMinMaxSumCountAggregator<T> minMaxSumCountAggregator;
-        }
-
-        [Fact]
-        public void MeasureAggregatorSupportsLong()
-        {
-            MeasureMinMaxSumCountAggregator<long> aggregator = new MeasureMinMaxSumCountAggregator<long>();            
-        }
-
-        [Fact]
-        public void MeasureAggregatorSupportsDouble()
-        {
-            MeasureMinMaxSumCountAggregator<double> aggregator = new MeasureMinMaxSumCountAggregator<double>();
-        }
-
-        [Fact]
-        public void MeasureAggregatorConstructorThrowsForUnSupportedTypeInt()
-        {
-            Assert.Throws<Exception>(() => new MeasureMinMaxSumCountAggregator<int>());            
-        }
-
-        [Fact]
-        public void MeasureAggregatorConstructorThrowsForUnSupportedTypeByte()
-        {
-            Assert.Throws<Exception>(() => new MeasureMinMaxSumCountAggregator<byte>());
+            public Aggregator<T> minMaxSumCountAggregator;
         }
 
         [Fact]
         public void MeasureAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdatesLong()
         {
             // create an aggregator
-            MeasureMinMaxSumCountAggregator<long> aggregator = new MeasureMinMaxSumCountAggregator<long>();
+            var aggregator = new Int64MeasureMinMaxSumCountAggregator();
             var summary = aggregator.ToMetricData() as SummaryData<long>;
 
             // we start with 0.
@@ -75,7 +51,7 @@ namespace OpenTelemetry.Metrics.Test
             argToThread.threadsStartedCount = 0;
             argToThread.mreToBlockUpdateThread = mre;
             argToThread.mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
-            
+
             Thread[] t = new Thread[10];
             for (int i = 0; i < 10; i++)
             {
@@ -114,7 +90,7 @@ namespace OpenTelemetry.Metrics.Test
         public void MeasureAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdatesDouble()
         {
             // create an aggregator
-            MeasureMinMaxSumCountAggregator<double> aggregator = new MeasureMinMaxSumCountAggregator<double>();
+            var aggregator = new DoubleMeasureMinMaxSumCountAggregator();
             var summary = aggregator.ToMetricData() as SummaryData<double>;
 
             // we start with 0.

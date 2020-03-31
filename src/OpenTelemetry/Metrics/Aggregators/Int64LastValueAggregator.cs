@@ -1,4 +1,4 @@
-﻿// <copyright file="LastValueAggregator.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Int64LastValueAggregator.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,47 +22,31 @@ namespace OpenTelemetry.Metrics.Aggregators
     /// <summary>
     /// Simple aggregator that only keeps the last value.
     /// </summary>
-    /// <typeparam name="T">Type of measure instrument.</typeparam>
-    public class LastValueAggregator<T> : Aggregator<T>
-        where T : struct
+    public class Int64LastValueAggregator : Aggregator<long>
     {
-        private T value;
-        private T checkpoint;
-
-        public LastValueAggregator()
-        {
-            if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
-            {
-                throw new Exception("Invalid Type");
-            }
-        }
+        private long value;
+        private long checkpoint;
 
         public override void Checkpoint()
         {
             this.checkpoint = this.value;
         }
 
-        public override MetricData<T> ToMetricData()
+        public override MetricData<long> ToMetricData()
         {
-            var sumData = new SumData<T>();
-            sumData.Sum = this.checkpoint;
-            sumData.Timestamp = DateTime.UtcNow;
-            return sumData;
+            return new SumData<long>
+            {
+                Sum = this.checkpoint,
+                Timestamp = DateTime.UtcNow,
+            };
         }
 
         public override AggregationType GetAggregationType()
         {
-            if (typeof(T) == typeof(double))
-            {
-                return AggregationType.DoubleSum;
-            }
-            else
-            {
-                return AggregationType.LongSum;
-            }
+            return AggregationType.LongSum;
         }
 
-        public override void Update(T newValue)
+        public override void Update(long newValue)
         {
             this.value = newValue;
         }

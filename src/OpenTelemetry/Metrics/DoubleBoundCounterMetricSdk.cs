@@ -1,4 +1,4 @@
-﻿// <copyright file="DoubleObserverMetricHandleSdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DoubleBoundCounterMetricSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,29 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Context;
 using OpenTelemetry.Metrics.Aggregators;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class DoubleObserverMetricHandleSdk : DoubleObserverMetricHandle
+    internal class DoubleBoundCounterMetricSdk : BoundCounterMetricSdkBase<double>
     {
-        private readonly DoubleLastValueAggregator aggregator = new DoubleLastValueAggregator();
+        private readonly DoubleCounterSumAggregator sumAggregator = new DoubleCounterSumAggregator();
 
-        public override void Observe(double value)
+        public override void Add(in SpanContext context, double value)
         {
-            this.aggregator.Update(value);
+            this.sumAggregator.Update(value);
         }
 
-        internal DoubleLastValueAggregator GetAggregator()
+        public override void Add(in DistributedContext context, double value)
         {
-            return this.aggregator;
+            this.sumAggregator.Update(value);
+        }
+
+        public override Aggregator<double> GetAggregator()
+        {
+            return this.sumAggregator;
         }
     }
 }

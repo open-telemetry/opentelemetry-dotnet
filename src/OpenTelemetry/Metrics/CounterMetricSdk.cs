@@ -1,4 +1,4 @@
-﻿// <copyright file="CounterMetricSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="CounterMetricSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,27 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class CounterMetricSdk<T> : CounterMetric<T>
+    internal abstract class CounterMetricSdk<T> : CounterMetric<T>
         where T : struct
     {
-        private readonly IDictionary<LabelSet, BoundCounterMetricSdk<T>> counterBoundInstruments = new ConcurrentDictionary<LabelSet, BoundCounterMetricSdk<T>>();
+        private readonly IDictionary<LabelSet, BoundCounterMetricSdkBase<T>> counterBoundInstruments = new ConcurrentDictionary<LabelSet,BoundCounterMetricSdkBase<T>>();
         private string metricName;
 
-        public CounterMetricSdk()
-        {
-            if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
-            {
-                throw new Exception("Invalid Type");
-            }
-        }
-
-        public CounterMetricSdk(string name) : this()
+        protected CounterMetricSdk(string name)
         {
             this.metricName = name;
         }
@@ -43,7 +34,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.counterBoundInstruments.TryGetValue(labelset, out var boundInstrument))
             {
-                boundInstrument = new BoundCounterMetricSdk<T>();
+                boundInstrument = this.CreateMetric();
 
                 this.counterBoundInstruments.Add(labelset, boundInstrument);
             }
@@ -56,9 +47,11 @@ namespace OpenTelemetry.Metrics
             return this.Bind(new LabelSetSdk(labels));
         }
 
-        internal IDictionary<LabelSet, BoundCounterMetricSdk<T>> GetAllBoundInstruments()
+        public IDictionary<LabelSet, BoundCounterMetricSdkBase<T>> GetAllBoundInstruments()
         {
             return this.counterBoundInstruments;
         }
+
+        protected abstract BoundCounterMetricSdkBase<T> CreateMetric();
     }
 }
