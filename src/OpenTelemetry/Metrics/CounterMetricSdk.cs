@@ -93,12 +93,27 @@ namespace OpenTelemetry.Metrics
             }
 
             // if boundInstrument is marked for removal, then take the
-            // lock to sync with Collect() and re-add. As Collect() might have removed this.
+            // lock to sync with Unbind() and re-add. As Collect() might have called Unbind().
             if (boundInstrument.Status == RecordStatus.CandidateForRemoval)
             {
-                // If MeterSDK.Collect gets the lock first, then it'd have removed the record.
-                // If this method gets this lock first, it'd promote record to UpdatePending, so that
-                // when Collect finally gets to execute, this record will not get deleted.
+                /*
+                 * If Unbind gets the lock first, then it'd have removed the record.
+                 * If Bind method gets this lock first, it'd promote record to UpdatePending, so that
+                 * Unbind will leave this record untouched.
+                                      
+                 * Additional notes:
+                 * This lock is never taken for bound instruments, and they offer the fastest performance.
+                 * This lock is only taken for those labelsets which are marked CandidateForRemoval.
+                 * It means the the 1st time a labelset is re-encountered after a Collect() phase,
+                 * this lock must be taken. Subsequent usage of this labelset before the next Collect()
+                 * will already have status promoted to UpdatePending, and no lock is taken.
+                 * In effect, there is a lock issue after every Collect(). If collect frequency is very high,
+                 * this can affect overall performance.
+                 * Its important to note that, for a brand new LabelSet being encountered for the 1st time, lock is not
+                 * taken. Lock is taken only during the 1st re-appearance of a LabelSet after a Collect period.
+                 *  
+                */
+
                 lock (this.bindUnbindLock)
                 {
                     boundInstrument.Status = RecordStatus.UpdatePending;
@@ -118,6 +133,8 @@ namespace OpenTelemetry.Metrics
             {
                 if (this.counterBoundInstruments.TryGetValue(labelSet, out var boundInstrument))
                 {
+                    // Check status again, inside lock as an instrument update
+                    // might have occured which promoted this record.
                     if (boundInstrument.Status == RecordStatus.CandidateForRemoval)
                     {
                         this.counterBoundInstruments.Remove(labelSet);

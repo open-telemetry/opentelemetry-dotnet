@@ -72,7 +72,7 @@ namespace OpenTelemetry.Metrics
                         if (handle.Value.Status == RecordStatus.UpdatePending)
                         {
                             handle.Value.Status = RecordStatus.CandidateForRemoval;
-                        }                        
+                        }
                     }
 
                     foreach (var boundInstrumentToRemove in boundInstrumentsToRemove)
