@@ -267,7 +267,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         private static void EncodeString(String input, MemoryStream output)
         {
             var length = input.Length;
-            var bytes  = new byte[VarInt.VarIntSize(length)];
+            var bytes = new byte[VarInt.VarIntSize(length)];
             VarInt.PutVarInt(length, bytes, 0);
             output.Write(bytes, 0, bytes.Length);
             var inPutBytes= Encoding.UTF8.GetBytes(input);
