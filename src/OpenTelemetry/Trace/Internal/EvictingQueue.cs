@@ -18,7 +18,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace OpenTelemetry.Trace.Internal
 {
@@ -66,6 +65,11 @@ namespace OpenTelemetry.Trace.Internal
             Debug.Assert(newItem != null, "Item must not be null");
 
             var index = Array.IndexOf(this.items, item);
+
+            if (index < 0)
+            {
+                return;
+            }
 
             this.items[index] = newItem;
         }
