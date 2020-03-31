@@ -22,11 +22,10 @@ namespace OpenTelemetry.Trace.Samplers.Test
 {
     public class SamplersTest
     {
-        private static readonly string SpanName = "MySpanName";
-        private static readonly int NUM_SAMPLE_TRIES = 1000;
+        private const string SpanName = "MySpanName";
+        private const int NUM_SAMPLE_TRIES = 1000;
         private static readonly SpanKind SpanKindServer = SpanKind.Server;
         private readonly ActivityTraceId traceId;
-        private readonly ActivitySpanId parentSpanId;
         private readonly ActivitySpanId spanId;
         private readonly SpanContext sampledSpanContext;
         private readonly SpanContext notSampledSpanContext;
@@ -35,8 +34,8 @@ namespace OpenTelemetry.Trace.Samplers.Test
         public SamplersTest()
         {
             traceId = ActivityTraceId.CreateRandom();
-            parentSpanId = ActivitySpanId.CreateRandom();
             spanId = ActivitySpanId.CreateRandom();
+            var parentSpanId = ActivitySpanId.CreateRandom();
             sampledSpanContext = new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded);
             notSampledSpanContext = new SpanContext(traceId, parentSpanId, ActivityTraceFlags.None);
             sampledLink = new Link(sampledSpanContext);
@@ -122,7 +121,6 @@ namespace OpenTelemetry.Trace.Samplers.Test
             Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilitySampler(-0.00001));
         }
 
-
         [Fact]
         public void ProbabilitySampler_DifferentProbabilities_NotSampledParent()
         {
@@ -191,7 +189,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
             // is not less than probability * Long.MAX_VALUE;
             var notSampledtraceId =
                 ActivityTraceId.CreateFromBytes(
-                    new byte[] 
+                    new byte[]
                     {
                       0x8F,
                       0xFF,
@@ -212,7 +210,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                     });
             Assert.False(
                     defaultProbability.ShouldSample(
-                        default, 
+                        default,
                         notSampledtraceId,
                         ActivitySpanId.CreateRandom(),
                         SpanName,
@@ -223,7 +221,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
             // is less than probability * Long.MAX_VALUE;
             var sampledtraceId =
                 ActivityTraceId.CreateFromBytes(
-                    new byte[] 
+                    new byte[]
                     {
                       0x00,
                       0x00,

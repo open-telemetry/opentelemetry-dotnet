@@ -1022,17 +1022,17 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Theory]
-        [InlineData(new bool[] {true, false, true})]
-        [InlineData(new long[] {1L, 2L, 3L})]
-        [InlineData(new ulong[] {1UL, 2UL, 3UL})]
-        [InlineData(new uint[] {1U, 2U, 3U})]
-        [InlineData(new int[] {1, 2, 3})]
-        [InlineData(new sbyte[] {(sbyte)1, (sbyte)2, (sbyte)3})]
-        [InlineData(new byte[] {(byte)1, (byte)2, (byte)3})]
-        [InlineData(new short[] {(short)1, (short)2, (short)3})]
-        [InlineData(new ushort[] {(ushort)1, (ushort)2, (ushort)3})]
-        [InlineData(new double[] {1.1d,2.2d,3.3d})]
-        [InlineData(new float[] {1.1f,2.2f,3.3f})]
+        [InlineData(new[] {true, false, true})]
+        [InlineData(new[] {1L, 2L, 3L})]
+        [InlineData(new[] {1UL, 2UL, 3UL})]
+        [InlineData(new[] {1U, 2U, 3U})]
+        [InlineData(new[] {1, 2, 3})]
+        [InlineData(new sbyte[] {1, 2, 3})]
+        [InlineData(new byte[] {1, 2, 3})]
+        [InlineData(new short[] {1, 2, 3})]
+        [InlineData(new ushort[] {1, 2, 3})]
+        [InlineData(new[] {1.1d,2.2d,3.3d})]
+        [InlineData(new[] {1.1f,2.2f,3.3f})]
         public void SetAttribute_Array(object array)
         {
             var tracer = tracerFactory.GetTracer(null);
@@ -1052,7 +1052,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
-            var array = new string[] {"1","2","3"};
+            var array = new[] {"1","2","3"};
             span.SetAttribute("array", array);
 
             Assert.Single(span.Attributes);
@@ -1068,7 +1068,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer = tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
-            var array = new Decimal[] {1.1M, 2.2M, 3.3M};
+            var array = new[] {1.1M, 2.2M, 3.3M};
             span.SetAttribute("array", array);
 
             Assert.Single(span.Attributes);
@@ -1283,12 +1283,11 @@ namespace OpenTelemetry.Trace.Test
                 Assert.True(span.Context.IsValid);
                 Assert.NotNull(span);
                 Assert.Equal(SpanKind.Producer, span.Kind);
-                Assert.Equal(parentSpan.Context.SpanId, ((SpanSdk)span).ParentSpanId);
+                Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
-
 
         [Fact]
         public void StartActiveSpan_ParentSpan_Kind_Timestamp()
@@ -1308,7 +1307,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
-                Assert.Equal(parentSpan.Context.SpanId, ((SpanSdk)span).ParentSpanId);
+                Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1334,7 +1333,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
-                Assert.Equal(parentSpan.Context.SpanId, ((SpanSdk)span).ParentSpanId);
+                Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1377,7 +1376,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.NotNull(span);
 
                 Assert.Equal(SpanKind.Producer, span.Kind);
-                Assert.Equal(parentContext.SpanId, ((SpanSdk)span).ParentSpanId);
+                Assert.Equal(parentContext.SpanId, span.ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1402,7 +1401,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.True(span.Context.IsValid);
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
-                Assert.Equal(parentContext.SpanId, ((SpanSdk)span).ParentSpanId);
+                Assert.Equal(parentContext.SpanId, span.ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1428,7 +1427,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
-                Assert.Equal(parentContext.SpanId, ((SpanSdk)span).ParentSpanId);
+                Assert.Equal(parentContext.SpanId, span.ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1472,7 +1471,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Same(childSpan, span);
 
                 Assert.Equal(SpanKind.Producer, span.Kind);
-                Assert.NotEqual(default, ((SpanSdk)span).ParentSpanId);
+                Assert.NotEqual(default, span.ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1498,7 +1497,7 @@ namespace OpenTelemetry.Trace.Test
 
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
-                Assert.NotEqual(default, ((SpanSdk)span).ParentSpanId);
+                Assert.NotEqual(default, span.ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1525,7 +1524,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(SpanKind.Producer, span.Kind);
                 Assert.Equal(startTimestamp, span.StartTimestamp);
                 Assert.Single(span.Links);
-                Assert.NotEqual(default, ((SpanSdk)span).ParentSpanId);
+                Assert.NotEqual(default, span.ParentSpanId);
             }
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -1661,7 +1660,7 @@ namespace OpenTelemetry.Trace.Test
                 It.IsAny<IEnumerable<Link>>()), Times.Once);
         }
 
-        private void AssertApproxSameTimestamp(DateTimeOffset one, DateTimeOffset two)
+        private static void AssertApproxSameTimestamp(DateTimeOffset one, DateTimeOffset two)
         {
             var timeShift = Math.Abs((one - two).TotalMilliseconds);
             Assert.InRange(timeShift, 0, 40);
