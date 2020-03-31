@@ -27,8 +27,8 @@ namespace OpenTelemetry.Metrics
     {
         private readonly IDictionary<LabelSet, BoundCounterMetricSdk<T>> counterBoundInstruments = new ConcurrentDictionary<LabelSet, BoundCounterMetricSdk<T>>();
         private string metricName;
-        // Lock used to sync with MeterSDK.Collect.
-        private object collectLock;
+        // Lock used to sync with Bind/UnBind.
+        private object bindUnbindLock = new object();
 
         public CounterMetricSdk()
         {
@@ -38,10 +38,9 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public CounterMetricSdk(string name, object collectLock) : this()
+        public CounterMetricSdk(string name) : this()
         {
             this.metricName = name;
-            this.collectLock = collectLock;
         }
 
         public override void Add(in SpanContext context, T value, LabelSet labelset)
@@ -100,7 +99,7 @@ namespace OpenTelemetry.Metrics
                 // If MeterSDK.Collect gets the lock first, then it'd have removed the record.
                 // If this method gets this lock first, it'd promote record to UpdatePending, so that
                 // when Collect finally gets to execute, this record will not get deleted.
-                lock (this.collectLock)
+                lock (this.bindUnbindLock)
                 {
                     boundInstrument.Status = RecordStatus.UpdatePending;
                     if (!this.counterBoundInstruments.ContainsKey(labelset))
@@ -115,7 +114,16 @@ namespace OpenTelemetry.Metrics
 
         internal void UnBind(LabelSet labelSet)
         {
-            this.counterBoundInstruments.Remove(labelSet);
+            lock (this.bindUnbindLock)
+            {
+                if (this.counterBoundInstruments.TryGetValue(labelSet, out var boundInstrument))
+                {
+                    if (boundInstrument.Status == RecordStatus.CandidateForRemoval)
+                    {
+                        this.counterBoundInstruments.Remove(labelSet);
+                    }
+                }
+            }            
         }
 
         internal IDictionary<LabelSet, BoundCounterMetricSdk<T>> GetAllBoundInstruments()

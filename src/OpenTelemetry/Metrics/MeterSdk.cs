@@ -191,7 +191,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.longCounters.TryGetValue(name, out var counter))
             {
-                counter = new CounterMetricSdk<long>(name, this.collectLock);
+                counter = new CounterMetricSdk<long>(name);
 
                 this.longCounters.Add(name, counter);
             }
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.doubleCounters.TryGetValue(name, out var counter))
             {
-                counter = new CounterMetricSdk<double>(name, this.collectLock);
+                counter = new CounterMetricSdk<double>(name);
                 this.doubleCounters.Add(name, counter);
             }
 
