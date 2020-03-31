@@ -333,7 +333,16 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, sanitizedValue));
+                var attribute = this.attributes.FirstOrDefault(a => a.Key == (key ?? string.Empty));
+                var newAttribute = new KeyValuePair<string, object>(key ?? string.Empty, sanitizedValue);
+                if (attribute.Equals(default(KeyValuePair<string, object>)))
+                {
+                    this.attributes.Add(newAttribute);
+                }
+                else
+                {
+                    this.attributes.Update(attribute, newAttribute);
+                }
             }
         }
 
@@ -359,7 +368,16 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+                var attribute = this.attributes.FirstOrDefault(a => a.Key == (key ?? string.Empty));
+                var newAttribute = new KeyValuePair<string, object>(key ?? string.Empty, value);
+                if (attribute.Equals(default(KeyValuePair<string, object>)))
+                {
+                    this.attributes.Add(newAttribute);
+                }
+                else
+                {
+                    this.attributes.Update(attribute, newAttribute);
+                }
             }
         }
 
@@ -385,7 +403,16 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+                var attribute = this.attributes.FirstOrDefault(a => a.Key == (key ?? string.Empty));
+                var newAttribute = new KeyValuePair<string, object>(key ?? string.Empty, value);
+                if (attribute.Equals(default(KeyValuePair<string, object>)))
+                {
+                    this.attributes.Add(newAttribute);
+                }
+                else
+                {
+                    this.attributes.Update(attribute, newAttribute);
+                }
             }
         }
 
@@ -411,7 +438,16 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+                var attribute = this.attributes.FirstOrDefault(a => a.Key == (key ?? string.Empty));
+                var newAttribute = new KeyValuePair<string, object>(key ?? string.Empty, value);
+                if (attribute.Equals(default(KeyValuePair<string, object>)))
+                {
+                    this.attributes.Add(newAttribute);
+                }
+                else
+                {
+                    this.attributes.Update(attribute, newAttribute);
+                }
             }
         }
 

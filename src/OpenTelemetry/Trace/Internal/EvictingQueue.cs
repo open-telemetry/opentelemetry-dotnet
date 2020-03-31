@@ -18,6 +18,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace OpenTelemetry.Trace.Internal
 {
@@ -57,6 +58,16 @@ namespace OpenTelemetry.Trace.Internal
         IEnumerator IEnumerable.GetEnumerator()
         {
             return new Enumerator(this);
+        }
+
+        internal void Update(T item, T newItem)
+        {
+            Debug.Assert(item != null, "Item must not be null");
+            Debug.Assert(newItem != null, "Item must not be null");
+
+            var index = Array.IndexOf(this.items, item);
+
+            this.items[index] = newItem;
         }
 
         internal void Add(T item)
