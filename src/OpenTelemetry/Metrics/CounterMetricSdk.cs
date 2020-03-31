@@ -98,6 +98,7 @@ namespace OpenTelemetry.Metrics
             {
                 /*
                  * If Unbind gets the lock first, then it'd have removed the record.
+                 * But it gets added again by Bind() so no record is lost.
                  * If Bind method gets this lock first, it'd promote record to UpdatePending, so that
                  * Unbind will leave this record untouched.
                                       
