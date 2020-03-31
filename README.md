@@ -573,6 +573,10 @@ metricExporter.Start();
 4. See [sample][ai-sample] for example use.
 
 ``` csharp
+string FrontendKey = "my.org/keys/frontend";
+DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance; // Enable asynclocal carrier for the context
+DistributedContext dc = DistributedContextBuilder.CreateContext(FrontendKey, "mobile-ios9.3.5");
+
 using var tracerFactory = TracerFactory.Create(builder => builder
     .SetResource(Resources.CreateServiceResource("my-service"))
     .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key"));
