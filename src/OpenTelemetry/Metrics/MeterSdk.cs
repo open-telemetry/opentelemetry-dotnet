@@ -60,12 +60,14 @@ namespace OpenTelemetry.Metrics
                     foreach (var handle in counterInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
-                        var aggregator = handle.Value.GetAggregator();
+                        var aggregator = handle.Value.GetAggregator();                        
                         aggregator.Checkpoint();
                         this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
 
                         if (handle.Value.Status == RecordStatus.CandidateForRemoval)
                         {
+                            // It is possible that record status got promoted from a parallel thread.
+                            // The actual removal doesn't occur here.                            
                             boundInstrumentsToRemove.Add(labelSet);
                         }                            
 
@@ -77,6 +79,9 @@ namespace OpenTelemetry.Metrics
 
                     foreach (var boundInstrumentToRemove in boundInstrumentsToRemove)
                     {
+                        // This actual unbinding or removal of the record occurs inside UnBind
+                        // which synchronizes with Bind to ensure no record with pending update
+                        // is lost.
                         counterInstrument.UnBind(boundInstrumentToRemove);
                     }
 
@@ -107,6 +112,9 @@ namespace OpenTelemetry.Metrics
 
                     foreach (var boundInstrumentToRemove in boundInstrumentsToRemove)
                     {
+                        // This actual unbinding or removal of the record occurs inside UnBind
+                        // which synchronizes with Bind to ensure no record with pending update
+                        // is lost.
                         counterInstrument.UnBind(boundInstrumentToRemove);
                     }
 

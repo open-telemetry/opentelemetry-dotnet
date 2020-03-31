@@ -23,11 +23,19 @@ using OpenTelemetry.Metrics.Export;
 using System.Diagnostics;
 using System.Threading;
 using System;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Test
 {
     public class CounterCleanUpTests
     {
+        private readonly ITestOutputHelper output;
+
+        public CounterCleanUpTests(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
+
         [Fact]
         public void LongCounterBoundInstrumentsStatusUpdatedCorrectlySingleThread()
         {
@@ -83,7 +91,7 @@ namespace OpenTelemetry.Metrics.Test
             meter.Collect();
 
             // Validate collect() has marked records correctly.
-            Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls1].Status);            
+            Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls1].Status);
             Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
             Assert.False(testCounter.GetAllBoundInstruments().ContainsKey(ls3));
         }
@@ -160,10 +168,11 @@ namespace OpenTelemetry.Metrics.Test
             var ls1 = meter.GetLabelSet(labels1);
 
             var context = default(SpanContext);
-            
+
+            // Call metric update with ls1 so that ls1 wont be brand new labelset when doing multi-thread test.
             testCounter.Add(context, 100, ls1);
             testCounter.Add(context, 10, ls1);
-            
+
             // This collect should mark ls1 CandidateForRemoval
             meter.Collect();
             Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 110));
@@ -171,7 +180,8 @@ namespace OpenTelemetry.Metrics.Test
             // Validate collect() has marked records correctly.
             Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls1].Status);
 
-            // Call Collect() and use LS1 parallelly.
+            // Call Collect() and update with ls1 parallelly to validate no update is lost, as ls1 is marked
+            // candidate for removal after above step.
             var mre = new ManualResetEvent(false);
             var argsForMeterCollect = new ArgsToThread();
             argsForMeterCollect.mreToBlockStartOfThread = mre;
@@ -197,22 +207,19 @@ namespace OpenTelemetry.Metrics.Test
             collectThread.Join();
             updateThread.Join();
 
-            // Validate            
-            if(testCounter.GetAllBoundInstruments()[ls1].Status == RecordStatus.CandidateForRemoval)
-            {
-                // If record is marked candidate for removal, then it must be already exported to processor.
-                Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 100));
-            }
-            else
-            {
-                // Record not yet marked for removal. So exported record has 0 sum.
-                Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 0));
+            // Validate that the exported record doesn't miss any update.
+            // The Add(100) value must have already been exported, or must be exported in the next Collect().
 
-                // The following collect should collect the metric update.
-                meter.Collect();
-                Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 100));
-                Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls1].Status);
+            meter.Collect();
+
+            long sum = 0;
+            foreach (var exportedData in testProcessor.longMetrics)
+            {
+                sum = sum + (exportedData.Data as SumData<long>).Sum;
             }
+
+            // 210 = 110 from initial update, 100 from the multi-thread test case.
+            Assert.Equal(210, sum);
         }
 
         [Fact]
@@ -228,6 +235,7 @@ namespace OpenTelemetry.Metrics.Test
 
             var context = default(SpanContext);
 
+            // Call metric update with ls1 so that ls1 wont be brand new labelset when doing multi-thread test.
             testCounter.Add(context, 100.0, ls1);
             testCounter.Add(context, 10.0, ls1);
 
@@ -238,7 +246,8 @@ namespace OpenTelemetry.Metrics.Test
             // Validate collect() has marked records correctly.
             Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls1].Status);
 
-            // Call Collect() and use LS1 parallelly.
+            // Call Collect() and update with ls1 parallelly to validate no update is lost, as ls1 is marked
+            // candidate for removal after above step.
             var mre = new ManualResetEvent(false);
             var argsForMeterCollect = new ArgsToThread();
             argsForMeterCollect.mreToBlockStartOfThread = mre;
@@ -264,22 +273,19 @@ namespace OpenTelemetry.Metrics.Test
             collectThread.Join();
             updateThread.Join();
 
-            // Validate            
-            if (testCounter.GetAllBoundInstruments()[ls1].Status == RecordStatus.CandidateForRemoval)
-            {
-                // If record is marked candidate for removal, then it must be already exported to processor.
-                Assert.Single(testProcessor.doubleMetrics.Where(m => (m.Data as SumData<double>).Sum == 100.0));
-            }
-            else
-            {
-                // Record not yet marked for removal. So exported record has 0 sum.
-                Assert.Single(testProcessor.doubleMetrics.Where(m => (m.Data as SumData<double>).Sum == 0));
+            // Validate that the exported record doesn't miss any update.
+            // The Add(100) value must have already been exported, or must be exported in the next Collect().
 
-                // The following collect should collect the metric update.
-                meter.Collect();
-                Assert.Single(testProcessor.doubleMetrics.Where(m => (m.Data as SumData<double>).Sum == 100.0));
-                Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls1].Status);
+            meter.Collect();
+
+            double sum = 0;
+            foreach (var exportedData in testProcessor.doubleMetrics)
+            {
+                sum = sum + (exportedData.Data as SumData<double>).Sum;
             }
+
+            // 210 = 110 from initial update, 100 from the multi-thread test case.
+            Assert.Equal(210.0, sum);
         }
 
         private static void ThreadMethod(object obj)
