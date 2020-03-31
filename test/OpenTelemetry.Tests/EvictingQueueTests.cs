@@ -86,5 +86,16 @@ namespace OpenTelemetry.Tests
 
             Assert.Empty(eq);
         }
+
+        [Fact]
+        public void Replacing()
+        {
+            var eq = new EvictingQueue<int>(1) { 0 };
+            eq.Replace(0, 1);
+
+            var items = eq.ToArray();
+
+            Assert.Equal(1, items[0]);
+        }
     }
 }

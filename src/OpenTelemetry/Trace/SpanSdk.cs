@@ -341,7 +341,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    this.attributes.Update(attribute, newAttribute);
+                    this.attributes.Replace(attribute, newAttribute);
                 }
             }
         }
@@ -376,7 +376,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    this.attributes.Update(attribute, newAttribute);
+                    this.attributes.Replace(attribute, newAttribute);
                 }
             }
         }
@@ -411,7 +411,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    this.attributes.Update(attribute, newAttribute);
+                    this.attributes.Replace(attribute, newAttribute);
                 }
             }
         }
@@ -446,7 +446,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    this.attributes.Update(attribute, newAttribute);
+                    this.attributes.Replace(attribute, newAttribute);
                 }
             }
         }

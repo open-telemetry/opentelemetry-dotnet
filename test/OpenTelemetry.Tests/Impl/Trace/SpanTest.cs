@@ -978,10 +978,7 @@ namespace OpenTelemetry.Trace.Test
             span.SetAttribute(null, 0.1d);
             span.SetAttribute(null, false);
 
-            Assert.Equal(4, span.Attributes.Count());
-            Assert.Single(span.Attributes.Where(kvp => kvp.Key == string.Empty && kvp.Value is long lv && lv  == 1L));
-            Assert.Single(span.Attributes.Where(kvp => kvp.Key == string.Empty && kvp.Value is double dv && dv == 0.1d));
-            Assert.Single(span.Attributes.Where(kvp => kvp.Key == string.Empty && kvp.Value is string sv && sv == "foo"));
+            Assert.Single(span.Attributes);
             Assert.Single(span.Attributes.Where(kvp => kvp.Key == string.Empty && kvp.Value is bool bv && bv == false));
         }
 

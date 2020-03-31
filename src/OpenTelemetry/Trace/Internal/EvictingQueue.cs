@@ -60,7 +60,7 @@ namespace OpenTelemetry.Trace.Internal
             return new Enumerator(this);
         }
 
-        internal void Update(T item, T newItem)
+        internal void Replace(T item, T newItem)
         {
             Debug.Assert(item != null, "Item must not be null");
             Debug.Assert(newItem != null, "Item must not be null");
