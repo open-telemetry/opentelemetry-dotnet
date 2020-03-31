@@ -35,14 +35,14 @@ namespace OpenTelemetry.Context.Propagation.Test
         public DistributedContextRoundtripTest()
         {
             DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
-            serializer = new DistributedContextBinarySerializer();
+            this.serializer = new DistributedContextBinarySerializer();
         }
 
         [Fact]
         public void TestRoundtripSerialization_NormalTagContext()
         {
-            TestRoundtripSerialization(DistributedContext.Empty);
-            TestRoundtripSerialization(DistributedContextBuilder.CreateContext(K1, V1));
+            this.TestRoundtripSerialization(DistributedContext.Empty);
+            this.TestRoundtripSerialization(DistributedContextBuilder.CreateContext(K1, V1));
 
             var expected = DistributedContextBuilder.CreateContext(
                 new List<DistributedContextEntry>(3)
@@ -52,9 +52,9 @@ namespace OpenTelemetry.Context.Propagation.Test
                     new DistributedContextEntry(K3, V3),
                 }
             );
-            TestRoundtripSerialization(expected);
+            this.TestRoundtripSerialization(expected);
 
-            TestRoundtripSerialization(DistributedContextBuilder.CreateContext(K1, V_EMPTY));
+            this.TestRoundtripSerialization(DistributedContextBuilder.CreateContext(K1, V_EMPTY));
         }
 
         [Fact]
@@ -70,13 +70,13 @@ namespace OpenTelemetry.Context.Propagation.Test
                 list.Add(new DistributedContextEntry(str, str));
             }
 
-            TestRoundtripSerialization(DistributedContextBuilder.CreateContext(list));
+            this.TestRoundtripSerialization(DistributedContextBuilder.CreateContext(list));
         }
 
         private void TestRoundtripSerialization(DistributedContext expected)
         {
-            var bytes  = serializer.ToByteArray(expected);
-            var actual = serializer.FromByteArray(bytes);
+            var bytes= this.serializer.ToByteArray(expected);
+            var actual = this.serializer.FromByteArray(bytes);
             Assert.Equal(expected, actual);
         }
     }

@@ -270,7 +270,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             var bytes  = new byte[VarInt.VarIntSize(length)];
             VarInt.PutVarInt(length, bytes, 0);
             output.Write(bytes, 0, bytes.Length);
-            var inPutBytes = Encoding.UTF8.GetBytes(input);
+            var inPutBytes= Encoding.UTF8.GetBytes(input);
             output.Write(inPutBytes, 0, inPutBytes.Length);
         }
     }
