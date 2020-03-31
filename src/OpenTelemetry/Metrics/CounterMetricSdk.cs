@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics
     internal abstract class CounterMetricSdk<T> : CounterMetric<T>
         where T : struct
     {
-        private readonly IDictionary<LabelSet, BoundCounterMetricSdkBase<T>> counterBoundInstruments = new ConcurrentDictionary<LabelSet,BoundCounterMetricSdkBase<T>>();
+        private readonly IDictionary<LabelSet, BoundCounterMetricSdkBase<T>> counterBoundInstruments = new ConcurrentDictionary<LabelSet, BoundCounterMetricSdkBase<T>>();
         private string metricName;
 
         protected CounterMetricSdk(string name)
