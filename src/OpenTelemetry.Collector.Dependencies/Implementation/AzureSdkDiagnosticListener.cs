@@ -124,7 +124,7 @@ namespace OpenTelemetry.Collector.Dependencies
 
             span.Status = Status.Unknown.WithDescription(valueValue?.ToString());
 
-            // todo: Determine if we need to call span.End() here or if OnStopActivity is also called for exceptions.
+            // Note: Span.End() is not called here on purpose, OnStopActivity is called after OnException for this listener.
         }
 
         private string GetOperationName(Activity activity)
