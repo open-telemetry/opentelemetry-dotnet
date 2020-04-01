@@ -103,7 +103,6 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Empty(spanData.Links);
         }
 
-
         [Fact]
         public void SpanData_FromSpan_ReflectsSpanChanges()
         {
@@ -114,7 +113,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Empty(spanData.Attributes);
             Assert.Empty(spanData.Events);
             Assert.Equal(default, spanData.EndTimestamp);
-            
+
             span.AddEvent(new Event("event"));
             span.SetAttribute("key", "value");
 

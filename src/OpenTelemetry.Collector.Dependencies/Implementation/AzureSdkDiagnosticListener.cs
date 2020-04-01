@@ -90,22 +90,26 @@ namespace OpenTelemetry.Collector.Dependencies
         public override void OnStopActivity(Activity current, object valueValue)
         {
             var span = this.Tracer.CurrentSpan;
-
-            if (span == null || !span.Context.IsValid)
+            try
             {
-                CollectorEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnStopActivity");
-                return;
-            }
-
-            if (span.IsRecording)
-            {
-                foreach (var keyValuePair in current.Tags)
+                if (span == null || !span.Context.IsValid)
                 {
-                    span.SetAttribute(keyValuePair.Key, keyValuePair.Value);
+                    CollectorEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnStopActivity");
+                    return;
+                }
+
+                if (span.IsRecording)
+                {
+                    foreach (var keyValuePair in current.Tags)
+                    {
+                        span.SetAttribute(keyValuePair.Key, keyValuePair.Value);
+                    }
                 }
             }
-
-            span.End();
+            finally
+            {
+                span?.End();
+            }
         }
 
         public override void OnException(Activity current, object valueValue)
@@ -119,6 +123,8 @@ namespace OpenTelemetry.Collector.Dependencies
             }
 
             span.Status = Status.Unknown.WithDescription(valueValue?.ToString());
+
+            // Note: Span.End() is not called here on purpose, OnStopActivity is called after OnException for this listener.
         }
 
         private string GetOperationName(Activity activity)
