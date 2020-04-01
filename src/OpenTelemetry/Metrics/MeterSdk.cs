@@ -66,7 +66,9 @@ namespace OpenTelemetry.Metrics
 
                         // Updates so far are pushed to Processor/Exporter.
                         // Adjust status accordinly.
-
+                        // The status flows from initial UpdatePending, to
+                        // NoPendingUpdate, to CandidateForRemoval, to physical removal.
+                        // i.e UpdatePending->NoPendingUpdate->CandidateForRemoval->removal
                         if (handle.Value.Status == RecordStatus.CandidateForRemoval)
                         {                            
                             // The actual removal doesn't occur here as we are still
@@ -107,11 +109,13 @@ namespace OpenTelemetry.Metrics
 
                         // Updates so far are pushed to Processor/Exporter.
                         // Adjust status accordinly.
-
+                        // The status flows from initial UpdatePending, to
+                        // NoPendingUpdate, to CandidateForRemoval, to physical removal.
+                        // i.e UpdatePending->NoPendingUpdate->CandidateForRemoval->removal
                         if (handle.Value.Status == RecordStatus.CandidateForRemoval)
                         {
-                            // It is possible that record status got promoted from a parallel thread.
-                            // The actual removal doesn't occur here.
+                            // The actual removal doesn't occur here as we are still
+                            // iterating the dictionary.
                             boundInstrumentsToRemove.Add(labelSet);
                         }
                         else if (handle.Value.Status == RecordStatus.UpdatePending)

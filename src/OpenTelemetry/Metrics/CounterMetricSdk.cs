@@ -110,11 +110,13 @@ namespace OpenTelemetry.Metrics
                  * Additional notes:
                  * This lock is never taken for bound instruments, and they offer the fastest performance.
                  * This lock is only taken for those labelsets which are marked CandidateForRemoval.
-                 * It means the the 1st time a labelset is re-encountered after a Collect() phase,
-                 * this lock must be taken. Subsequent usage of this labelset before the next Collect()
-                 * will already have status promoted to UpdatePending, and no lock is taken.
-                 * In effect, there is a lock issue after every Collect(). If collect frequency is very high,
-                 * this can affect overall performance.
+                 * It means the the 1st time a labelset is re-encountered after two Collect() has occured,
+                 * this lock must be taken. Subsequent usage of this labelset before the next two Collect()
+                 * will already have status promoted, and no lock is taken.
+                 * In effect, the lock is only taken for those labelsets
+                 * which was used once, then not used for two collect(), and then used within the subsequent
+                 * Collect().
+                 *
                  * Its important to note that, for a brand new LabelSet being encountered for the 1st time, lock is not
                  * taken. Lock is taken only during the 1st re-appearance of a LabelSet after a Collect period.
                  *  
