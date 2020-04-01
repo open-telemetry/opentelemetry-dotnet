@@ -50,7 +50,7 @@
     "method": "GET",
     "url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/",
     "spanName": "/",
-    "spanStatus": "UNKNOWN",
+    "spanStatus": "INVALID_ARGUMENT",
     "spanStatusHasDescription": true,
     "spanKind": "Client",
     "spanAttributes": {

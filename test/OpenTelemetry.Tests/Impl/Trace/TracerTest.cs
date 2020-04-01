@@ -355,7 +355,6 @@ namespace OpenTelemetry.Trace.Test
             }
         }
 
-
         [Fact]
         public void DroppingAttributes()
         {

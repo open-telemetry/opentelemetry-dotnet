@@ -28,13 +28,13 @@ namespace OpenTelemetry.Context
     {
         private static readonly List<DistributedContextEntry> EmptyList = new List<DistributedContextEntry>();
         private static DistributedContextCarrier carrier = NoopDistributedContextCarrier.Instance;
-        private readonly IEnumerable<DistributedContextEntry> entries;
+        private readonly List<DistributedContextEntry> entries;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DistributedContext"/> struct.
         /// </summary>
         /// <param name="entries">Entries for distributed context.</param>
-        internal DistributedContext(IEnumerable<DistributedContextEntry> entries)
+        internal DistributedContext(List<DistributedContextEntry> entries)
         {
             this.entries = entries;
         }
@@ -89,20 +89,7 @@ namespace OpenTelemetry.Context
         /// <inheritdoc/>
         public bool Equals(DistributedContext other)
         {
-            if (this.entries.Count() != other.entries.Count())
-            {
-                return false;
-            }
-
-            foreach (DistributedContextEntry entry in this.entries)
-            {
-                if (other.GetEntryValue(entry.Key) != entry.Value)
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            return this.entries.Count == other.entries.Count && this.entries.All(entry => other.GetEntryValue(entry.Key) == entry.Value);
         }
     }
 }

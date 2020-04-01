@@ -1,4 +1,4 @@
-﻿// <copyright file="BasicTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpClientTests.Basic.netcore31.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-
+#if NETCOREAPP3_1
 using OpenTelemetry.Trace.Configuration;
 using Moq;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
@@ -34,9 +33,10 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
     {
         private readonly IDisposable serverLifeTime;
         private readonly string url;
+
         public HttpClientTests()
         {
-            serverLifeTime = TestServer.RunServer(
+            this.serverLifeTime = TestServer.RunServer(
                 (ctx) =>
                 {
                     ctx.Response.StatusCode = 200;
@@ -45,9 +45,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 out var host,
                 out var port);
 
-            url = $"http://{host}:{port}/";
+            this.url = $"http://{host}:{port}/";
         }
-
 
         [Fact]
         public void AddDependencyCollector_BadArgs()
@@ -66,7 +65,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             var request = new HttpRequestMessage
             {
-                RequestUri = new Uri(url),
+                RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
             };
 
@@ -117,7 +116,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             var request = new HttpRequestMessage
             {
-                RequestUri = new Uri(url),
+                RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
             };
 
@@ -181,7 +180,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 await c.GetAsync(this.url);
             }
 
-
             Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnStart"));
             Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnEnd"));
             Assert.IsType<SpanData>(spanProcessor.Invocations[1].Arguments[0]);
@@ -197,7 +195,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             var request = new HttpRequestMessage
             {
-                RequestUri = new Uri(url),
+                RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
             };
 
@@ -223,7 +221,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             var options = new HttpClientCollectorOptions((activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
                                                                                         arg1 is HttpRequestMessage request &&
-                                                                                        request.RequestUri.OriginalString.Contains(url)));
+                                                                                        request.RequestUri.OriginalString.Contains(this.url)));
 
             using (new HttpClientCollector(tracer, options))
             {
@@ -233,7 +231,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             Assert.Equal(0, spanProcessor.Invocations.Count);
         }
-
 
         [Fact]
         public async Task HttpDependenciesCollectorFiltersOutRequestsToExporterEndpoints()
@@ -257,7 +254,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 }
                 catch
                 {
-                    // ignore all, whatever response is,  we don't want anything tracked
+                    // ignore all, whatever response is, we don't want anything tracked
                 }
             }
 
@@ -266,8 +263,9 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
         public void Dispose()
         {
-            serverLifeTime?.Dispose();
+            this.serverLifeTime?.Dispose();
             Activity.Current = null;
         }
     }
 }
+#endif

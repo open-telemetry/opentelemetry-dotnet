@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
@@ -21,17 +22,20 @@ namespace OpenTelemetry.Context.Test
 {
     public class DistributedContextBuilderTest
     {
-        private static readonly string KEY_1 = "key 1";
-        private static readonly string KEY_2 = "key 2";
+        private const string KEY_1 = "key 1";
+        private const string KEY_2 = "key 2";
 
-        private static readonly string VALUE_1 = "value 1";
-        private static readonly string VALUE_2 = "value 2";
+        private const string VALUE_1 = "value 1";
+        private const string VALUE_2 = "value 2";
 
-        private static readonly List<DistributedContextEntry> list1 = new List<DistributedContextEntry>(1) { new DistributedContextEntry(KEY_1, VALUE_1) };
-        private static readonly List<DistributedContextEntry> list2 = new List<DistributedContextEntry>(2) {
-                                                                            new DistributedContextEntry(KEY_1, VALUE_1),
-                                                                            new DistributedContextEntry(KEY_2, VALUE_2),
-                                                                      };
+        private static readonly List<DistributedContextEntry> List1 = new List<DistributedContextEntry>(1)
+            {new DistributedContextEntry(KEY_1, VALUE_1)};
+
+        private static readonly List<DistributedContextEntry> List2 = new List<DistributedContextEntry>(2)
+        {
+            new DistributedContextEntry(KEY_1, VALUE_1),
+            new DistributedContextEntry(KEY_2, VALUE_2),
+        };
 
         public DistributedContextBuilderTest()
         {
@@ -48,7 +52,7 @@ namespace OpenTelemetry.Context.Test
             Assert.Equal(DistributedContext.Empty, dc);
 
             dc = DistributedContextBuilder.CreateContext(KEY_1, VALUE_1);
-            Assert.Equal(DistributedContextBuilder.CreateContext(list1), dc);
+            Assert.Equal(DistributedContextBuilder.CreateContext(List1), dc);
 
             Assert.Equal(dc, new DistributedContextBuilder(dc).Build());
         }
@@ -57,60 +61,77 @@ namespace OpenTelemetry.Context.Test
         public void AddEntries()
         {
             Assert.Equal(DistributedContext.Empty, new DistributedContextBuilder(inheritCurrentContext: false).Build());
-            Assert.Equal(DistributedContextBuilder.CreateContext(list1), new DistributedContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(KEY_1, VALUE_1)
-                                                                                    .Build());
 
-            Assert.Equal(DistributedContextBuilder.CreateContext(list1), new DistributedContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(new DistributedContextEntry(KEY_1, VALUE_1))
-                                                                                    .Build());
+            Assert.Equal(
+                DistributedContextBuilder.CreateContext(List1), new DistributedContextBuilder(inheritCurrentContext: false)
+                    .Add(KEY_1, VALUE_1)
+                    .Build()
+            );
 
-            Assert.Equal(DistributedContextBuilder.CreateContext(list2), new DistributedContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(KEY_1, VALUE_1)
-                                                                                    .Add(KEY_2, VALUE_2)
-                                                                                    .Build());
+            Assert.Equal(
+                DistributedContextBuilder.CreateContext(List1), new DistributedContextBuilder(inheritCurrentContext: false)
+                    .Add(new DistributedContextEntry(KEY_1, VALUE_1))
+                    .Build()
+            );
 
-            Assert.Equal(DistributedContextBuilder.CreateContext(list2), new DistributedContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(new DistributedContextEntry(KEY_1, VALUE_1))
-                                                                                    .Add(new DistributedContextEntry(KEY_2, VALUE_2))
-                                                                                    .Build());
+            Assert.Equal(
+                DistributedContextBuilder.CreateContext(List2), new DistributedContextBuilder(inheritCurrentContext: false)
+                    .Add(KEY_1, VALUE_1)
+                    .Add(KEY_2, VALUE_2)
+                    .Build()
+            );
 
-            Assert.Equal(DistributedContextBuilder.CreateContext(list1), new DistributedContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(list1)
-                                                                                    .Build());
+            Assert.Equal(
+                DistributedContextBuilder.CreateContext(List2), new DistributedContextBuilder(inheritCurrentContext: false)
+                    .Add(new DistributedContextEntry(KEY_1, VALUE_1))
+                    .Add(new DistributedContextEntry(KEY_2, VALUE_2))
+                    .Build()
+            );
 
-            Assert.Equal(DistributedContextBuilder.CreateContext(list2), new DistributedContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(list2)
-                                                                                    .Build());
+            Assert.Equal(
+                DistributedContextBuilder.CreateContext(List1), new DistributedContextBuilder(inheritCurrentContext: false)
+                    .Add(List1)
+                    .Build()
+            );
+
+            Assert.Equal(
+                DistributedContextBuilder.CreateContext(List2), new DistributedContextBuilder(inheritCurrentContext: false)
+                    .Add(List2)
+                    .Build()
+            );
         }
 
         [Fact]
         public void RemoveEntries()
         {
-            Assert.Equal(DistributedContextBuilder.CreateContext(list1), new DistributedContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(list2)
-                                                                                    .Remove(KEY_2)
-                                                                                    .Build());
+            Assert.Equal(
+                DistributedContextBuilder.CreateContext(List1), new DistributedContextBuilder(inheritCurrentContext: false)
+                    .Add(List2)
+                    .Remove(KEY_2)
+                    .Build()
+            );
 
-            Assert.Equal(DistributedContext.Empty, new DistributedContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(list2)
-                                                                                    .Remove(KEY_2)
-                                                                                    .Remove(KEY_1)
-                                                                                    .Build());
+            Assert.Equal(
+                DistributedContext.Empty, new DistributedContextBuilder(inheritCurrentContext: false)
+                    .Add(List2)
+                    .Remove(KEY_2)
+                    .Remove(KEY_1)
+                    .Build()
+            );
         }
 
         [Fact]
         public void EnsureEmptyListAfterBuild()
         {
-            DistributedContextBuilder dcb = new DistributedContextBuilder(inheritCurrentContext: false);
+            var dcb = new DistributedContextBuilder(inheritCurrentContext: false);
             Assert.Equal(DistributedContext.Empty, dcb.Build());
 
-            dcb.Add(list2);
-            Assert.Equal(DistributedContextBuilder.CreateContext(list2), dcb.Build());
+            dcb.Add(List2);
+            Assert.Equal(DistributedContextBuilder.CreateContext(List2), dcb.Build());
             Assert.Equal(DistributedContext.Empty, dcb.Build());
 
-            DistributedContext dc = dcb.Add(list1).Build();
-            Assert.Equal(dc, dcb.Add(list1).Build());
+            var dc = dcb.Add(List1).Build();
+            Assert.Equal(dc, dcb.Add(List1).Build());
 
             dcb = new DistributedContextBuilder(dc);
             Assert.Equal(dc, dcb.Build());
