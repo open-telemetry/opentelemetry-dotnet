@@ -92,10 +92,15 @@ namespace OpenTelemetry.Metrics
                 this.counterBoundInstruments.Add(labelset, boundInstrument);
             }
 
-            // if boundInstrument is marked for removal, then take the
-            // lock to sync with Unbind() and re-add. As Collect() might have called Unbind().
-            if (boundInstrument.Status == RecordStatus.CandidateForRemoval)
+            if (boundInstrument.Status == RecordStatus.NoPendingUpdate)
             {
+                boundInstrument.Status = RecordStatus.UpdatePending;
+            }
+            else if (boundInstrument.Status == RecordStatus.CandidateForRemoval)
+            {
+                // if boundInstrument is marked for removal, then take the
+                // lock to sync with Unbind() and re-add. As Collect() might have called Unbind().
+
                 /*
                  * If Unbind gets the lock first, then it'd have removed the record.
                  * But it gets added again by Bind() so no record is lost.

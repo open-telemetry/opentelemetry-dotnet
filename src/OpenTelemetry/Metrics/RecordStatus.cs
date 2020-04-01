@@ -27,14 +27,22 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// This applies to bound instruments that was created by MeterSDK intended to be short lived one.
         /// They currently have pending updates to be sent to MetricProcessor/Batcher/Exporter.
-        /// This can be removed if no update to it after one Collect cycle is over.
+        /// Collect will move them to NoPendingUpdate after exporting updates.
         /// </summary>
         UpdatePending,
 
         /// <summary>
+        /// This status is applied to UpdatePending instruments after Collect() is done.        
+        /// This will be moved to  CandidateForRemoval during the next Collect() cycle.
+        /// If an update occurs, the instrument promotes them to UpdatePending.
+        /// </summary>
+        NoPendingUpdate,
+
+        /// <summary>
         /// This also applies to bound instruments that was created by MeterSDK intended to be short lived one.
-        /// They will be removed in the next Collect pass.
-        /// Collect will set this status to all UpdatePending bound instruments after finishing a Collect pass.
+        /// They have no pending update and has not been used since atleast one Collect() cycle.
+        /// Collect will set this status to all NoPendingUpdate bound instruments after finishing a Collect pass.
+        /// Instrument records with this status are removed after Collect().
         /// </summary>
         CandidateForRemoval,
     }

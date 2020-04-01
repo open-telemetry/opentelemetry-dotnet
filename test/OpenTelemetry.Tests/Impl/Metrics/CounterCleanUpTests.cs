@@ -75,22 +75,31 @@ namespace OpenTelemetry.Metrics.Test
             // initial status for temp bound instruments are UpdatePending.            
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls3].Status);
 
-            // This collect should mark ls1, ls3 as CandidateForRemoval, leave ls2 untouched.
+            // This collect should mark ls1, ls3 as NoPendingUpdate, leave ls2 untouched.
             meter.Collect();
 
             // Validate collect() has marked records correctly.
-            Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls1].Status);
-            Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls3].Status);
+            Assert.Equal(RecordStatus.NoPendingUpdate, testCounter.GetAllBoundInstruments()[ls1].Status);
+            Assert.Equal(RecordStatus.NoPendingUpdate, testCounter.GetAllBoundInstruments()[ls3].Status);
             Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
 
             // Use ls1 again, so that it'll be promoted to UpdatePending
             testCounter.Add(context, 100, ls1);
 
-            // This collect should mark ls1 as CandidateForRemoval, leave ls2 untouched.
-            // And physically remove ls3, as it was not used since last Collect
+            // This collect should mark ls1 as NoPendingUpdate, leave ls2 untouched.
+            // And ls3 as CandidateForRemoval, as it was not used since last Collect
             meter.Collect();
 
             // Validate collect() has marked records correctly.
+            Assert.Equal(RecordStatus.NoPendingUpdate, testCounter.GetAllBoundInstruments()[ls1].Status);
+            Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls3].Status);
+            Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
+
+            // This collect should mark
+            // ls1 as CandidateForRemoval as it was not used since last Collect
+            // leave ls2 untouched.
+            // ls3 should be physically removed as it remained CandidateForRemoval during an entire Collect cycle.
+            meter.Collect();
             Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls1].Status);
             Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
             Assert.False(testCounter.GetAllBoundInstruments().ContainsKey(ls3));
@@ -135,22 +144,31 @@ namespace OpenTelemetry.Metrics.Test
             // initial status for temp bound instruments are UpdatePending.            
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls3].Status);
 
-            // This collect should mark ls1, ls3 as CandidateForRemoval, leave ls2 untouched.
+            // This collect should mark ls1, ls3 as NoPendingUpdate, leave ls2 untouched.
             meter.Collect();
 
             // Validate collect() has marked records correctly.
-            Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls1].Status);
-            Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls3].Status);
+            Assert.Equal(RecordStatus.NoPendingUpdate, testCounter.GetAllBoundInstruments()[ls1].Status);
+            Assert.Equal(RecordStatus.NoPendingUpdate, testCounter.GetAllBoundInstruments()[ls3].Status);
             Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
 
             // Use ls1 again, so that it'll be promoted to UpdatePending
             testCounter.Add(context, 100.0, ls1);
 
-            // This collect should mark ls1 as CandidateForRemoval, leave ls2 untouched.
-            // And physically remove ls3, as it was not used since last Collect
+            // This collect should mark ls1 as NoPendingUpdate, leave ls2 untouched.
+            // And ls3 as CandidateForRemoval, as it was not used since last Collect
             meter.Collect();
 
             // Validate collect() has marked records correctly.
+            Assert.Equal(RecordStatus.NoPendingUpdate, testCounter.GetAllBoundInstruments()[ls1].Status);
+            Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls3].Status);
+            Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
+
+            // This collect should mark
+            // ls1 as CandidateForRemoval as it was not used since last Collect
+            // leave ls2 untouched.
+            // ls3 should be physically removed as it remained CandidateForRemoval during an entire Collect cycle.
+            meter.Collect();
             Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls1].Status);
             Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
             Assert.False(testCounter.GetAllBoundInstruments().ContainsKey(ls3));
@@ -173,11 +191,15 @@ namespace OpenTelemetry.Metrics.Test
             testCounter.Add(context, 100, ls1);
             testCounter.Add(context, 10, ls1);
 
-            // This collect should mark ls1 CandidateForRemoval
+            // This collect should mark ls1 NoPendingUpdate
             meter.Collect();
             Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 110));
 
             // Validate collect() has marked records correctly.
+            Assert.Equal(RecordStatus.NoPendingUpdate, testCounter.GetAllBoundInstruments()[ls1].Status);
+
+            // Another collect(). This collect should mark ls1 as CandidateForRemoval.
+            meter.Collect();
             Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls1].Status);
 
             // Call Collect() and update with ls1 parallelly to validate no update is lost, as ls1 is marked
@@ -239,11 +261,15 @@ namespace OpenTelemetry.Metrics.Test
             testCounter.Add(context, 100.0, ls1);
             testCounter.Add(context, 10.0, ls1);
 
-            // This collect should mark ls1 CandidateForRemoval
+            // This collect should mark ls1 NoPendingUpdate
             meter.Collect();
             Assert.Single(testProcessor.doubleMetrics.Where(m => (m.Data as SumData<double>).Sum == 110.0));
 
             // Validate collect() has marked records correctly.
+            Assert.Equal(RecordStatus.NoPendingUpdate, testCounter.GetAllBoundInstruments()[ls1].Status);
+
+            // Another collect(). This collect should mark ls1 as CandidateForRemoval.
+            meter.Collect();
             Assert.Equal(RecordStatus.CandidateForRemoval, testCounter.GetAllBoundInstruments()[ls1].Status);
 
             // Call Collect() and update with ls1 parallelly to validate no update is lost, as ls1 is marked

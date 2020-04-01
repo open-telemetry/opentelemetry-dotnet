@@ -60,18 +60,24 @@ namespace OpenTelemetry.Metrics
                     foreach (var handle in counterInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
-                        var aggregator = handle.Value.GetAggregator();                        
+                        var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
                         this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
 
-                        if (handle.Value.Status == RecordStatus.CandidateForRemoval)
-                        {
-                            // It is possible that record status got promoted from a parallel thread.
-                            // The actual removal doesn't occur here.                            
-                            boundInstrumentsToRemove.Add(labelSet);
-                        }                            
+                        // Updates so far are pushed to Processor/Exporter.
+                        // Adjust status accordinly.
 
-                        if (handle.Value.Status == RecordStatus.UpdatePending)
+                        if (handle.Value.Status == RecordStatus.CandidateForRemoval)
+                        {                            
+                            // The actual removal doesn't occur here as we are still
+                            // iterating the dictionary.
+                            boundInstrumentsToRemove.Add(labelSet);
+                        }
+                        else if (handle.Value.Status == RecordStatus.UpdatePending)
+                        {
+                            handle.Value.Status = RecordStatus.NoPendingUpdate;
+                        }
+                        else if (handle.Value.Status == RecordStatus.NoPendingUpdate)
                         {
                             handle.Value.Status = RecordStatus.CandidateForRemoval;
                         }
@@ -99,12 +105,20 @@ namespace OpenTelemetry.Metrics
                         aggregator.Checkpoint();
                         this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
 
+                        // Updates so far are pushed to Processor/Exporter.
+                        // Adjust status accordinly.
+
                         if (handle.Value.Status == RecordStatus.CandidateForRemoval)
                         {
+                            // It is possible that record status got promoted from a parallel thread.
+                            // The actual removal doesn't occur here.
                             boundInstrumentsToRemove.Add(labelSet);
                         }
-
-                        if (handle.Value.Status == RecordStatus.UpdatePending)
+                        else if (handle.Value.Status == RecordStatus.UpdatePending)
+                        {
+                            handle.Value.Status = RecordStatus.NoPendingUpdate;
+                        }
+                        else if (handle.Value.Status == RecordStatus.NoPendingUpdate)
                         {
                             handle.Value.Status = RecordStatus.CandidateForRemoval;
                         }
