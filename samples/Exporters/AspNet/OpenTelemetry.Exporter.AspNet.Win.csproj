@@ -106,11 +106,18 @@
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="Exists('$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets')" />
   <Target Name="MvcBuildViews" AfterTargets="AfterBuild" Condition="'$(MvcBuildViews)'=='true'">
     <AspNetCompiler VirtualPath="temp" PhysicalPath="$(WebProjectOutputDir)" />
   </Target>
+  <Target Name="SkipBuildWithoutVisualStudio">
+    <Message Text="Skipping build because Visual Studio is not available." Condition="!Exists('$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets')"/>
+    <CallTarget Targets="$(BuildDependsOnOriginalValue)" Condition="Exists('$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets')"/>
+  </Target>
+  <PropertyGroup>
+    <BuildDependsOnOriginalValue>$(BuildDependsOn)</BuildDependsOnOriginalValue>
+    <BuildDependsOn>SkipBuildWithoutVisualStudio</BuildDependsOn>
+  </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
       <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
