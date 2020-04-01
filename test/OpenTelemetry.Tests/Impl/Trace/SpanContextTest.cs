@@ -22,22 +22,21 @@ namespace OpenTelemetry.Trace.Test
 {
     public class SpanContextTest
     {
-        private static readonly byte[] firstTraceIdBytes = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte)'a' };
+        private static readonly byte[] FirstTraceIdBytes = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte)'a' };
+        private static readonly byte[] SecondTraceIdBytes = { 0, 0, 0, 0, 0, 0, 0, (byte)'0', 0, 0, 0, 0, 0, 0, 0, 0 };
+        private static readonly byte[] FirstSpanIdBytes = { 0, 0, 0, 0, 0, 0, 0, (byte)'a' };
+        private static readonly byte[] SecondSpanIdBytes = { (byte)'0', 0, 0, 0, 0, 0, 0, 0 };
 
-        private static readonly byte[] secondTraceIdBytes = { 0, 0, 0, 0, 0, 0, 0, (byte)'0', 0, 0, 0, 0, 0, 0, 0, 0 };
-
-        private static readonly byte[] firstSpanIdBytes = { 0, 0, 0, 0, 0, 0, 0, (byte)'a' };
-        private static readonly byte[] secondSpanIdBytes = { (byte)'0', 0, 0, 0, 0, 0, 0, 0 };
-        private static readonly SpanContext first =
+        private static readonly SpanContext First =
           new SpanContext(
-              ActivityTraceId.CreateFromBytes(firstTraceIdBytes),
-              ActivitySpanId.CreateFromBytes(firstSpanIdBytes),
+              ActivityTraceId.CreateFromBytes(FirstTraceIdBytes),
+              ActivitySpanId.CreateFromBytes(FirstSpanIdBytes),
               ActivityTraceFlags.None);
 
-        private static readonly SpanContext second =
+        private static readonly SpanContext Second =
           new SpanContext(
-              ActivityTraceId.CreateFromBytes(secondTraceIdBytes),
-              ActivitySpanId.CreateFromBytes(secondSpanIdBytes),
+              ActivityTraceId.CreateFromBytes(SecondTraceIdBytes),
+              ActivitySpanId.CreateFromBytes(SecondSpanIdBytes),
               ActivityTraceFlags.Recorded);
 
         [Fact]
@@ -54,35 +53,35 @@ namespace OpenTelemetry.Trace.Test
             Assert.False(default(SpanContext).IsValid);
             Assert.False(
                     new SpanContext(
-                            ActivityTraceId.CreateFromBytes(firstTraceIdBytes), default, ActivityTraceFlags.None)
+                            ActivityTraceId.CreateFromBytes(FirstTraceIdBytes), default, ActivityTraceFlags.None)
                         .IsValid);
             Assert.False(
                     new SpanContext(
-                            default, ActivitySpanId.CreateFromBytes(firstSpanIdBytes), ActivityTraceFlags.None)
+                            default, ActivitySpanId.CreateFromBytes(FirstSpanIdBytes), ActivityTraceFlags.None)
                         .IsValid);
-            Assert.True(first.IsValid);
-            Assert.True(second.IsValid);
+            Assert.True(First.IsValid);
+            Assert.True(Second.IsValid);
         }
 
         [Fact]
         public void GetTraceId()
         {
-            Assert.Equal(ActivityTraceId.CreateFromBytes(firstTraceIdBytes), first.TraceId);
-            Assert.Equal(ActivityTraceId.CreateFromBytes(secondTraceIdBytes), second.TraceId);
+            Assert.Equal(ActivityTraceId.CreateFromBytes(FirstTraceIdBytes), First.TraceId);
+            Assert.Equal(ActivityTraceId.CreateFromBytes(SecondTraceIdBytes), Second.TraceId);
         }
 
         [Fact]
         public void GetSpanId()
         {
-            Assert.Equal(ActivitySpanId.CreateFromBytes(firstSpanIdBytes), first.SpanId);
-            Assert.Equal(ActivitySpanId.CreateFromBytes(secondSpanIdBytes), second.SpanId);
+            Assert.Equal(ActivitySpanId.CreateFromBytes(FirstSpanIdBytes), First.SpanId);
+            Assert.Equal(ActivitySpanId.CreateFromBytes(SecondSpanIdBytes), Second.SpanId);
         }
 
         [Fact]
         public void GetTraceOptions()
         {
-            Assert.Equal(ActivityTraceFlags.None, first.TraceOptions);
-            Assert.Equal(ActivityTraceFlags.Recorded, second.TraceOptions);
+            Assert.Equal(ActivityTraceFlags.None, First.TraceOptions);
+            Assert.Equal(ActivityTraceFlags.Recorded, Second.TraceOptions);
         }
 
         [Fact]

@@ -1,4 +1,4 @@
-﻿// <copyright file="DurationTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DurationTest.netcore31.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+#if NETCOREAPP3_1
 using Moq;
 using Newtonsoft.Json;
 using OpenTelemetry.Trace;
@@ -31,59 +32,11 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 {
     public partial class HttpClientTests
     {
-        public class HttpOutTestCase
-        {
-            public string Name { get; set; }
-
-            public string Method { get; set; }
-
-            public string Url { get; set; }
-
-            public Dictionary<string, string> Headers { get; set; }
-
-            public int ResponseCode { get; set; }
-
-            public string SpanName { get; set; }
-
-            public string SpanKind { get; set; }
-
-            public string SpanStatus { get; set; }
-
-            public bool? SpanStatusHasDescription { get; set; }
-
-            public Dictionary<string, string> SpanAttributes { get; set; }
-
-            public bool SetHttpFlavor { get; set; }
-        }
-
-        private static IEnumerable<object[]> ReadTestCases()
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var serializer = new JsonSerializer();
-            var input = serializer.Deserialize<HttpOutTestCase[]>(new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream("OpenTelemetry.Collector.Dependencies.Tests.http-out-test-cases.json"))));
-
-            return GetArgumentsFromTestCaseObject(input);
-        }
-
-        private static IEnumerable<object[]> GetArgumentsFromTestCaseObject(IEnumerable<HttpOutTestCase> input)
-        {
-            var result = new List<object[]>();
-
-            foreach (var testCase in input)
-            {
-                result.Add(new object[] {
-                    testCase,
-                });
-            }
-
-            return result;
-        }
-
-        public static IEnumerable<object[]> TestData => ReadTestCases();
+        public static IEnumerable<object[]> TestData => HttpTestData.ReadTestCases();
 
         [Theory]
         [MemberData(nameof(TestData))]
-        public async Task HttpOutCallsAreCollectedSuccessfullyAsync(HttpOutTestCase tc)
+        public async Task HttpOutCallsAreCollectedSuccessfullyAsync(HttpTestData.HttpOutTestCase tc)
         {
             var serverLifeTime = TestServer.RunServer(
                 (ctx) =>
@@ -98,7 +51,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             var tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
-            tc.Url = NormalizeValues(tc.Url, host, port);
+            tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
             using (serverLifeTime)
 
@@ -162,43 +115,39 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(span.Status.Description));
 
             var normalizedAttributes = span.Attributes.ToDictionary(x => x.Key, x => x.Value.ToString());
-            tc.SpanAttributes = tc.SpanAttributes.ToDictionary(x => x.Key, x => NormalizeValues(x.Value, host, port));
+            tc.SpanAttributes = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
 
-            Assert.Equal(tc.SpanAttributes.ToHashSet(), normalizedAttributes.ToHashSet());
+            Assert.Equal(tc.SpanAttributes, normalizedAttributes);
         }
 
         [Fact]
         public async Task DebugIndividualTestAsync()
         {
             var serializer = new JsonSerializer();
-            var input = serializer.Deserialize<HttpOutTestCase[]>(new JsonTextReader(new StringReader(@"
-[   {
-    ""name"": ""Response code 404"",
+            var input = serializer.Deserialize<HttpTestData.HttpOutTestCase[]>(new JsonTextReader(new StringReader(@"
+[
+  {
+    ""name"": ""Response code: 399"",
     ""method"": ""GET"",
-    ""url"": ""http://{host}:{port}/path/12314/?q=ddds#123"",
-    ""responseCode"": 404,
-    ""spanName"": ""/path/12314/"",
-    ""spanStatus"": ""NOT_FOUND"",
+    ""url"": ""http://{host}:{port}/"",
+    ""responseCode"": 399,
+    ""spanName"": ""/"",
+    ""spanStatus"": ""OK"",
     ""spanKind"": ""Client"",
     ""spanAttributes"": {
       ""component"": ""http"",
       ""http.method"": ""GET"",
       ""http.host"": ""{host}:{port}"",
-      ""http.status_code"": ""404"",
-      ""http.url"": ""http://{host}:{port}/path/12314/?q=ddds#123""
-}
-        }
+      ""http.status_code"": ""399"",
+      ""http.url"": ""http://{host}:{port}/""
+    }
+  }
 ]
 ")));
 
-            var t = (Task)GetType().InvokeMember(nameof(HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, GetArgumentsFromTestCaseObject(input).First());
+            var t = (Task)this.GetType().InvokeMember(nameof(HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
             await t;
         }
-
-        private string NormalizeValues(string value, string host, int port)
-        {
-            return value.Replace("{host}", host).Replace("{port}", port.ToString());
-        }
-
     }
 }
+#endif

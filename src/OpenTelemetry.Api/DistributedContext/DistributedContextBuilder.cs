@@ -14,12 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context
 {
@@ -156,7 +151,7 @@ namespace OpenTelemetry.Context
                 return this;
             }
 
-            foreach (DistributedContextEntry entry in entries)
+            foreach (var entry in entries)
             {
                 this.Add(entry);
             }
@@ -176,7 +171,7 @@ namespace OpenTelemetry.Context
                 return this;
             }
 
-            int index = this.entries.FindIndex((DistributedContextEntry entry) => entry.Key == key);
+            int index = this.entries.FindIndex(entry => entry.Key == key);
             if (index >= 0)
             {
                 this.entries.RemoveAt(index);
@@ -196,7 +191,7 @@ namespace OpenTelemetry.Context
                 return DistributedContext.Empty;
             }
 
-            DistributedContext context = new DistributedContext(this.entries);
+            var context = new DistributedContext(this.entries);
             this.entries = null; // empty current builder entries.
             return context;
         }
