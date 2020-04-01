@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,15 +27,15 @@ namespace OpenTelemetry.Context.Propagation.Test
 {
     public class DistributedContextSerializationTest
     {
-        private static readonly string K1 = "k1";
-        private static readonly string K2 = "k2";
-        private static readonly string K3 = "k3";
-        private static readonly string K4 = "k4";
+        private const string K1 = "k1";
+        private const string K2 = "k2";
+        private const string K3 = "k3";
+        private const string K4 = "k4";
 
-        private static readonly string V1 = "v1";
-        private static readonly string V2 = "v2";
-        private static readonly string V3 = "v3";
-        private static readonly string V4 = "v4";
+        private const string V1 = "v1";
+        private const string V2 = "v2";
+        private const string V3 = "v3";
+        private const string V4 = "v4";
 
         private static readonly DistributedContextEntry T1 = new DistributedContextEntry(K1, V1);
         private static readonly DistributedContextEntry T2 = new DistributedContextEntry(K2, V2);
@@ -70,81 +71,68 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void TestSerializeTooLargeTagContext()
         {
-            List<DistributedContextEntry> list = new List<DistributedContextEntry>();
+            var list = new List<DistributedContextEntry>();
 
-            for (var i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8 - 1; i++) {
+            for (var i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8 - 1; i++)
+            {
                 // Each tag will be with format {key : "0123", value : "0123"}, so the length of it is 8.
-                String str;
-                if (i < 10)
-                {
-                    str = "000" + i;
-                }
-                else if (i < 100)
-                {
-                    str = "00" + i;
-                }
-                else if (i < 1000)
-                {
-                    str = "0" + i;
-                }
-                else
-                {
-                    str = i.ToString();
-                }
+                var str = i.ToString("0000");
                 list.Add(new DistributedContextEntry(str, str));
             }
+
             // The last tag will be of size 9, so the total size of the TagContext (8193) will be one byte
             // more than limit.
             list.Add(new DistributedContextEntry("last", "last1"));
 
-            DistributedContext dc = DistributedContextBuilder.CreateContext(list);
-
+            var dc = DistributedContextBuilder.CreateContext(list);
             Assert.Empty(serializer.ToByteArray(dc));
         }
 
         private void TestSerialize(params DistributedContextEntry[] tags)
         {
-            List<DistributedContextEntry> list = new List<DistributedContextEntry>();
-
-            foreach (var tag in tags)
-            {
-                list.Add(tag);
-            }
+            var list = new List<DistributedContextEntry>(tags);
 
             var actual = serializer.ToByteArray(DistributedContextBuilder.CreateContext(list));
             var tagsList = tags.ToList();
-            var tagPermutation = Permutate(tagsList, tagsList.Count);
-            ISet<String> possibleOutPuts = new HashSet<String>();
-            foreach (List<DistributedContextEntry> l in tagPermutation) {
+            var tagPermutation= Permutate(tagsList, tagsList.Count);
+            ISet<string> possibleOutPuts = new HashSet<string>();
+
+            foreach (var distributedContextEntries in tagPermutation)
+            {
+                var l = (List<DistributedContextEntry>) distributedContextEntries;
                 var expected = new MemoryStream();
                 expected.WriteByte(SerializationUtils.VersionId);
-                foreach (var tag in l) {
+
+                foreach (var tag in l)
+                {
                     expected.WriteByte(SerializationUtils.TagFieldId);
                     EncodeString(tag.Key, expected);
                     EncodeString(tag.Value, expected);
                 }
+
                 var bytes = expected.ToArray();
                 possibleOutPuts.Add(Encoding.UTF8.GetString(bytes));
             }
+
             var exp = Encoding.UTF8.GetString(actual);
             Assert.Contains(exp, possibleOutPuts);
         }
 
-        private static void EncodeString(String input, MemoryStream byteArrayOutPutStream)
+        private static void EncodeString(string input, MemoryStream byteArrayOutPutStream)
         {
             VarInt.PutVarInt(input.Length, byteArrayOutPutStream);
             var inpBytes = Encoding.UTF8.GetBytes(input);
             byteArrayOutPutStream.Write(inpBytes, 0, inpBytes.Length);
         }
 
-        internal static void RotateRight(IList<DistributedContextEntry> sequence, int count)
+        private static void RotateRight(IList<DistributedContextEntry> sequence, int count)
         {
             var tmp = sequence[count - 1];
             sequence.RemoveAt(count - 1);
             sequence.Insert(0, tmp);
         }
 
-        internal static IEnumerable<IList<DistributedContextEntry>> Permutate(IList<DistributedContextEntry> sequence, int count)
+        private static IEnumerable<IList<DistributedContextEntry>> Permutate(IList<DistributedContextEntry> sequence, int count)
         {
             if (count == 0)
             {

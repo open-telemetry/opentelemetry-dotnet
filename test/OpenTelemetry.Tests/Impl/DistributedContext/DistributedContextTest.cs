@@ -21,11 +21,11 @@ namespace OpenTelemetry.Context.Test
 {
     public class DistributedContextTest
     {
-        private static readonly string K1 = "k1";
-        private static readonly string K2 = "k2";
+        private const string K1 = "k1";
+        private const string K2 = "k2";
 
-        private static readonly string V1 = "v1";
-        private static readonly string V2 = "v2";
+        private const string V1 = "v1";
+        private const string V2 = "v2";
 
         public DistributedContextTest()
         {
@@ -35,7 +35,7 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void EmptyContext()
         {
-            DistributedContext dc = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>());
+            var dc = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>());
             Assert.Empty(dc.Entries);
             Assert.Equal(DistributedContext.Empty, dc);
         }
@@ -43,28 +43,28 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void NonEmptyContext()
         {
-            List<DistributedContextEntry> list = new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2) };
-            DistributedContext dc = DistributedContextBuilder.CreateContext(list);
+            var list = new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2) };
+            var dc = DistributedContextBuilder.CreateContext(list);
             Assert.Equal(list, dc.Entries);
         }
 
         [Fact]
         public void AddExtraKey()
         {
-            List<DistributedContextEntry> list = new List<DistributedContextEntry>(1) { new DistributedContextEntry(K1, V1)};
-            DistributedContext dc = DistributedContextBuilder.CreateContext(list);
+            var list = new List<DistributedContextEntry>(1) { new DistributedContextEntry(K1, V1)};
+            var dc = DistributedContextBuilder.CreateContext(list);
             Assert.Equal(list, dc.Entries);
 
             list.Add(new DistributedContextEntry(K2, V2));
-            DistributedContext dc1 = DistributedContextBuilder.CreateContext(list);
+            var dc1 = DistributedContextBuilder.CreateContext(list);
             Assert.Equal(list, dc1.Entries);
         }
 
         [Fact]
         public void AddExistingKey()
         {
-            List<DistributedContextEntry> list = new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K1, V2) };
-            DistributedContext dc = DistributedContextBuilder.CreateContext(list);
+            var list = new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K1, V2) };
+            var dc = DistributedContextBuilder.CreateContext(list);
             Assert.Equal(new List<DistributedContextEntry>(1) { new DistributedContextEntry(K1, V2) }, dc.Entries);
         }
 
@@ -78,8 +78,8 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void RemoveExistingKey()
         {
-            List<DistributedContextEntry> list = new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2) };
-            DistributedContext dc = DistributedContextBuilder.CreateContext(list);
+            var list = new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2) };
+            var dc = DistributedContextBuilder.CreateContext(list);
             Assert.Equal(list, dc.Entries);
 
             list.RemoveAt(0);
@@ -95,8 +95,8 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void TestIterator()
         {
-            List<DistributedContextEntry> list = new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2) };
-            DistributedContext dc = DistributedContextBuilder.CreateContext(list);
+            var list = new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2) };
+            var dc = DistributedContextBuilder.CreateContext(list);
 
             var i = dc.Entries.GetEnumerator();
             Assert.True(i.MoveNext());
@@ -104,17 +104,17 @@ namespace OpenTelemetry.Context.Test
             Assert.True(i.MoveNext());
             var tag2 = i.Current;
             Assert.False(i.MoveNext());
-            Assert.Equal(new List<DistributedContextEntry>() { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2)}, new List<DistributedContextEntry>() { tag1, tag2 });
+            Assert.Equal(new List<DistributedContextEntry> { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2)}, new List<DistributedContextEntry> { tag1, tag2 });
         }
 
         [Fact]
         public void TestEquals()
         {
-            DistributedContext dc1 = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2) });
-            DistributedContext dc2 = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2) });
-            DistributedContext dc3 = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(2) { new DistributedContextEntry(K2, V2), new DistributedContextEntry(K1, V1) });
-            DistributedContext dc4 = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V1) });
-            DistributedContext dc5 = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V2), new DistributedContextEntry(K2, V1) });
+            var dc1 = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2) });
+            var dc2 = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2) });
+            var dc3 = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(2) { new DistributedContextEntry(K2, V2), new DistributedContextEntry(K1, V1) });
+            var dc4 = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V1) });
+            var dc5 = DistributedContextBuilder.CreateContext(new List<DistributedContextEntry>(2) { new DistributedContextEntry(K1, V2), new DistributedContextEntry(K2, V1) });
 
             Assert.True(dc1.Equals(dc2));
             Assert.True(dc1.Equals(dc3));
