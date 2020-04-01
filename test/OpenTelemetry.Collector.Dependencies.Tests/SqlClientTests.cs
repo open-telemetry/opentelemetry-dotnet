@@ -102,7 +102,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     afterExecuteEventData);
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin was called
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
 
             var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
 
@@ -200,7 +200,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                     commandErrorEventData);
             }
 
-            Assert.Equal(1, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
 
             var span = (SpanData)spanProcessor.Invocations[0].Arguments[0];
 

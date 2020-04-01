@@ -58,7 +58,7 @@ Myget feeds:
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
 | ASP.NET Core                      | [![MyGet Nightly][OpenTelemetry-collect-aspnetcore-myget-image]][OpenTelemetry-collect-aspnetcore-myget-url]                   | [![NuGet Release][OpenTelemetry-collect-aspnetcore-nuget-image]][OpenTelemetry-collect-aspnetcore-nuget-url]                   |
 | ASP.NET (WebForms, MVC, & WebAPI) | [![MyGet Nightly][OpenTelemetry-collect-aspnet-myget-image]][OpenTelemetry-collect-aspnet-myget-url]                           | [![NuGet Release][OpenTelemetry-collect-aspnet-nuget-image]][OpenTelemetry-collect-aspnet-nuget-url]                           |
-| .NET Core HttpClient, Microsoft.Data.SqlClient, System.Data.SqlClient, & Azure SDKs | [![MyGet Nightly][OpenTelemetry-collect-deps-myget-image]][OpenTelemetry-collect-deps-myget-url]                               | [![NuGet Release][OpenTelemetry-collect-deps-nuget-image]][OpenTelemetry-collect-deps-nuget-url]                               |
+| .NET Core HttpClient, .NET Framework HttpClient & HttpWebRequest, Microsoft.Data.SqlClient, System.Data.SqlClient, & Azure SDKs | [![MyGet Nightly][OpenTelemetry-collect-deps-myget-image]][OpenTelemetry-collect-deps-myget-url]                               | [![NuGet Release][OpenTelemetry-collect-deps-nuget-image]][OpenTelemetry-collect-deps-nuget-url]                               |
 | StackExchange.Redis               | [![MyGet Nightly][OpenTelemetry-collect-stackexchange-redis-myget-image]][OpenTelemetry-collect-stackexchange-redis-myget-url] | [![NuGet Release][OpenTelemetry-collect-stackexchange-redis-nuget-image]][OpenTelemetry-collect-stackexchange-redis-nuget-url] |
 
 ### Exporters Packages
@@ -76,13 +76,13 @@ Myget feeds:
 | Console              | [![MyGet Nightly][OpenTelemetry-exporter-console-myget-image]][OpenTelemetry-exporter-console-myget-url]         |                                                                                                                  |
 
 
-## OpenTelemetry Tracing QuickStart: collecting data
+## OpenTelemetry Tracing QuickStart: Collecting Data
 
 You can use OpenTelemetry API to instrument code and report data.  Check out [Tracing API overview](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md) to learn more about distributed tracing.
 
 In the examples below we demonstrate how to create and enrich spans though OpenTelemetry API.
 
-OpenTelemetry also provides auto-collectors for ASP.NET Core, HttpClient calls (.NET Core) and Azure SDKs - [configuration](#configuration) section demonstrates how to enable it.
+OpenTelemetry also provides auto-collectors for ASP.NET Core & ASP.NET incoming requests and HttpClient (.NET Core & .NET Framework), SqlClient, & Azure SDK outgoing requests. See the [configuration](#configuration) section for examples detailing how to enable auto-collection.
 
 ### Obtaining tracer
 
@@ -210,7 +210,7 @@ incomingSpan.End();
 
 ### Auto-collector implementation for Activity/DiagnosticSource
 
-`System.Diagnostics.Activity` is similar to OpenTelemetry Span. HttpClient, ASP.NET Core, Azure SDKs use them to expose diagnostics events and context.
+`System.Diagnostics.Activity` is similar to OpenTelemetry Span. HttpClient, ASP.NET Core, SqlClient, & Azure SDKs use them to expose diagnostics events and context.
 
 Leaving aside subscription mechanism, here is an example how you may implement callbacks for Start/Stop Activity
 
@@ -261,7 +261,7 @@ Configuration is done by user application: it should configure exporter and may 
 1. Install packages to your project:
    [OpenTelemetry.Hosting][OpenTelemetry-hosting-nuget-url] to provide `AddOpenTelemetry` helper method
    [OpenTelemetry.Collector.AspNetCore][OpenTelemetry-collect-aspnetcore-nuget-url] to collect incoming HTTP requests
-   [OpenTelemetry.Collector.Dependencies](OpenTelemetry-collect-deps-nuget-url) to collect outgoing HTTP requests and Azure SDK calls
+   [OpenTelemetry.Collector.Dependencies][OpenTelemetry-collect-deps-nuget-url] to collect outgoing HTTP requests, SqlClient calls, and Azure SDK calls
 
 2. Make sure `TracerFactory`, is registered in DI.
 
@@ -389,7 +389,7 @@ class MySampler : Sampler
 }
 ```
 
-## OpenTelemetry QuickStart: exporting data
+## OpenTelemetry QuickStart: Exporting Data
 
 ### Using the Jaeger exporter
 
