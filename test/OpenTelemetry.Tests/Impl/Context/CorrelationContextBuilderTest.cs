@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
@@ -21,17 +22,20 @@ namespace OpenTelemetry.Context.Test
 {
     public class CorrelationContextBuilderTest
     {
-        private static readonly string KEY_1 = "key 1";
-        private static readonly string KEY_2 = "key 2";
+        private const string KEY_1 = "key 1";
+        private const string KEY_2 = "key 2";
 
-        private static readonly string VALUE_1 = "value 1";
-        private static readonly string VALUE_2 = "value 2";
+        private const string VALUE_1 = "value 1";
+        private const string VALUE_2 = "value 2";
 
-        private static readonly List<CorrelationContextEntry> list1 = new List<CorrelationContextEntry>(1) { new CorrelationContextEntry(KEY_1, VALUE_1) };
-        private static readonly List<CorrelationContextEntry> list2 = new List<CorrelationContextEntry>(2) {
-                                                                            new CorrelationContextEntry(KEY_1, VALUE_1),
-                                                                            new CorrelationContextEntry(KEY_2, VALUE_2),
-                                                                      };
+        private static readonly List<CorrelationContextEntry> List1 = new List<CorrelationContextEntry>(1)
+            { new CorrelationContextEntry(KEY_1, VALUE_1) };
+
+        private static readonly List<CorrelationContextEntry> List2 = new List<CorrelationContextEntry>(2)
+        {
+            new CorrelationContextEntry(KEY_1, VALUE_1),
+            new CorrelationContextEntry(KEY_2, VALUE_2),
+        };
 
         public CorrelationContextBuilderTest()
         {
@@ -48,7 +52,7 @@ namespace OpenTelemetry.Context.Test
             Assert.Equal(CorrelationContext.Empty, dc);
 
             dc = CorrelationContextBuilder.CreateContext(KEY_1, VALUE_1);
-            Assert.Equal(CorrelationContextBuilder.CreateContext(list1), dc);
+            Assert.Equal(CorrelationContextBuilder.CreateContext(List1), dc);
 
             Assert.Equal(dc, new CorrelationContextBuilder(dc).Build());
         }
@@ -57,60 +61,77 @@ namespace OpenTelemetry.Context.Test
         public void AddEntries()
         {
             Assert.Equal(CorrelationContext.Empty, new CorrelationContextBuilder(inheritCurrentContext: false).Build());
-            Assert.Equal(CorrelationContextBuilder.CreateContext(list1), new CorrelationContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(KEY_1, VALUE_1)
-                                                                                    .Build());
 
-            Assert.Equal(CorrelationContextBuilder.CreateContext(list1), new CorrelationContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(new CorrelationContextEntry(KEY_1, VALUE_1))
-                                                                                    .Build());
+            Assert.Equal(
+                CorrelationContextBuilder.CreateContext(List1), new CorrelationContextBuilder(inheritCurrentContext: false)
+                    .Add(KEY_1, VALUE_1)
+                    .Build()
+            );
 
-            Assert.Equal(CorrelationContextBuilder.CreateContext(list2), new CorrelationContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(KEY_1, VALUE_1)
-                                                                                    .Add(KEY_2, VALUE_2)
-                                                                                    .Build());
+            Assert.Equal(
+                CorrelationContextBuilder.CreateContext(List1), new CorrelationContextBuilder(inheritCurrentContext: false)
+                    .Add(new CorrelationContextEntry(KEY_1, VALUE_1))
+                    .Build()
+            );
 
-            Assert.Equal(CorrelationContextBuilder.CreateContext(list2), new CorrelationContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(new CorrelationContextEntry(KEY_1, VALUE_1))
-                                                                                    .Add(new CorrelationContextEntry(KEY_2, VALUE_2))
-                                                                                    .Build());
+            Assert.Equal(
+                CorrelationContextBuilder.CreateContext(List2), new CorrelationContextBuilder(inheritCurrentContext: false)
+                    .Add(KEY_1, VALUE_1)
+                    .Add(KEY_2, VALUE_2)
+                    .Build()
+            );
 
-            Assert.Equal(CorrelationContextBuilder.CreateContext(list1), new CorrelationContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(list1)
-                                                                                    .Build());
+            Assert.Equal(
+                CorrelationContextBuilder.CreateContext(List2), new CorrelationContextBuilder(inheritCurrentContext: false)
+                    .Add(new CorrelationContextEntry(KEY_1, VALUE_1))
+                    .Add(new CorrelationContextEntry(KEY_2, VALUE_2))
+                    .Build()
+            );
 
-            Assert.Equal(CorrelationContextBuilder.CreateContext(list2), new CorrelationContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(list2)
-                                                                                    .Build());
+            Assert.Equal(
+                CorrelationContextBuilder.CreateContext(List1), new CorrelationContextBuilder(inheritCurrentContext: false)
+                    .Add(List1)
+                    .Build()
+            );
+
+            Assert.Equal(
+                CorrelationContextBuilder.CreateContext(List2), new CorrelationContextBuilder(inheritCurrentContext: false)
+                    .Add(List2)
+                    .Build()
+            );
         }
 
         [Fact]
         public void RemoveEntries()
         {
-            Assert.Equal(CorrelationContextBuilder.CreateContext(list1), new CorrelationContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(list2)
-                                                                                    .Remove(KEY_2)
-                                                                                    .Build());
+            Assert.Equal(
+                CorrelationContextBuilder.CreateContext(List1), new CorrelationContextBuilder(inheritCurrentContext: false)
+                    .Add(List2)
+                    .Remove(KEY_2)
+                    .Build()
+            );
 
-            Assert.Equal(CorrelationContext.Empty, new CorrelationContextBuilder(inheritCurrentContext: false)
-                                                                                    .Add(list2)
-                                                                                    .Remove(KEY_2)
-                                                                                    .Remove(KEY_1)
-                                                                                    .Build());
+            Assert.Equal(
+                CorrelationContext.Empty, new CorrelationContextBuilder(inheritCurrentContext: false)
+                    .Add(List2)
+                    .Remove(KEY_2)
+                    .Remove(KEY_1)
+                    .Build()
+            );
         }
 
         [Fact]
         public void EnsureEmptyListAfterBuild()
         {
-            CorrelationContextBuilder dcb = new CorrelationContextBuilder(inheritCurrentContext: false);
+            var dcb = new CorrelationContextBuilder(inheritCurrentContext: false);
             Assert.Equal(CorrelationContext.Empty, dcb.Build());
 
-            dcb.Add(list2);
-            Assert.Equal(CorrelationContextBuilder.CreateContext(list2), dcb.Build());
+            dcb.Add(List2);
+            Assert.Equal(CorrelationContextBuilder.CreateContext(List2), dcb.Build());
             Assert.Equal(CorrelationContext.Empty, dcb.Build());
 
-            CorrelationContext dc = dcb.Add(list1).Build();
-            Assert.Equal(dc, dcb.Add(list1).Build());
+            var dc = dcb.Add(List1).Build();
+            Assert.Equal(dc, dcb.Add(List1).Build());
 
             dcb = new CorrelationContextBuilder(dc);
             Assert.Equal(dc, dcb.Build());

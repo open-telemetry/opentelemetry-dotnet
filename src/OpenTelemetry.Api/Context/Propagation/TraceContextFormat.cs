@@ -28,6 +28,9 @@ namespace OpenTelemetry.Context.Propagation
     /// </summary>
     public class TraceContextFormat : ITextFormat
     {
+        private const string TraceParent = "traceparent";
+        private const string TraceState = "tracestate";
+
         private static readonly int VersionLength = "00".Length;
         private static readonly int VersionPrefixIdLength = "00-".Length;
         private static readonly int TraceIdLength = "0af7651916cd43dd8448eb211c80319c".Length;
@@ -38,14 +41,14 @@ namespace OpenTelemetry.Context.Propagation
         private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
 
         /// <inheritdoc/>
-        public ISet<string> Fields => new HashSet<string> { "tracestate", "traceparent" };
+        public ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
 
         /// <inheritdoc/>
         public SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
-                var traceparentCollection = getter(carrier, "traceparent");
+                var traceparentCollection = getter(carrier, TraceParent);
 
                 // There must be a single traceparent
                 if (traceparentCollection == null || traceparentCollection.Count() != 1)
@@ -62,7 +65,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
 
                 List<KeyValuePair<string, string>> tracestate = null;
-                var tracestateCollection = getter(carrier, "tracestate");
+                var tracestateCollection = getter(carrier, TraceState);
                 if (tracestateCollection != null)
                 {
                     this.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
@@ -103,12 +106,12 @@ namespace OpenTelemetry.Context.Propagation
             var traceparent = string.Concat("00-", spanContext.TraceId.ToHexString(), "-", spanContext.SpanId.ToHexString());
             traceparent = string.Concat(traceparent, (spanContext.TraceOptions & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
 
-            setter(carrier, "traceparent", traceparent);
+            setter(carrier, TraceParent, traceparent);
 
             string tracestateStr = TracestateUtils.GetString(spanContext.Tracestate);
             if (tracestateStr.Length > 0)
             {
-                setter(carrier, "tracestate", tracestateStr);
+                setter(carrier, TraceState, tracestateStr);
             }
         }
 

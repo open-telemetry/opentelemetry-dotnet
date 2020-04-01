@@ -80,12 +80,7 @@ namespace OpenTelemetry.Context
         /// <inheritdoc/>
         public bool Equals(DistributedContext other)
         {
-            if (!this.correlationContext.Equals(other.CorrelationContext))
-            {
-                return false;
-            }
-
-            return true;
+            return this.CorrelationContext.Equals(other.CorrelationContext);
         }
     }
 }

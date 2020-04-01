@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using Xunit;
 using System.Collections.Generic;
 
@@ -21,76 +21,63 @@ namespace OpenTelemetry.Context.Propagation.Test
 {
     public class DistributedContextRoundtripTest
     {
+        private const string K1 = "k1";
+        private const string K2 = "k2";
+        private const string K3 = "k3";
 
-        private static readonly string K1 = "k1";
-        private static readonly string K2 = "k2";
-        private static readonly string K3 = "k3";
-
-        private static readonly string V_EMPTY = "";
-        private static readonly string V1 = "v1";
-        private static readonly string V2 = "v2";
-        private static readonly string V3 = "v3";
+        private const string V_EMPTY = "";
+        private const string V1 = "v1";
+        private const string V2 = "v2";
+        private const string V3 = "v3";
 
         private readonly DistributedContextBinarySerializer serializer;
 
         public DistributedContextRoundtripTest()
         {
             DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
-            serializer = new DistributedContextBinarySerializer();
+            this.serializer = new DistributedContextBinarySerializer();
         }
 
         [Fact]
         public void TestRoundtripSerialization_NormalTagContext()
         {
-            TestRoundtripSerialization(CorrelationContext.Empty);
-            TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(K1, V1));
+            this.TestRoundtripSerialization(CorrelationContext.Empty);
+            this.TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(K1, V1));
 
-            CorrelationContext expected = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(3) {
-                                                                          new CorrelationContextEntry(K1, V1),
-                                                                          new CorrelationContextEntry(K2, V2),
-                                                                          new CorrelationContextEntry(K3, V3),
-                                                                 });
-            TestRoundtripSerialization(expected);
+            CorrelationContext expected = CorrelationContextBuilder.CreateContext(
+                new List<CorrelationContextEntry>(3)
+                {
+                    new CorrelationContextEntry(K1, V1),
+                    new CorrelationContextEntry(K2, V2),
+                    new CorrelationContextEntry(K3, V3),
+                }
+            );
 
-            TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(K1, V_EMPTY));
+            this.TestRoundtripSerialization(expected);
+            this.TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(K1, V_EMPTY));
         }
 
         [Fact]
         public void TestRoundtrip_TagContextWithMaximumSize()
         {
-            List<CorrelationContextEntry> list = new List<CorrelationContextEntry>();
+            var list = new List<CorrelationContextEntry>();
+
             for (var i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8; i++)
             {
                 // Each tag will be with format {key : "0123", value : "0123"}, so the length of it is 8.
                 // Add 1024 tags, the total size should just be 8192.
-                String str;
-                if (i < 10)
-                {
-                    str = "000" + i;
-                }
-                else if (i < 100)
-                {
-                    str = "00" + i;
-                }
-                else if (i < 1000)
-                {
-                    str = "0" + i;
-                }
-                else
-                {
-                    str = "" + i;
-                }
 
+                var str = i.ToString("0000");
                 list.Add(new CorrelationContextEntry(str, str));
             }
 
-            TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(list));
+            this.TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(list));
         }
 
         private void TestRoundtripSerialization(CorrelationContext expected)
         {
-            var bytes = serializer.ToByteArray(expected);
-            var actual = serializer.FromByteArray(bytes);
+            var bytes= this.serializer.ToByteArray(expected);
+            var actual = this.serializer.FromByteArray(bytes);
             Assert.Equal(expected, actual);
         }
     }

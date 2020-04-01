@@ -96,27 +96,13 @@ namespace OpenTelemetry.Context
         /// <inheritdoc/>
         public override bool Equals(object o)
         {
-            if (o is CorrelationContextEntry that)
-            {
-                return this.Key == that.Key && this.Value == that.Value;
-            }
-
-            return false;
+            return o is CorrelationContextEntry that && (this.Key == that.Key && this.Value == that.Value);
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (this.Key is null)
-            {
-                return "{}";
-            }
-
-            return nameof(CorrelationContextEntry)
-            + "{"
-            + nameof(this.Key) + "=" + this.Key + ", "
-            + nameof(this.Value) + "=" + this.Value
-            + "}";
+            return this.Key is null ? "{}" : $"{nameof(CorrelationContextEntry)}{{{nameof(this.Key)}={this.Key}, {nameof(this.Value)}={this.Value}}}";
         }
 
         /// <inheritdoc/>
