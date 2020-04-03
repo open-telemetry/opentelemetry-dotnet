@@ -333,7 +333,7 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, sanitizedValue));
+                this.AddOrReplaceAttribute(key, sanitizedValue);
             }
         }
 
@@ -359,7 +359,7 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+                this.AddOrReplaceAttribute(key, value);
             }
         }
 
@@ -385,7 +385,7 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+                this.AddOrReplaceAttribute(key, value);
             }
         }
 
@@ -411,7 +411,7 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+                this.AddOrReplaceAttribute(key, value);
             }
         }
 
@@ -876,6 +876,20 @@ namespace OpenTelemetry.Trace
                    || attributeValue is ushort
                    || attributeValue is float
                    || attributeValue is decimal;
+        }
+
+        private void AddOrReplaceAttribute(string key, object value)
+        {
+            var attribute = this.attributes.FirstOrDefault(a => a.Key == (key ?? string.Empty));
+            var newAttribute = new KeyValuePair<string, object>(key ?? string.Empty, value);
+            if (attribute.Equals(default(KeyValuePair<string, object>)))
+            {
+                this.attributes.Add(newAttribute);
+            }
+            else
+            {
+                this.attributes.Replace(attribute, newAttribute);
+            }
         }
 
         private readonly struct ActivityAndTracestate

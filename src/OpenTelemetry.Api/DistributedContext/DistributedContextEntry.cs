@@ -96,27 +96,13 @@ namespace OpenTelemetry.Context
         /// <inheritdoc/>
         public override bool Equals(object o)
         {
-            if (o is DistributedContextEntry that)
-            {
-                return this.Key == that.Key && this.Value == that.Value;
-            }
-
-            return false;
+            return o is DistributedContextEntry that && (this.Key == that.Key && this.Value == that.Value);
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (this.Key is null)
-            {
-                return "{}";
-            }
-
-            return nameof(DistributedContextEntry)
-            + "{"
-            + nameof(this.Key) + "=" + this.Key + ", "
-            + nameof(this.Value) + "=" + this.Value
-            + "}";
+            return this.Key is null ? "{}" : $"{nameof(DistributedContextEntry)}{{{nameof(this.Key)}={this.Key}, {nameof(this.Value)}={this.Value}}}";
         }
 
         /// <inheritdoc/>

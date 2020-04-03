@@ -40,6 +40,7 @@ namespace OpenTelemetry.Trace.Configuration
                 .AddCollector((t) => new AzureClientsCollector(t))
                 .AddCollector((t) => new AzurePipelineCollector(t))
                 .AddCollector((t) => new HttpClientCollector(t))
+                .AddCollector((t) => new HttpWebRequestCollector(t))
                 .AddCollector((t) => new SqlClientCollector(t));
         }
 
@@ -70,6 +71,7 @@ namespace OpenTelemetry.Trace.Configuration
                 .AddCollector((t) => new AzureClientsCollector(t))
                 .AddCollector((t) => new AzurePipelineCollector(t))
                 .AddCollector((t) => new HttpClientCollector(t, httpOptions))
+                .AddCollector((t) => new HttpWebRequestCollector(t, httpOptions))
                 .AddCollector((t) => new SqlClientCollector(t, sqlOptions));
         }
     }

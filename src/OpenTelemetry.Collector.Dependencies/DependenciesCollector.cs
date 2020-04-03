@@ -42,11 +42,13 @@ namespace OpenTelemetry.Collector.Dependencies
             var assemblyVersion = typeof(DependenciesCollector).Assembly.GetName().Version;
 
             var httpClientListener = new HttpClientCollector(tracerFactory.GetTracer(nameof(HttpClientCollector), "semver:" + assemblyVersion), httpOptions ?? new HttpClientCollectorOptions());
+            var httpWebRequestCollector = new HttpWebRequestCollector(tracerFactory.GetTracer(nameof(HttpWebRequestCollector), "semver:" + assemblyVersion), httpOptions ?? new HttpClientCollectorOptions());
             var azureClientsListener = new AzureClientsCollector(tracerFactory.GetTracer(nameof(AzureClientsCollector), "semver:" + assemblyVersion));
             var azurePipelineListener = new AzurePipelineCollector(tracerFactory.GetTracer(nameof(AzurePipelineCollector), "semver:" + assemblyVersion));
             var sqlClientListener = new SqlClientCollector(tracerFactory.GetTracer(nameof(AzurePipelineCollector), "semver:" + assemblyVersion), sqlOptions ?? new SqlClientCollectorOptions());
 
             this.collectors.Add(httpClientListener);
+            this.collectors.Add(httpWebRequestCollector);
             this.collectors.Add(azureClientsListener);
             this.collectors.Add(azurePipelineListener);
             this.collectors.Add(sqlClientListener);
