@@ -32,7 +32,7 @@ namespace OpenTelemetry.Tests
         {
             var expectedKeyValuePairs = expectedAttributes as KeyValuePair<string, object>[] ?? expectedAttributes.ToArray();
             var actualKeyValuePairs = attributes as KeyValuePair<string, object>[] ?? attributes.ToArray();
-            Assert.Equal(actualKeyValuePairs.Count(), expectedKeyValuePairs.Count());
+            Assert.Equal(actualKeyValuePairs.Length, expectedKeyValuePairs.Length);
 
             foreach (var attr in actualKeyValuePairs)
             {

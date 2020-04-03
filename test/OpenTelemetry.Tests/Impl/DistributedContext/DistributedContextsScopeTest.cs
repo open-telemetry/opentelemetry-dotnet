@@ -21,11 +21,11 @@ namespace OpenTelemetry.Context.Test
 {
     public class DistributedContextsScopeTest
     {
-        private static readonly string KEY_1 = "key 1";
-        private static readonly string KEY_2 = "key 2";
+        private const string KEY_1 = "key 1";
+        private const string KEY_2 = "key 2";
 
-        private static readonly string VALUE_1 = "value 1";
-        private static readonly string VALUE_2 = "value 2";
+        private const string VALUE_1 = "value 1";
+        private const string VALUE_2 = "value 2";
 
         [Fact]
         public void NoopContextCarrier()
@@ -85,8 +85,8 @@ namespace OpenTelemetry.Context.Test
         public async void TestContextInheritance()
         {
             DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
-            List<DistributedContextEntry> list1 = new List<DistributedContextEntry>(1) { new DistributedContextEntry(KEY_1, VALUE_1)};
-            List<DistributedContextEntry> list2 = new List<DistributedContextEntry>(2) { new DistributedContextEntry(KEY_1, VALUE_1), new DistributedContextEntry(KEY_2, VALUE_2), };
+            var list1 = new List<DistributedContextEntry>(1) { new DistributedContextEntry(KEY_1, VALUE_1)};
+            var list2 = new List<DistributedContextEntry>(2) { new DistributedContextEntry(KEY_1, VALUE_1), new DistributedContextEntry(KEY_2, VALUE_2), };
 
             DistributedContext.SetCurrent(DistributedContext.Empty);
             await Task.Run(() => Assert.Equal(DistributedContext.Empty, DistributedContext.Current));
