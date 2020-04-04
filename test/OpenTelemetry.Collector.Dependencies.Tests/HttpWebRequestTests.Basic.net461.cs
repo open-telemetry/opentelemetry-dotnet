@@ -25,6 +25,7 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Collector.Dependencies.Implementation;
 using Xunit;
 
 namespace OpenTelemetry.Collector.Dependencies.Tests
@@ -209,7 +210,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 .GetTracer(null);
 
             var options = new HttpClientCollectorOptions((activityName, arg1, _)
-                => !(activityName == "System.Net.Http.OpenTelemetry.HttpRequestOut" &&
+                => !(activityName == HttpWebRequestDiagnosticSource.DiagnosticListenerName + ".HttpRequestOut" &&
                 arg1 is HttpWebRequest request &&
                 request.RequestUri.OriginalString.Contains(this.url)));
 
