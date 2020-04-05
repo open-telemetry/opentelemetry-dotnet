@@ -28,21 +28,18 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
     internal sealed class HttpWebRequestDiagnosticSource : DiagnosticListener
     {
         internal const string DiagnosticListenerName = "HttpWebRequestDiagnosticListener";
+        internal const string ActivityName = DiagnosticListenerName + ".HttpRequestOut";
+        internal const string RequestStartName = ActivityName + ".Start";
+        internal const string RequestStopName = ActivityName + ".Stop";
+        internal const string RequestExceptionName = ActivityName + ".Exception";
 
         internal static readonly HttpWebRequestDiagnosticSource Instance = new HttpWebRequestDiagnosticSource();
 
-        private const string ActivityName = DiagnosticListenerName + ".HttpRequestOut";
-        private const string RequestStartName = ActivityName + ".Start";
-        private const string RequestStopName = ActivityName + ".Stop";
-        private const string RequestExceptionName = ActivityName + ".Exception";
         private const string InitializationFailed = DiagnosticListenerName + ".InitializationFailed";
         private const string RequestIdHeaderName = "Request-Id";
         private const string CorrelationContextHeaderName = "Correlation-Context";
         private const string TraceParentHeaderName = "traceparent";
         private const string TraceStateHeaderName = "tracestate";
-
-        private static readonly AsyncCallback ReadAsyncCallbackRef = ReadAsyncCallback;
-        private static readonly AsyncCallback WriteAsyncCallbackRef = WriteAsyncCallback;
 
         // Fields for reflection
         private static FieldInfo connectionGroupListField;
@@ -50,8 +47,8 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         private static FieldInfo connectionListField;
         private static Type connectionType;
         private static FieldInfo writeListField;
-        private static Func<object, object> writeAResultAccessor;
-        private static Func<object, object> readAResultAccessor;
+        private static Func<object, IAsyncResult> writeAResultAccessor;
+        private static Func<object, IAsyncResult> readAResultAccessor;
 
         // LazyAsyncResult & ContextAwareResult
         private static Func<object, AsyncCallback> asyncCallbackAccessor;
@@ -147,8 +144,8 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
         private static void HookOrProcessResult(HttpWebRequest request)
         {
-            object writeAsyncContext = writeAResultAccessor(request);
-            if (writeAsyncContext == null || !(asyncStateAccessor(writeAsyncContext) is Tuple<HttpWebRequest, object, AsyncCallback, Activity> writeAsyncState))
+            IAsyncResult writeAsyncContext = writeAResultAccessor(request);
+            if (writeAsyncContext == null || !(asyncCallbackAccessor(writeAsyncContext)?.Target is AsyncCallbackWrapper writeAsyncContextCallback))
             {
                 // If we already hooked into the read result during RaiseRequestEvent or we hooked up after the fact already we don't need to do anything here.
                 return;
@@ -156,46 +153,38 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
             // If we got here it means the user called [Begin]GetRequestStream[Async] and we have to hook the read result after the fact.
 
-            object readAsyncContext = readAResultAccessor(request);
+            IAsyncResult readAsyncContext = readAResultAccessor(request);
             if (readAsyncContext == null)
             {
-                // We're still trying to establish the connection (no read has started) or we are alrady hooked.
+                // We're still trying to establish the connection (no read has started).
                 return;
             }
 
-            // Clear our saved state so we know not to process again.
-            asyncStateModifier(writeAsyncContext, writeAsyncState.Item2);
+            // Clear our saved callback so we know not to process again.
+            asyncCallbackModifier(writeAsyncContext, null);
 
-            if (endCalledAccessor.Invoke(readAsyncContext))
+            if (endCalledAccessor.Invoke(readAsyncContext) || readAsyncContext.CompletedSynchronously)
             {
                 // We need to process the result directly because the read callback has already fired. Force a copy because response has likely already been disposed.
-                ProcessResult((IAsyncResult)readAsyncContext, writeAsyncState, null, resultAccessor(readAsyncContext), true);
+                ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Request, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true);
                 return;
             }
 
             // Hook into the result callback if it hasn't already fired.
-            HookAsyncResultCallback(readAsyncContext, request, writeAsyncState.Item4, ReadAsyncCallbackRef);
+            AsyncCallbackWrapper callback = new AsyncCallbackWrapper(writeAsyncContextCallback.Request, writeAsyncContextCallback.Activity, asyncCallbackAccessor(readAsyncContext));
+            asyncCallbackModifier(readAsyncContext, callback.AsyncCallback);
         }
 
-        private static void HookAsyncResultCallback(object asyncContext, HttpWebRequest request, Activity activity, AsyncCallback asyncCallback)
-        {
-            // Step 1: Hook m_AsyncState to store the state (request + state + callback + activity) we will need later.
-            asyncStateModifier(asyncContext, new Tuple<HttpWebRequest, object, AsyncCallback, Activity>(request, asyncStateAccessor(asyncContext), asyncCallbackAccessor(asyncContext), activity));
-
-            // Step 2: Hook m_AsyncCallback so we can fire our events when the request is completed.
-            asyncCallbackModifier(asyncContext, asyncCallback);
-        }
-
-        private static void ProcessResult(IAsyncResult asyncResult, Tuple<HttpWebRequest, object, AsyncCallback, Activity> state, AsyncCallback asyncCallback, object result, bool forceResponseCopy)
+        private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, HttpWebRequest request, Activity activity, object result, bool forceResponseCopy)
         {
             // We could be executing on a different thread now so set the activity.
-            Activity.Current = state.Item4;
+            Activity.Current = activity;
 
             try
             {
                 if (result is Exception ex)
                 {
-                    Instance.RaiseExceptionEvent(state.Item1, ex);
+                    Instance.RaiseExceptionEvent(request, ex);
                 }
                 else
                 {
@@ -216,11 +205,11 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                                 isWebSocketResponseAccessor(response), connectionGroupNameAccessor(response),
                             });
 
-                        Instance.RaiseResponseEvent(state.Item1, responseCopy);
+                        Instance.RaiseResponseEvent(request, responseCopy);
                     }
                     else
                     {
-                        Instance.RaiseResponseEvent(state.Item1, response);
+                        Instance.RaiseResponseEvent(request, response);
                     }
                 }
             }
@@ -228,57 +217,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             {
             }
 
-            state.Item4.Stop();
-        }
-
-        private static void ReadAsyncCallback(IAsyncResult asyncResult)
-        {
-            // Retrieve the state we stuffed into m_AsyncState.
-            Tuple<HttpWebRequest, object, AsyncCallback, Activity> state = (Tuple<HttpWebRequest, object, AsyncCallback, Activity>)asyncStateAccessor(asyncResult);
-
-            AsyncCallback asyncCallback = state.Item3;
-
-            ProcessResult(asyncResult, state, asyncCallback, resultAccessor(asyncResult), false);
-
-            if (asyncCallback != null)
-            {
-                // Restore the state in case anyone downstream is reliant on it.
-                asyncStateModifier(asyncResult, state.Item2);
-
-                // Fire the user's callback, if it was set. No catch so calling HttpWebRequest can abort on failure.
-                asyncCallback.Invoke(asyncResult);
-            }
-        }
-
-        private static void WriteAsyncCallback(IAsyncResult asyncResult)
-        {
-            // Retrieve the state we stuffed into m_AsyncState.
-            Tuple<HttpWebRequest, object, AsyncCallback, Activity> state = (Tuple<HttpWebRequest, object, AsyncCallback, Activity>)asyncStateAccessor(asyncResult);
-
-            AsyncCallback asyncCallback = state.Item3;
-
-            object result = resultAccessor(asyncResult);
-            if (result is Exception)
-            {
-                ProcessResult(asyncResult, state, asyncCallback, result, false);
-            }
-
-            if (asyncCallback != null)
-            {
-                // Restore the state in case anyone downstream is reliant on it.
-                asyncStateModifier(asyncResult, state.Item2);
-
-                try
-                {
-                    // Fire the user's callback, if it was set. No catch so calling HttpWebRequest can abort on failure.
-                    asyncCallback.Invoke(asyncResult);
-                }
-                finally
-                {
-                    // Put our state back so we can read the activity when we process the result.
-                    asyncStateModifier(asyncResult, state);
-                }
-            }
+            activity.Stop();
         }
 
         private static void PrepareReflectionObjects()
@@ -293,8 +232,8 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             connectionType = systemNetHttpAssembly?.GetType("System.Net.Connection");
             writeListField = connectionType?.GetField("m_WriteList", BindingFlags.Instance | BindingFlags.NonPublic);
 
-            writeAResultAccessor = CreateFieldGetter<object>(typeof(HttpWebRequest), "_WriteAResult", BindingFlags.NonPublic | BindingFlags.Instance);
-            readAResultAccessor = CreateFieldGetter<object>(typeof(HttpWebRequest), "_ReadAResult", BindingFlags.NonPublic | BindingFlags.Instance);
+            writeAResultAccessor = CreateFieldGetter<IAsyncResult>(typeof(HttpWebRequest), "_WriteAResult", BindingFlags.NonPublic | BindingFlags.Instance);
+            readAResultAccessor = CreateFieldGetter<IAsyncResult>(typeof(HttpWebRequest), "_ReadAResult", BindingFlags.NonPublic | BindingFlags.Instance);
 
             // Double checking to make sure we have all the pieces initialized
             if (connectionGroupListField == null ||
@@ -567,18 +506,21 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 var activity = new Activity(ActivityName);
                 activity.Start();
 
-                object asyncContext = readAResultAccessor(request);
+                IAsyncResult asyncContext = readAResultAccessor(request);
                 if (asyncContext != null)
                 {
                     // Flow here is for [Begin]GetResponse[Async] without a prior call to [Begin]GetRequestStream[Async].
 
-                    HookAsyncResultCallback(asyncContext, request, activity, ReadAsyncCallbackRef);
+                    AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
+                    asyncCallbackModifier(asyncContext, callback.AsyncCallback);
                 }
                 else
                 {
                     // Flow here is for [Begin]GetRequestStream[Async].
 
-                    HookAsyncResultCallback(writeAResultAccessor(request), request, activity, WriteAsyncCallbackRef);
+                    asyncContext = writeAResultAccessor(request);
+                    AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
+                    asyncCallbackModifier(asyncContext, callback.AsyncCallback);
                 }
 
                 InstrumentRequest(request, activity);
@@ -1056,6 +998,36 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                         HookOrProcessResult(request);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// A closure object so our state is available when our callback executes.
+        /// </summary>
+        private sealed class AsyncCallbackWrapper
+        {
+            public AsyncCallbackWrapper(HttpWebRequest request, Activity activity, AsyncCallback originalCallback)
+            {
+                this.Request = request;
+                this.Activity = activity;
+                this.OriginalCallback = originalCallback;
+            }
+
+            public HttpWebRequest Request { get; }
+
+            public Activity Activity { get; }
+
+            public AsyncCallback OriginalCallback { get; }
+
+            public void AsyncCallback(IAsyncResult asyncResult)
+            {
+                object result = resultAccessor(asyncResult);
+                if (result is Exception || result is HttpWebResponse)
+                {
+                    ProcessResult(asyncResult, this.OriginalCallback, this.Request, this.Activity, result, false);
+                }
+
+                this.OriginalCallback?.Invoke(asyncResult);
             }
         }
     }

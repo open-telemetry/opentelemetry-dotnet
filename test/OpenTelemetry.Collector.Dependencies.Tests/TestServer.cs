@@ -80,8 +80,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             {
                 try
                 {
-                    listener?.Stop();
                     cts.Cancel();
+                    listener?.Stop();
                 }
                 catch (ObjectDisposedException)
                 {
