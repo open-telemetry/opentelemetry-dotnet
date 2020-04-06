@@ -94,7 +94,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             var jaegerSpan = span.ToJaegerSpan();
 
-            string spanServiceName = jaegerSpan.PeerServiceName ?? this.Process.ServiceName;
+            var spanServiceName = jaegerSpan.PeerServiceName ?? this.Process.ServiceName;
 
             if (!this.processCache.TryGetValue(spanServiceName, out var spanProcess))
             {
@@ -112,23 +112,24 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 throw new JaegerExporterException($"ThriftSender received a span that was too large, size = {spanMessage.Count + spanProcess.Message.Length}, max = {this.maxPacketSize}", null);
             }
 
-            int spanTotalBytesNeeded = spanMessage.Count;
-            if (!this.CurrentBatches.TryGetValue(spanServiceName, out var spanBatch))
-            {
-                spanBatch = new Batch(spanProcess)
-                {
-                    SpanMessages = new List<BufferWriterMemory>(),
-                };
-                this.CurrentBatches.Add(spanServiceName, spanBatch);
-
-                spanTotalBytesNeeded += spanProcess.Message.Length;
-            }
+            var spanTotalBytesNeeded = spanMessage.Count;
 
             var flushedSpanCount = 0;
 
             await this.flushLock.WaitAsync().ConfigureAwait(false);
             try
             {
+                if (!this.CurrentBatches.TryGetValue(spanServiceName, out var spanBatch))
+                {
+                    spanBatch = new Batch(spanProcess)
+                    {
+                        SpanMessages = new List<BufferWriterMemory>(),
+                    };
+                    this.CurrentBatches.Add(spanServiceName, spanBatch);
+
+                    spanTotalBytesNeeded += spanProcess.Message.Length;
+                }
+
                 // flush if current batch size plus new span size equals or exceeds max batch size
                 if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPacketSize)
                 {
