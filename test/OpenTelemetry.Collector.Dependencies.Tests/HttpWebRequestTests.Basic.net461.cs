@@ -185,8 +185,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
         {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-
             var spanProcessor = new Mock<SpanProcessor>();
             var tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))

@@ -25,6 +25,13 @@ using System.Text;
 
 namespace OpenTelemetry.Collector.Dependencies.Implementation
 {
+    /// <summary>
+    /// Hooks into the <see cref="HttpWebRequest"/> class reflectively and writes diagnostic events as requests are processed.
+    /// </summary>
+    /// <remarks>
+    /// Created from the System.Diagnostics.DiagnosticSource.HttpHandlerDiagnosticListener class which has some bugs and feature gaps.
+    /// See https://github.com/dotnet/runtime/pull/33732 for details.
+    /// </remarks>
     internal sealed class HttpWebRequestDiagnosticSource : DiagnosticListener
     {
         internal const string DiagnosticListenerName = "HttpWebRequestDiagnosticListener";
@@ -36,7 +43,6 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         internal static readonly HttpWebRequestDiagnosticSource Instance = new HttpWebRequestDiagnosticSource();
 
         private const string InitializationFailed = DiagnosticListenerName + ".InitializationFailed";
-        private const string RequestIdHeaderName = "Request-Id";
         private const string CorrelationContextHeaderName = "Correlation-Context";
         private const string TraceParentHeaderName = "traceparent";
         private const string TraceStateHeaderName = "tracestate";
@@ -100,26 +106,17 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
 
         private static void InstrumentRequest(HttpWebRequest request, Activity activity)
         {
-            if (activity.IdFormat == ActivityIdFormat.W3C)
+            // do not inject header if it was injected already
+            // perhaps tracing systems wants to override it
+            if (request.Headers.Get(TraceParentHeaderName) == null)
             {
-                // do not inject header if it was injected already
-                // perhaps tracing systems wants to override it
-                if (request.Headers.Get(TraceParentHeaderName) == null)
-                {
-                    request.Headers.Add(TraceParentHeaderName, activity.Id);
+                request.Headers.Add(TraceParentHeaderName, activity.Id);
 
-                    string traceState = activity.TraceStateString;
-                    if (traceState != null)
-                    {
-                        request.Headers.Add(TraceStateHeaderName, traceState);
-                    }
+                string traceState = activity.TraceStateString;
+                if (traceState != null)
+                {
+                    request.Headers.Add(TraceStateHeaderName, traceState);
                 }
-            }
-            else if (request.Headers.Get(RequestIdHeaderName) == null)
-            {
-                // do not inject header if it was injected already
-                // perhaps tracing systems wants to override it
-                request.Headers.Add(RequestIdHeaderName, activity.Id);
             }
 
             if (request.Headers.Get(CorrelationContextHeaderName) == null)
@@ -500,8 +497,6 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             if (this.IsEnabled(ActivityName, request))
             {
                 // We don't call StartActivity here because it will fire into user code before the headers are added.
-                // In the case where user code cancels or aborts the request, this can lead to a Stop or Exception
-                // event NOT firing because IsRequestInstrumented will return false without the headers.
 
                 var activity = new Activity(ActivityName);
                 activity.Start();
@@ -550,15 +545,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
         }
 
         private bool IsRequestInstrumented(HttpWebRequest request)
-        {
-            ActivityIdFormat format = Activity.ForceDefaultIdFormat
-                ? Activity.DefaultIdFormat
-                : (Activity.Current?.IdFormat ?? Activity.DefaultIdFormat);
-
-            return format == ActivityIdFormat.W3C
-                ? request.Headers.Get(TraceParentHeaderName) != null
-                : request.Headers.Get(RequestIdHeaderName) != null;
-        }
+            => request.Headers.Get(TraceParentHeaderName) != null;
 
         private class HashtableWrapper : Hashtable, IEnumerable
         {

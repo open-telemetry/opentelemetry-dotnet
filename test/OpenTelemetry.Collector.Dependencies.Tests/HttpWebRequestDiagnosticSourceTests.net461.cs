@@ -45,7 +45,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public HttpWebRequestDiagnosticSourceTests()
         {
             Assert.Null(Activity.Current);
-            Activity.DefaultIdFormat = ActivityIdFormat.Hierarchical;
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = false;
 
             this.testServer = TestServer.RunServer(
@@ -377,90 +377,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         }
 
         [Fact]
-        public async Task TestW3CHeaders()
-        {
-            try
-            {
-                using (var eventRecords = new EventObserverAndRecorder(e =>
-                {
-                    // Verify W3C header is available when start event is fired.
-                    HttpWebRequest startRequest = ReadPublicProperty<HttpWebRequest>(e.Value, "Request");
-                    Assert.NotNull(startRequest);
-                    VerifyW3CHeaders(startRequest);
-                }))
-                {
-                    Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-                    Activity.ForceDefaultIdFormat = true;
-                    // Send a random Http request to generate some events
-                    using (var client = new HttpClient())
-                    {
-                        (await client.GetAsync(this.BuildRequestUrl())).Dispose();
-                    }
-
-                    Assert.Equal(2, eventRecords.Records.Count());
-
-                    // Check to make sure: The first record must be a request, the next record must be a response.
-                    HttpWebRequest startRequest = AssertFirstEventWasStart(eventRecords);
-
-                    VerifyW3CHeaders(startRequest);
-
-                    Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
-                    Assert.Equal(HttpWebRequestDiagnosticSource.RequestStopName, stopEvent.Key);
-                    HttpWebRequest stopRequest = ReadPublicProperty<HttpWebRequest>(stopEvent.Value, "Request");
-                    Assert.NotNull(stopRequest);
-
-                    HttpWebResponse stopResponse = ReadPublicProperty<HttpWebResponse>(stopEvent.Value, "Response");
-                    Assert.NotNull(stopResponse);
-                }
-            }
-            finally
-            {
-                this.CleanUpActivity();
-            }
-        }
-
-        [Fact]
-        public async Task TestW3CHeadersWithoutContent()
-        {
-            try
-            {
-                using var eventRecords = new EventObserverAndRecorder();
-
-                Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-                Activity.ForceDefaultIdFormat = true;
-                // Send a random Http request to generate some events
-                using (var client = new HttpClient())
-                {
-                    (await client.GetAsync(this.BuildRequestUrl(queryString: "responseCode=204"))).Dispose();
-                }
-
-                Assert.Equal(2, eventRecords.Records.Count());
-
-                // Check to make sure: The first record must be a request, the next record must be a response.
-                HttpWebRequest startRequest = AssertFirstEventWasStart(eventRecords);
-
-                var traceparent = startRequest.Headers["traceparent"];
-                Assert.NotNull(traceparent);
-                Assert.Matches("^[0-9a-f][0-9a-f]-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f][0-9a-f]$", traceparent);
-                Assert.Null(startRequest.Headers["tracestate"]);
-                Assert.Null(startRequest.Headers["Request-Id"]);
-
-                Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
-                Assert.Equal(HttpWebRequestDiagnosticSource.RequestStopName, stopEvent.Key);
-                HttpWebRequest stopRequest = ReadPublicProperty<HttpWebRequest>(stopEvent.Value, "Request");
-                Assert.NotNull(stopRequest);
-
-                HttpWebResponse stopResponse = ReadPublicProperty<HttpWebResponse>(stopEvent.Value, "Response");
-                Assert.NotNull(stopResponse);
-            }
-            finally
-            {
-                this.CleanUpActivity();
-            }
-        }
-
-        [Fact]
-        public async Task TestW3CHeadersTraceStateAndCorrelationContext()
+        public async Task TestTraceStateAndCorrelationContext()
         {
             try
             {
@@ -493,60 +410,11 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 Assert.Equal("k=v", correlationContext);
                 Assert.StartsWith($"00-{parent.TraceId.ToHexString()}-", traceparent);
                 Assert.Matches("^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$", traceparent);
-                Assert.Null(startRequest.Headers["Request-Id"]);
             }
             finally
             {
                 this.CleanUpActivity();
             }
-        }
-
-        [Fact]
-        public async Task DoNotInjectRequestIdWhenPresent()
-        {
-            using var eventRecords = new EventObserverAndRecorder();
-
-            // Send a random Http request to generate some events
-            using (var client = new HttpClient())
-            using (var request = new HttpRequestMessage(HttpMethod.Get, this.BuildRequestUrl()))
-            {
-                request.Headers.Add("Request-Id", "|rootId.1.");
-                (await client.SendAsync(request)).Dispose();
-            }
-
-            // No events are sent.
-            Assert.Empty(eventRecords.Records);
-        }
-
-        [Fact]
-        public async Task InjectTraceIdWhenRequestIdIsPresentButTraceFormatIsW3C()
-        {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-
-            using var eventRecords = new EventObserverAndRecorder();
-
-            // Send a random Http request to generate some events
-            using (var client = new HttpClient())
-            using (var request = new HttpRequestMessage(HttpMethod.Get, this.BuildRequestUrl()))
-            {
-                request.Headers.Add("Request-Id", "|rootId.1.");
-                (await client.SendAsync(request)).Dispose();
-            }
-
-            Assert.Equal(2, eventRecords.Records.Count());
-
-            // Check to make sure: The first record must be a request, the next record must be a response.
-            HttpWebRequest startRequest = AssertFirstEventWasStart(eventRecords);
-
-            VerifyW3CHeaders(startRequest, expectedRequestIdHeaderValue: "|rootId.1.");
-
-            Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
-            Assert.Equal(HttpWebRequestDiagnosticSource.RequestStopName, stopEvent.Key);
-            HttpWebRequest stopRequest = ReadPublicProperty<HttpWebRequest>(stopEvent.Value, "Request");
-            Assert.NotNull(stopRequest);
-
-            HttpWebResponse stopResponse = ReadPublicProperty<HttpWebResponse>(stopEvent.Value, "Response");
-            Assert.NotNull(stopResponse);
         }
 
         [Fact]
@@ -556,8 +424,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             {
                 using var eventRecords = new EventObserverAndRecorder();
 
-                Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-                Activity.ForceDefaultIdFormat = true;
                 // Send a random Http request to generate some events
                 using (var client = new HttpClient())
                 using (var request = new HttpRequestMessage(HttpMethod.Get, this.BuildRequestUrl()))
@@ -600,7 +466,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             // Check to make sure: The first record must be a request, the next record must be a response.
             HttpWebRequest startRequest = AssertFirstEventWasStart(eventRecords);
-            Assert.NotNull(startRequest.Headers["Request-Id"]);
+
+            VerifyHeaders(startRequest);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal(HttpWebRequestDiagnosticSource.RequestStopName, stopEvent.Key);
@@ -757,37 +624,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             Assert.Equal(2, eventRecords.Records.Count());
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Start")));
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Exception")));
-        }
-
-        /// <summary>
-        /// Test Request-Id and Correlation-Context headers injection.
-        /// </summary>
-        [Fact]
-        public async Task TestActivityIsCreated()
-        {
-            var parentActivity = new Activity("parent").AddBaggage("k1", "v1").AddBaggage("k2", "v2").Start();
-            using (var eventRecords = new EventObserverAndRecorder())
-            {
-                using (var client = new HttpClient())
-                {
-                    (await client.GetAsync(this.BuildRequestUrl())).Dispose();
-                }
-
-                Assert.Equal(2, eventRecords.Records.Count());
-                Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Start")));
-                Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Stop")));
-
-                WebRequest thisRequest = ReadPublicProperty<WebRequest>(eventRecords.Records.First().Value, "Request");
-                var requestId = thisRequest.Headers["Request-Id"];
-                var correlationContext = thisRequest.Headers["Correlation-Context"];
-
-                Assert.NotNull(requestId);
-                Assert.StartsWith(parentActivity.Id, requestId);
-
-                Assert.NotNull(correlationContext);
-                Assert.True(correlationContext == "k1=v1,k2=v2" || correlationContext == "k2=v2,k1=v1");
-            }
-            parentActivity.Stop();
         }
 
         [Fact]
@@ -967,12 +803,9 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                         continue;
                     }
 
-                    // all requests have Request-Id with proper parent Id
-                    var requestId = request.Headers["Request-Id"];
-                    Assert.StartsWith(parentActivity.Id, requestId);
-                    // all request activities are siblings:
-                    var childSuffix = requestId.Substring(0, parentActivity.Id.Length);
-                    Assert.True(childSuffix.IndexOf('.') == childSuffix.Length - 1);
+                    // all requests have traceparent with proper parent Id
+                    var traceparent = request.Headers["traceparent"];
+                    Assert.StartsWith($"00-{parentActivity.TraceId.ToHexString()}-", traceparent);
 
                     Assert.Null(requestData[request.RequestUri]);
                     requestData[request.RequestUri] =
@@ -1024,9 +857,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
         private void CleanUpActivity()
         {
-            Activity.DefaultIdFormat = ActivityIdFormat.Hierarchical;
-            Activity.ForceDefaultIdFormat = false;
-
             while (Activity.Current != null)
             {
                 Activity.Current.Stop();
@@ -1051,18 +881,10 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
         private static void VerifyHeaders(HttpWebRequest startRequest)
         {
-            Assert.NotNull(startRequest.Headers["Request-Id"]);
-            Assert.Null(startRequest.Headers["traceparent"]);
-            Assert.Null(startRequest.Headers["tracestate"]);
-        }
-
-        private static void VerifyW3CHeaders(HttpWebRequest startRequest, string expectedRequestIdHeaderValue = null)
-        {
             var traceparent = startRequest.Headers["traceparent"];
             Assert.NotNull(traceparent);
             Assert.Matches("^[0-9a-f][0-9a-f]-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f][0-9a-f]$", traceparent);
             Assert.Null(startRequest.Headers["tracestate"]);
-            Assert.Equal(expectedRequestIdHeaderValue, startRequest.Headers["Request-Id"]);
         }
 
         /// <summary>
