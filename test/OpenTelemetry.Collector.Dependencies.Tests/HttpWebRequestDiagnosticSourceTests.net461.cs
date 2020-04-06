@@ -417,8 +417,10 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             }
         }
 
-        [Fact]
-        public async Task DoNotInjectTraceParentWhenPresent()
+        [Theory]
+        [InlineData("GET")]
+        [InlineData("POST")]
+        public async Task DoNotInjectTraceParentWhenPresent(string method)
         {
             try
             {
@@ -429,6 +431,17 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 using (var request = new HttpRequestMessage(HttpMethod.Get, this.BuildRequestUrl()))
                 {
                     request.Headers.Add("traceparent", "00-abcdef0123456789abcdef0123456789-abcdef0123456789-01");
+
+                    if (method == "GET")
+                    {
+                        request.Method = HttpMethod.Get;
+                    }
+                    else
+                    {
+                        request.Method = HttpMethod.Post;
+                        request.Content = new StringContent("hello world");
+                    }
+
                     (await client.SendAsync(request)).Dispose();
                 }
 
