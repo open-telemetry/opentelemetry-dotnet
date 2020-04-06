@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Metrics.Export;
@@ -23,8 +24,8 @@ namespace OpenTelemetry.Metrics.Test
 {
     internal class TestMetricProcessor : MetricProcessor
     {
-        public List<Metric<long>> longMetrics = new List<Metric<long>>();
-        public List<Metric<double>> doubleMetrics = new List<Metric<double>>();
+        public ConcurrentBag<Metric<long>> longMetrics = new ConcurrentBag<Metric<long>>();
+        public ConcurrentBag<Metric<double>> doubleMetrics = new ConcurrentBag<Metric<double>>();
 
         public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
         {

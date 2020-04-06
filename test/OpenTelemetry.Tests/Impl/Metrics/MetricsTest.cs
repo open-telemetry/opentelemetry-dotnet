@@ -39,19 +39,27 @@ namespace OpenTelemetry.Metrics.Test
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
 
+            var labels3 = new List<KeyValuePair<string, string>>();
+            labels3.Add(new KeyValuePair<string, string>("dim1", "value3"));
+
             var context = default(SpanContext);
             testCounter.Add(context, 100, meter.GetLabelSet(labels1));
             testCounter.Add(context, 10, meter.GetLabelSet(labels1));
-            testCounter.Add(context, 200, meter.GetLabelSet(labels2));
-            testCounter.Add(context, 10, meter.GetLabelSet(labels2));
+
+            var boundCounterLabel2 = testCounter.Bind(labels2);
+            boundCounterLabel2.Add(context, 200);
+
+            testCounter.Add(context, 200, meter.GetLabelSet(labels3));
+            testCounter.Add(context, 10, meter.GetLabelSet(labels3));
 
             meter.Collect();
 
-            Assert.Equal(2, testProcessor.longMetrics.Count);
-            Assert.Equal(2, testProcessor.longMetrics.Count(m => m.MetricName == "testCounter"));
+            Assert.Equal(3, testProcessor.longMetrics.Count);
+            Assert.Equal(3, testProcessor.longMetrics.Count(m => m.MetricName == "testCounter"));
 
             Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 110 ));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 210));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 200));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 210));            
         }
 
         [Fact]
