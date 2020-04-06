@@ -29,22 +29,18 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         {
             private readonly Task httpListenerTask;
             private readonly HttpListener listener;
-            private readonly CancellationTokenSource cts;
             private readonly AutoResetEvent initialized = new AutoResetEvent(false);
 
             public RunningServer(Action<HttpListenerContext> action, string host, int port)
             {
-                cts = new CancellationTokenSource();
                 listener = new HttpListener();
-
-                var token = cts.Token;
 
                 listener.Prefixes.Add($"http://{host}:{port}/");
                 listener.Start();
 
-                httpListenerTask = new Task(() =>
+                httpListenerTask = new Task(async () =>
                 {
-                    while (!token.IsCancellationRequested)
+                    while (true)
                     {
                         var ctxTask = listener.GetContextAsync();
 
@@ -52,15 +48,12 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
                         try
                         {
-                            ctxTask.Wait(token);
-
-                            if (ctxTask.Status == TaskStatus.RanToCompletion)
-                            {
-                                action(ctxTask.Result);
-                            }
+                            action(await ctxTask.ConfigureAwait(false));
                         }
-                        catch (OperationCanceledException)
+                        catch (HttpListenerException httpEx)
+                            when (httpEx.ErrorCode == 995) // "The I/O operation has been aborted because of either a thread exit or an application request"
                         {
+                            break;
                         }
                         catch (Exception ex)
                         {
@@ -80,7 +73,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
             {
                 try
                 {
-                    cts.Cancel();
                     listener?.Stop();
                 }
                 catch (ObjectDisposedException)
