@@ -6,6 +6,7 @@
     <PackageIconUrl>https://opentelemetry.io/img/logos/opentelemetry-icon-color.png</PackageIconUrl>
     <PackageProjectUrl>https://OpenTelemetry.io</PackageProjectUrl>
     <PackageTags>Tracing;OpenTelemetry;Management;Monitoring;Jaeger;distributed-tracing</PackageTags>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyReferencesToPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -13,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ApacheThrift" Version="0.13.0.1" ExcludeAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="ApacheThrift" Version="0.13.0.1" IncludeAssets="all" ExcludeAssets="compile;runtime" GeneratePathProperty="true" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" Condition="'$(TargetFramework)' != 'netstandard2.1'" />
   </ItemGroup>
@@ -24,8 +25,15 @@
 
   <ItemGroup>
     <Reference Include="ApacheThrift">
+      <!-- Special care is given to the ApacheThrift reference because the package contains a net45 binary with a breaking API. Be careful modifying this. -->
       <HintPath>$(PkgApacheThrift)\lib\netstandard2.0\Thrift.dll</HintPath>
     </Reference>
   </ItemGroup>
+
+  <Target Name="CopyReferencesToPackage">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="$(OutputPath)\Thrift.dll" PackagePath="lib/$(TargetFramework)" />
+    </ItemGroup>
+  </Target>
 
 </Project>
