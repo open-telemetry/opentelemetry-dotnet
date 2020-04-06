@@ -429,18 +429,24 @@ Configure Zipkin exporter to see traces in Zipkin UI.
 3. See [sample][zipkin-sample] for example use.
 
 ```csharp
-using (var tracerFactory = TracerFactory.Create(
-    builder => builder.UseZipkin(o =>
-        o.ServiceName = "my-service";
-        o.Endpoint = new Uri("https://<zipkin-server:9411>/api/v2/spans"))))
+using (var tracerFactory = TracerFactory.Create(builder => builder
+    .UseZipkin(o =>
+    {
+        o.ServiceName = "test-zipkin";
+        o.Endpoint = new Uri(zipkinUri);
+    })))
 {
     var tracer = tracerFactory.GetTracer("zipkin-test");
-    var span = tracer
-        .SpanBuilder("incoming request")
-        .StartSpan();
 
-    await Task.Delay(1000);
-    span.End();
+    // Create a scoped span. It will end automatically when using statement ends
+    using (tracer.WithSpan(tracer.StartSpan("Main")))
+    {
+        Console.WriteLine("About to do a busy work");
+        for (var i = 0; i < 10; i++)
+        {
+            DoWork(i, tracer);
+        }
+    }
 }
 ```
 
@@ -523,16 +529,21 @@ using (var tracerFactory = TracerFactory.Create(builder => builder
 #### Traces
 
 ```csharp
-using (var tracerFactory = TracerFactory.Create(builder => builder
-    .AddProcessorPipeline(c => c.SetExporter(new StackdriverTraceExporter("YOUR-GOOGLE-PROJECT-ID")))))
-{
-    var tracer = tracerFactory.GetTracer("stackdriver-test");
-    var span = tracer
-        .SpanBuilder("incoming request")
-        .StartSpan();
+var spanExporter = new StackdriverTraceExporter(projectId);
 
-    await Task.Delay(1000);
-    span.End();
+using var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(spanExporter)));
+var tracer = tracerFactory.GetTracer("stackdriver-test");
+
+using (tracer.StartActiveSpan("/getuser", out TelemetrySpan span))
+{
+    span.AddEvent("Processing video.");
+    span.PutHttpMethodAttribute("GET");
+    span.PutHttpHostAttribute("localhost", 8080);
+    span.PutHttpPathAttribute("/resource");
+    span.PutHttpStatusCodeAttribute(200);
+    span.PutHttpUserAgentAttribute("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0");
+
+    Thread.Sleep(TimeSpan.FromMilliseconds(10));
 }
 ```
 
@@ -555,16 +566,16 @@ metricExporter.Start();
 4. See [sample][ai-sample] for example use.
 
 ``` csharp
-using (var tracerFactory = TracerFactory.Create(builder => builder
-    .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key")))
-{
-    var tracer = tracerFactory.GetTracer("application-insights-test");
-    var span = tracer
-        .SpanBuilder("incoming request")
-        .StartSpan();
+using var tracerFactory = TracerFactory.Create(builder => builder
+    .SetResource(Resources.CreateServiceResource("my-service"))
+    .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key"));
+var tracer = tracerFactory.GetTracer("application-insights-test");
 
-    await Task.Delay(1000);
-    span.End();
+using (tracer.StartActiveSpan("incoming request", out var span))
+{
+    span.AddEvent("Start processing video.");
+    Thread.Sleep(TimeSpan.FromMilliseconds(10));
+    span.AddEvent("Finished processing video.");
 }
 ```
 ### Using Application Insights exporter in Web App
