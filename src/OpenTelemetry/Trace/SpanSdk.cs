@@ -615,13 +615,18 @@ namespace OpenTelemetry.Trace
             SpanProcessor spanProcessor,
             Resource libraryResource)
         {
+            var spanCreationOptions = new SpanCreationOptions
+            {
+                Attributes = activity.Tags?.ToDictionary(k => k.Key, v => (object)v.Value),
+            };
+
             var span = new SpanSdk(
                 name,
                 ParentContextFromActivity(activity),
                 FromActivity(activity),
                 true,
                 spanKind,
-                null,
+                spanCreationOptions,
                 sampler,
                 tracerConfiguration,
                 spanProcessor,
