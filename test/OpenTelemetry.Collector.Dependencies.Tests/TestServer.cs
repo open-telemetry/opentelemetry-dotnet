@@ -42,21 +42,21 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 {
                     while (true)
                     {
-                        var ctxTask = listener.GetContextAsync();
-
-                        initialized.Set();
-
                         try
                         {
+                            var ctxTask = listener.GetContextAsync();
+
+                            initialized.Set();
+
                             action(await ctxTask.ConfigureAwait(false));
-                        }
-                        catch (HttpListenerException httpEx)
-                            when (httpEx.ErrorCode == 995) // "The I/O operation has been aborted because of either a thread exit or an application request"
-                        {
-                            break;
                         }
                         catch (Exception ex)
                         {
+                            if (ex is ObjectDisposedException // Listener was closed before we got into GetContextAsync.
+                                || (ex is HttpListenerException httpEx && httpEx.ErrorCode == 995)) // Listener was closed while we were in GetContextAsync.
+                            {
+                                break;
+                            }
                             Assert.True(false, ex.ToString());
                         }
                     }
