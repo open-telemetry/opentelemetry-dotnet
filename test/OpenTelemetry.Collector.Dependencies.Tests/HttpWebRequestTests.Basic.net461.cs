@@ -25,6 +25,7 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Collector.Dependencies.Implementation;
 using Xunit;
 
 namespace OpenTelemetry.Collector.Dependencies.Tests
@@ -36,6 +37,10 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
         public HttpWebRequestTests()
         {
+            Assert.Null(Activity.Current);
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = false;
+
             this.serverLifeTime = TestServer.RunServer(
                 (ctx) =>
                 {
@@ -51,7 +56,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public void Dispose()
         {
             this.serverLifeTime?.Dispose();
-            Activity.Current = null;
         }
 
         [Fact]
@@ -89,6 +93,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             Assert.Equal($"00-{span.Context.TraceId}-{span.Context.SpanId}-01", traceparent);
             Assert.Equal("k1=v1,k2=v2", tracestate);
+
+            parent.Stop();
         }
 
         [Fact]
@@ -136,6 +142,8 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             Assert.Equal($"00/{span.Context.TraceId}/{span.Context.SpanId}/01", traceparent);
             Assert.Equal("k1=v1,k2=v2", tracestate);
+
+            parent.Stop();
         }
 
         [Fact]
@@ -209,7 +217,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 .GetTracer(null);
 
             var options = new HttpClientCollectorOptions((activityName, arg1, _)
-                => !(activityName == "System.Net.Http.OpenTelemetry.HttpRequestOut" &&
+                => !(activityName == HttpWebRequestDiagnosticSource.ActivityName &&
                 arg1 is HttpWebRequest request &&
                 request.RequestUri.OriginalString.Contains(this.url)));
 
