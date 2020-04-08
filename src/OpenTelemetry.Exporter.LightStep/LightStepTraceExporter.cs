@@ -29,6 +29,8 @@ namespace OpenTelemetry.Exporter.LightStep
 {
     public class LightStepTraceExporter : SpanExporter
     {
+        private const string ContentTypeApplicationJson = "application/json";
+        private const string LightStepAccessTokenHeader = "Lightstep-Access-Token";
         private readonly LightStepTraceExporterOptions options;
         private readonly HttpClient httpClient;
 
@@ -82,7 +84,8 @@ namespace OpenTelemetry.Exporter.LightStep
             var requestUri = this.options.Satellite;
             var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
             var jsonReport = JsonConvert.SerializeObject(report);
-            request.Content = new StringContent(jsonReport, Encoding.UTF8, "application/json");
+            request.Content = new StringContent(jsonReport, Encoding.UTF8, ContentTypeApplicationJson);
+            request.Content.Headers.Add(LightStepAccessTokenHeader, report.Auth.AccessToken);
 
             // avoid cancelling here: this is no return point: if we reached this point
             // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
