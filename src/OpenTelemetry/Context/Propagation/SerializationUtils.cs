@@ -33,7 +33,7 @@ namespace OpenTelemetry.Context.Propagation
 
         // Serializes a CorrelationContext to the on-the-wire format.
         // Encoded tags are of the form: <version_id><encoded_tags>
-        internal static byte[] SerializeBinary(CorrelationContext dc)
+        internal static byte[] SerializeBinary(DistributedContext dc)
         {
             // Use a ByteArrayDataOutput to avoid needing to handle IOExceptions.
             // ByteArrayDataOutput byteArrayDataOutput = ByteStreams.newDataOutput();
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Context.Propagation
 
             byteArrayDataOutput.WriteByte(VersionId);
             var totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
-            foreach (var tag in dc.Entries)
+            foreach (var tag in dc.CorrelationContext.Entries)
             {
                 totalChars += tag.Key.Length;
                 totalChars += tag.Value.Length;
@@ -66,12 +66,12 @@ namespace OpenTelemetry.Context.Propagation
 
         // Deserializes input to CorrelationContext based on the binary format standard.
         // The encoded tags are of the form: <version_id><encoded_tags>
-        internal static CorrelationContext DeserializeBinary(byte[] bytes)
+        internal static DistributedContext DeserializeBinary(byte[] bytes)
         {
             if (bytes.Length == 0)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToExtractContext("Input byte[] can not be empty.");
-                return CorrelationContext.Empty;
+                return DistributedContext.Empty;
             }
 
             try
@@ -81,12 +81,12 @@ namespace OpenTelemetry.Context.Propagation
                 if (versionId > VersionId || versionId < 0)
                 {
                     OpenTelemetrySdkEventSource.Log.FailedToExtractContext("Wrong Version ID: " + versionId + ". Currently supports version up to: " + VersionId);
-                    return CorrelationContext.Empty;
+                    return DistributedContext.Empty;
                 }
 
                 if (TryParseTags(buffer, out var tags))
                 {
-                    return CorrelationContextBuilder.CreateContext(tags);
+                    return DistributedContextBuilder.CreateContext(tags);
                 }
             }
             catch (Exception e)
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Context.Propagation
                 OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
             }
 
-            return CorrelationContext.Empty;
+            return DistributedContext.Empty;
         }
 
         internal static bool TryParseTags(MemoryStream buffer, out List<CorrelationContextEntry> tags)

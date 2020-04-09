@@ -24,9 +24,9 @@ namespace OpenTelemetry.Context
         internal static readonly DistributedContextBinarySerializerBase Instance = new NoopDistributedContextBinarySerializer();
         private static readonly byte[] EmptyByteArray = { };
 
-        public override byte[] ToByteArray(CorrelationContext tags)
+        public override byte[] ToByteArray(DistributedContext context)
         {
-            if (tags.Entries is null)
+            if (context.CorrelationContext.Entries is null)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToInjectContext("entries are null");
             }
@@ -34,14 +34,14 @@ namespace OpenTelemetry.Context
             return EmptyByteArray;
         }
 
-        public override CorrelationContext FromByteArray(byte[] bytes)
+        public override DistributedContext FromByteArray(byte[] bytes)
         {
             if (bytes == null)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null bytes");
             }
 
-            return CorrelationContext.Empty;
+            return DistributedContext.Empty;
         }
     }
 }

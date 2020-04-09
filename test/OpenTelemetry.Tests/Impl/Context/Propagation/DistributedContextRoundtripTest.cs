@@ -41,10 +41,10 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void TestRoundtripSerialization_NormalTagContext()
         {
-            this.TestRoundtripSerialization(CorrelationContext.Empty);
-            this.TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(K1, V1));
+            this.TestRoundtripSerialization(DistributedContext.Empty);
+            this.TestRoundtripSerialization(DistributedContextBuilder.CreateContext(K1, V1));
 
-            var expected = CorrelationContextBuilder.CreateContext(
+            var expected = DistributedContextBuilder.CreateContext(
                 new List<CorrelationContextEntry>(3)
                 {
                     new CorrelationContextEntry(K1, V1),
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             );
 
             this.TestRoundtripSerialization(expected);
-            this.TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(K1, V_EMPTY));
+            this.TestRoundtripSerialization(DistributedContextBuilder.CreateContext(K1, V_EMPTY));
         }
 
         [Fact]
@@ -71,12 +71,12 @@ namespace OpenTelemetry.Context.Propagation.Test
                 list.Add(new CorrelationContextEntry(str, str));
             }
 
-            this.TestRoundtripSerialization(CorrelationContextBuilder.CreateContext(list));
+            this.TestRoundtripSerialization(DistributedContextBuilder.CreateContext(list));
         }
 
-        private void TestRoundtripSerialization(CorrelationContext expected)
+        private void TestRoundtripSerialization(DistributedContext expected)
         {
-            var bytes= this.serializer.ToByteArray(expected);
+            var bytes = this.serializer.ToByteArray(expected);
             var actual = this.serializer.FromByteArray(bytes);
             Assert.Equal(expected, actual);
         }

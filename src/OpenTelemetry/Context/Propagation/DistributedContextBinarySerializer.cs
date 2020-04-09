@@ -24,12 +24,12 @@ namespace OpenTelemetry.Context.Propagation
         {
         }
 
-        public override byte[] ToByteArray(CorrelationContext tags)
+        public override byte[] ToByteArray(DistributedContext context)
         {
-            return SerializationUtils.SerializeBinary(tags);
+            return SerializationUtils.SerializeBinary(context);
         }
 
-        public override CorrelationContext FromByteArray(byte[] bytes)
+        public override DistributedContext FromByteArray(byte[] bytes)
         {
             return SerializationUtils.DeserializeBinary(bytes);
         }

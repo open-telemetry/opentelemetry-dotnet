@@ -46,16 +46,16 @@ namespace OpenTelemetry.Context.Propagation.Test
         public void TestNoTagsSerialization()
         {
             var dc = serializer.FromByteArray(serializer.ToByteArray(DistributedContext.Empty));
-            Assert.Empty(dc.Entries);
+            Assert.Empty(dc.CorrelationContext.Entries);
 
             dc = serializer.FromByteArray(new byte[] {SerializationUtils.VersionId}); // One byte that represents Version ID.
-            Assert.Empty(dc.Entries);
+            Assert.Empty(dc.CorrelationContext.Entries);
         }
 
         [Fact]
         public void TestDeserializeEmptyByteArrayThrowException()
         {
-            Assert.Equal(CorrelationContext.Empty, serializer.FromByteArray(new byte[0]));
+            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(new byte[0]));
         }
 
         [Fact]
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             EncodeTagToOutPut("Key1", "Value4", output);
             EncodeTagToOutPut("Key2", "Value5", output);
 
-            var expected = CorrelationContextBuilder.CreateContext(
+            var expected = DistributedContextBuilder.CreateContext(
                 new List<CorrelationContextEntry>(3)
                 {
                     new CorrelationContextEntry("Key1", "Value4"),
@@ -183,7 +183,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             EncodeTagToOutPut("Key1", "Value1", output);
             EncodeTagToOutPut("Key2", "Value2", output);
 
-            var expected = CorrelationContextBuilder.CreateContext(
+            var expected = DistributedContextBuilder.CreateContext(
                 new List<CorrelationContextEntry>(3)
                 {
                     new CorrelationContextEntry("Key1", "Value1"),
@@ -208,7 +208,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
             EncodeTagToOutPut("Key3", "Value3", output);
 
-            var expected = CorrelationContextBuilder.CreateContext(
+            var expected = DistributedContextBuilder.CreateContext(
                 new List<CorrelationContextEntry>(2)
                 {
                     new CorrelationContextEntry("Key1", "Value1"),
@@ -229,14 +229,14 @@ namespace OpenTelemetry.Context.Propagation.Test
             output.Write(new byte[] {1, 2, 3, 4}, 0, 4);
 
             EncodeTagToOutPut("Key", "Value", output);
-            Assert.Equal(CorrelationContext.Empty, serializer.FromByteArray(output.ToArray()));
+            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(output.ToArray()));
         }
 
         [Fact]
         public void TestDeserializeWrongFormat()
         {
             // encoded tags should follow the format <version_id>(<tag_field_id><tag_encoding>)*
-            Assert.Equal(CorrelationContext.Empty, serializer.FromByteArray(new byte[3]));
+            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(new byte[3]));
         }
 
         [Fact]
