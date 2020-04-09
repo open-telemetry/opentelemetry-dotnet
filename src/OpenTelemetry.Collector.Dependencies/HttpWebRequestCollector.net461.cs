@@ -45,9 +45,9 @@ namespace OpenTelemetry.Collector.Dependencies
         public HttpWebRequestCollector(Tracer tracer, HttpClientCollectorOptions options)
         {
 #if NET461
-            GC.KeepAlive(System.Diagnostics.HttpHandlerDiagnosticListener.s_instance);
+            GC.KeepAlive(HttpWebRequestDiagnosticSource.Instance);
 
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpDesktopDiagnosticListener(tracer, options), options.EventFilter);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpWebRequestDiagnosticListener(tracer, options), options.EventFilter);
             this.diagnosticSourceSubscriber.Subscribe();
 #endif
         }
