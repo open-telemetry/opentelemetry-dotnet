@@ -84,7 +84,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             // more than limit.
             list.Add(new CorrelationContextEntry("last", "last1"));
 
-            var dc = CorrelationContextBuilder.CreateContext(list);
+            var dc = DistributedContextBuilder.CreateContext(list);
             Assert.Empty(serializer.ToByteArray(dc));
         }
 
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         {
             var list = new List<CorrelationContextEntry>(tags);
 
-            var actual = serializer.ToByteArray(CorrelationContextBuilder.CreateContext(list));
+            var actual = serializer.ToByteArray(DistributedContextBuilder.CreateContext(list));
             var tagsList = tags.ToList();
             var tagPermutation= Permutate(tagsList, tagsList.Count);
             ISet<string> possibleOutPuts = new HashSet<string>();

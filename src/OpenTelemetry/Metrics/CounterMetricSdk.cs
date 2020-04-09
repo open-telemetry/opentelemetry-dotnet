@@ -57,14 +57,14 @@ namespace OpenTelemetry.Metrics
             this.Bind(new LabelSetSdk(labels), isShortLived: true).Add(context, value);
         }
 
-        public override void Add(in CorrelationContext context, T value, LabelSet labelset)
+        public override void Add(in DistributedContext context, T value, LabelSet labelset)
         {
             // user not using bound instrument. Hence create a
             // short-lived bound intrument.
             this.Bind(labelset, isShortLived: true).Add(context, value);
         }
 
-        public override void Add(in CorrelationContext context, T value, IEnumerable<KeyValuePair<string, string>> labels)
+        public override void Add(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels)
         {
             // user not using bound instrument. Hence create a
             // short-lived bound intrument.
