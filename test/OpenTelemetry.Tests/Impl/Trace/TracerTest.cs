@@ -394,5 +394,24 @@ namespace OpenTelemetry.Trace.Test
                         .GetValue("MyStringAttributeKey" + (i + maxNumberOfAttributes)));
             }
         }
+
+        [Fact]
+        public void Tracer_StartSpanFromActivity_ValidArguments_ReturnsSpanWithActivityAttributesAsSpanTags()
+        {
+            var activity = new Activity("foo")
+                .SetStartTime(DateTime.UtcNow)
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+
+            activity.AddTag("key1", "value1");
+            activity.AddTag("key2", "value2");
+
+            var span = (SpanSdk)this.tracerSdk.StartSpanFromActivity("foo", activity);
+
+            Assert.NotNull(span);
+
+            Assert.NotNull(span.Attributes.FirstOrDefault(k => k.Key == "key1"));
+            Assert.NotNull(span.Attributes.FirstOrDefault(k => k.Key == "key2"));
+        }
     }
 }
