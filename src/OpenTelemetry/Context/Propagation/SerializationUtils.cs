@@ -31,7 +31,7 @@ namespace OpenTelemetry.Context.Propagation
 
         private static readonly byte[] InvalidContext = new byte[0];
 
-        // Serializes a CorrelationContext to the on-the-wire format.
+        // Serializes a DistributedContext to the on-the-wire format.
         // Encoded tags are of the form: <version_id><encoded_tags>
         internal static byte[] SerializeBinary(DistributedContext dc)
         {
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Context.Propagation
             // }
             if (totalChars > TagContextSerializedSizeLimit)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("Size of CorrelationContext exceeds the maximum serialized size "
+                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("Size of DistributedContext exceeds the maximum serialized size "
                                                                           + TagContextSerializedSizeLimit);
                 return InvalidContext;
             }
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Context.Propagation
             return byteArrayDataOutput.ToArray();
         }
 
-        // Deserializes input to CorrelationContext based on the binary format standard.
+        // Deserializes input to DistributedContext based on the binary format standard.
         // The encoded tags are of the form: <version_id><encoded_tags>
         internal static DistributedContext DeserializeBinary(byte[] bytes)
         {

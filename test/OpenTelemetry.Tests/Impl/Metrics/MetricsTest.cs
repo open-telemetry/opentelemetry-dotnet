@@ -59,7 +59,7 @@ namespace OpenTelemetry.Metrics.Test
 
             Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 110 ));
             Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 200));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 210));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 210));            
         }
 
         [Fact]

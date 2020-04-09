@@ -62,7 +62,7 @@ namespace OpenTelemetry.Metrics.Test
             // ls2 is bound by user.
             testCounter.Add(context, 100, ls1);
             testCounter.Add(context, 10, ls1);
-            // initial status for temp bound instruments are UpdatePending.
+            // initial status for temp bound instruments are UpdatePending.            
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls1].Status);
 
             var boundCounterLabel2 = testCounter.Bind(ls2);
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Metrics.Test
 
             testCounter.Add(context, 200, ls3);
             testCounter.Add(context, 10, ls3);
-            // initial status for temp bound instruments are UpdatePending.
+            // initial status for temp bound instruments are UpdatePending.            
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls3].Status);
 
             // This collect should mark ls1, ls3 as NoPendingUpdate, leave ls2 untouched.
@@ -131,7 +131,7 @@ namespace OpenTelemetry.Metrics.Test
             // ls2 is bound by user.
             testCounter.Add(context, 100.0, ls1);
             testCounter.Add(context, 10.0, ls1);
-            // initial status for temp bound instruments are UpdatePending.
+            // initial status for temp bound instruments are UpdatePending.            
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls1].Status);
 
             var boundCounterLabel2 = testCounter.Bind(ls2);
@@ -141,7 +141,7 @@ namespace OpenTelemetry.Metrics.Test
 
             testCounter.Add(context, 200.0, ls3);
             testCounter.Add(context, 10.0, ls3);
-            // initial status for temp bound instruments are UpdatePending.
+            // initial status for temp bound instruments are UpdatePending.            
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls3].Status);
 
             // This collect should mark ls1, ls3 as NoPendingUpdate, leave ls2 untouched.
