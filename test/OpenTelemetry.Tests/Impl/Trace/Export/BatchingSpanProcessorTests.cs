@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private SpanSdk CreateSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
         {
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProvider.Create(b => b
                 .SetSampler(new AlwaysOnSampler())
                 .AddProcessorPipeline(p => p.AddProcessor(e => spanProcessor))
                 .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
         private SpanSdk CreateNotSampledEndedSpan(string spanName, SpanProcessor spanProcessor)
         {
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProvider.Create(b => b
                 .SetSampler(new AlwaysOffSampler())
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor))
                 .SetTracerOptions(new TracerConfiguration())).GetTracer(null);
@@ -221,11 +221,11 @@ namespace OpenTelemetry.Trace.Export.Test
         { 
             var resetEvent = new ManualResetEvent(false);
             var spanExporter = new TestExporter(_ => resetEvent.WaitOne(TimeSpan.FromSeconds(10)));
-            using var factory = TracerFactory.Create(b => b
+            using var tracerProvider = TracerProvider.Create(b => b
                 .AddProcessorPipeline(p => p
                     .SetExporter(spanExporter)
                     .SetExportingProcessor(e => new BatchingSpanProcessor(e, 128, DefaultDelay, 128))));
-            var tracer = factory.GetTracer(null);
+            var tracer = tracerProvider.GetTracer(null);
 
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var span = (SpanSdk)tracer.StartSpan("foo", context);

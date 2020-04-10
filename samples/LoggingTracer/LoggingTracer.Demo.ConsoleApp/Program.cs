@@ -36,20 +36,20 @@ namespace LoggingTracer.Demo.ConsoleApp
         private static async Task RunFooWithLogingTracer()
         {
             Logger.Log("*** RunFooWithLogingTracer ***");
-            await Foo(new LoggingTracerFactory());
+            await Foo(new LoggingTracerProvider());
         }
 
         private static async Task RunFooWithLoggingExporter()
         {
             Logger.Log("*** RunFooWithLoggingExporter ***");
             var exporter = new LoggingExporter();
-            using var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(exporter)));
-            await Foo(tracerFactory);
+            using var tracerProvider = TracerProvider.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(exporter)));
+            await Foo(tracerProvider);
         }
 
-        private static async Task Foo(TracerFactoryBase tracerFactory)
+        private static async Task Foo(TracerProviderBase tracerProvider)
         {
-            var tracer = tracerFactory.GetTracer("ConsoleApp", "semver:1.0.0");
+            var tracer = tracerProvider.GetTracer("ConsoleApp", "semver:1.0.0");
             using (tracer.WithSpan(tracer.StartSpan("Main")))
             {
                 using (tracer.WithSpan(tracer.StartSpan("Main (span1)")))

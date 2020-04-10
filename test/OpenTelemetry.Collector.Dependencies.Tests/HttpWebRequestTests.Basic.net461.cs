@@ -62,7 +62,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorInjectsHeadersAsync()
         {
             var spanProcessor = new Mock<SpanProcessor>();
-            var tracer = TracerFactory.Create(b => b.AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
+            var tracer = TracerProvider.Create(b => b.AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
             var request = (HttpWebRequest)WebRequest.Create(this.url);
@@ -109,7 +109,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 });
 
             var spanProcessor = new Mock<SpanProcessor>();
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProvider.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         {
             var spanProcessor = new Mock<SpanProcessor>();
 
-            using (TracerFactory.Create(b => b
+            using (TracerProvider.Create(b => b
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
                 .AddCollector(t => new HttpWebRequestCollector(t))))
             {
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         {
             var spanProcessor = new Mock<SpanProcessor>();
 
-            using (TracerFactory.Create(b => b
+            using (TracerProvider.Create(b => b
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
                 .AddDependencyCollector()))
             {
@@ -186,7 +186,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
         {
             var spanProcessor = new Mock<SpanProcessor>();
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProvider.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
@@ -212,7 +212,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         {
             var spanProcessor = new Mock<SpanProcessor>();
 
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProvider.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 

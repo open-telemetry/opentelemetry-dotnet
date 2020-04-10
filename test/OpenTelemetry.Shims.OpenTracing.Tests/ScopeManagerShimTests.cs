@@ -31,7 +31,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Active_IsNull()
         {
-            var tracer = TracerFactoryBase.Default.GetTracer(null);
+            var tracer = TracerProviderBase.Default.GetTracer(null);
             var shim = new ScopeManagerShim(tracer);
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);

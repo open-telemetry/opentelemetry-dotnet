@@ -51,7 +51,7 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
         {
             TracerBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddRequestCollector());
-            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddRequestCollector(null)));
+            Assert.Throws<ArgumentNullException>(() => TracerProvider.Create(b => b.AddRequestCollector(null)));
         }
 
         [Fact]
@@ -61,8 +61,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                services.AddSingleton<TracerFactory>(_ =>
-                    TracerFactory.Create(b => b
+                services.AddSingleton<TracerProvider>(_ =>
+                    TracerProvider.Create(b => b
                         .SetSampler(new AlwaysOnSampler())
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                         .AddRequestCollector()));
@@ -104,8 +104,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
-                        services.AddSingleton<TracerFactory>(_ =>
-                            TracerFactory.Create(b => b
+                        services.AddSingleton<TracerProvider>(_ =>
+                            TracerProvider.Create(b => b
                                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                                 .AddRequestCollector()));
                     })))
@@ -154,8 +154,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
-                        services.AddSingleton<TracerFactory>(_ =>
-                            TracerFactory.Create(b => b
+                        services.AddSingleton<TracerProvider>(_ =>
+                            TracerProvider.Create(b => b
                                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                                 .AddRequestCollector(o => o.TextFormat = textFormat.Object)));
                     })))
@@ -186,8 +186,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                services.AddSingleton<TracerFactory>(_ =>
-                    TracerFactory.Create(b => b
+                services.AddSingleton<TracerProvider>(_ =>
+                    TracerProvider.Create(b => b
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
                         .AddRequestCollector(o => o.RequestFilter = (httpContext) => httpContext.Request.Path != "/api/values/2")));
             }

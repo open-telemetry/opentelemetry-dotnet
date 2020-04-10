@@ -31,7 +31,7 @@ namespace OpenTelemetry.Collector.StackExchangeRedis.Implementation
 
         public RedisProfilerEntryToSpanConverterTests()
         {
-            tracer = TracerFactory.Create(b => { }).GetTracer(null);
+            tracer = TracerProvider.Create(b => { }).GetTracer(null);
         }
 
         [Fact]

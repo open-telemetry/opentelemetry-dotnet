@@ -105,7 +105,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         public void ProxyTracer_UpdateTracer_StartRootSpanFrom_Kind_Timestamp_Links()
         {
             var proxyTracer = new ProxyTracer();
-            var realTracer = TracerFactory.Create(b => { }).GetTracer(null);
+            var realTracer = TracerProvider.Create(b => { }).GetTracer(null);
             proxyTracer.UpdateTracer(realTracer);
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         public void ProxyTracer_UpdateTracer_StartSpanFrom_ParentSpan_Kind_Timestamp_Links()
         {
             var proxyTracer = new ProxyTracer();
-            var realTracer = TracerFactory.Create(b => { }).GetTracer(null);
+            var realTracer = TracerProvider.Create(b => { }).GetTracer(null);
             proxyTracer.UpdateTracer(realTracer);
 
             var parentSpan = (SpanSdk)proxyTracer.StartSpan("parent");
@@ -166,7 +166,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         public void ProxyTracer_UpdateTracer_StartSpanFrom_ParentContext_Kind_Timestamp_Links()
         {
             var proxyTracer = new ProxyTracer();
-            var realTracer = TracerFactory.Create(b => { }).GetTracer(null);
+            var realTracer = TracerProvider.Create(b => { }).GetTracer(null);
             proxyTracer.UpdateTracer(realTracer);
 
             var parentSpanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
@@ -197,7 +197,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         public void ProxyTracer_UpdateTracer_StartSpanFrom_FromActivity_Kind_Links()
         {
             var proxyTracer = new ProxyTracer();
-            var realTracer = TracerFactory.Create(b => { }).GetTracer(null);
+            var realTracer = TracerProvider.Create(b => { }).GetTracer(null);
             proxyTracer.UpdateTracer(realTracer);
 
             var activity = new Activity("foo").SetIdFormat(ActivityIdFormat.W3C).Start();
@@ -224,7 +224,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         public void ProxyTracer_UpdateTracer_StartSpanFrom_ImplicitParent_Kind_Timestamp_Links()
         {
             var proxyTracer = new ProxyTracer();
-            var realTracer = TracerFactory.Create(b => { }).GetTracer(null);
+            var realTracer = TracerProvider.Create(b => { }).GetTracer(null);
             proxyTracer.UpdateTracer(realTracer);
 
             var parentSpan = (SpanSdk)proxyTracer.StartSpan("parent");

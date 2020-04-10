@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerFactoryTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,19 +28,19 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Test
 {
-    public class TracerFactoryTest
+    public class TracerProviderTests
     {
         [Fact]
-        public void CreateFactory_NullBuilder()
+        public void CreateProvider_NullBuilder()
         {
-            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(null));
+            Assert.Throws<ArgumentNullException>(() => TracerProvider.Create(null));
         }
 
         [Fact]
-        public void CreateFactory_DefaultBuilder()
+        public void CreateProvider_DefaultBuilder()
         {
-            var tracerFactory = TracerFactory.Create(b => { });
-            var tracer = tracerFactory.GetTracer("");
+            var tracerProvider = TracerProvider.Create(b => { });
+            var tracer = tracerProvider.GetTracer("");
             Assert.NotNull(tracer);
             Assert.IsType<TracerSdk>(tracer);
 
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void CreateFactory_BuilderWithArgs()
+        public void CreateProvider_BuilderWithArgs()
         {
             var exporterCalledCount = 0;
 
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Trace.Test
             TestCollector collector1 = null;
             TestCollector collector2 = null;
             TestProcessor processor = null;
-            var tracerFactory = TracerFactory.Create(b => b
+            var tracerProvider = TracerProvider.Create(b => b
                 .AddProcessorPipeline(p => p
                     .SetExporter(testExporter)
                     .SetExportingProcessor(e =>
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Trace.Test
                     return collector2;
                 }));
 
-            var tracer = tracerFactory.GetTracer("my-app");
+            var tracer = tracerProvider.GetTracer("my-app");
             var span = tracer.StartSpan("foo");
             span.End();
 
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Single(span1.LibraryResource.Attributes.Where(kvp => kvp.Key == "version" && kvp.Value is string sv && sv == "semver:1.0.0.0"));
             Assert.Single(span2.LibraryResource.Attributes.Where(kvp => kvp.Key == "version" && kvp.Value is string sv && sv == "semver:1.0.0.0"));
 
-            tracerFactory.Dispose();
+            tracerProvider.Dispose();
             Assert.True(collector1.IsDisposed);
             Assert.True(collector2.IsDisposed);
             Assert.True(processor.IsDisposed);
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Trace.Test
 
 
         [Fact]
-        public void CreateFactory_BuilderWithMultiplePipelines()
+        public void CreateProvider_BuilderWithMultiplePipelines()
         {
             var exporterCalledCount = 0;
 
@@ -138,7 +138,7 @@ namespace OpenTelemetry.Trace.Test
             TestProcessor testProcessor1 = null;
             var testProcessor2 = new TestProcessor(_ => processCalledCount ++);
             
-            var tracerFactory = TracerFactory.Create(b => b
+            var tracerProvider = TracerProvider.Create(b => b
                 .AddProcessorPipeline(p => p
                     .SetExporter(testExporter)
                     .SetExportingProcessor(e =>
@@ -149,14 +149,14 @@ namespace OpenTelemetry.Trace.Test
                 .AddProcessorPipeline(p => p
                     .AddProcessor(_ => testProcessor2)));
 
-            var tracer = tracerFactory.GetTracer("my-app");
+            var tracer = tracerProvider.GetTracer("my-app");
             var span = tracer.StartSpan("foo");
             span.End();
 
             Assert.Equal(1, exporterCalledCount);
             Assert.Equal(1, processCalledCount);
 
-            tracerFactory.Dispose();
+            tracerProvider.Dispose();
             Assert.True(testProcessor1.IsDisposed);
             Assert.True(testProcessor2.IsDisposed);
         }
@@ -164,8 +164,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetTracer_NoName_NoVersion()
         {
-            var tracerFactory = TracerFactory.Create(b => { });
-            var tracer = (TracerSdk)tracerFactory.GetTracer("");
+            var tracerProvider = TracerProvider.Create(b => { });
+            var tracer = (TracerSdk)tracerProvider.GetTracer("");
             Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "name");
             Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "version");
         }
@@ -173,8 +173,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetTracer_NoName_Version()
         {
-            var tracerFactory = TracerFactory.Create(b => { });
-            var tracer = (TracerSdk)tracerFactory.GetTracer(null, "semver:1.0.0");
+            var tracerProvider = TracerProvider.Create(b => { });
+            var tracer = (TracerSdk)tracerProvider.GetTracer(null, "semver:1.0.0");
             Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "name");
             Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "version");
         }
@@ -182,8 +182,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetTracer_Name_NoVersion()
         {
-            var tracerFactory = TracerFactory.Create(b => { });
-            var tracer = (TracerSdk)tracerFactory.GetTracer("foo");
+            var tracerProvider = TracerProvider.Create(b => { });
+            var tracer = (TracerSdk)tracerProvider.GetTracer("foo");
             Assert.Equal("foo", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "name").Value);
             Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "version");
         }
@@ -191,8 +191,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetTracer_Name_Version()
         {
-            var tracerFactory = TracerFactory.Create(b => { });
-            var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.2.3");
+            var tracerProvider = TracerProvider.Create(b => { });
+            var tracer = (TracerSdk)tracerProvider.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("foo", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "name").Value);
             Assert.Equal("semver:1.2.3", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "version").Value);
         }
@@ -200,8 +200,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetTracerReturnsTracerWithResourceAfterSetResource()
         {
-            var tracerFactory = TracerFactory.Create(b => { b.SetResource(new Resource(new Dictionary<string, object>() { { "a", "b" } })); });
-            var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.2.3");
+            var tracerProvider = TracerProvider.Create(b => { b.SetResource(new Resource(new Dictionary<string, object>() { { "a", "b" } })); });
+            var tracer = (TracerSdk)tracerProvider.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("b", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "a").Value);
             Assert.Equal("foo", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "name").Value);
             Assert.Equal("semver:1.2.3", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "version").Value);
@@ -210,25 +210,25 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetTracerReturnsTracerWithResourceOverriddenBySetResource()
         {
-            var tracerFactory = TracerFactory.Create(b => { 
+            var tracerProvider = TracerProvider.Create(b => { 
                 b.SetResource(new Resource(new Dictionary<string, object>() { { "a", "b" } }))
                 .SetResource(new Resource(new Dictionary<string, object>() { { "a", "c" } })); });
-            var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.2.3");
+            var tracer = (TracerSdk)tracerProvider.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("c", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "a").Value);
         }
 
         [Fact]
-        public void FactoryReturnsSameTracerForGivenNameAndVersion()
+        public void ProviderReturnsSameTracerForGivenNameAndVersion()
         {
-            var tracerFactory = TracerFactory.Create(b => { });
-            var tracer1 = tracerFactory.GetTracer("foo", "semver:1.2.3");
-            var tracer2 = tracerFactory.GetTracer("foo");
-            var tracer3 = tracerFactory.GetTracer("foo", "semver:2.3.4");
-            var tracer4 = tracerFactory.GetTracer("bar", "semver:1.2.3");
-            var tracer5 = tracerFactory.GetTracer("foo", "semver:1.2.3");
-            var tracer6 = tracerFactory.GetTracer("");
-            var tracer7 = tracerFactory.GetTracer(null);
-            var tracer8 = tracerFactory.GetTracer(null, "semver:1.2.3");
+            var tracerProvider = TracerProvider.Create(b => { });
+            var tracer1 = tracerProvider.GetTracer("foo", "semver:1.2.3");
+            var tracer2 = tracerProvider.GetTracer("foo");
+            var tracer3 = tracerProvider.GetTracer("foo", "semver:2.3.4");
+            var tracer4 = tracerProvider.GetTracer("bar", "semver:1.2.3");
+            var tracer5 = tracerProvider.GetTracer("foo", "semver:1.2.3");
+            var tracer6 = tracerProvider.GetTracer("");
+            var tracer7 = tracerProvider.GetTracer(null);
+            var tracer8 = tracerProvider.GetTracer(null, "semver:1.2.3");
 
             Assert.NotEqual(tracer1, tracer2);
             Assert.NotEqual(tracer1, tracer3);

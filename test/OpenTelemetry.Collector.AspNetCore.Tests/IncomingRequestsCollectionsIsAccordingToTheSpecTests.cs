@@ -62,8 +62,8 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl());
-                        services.AddSingleton<TracerFactory>(_ =>
-                            TracerFactory.Create(b => b
+                        services.AddSingleton<TracerProvider>(_ =>
+                            TracerProvider.Create(b => b
                                 .AddProcessorPipeline(p => p.AddProcessor(e => spanProcessor.Object))
                                 .AddRequestCollector()));
                     }))

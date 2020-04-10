@@ -27,7 +27,7 @@ namespace OpenTelemetry.Collector.AspNet.Tests
         {
             TracerBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddRequestCollector());
-            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddRequestCollector(null)));
+            Assert.Throws<ArgumentNullException>(() => TracerProvider.Create(b => b.AddRequestCollector(null)));
         }
     }
 }

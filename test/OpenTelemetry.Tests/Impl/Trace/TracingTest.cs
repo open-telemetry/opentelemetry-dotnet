@@ -21,14 +21,14 @@ namespace OpenTelemetry.Trace.Test
     public class TracingTest
     {
         [Fact]
-        public void DefaultTracerFactory()
+        public void DefaultTracerProvider()
         {
-            Assert.Equal(typeof(TracerFactoryBase), TracerFactoryBase.Default.GetType());
-            Assert.Equal(typeof(ProxyTracer), TracerFactoryBase.Default.GetTracer(null).GetType());
+            Assert.Equal(typeof(TracerProviderBase), TracerProviderBase.Default.GetType());
+            Assert.Equal(typeof(ProxyTracer), TracerProviderBase.Default.GetTracer(null).GetType());
 
-            var newFactory = TracerFactory.Create(_ => { });
-            TracerFactoryBase.SetDefault(newFactory);
-            Assert.IsAssignableFrom<TracerFactory>(TracerFactoryBase.Default);
+            var tracerProvider = TracerProvider.Create(_ => { });
+            TracerProviderBase.SetDefault(tracerProvider);
+            Assert.IsAssignableFrom<TracerProvider>(TracerProviderBase.Default);
         }
 
         [Fact]

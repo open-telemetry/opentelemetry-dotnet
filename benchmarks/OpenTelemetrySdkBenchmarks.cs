@@ -31,13 +31,13 @@ namespace Benchmarks
 
         public OpenTelemetrySdkBenchmarks()
         {
-            this.alwaysSampleTracer = TracerFactory
+            this.alwaysSampleTracer = TracerProvider
                 .Create(b => b.SetSampler(new AlwaysOnSampler()))
                 .GetTracer(null);
-            this.neverSampleTracer = TracerFactory
+            this.neverSampleTracer = TracerProvider
                 .Create(b => b.SetSampler(new AlwaysOffSampler()))
                 .GetTracer(null);
-            this.noopTracer = TracerFactoryBase.Default.GetTracer(null);
+            this.noopTracer = TracerProviderBase.Default.GetTracer(null);
         }
 
         [Benchmark]

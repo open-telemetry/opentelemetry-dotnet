@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerFactory.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProvider.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,7 @@ using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace.Configuration
 {
-    public class TracerFactory : TracerFactoryBase, IDisposable
+    public class TracerProvider : TracerProviderBase, IDisposable
     {
         private readonly object lck = new object();
         private readonly Dictionary<TracerRegistryKey, Tracer> tracerRegistry = new Dictionary<TracerRegistryKey, Tracer>();
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         private Tracer defaultTracer;
 
-        private TracerFactory(TracerBuilder builder)
+        private TracerProvider(TracerBuilder builder)
         {
             this.sampler = builder.Sampler ?? new AlwaysOnSampler();
             this.defaultResource = builder.Resource;
@@ -79,10 +79,10 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Creates tracerSdk factory.
+        /// Creates tracerSdk provider.
         /// </summary>
-        /// <param name="configure">Function that configures tracerSdk factory.</param>
-        public static TracerFactory Create(Action<TracerBuilder> configure)
+        /// <param name="configure">Function that configures tracerSdk provider.</param>
+        public static TracerProvider Create(Action<TracerBuilder> configure)
         {
             if (configure == null)
             {
@@ -91,18 +91,18 @@ namespace OpenTelemetry.Trace.Configuration
 
             var builder = new TracerBuilder();
             configure(builder);
-            var factory = new TracerFactory(builder);
+            var provider = new TracerProvider(builder);
 
             if (builder.CollectorFactories != null)
             {
                 foreach (var collector in builder.CollectorFactories)
                 {
-                    var tracer = factory.GetTracer(collector.Name, collector.Version);
-                    factory.collectors.Add(collector.Factory(tracer));
+                    var tracer = provider.GetTracer(collector.Name, collector.Version);
+                    provider.collectors.Add(collector.Factory(tracer));
                 }
             }
 
-            return factory;
+            return provider;
         }
 
         public override Tracer GetTracer(string name, string version = null)

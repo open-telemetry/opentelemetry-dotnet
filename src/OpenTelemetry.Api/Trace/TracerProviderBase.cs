@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerFactoryBase.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderBase.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,36 +20,36 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Creates Tracers for an instrumentation library.
     /// </summary>
-    public class TracerFactoryBase
+    public class TracerProviderBase
     {
         private static ProxyTracer proxy = new ProxyTracer();
         private static bool isInitialized;
-        private static TracerFactoryBase defaultFactory = new TracerFactoryBase();
+        private static TracerProviderBase defaultProvider = new TracerProviderBase();
 
         /// <summary>
-        /// Gets the default instance of <see cref="TracerFactoryBase"/>.
+        /// Gets the default instance of <see cref="TracerProviderBase"/>.
         /// </summary>
-        public static TracerFactoryBase Default
+        public static TracerProviderBase Default
         {
-            get => defaultFactory;
+            get => defaultProvider;
         }
 
         /// <summary>
-        /// Sets the default instance of <see cref="TracerFactoryBase"/>.
+        /// Sets the default instance of <see cref="TracerProviderBase"/>.
         /// </summary>
-        /// <param name="tracerFactory">Instance of <see cref="TracerFactoryBase"/>.</param>
+        /// <param name="tracerProvider">Instance of <see cref="TracerProviderBase"/>.</param>
         /// <remarks>
         /// This method can only be called once. Calling it multiple times will throw an <see cref="System.InvalidOperationException"/>.
         /// </remarks>
         /// <exception cref="System.InvalidOperationException">Thrown when called multiple times.</exception>
-        public static void SetDefault(TracerFactoryBase tracerFactory)
+        public static void SetDefault(TracerProviderBase tracerProvider)
         {
             if (isInitialized)
             {
-                throw new InvalidOperationException("Default factory is already set");
+                throw new InvalidOperationException("Default provider is already set");
             }
 
-            defaultFactory = tracerFactory ?? throw new ArgumentNullException(nameof(tracerFactory));
+            defaultProvider = tracerProvider ?? throw new ArgumentNullException(nameof(tracerProvider));
 
             // some libraries might have already used and cached ProxyTracer.
             // let's update it to real one and forward all calls.
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace
             // resource assignment is not possible for libraries that cache tracer before SDK is initialized.
             // SDK (Tracer) must be at least partially initialized before any collection starts to capture resources.
             // we might be able to work this around with events.
-            proxy.UpdateTracer(defaultFactory.GetTracer(null));
+            proxy.UpdateTracer(defaultProvider.GetTracer(null));
 
             isInitialized = true;
         }
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Tracer for the given name and version information.</returns>
         public virtual Tracer GetTracer(string name, string version = null)
         {
-            return isInitialized ? defaultFactory.GetTracer(name, version) : proxy;
+            return isInitialized ? defaultProvider.GetTracer(name, version) : proxy;
         }
 
         // for tests
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace
         {
             proxy = new ProxyTracer();
             isInitialized = false;
-            defaultFactory = new TracerFactoryBase();
+            defaultProvider = new TracerProviderBase();
         }
     }
 }

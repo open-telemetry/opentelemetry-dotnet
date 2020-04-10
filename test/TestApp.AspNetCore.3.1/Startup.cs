@@ -42,13 +42,13 @@ namespace TestApp.AspNetCore._3._1
             services.AddSingleton(
                 new CallbackMiddleware.CallbackMiddlewareImpl());
 
-            services.TryAddSingleton<TracerFactory>(_ => TracerFactory.Create(b => b
+            services.TryAddSingleton<TracerProvider>(_ => TracerProvider.Create(b => b
                     .AddRequestCollector()
                     .AddDependencyCollector()));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, TracerFactory factory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, TracerProvider provider)
         {
             if (env.IsDevelopment())
             {
