@@ -24,7 +24,7 @@ namespace OpenTelemetry.Metrics.Aggregators
     /// Aggregator which calculates summary (Min,Max,Sum,Count) from measures.
     /// </summary>
     /// <typeparam name="T">Type of measure instrument.</typeparam>
-    public class MeasureMinMaxSumCountAggregator<T> : Aggregator<T> 
+    public class MeasureMinMaxSumCountAggregator<T> : Aggregator<T>
         where T : struct
     {
         private Summary<T> summary;
@@ -42,16 +42,19 @@ namespace OpenTelemetry.Metrics.Aggregators
             this.checkPoint = new Summary<T>();
         }
 
+        /// <inheritdoc/>
         public override void Checkpoint()
         {
             this.checkPoint = Interlocked.Exchange(ref this.summary, new Summary<T>());
         }
 
+        /// <inheritdoc/>
         public override AggregationType GetAggregationType()
         {
             return AggregationType.Summary;
         }
 
+        /// <inheritdoc/>
         public override MetricData<T> ToMetricData()
         {
             var summaryData = new SummaryData<T>();
@@ -63,11 +66,12 @@ namespace OpenTelemetry.Metrics.Aggregators
             return summaryData;
         }
 
+        /// <inheritdoc/>
         public override void Update(T value)
         {
             lock (this.updateLock)
             {
-                this.summary.Count++;                
+                this.summary.Count++;
                 if (typeof(T) == typeof(double))
                 {
                     this.summary.Sum = (T)(object)((double)(object)this.summary.Sum + (double)(object)value);
@@ -83,7 +87,8 @@ namespace OpenTelemetry.Metrics.Aggregators
             }
         }
 
-        private class Summary<Type> where Type : struct
+        private class Summary<Type>
+            where Type : struct
         {
             public long Count;
             public Type Min;

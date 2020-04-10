@@ -39,6 +39,7 @@ namespace OpenTelemetry.Metrics.Aggregators
             }
         }
 
+        /// <inheritdoc/>
         public override void Checkpoint()
         {
             // checkpoints the current running sum into checkpoint, and starts counting again.
@@ -52,6 +53,7 @@ namespace OpenTelemetry.Metrics.Aggregators
             }
         }
 
+        /// <inheritdoc/>
         public override MetricData<T> ToMetricData()
         {
             var sumData = new SumData<T>();
@@ -60,6 +62,7 @@ namespace OpenTelemetry.Metrics.Aggregators
             return sumData;
         }
 
+        /// <inheritdoc/>
         public override AggregationType GetAggregationType()
         {
             if (typeof(T) == typeof(double))
@@ -69,9 +72,10 @@ namespace OpenTelemetry.Metrics.Aggregators
             else
             {
                 return AggregationType.LongSum;
-            }            
+            }
         }
 
+        /// <inheritdoc/>
         public override void Update(T value)
         {
             // Adds value to the running total in a thread safe manner.

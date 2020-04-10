@@ -27,6 +27,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly IDictionary<LabelSet, BoundCounterMetricSdk<T>> counterBoundInstruments = new ConcurrentDictionary<LabelSet, BoundCounterMetricSdk<T>>();
         private string metricName;
+
         // Lock used to sync with Bind/UnBind.
         private object bindUnbindLock = new object();
 
@@ -38,7 +39,8 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public CounterMetricSdk(string name) : this()
+        public CounterMetricSdk(string name)
+            : this()
         {
             this.metricName = name;
         }
@@ -106,7 +108,7 @@ namespace OpenTelemetry.Metrics
                  * But it gets added again by Bind() so no record is lost.
                  * If Bind method gets this lock first, it'd promote record to UpdatePending, so that
                  * Unbind will leave this record untouched.
-                                      
+                 *
                  * Additional notes:
                  * This lock is never taken for bound instruments, and they offer the fastest performance.
                  * This lock is only taken for those labelsets which are marked CandidateForRemoval.
@@ -119,7 +121,7 @@ namespace OpenTelemetry.Metrics
                  *
                  * Its important to note that, for a brand new LabelSet being encountered for the 1st time, lock is not
                  * taken. Lock is taken only during the 1st re-appearance of a LabelSet after a Collect period.
-                 *  
+                 *
                 */
 
                 lock (this.bindUnbindLock)
@@ -148,7 +150,7 @@ namespace OpenTelemetry.Metrics
                         this.counterBoundInstruments.Remove(labelSet);
                     }
                 }
-            }            
+            }
         }
 
         internal IDictionary<LabelSet, BoundCounterMetricSdk<T>> GetAllBoundInstruments()

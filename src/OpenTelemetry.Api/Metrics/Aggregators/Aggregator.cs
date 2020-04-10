@@ -1,4 +1,4 @@
-﻿// <copyright file="Int64ObserverMetricHandleSdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Aggregator.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,19 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Metrics.Aggregators;
+using OpenTelemetry.Metrics.Export;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics.Aggregators
 {
-    internal class Int64ObserverMetricHandleSdk : Int64ObserverMetricHandle
+    public abstract class Aggregator<T>
+        where T : struct
     {
-        private readonly LastValueAggregator<long> aggregator = new LastValueAggregator<long>();
+        public abstract void Update(T value);
 
-        public override void Observe(long value)
-        {
-            this.aggregator.Update(value);
-        }
+        public abstract void Checkpoint();
 
-        internal LastValueAggregator<long> GetAggregator()
-        {
-            return this.aggregator;
-        }        
+        public abstract MetricData<T> ToMetricData();
+
+        public abstract AggregationType GetAggregationType();
     }
 }

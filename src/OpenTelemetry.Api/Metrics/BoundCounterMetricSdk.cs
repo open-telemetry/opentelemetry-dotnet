@@ -35,7 +35,8 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal BoundCounterMetricSdk(RecordStatus recordStatus) : this()
+        internal BoundCounterMetricSdk(RecordStatus recordStatus)
+            : this()
         {
             this.Status = recordStatus;
         }

@@ -41,6 +41,7 @@ namespace OpenTelemetry.Metrics
             this.metricProcessor = metricProcessor;
         }
 
+        /// <inheritdoc/>
         public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)
         {
             return new LabelSetSdk(labels);
@@ -70,7 +71,7 @@ namespace OpenTelemetry.Metrics
                         // NoPendingUpdate, to CandidateForRemoval, to physical removal.
                         // i.e UpdatePending->NoPendingUpdate->CandidateForRemoval->removal
                         if (handle.Value.Status == RecordStatus.CandidateForRemoval)
-                        {                            
+                        {
                             // The actual removal doesn't occur here as we are still
                             // iterating the dictionary.
                             boundInstrumentsToRemove.Add(labelSet);
@@ -213,6 +214,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
+        /// <inheritdoc/>
         public override CounterMetric<long> CreateInt64Counter(string name, bool monotonic = true)
         {
             if (!this.longCounters.TryGetValue(name, out var counter))
@@ -225,6 +227,7 @@ namespace OpenTelemetry.Metrics
             return counter;
         }
 
+        /// <inheritdoc/>
         public override CounterMetric<double> CreateDoubleCounter(string name, bool monotonic = true)
         {
             if (!this.doubleCounters.TryGetValue(name, out var counter))
@@ -236,6 +239,7 @@ namespace OpenTelemetry.Metrics
             return counter;
         }
 
+        /// <inheritdoc/>
         public override MeasureMetric<double> CreateDoubleMeasure(string name, bool absolute = true)
         {
             if (!this.doubleMeasures.TryGetValue(name, out var measure))
@@ -248,6 +252,7 @@ namespace OpenTelemetry.Metrics
             return measure;
         }
 
+        /// <inheritdoc/>
         public override MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true)
         {
             if (!this.longMeasures.TryGetValue(name, out var measure))

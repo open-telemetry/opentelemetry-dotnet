@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
         private string labelSetEncoded;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LabelSet"/> class.
+        /// Initializes a new instance of the <see cref="LabelSetSdk"/> class.
         /// </summary>
         /// <param name="labels">labels from which labelset should be constructed.</param>
         internal LabelSetSdk(IEnumerable<KeyValuePair<string, string>> labels)
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Metrics
                 int dedupedListIndex = 0;
                 dedupedList.Add(orderedList[dedupedListIndex]);
                 for (int i = 1; i < orderedList.Count; i++)
-                {                    
+                {
                     if (orderedList[i].Key.Equals(orderedList[i - 1].Key))
                     {
                         dedupedList[dedupedListIndex] = orderedList[i];

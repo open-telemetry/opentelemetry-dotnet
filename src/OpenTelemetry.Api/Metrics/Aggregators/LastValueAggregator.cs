@@ -37,11 +37,13 @@ namespace OpenTelemetry.Metrics.Aggregators
             }
         }
 
+        /// <inheritdoc/>
         public override void Checkpoint()
         {
             this.checkpoint = this.value;
         }
 
+        /// <inheritdoc/>
         public override MetricData<T> ToMetricData()
         {
             var sumData = new SumData<T>();
@@ -50,6 +52,7 @@ namespace OpenTelemetry.Metrics.Aggregators
             return sumData;
         }
 
+        /// <inheritdoc/>
         public override AggregationType GetAggregationType()
         {
             if (typeof(T) == typeof(double))
@@ -62,6 +65,7 @@ namespace OpenTelemetry.Metrics.Aggregators
             }
         }
 
+        /// <inheritdoc/>
         public override void Update(T newValue)
         {
             this.value = newValue;

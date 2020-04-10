@@ -34,7 +34,8 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public MeasureMetricSdk(string name) : this()
+        public MeasureMetricSdk(string name)
+            : this()
         {
             this.metricName = name;
         }
