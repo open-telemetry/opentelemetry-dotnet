@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Linq;
 using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Configuration
@@ -66,6 +67,11 @@ namespace OpenTelemetry.Metrics.Configuration
 
                 return meter;
             }
+        }
+
+        internal List<Meter> GetAllMeters()
+        {
+            return this.meterRegistry.Values.ToList();
         }
 
         private static IEnumerable<KeyValuePair<string, string>> CreateLibraryResourceLabels(string name, string version)

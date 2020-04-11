@@ -22,8 +22,7 @@ using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics
 {
-    // TODO: make MeterSdk internal
-    public class MeterSdk : Meter
+    internal class MeterSdk : Meter
     {
         private readonly string meterName;
         private readonly MetricProcessor metricProcessor;
@@ -46,7 +45,7 @@ namespace OpenTelemetry.Metrics
             return new LabelSetSdk(labels);
         }
 
-        public void Collect()
+        public Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>> Collect()
         {
             lock (this.collectLock)
             {
@@ -210,6 +209,8 @@ namespace OpenTelemetry.Metrics
                         this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
+
+                return this.metricProcessor.FinishCollectionCycle();
             }
         }
 

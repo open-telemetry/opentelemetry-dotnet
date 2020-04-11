@@ -66,6 +66,15 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        [NonEvent]
+        public void MetricControllerException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.MetricObserverException(ToInvariantString(ex));
+            }
+        }
+
         [Event(1, Message = "Span processor queue size reached maximum. Throttling spans.", Level = EventLevel.Warning)]
         public void SpanProcessorQueueIsExhausted()
         {
@@ -160,6 +169,24 @@ namespace OpenTelemetry.Internal
         public void MetricObserverCallbackError(string metricName, string exception)
         {
             this.WriteEvent(16, metricName, exception);
+        }
+
+        [Event(17, Message = "Batcher starting export of '{0}' '{1}' metrics.", Level = EventLevel.Informational)]
+        public void BatcherExportLongMetric(int count, string metricType)
+        {
+            this.WriteEvent(17, count, metricType);
+        }
+
+        [Event(18, Message = "Collection completed in '{0}' msecs.", Level = EventLevel.Informational)]
+        public void CollectionCompleted(long msec)
+        {
+            this.WriteEvent(18, msec);
+        }
+
+        [Event(19, Message = "Exception occured in Metric Controller. Exception: '{0}'", Level = EventLevel.Warning)]
+        public void MetricObserverException(string exception)
+        {
+            this.WriteEvent(19, exception);
         }
 
         /// <summary>

@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
 using OpenTelemetry.Metrics.Aggregators;
 
 namespace OpenTelemetry.Metrics.Export
@@ -36,6 +38,11 @@ namespace OpenTelemetry.Metrics.Export
         /// <param name="metricName">the name of the instrument.</param>
         /// <param name="labelSet">the labelSet associated with the instrument.</param>
         /// <param name="aggregator">the aggregator used.</param>
-        public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator);        
+        public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator);
+
+        /// <summary>
+        /// Finish the current collection Cycle.
+        /// </summary>        
+        public abstract Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>> FinishCollectionCycle(); 
     }
 }
