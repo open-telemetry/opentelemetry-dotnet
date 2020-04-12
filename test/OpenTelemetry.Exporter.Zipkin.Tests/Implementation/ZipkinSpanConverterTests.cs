@@ -25,10 +25,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
 {
     public class ZipkinTraceExporterRemoteEndpointTests
     {
-        private static readonly ZipkinEndpoint DefaultZipkinEndpoint = new ZipkinEndpoint
-        {
-            ServiceName = "TestService",
-        };
+        private static readonly ZipkinEndpoint DefaultZipkinEndpoint = new ZipkinEndpoint("TestService");
 
         [Fact]
         public void ZipkinSpanConverterTest_GenerateSpan_RemoteEndpointOmittedByDefault()

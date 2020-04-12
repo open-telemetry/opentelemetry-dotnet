@@ -3,7 +3,12 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Zipkin exporter for OpenTelemetry</Description>
     <PackageTags>$(PackageTags);Zipkin;distributed-tracing</PackageTags>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\OpenTelemetry\Internal\EnumerationHelper.cs" Link="Implementation\EnumerationHelper.cs" />
+    <Compile Include="..\OpenTelemetry\Internal\PooledList.cs" Link="Implementation\PooledList.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />

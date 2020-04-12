@@ -17,6 +17,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
@@ -40,6 +41,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> LocalEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
+        private static readonly ConcurrentDictionary<CanonicalCode, string> CanonicalCodeCache = new ConcurrentDictionary<CanonicalCode, string>();
+
+        private static readonly DictionaryEnumerator<string, object, AttributeEnumerationState>.ForEachDelegate ProcessAttributesRef = ProcessAttributes;
+        private static readonly DictionaryEnumerator<string, object, AttributeEnumerationState>.ForEachDelegate ProcessLibraryResourcesRef = ProcessLibraryResources;
+        private static readonly ListEnumerator<Event, PooledList<ZipkinAnnotation>>.ForEachDelegate ProcessEventsRef = ProcessEvents;
 
         internal static ZipkinSpan ToZipkinSpan(this SpanData otelSpan, ZipkinEndpoint defaultLocalEndpoint, bool useShortTraceIds = false)
         {
@@ -47,106 +53,79 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             var startTimestamp = ToEpochMicroseconds(otelSpan.StartTimestamp);
             var endTimestamp = ToEpochMicroseconds(otelSpan.EndTimestamp);
 
-            var spanBuilder =
-                ZipkinSpan.NewBuilder()
-                    .TraceId(EncodeTraceId(context.TraceId, useShortTraceIds))
-                    .Id(EncodeSpanId(context.SpanId))
-                    .Kind(ToSpanKind(otelSpan))
-                    .Name(otelSpan.Name)
-                    .Timestamp(ToEpochMicroseconds(otelSpan.StartTimestamp))
-                    .Duration(endTimestamp - startTimestamp);
-
+            string parentId = null;
             if (otelSpan.ParentSpanId != default)
             {
-                spanBuilder.ParentId(EncodeSpanId(otelSpan.ParentSpanId));
+                parentId = EncodeSpanId(otelSpan.ParentSpanId);
             }
 
-            Tuple<string, int> remoteEndpointServiceName = null;
-            foreach (var label in otelSpan.Attributes)
+            var attributeEnumerationState = new AttributeEnumerationState
             {
-                string key = label.Key;
-                string strVal = label.Value.ToString();
+                Tags = PooledList<KeyValuePair<string, string>>.Create(),
+            };
 
-                if (strVal != null
-                    && RemoteEndpointServiceNameKeyResolutionDictionary.TryGetValue(key, out int priority)
-                    && (remoteEndpointServiceName == null || priority < remoteEndpointServiceName.Item2))
-                {
-                    remoteEndpointServiceName = new Tuple<string, int>(strVal, priority);
-                }
+            DictionaryEnumerator<string, object, AttributeEnumerationState>.AllocationFreeForEach(otelSpan.Attributes, ref attributeEnumerationState, ProcessAttributesRef);
+            DictionaryEnumerator<string, object, AttributeEnumerationState>.AllocationFreeForEach(otelSpan.LibraryResource.Attributes, ref attributeEnumerationState, ProcessLibraryResourcesRef);
 
-                spanBuilder.PutTag(key, strVal);
-            }
-
-            // See https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md
-            string serviceName = string.Empty;
-            string serviceNamespace = string.Empty;
-            foreach (var label in otelSpan.LibraryResource.Attributes)
+            var serviceName = attributeEnumerationState.ServiceName;
+            if (attributeEnumerationState.ServiceNamespace != string.Empty)
             {
-                string key = label.Key;
-                object val = label.Value;
-                string strVal = val as string;
-
-                if (key == Resource.ServiceNameKey && strVal != null)
-                {
-                    serviceName = strVal;
-                }
-                else if (key == Resource.ServiceNamespaceKey && strVal != null)
-                {
-                    serviceNamespace = strVal;
-                }
-                else
-                {
-                    spanBuilder.PutTag(key, strVal ?? val?.ToString());
-                }
+                serviceName = attributeEnumerationState.ServiceNamespace + "." + attributeEnumerationState.ServiceName;
             }
 
-            if (serviceNamespace != string.Empty)
-            {
-                serviceName = serviceNamespace + "." + serviceName;
-            }
-
-            var endpoint = defaultLocalEndpoint;
+            var localEndpoint = defaultLocalEndpoint;
 
             // override default service name
             if (serviceName != string.Empty)
             {
-                endpoint = LocalEndpointCache.GetOrAdd(serviceName, _ => new ZipkinEndpoint()
+                if (!LocalEndpointCache.TryGetValue(serviceName, out localEndpoint))
                 {
-                    Ipv4 = defaultLocalEndpoint.Ipv4,
-                    Ipv6 = defaultLocalEndpoint.Ipv6,
-                    Port = defaultLocalEndpoint.Port,
-                    ServiceName = serviceName,
-                });
+                    localEndpoint = defaultLocalEndpoint.Clone(serviceName);
+                    LocalEndpointCache.TryAdd(serviceName, localEndpoint);
+                }
             }
 
-            spanBuilder.LocalEndpoint(endpoint);
-
-            if ((otelSpan.Kind == SpanKind.Client || otelSpan.Kind == SpanKind.Producer) && remoteEndpointServiceName != null)
+            ZipkinEndpoint remoteEndpoint = null;
+            if ((otelSpan.Kind == SpanKind.Client || otelSpan.Kind == SpanKind.Producer) && attributeEnumerationState.RemoteEndpointServiceName != null)
             {
-                spanBuilder.RemoteEndpoint(RemoteEndpointCache.GetOrAdd(remoteEndpointServiceName.Item1, _ => new ZipkinEndpoint
-                {
-                    ServiceName = remoteEndpointServiceName.Item1,
-                }));
+                remoteEndpoint = RemoteEndpointCache.GetOrAdd(attributeEnumerationState.RemoteEndpointServiceName, ZipkinEndpoint.Create);
             }
 
             var status = otelSpan.Status;
 
             if (status.IsValid)
             {
-                spanBuilder.PutTag(StatusCode, status.CanonicalCode.ToString());
+                if (!CanonicalCodeCache.TryGetValue(status.CanonicalCode, out string canonicalCode))
+                {
+                    canonicalCode = status.CanonicalCode.ToString();
+                    CanonicalCodeCache.TryAdd(status.CanonicalCode, canonicalCode);
+                }
+
+                PooledList<KeyValuePair<string, string>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, string>(StatusCode, canonicalCode));
 
                 if (status.Description != null)
                 {
-                    spanBuilder.PutTag(StatusDescription, status.Description);
+                    PooledList<KeyValuePair<string, string>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, string>(StatusDescription, status.Description));
                 }
             }
 
-            foreach (var annotation in otelSpan.Events)
-            {
-                spanBuilder.AddAnnotation(ToEpochMicroseconds(annotation.Timestamp), annotation.Name);
-            }
+            var annotations = PooledList<ZipkinAnnotation>.Create();
+            ListEnumerator<Event, PooledList<ZipkinAnnotation>>.AllocationFreeForEach(otelSpan.Events, ref annotations, ProcessEventsRef);
 
-            return spanBuilder.Build();
+            return new ZipkinSpan(
+                EncodeTraceId(context.TraceId, useShortTraceIds),
+                parentId,
+                EncodeSpanId(context.SpanId),
+                ToSpanKind(otelSpan),
+                otelSpan.Name,
+                ToEpochMicroseconds(otelSpan.StartTimestamp),
+                duration: endTimestamp - startTimestamp,
+                localEndpoint,
+                remoteEndpoint,
+                annotations,
+                attributeEnumerationState.Tags,
+                false,
+                false);
         }
 
         private static long ToEpochMicroseconds(DateTimeOffset timestamp)
@@ -171,18 +150,83 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return spanId.ToHexString();
         }
 
-        private static ZipkinSpanKind ToSpanKind(SpanData otelSpan)
+        private static string ToSpanKind(SpanData otelSpan)
         {
-            if (otelSpan.Kind == SpanKind.Server)
+            switch (otelSpan.Kind)
             {
-                return ZipkinSpanKind.SERVER;
+                case SpanKind.Server:
+                    return "SERVER";
+                case SpanKind.Producer:
+                    return "PRODUCER";
+                case SpanKind.Consumer:
+                    return "CONSUMER";
+                default:
+                    return "CLIENT";
             }
-            else if (otelSpan.Kind == SpanKind.Client)
+        }
+
+        private static bool ProcessEvents(ref PooledList<ZipkinAnnotation> annotations, Event @event)
+        {
+            PooledList<ZipkinAnnotation>.Add(ref annotations, new ZipkinAnnotation(ToEpochMicroseconds(@event.Timestamp), @event.Name));
+            return true;
+        }
+
+        private static bool ProcessAttributes(ref AttributeEnumerationState state, KeyValuePair<string, object> attribute)
+        {
+            string key = attribute.Key;
+            if (!(attribute.Value is string strVal))
             {
-                return ZipkinSpanKind.CLIENT;
+                strVal = attribute.Value?.ToString();
             }
 
-            return ZipkinSpanKind.CLIENT;
+            if (strVal != null
+                && RemoteEndpointServiceNameKeyResolutionDictionary.TryGetValue(key, out int priority)
+                && (state.RemoteEndpointServiceName == null || priority < state.RemoteEndpointServiceNamePriority))
+            {
+                state.RemoteEndpointServiceName = strVal;
+                state.RemoteEndpointServiceNamePriority = priority;
+            }
+
+            PooledList<KeyValuePair<string, string>>.Add(ref state.Tags, new KeyValuePair<string, string>(key, strVal));
+
+            return true;
+        }
+
+        private static bool ProcessLibraryResources(ref AttributeEnumerationState state, KeyValuePair<string, object> label)
+        {
+            // See https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md
+
+            string key = label.Key;
+            object val = label.Value;
+            string strVal = val as string;
+
+            if (key == Resource.ServiceNameKey && strVal != null)
+            {
+                state.ServiceName = strVal;
+            }
+            else if (key == Resource.ServiceNamespaceKey && strVal != null)
+            {
+                state.ServiceNamespace = strVal;
+            }
+            else
+            {
+                PooledList<KeyValuePair<string, string>>.Add(ref state.Tags, new KeyValuePair<string, string>(key, strVal ?? val?.ToString()));
+            }
+
+            return true;
+        }
+
+        private struct AttributeEnumerationState
+        {
+            public PooledList<KeyValuePair<string, string>> Tags;
+
+            public string RemoteEndpointServiceName;
+
+            public int RemoteEndpointServiceNamePriority;
+
+            public string ServiceName;
+
+            public string ServiceNamespace;
         }
     }
 }

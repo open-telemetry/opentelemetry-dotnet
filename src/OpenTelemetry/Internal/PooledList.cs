@@ -18,7 +18,7 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Internal
 {
     internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
     {
