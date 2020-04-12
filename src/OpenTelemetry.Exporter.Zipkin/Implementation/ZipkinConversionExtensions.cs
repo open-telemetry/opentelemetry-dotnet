@@ -124,8 +124,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 remoteEndpoint,
                 annotations,
                 attributeEnumerationState.Tags,
-                false,
-                false);
+                null,
+                null);
         }
 
         private static long ToEpochMicroseconds(DateTimeOffset timestamp)

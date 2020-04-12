@@ -136,23 +136,30 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             if (this.LocalEndpoint != null)
             {
+                writer.WritePropertyName("localEndpoint");
                 this.LocalEndpoint.Write(writer);
             }
 
             if (this.RemoteEndpoint != null)
             {
+                writer.WritePropertyName("remoteEndpoint");
                 this.RemoteEndpoint.Write(writer);
             }
 
             if (this.Annotations.HasValue)
             {
+                writer.WritePropertyName("annotations");
                 writer.WriteStartArray();
 
                 foreach (var annotation in this.Annotations.Value)
                 {
+                    writer.WriteStartObject();
+
                     writer.WriteNumber("timestamp", annotation.Timestamp);
 
                     writer.WriteString("value", annotation.Value);
+
+                    writer.WriteEndObject();
                 }
 
                 writer.WriteEndArray();
@@ -160,6 +167,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             if (this.Tags.HasValue)
             {
+                writer.WritePropertyName("tags");
                 writer.WriteStartObject();
 
                 foreach (var tag in this.Tags.Value)

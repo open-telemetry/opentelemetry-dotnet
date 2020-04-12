@@ -100,7 +100,7 @@ namespace OpenTelemetry.Exporter.Zipkin
                 this.options.ServiceName,
                 ipv4,
                 ipv6,
-                0);
+                null);
         }
 
         private string ResolveHostAddress(string hostName, AddressFamily family)
