@@ -167,6 +167,8 @@ namespace OpenTelemetry.Exporter.Zipkin
                 CharSet = "utf-8",
             };
 
+            private static Utf8JsonWriter writer;
+
             private readonly ZipkinTraceExporter exporter;
             private readonly IEnumerable<SpanData> spans;
 
@@ -180,7 +182,14 @@ namespace OpenTelemetry.Exporter.Zipkin
 
             protected override Task SerializeToStreamAsync(Stream stream, TransportContext context)
             {
-                using Utf8JsonWriter writer = new Utf8JsonWriter(stream);
+                if (writer == null)
+                {
+                    writer = new Utf8JsonWriter(stream);
+                }
+                else
+                {
+                    writer.Reset(stream);
+                }
 
                 writer.WriteStartArray();
 
@@ -195,7 +204,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 writer.WriteEndArray();
 
-                return Task.CompletedTask;
+                return writer.FlushAsync();
             }
 
             protected override bool TryComputeLength(out long length)

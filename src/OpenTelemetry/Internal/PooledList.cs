@@ -92,7 +92,12 @@ namespace OpenTelemetry.Internal
 
         void ICollection.CopyTo(Array array, int index) => throw new NotSupportedException();
 
-        public IEnumerator<T> GetEnumerator()
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(in this);
+        }
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             return new Enumerator(in this);
         }
@@ -102,7 +107,7 @@ namespace OpenTelemetry.Internal
             return new Enumerator(in this);
         }
 
-        private struct Enumerator : IEnumerator<T>, IEnumerator
+        public struct Enumerator : IEnumerator<T>, IEnumerator
         {
             private readonly T[] buffer;
             private readonly int count;
