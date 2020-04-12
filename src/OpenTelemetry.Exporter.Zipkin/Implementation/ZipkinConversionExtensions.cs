@@ -67,17 +67,18 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             DictionaryEnumerator<string, object, AttributeEnumerationState>.AllocationFreeForEach(otelSpan.Attributes, ref attributeEnumerationState, ProcessAttributesRef);
             DictionaryEnumerator<string, object, AttributeEnumerationState>.AllocationFreeForEach(otelSpan.LibraryResource.Attributes, ref attributeEnumerationState, ProcessLibraryResourcesRef);
 
-            var serviceName = attributeEnumerationState.ServiceName;
-            if (attributeEnumerationState.ServiceNamespace != string.Empty)
-            {
-                serviceName = attributeEnumerationState.ServiceNamespace + "." + attributeEnumerationState.ServiceName;
-            }
-
             var localEndpoint = defaultLocalEndpoint;
 
+            var serviceName = attributeEnumerationState.ServiceName;
+
             // override default service name
-            if (serviceName != string.Empty)
+            if (!string.IsNullOrWhiteSpace(serviceName))
             {
+                if (!string.IsNullOrWhiteSpace(attributeEnumerationState.ServiceNamespace))
+                {
+                    serviceName = attributeEnumerationState.ServiceNamespace + "." + serviceName;
+                }
+
                 if (!LocalEndpointCache.TryGetValue(serviceName, out localEndpoint))
                 {
                     localEndpoint = defaultLocalEndpoint.Clone(serviceName);
@@ -128,7 +129,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 null);
         }
 
-        private static long ToEpochMicroseconds(DateTimeOffset timestamp)
+        internal static string EncodeSpanId(ActivitySpanId spanId)
+        {
+            return spanId.ToHexString();
+        }
+
+        internal static long ToEpochMicroseconds(DateTimeOffset timestamp)
         {
             return timestamp.ToUnixTimeMilliseconds() * 1000;
         }
@@ -143,11 +149,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             }
 
             return id;
-        }
-
-        private static string EncodeSpanId(ActivitySpanId spanId)
-        {
-            return spanId.ToHexString();
         }
 
         private static string ToSpanKind(SpanData otelSpan)

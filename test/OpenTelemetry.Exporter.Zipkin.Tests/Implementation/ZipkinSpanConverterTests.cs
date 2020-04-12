@@ -75,7 +75,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             Assert.Equal("RemoteServiceName", zipkinSpan.RemoteEndpoint.ServiceName);
         }
 
-        internal SpanData CreateTestSpan(
+        internal static SpanData CreateTestSpan(
             bool setAttributes = true,
             Dictionary<string, object> additionalAttributes = null,
             bool addEvents = true,

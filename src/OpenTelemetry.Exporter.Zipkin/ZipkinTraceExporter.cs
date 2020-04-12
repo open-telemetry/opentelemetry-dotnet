@@ -34,7 +34,6 @@ namespace OpenTelemetry.Exporter.Zipkin
     public class ZipkinTraceExporter : SpanExporter
     {
         private readonly ZipkinTraceExporterOptions options;
-        private readonly ZipkinEndpoint localEndpoint;
         private readonly HttpClient httpClient;
 
         /// <summary>
@@ -45,9 +44,11 @@ namespace OpenTelemetry.Exporter.Zipkin
         public ZipkinTraceExporter(ZipkinTraceExporterOptions options, HttpClient client = null)
         {
             this.options = options;
-            this.localEndpoint = this.GetLocalZipkinEndpoint();
+            this.LocalEndpoint = this.GetLocalZipkinEndpoint();
             this.httpClient = client ?? new HttpClient();
         }
+
+        internal ZipkinEndpoint LocalEndpoint { get; }
 
         /// <inheritdoc/>
         public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
@@ -185,7 +186,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 foreach (var span in this.spans)
                 {
-                    var zipkinSpan = span.ToZipkinSpan(this.exporter.localEndpoint, this.exporter.options.UseShortTraceIds);
+                    var zipkinSpan = span.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
 
                     zipkinSpan.Write(writer);
 
