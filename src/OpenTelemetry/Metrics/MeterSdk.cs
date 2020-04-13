@@ -45,10 +45,11 @@ namespace OpenTelemetry.Metrics
             return new LabelSetSdk(labels);
         }
 
-        public Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>> Collect()
+        public virtual Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>> Collect()
         {
             lock (this.collectLock)
             {
+                OpenTelemetrySdkEventSource.Log.MeterCollectInvoked(this.meterName);
                 // collect all pending metric updates and send to batcher.
                 // must sync to prevent multiple Collect occuring at same time.
                 var boundInstrumentsToRemove = new List<LabelSet>();

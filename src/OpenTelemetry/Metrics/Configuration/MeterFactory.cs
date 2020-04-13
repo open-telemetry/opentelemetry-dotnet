@@ -69,7 +69,7 @@ namespace OpenTelemetry.Metrics.Configuration
             }
         }
 
-        internal List<Meter> GetAllMeters()
+        internal virtual List<Meter> GetAllMeters()
         {
             return this.meterRegistry.Values.ToList();
         }

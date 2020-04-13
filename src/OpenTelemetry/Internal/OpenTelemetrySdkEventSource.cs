@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Threading;
+using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Internal
@@ -187,6 +188,18 @@ namespace OpenTelemetry.Internal
         public void MetricObserverException(string exception)
         {
             this.WriteEvent(19, exception);
+        }
+
+        [Event(20, Message = "Meter Collect Invoked for Meter: '{0}'", Level = EventLevel.Verbose)]
+        public void MeterCollectInvoked(string meterName)
+        {
+            this.WriteEvent(20, meterName);
+        }
+
+        [Event(21, Message = "Metric Exporter returned error '{0}'.", Level = EventLevel.Warning)]
+        public void MetricExporterErrorResult(MetricExporter.ExportResult exportResult)
+        {
+            this.WriteEvent(21, exportResult.ToString());
         }
 
         /// <summary>

@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics.Aggregators;
 
 namespace OpenTelemetry.Metrics.Export
