@@ -40,7 +40,7 @@ namespace OpenTelemetry.Metrics.Test
         public void LongCounterBoundInstrumentsStatusUpdatedCorrectlySingleThread()
         {
             var testProcessor = new TestMetricProcessor();
-            var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
+            var meter = MeterFactory.Create(mb => mb.SetMetricProcessor(testProcessor)).GetMeter("library1") as MeterSdk;
             var testCounter = meter.CreateInt64Counter("testCounter") as CounterMetricSdk<long>;
 
             var labels1 = new List<KeyValuePair<string, string>>();
@@ -109,7 +109,7 @@ namespace OpenTelemetry.Metrics.Test
         public void DoubleCounterBoundInstrumentsStatusUpdatedCorrectlySingleThread()
         {
             var testProcessor = new TestMetricProcessor();
-            var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
+            var meter = MeterFactory.Create(mb => mb.SetMetricProcessor(testProcessor)).GetMeter("library1") as MeterSdk;
             var testCounter = meter.CreateDoubleCounter("testCounter") as CounterMetricSdk<double>;
 
             var labels1 = new List<KeyValuePair<string, string>>();
@@ -178,7 +178,7 @@ namespace OpenTelemetry.Metrics.Test
         public void LongCounterBoundInstrumentsStatusUpdatedCorrectlyMultiThread()
         {
             var testProcessor = new TestMetricProcessor();
-            var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
+            var meter = MeterFactory.Create(mb => mb.SetMetricProcessor(testProcessor)).GetMeter("library1") as MeterSdk;
             var testCounter = meter.CreateInt64Counter("testCounter") as CounterMetricSdk<long>;
 
             var labels1 = new List<KeyValuePair<string, string>>();
@@ -248,7 +248,7 @@ namespace OpenTelemetry.Metrics.Test
         public void DoubleCounterBoundInstrumentsStatusUpdatedCorrectlyMultiThread()
         {
             var testProcessor = new TestMetricProcessor();
-            var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
+            var meter = MeterFactory.Create(mb => mb.SetMetricProcessor(testProcessor)).GetMeter("library1") as MeterSdk;
             var testCounter = meter.CreateDoubleCounter("testCounter") as CounterMetricSdk<double>;
 
             var labels1 = new List<KeyValuePair<string, string>>();

@@ -34,14 +34,18 @@ namespace OpenTelemetry.Metrics.Test
         {
             var controllerPushIntervalInMsec = 100;
             var waitIntervalInMsec = (controllerPushIntervalInMsec * 3) + 200;
-            var testProcessor = new TestMetricProcessor();
-            var meterFactory = MeterFactory.Create(testProcessor);
-            var meter1 = meterFactory.GetMeter("library1");
-            var meter2 = meterFactory.GetMeter("library2");
             var testExporter = new TestMetricExporter();
-
-            PushMetricController controller = new PushMetricController(meterFactory,
-                testExporter, TimeSpan.FromMilliseconds(controllerPushIntervalInMsec), new CancellationTokenSource());
+            var testProcessor = new TestMetricProcessor();
+            var meterFactory = MeterFactory.Create(
+                mb =>
+                {
+                    mb.SetMetricProcessor(testProcessor);
+                    mb.SetMetricExporter(testExporter);
+                    mb.SetMetricPushInterval(TimeSpan.FromMilliseconds(controllerPushIntervalInMsec));
+                }
+                );
+            var meter1 = meterFactory.GetMeter("library1");
+            var meter2 = meterFactory.GetMeter("library2");                       
 
             var meter1Counter1 = meter1.CreateInt64Counter("testCounter1");
             var meter1Counter2 = meter1.CreateInt64Counter("testCounter2");
