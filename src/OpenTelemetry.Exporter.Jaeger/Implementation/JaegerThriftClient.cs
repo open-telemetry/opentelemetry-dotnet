@@ -19,7 +19,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Thrift;
 using Thrift.Protocol;
-using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
@@ -35,26 +34,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
         }
 
-        public async Task EmitBatchAsync(Batch batch, CancellationToken cancellationToken)
+        internal Task WriteBatchAsync(byte[] processMessage, List<BufferWriterMemory> spanMessages, CancellationToken cancellationToken)
         {
-            await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
-
-            var args = new EmitBatchArgs
-            {
-                Batch = batch,
-            };
-
-            await args.WriteAsync(this.OutputProtocol, cancellationToken);
-            await this.OutputProtocol.WriteMessageEndAsync(cancellationToken);
-            await this.OutputProtocol.Transport.FlushAsync(cancellationToken);
-        }
-
-        internal async Task EmitBatchAsync(byte[] processMessage, List<BufferWriterMemory> spanMessages, CancellationToken cancellationToken)
-        {
-            await this.OutputProtocol.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, this.SeqId), cancellationToken);
-            await EmitBatchArgs.WriteAsync(processMessage, spanMessages, this.OutputProtocol, cancellationToken);
-            await this.OutputProtocol.WriteMessageEndAsync(cancellationToken);
-            await this.OutputProtocol.Transport.FlushAsync(cancellationToken);
+            return EmitBatchArgs.WriteAsync(
+                this.SeqId,
+                processMessage,
+                spanMessages,
+                this.OutputProtocol,
+                cancellationToken);
         }
     }
 }
