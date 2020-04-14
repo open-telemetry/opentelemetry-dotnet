@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics.Aggregators;
 
 namespace OpenTelemetry.Metrics.Export
@@ -71,6 +72,7 @@ namespace OpenTelemetry.Metrics.Export
                 this.doubleMetrics = new List<Metric<double>>();                
             }
 
+            OpenTelemetrySdkEventSource.Log.BatcherCollectionCompleted(longMetricToExport.Count + doubleMetricToExport.Count);
             return new Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>>(longMetricToExport, doubleMetricToExport);
         }
     }

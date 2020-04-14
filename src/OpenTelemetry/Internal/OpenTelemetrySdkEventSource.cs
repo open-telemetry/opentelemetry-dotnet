@@ -172,10 +172,10 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(16, metricName, exception);
         }
 
-        [Event(17, Message = "Batcher starting export of '{0}' '{1}' metrics.", Level = EventLevel.Informational)]
-        public void BatcherExportLongMetric(int count, string metricType)
+        [Event(17, Message = "Batcher finished collection with '{0}' metrics.", Level = EventLevel.Informational)]
+        public void BatcherCollectionCompleted(int count)
         {
-            this.WriteEvent(17, count, metricType);
+            this.WriteEvent(17, count);
         }
 
         [Event(18, Message = "Collection completed in '{0}' msecs.", Level = EventLevel.Informational)]

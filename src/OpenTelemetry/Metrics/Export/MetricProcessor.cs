@@ -41,7 +41,7 @@ namespace OpenTelemetry.Metrics.Export
         public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator);
 
         /// <summary>
-        /// Finish the current collection Cycle.
+        /// Finish the current collection cycle and return the metrics.
         /// </summary>        
         public abstract Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>> FinishCollectionCycle(); 
     }

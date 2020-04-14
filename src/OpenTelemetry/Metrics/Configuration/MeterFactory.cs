@@ -24,6 +24,7 @@ namespace OpenTelemetry.Metrics.Configuration
 {
     public class MeterFactory : MeterFactoryBase
     {
+        // TODO make MeterFactory IDisposable to call Dispose on Exporter/Controller.
         private readonly object lck = new object();
         private readonly Dictionary<MeterRegistryKey, Meter> meterRegistry = new Dictionary<MeterRegistryKey, Meter>();
         private readonly MetricProcessor metricProcessor;
@@ -36,10 +37,11 @@ namespace OpenTelemetry.Metrics.Configuration
         {
             this.metricProcessor = meterBuilder.MetricProcessor ?? new NoOpMetricProcessor();
             this.metricExporter = meterBuilder.MetricExporter ?? new NoOpMetricExporter();
+            // We only have PushMetricController now with only configurable thing being the push interval
             this.pushMetricController = new PushMetricController(
                 this.meterRegistry,
                 this.metricProcessor,
-                this.metricExporter,
+                this.metricExporter,                
                 meterBuilder.MetricPushInterval == default(TimeSpan) ? this.defaultPushInterval : meterBuilder.MetricPushInterval,
                 new CancellationTokenSource());
 
@@ -80,11 +82,6 @@ namespace OpenTelemetry.Metrics.Configuration
 
                 return meter;
             }
-        }
-
-        internal virtual List<Meter> GetAllMeters()
-        {
-            return this.meterRegistry.Values.ToList();
         }
 
         private static IEnumerable<KeyValuePair<string, string>> CreateLibraryResourceLabels(string name, string version)
