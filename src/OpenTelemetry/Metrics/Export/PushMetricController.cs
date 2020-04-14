@@ -21,22 +21,26 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics.Configuration;
+using static OpenTelemetry.Metrics.Configuration.MeterFactory;
 
 namespace OpenTelemetry.Metrics.Export
 {
-    public class PushMetricController
+    internal class PushMetricController
     {
         private readonly TimeSpan pushInterval;
         private readonly Task worker;
         private MetricExporter metricExporter;
-        private MeterFactory meterFactory;
+        private MetricProcessor metricProcessor;
+        private Dictionary<MeterRegistryKey, Meter> meters;
 
-        public PushMetricController(MeterFactory meterFactory,
+        public PushMetricController(Dictionary<MeterRegistryKey, Meter> meters,
+            MetricProcessor metricProcessor,
             MetricExporter metricExporter,
             TimeSpan pushInterval,
             CancellationTokenSource cts)
         {
-            this.meterFactory = meterFactory;
+            this.meters = meters;
+            this.metricProcessor = metricProcessor;
             this.metricExporter = metricExporter;
             this.pushInterval = pushInterval;
             this.worker = Task.Factory.StartNew(
@@ -55,21 +59,28 @@ namespace OpenTelemetry.Metrics.Export
                 {
                     var sw = Stopwatch.StartNew();
 
-                    foreach (var meter in this.meterFactory.GetAllMeters())
-                    {                        
-                        var metricsToExportTuple = (meter as MeterSdk).Collect();
-                        if (metricsToExportTuple.Item1 != null)
-                        {
-                            longMetricToExport.AddRange(metricsToExportTuple.Item1);
-                        }
-
-                        if (metricsToExportTuple.Item2 != null)
-                        {
-                            doubleMetricToExport.AddRange(metricsToExportTuple.Item2);
-                        }
+                    foreach (var meter in this.meters.Values)
+                    {
+                        (meter as MeterSdk).Collect();
                     }
 
                     OpenTelemetrySdkEventSource.Log.CollectionCompleted(sw.ElapsedMilliseconds);
+
+                    // Collection is over at this point. All metrics are given
+                    // to the MetricProcesor(Batcher).
+                    // Let MetricProcessor know that this cycle is ending,
+                    // and send the metrics from MetricProcessor
+                    // to the MetricExporter.
+                    var metricsToExportTuple = this.metricProcessor.FinishCollectionCycle();
+                    if (metricsToExportTuple.Item1 != null)
+                    {
+                        longMetricToExport.AddRange(metricsToExportTuple.Item1);
+                    }
+
+                    if (metricsToExportTuple.Item2 != null)
+                    {
+                        doubleMetricToExport.AddRange(metricsToExportTuple.Item2);
+                    }
 
                     var longExportResult = await this.metricExporter.ExportAsync<long>(longMetricToExport, cancellationToken);
                     if (longExportResult != MetricExporter.ExportResult.Success)

@@ -14,8 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Configuration
@@ -25,26 +27,37 @@ namespace OpenTelemetry.Metrics.Configuration
         private readonly object lck = new object();
         private readonly Dictionary<MeterRegistryKey, Meter> meterRegistry = new Dictionary<MeterRegistryKey, Meter>();
         private readonly MetricProcessor metricProcessor;
+        private readonly MetricExporter metricExporter;
+        private readonly PushMetricController pushMetricController;
+        private readonly TimeSpan defaultPushInterval = TimeSpan.FromSeconds(60);
         private Meter defaultMeter;
 
-        private MeterFactory(MetricProcessor metricProcessor)
+        private MeterFactory(MeterBuilder meterBuilder)
         {
-            if (metricProcessor == null)
-            {
-                this.metricProcessor = new NoOpMetricProcessor();
-            }
-            else
-            {
-                this.metricProcessor = metricProcessor;
-            }
-           
+            this.metricProcessor = meterBuilder.MetricProcessor ?? new NoOpMetricProcessor();
+            this.metricExporter = meterBuilder.MetricExporter ?? new NoOpMetricExporter();
+            this.pushMetricController = new PushMetricController(
+                this.meterRegistry,
+                this.metricProcessor,
+                this.metricExporter,
+                meterBuilder.MetricPushInterval == default(TimeSpan) ? this.defaultPushInterval : meterBuilder.MetricPushInterval,
+                new CancellationTokenSource());
+
             this.defaultMeter = new MeterSdk(string.Empty,
                 this.metricProcessor);
         }
 
-        public static MeterFactory Create(MetricProcessor metricProcessor)
+        public static MeterFactory Create(Action<MeterBuilder> configure)
         {
-            return new MeterFactory(metricProcessor);
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            var builder = new MeterBuilder();
+            configure(builder);
+
+            return new MeterFactory(builder);
         }
 
         public override Meter GetMeter(string name, string version = null)
@@ -85,7 +98,7 @@ namespace OpenTelemetry.Metrics.Configuration
             return labels;
         }
 
-        private readonly struct MeterRegistryKey
+        internal readonly struct MeterRegistryKey
         {
             private readonly string name;
             private readonly string version;

@@ -45,7 +45,7 @@ namespace OpenTelemetry.Metrics
             return new LabelSetSdk(labels);
         }
 
-        public virtual Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>> Collect()
+        public void Collect()
         {
             lock (this.collectLock)
             {
@@ -210,8 +210,6 @@ namespace OpenTelemetry.Metrics
                         this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
                     }
                 }
-
-                return this.metricProcessor.FinishCollectionCycle();
             }
         }
 
