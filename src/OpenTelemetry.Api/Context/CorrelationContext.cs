@@ -51,7 +51,7 @@ namespace OpenTelemetry.Context
         /// Gets the <see cref="CorrelationContextEntry"/> with the specified name.
         /// </summary>
         /// <param name="key">Name of the <see cref="CorrelationContextEntry"/> to get.</param>
-        /// <returns>The <see cref="CorrelationContextEntry"/> with the specified name. If not found - null.</returns>
+        /// <returns>The <see cref="string"/> with the specified name. If not found - null.</returns>
         public string GetEntryValue(string key) => this.entries.LastOrDefault(x => x.Key == key).Value;
 
         /// <inheritdoc/>
