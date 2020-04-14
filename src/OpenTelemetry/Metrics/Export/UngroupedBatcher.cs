@@ -72,7 +72,8 @@ namespace OpenTelemetry.Metrics.Export
                 this.doubleMetrics = new List<Metric<double>>();                
             }
 
-            OpenTelemetrySdkEventSource.Log.BatcherCollectionCompleted(longMetricToExport.Count + doubleMetricToExport.Count);
+            var count = longMetricToExport?.Count + doubleMetricToExport?.Count;
+            OpenTelemetrySdkEventSource.Log.BatcherCollectionCompleted(count.HasValue ? count.Value : 0);
             return new Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>>(longMetricToExport, doubleMetricToExport);
         }
     }
