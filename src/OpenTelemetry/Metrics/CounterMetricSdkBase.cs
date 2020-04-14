@@ -1,4 +1,4 @@
-// <copyright file="CounterMetricSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="CounterMetricSdkBase.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,11 @@ namespace OpenTelemetry.Metrics
         protected CounterMetricSdkBase(string name)
         {
             this.metricName = name;
+        }
+
+        public IDictionary<LabelSet, BoundCounterMetricSdkBase<T>> GetAllBoundInstruments()
+        {
+            return this.counterBoundInstruments;
         }
 
         public override BoundCounterMetric<T> Bind(LabelSet labelset)
@@ -123,11 +128,6 @@ namespace OpenTelemetry.Metrics
                     }
                 }
             }
-        }
-
-        public IDictionary<LabelSet, BoundCounterMetricSdkBase<T>> GetAllBoundInstruments()
-        {
-            return this.counterBoundInstruments;
         }
 
         protected abstract BoundCounterMetricSdkBase<T> CreateMetric(RecordStatus recordStatus);
