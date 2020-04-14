@@ -40,11 +40,12 @@ namespace Samples
 
             // MeterFactory is from where one can obtain Meters.
             // All meters from this factory will be configured with the common processor.
-            var meterFactory = MeterFactory.Create(processor);
-
-            // Controller - It currently holds MeterFactory and Exporter.            
-            PushMetricController controller = new PushMetricController(meterFactory,
-                promExporter, TimeSpan.FromSeconds(30), new CancellationTokenSource());
+            var meterFactory = MeterFactory.Create(mb =>
+                {
+                mb.SetMetricProcessor(processor);
+                mb.SetMetricExporter(promExporter);
+                mb.SetMetricPushInterval(TimeSpan.FromSeconds(30));
+                });
 
             // Obtain a Meter. Libraries would pass their name as argument.
             var meter = meterFactory.GetMeter("MyMeter");
