@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Threading;
 using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Aggregators
@@ -29,7 +30,7 @@ namespace OpenTelemetry.Metrics.Aggregators
 
         public override void Checkpoint()
         {
-            this.checkpoint = this.value;
+            Interlocked.Exchange(ref this.checkpoint, this.value);
         }
 
         public override MetricData<double> ToMetricData()
@@ -48,7 +49,7 @@ namespace OpenTelemetry.Metrics.Aggregators
 
         public override void Update(double newValue)
         {
-            this.value = newValue;
+            Interlocked.Exchange(ref this.value, newValue);
         }
     }
 }
