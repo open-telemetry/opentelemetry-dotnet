@@ -410,8 +410,8 @@ namespace OpenTelemetry.Trace.Test
 
             Assert.NotNull(span);
 
-            Assert.Single(span.Attributes.Where(k => k.Key == "key1" && k.Value == "Value1"));
-            Assert.Single(span.Attributes.Where(k => k.Key == "key2" && k.Value == "Value2"));
+            Assert.Single(span.Attributes.Where(k => k.Key == "key1" && k.Value == "value1"));
+            Assert.Single(span.Attributes.Where(k => k.Key == "key2" && k.Value == "value2"));
         }
     }
 }
