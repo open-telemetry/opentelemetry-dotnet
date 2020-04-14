@@ -69,7 +69,7 @@ namespace OpenTelemetry.Context
         /// <returns>The current <see cref="DistributedContextBuilder"/> instance.</returns>
         public DistributedContextBuilder Correlations(Action<CorrelationContextBuilder> configureCorrelations)
         {
-            configureCorrelations(this.correlationContextBuilder);
+            configureCorrelations?.Invoke(this.correlationContextBuilder);
             return this;
         }
 
