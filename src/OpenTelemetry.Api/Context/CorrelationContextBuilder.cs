@@ -1,4 +1,4 @@
-﻿// <copyright file="DistributedContextBuilder.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CorrelationContextBuilder.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,17 +19,17 @@ using System.Collections.Generic;
 namespace OpenTelemetry.Context
 {
     /// <summary>
-    /// Distributed context Builder.
+    /// Correlation context Builder.
     /// </summary>
-    public struct DistributedContextBuilder
+    public struct CorrelationContextBuilder
     {
-        private List<DistributedContextEntry> entries;
+        private List<CorrelationContextEntry> entries;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DistributedContextBuilder"/> struct.
+        /// Initializes a new instance of the <see cref="CorrelationContextBuilder"/> struct.
         /// </summary>
         /// <param name="inheritCurrentContext">Flag to allow inheriting the current context entries.</param>
-        public DistributedContextBuilder(bool inheritCurrentContext)
+        public CorrelationContextBuilder(bool inheritCurrentContext)
         {
             this.entries = null;
 
@@ -40,15 +40,15 @@ namespace OpenTelemetry.Context
 
             if (inheritCurrentContext)
             {
-                this.entries = new List<DistributedContextEntry>(DistributedContext.Current.Entries);
+                this.entries = new List<CorrelationContextEntry>(DistributedContext.Current.CorrelationContext.Entries);
             }
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DistributedContextBuilder"/> struct using some context.
+        /// Initializes a new instance of the <see cref="CorrelationContextBuilder"/> struct using some context.
         /// </summary>
         /// <param name="context">Initial context.</param>
-        public DistributedContextBuilder(DistributedContext context)
+        public CorrelationContextBuilder(CorrelationContext context)
         {
             if (DistributedContext.Carrier is NoopDistributedContextCarrier)
             {
@@ -56,40 +56,40 @@ namespace OpenTelemetry.Context
                 return;
             }
 
-            this.entries = new List<DistributedContextEntry>(context.Entries);
+            this.entries = new List<CorrelationContextEntry>(context.Entries);
         }
 
         /// <summary>
-        /// Create <see cref="DistributedContext"/> instance from key and value entry.
+        /// Create <see cref="CorrelationContext"/> instance from key and value entry.
         /// </summary>
         /// <param name="key">Entry key.</param>
         /// <param name="value">Entry value.</param>
-        /// <returns>Instance of <see cref="DistributedContext"/>.</returns>
-        public static DistributedContext CreateContext(string key, string value) =>
-            new DistributedContextBuilder(inheritCurrentContext: false).Add(key, value).Build();
+        /// <returns>Instance of <see cref="CorrelationContext"/>.</returns>
+        public static CorrelationContext CreateContext(string key, string value) =>
+            new CorrelationContextBuilder(inheritCurrentContext: false).Add(key, value).Build();
 
         /// <summary>
-        /// Create <see cref="DistributedContext"/> instance from entry.
+        /// Create <see cref="CorrelationContext"/> instance from entry.
         /// </summary>
         /// <param name="entry">Entry to add to the context.</param>
-        /// <returns>Instance of <see cref="DistributedContext"/>.</returns>
-        public static DistributedContext CreateContext(DistributedContextEntry entry) =>
-            new DistributedContextBuilder(inheritCurrentContext: false).Add(entry).Build();
+        /// <returns>Instance of <see cref="CorrelationContext"/>.</returns>
+        public static CorrelationContext CreateContext(CorrelationContextEntry entry) =>
+            new CorrelationContextBuilder(inheritCurrentContext: false).Add(entry).Build();
 
         /// <summary>
-        /// Create <see cref="DistributedContext"/> instance from entry.
+        /// Create <see cref="CorrelationContext"/> instance from entry.
         /// </summary>
         /// <param name="entries">List of entries to add to the context.</param>
-        /// <returns>Instance of <see cref="DistributedContext"/>.</returns>
-        public static DistributedContext CreateContext(IEnumerable<DistributedContextEntry> entries) =>
-            new DistributedContextBuilder(inheritCurrentContext: false).Add(entries).Build();
+        /// <returns>Instance of <see cref="CorrelationContext"/>.</returns>
+        public static CorrelationContext CreateContext(IEnumerable<CorrelationContextEntry> entries) =>
+            new CorrelationContextBuilder(inheritCurrentContext: false).Add(entries).Build();
 
         /// <summary>
         /// Add Distributed Context entry to the builder.
         /// </summary>
         /// <param name="entry">Entry to add to the context.</param>
-        /// <returns>The current <see cref="DistributedContextBuilder"/> instance.</returns>
-        public DistributedContextBuilder Add(DistributedContextEntry entry)
+        /// <returns>The current <see cref="CorrelationContextBuilder"/> instance.</returns>
+        public CorrelationContextBuilder Add(CorrelationContextEntry entry)
         {
             if (DistributedContext.Carrier is NoopDistributedContextCarrier || entry == default)
             {
@@ -98,7 +98,7 @@ namespace OpenTelemetry.Context
 
             if (this.entries == null)
             {
-                this.entries = new List<DistributedContextEntry>();
+                this.entries = new List<CorrelationContextEntry>();
             }
             else
             {
@@ -122,10 +122,10 @@ namespace OpenTelemetry.Context
         /// <param name="key">Entry key.</param>
         /// <param name="value">Entry value.</param>
         /// <param name="metadata">Entry metadata.</param>
-        /// <returns>The current <see cref="DistributedContextBuilder"/> instance.</returns>
-        public DistributedContextBuilder Add(string key, string value, EntryMetadata metadata)
+        /// <returns>The current <see cref="CorrelationContextBuilder"/> instance.</returns>
+        public CorrelationContextBuilder Add(string key, string value, EntryMetadata metadata)
         {
-            return this.Add(new DistributedContextEntry(key, value, metadata));
+            return this.Add(new CorrelationContextEntry(key, value, metadata));
         }
 
         /// <summary>
@@ -133,18 +133,18 @@ namespace OpenTelemetry.Context
         /// </summary>
         /// <param name="key">Entry key.</param>
         /// <param name="value">Entry value.</param>
-        /// <returns>The current <see cref="DistributedContextBuilder"/> instance.</returns>
-        public DistributedContextBuilder Add(string key, string value)
+        /// <returns>The current <see cref="CorrelationContextBuilder"/> instance.</returns>
+        public CorrelationContextBuilder Add(string key, string value)
         {
-            return this.Add(new DistributedContextEntry(key, value));
+            return this.Add(new CorrelationContextEntry(key, value));
         }
 
         /// <summary>
         /// Add Distributed Context entry to the builder.
         /// </summary>
         /// <param name="entries">List of entries to add to the context.</param>
-        /// <returns>The current <see cref="DistributedContextBuilder"/> instance.</returns>
-        public DistributedContextBuilder Add(IEnumerable<DistributedContextEntry> entries)
+        /// <returns>The current <see cref="CorrelationContextBuilder"/> instance.</returns>
+        public CorrelationContextBuilder Add(IEnumerable<CorrelationContextEntry> entries)
         {
             if (DistributedContext.Carrier is NoopDistributedContextCarrier || entries == null)
             {
@@ -163,8 +163,8 @@ namespace OpenTelemetry.Context
         /// Remove Distributed Context entry from the context.
         /// </summary>
         /// <param name="key">Entry key.</param>
-        /// <returns>The current <see cref="DistributedContextBuilder"/> instance.</returns>
-        public DistributedContextBuilder Remove(string key)
+        /// <returns>The current <see cref="CorrelationContextBuilder"/> instance.</returns>
+        public CorrelationContextBuilder Remove(string key)
         {
             if (key == null || DistributedContext.Carrier is NoopDistributedContextCarrier || this.entries == null)
             {
@@ -181,17 +181,17 @@ namespace OpenTelemetry.Context
         }
 
         /// <summary>
-        /// Build a Distributed Context from current builder.
+        /// Build a Correlation Context from current builder.
         /// </summary>
-        /// <returns><see cref="DistributedContext"/> instance.</returns>
-        public DistributedContext Build()
+        /// <returns><see cref="CorrelationContext"/> instance.</returns>
+        public CorrelationContext Build()
         {
             if (DistributedContext.Carrier is NoopDistributedContextCarrier || this.entries == null)
             {
-                return DistributedContext.Empty;
+                return CorrelationContext.Empty;
             }
 
-            var context = new DistributedContext(this.entries);
+            var context = new CorrelationContext(this.entries);
             this.entries = null; // empty current builder entries.
             return context;
         }

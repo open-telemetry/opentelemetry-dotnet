@@ -24,9 +24,9 @@ namespace OpenTelemetry.Context.Propagation
         {
         }
 
-        public override byte[] ToByteArray(DistributedContext tags)
+        public override byte[] ToByteArray(DistributedContext context)
         {
-            return SerializationUtils.SerializeBinary(tags);
+            return SerializationUtils.SerializeBinary(context);
         }
 
         public override DistributedContext FromByteArray(byte[] bytes)

@@ -41,7 +41,7 @@ namespace OpenTelemetry.Context.Propagation
 
             byteArrayDataOutput.WriteByte(VersionId);
             var totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
-            foreach (var tag in dc.Entries)
+            foreach (var tag in dc.CorrelationContext.Entries)
             {
                 totalChars += tag.Key.Length;
                 totalChars += tag.Value.Length;
@@ -97,9 +97,9 @@ namespace OpenTelemetry.Context.Propagation
             return DistributedContext.Empty;
         }
 
-        internal static bool TryParseTags(MemoryStream buffer, out List<DistributedContextEntry> tags)
+        internal static bool TryParseTags(MemoryStream buffer, out List<CorrelationContextEntry> tags)
         {
-            tags = new List<DistributedContextEntry>();
+            tags = new List<CorrelationContextEntry>();
             var limit = buffer.Length;
             var totalChars = 0; // Here chars are equivalent to bytes, since we're using ascii chars.
             while (buffer.Position < limit)
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Context.Propagation
                     var val = CreateTagValue(key, DecodeString(buffer));
                     totalChars += key.Length;
                     totalChars += val.Length;
-                    tags.Add(new DistributedContextEntry(key, val));
+                    tags.Add(new CorrelationContextEntry(key, val));
                 }
                 else
                 {
@@ -147,7 +147,7 @@ namespace OpenTelemetry.Context.Propagation
             return value;
         }
 
-        private static void EncodeTag(DistributedContextEntry tag, MemoryStream byteArrayDataOutput)
+        private static void EncodeTag(CorrelationContextEntry tag, MemoryStream byteArrayDataOutput)
         {
             byteArrayDataOutput.WriteByte(TagFieldId);
             EncodeString(tag.Key, byteArrayDataOutput);
