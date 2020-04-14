@@ -13,16 +13,76 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Text.Json;
+
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     internal class ZipkinEndpoint
     {
-        public string ServiceName { get; set; }
+        public ZipkinEndpoint(string serviceName)
+            : this(serviceName, null, null, null)
+        {
+        }
 
-        public string Ipv4 { get; set; }
+        public ZipkinEndpoint(
+            string serviceName,
+            string ipv4,
+            string ipv6,
+            int? port)
+        {
+            this.ServiceName = serviceName;
+            this.Ipv4 = ipv4;
+            this.Ipv6 = ipv6;
+            this.Port = port;
+        }
 
-        public string Ipv6 { get; set; }
+        public string ServiceName { get; }
 
-        public int Port { get; set; }
+        public string Ipv4 { get; }
+
+        public string Ipv6 { get; }
+
+        public int? Port { get; }
+
+        public static ZipkinEndpoint Create(string serviceName)
+        {
+            return new ZipkinEndpoint(serviceName);
+        }
+
+        public ZipkinEndpoint Clone(string serviceName)
+        {
+            return new ZipkinEndpoint(
+                serviceName,
+                this.Ipv4,
+                this.Ipv6,
+                this.Port);
+        }
+
+        public void Write(Utf8JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (this.ServiceName != null)
+            {
+                writer.WriteString("serviceName", this.ServiceName);
+            }
+
+            if (this.Ipv4 != null)
+            {
+                writer.WriteString("ipv4", this.Ipv4);
+            }
+
+            if (this.Ipv6 != null)
+            {
+                writer.WriteString("ipv6", this.Ipv6);
+            }
+
+            if (this.Port.HasValue)
+            {
+                writer.WriteNumber("port", this.Port.Value);
+            }
+
+            writer.WriteEndObject();
+        }
     }
 }

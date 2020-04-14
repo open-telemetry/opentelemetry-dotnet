@@ -22,7 +22,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Internal
 {
     internal class DictionaryEnumerator<TKey, TValue, TState> : Enumerator
         <IEnumerable<KeyValuePair<TKey, TValue>>,
