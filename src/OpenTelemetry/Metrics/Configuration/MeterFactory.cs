@@ -36,7 +36,7 @@ namespace OpenTelemetry.Metrics.Configuration
             {
                 this.metricProcessor = metricProcessor;
             }
-           
+
             this.defaultMeter = new MeterSdk(string.Empty,
                 this.metricProcessor);
         }

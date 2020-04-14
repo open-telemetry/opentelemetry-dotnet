@@ -29,7 +29,7 @@ namespace OpenTelemetry.Tests.Impl.Resources
         {
             var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service");
             Assert.Equal(2, resource.Attributes.Count());
-            Assert.Contains(new KeyValuePair<string ,object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
             Assert.Single(resource.Attributes.Where(kvp => kvp.Key == Resource.ServiceNameKey));
             Assert.True(Guid.TryParse((string)resource.Attributes.Single(kvp => kvp.Key == Resource.ServiceInstanceIdKey).Value, out _));
         }

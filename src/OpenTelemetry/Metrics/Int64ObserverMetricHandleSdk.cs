@@ -30,6 +30,6 @@ namespace OpenTelemetry.Metrics
         internal LastValueAggregator<long> GetAggregator()
         {
             return this.aggregator;
-        }        
+        }
     }
 }

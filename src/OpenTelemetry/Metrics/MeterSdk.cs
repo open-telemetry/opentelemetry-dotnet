@@ -70,7 +70,7 @@ namespace OpenTelemetry.Metrics
                         // NoPendingUpdate, to CandidateForRemoval, to physical removal.
                         // i.e UpdatePending->NoPendingUpdate->CandidateForRemoval->removal
                         if (handle.Value.Status == RecordStatus.CandidateForRemoval)
-                        {                            
+                        {
                             // The actual removal doesn't occur here as we are still
                             // iterating the dictionary.
                             boundInstrumentsToRemove.Add(labelSet);

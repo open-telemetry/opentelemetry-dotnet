@@ -51,7 +51,7 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void AddExtraKey()
         {
-            var list = new List<DistributedContextEntry>(1) { new DistributedContextEntry(K1, V1)};
+            var list = new List<DistributedContextEntry>(1) { new DistributedContextEntry(K1, V1) };
             var dc = DistributedContextBuilder.CreateContext(list);
             Assert.Equal(list, dc.Entries);
 
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Context.Test
             Assert.True(i.MoveNext());
             var tag2 = i.Current;
             Assert.False(i.MoveNext());
-            Assert.Equal(new List<DistributedContextEntry> { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2)}, new List<DistributedContextEntry> { tag1, tag2 });
+            Assert.Equal(new List<DistributedContextEntry> { new DistributedContextEntry(K1, V1), new DistributedContextEntry(K2, V2) }, new List<DistributedContextEntry> { tag1, tag2 });
         }
 
         [Fact]

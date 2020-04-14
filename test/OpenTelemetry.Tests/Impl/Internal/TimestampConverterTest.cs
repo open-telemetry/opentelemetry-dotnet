@@ -24,5 +24,5 @@ namespace OpenTelemetry.Internal.Test
         {
             Assert.True(true);
         }
-    } 
+    }
 }

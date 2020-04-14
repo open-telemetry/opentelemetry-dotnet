@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics.Test
 {
     public class MinMaxSumCountAggregatorTest
     {
-        private class UpdateThreadArguments<T> where T: struct
+        private class UpdateThreadArguments<T> where T : struct
         {
             public ManualResetEvent mreToBlockUpdateThread;
             public ManualResetEvent mreToEnsureAllThreadsStart;
@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics.Test
         [Fact]
         public void MeasureAggregatorSupportsLong()
         {
-            MeasureMinMaxSumCountAggregator<long> aggregator = new MeasureMinMaxSumCountAggregator<long>();            
+            MeasureMinMaxSumCountAggregator<long> aggregator = new MeasureMinMaxSumCountAggregator<long>();
         }
 
         [Fact]
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Metrics.Test
         [Fact]
         public void MeasureAggregatorConstructorThrowsForUnSupportedTypeInt()
         {
-            Assert.Throws<Exception>(() => new MeasureMinMaxSumCountAggregator<int>());            
+            Assert.Throws<Exception>(() => new MeasureMinMaxSumCountAggregator<int>());
         }
 
         [Fact]
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Metrics.Test
             argToThread.threadsStartedCount = 0;
             argToThread.mreToBlockUpdateThread = mre;
             argToThread.mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
-            
+
             Thread[] t = new Thread[10];
             for (int i = 0; i < 10; i++)
             {

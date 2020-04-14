@@ -85,7 +85,7 @@ namespace OpenTelemetry.Context.Test
         public async void TestContextInheritance()
         {
             DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
-            var list1 = new List<DistributedContextEntry>(1) { new DistributedContextEntry(KEY_1, VALUE_1)};
+            var list1 = new List<DistributedContextEntry>(1) { new DistributedContextEntry(KEY_1, VALUE_1) };
             var list2 = new List<DistributedContextEntry>(2) { new DistributedContextEntry(KEY_1, VALUE_1), new DistributedContextEntry(KEY_2, VALUE_2), };
 
             DistributedContext.SetCurrent(DistributedContext.Empty);

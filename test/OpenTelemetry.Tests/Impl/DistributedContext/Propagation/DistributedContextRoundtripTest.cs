@@ -75,7 +75,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
         private void TestRoundtripSerialization(DistributedContext expected)
         {
-            var bytes= this.serializer.ToByteArray(expected);
+            var bytes = this.serializer.ToByteArray(expected);
             var actual = this.serializer.FromByteArray(bytes);
             Assert.Equal(expected, actual);
         }

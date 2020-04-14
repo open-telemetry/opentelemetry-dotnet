@@ -91,7 +91,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.NotEqual(link1, link2);
             Assert.True(link1 != link2);
         }
-        
+
         public void Dispose()
         {
             Activity.Current = null;

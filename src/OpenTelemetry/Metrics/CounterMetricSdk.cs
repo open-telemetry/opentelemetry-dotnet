@@ -148,7 +148,7 @@ namespace OpenTelemetry.Metrics
                         this.counterBoundInstruments.Remove(labelSet);
                     }
                 }
-            }            
+            }
         }
 
         internal IDictionary<LabelSet, BoundCounterMetricSdk<T>> GetAllBoundInstruments()

@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics.Test
 {
     public class CounterAggregatorTest
     {
-        private class UpdateThreadArguments<T> where T: struct
+        private class UpdateThreadArguments<T> where T : struct
         {
             public ManualResetEvent mreToBlockUpdateThread;
             public ManualResetEvent mreToEnsureAllThreadsStart;
@@ -33,8 +33,8 @@ namespace OpenTelemetry.Metrics.Test
 
         [Fact]
         public void CounterAggregatorSupportsLong()
-        {            
-            CounterSumAggregator<long> aggregator = new CounterSumAggregator<long>();            
+        {
+            CounterSumAggregator<long> aggregator = new CounterSumAggregator<long>();
         }
 
         [Fact]
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Metrics.Test
         [Fact]
         public void CounterAggregatorConstructorThrowsForUnSupportedTypeInt()
         {
-            Assert.Throws<Exception>(() => new CounterSumAggregator<int>());            
+            Assert.Throws<Exception>(() => new CounterSumAggregator<int>());
         }
 
         [Fact]
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Metrics.Test
             argToThread.threadsStartedCount = 0;
             argToThread.mreToBlockUpdateThread = mre;
             argToThread.mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
-            
+
             Thread[] t = new Thread[10];
             for (int i = 0; i < 10; i++)
             {
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Metrics.Test
 
             // setup args to threads.
             var mre = new ManualResetEvent(false);
-            var mreToEnsureAllThreadsStart = new ManualResetEvent(false);            
+            var mreToEnsureAllThreadsStart = new ManualResetEvent(false);
 
             var argToThread = new UpdateThreadArguments<double>();
             argToThread.counterSumAggregator = aggregator;

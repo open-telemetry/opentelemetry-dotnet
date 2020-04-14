@@ -31,7 +31,8 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
                 var sc = new SpanContext { SpanId = data.ParentSpanId.ToLSSpanId() };
                 span.References.Add(new Reference
                 {
-                    Relationship = "CHILD_OF", SpanContext = sc,
+                    Relationship = "CHILD_OF",
+                    SpanContext = sc,
                 });
             }
 
@@ -41,7 +42,8 @@ namespace OpenTelemetry.Exporter.LightStep.Implementation
 
             span.SpanContext = new SpanContext
             {
-                SpanId = spanId, TraceId = traceId,
+                SpanId = spanId,
+                TraceId = traceId,
             };
             span.StartTimestamp = data.StartTimestamp.UtcDateTime;
             span.DurationMicros = Convert.ToUInt64(Math.Abs(duration.Ticks) / 10);

@@ -34,7 +34,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
         {
             if (headers.TryGetValue(name, out var value))
             {
-                return new [] { value };
+                return new[] { value };
             }
 
             return Empty;

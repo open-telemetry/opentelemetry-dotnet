@@ -103,7 +103,7 @@ namespace OpenTelemetry.Trace.Configuration
 
             this.CollectorFactories.Add(
                 new CollectorFactory(
-                    typeof(TCollector).Name, 
+                    typeof(TCollector).Name,
                     "semver:" + typeof(TCollector).Assembly.GetName().Version,
                     collectorFactory));
 

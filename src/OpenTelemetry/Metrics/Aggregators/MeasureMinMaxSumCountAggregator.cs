@@ -24,7 +24,7 @@ namespace OpenTelemetry.Metrics.Aggregators
     /// Aggregator which calculates summary (Min,Max,Sum,Count) from measures.
     /// </summary>
     /// <typeparam name="T">Type of measure instrument.</typeparam>
-    public class MeasureMinMaxSumCountAggregator<T> : Aggregator<T> 
+    public class MeasureMinMaxSumCountAggregator<T> : Aggregator<T>
         where T : struct
     {
         private Summary<T> summary;
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Metrics.Aggregators
         {
             lock (this.updateLock)
             {
-                this.summary.Count++;                
+                this.summary.Count++;
                 if (typeof(T) == typeof(double))
                 {
                     this.summary.Sum = (T)(object)((double)(object)this.summary.Sum + (double)(object)value);

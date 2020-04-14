@@ -69,7 +69,7 @@ namespace OpenTelemetry.Metrics.Aggregators
             else
             {
                 return AggregationType.LongSum;
-            }            
+            }
         }
 
         public override void Update(T value)
