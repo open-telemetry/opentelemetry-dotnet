@@ -410,8 +410,8 @@ namespace OpenTelemetry.Trace.Test
 
             Assert.NotNull(span);
 
-            Assert.Equal("value1", span.Attributes.FirstOrDefault(k => k.Key == "key1").Value);
-            Assert.Equal("value2", span.Attributes.FirstOrDefault(k => k.Key == "key2").Value);
+            Assert.Equal("value1", span.Attributes.First(k => k.Key == "key1").Value);
+            Assert.Equal("value2", span.Attributes.First(k => k.Key == "key2").Value);
         }
     }
 }
