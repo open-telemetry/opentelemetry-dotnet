@@ -33,6 +33,26 @@ namespace OpenTelemetry.Metrics
         public static readonly NoOpCounterMetric<T> Instance = new NoOpCounterMetric<T>();
 
         /// <inheritdoc/>
+        public override void Add(in SpanContext context, T value, LabelSet labelset)
+        {
+        }
+
+        /// <inheritdoc/>
+        public override void Add(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels)
+        {
+        }
+
+        /// <inheritdoc/>
+        public override void Add(in DistributedContext context, T value, LabelSet labelset)
+        {
+        }
+
+        /// <inheritdoc/>
+        public override void Add(in DistributedContext context, T value, IEnumerable<KeyValuePair<string, string>> labels)
+        {
+        }
+
+        /// <inheritdoc/>
         public override BoundCounterMetric<T> Bind(LabelSet labelset)
         {
             return NoOpBoundCounterMetric<T>.Instance;

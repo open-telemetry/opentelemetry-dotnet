@@ -29,41 +29,34 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         {
             private readonly Task httpListenerTask;
             private readonly HttpListener listener;
-            private readonly CancellationTokenSource cts;
             private readonly AutoResetEvent initialized = new AutoResetEvent(false);
 
             public RunningServer(Action<HttpListenerContext> action, string host, int port)
             {
-                cts = new CancellationTokenSource();
                 listener = new HttpListener();
-
-                var token = cts.Token;
 
                 listener.Prefixes.Add($"http://{host}:{port}/");
                 listener.Start();
 
-                httpListenerTask = new Task(() =>
+                httpListenerTask = new Task(async () =>
                 {
-                    while (!token.IsCancellationRequested)
+                    while (true)
                     {
-                        var ctxTask = listener.GetContextAsync();
-
-                        initialized.Set();
-
                         try
                         {
-                            ctxTask.Wait(token);
+                            var ctxTask = listener.GetContextAsync();
 
-                            if (ctxTask.Status == TaskStatus.RanToCompletion)
-                            {
-                                action(ctxTask.Result);
-                            }
-                        }
-                        catch (OperationCanceledException)
-                        {
+                            initialized.Set();
+
+                            action(await ctxTask.ConfigureAwait(false));
                         }
                         catch (Exception ex)
                         {
+                            if (ex is ObjectDisposedException // Listener was closed before we got into GetContextAsync.
+                                || (ex is HttpListenerException httpEx && httpEx.ErrorCode == 995)) // Listener was closed while we were in GetContextAsync.
+                            {
+                                break;
+                            }
                             Assert.True(false, ex.ToString());
                         }
                     }
@@ -81,7 +74,6 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 try
                 {
                     listener?.Stop();
-                    cts.Cancel();
                 }
                 catch (ObjectDisposedException)
                 {

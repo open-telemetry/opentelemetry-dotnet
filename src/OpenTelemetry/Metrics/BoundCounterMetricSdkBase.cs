@@ -21,6 +21,13 @@ namespace OpenTelemetry.Metrics
     public abstract class BoundCounterMetricSdkBase<T> : BoundCounterMetric<T>
         where T : struct
     {
+        internal RecordStatus Status;
+
+        internal BoundCounterMetricSdkBase(RecordStatus recordStatus)
+        {
+            this.Status = recordStatus;
+        }
+
         public abstract Aggregator<T> GetAggregator();
     }
 }

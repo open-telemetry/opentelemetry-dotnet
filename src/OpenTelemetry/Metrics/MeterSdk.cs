@@ -52,6 +52,7 @@ namespace OpenTelemetry.Metrics
             {
                 // collect all pending metric updates and send to batcher.
                 // must sync to prevent multiple Collect occuring at same time.
+                var boundInstrumentsToRemove = new List<LabelSet>();
                 foreach (var longCounter in this.longCounters)
                 {
                     var metricName = longCounter.Key;
@@ -62,7 +63,37 @@ namespace OpenTelemetry.Metrics
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
                         this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
+
+                        // Updates so far are pushed to Processor/Exporter.
+                        // Adjust status accordinly.
+                        // The status flows from initial UpdatePending, to
+                        // NoPendingUpdate, to CandidateForRemoval, to physical removal.
+                        // i.e UpdatePending->NoPendingUpdate->CandidateForRemoval->removal
+                        if (handle.Value.Status == RecordStatus.CandidateForRemoval)
+                        {                            
+                            // The actual removal doesn't occur here as we are still
+                            // iterating the dictionary.
+                            boundInstrumentsToRemove.Add(labelSet);
+                        }
+                        else if (handle.Value.Status == RecordStatus.UpdatePending)
+                        {
+                            handle.Value.Status = RecordStatus.NoPendingUpdate;
+                        }
+                        else if (handle.Value.Status == RecordStatus.NoPendingUpdate)
+                        {
+                            handle.Value.Status = RecordStatus.CandidateForRemoval;
+                        }
                     }
+
+                    foreach (var boundInstrumentToRemove in boundInstrumentsToRemove)
+                    {
+                        // This actual unbinding or removal of the record occurs inside UnBind
+                        // which synchronizes with Bind to ensure no record with pending update
+                        // is lost.
+                        counterInstrument.UnBind(boundInstrumentToRemove);
+                    }
+
+                    boundInstrumentsToRemove.Clear();
                 }
 
                 foreach (var doubleCounter in this.doubleCounters)
@@ -75,7 +106,37 @@ namespace OpenTelemetry.Metrics
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
                         this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
+
+                        // Updates so far are pushed to Processor/Exporter.
+                        // Adjust status accordinly.
+                        // The status flows from initial UpdatePending, to
+                        // NoPendingUpdate, to CandidateForRemoval, to physical removal.
+                        // i.e UpdatePending->NoPendingUpdate->CandidateForRemoval->removal
+                        if (handle.Value.Status == RecordStatus.CandidateForRemoval)
+                        {
+                            // The actual removal doesn't occur here as we are still
+                            // iterating the dictionary.
+                            boundInstrumentsToRemove.Add(labelSet);
+                        }
+                        else if (handle.Value.Status == RecordStatus.UpdatePending)
+                        {
+                            handle.Value.Status = RecordStatus.NoPendingUpdate;
+                        }
+                        else if (handle.Value.Status == RecordStatus.NoPendingUpdate)
+                        {
+                            handle.Value.Status = RecordStatus.CandidateForRemoval;
+                        }
                     }
+
+                    foreach (var boundInstrumentToRemove in boundInstrumentsToRemove)
+                    {
+                        // This actual unbinding or removal of the record occurs inside UnBind
+                        // which synchronizes with Bind to ensure no record with pending update
+                        // is lost.
+                        counterInstrument.UnBind(boundInstrumentToRemove);
+                    }
+
+                    boundInstrumentsToRemove.Clear();
                 }
 
                 foreach (var longMeasure in this.longMeasures)

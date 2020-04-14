@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpDesktopDiagnosticListener.net461.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpWebRequestDiagnosticListener.net461.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,15 +22,15 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Collector.Dependencies.Implementation
 {
-    internal class HttpDesktopDiagnosticListener : ListenerHandler
+    internal class HttpWebRequestDiagnosticListener : ListenerHandler
     {
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
         private readonly PropertyFetcher stopResponseFetcher = new PropertyFetcher("Response");
         private readonly PropertyFetcher stopExceptionFetcher = new PropertyFetcher("Exception");
         private readonly HttpClientCollectorOptions options;
 
-        public HttpDesktopDiagnosticListener(Tracer tracer, HttpClientCollectorOptions options)
-            : base(System.Diagnostics.HttpHandlerDiagnosticListener.DiagnosticListenerName, tracer)
+        public HttpWebRequestDiagnosticListener(Tracer tracer, HttpClientCollectorOptions options)
+            : base(HttpWebRequestDiagnosticSource.DiagnosticListenerName, tracer)
         {
             this.options = options;
         }
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             const string EventNameSuffix = ".OnStartActivity";
             if (!(this.startRequestFetcher.Fetch(payload) is HttpWebRequest request))
             {
-                CollectorEventSource.Log.NullPayload(nameof(HttpDesktopDiagnosticListener) + EventNameSuffix);
+                CollectorEventSource.Log.NullPayload(nameof(HttpWebRequestDiagnosticListener) + EventNameSuffix);
                 return;
             }
 
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             {
                 if (span == null || !span.Context.IsValid)
                 {
-                    CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpDesktopDiagnosticListener) + EventNameSuffix);
+                    CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpWebRequestDiagnosticListener) + EventNameSuffix);
                     return;
                 }
 
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
             {
                 if (span == null || !span.Context.IsValid)
                 {
-                    CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpDesktopDiagnosticListener) + EventNameSuffix);
+                    CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpWebRequestDiagnosticListener) + EventNameSuffix);
                     return;
                 }
 
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Collector.Dependencies.Implementation
                 {
                     if (!(this.stopExceptionFetcher.Fetch(payload) is Exception exc))
                     {
-                        CollectorEventSource.Log.NullPayload(nameof(HttpDesktopDiagnosticListener) + EventNameSuffix);
+                        CollectorEventSource.Log.NullPayload(nameof(HttpWebRequestDiagnosticListener) + EventNameSuffix);
                         return;
                     }
 

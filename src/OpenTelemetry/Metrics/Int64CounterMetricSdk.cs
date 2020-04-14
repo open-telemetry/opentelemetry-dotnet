@@ -14,17 +14,45 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+using OpenTelemetry.Context;
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Metrics
 {
-    internal class Int64CounterMetricSdk : CounterMetricSdk<long>
+    internal class Int64CounterMetricSdk : CounterMetricSdkBase<long>
     {
         public Int64CounterMetricSdk(string name) : base(name)
         {
         }
 
-        protected override BoundCounterMetricSdkBase<long> CreateMetric()
+        public override void Add(in SpanContext context, long value, LabelSet labelset)
         {
-            return new Int64BoundCounterMetricSdk();
+            // user not using bound instrument. Hence create a  short-lived bound instrument.
+            this.Bind(labelset, isShortLived: true).Add(context, value);
+        }
+
+        public override void Add(in SpanContext context, long value, IEnumerable<KeyValuePair<string, string>> labels)
+        {
+            // user not using bound instrument. Hence create a short-lived bound instrument.
+            this.Bind(new LabelSetSdk(labels), isShortLived: true).Add(context, value);
+        }
+
+        public override void Add(in DistributedContext context, long value, LabelSet labelset)
+        {
+            // user not using bound instrument. Hence create a  short-lived bound instrument.
+            this.Bind(labelset, isShortLived: true).Add(context, value);
+        }
+
+        public override void Add(in DistributedContext context, long value, IEnumerable<KeyValuePair<string, string>> labels)
+        {
+            // user not using bound instrument. Hence create a short-lived bound instrument.
+            this.Bind(new LabelSetSdk(labels), isShortLived: true).Add(context, value);
+        }
+
+        protected override BoundCounterMetricSdkBase<long> CreateMetric(RecordStatus recordStatus)
+        {
+            return new Int64BoundCounterMetricSdk(recordStatus);
         }
     }
 }
