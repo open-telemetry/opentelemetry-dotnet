@@ -19,7 +19,7 @@ using System;
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
-    /// Filter defining propagation rules for <see cref="DistributedContextEntry"/>.
+    /// Filter defining propagation rules for <see cref="CorrelationContextEntry"/>.
     /// </summary>
     public readonly struct EntryPropagationFilter
     {
@@ -29,7 +29,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <param name="op">Operator to apply.</param>
         /// <param name="matchString">String to apply the operator with.</param>
         /// <param name="action">Action to execute on entry.</param>
-        public EntryPropagationFilter(FilterMatchOperator op, string matchString, Action<DistributedContextEntry> action)
+        public EntryPropagationFilter(FilterMatchOperator op, string matchString, Action<CorrelationContextEntry> action)
         {
             this.Operator = op;
             this.MatchString = matchString;
@@ -61,14 +61,14 @@ namespace OpenTelemetry.Context.Propagation
 
         internal string MatchString { get; }
 
-        internal Action<DistributedContextEntry> Action { get; }
+        internal Action<CorrelationContextEntry> Action { get; }
 
         /// <summary>
-        /// Check whether <see cref="DistributedContextEntry"/> matches this filter pattern.
+        /// Check whether <see cref="CorrelationContextEntry"/> matches this filter pattern.
         /// </summary>
         /// <param name="entry">Distributed Context entry to check.</param>
-        /// <returns>True if <see cref="DistributedContextEntry"/> matches this filter, false - otherwise.</returns>
-        public bool IsMatch(DistributedContextEntry entry)
+        /// <returns>True if <see cref="CorrelationContextEntry"/> matches this filter, false - otherwise.</returns>
+        public bool IsMatch(CorrelationContextEntry entry)
         {
             bool result = false;
             switch (this.Operator)

@@ -1,4 +1,4 @@
-﻿// <copyright file="DistributedEntryTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CorrelationContextEntryTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,21 +19,21 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Context.Test
 {
-    public class DistributedEntryTest
+    public class CorrelationContextEntryTest
     {
         [Fact]
         public void TestGetKey()
         {
-            Assert.Equal("k", new DistributedContextEntry("k", "v").Key);
+            Assert.Equal("k", new CorrelationContextEntry("k", "v").Key);
         }
 
         [Fact]
         public void TestTagEquals()
         {
-            var tag1 = new DistributedContextEntry("Key", "foo");
-            var tag2 = new DistributedContextEntry("Key", "foo");
-            var tag3 = new DistributedContextEntry("Key", "bar");
-            var tag4 = new DistributedContextEntry("Key2", "foo");
+            var tag1 = new CorrelationContextEntry("Key", "foo");
+            var tag2 = new CorrelationContextEntry("Key", "foo");
+            var tag3 = new CorrelationContextEntry("Key", "bar");
+            var tag4 = new CorrelationContextEntry("Key2", "foo");
             Assert.Equal(tag1, tag2);
             Assert.NotEqual(tag1, tag3);
             Assert.NotEqual(tag1, tag4);
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void TestNullKeyNullValue()
         {
-            var entry = new DistributedContextEntry(null, null);
+            var entry = new CorrelationContextEntry(null, null);
             Assert.Empty(entry.Key);
             Assert.Empty(entry.Value);
         }
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void TestNullKey()
         {
-            var entry = new DistributedContextEntry(null, "foo");
+            var entry = new CorrelationContextEntry(null, "foo");
             Assert.Empty(entry.Key);
             Assert.Equal("foo", entry.Value);
         }
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void TestNullValue()
         {
-            var entry = new DistributedContextEntry("foo", null);
+            var entry = new CorrelationContextEntry("foo", null);
             Assert.Equal("foo", entry.Key);
             Assert.Empty(entry.Value);
         }

@@ -173,7 +173,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             {
                 foreach (var batch in batches)
                 {
-                    await this.thriftClient.EmitBatchAsync(
+                    await this.thriftClient.WriteBatchAsync(
                         batch.Value.Process.Message,
                         batch.Value.SpanMessages,
                         cancellationToken).ConfigureAwait(false);
@@ -253,12 +253,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private BufferWriterMemory BuildThriftMessage(Process process)
         {
             var task = process.WriteAsync(this.memoryProtocol, CancellationToken.None);
-
+#if DEBUG
             if (task.Status != TaskStatus.RanToCompletion)
             {
                 throw new InvalidOperationException();
             }
-
+#endif
             return this.memoryTransport.ToBuffer();
         }
 
@@ -266,12 +266,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private BufferWriterMemory BuildThriftMessage(in JaegerSpan jaegerSpan)
         {
             var task = jaegerSpan.WriteAsync(this.memoryProtocol, CancellationToken.None);
-
+#if DEBUG
             if (task.Status != TaskStatus.RanToCompletion)
             {
                 throw new InvalidOperationException();
             }
-
+#endif
             return this.memoryTransport.ToBuffer();
         }
     }
