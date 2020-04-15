@@ -45,7 +45,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             var startTime = DateTimeOffset.UtcNow.AddSeconds(-2);
             var endTime = DateTimeOffset.UtcNow.AddSeconds(-1);
             var span = tracer.StartSpan("name", parentContext, SpanKind.Producer,
-                new SpanCreationOptions {Attributes = attributes, Links = new[] { link }, StartTimestamp = startTime,});
+                new SpanCreationOptions { Attributes = attributes, Links = new[] { link }, StartTimestamp = startTime, });
 
             span.AddEvent(evnt);
             span.Status = Status.FailedPrecondition;
@@ -135,8 +135,8 @@ namespace OpenTelemetry.Tests.Impl.Trace
                 ActivityTraceFlags.Recorded, true, tracestate);
 
             var attributes = new Dictionary<string, object> { ["key"] = "value", };
-            var links = new [] { new Link(context) };
-            var events = new [] { new Event("event") };
+            var links = new[] { new Link(context) };
+            var events = new[] { new Event("event") };
 
             var startTime = DateTimeOffset.UtcNow.AddSeconds(-2);
             var endTime = DateTimeOffset.UtcNow.AddSeconds(-1);
@@ -220,7 +220,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
 
             var spanData1 = new SpanData("name", context, parentSpanId, SpanKind.Client, startTime, attributes, events, links, resource, Status.DataLoss, endTime);
             var spanData2 = new SpanData("name1", context, parentSpanId, SpanKind.Client, startTime, attributes, events, links, resource, Status.DataLoss, endTime);
-            var spanData3 = new SpanData("name",  otherContext, parentSpanId, SpanKind.Client, startTime, attributes, events, links, resource, Status.DataLoss, endTime);
+            var spanData3 = new SpanData("name", otherContext, parentSpanId, SpanKind.Client, startTime, attributes, events, links, resource, Status.DataLoss, endTime);
             var spanData4 = new SpanData("name", context, default, SpanKind.Client, startTime, attributes, events, links, resource, Status.DataLoss, endTime);
             var spanData5 = new SpanData("name", context, parentSpanId, SpanKind.Server, startTime, attributes, events, links, resource, Status.DataLoss, endTime);
             var spanData6 = new SpanData("name", context, parentSpanId, SpanKind.Client, otherStartTime, attributes, events, links, resource, Status.DataLoss, endTime);

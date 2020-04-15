@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Export
             /// Batch export failed. Caller must not retry.
             /// </summary>
             FailedNotRetryable = 1,
-            
+
             /// <summary>
             /// Batch export failed transiently. Caller should record error and may retry.
             /// </summary>

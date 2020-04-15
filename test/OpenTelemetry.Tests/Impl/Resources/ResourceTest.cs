@@ -73,7 +73,7 @@ namespace OpenTelemetry.Impl.Resources
         public void CreateResource_EmptyAttributeValue()
         {
             // Arrange
-            var attributes = new Dictionary<string, object> {{"EmptyValue", string.Empty}};
+            var attributes = new Dictionary<string, object> { { "EmptyValue", string.Empty } };
 
             // does not throw
             var resource = new Resource(attributes);

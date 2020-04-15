@@ -79,7 +79,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
         public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> spanDataList, CancellationToken cancellationToken)
         {
             var traceWriter = TraceServiceClient.Create(settings: this.traceServiceSettings);
-            
+
             var batchSpansRequest = new BatchWriteSpansRequest
             {
                 ProjectName = this.googleCloudProjectId,

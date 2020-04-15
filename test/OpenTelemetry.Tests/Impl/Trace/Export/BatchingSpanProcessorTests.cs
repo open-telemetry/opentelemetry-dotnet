@@ -218,7 +218,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
         [Fact]
         public void ProcessorDoesNotBlockOnExporter()
-        { 
+        {
             var resetEvent = new ManualResetEvent(false);
             var spanExporter = new TestExporter(_ => resetEvent.WaitOne(TimeSpan.FromSeconds(10)));
             using var factory = TracerFactory.Create(b => b

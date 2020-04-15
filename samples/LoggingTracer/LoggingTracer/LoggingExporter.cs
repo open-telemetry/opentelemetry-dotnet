@@ -44,7 +44,7 @@ namespace LoggingTracer
                     AppendIndentedLine(sb, 5, $"{a.Key}' : {a.Value}");
                 }
             }
-            
+
             Logger.Log(sb.ToString());
 
             return Task.FromResult(ExportResult.Success);

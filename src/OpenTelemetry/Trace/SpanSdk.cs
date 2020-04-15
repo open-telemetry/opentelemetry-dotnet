@@ -621,7 +621,7 @@ namespace OpenTelemetry.Trace
                 spanCreationOptions = new SpanCreationOptions
                 {
                     Attributes = activity.Tags.ToDictionary(k => k.Key, v => (object)v.Value),
-                }; 
+                };
             }
 
             var span = new SpanSdk(

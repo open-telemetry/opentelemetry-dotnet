@@ -57,6 +57,6 @@ namespace OpenTelemetry.Metrics
         internal IDictionary<LabelSet, Int64ObserverMetricHandleSdk> GetAllHandles()
         {
             return this.observerHandles;
-        }    
+        }
     }
 }
