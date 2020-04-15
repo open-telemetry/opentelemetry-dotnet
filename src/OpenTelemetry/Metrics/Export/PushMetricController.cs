@@ -48,16 +48,18 @@ namespace OpenTelemetry.Metrics.Export
         }
 
         private async Task Worker(CancellationToken cancellationToken)
-        {
-            try
-            {
-                List<Metric<long>> longMetricToExport = new List<Metric<long>>();
-                List<Metric<double>> doubleMetricToExport = new List<Metric<double>>();
+        {           
+            List<Metric<long>> longMetricToExport = new List<Metric<long>>();
+            List<Metric<double>> doubleMetricToExport = new List<Metric<double>>();
 
-                await Task.Delay(this.pushInterval, cancellationToken).ConfigureAwait(false);
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    var sw = Stopwatch.StartNew();
+            await Task.Delay(this.pushInterval, cancellationToken).ConfigureAwait(false);
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var sw = Stopwatch.StartNew();
+                try
+                {                    
+                    longMetricToExport.Clear();
+                    doubleMetricToExport.Clear();
 
                     foreach (var meter in this.meters.Values)
                     {
@@ -85,37 +87,33 @@ namespace OpenTelemetry.Metrics.Export
                     var longExportResult = await this.metricExporter.ExportAsync<long>(longMetricToExport, cancellationToken);
                     if (longExportResult != MetricExporter.ExportResult.Success)
                     {
-                        OpenTelemetrySdkEventSource.Log.MetricExporterErrorResult(longExportResult);
+                        OpenTelemetrySdkEventSource.Log.MetricExporterErrorResult((int)longExportResult);
 
                         // we do not support retries for now and leave it up to exporter
                         // as only exporter implementation knows how to retry: which items failed
                         // and what is the reasonable policy for that exporter.
                     }
-
-                    longMetricToExport.Clear();
 
                     var doubleExportResult = await this.metricExporter.ExportAsync<double>(doubleMetricToExport, cancellationToken);
                     if (doubleExportResult != MetricExporter.ExportResult.Success)
                     {
-                        OpenTelemetrySdkEventSource.Log.MetricExporterErrorResult(longExportResult);
+                        OpenTelemetrySdkEventSource.Log.MetricExporterErrorResult((int)doubleExportResult);
 
                         // we do not support retries for now and leave it up to exporter
                         // as only exporter implementation knows how to retry: which items failed
                         // and what is the reasonable policy for that exporter.
-                    }
-
-                    doubleMetricToExport.Clear();
-
-                    var remainingWait = this.pushInterval - sw.Elapsed;
-                    if (remainingWait > TimeSpan.Zero)
-                    {
-                        await Task.Delay(remainingWait, cancellationToken).ConfigureAwait(false);
-                    }
+                    }                    
                 }
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.MetricControllerException(ex);
+                catch (Exception ex)
+                {
+                    OpenTelemetrySdkEventSource.Log.MetricControllerException(ex);
+                }
+
+                var remainingWait = this.pushInterval - sw.Elapsed;
+                if (remainingWait > TimeSpan.Zero)
+                {
+                    await Task.Delay(remainingWait, cancellationToken).ConfigureAwait(false);
+                }
             }
         }
     }

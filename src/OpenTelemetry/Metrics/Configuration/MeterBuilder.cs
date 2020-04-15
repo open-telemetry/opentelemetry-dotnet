@@ -37,7 +37,7 @@ namespace OpenTelemetry.Metrics.Configuration
         /// <param name="metricProcessor">MetricProcessor instance.</param>
         public MeterBuilder SetMetricProcessor(MetricProcessor metricProcessor)
         {
-            this.MetricProcessor = metricProcessor ?? throw new ArgumentNullException(nameof(metricProcessor));
+            this.MetricProcessor = metricProcessor;
             return this;
         }
 
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Metrics.Configuration
         /// <param name="metricExporter">MetricExporter instance.</param>
         public MeterBuilder SetMetricExporter(MetricExporter metricExporter)
         {
-            this.MetricExporter = metricExporter ?? throw new ArgumentNullException(nameof(metricExporter));
+            this.MetricExporter = metricExporter;
             return this;
         }
 

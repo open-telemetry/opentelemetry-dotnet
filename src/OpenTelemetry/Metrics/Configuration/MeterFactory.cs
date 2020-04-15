@@ -24,7 +24,7 @@ namespace OpenTelemetry.Metrics.Configuration
 {
     public class MeterFactory : MeterFactoryBase
     {
-        // TODO make MeterFactory IDisposable to call Dispose on Exporter/Controller.
+        // TODO: make MeterFactory IDisposable to call Dispose on Exporter/Controller.
         private readonly object lck = new object();
         private readonly Dictionary<MeterRegistryKey, Meter> meterRegistry = new Dictionary<MeterRegistryKey, Meter>();
         private readonly MetricProcessor metricProcessor;

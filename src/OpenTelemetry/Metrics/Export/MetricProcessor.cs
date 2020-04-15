@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics.Export
     public abstract class MetricProcessor
     {
         /// <summary>
-        /// Process the metric.
+        /// Process the metric. This method is called once every collection interval.
         /// </summary>
         /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
         /// <param name="metricName">the name of the instrument.</param>
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics.Export
         public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator);
 
         /// <summary>
-        /// Process the metric.
+        /// Process the metric. This method is called once every collection interval.
         /// </summary>
         /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
         /// <param name="metricName">the name of the instrument.</param>
@@ -41,8 +41,11 @@ namespace OpenTelemetry.Metrics.Export
         public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator);
 
         /// <summary>
-        /// Finish the current collection cycle and return the metrics.
-        /// </summary>        
+        /// Finish the current collection cycle and return the metrics it holds.
+        /// This is called at the end of one collection cycle by the Controller.
+        /// MetricProcessor can use this to clear its Metrics (in case of stateless).
+        /// </summary>
+        /// <returns>The tuple containing long and double metrics, which is expected to be exported.</returns>
         public abstract Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>> FinishCollectionCycle(); 
     }
 }

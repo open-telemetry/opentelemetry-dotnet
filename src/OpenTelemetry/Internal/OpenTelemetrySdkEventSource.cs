@@ -202,7 +202,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(18, msec);
         }
 
-        [Event(19, Message = "Exception occurred in Metric Controller. Exception: '{0}'", Level = EventLevel.Warning)]
+        [Event(19, Message = "Exception occurred in Metric Controller while processing metrics from one Collect cycle. Exception: '{0}'", Level = EventLevel.Warning)]
         public void MetricObserverException(string exception)
         {
             this.WriteEvent(19, exception);
@@ -214,10 +214,10 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(20, meterName);
         }
 
-        [Event(21, Message = "Metric Exporter returned error '{0}'.", Level = EventLevel.Warning)]
-        public void MetricExporterErrorResult(MetricExporter.ExportResult exportResult)
+        [Event(21, Message = "Metric Export failed with error '{0}'.", Level = EventLevel.Warning)]
+        public void MetricExporterErrorResult(int exportResult)
         {
-            this.WriteEvent(21, exportResult.ToString());
+            this.WriteEvent(21, exportResult);
         }
 
         /// <summary>
