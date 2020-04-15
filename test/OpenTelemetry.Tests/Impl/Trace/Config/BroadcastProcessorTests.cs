@@ -69,7 +69,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
 
             });
 
-            var broadcastProcessor = new BroadcastProcessor(new []{ processor1, processor2 });
+            var broadcastProcessor = new BroadcastProcessor(new[] { processor1, processor2 });
 
             var tracer = TracerFactory.Create(_ => { }).GetTracer(null);
             var span = (SpanSdk)tracer.StartSpan("foo");

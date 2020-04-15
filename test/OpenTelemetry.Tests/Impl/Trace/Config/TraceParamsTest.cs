@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Config.Test
         [Fact]
         public void UpdateTraceParams_NonPositiveMaxNumberOfAttributes()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfiguration(0 ,1, 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfiguration(0, 1, 1));
         }
 
         [Fact]

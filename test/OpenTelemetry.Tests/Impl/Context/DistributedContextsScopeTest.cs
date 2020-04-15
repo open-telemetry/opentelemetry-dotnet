@@ -85,8 +85,8 @@ namespace OpenTelemetry.Context.Test
         public async void TestContextInheritance()
         {
             DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
-            var list1 = new List<CorrelationContextEntry>(1) {new CorrelationContextEntry(KEY_1, VALUE_1)};
-            var list2 = new List<CorrelationContextEntry>(2) {new CorrelationContextEntry(KEY_1, VALUE_1), new CorrelationContextEntry(KEY_2, VALUE_2)};
+            var list1 = new List<CorrelationContextEntry>(1) { new CorrelationContextEntry(KEY_1, VALUE_1) };
+            var list2 = new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(KEY_1, VALUE_1), new CorrelationContextEntry(KEY_2, VALUE_2) };
 
             DistributedContext.SetCurrent(DistributedContext.Empty);
             await Task.Run(() => Assert.Equal(DistributedContext.Empty, DistributedContext.Current));

@@ -87,7 +87,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ProcessorDoesNotBlockOnExporter()
         {
-            spanExporter = new TestExporter( async _ => await Task.Delay(500));
+            spanExporter = new TestExporter(async _ => await Task.Delay(500));
             tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p
                         .SetExporter(spanExporter)
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
             Assert.InRange(sw.Elapsed, TimeSpan.Zero, TimeSpan.FromMilliseconds(100));
 
-            var  exported = WaitForSpans(spanExporter, 1, TimeSpan.FromMilliseconds(600));
+            var exported = WaitForSpans(spanExporter, 1, TimeSpan.FromMilliseconds(600));
 
             Assert.Single(exported);
         }

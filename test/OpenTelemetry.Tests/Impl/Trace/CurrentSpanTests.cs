@@ -22,7 +22,7 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Test
 {
-    public class CurrentSpanTests: IDisposable
+    public class CurrentSpanTests : IDisposable
     {
         private readonly Tracer tracer;
 
@@ -285,7 +285,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var span = (SpanSdk)tracer.StartRootSpan("foo");
 
-            using(var scope1 = this.tracer.WithSpan(span))
+            using (var scope1 = this.tracer.WithSpan(span))
             {
                 using var scope2 = this.tracer.WithSpan(span);
                 Assert.IsNotType<NoopDisposable>(scope1);

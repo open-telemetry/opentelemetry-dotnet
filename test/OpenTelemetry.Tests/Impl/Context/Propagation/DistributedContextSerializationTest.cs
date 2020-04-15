@@ -94,12 +94,12 @@ namespace OpenTelemetry.Context.Propagation.Test
 
             var actual = serializer.ToByteArray(DistributedContextBuilder.CreateContext(list));
             var tagsList = tags.ToList();
-            var tagPermutation= Permutate(tagsList, tagsList.Count);
+            var tagPermutation = Permutate(tagsList, tagsList.Count);
             ISet<string> possibleOutPuts = new HashSet<string>();
 
             foreach (var distributedContextEntries in tagPermutation)
             {
-                var l = (List<CorrelationContextEntry>) distributedContextEntries;
+                var l = (List<CorrelationContextEntry>)distributedContextEntries;
                 var expected = new MemoryStream();
                 expected.WriteByte(SerializationUtils.VersionId);
 

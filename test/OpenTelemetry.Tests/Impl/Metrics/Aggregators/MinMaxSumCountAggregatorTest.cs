@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics.Test
 {
     public class MinMaxSumCountAggregatorTest
     {
-        private class UpdateThreadArguments<T> where T: struct
+        private class UpdateThreadArguments<T> where T : struct
         {
             public ManualResetEvent mreToBlockUpdateThread;
             public ManualResetEvent mreToEnsureAllThreadsStart;

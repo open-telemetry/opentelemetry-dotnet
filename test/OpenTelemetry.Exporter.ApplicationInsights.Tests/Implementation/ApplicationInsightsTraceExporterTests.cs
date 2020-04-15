@@ -1478,7 +1478,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 });
 
             var span = CreateSpanData(name, traceId, parentSpanId, traceOptions,
-                tracestate, kind, status, new SpanCreationOptions { Links = new [] { parentLink }});
+                tracestate, kind, status, new SpanCreationOptions { Links = new[] { parentLink } });
 
             var sentItems = ConvertSpan(span);
 
@@ -1738,7 +1738,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             };
 
             var span = CreateSpanData(name, traceId, parentSpanId, traceOptions,
-                tracestate, spanKind, status, null, default, new[] {new Event("test message1")},
+                tracestate, spanKind, status, null, default, new[] { new Event("test message1") },
                 new Resource(resource));
             var sentItems = ConvertSpan(span);
 
@@ -1866,14 +1866,14 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
             var link1Enqueued = startTimestamp.AddMilliseconds(-200).ToUnixTimeMilliseconds();
             var link2Enqueued = startTimestamp.AddMilliseconds(-300).ToUnixTimeMilliseconds();
 
-            var link0 = new Link(RandomContext(), new Dictionary<string, object> {["enqueuedTime"] = link0Enqueued });
+            var link0 = new Link(RandomContext(), new Dictionary<string, object> { ["enqueuedTime"] = link0Enqueued });
             var link1 = new Link(RandomContext(), new Dictionary<string, object> { ["enqueuedTime"] = link1Enqueued });
-            var link2 = new Link(RandomContext(), new Dictionary<string, object> {["enqueuedTime"] = link2Enqueued });
+            var link2 = new Link(RandomContext(), new Dictionary<string, object> { ["enqueuedTime"] = link2Enqueued });
 
             var options = new SpanCreationOptions
             {
                 StartTimestamp = startTimestamp,
-                Links = new List<Link> {link0, link1, link2},
+                Links = new List<Link> { link0, link1, link2 },
                 Attributes = new Dictionary<string, object>
                 {
                     ["az.namespace"] = "Microsoft.EventHub",
@@ -2278,7 +2278,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             processor.Setup(p => p.OnEnd(It.IsAny<SpanData>()));
 
-            var tracer = TracerFactory.Create(b =>b
+            var tracer = TracerFactory.Create(b => b
                     .SetResource(resource)
                     .AddProcessorPipeline(p => p.AddProcessor(_ => processor.Object)))
                 .GetTracer(null);

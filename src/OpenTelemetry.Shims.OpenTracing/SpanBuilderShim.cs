@@ -194,7 +194,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                     }
                 }
             }
-            
+
             if (span == null)
             {
                 span = this.tracer.StartSpan(this.spanName, null, this.spanKind, options);

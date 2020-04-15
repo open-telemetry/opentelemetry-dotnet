@@ -36,6 +36,6 @@ namespace OpenTelemetry.Metrics.Export
         /// <param name="metricName">the name of the instrument.</param>
         /// <param name="labelSet">the labelSet associated with the instrument.</param>
         /// <param name="aggregator">the aggregator used.</param>
-        public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator);        
+        public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator);
     }
 }
