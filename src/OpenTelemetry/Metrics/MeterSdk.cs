@@ -50,6 +50,7 @@ namespace OpenTelemetry.Metrics
             lock (this.collectLock)
             {
                 OpenTelemetrySdkEventSource.Log.MeterCollectInvoked(this.meterName);
+
                 // collect all pending metric updates and send to batcher.
                 // must sync to prevent multiple Collect occuring at same time.
                 var boundInstrumentsToRemove = new List<LabelSet>();

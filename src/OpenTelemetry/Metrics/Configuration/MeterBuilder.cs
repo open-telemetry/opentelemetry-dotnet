@@ -35,6 +35,7 @@ namespace OpenTelemetry.Metrics.Configuration
         /// Configures metric processor. (aka batcher).
         /// </summary>
         /// <param name="metricProcessor">MetricProcessor instance.</param>
+        /// <returns>The meter builder instance for chaining.</returns>
         public MeterBuilder SetMetricProcessor(MetricProcessor metricProcessor)
         {
             this.MetricProcessor = metricProcessor;
@@ -45,6 +46,7 @@ namespace OpenTelemetry.Metrics.Configuration
         /// Configures Metric Exporter.
         /// </summary>
         /// <param name="metricExporter">MetricExporter instance.</param>
+        /// <returns>The meter builder instance for chaining.</returns>
         public MeterBuilder SetMetricExporter(MetricExporter metricExporter)
         {
             this.MetricExporter = metricExporter;
@@ -55,6 +57,7 @@ namespace OpenTelemetry.Metrics.Configuration
         /// Sets the push interval.
         /// </summary>
         /// <param name="pushInterval">push interval.</param>
+        /// <returns>The meter builder instance for chaining.</returns>
         public MeterBuilder SetMetricPushInterval(TimeSpan pushInterval)
         {
             this.MetricPushInterval = pushInterval;

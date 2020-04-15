@@ -33,7 +33,8 @@ namespace OpenTelemetry.Metrics.Export
         private MetricProcessor metricProcessor;
         private Dictionary<MeterRegistryKey, MeterSdk> meters;
 
-        public PushMetricController(Dictionary<MeterRegistryKey, MeterSdk> meters,
+        public PushMetricController(
+            Dictionary<MeterRegistryKey, MeterSdk> meters,
             MetricProcessor metricProcessor,
             MetricExporter metricExporter,
             TimeSpan pushInterval,
@@ -57,7 +58,7 @@ namespace OpenTelemetry.Metrics.Export
             {
                 var sw = Stopwatch.StartNew();
                 try
-                {                    
+                {
                     foreach (var meter in this.meters.Values)
                     {
                         meter.Collect();
@@ -90,7 +91,7 @@ namespace OpenTelemetry.Metrics.Export
                         // we do not support retries for now and leave it up to exporter
                         // as only exporter implementation knows how to retry: which items failed
                         // and what is the reasonable policy for that exporter.
-                    }                    
+                    }
                 }
                 catch (Exception ex)
                 {

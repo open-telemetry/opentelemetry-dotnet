@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics.Export
         /// Initializes a new instance of the <see cref="UngroupedBatcher"/> class.
         /// </summary>
         public UngroupedBatcher()
-        {                        
+        {
             this.longMetrics = new List<Metric<long>>();
             this.doubleMetrics = new List<Metric<double>>();
         }
@@ -60,9 +60,9 @@ namespace OpenTelemetry.Metrics.Export
             doubleMetrics = this.doubleMetrics;
 
             var count = this.longMetrics.Count + this.doubleMetrics.Count;
-            this.longMetrics = new List<Metric<long>>();                
-            this.doubleMetrics = new List<Metric<double>>();                
-            
+            this.longMetrics = new List<Metric<long>>();
+            this.doubleMetrics = new List<Metric<double>>();
+
             OpenTelemetrySdkEventSource.Log.BatcherCollectionCompleted(count);
         }
     }
