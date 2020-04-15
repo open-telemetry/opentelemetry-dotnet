@@ -77,7 +77,7 @@ namespace OpenTelemetry.Metrics.Test
         public void PushControllerPushesMetricAtConfiguredInterval()
         {
             var controllerPushIntervalInMsec = 100;
-            var waitIntervalInMsec = (controllerPushIntervalInMsec * 3) + 200;
+            var waitIntervalInMsec = (controllerPushIntervalInMsec * 3) + 400;
             var testExporter = new TestMetricExporter();
             var testProcessor = new TestMetricProcessor();
             var meterFactory = MeterFactory.Create(
