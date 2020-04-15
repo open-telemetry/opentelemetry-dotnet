@@ -28,38 +28,14 @@ namespace OpenTelemetry.Metrics.Test
             public ManualResetEvent mreToBlockUpdateThread;
             public ManualResetEvent mreToEnsureAllThreadsStart;
             public int threadsStartedCount;
-            public CounterSumAggregator<T> counterSumAggregator;
-        }
-
-        [Fact]
-        public void CounterAggregatorSupportsLong()
-        {            
-            CounterSumAggregator<long> aggregator = new CounterSumAggregator<long>();            
-        }
-
-        [Fact]
-        public void CounterAggregatorSupportsDouble()
-        {
-            CounterSumAggregator<double> aggregator = new CounterSumAggregator<double>();
-        }
-
-        [Fact]
-        public void CounterAggregatorConstructorThrowsForUnSupportedTypeInt()
-        {
-            Assert.Throws<Exception>(() => new CounterSumAggregator<int>());            
-        }
-
-        [Fact]
-        public void CounterAggregatorConstructorThrowsForUnSupportedTypeByte()
-        {
-            Assert.Throws<Exception>(() => new CounterSumAggregator<byte>());
+            public Aggregator<T> counterSumAggregator;
         }
 
         [Fact]
         public void CounterAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdatesLong()
         {
             // create an aggregator
-            CounterSumAggregator<long> aggregator = new CounterSumAggregator<long>();
+            var aggregator = new Int64CounterSumAggregator();
             var sum = aggregator.ToMetricData() as SumData<long>;
 
             // we start with 0.
@@ -69,12 +45,15 @@ namespace OpenTelemetry.Metrics.Test
             var mre = new ManualResetEvent(false);
             var mreToEnsureAllThreadsStart = new ManualResetEvent(false);
 
-            var argToThread = new UpdateThreadArguments<long>();
-            argToThread.counterSumAggregator = aggregator;
-            argToThread.threadsStartedCount = 0;
-            argToThread.mreToBlockUpdateThread = mre;
-            argToThread.mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
-            
+            var argToThread =
+                new UpdateThreadArguments<long>
+                {
+                    counterSumAggregator = aggregator,
+                    threadsStartedCount = 0,
+                    mreToBlockUpdateThread = mre,
+                    mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart,
+                };
+
             Thread[] t = new Thread[10];
             for (int i = 0; i < 10; i++)
             {
@@ -106,7 +85,7 @@ namespace OpenTelemetry.Metrics.Test
         public void CounterAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdatesDouble()
         {
             // create an aggregator
-            CounterSumAggregator<double> aggregator = new CounterSumAggregator<double>();
+            var aggregator = new DoubleCounterSumAggregator();
             var sum = aggregator.ToMetricData() as SumData<double>;
 
             // we start with 0.0
@@ -114,13 +93,16 @@ namespace OpenTelemetry.Metrics.Test
 
             // setup args to threads.
             var mre = new ManualResetEvent(false);
-            var mreToEnsureAllThreadsStart = new ManualResetEvent(false);            
+            var mreToEnsureAllThreadsStart = new ManualResetEvent(false);
 
-            var argToThread = new UpdateThreadArguments<double>();
-            argToThread.counterSumAggregator = aggregator;
-            argToThread.threadsStartedCount = 0;
-            argToThread.mreToBlockUpdateThread = mre;
-            argToThread.mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
+            var argToThread =
+                new UpdateThreadArguments<double>
+                {
+                    counterSumAggregator = aggregator,
+                    threadsStartedCount = 0,
+                    mreToBlockUpdateThread = mre,
+                    mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart,
+                };
 
             Thread[] t = new Thread[10];
             for (int i = 0; i < 10; i++)
