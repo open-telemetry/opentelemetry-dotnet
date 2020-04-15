@@ -19,7 +19,7 @@ using System;
 namespace OpenTelemetry.Context
 {
     /// <summary>
-    /// Abstraction to the carrier of the DistributedContext current object.
+    /// Abstraction to the carrier of the DistributedContext.Current object.
     /// </summary>
     public abstract class DistributedContextCarrier
     {

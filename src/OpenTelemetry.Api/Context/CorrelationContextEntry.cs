@@ -1,4 +1,4 @@
-﻿// <copyright file="DistributedContextEntry.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CorrelationContextEntry.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,30 +21,30 @@ namespace OpenTelemetry.Context
     /// <summary>
     /// Distributed Context entry with the key, value and metadata.
     /// </summary>
-    public readonly struct DistributedContextEntry
+    public readonly struct CorrelationContextEntry
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="DistributedContextEntry"/> struct with the key and value.
+        /// Initializes a new instance of the <see cref="CorrelationContextEntry"/> struct with the key and value.
         /// </summary>
         /// <param name="key">Key name for the entry.</param>
         /// <param name="value">Value associated with the key name.</param>
-        public DistributedContextEntry(string key, string value)
+        public CorrelationContextEntry(string key, string value)
             : this(key, value, EntryMetadata.NoPropagationEntry)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DistributedContextEntry"/> struct with the key, value, and metadata.
+        /// Initializes a new instance of the <see cref="CorrelationContextEntry"/> struct with the key, value, and metadata.
         /// </summary>
         /// <param name="key">Key name for the entry.</param>
         /// <param name="value">Value associated with the key name.</param>
         /// <param name="metadata">Entry metadata.</param>
-        public DistributedContextEntry(string key, string value, in EntryMetadata metadata)
+        public CorrelationContextEntry(string key, string value, in EntryMetadata metadata)
         {
             if (key == null)
             {
                 this.Key = string.Empty;
-                OpenTelemetryApiEventSource.Log.InvalidArgument(nameof(DistributedContextEntry), nameof(key), "is null");
+                OpenTelemetryApiEventSource.Log.InvalidArgument(nameof(CorrelationContextEntry), nameof(key), "is null");
             }
             else
             {
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Context
             if (value == null)
             {
                 this.Value = string.Empty;
-                OpenTelemetryApiEventSource.Log.InvalidArgument(nameof(DistributedContextEntry), nameof(value), "is null");
+                OpenTelemetryApiEventSource.Log.InvalidArgument(nameof(CorrelationContextEntry), nameof(value), "is null");
             }
             else
             {
@@ -80,29 +80,29 @@ namespace OpenTelemetry.Context
         public EntryMetadata Metadata { get; }
 
         /// <summary>
-        /// Compare two entries of <see cref="DistributedContextEntry"/> for equality.
+        /// Compare two entries of <see cref="CorrelationContextEntry"/> for equality.
         /// </summary>
         /// <param name="entry1">First Entry to compare.</param>
         /// <param name="entry2">Second Entry to compare.</param>
-        public static bool operator ==(DistributedContextEntry entry1, DistributedContextEntry entry2) => entry1.Equals(entry2);
+        public static bool operator ==(CorrelationContextEntry entry1, CorrelationContextEntry entry2) => entry1.Equals(entry2);
 
         /// <summary>
-        /// Compare two entries of <see cref="DistributedContextEntry"/> for not equality.
+        /// Compare two entries of <see cref="CorrelationContextEntry"/> for not equality.
         /// </summary>
         /// <param name="entry1">First Entry to compare.</param>
         /// <param name="entry2">Second Entry to compare.</param>
-        public static bool operator !=(DistributedContextEntry entry1, DistributedContextEntry entry2) => !entry1.Equals(entry2);
+        public static bool operator !=(CorrelationContextEntry entry1, CorrelationContextEntry entry2) => !entry1.Equals(entry2);
 
         /// <inheritdoc/>
         public override bool Equals(object o)
         {
-            return o is DistributedContextEntry that && (this.Key == that.Key && this.Value == that.Value);
+            return o is CorrelationContextEntry that && (this.Key == that.Key && this.Value == that.Value);
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            return this.Key is null ? "{}" : $"{nameof(DistributedContextEntry)}{{{nameof(this.Key)}={this.Key}, {nameof(this.Value)}={this.Value}}}";
+            return this.Key is null ? "{}" : $"{nameof(CorrelationContextEntry)}{{{nameof(this.Key)}={this.Key}, {nameof(this.Value)}={this.Value}}}";
         }
 
         /// <inheritdoc/>
