@@ -29,8 +29,8 @@ namespace OpenTelemetry.Trace.Export
         private readonly SpanSdk span;
 
         /// <summary>
-        /// Creates SpanData instance.
-        /// <remarks>This constructor should be used to export out of band spans such as 
+        /// Initializes a new instance of the <see cref="SpanData"/> struct.
+        /// <remarks>This constructor should be used to export out of band spans such as
         /// compatible events created without OpenTelemetry API or in a different process</remarks>
         /// </summary>
         /// <param name="name">Span name.</param>
@@ -64,7 +64,8 @@ namespace OpenTelemetry.Trace.Export
                 kind,
                 startTimestamp,
                 attributes,
-                events, links,
+                events,
+                links,
                 resource,
                 status,
                 endTimestamp,
@@ -72,7 +73,7 @@ namespace OpenTelemetry.Trace.Export
         }
 
         /// <summary>
-        /// Creates SpanData from SpanSdk.
+        /// Initializes a new instance of the <see cref="SpanData"/> struct from SpanSdk.
         /// </summary>
         /// <param name="span">Span instance.</param>
         internal SpanData(SpanSdk span)

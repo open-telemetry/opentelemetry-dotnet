@@ -22,7 +22,8 @@ namespace OpenTelemetry.Metrics
 {
     internal class DoubleCounterMetricSdk : CounterMetricSdkBase<double>
     {
-        public DoubleCounterMetricSdk(string name) : base(name)
+        public DoubleCounterMetricSdk(string name)
+            : base(name)
         {
         }
 

@@ -24,7 +24,8 @@ namespace OpenTelemetry.Metrics
     {
         private readonly DoubleCounterSumAggregator sumAggregator = new DoubleCounterSumAggregator();
 
-        public DoubleBoundCounterMetricSdk(RecordStatus recordStatus) : base(recordStatus)
+        public DoubleBoundCounterMetricSdk(RecordStatus recordStatus)
+            : base(recordStatus)
         {
         }
 
