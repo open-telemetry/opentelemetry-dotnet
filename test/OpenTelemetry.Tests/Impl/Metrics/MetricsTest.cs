@@ -57,9 +57,9 @@ namespace OpenTelemetry.Metrics.Test
             Assert.Equal(3, testProcessor.longMetrics.Count);
             Assert.Equal(3, testProcessor.longMetrics.Count(m => m.MetricName == "testCounter"));
 
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 110 ));
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 110));
             Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 200));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 210));            
+            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 210));
         }
 
         [Fact]
@@ -136,7 +136,7 @@ namespace OpenTelemetry.Metrics.Test
 
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
-            
+
             observerMetric.Observe(10, labels1);
             observerMetric.Observe(20, labels1);
             observerMetric.Observe(30, labels1);

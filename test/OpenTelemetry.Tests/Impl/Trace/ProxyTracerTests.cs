@@ -46,7 +46,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         public void ProxyTracer_CreateSpan_BadArgs_DoesNotThrow()
         {
             var proxyTracer = new ProxyTracer();
-            
+
             proxyTracer.StartRootSpan(null);
             proxyTracer.StartRootSpan(null, SpanKind.Client);
             proxyTracer.StartRootSpan(null, SpanKind.Client, default);

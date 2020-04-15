@@ -74,8 +74,7 @@ namespace OpenTelemetry.Metrics.Configuration
                 var key = new MeterRegistryKey(name, version);
                 if (!this.meterRegistry.TryGetValue(key, out var meter))
                 {
-                    meter = this.defaultMeter = new MeterSdk(name,
-                        this.metricProcessor);
+                    meter = this.defaultMeter = new MeterSdk(name, this.metricProcessor);
 
                     this.meterRegistry.Add(key, meter);
                 }

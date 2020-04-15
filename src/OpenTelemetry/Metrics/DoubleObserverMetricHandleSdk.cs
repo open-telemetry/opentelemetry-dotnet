@@ -20,14 +20,14 @@ namespace OpenTelemetry.Metrics
 {
     internal class DoubleObserverMetricHandleSdk : DoubleObserverMetricHandle
     {
-        private readonly LastValueAggregator<double> aggregator = new LastValueAggregator<double>();
+        private readonly DoubleLastValueAggregator aggregator = new DoubleLastValueAggregator();
 
         public override void Observe(double value)
         {
             this.aggregator.Update(value);
         }
 
-        internal LastValueAggregator<double> GetAggregator()
+        internal DoubleLastValueAggregator GetAggregator()
         {
             return this.aggregator;
         }

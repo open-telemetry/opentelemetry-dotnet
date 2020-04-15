@@ -284,7 +284,7 @@ namespace OpenTelemetry.Context.Propagation
         private static void LogTooManyItemsInTracestate()
         {
 #if API
-           OpenTelemetryApiEventSource.Log.TooManyItemsInTracestate();
+            OpenTelemetryApiEventSource.Log.TooManyItemsInTracestate();
 #else
             OpenTelemetrySdkEventSource.Log.TooManyItemsInTracestate();
 #endif

@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Creates an instance of <see cref="TracerSdk"/>.
+        /// Initializes a new instance of the <see cref="TracerSdk"/> class.
         /// </summary>
         /// <param name="spanProcessor">Span processor.</param>
         /// <param name="sampler">Sampler to use.</param>
@@ -86,8 +86,15 @@ namespace OpenTelemetry.Trace
                 parent = this.CurrentSpan;
             }
 
-            return SpanSdk.CreateFromParentSpan(operationName, parent, kind, options, this.sampler, this.tracerConfiguration,
-                this.spanProcessor, this.LibraryResource);
+            return SpanSdk.CreateFromParentSpan(
+                operationName,
+                parent,
+                kind,
+                options,
+                this.sampler,
+                this.tracerConfiguration,
+                this.spanProcessor,
+                this.LibraryResource);
         }
 
         /// <inheritdoc/>
@@ -95,12 +102,25 @@ namespace OpenTelemetry.Trace
         {
             if (parent.IsValid)
             {
-                return SpanSdk.CreateFromParentContext(operationName, parent, kind, options, this.sampler, this.tracerConfiguration,
-                    this.spanProcessor, this.LibraryResource);
+                return SpanSdk.CreateFromParentContext(
+                    operationName,
+                    parent,
+                    kind,
+                    options,
+                    this.sampler,
+                    this.tracerConfiguration,
+                    this.spanProcessor,
+                    this.LibraryResource);
             }
 
-            return SpanSdk.CreateRoot(operationName, kind, options, this.sampler, this.tracerConfiguration,
-                this.spanProcessor, this.LibraryResource);
+            return SpanSdk.CreateRoot(
+                operationName,
+                kind,
+                options,
+                this.sampler,
+                this.tracerConfiguration,
+                this.spanProcessor,
+                this.LibraryResource);
         }
 
         /// <inheritdoc/>

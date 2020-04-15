@@ -14,27 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class MeasureMetricSdk<T> : MeasureMetric<T>
+    internal abstract class MeasureMetricSdk<T> : MeasureMetric<T>
         where T : struct
     {
-        private readonly IDictionary<LabelSet, BoundMeasureMetricSdk<T>> measureBoundInstruments = new ConcurrentDictionary<LabelSet, BoundMeasureMetricSdk<T>>();
+        private readonly IDictionary<LabelSet, BoundMeasureMetricSdkBase<T>> measureBoundInstruments = new ConcurrentDictionary<LabelSet, BoundMeasureMetricSdkBase<T>>();
         private string metricName;
 
-        public MeasureMetricSdk()
-        {
-            if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
-            {
-                throw new Exception("Invalid Type");
-            }
-        }
-
-        public MeasureMetricSdk(string name) : this()
+        public MeasureMetricSdk(string name)
         {
             this.metricName = name;
         }
@@ -43,7 +34,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.measureBoundInstruments.TryGetValue(labelset, out var boundInstrument))
             {
-                boundInstrument = new BoundMeasureMetricSdk<T>();
+                boundInstrument = this.CreateMetric();
 
                 this.measureBoundInstruments.Add(labelset, boundInstrument);
             }
@@ -56,9 +47,11 @@ namespace OpenTelemetry.Metrics
             return this.Bind(new LabelSetSdk(labels));
         }
 
-        internal IDictionary<LabelSet, BoundMeasureMetricSdk<T>> GetAllBoundInstruments()
+        internal IDictionary<LabelSet, BoundMeasureMetricSdkBase<T>> GetAllBoundInstruments()
         {
             return this.measureBoundInstruments;
         }
+
+        protected abstract BoundMeasureMetricSdkBase<T> CreateMetric();
     }
 }

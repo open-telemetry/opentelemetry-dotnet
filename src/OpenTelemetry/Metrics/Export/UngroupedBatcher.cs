@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics.Export
         private List<Metric<double>> doubleMetrics;
 
         /// <summary>
-        /// Constructs UngroupedBatcher.
+        /// Initializes a new instance of the <see cref="UngroupedBatcher"/> class.
         /// </summary>
         public UngroupedBatcher()
         {                        

@@ -60,7 +60,7 @@ namespace OpenTelemetry.Trace.Test
 
             var testExporter = new TestExporter(spans =>
             {
-                exporterCalledCount ++;
+                exporterCalledCount++;
                 Assert.Single(spans);
                 Assert.IsType<SpanData>(spans.Single());
             });
@@ -136,8 +136,8 @@ namespace OpenTelemetry.Trace.Test
             var processCalledCount = 0;
 
             TestProcessor testProcessor1 = null;
-            var testProcessor2 = new TestProcessor(_ => processCalledCount ++);
-            
+            var testProcessor2 = new TestProcessor(_ => processCalledCount++);
+
             var tracerFactory = TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p
                     .SetExporter(testExporter)
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(testProcessor1.IsDisposed);
             Assert.True(testProcessor2.IsDisposed);
         }
-        
+
         [Fact]
         public void GetTracer_NoName_NoVersion()
         {
@@ -210,9 +210,11 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetTracerReturnsTracerWithResourceOverriddenBySetResource()
         {
-            var tracerFactory = TracerFactory.Create(b => { 
+            var tracerFactory = TracerFactory.Create(b =>
+            {
                 b.SetResource(new Resource(new Dictionary<string, object>() { { "a", "b" } }))
-                .SetResource(new Resource(new Dictionary<string, object>() { { "a", "c" } })); });
+                .SetResource(new Resource(new Dictionary<string, object>() { { "a", "c" } }));
+            });
             var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.2.3");
             Assert.Equal("c", tracer.LibraryResource.Attributes.Single(kvp => kvp.Key == "a").Value);
         }
@@ -270,7 +272,7 @@ namespace OpenTelemetry.Trace.Test
             public override void OnEnd(SpanData span)
             {
                 this.onEnd?.Invoke(span);
-                exporter?.ExportAsync(new[] {span}, default);
+                exporter?.ExportAsync(new[] { span }, default);
             }
 
             public override Task ShutdownAsync(CancellationToken cancellationToken)

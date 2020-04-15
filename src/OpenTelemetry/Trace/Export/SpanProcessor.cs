@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 namespace OpenTelemetry.Trace.Export
 {
     /// <summary>
-    /// Span processor base class. 
+    /// Span processor base class.
     /// </summary>
     public abstract class SpanProcessor
     {
@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace.Export
         /// </summary>
         /// <param name="span">Instance of span to process.</param>
         public abstract void OnStart(SpanData span);
-        
+
         /// <summary>
         /// Span end hook.
         /// </summary>
@@ -39,6 +39,7 @@ namespace OpenTelemetry.Trace.Export
         /// Shuts down span processor asynchronously.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Returns <see cref="Task"/>.</returns>
         public abstract Task ShutdownAsync(CancellationToken cancellationToken);
     }
 }

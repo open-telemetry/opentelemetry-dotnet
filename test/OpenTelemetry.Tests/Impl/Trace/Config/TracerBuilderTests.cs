@@ -99,7 +99,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.True(collectorFactoryCalled);
         }
 
-        private class TestCollector 
+        private class TestCollector
         {
             private readonly Tracer tracer;
             public TestCollector(Tracer tracer)
