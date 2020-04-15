@@ -1,4 +1,4 @@
-﻿// <copyright file="DistributedContext.cs" company="OpenTelemetry Authors">
+// <copyright file="DistributedContext.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Internal;
 
@@ -26,26 +25,25 @@ namespace OpenTelemetry.Context
     /// </summary>
     public readonly struct DistributedContext : IEquatable<DistributedContext>
     {
-        private static readonly List<DistributedContextEntry> EmptyList = new List<DistributedContextEntry>();
         private static DistributedContextCarrier carrier = NoopDistributedContextCarrier.Instance;
-        private readonly List<DistributedContextEntry> entries;
+        private readonly CorrelationContext correlationContext;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DistributedContext"/> struct.
         /// </summary>
-        /// <param name="entries">Entries for distributed context.</param>
-        internal DistributedContext(List<DistributedContextEntry> entries)
+        /// <param name="correlationContext">The correlation context.</param>
+        internal DistributedContext(CorrelationContext correlationContext)
         {
-            this.entries = entries;
+            this.correlationContext = correlationContext;
         }
 
         /// <summary>
         /// Gets empty object of <see cref="DistributedContext"/> struct.
         /// </summary>
-        public static DistributedContext Empty { get; } = new DistributedContext(EmptyList);
+        public static DistributedContext Empty { get; } = new DistributedContext(CorrelationContext.Empty);
 
         /// <summary>
-        /// Gets the current <see cref="DistributedContext"/>.
+        /// Gets the current <see cref="CorrelationContext"/>.
         /// </summary>
         public static DistributedContext Current => carrier.Current;
 
@@ -68,9 +66,9 @@ namespace OpenTelemetry.Context
         }
 
         /// <summary>
-        /// Gets all the <see cref="DistributedContextEntry"/> in this <see cref="DistributedContext"/>.
+        /// Gets the <see cref="CorrelationContext"/> for the current distributed context.
         /// </summary>
-        public IEnumerable<DistributedContextEntry> Entries => this.entries;
+        public CorrelationContext CorrelationContext => this.correlationContext;
 
         /// <summary>
         /// Sets the current <see cref="DistributedContext"/>.
@@ -79,17 +77,10 @@ namespace OpenTelemetry.Context
         /// <returns>Scope object. On disposal - original context will be restored.</returns>
         public static IDisposable SetCurrent(in DistributedContext context) => carrier.SetCurrent(context);
 
-        /// <summary>
-        /// Gets the <see cref="DistributedContextEntry"/> with the specified name.
-        /// </summary>
-        /// <param name="key">Name of the <see cref="DistributedContextEntry"/> to get.</param>
-        /// <returns>The <see cref="DistributedContextEntry"/> with the specified name. If not found - null.</returns>
-        public string GetEntryValue(string key) => this.entries.LastOrDefault(x => x.Key == key).Value;
-
         /// <inheritdoc/>
         public bool Equals(DistributedContext other)
         {
-            return this.entries.Count == other.entries.Count && this.entries.All(entry => other.GetEntryValue(entry.Key) == entry.Value);
+            return this.CorrelationContext.Equals(other.CorrelationContext);
         }
     }
 }

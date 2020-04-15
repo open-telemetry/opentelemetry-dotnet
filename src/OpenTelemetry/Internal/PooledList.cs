@@ -18,7 +18,7 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Internal
 {
     internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
     {
@@ -92,7 +92,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         void ICollection.CopyTo(Array array, int index) => throw new NotSupportedException();
 
-        public IEnumerator<T> GetEnumerator()
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(in this);
+        }
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             return new Enumerator(in this);
         }
@@ -102,7 +107,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return new Enumerator(in this);
         }
 
-        private struct Enumerator : IEnumerator<T>, IEnumerator
+        public struct Enumerator : IEnumerator<T>, IEnumerator
         {
             private readonly T[] buffer;
             private readonly int count;

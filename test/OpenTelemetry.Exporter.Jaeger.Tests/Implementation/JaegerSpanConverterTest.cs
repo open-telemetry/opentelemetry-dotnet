@@ -348,6 +348,25 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
+        public void JaegerSpanConverterTest_GenerateSpan_PeerServiceNameIgnoredForServerSpan()
+        {
+            // Arrange
+            var span = CreateTestSpan(
+                additionalAttributes: new Dictionary<string, object>
+                {
+                    ["http.host"] = "DiscardedRemoteServiceName",
+                },
+                kind: SpanKind.Server);
+
+            // Act
+            var jaegerSpan = span.ToJaegerSpan();
+
+            // Assert
+            Assert.Null(jaegerSpan.PeerServiceName);
+            Assert.Empty(jaegerSpan.Tags.Where(t => t.Key == "peer.service"));
+        }
+
+        [Fact]
         public void JaegerSpanConverterTest_GenerateSpan_RemoteEndpointResolutionPriority()
         {
             // Arrange
@@ -391,7 +410,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Dictionary<string, object> additionalAttributes = null,
             bool addEvents = true,
             bool addLinks = true,
-            Resource resource = null)
+            Resource resource = null,
+            SpanKind kind = SpanKind.Client)
         {
             var startTimestamp = DateTime.UtcNow;
             var endTimestamp = startTimestamp.AddSeconds(60);
@@ -444,7 +464,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 "Name",
                 new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded),
                 parentSpanId,
-                SpanKind.Client,
+                kind,
                 startTimestamp,
                 setAttributes ? attributes : null,
                 addEvents ? events : null,
