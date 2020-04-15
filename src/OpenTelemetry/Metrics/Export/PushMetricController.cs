@@ -48,9 +48,9 @@ namespace OpenTelemetry.Metrics.Export
         }
 
         private async Task Worker(CancellationToken cancellationToken)
-        {           
-            List<Metric<long>> longMetricToExport = new List<Metric<long>>();
-            List<Metric<double>> doubleMetricToExport = new List<Metric<double>>();
+        {
+            IEnumerable<Metric<long>> longMetricToExport;
+            IEnumerable<Metric<double>> doubleMetricToExport;
 
             await Task.Delay(this.pushInterval, cancellationToken).ConfigureAwait(false);
             while (!cancellationToken.IsCancellationRequested)
@@ -58,9 +58,6 @@ namespace OpenTelemetry.Metrics.Export
                 var sw = Stopwatch.StartNew();
                 try
                 {                    
-                    longMetricToExport.Clear();
-                    doubleMetricToExport.Clear();
-
                     foreach (var meter in this.meters.Values)
                     {
                         meter.Collect();
@@ -73,16 +70,7 @@ namespace OpenTelemetry.Metrics.Export
                     // Let MetricProcessor know that this cycle is ending,
                     // and send the metrics from MetricProcessor
                     // to the MetricExporter.
-                    var metricsToExportTuple = this.metricProcessor.FinishCollectionCycle();
-                    if (metricsToExportTuple.Item1 != null)
-                    {
-                        longMetricToExport.AddRange(metricsToExportTuple.Item1);
-                    }
-
-                    if (metricsToExportTuple.Item2 != null)
-                    {
-                        doubleMetricToExport.AddRange(metricsToExportTuple.Item2);
-                    }
+                    this.metricProcessor.FinishCollectionCycle(out longMetricToExport, out doubleMetricToExport);
 
                     var longExportResult = await this.metricExporter.ExportAsync<long>(longMetricToExport, cancellationToken);
                     if (longExportResult != MetricExporter.ExportResult.Success)

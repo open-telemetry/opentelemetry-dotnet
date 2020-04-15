@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics.Export
 {
     internal class NoOpMetricExporter : MetricExporter
     {
-        public override Task<ExportResult> ExportAsync<T>(List<Metric<T>> metrics, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync<T>(IEnumerable<Metric<T>> metrics, CancellationToken cancellationToken)
         {
             return Task.FromResult(ExportResult.Success);
         }

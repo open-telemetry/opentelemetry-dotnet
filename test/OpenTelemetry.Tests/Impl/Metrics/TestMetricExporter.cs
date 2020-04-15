@@ -31,7 +31,7 @@ namespace OpenTelemetry.Metrics.Test
         public List<Metric<double>> DoubleMetrics = new List<Metric<double>>();
         public int count = 0;
 
-        public override Task<ExportResult> ExportAsync<T>(List<Metric<T>> metrics, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync<T>(IEnumerable<Metric<T>> metrics, CancellationToken cancellationToken)
         {
             count++;
             if (typeof(T) == typeof(double))
