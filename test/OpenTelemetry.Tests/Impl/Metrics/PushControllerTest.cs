@@ -36,7 +36,7 @@ namespace OpenTelemetry.Metrics.Test
             // Setup controller to collect every 100 msec.
             var controllerPushIntervalInMsec = 100;
             var collectionCountExpectedMin = 3;
-            var waitIntervalInMsec = (controllerPushIntervalInMsec * collectionCountExpectedMin) + 200;
+            var waitIntervalInMsec = (controllerPushIntervalInMsec * collectionCountExpectedMin) + 400;
             var testExporter = new TestMetricExporter();
             var testProcessor = new TestMetricProcessor();
 
@@ -60,17 +60,17 @@ namespace OpenTelemetry.Metrics.Test
             Task.Delay(waitIntervalInMsec).Wait();
 
             // Validate that collectCount is incremented atleast 3
-            // and not greater than 2 more additional collections.
-            // "2" because the buffer wait is 2 times push interval.
+            // and not greater than 4 more additional collections.
+            // "4" because the buffer wait is 4 times push interval.
             Assert.True(meter1CollectCount >= collectionCountExpectedMin
-                && meter1CollectCount <= collectionCountExpectedMin + 2,
+                && meter1CollectCount <= collectionCountExpectedMin + 4,
                 $"Actual Collect Count for Meter1 is {meter1CollectCount} vs Expected Range of between {collectionCountExpectedMin}" +
-                $" and {collectionCountExpectedMin + 2}.");
+                $" and {collectionCountExpectedMin + 4}.");
 
             Assert.True(meter2CollectCount >= collectionCountExpectedMin
-                && meter2CollectCount <= collectionCountExpectedMin + 2,
+                && meter2CollectCount <= collectionCountExpectedMin + 4,
                 $"Actual Collect Count for Meter2 is {meter2CollectCount} vs Expected Range of between {collectionCountExpectedMin}" +
-                $" and {collectionCountExpectedMin + 2}");
+                $" and {collectionCountExpectedMin + 4}");
         }
 
         [Fact]
