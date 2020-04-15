@@ -100,7 +100,40 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     case AggregationType.Summary:
                         {
-                            // Not supported yet.
+                            var longSummary = metric.Data as SummaryData<long>;
+                            var longValueCount = longSummary.Count;
+                            var longValueSum = longSummary.Sum;
+                            var longValueMin = longSummary.Min;
+                            var longValueMax = longSummary.Max;
+
+                            builder = builder.WithType("summary");
+
+                            foreach (var label in labels)
+                            {
+                                var metricValueBuilder = builder.AddValue();
+                                metricValueBuilder.WithName(metric.MetricName + "_sum");
+                                metricValueBuilder = metricValueBuilder.WithValue(longValueSum);
+                                metricValueBuilder.WithLabel(label.Key, label.Value);
+
+                                metricValueBuilder = builder.AddValue();
+                                metricValueBuilder.WithName(metric.MetricName + "_count");
+                                metricValueBuilder = metricValueBuilder.WithValue(longValueCount);
+                                metricValueBuilder.WithLabel(label.Key, label.Value);
+
+                                metricValueBuilder = builder.AddValue();
+                                metricValueBuilder.WithName(metric.MetricName);
+                                metricValueBuilder = metricValueBuilder.WithValue(longValueMin);
+                                metricValueBuilder.WithLabel(label.Key, label.Value);
+                                metricValueBuilder.WithLabel("quantile", "0.0");
+
+                                metricValueBuilder = builder.AddValue();
+                                metricValueBuilder.WithName(metric.MetricName);
+                                metricValueBuilder = metricValueBuilder.WithValue(longValueMax);
+                                metricValueBuilder.WithLabel(label.Key, label.Value);
+                                metricValueBuilder.WithLabel("quantile", "1.0");
+                            }
+
+                            builder.Write(writer);
                             break;
                         }
                 }
