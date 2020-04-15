@@ -45,7 +45,7 @@ namespace OpenTelemetry.Metrics
             return new LabelSetSdk(labels);
         }
 
-        public void Collect()
+        public virtual void Collect()
         {
             lock (this.collectLock)
             {

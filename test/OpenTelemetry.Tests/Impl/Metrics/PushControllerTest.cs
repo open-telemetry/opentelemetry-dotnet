@@ -24,11 +24,48 @@ using System.Diagnostics;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using static OpenTelemetry.Metrics.Configuration.MeterFactory;
 
 namespace OpenTelemetry.Metrics.Test
 {
     public class PushControllerTest
     {
+        [Fact]
+        public void PushControllerCollectsAllMeters()
+        {
+            // Setup controller to collect every 100 msec.
+            var controllerPushIntervalInMsec = 100;
+            var collectionCountExpectedMin = 3;
+            var waitIntervalInMsec = (controllerPushIntervalInMsec * collectionCountExpectedMin) + 200;
+            var testExporter = new TestMetricExporter();
+            var testProcessor = new TestMetricProcessor();
+
+            // Setup 2 meters whose Collect will increment the collect count.
+            int meter1CollectCount = 0;
+            int meter2CollectCount = 0;
+            var meters = new Dictionary<MeterRegistryKey, MeterSdk>();
+            var testMeter1 = new TestMeter("meter1", testProcessor, () => meter1CollectCount++);
+            meters.Add(new MeterRegistryKey("meter1", ""), testMeter1);
+            var testMeter2 = new TestMeter("meter2", testProcessor, () => meter2CollectCount++);
+            meters.Add(new MeterRegistryKey("meter2", ""), testMeter2);
+
+            var pushInterval = TimeSpan.FromMilliseconds(controllerPushIntervalInMsec);
+            var pushController = new PushMetricController(meters,
+                testProcessor,
+                testExporter,
+                pushInterval,
+                new CancellationTokenSource());
+
+            // Wait 3 times collection interval, plus a comfortable buffer.
+            Task.Delay(waitIntervalInMsec).Wait();
+
+            // Validate that collectCount is incremented atleast 3
+            // and not greater than 2 more additional collections.
+            // "2" because the buffer wait is 2 times push interval.
+            Assert.True(meter1CollectCount >= collectionCountExpectedMin && meter1CollectCount < collectionCountExpectedMin + 2);
+            Assert.True(meter2CollectCount >= collectionCountExpectedMin && meter2CollectCount < collectionCountExpectedMin + 2);
+        }
+
         [Fact]
         public void PushControllerPushesMetricAtConfiguredInterval()
         {
