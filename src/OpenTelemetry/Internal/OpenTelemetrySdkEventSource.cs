@@ -90,7 +90,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.MetricObserverException(ToInvariantString(ex));
+                this.MetricControllerException(ToInvariantString(ex));
             }
         }
 
@@ -202,8 +202,8 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(18, msec);
         }
 
-        [Event(19, Message = "Exception occurred in Metric Controller while processing metrics from one Collect cycle. Exception: '{0}'", Level = EventLevel.Warning)]
-        public void MetricObserverException(string exception)
+        [Event(19, Message = "Exception occurred in Metric Controller while processing metrics from one Collect cycle. This does not shutdown controller and subsequent collections will be done. Exception: '{0}'", Level = EventLevel.Warning)]
+        public void MetricControllerException(string exception)
         {
             this.WriteEvent(19, exception);
         }
