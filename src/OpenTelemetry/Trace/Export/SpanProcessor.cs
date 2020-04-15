@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace.Export
         /// Shuts down span processor asynchronously.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns><see cref="Task"/>.</returns>
+        /// <returns>Returns <see cref="Task"/>.</returns>
         public abstract Task ShutdownAsync(CancellationToken cancellationToken);
     }
 }
