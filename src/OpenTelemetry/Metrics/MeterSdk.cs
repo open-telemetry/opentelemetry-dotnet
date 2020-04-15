@@ -27,10 +27,10 @@ namespace OpenTelemetry.Metrics
     {
         private readonly string meterName;
         private readonly MetricProcessor metricProcessor;
-        private readonly IDictionary<string, CounterMetricSdk<long>> longCounters = new ConcurrentDictionary<string, CounterMetricSdk<long>>();
-        private readonly IDictionary<string, CounterMetricSdk<double>> doubleCounters = new ConcurrentDictionary<string, CounterMetricSdk<double>>();
-        private readonly IDictionary<string, MeasureMetricSdk<long>> longMeasures = new ConcurrentDictionary<string, MeasureMetricSdk<long>>();
-        private readonly IDictionary<string, MeasureMetricSdk<double>> doubleMeasures = new ConcurrentDictionary<string, MeasureMetricSdk<double>>();
+        private readonly IDictionary<string, Int64CounterMetricSdk> longCounters = new ConcurrentDictionary<string, Int64CounterMetricSdk>();
+        private readonly IDictionary<string, DoubleCounterMetricSdk> doubleCounters = new ConcurrentDictionary<string, DoubleCounterMetricSdk>();
+        private readonly IDictionary<string, Int64MeasureMetricSdk> longMeasures = new ConcurrentDictionary<string, Int64MeasureMetricSdk>();
+        private readonly IDictionary<string, DoubleMeasureMetricSdk> doubleMeasures = new ConcurrentDictionary<string, DoubleMeasureMetricSdk>();
         private readonly IDictionary<string, Int64ObserverMetricSdk> longObservers = new ConcurrentDictionary<string, Int64ObserverMetricSdk>();
         private readonly IDictionary<string, DoubleObserverMetricSdk> doubleObservers = new ConcurrentDictionary<string, DoubleObserverMetricSdk>();
         private readonly object collectLock = new object();
@@ -217,7 +217,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.longCounters.TryGetValue(name, out var counter))
             {
-                counter = new CounterMetricSdk<long>(name);
+                counter = new Int64CounterMetricSdk(name);
 
                 this.longCounters.Add(name, counter);
             }
@@ -229,7 +229,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.doubleCounters.TryGetValue(name, out var counter))
             {
-                counter = new CounterMetricSdk<double>(name);
+                counter = new DoubleCounterMetricSdk(name);
                 this.doubleCounters.Add(name, counter);
             }
 
@@ -240,7 +240,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.doubleMeasures.TryGetValue(name, out var measure))
             {
-                measure = new MeasureMetricSdk<double>(name);
+                measure = new DoubleMeasureMetricSdk(name);
 
                 this.doubleMeasures.Add(name, measure);
             }
@@ -252,7 +252,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.longMeasures.TryGetValue(name, out var measure))
             {
-                measure = new MeasureMetricSdk<long>(name);
+                measure = new Int64MeasureMetricSdk(name);
 
                 this.longMeasures.Add(name, measure);
             }

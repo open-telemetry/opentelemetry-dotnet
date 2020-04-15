@@ -1,4 +1,4 @@
-﻿// <copyright file="BoundCounterMetricSdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DoubleBoundCounterMetricSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,43 +14,31 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using OpenTelemetry.Context;
 using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class BoundCounterMetricSdk<T> : BoundCounterMetric<T>
-        where T : struct
+    internal class DoubleBoundCounterMetricSdk : BoundCounterMetricSdkBase<double>
     {
-        internal RecordStatus Status;
-        private readonly CounterSumAggregator<T> sumAggregator = new CounterSumAggregator<T>();
+        private readonly DoubleCounterSumAggregator sumAggregator = new DoubleCounterSumAggregator();
 
-        internal BoundCounterMetricSdk()
+        public DoubleBoundCounterMetricSdk(RecordStatus recordStatus) : base(recordStatus)
         {
-            if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
-            {
-                throw new Exception("Invalid Type");
-            }
         }
 
-        internal BoundCounterMetricSdk(RecordStatus recordStatus) : this()
-        {
-            this.Status = recordStatus;
-        }
-
-        public override void Add(in SpanContext context, T value)
+        public override void Add(in SpanContext context, double value)
         {
             this.sumAggregator.Update(value);
         }
 
-        public override void Add(in DistributedContext context, T value)
+        public override void Add(in DistributedContext context, double value)
         {
             this.sumAggregator.Update(value);
         }
 
-        internal CounterSumAggregator<T> GetAggregator()
+        public override Aggregator<double> GetAggregator()
         {
             return this.sumAggregator;
         }

@@ -37,8 +37,8 @@ namespace OpenTelemetry.Metrics
         /// <param name="labels">labels from which labelset should be constructed.</param>
         internal LabelSetSdk(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            this.Labels = this.SortAndDedup(labels);
-            this.labelSetEncoded = this.GetLabelSetEncoded(this.Labels);
+            this.Labels = SortAndDedup(labels);
+            this.labelSetEncoded = GetLabelSetEncoded(this.Labels);
         }
 
         /// <summary>
@@ -59,38 +59,36 @@ namespace OpenTelemetry.Metrics
             return this.labelSetEncoded.Equals(((LabelSetSdk)obj).labelSetEncoded);
         }
 
-        private IEnumerable<KeyValuePair<string, string>> SortAndDedup(IEnumerable<KeyValuePair<string, string>> labels)
+        private static IEnumerable<KeyValuePair<string, string>> SortAndDedup(IEnumerable<KeyValuePair<string, string>> labels)
         {
             // TODO - could be optimized to avoid creating List twice.
-            var orderedList = labels.OrderBy(x => x.Key).ToList<KeyValuePair<string, string>>();
+            var orderedList = labels.OrderBy(x => x.Key).ToList();
             if (orderedList.Count == 1)
             {
                 return orderedList;
             }
-            else
+
+            var dedupedList = new List<KeyValuePair<string, string>>();
+
+            int dedupedListIndex = 0;
+            dedupedList.Add(orderedList[dedupedListIndex]);
+            for (int i = 1; i < orderedList.Count; i++)
             {
-                var dedupedList = new List<KeyValuePair<string, string>>();
-
-                int dedupedListIndex = 0;
-                dedupedList.Add(orderedList[dedupedListIndex]);
-                for (int i = 1; i < orderedList.Count; i++)
-                {                    
-                    if (orderedList[i].Key.Equals(orderedList[i - 1].Key))
-                    {
-                        dedupedList[dedupedListIndex] = orderedList[i];
-                    }
-                    else
-                    {
-                        dedupedList.Add(orderedList[i]);
-                        dedupedListIndex++;
-                    }
+                if (orderedList[i].Key.Equals(orderedList[i - 1].Key))
+                {
+                    dedupedList[dedupedListIndex] = orderedList[i];
                 }
-
-                return dedupedList;
+                else
+                {
+                    dedupedList.Add(orderedList[i]);
+                    dedupedListIndex++;
+                }
             }
+
+            return dedupedList;
         }
 
-        private string GetLabelSetEncoded(IEnumerable<KeyValuePair<string, string>> labels)
+        private static string GetLabelSetEncoded(IEnumerable<KeyValuePair<string, string>> labels)
         {
             StringBuilder encoder = new StringBuilder();
             bool isFirstLabel = true;
