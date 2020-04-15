@@ -24,34 +24,10 @@ namespace OpenTelemetry.Metrics.Test
     public class LastValueAggregatorTest
     {
         [Fact]
-        public void LastValueAggregatorSupportsLong()
-        {
-            LastValueAggregator<long> aggregator = new LastValueAggregator<long>();
-        }
-
-        [Fact]
-        public void LastValueAggregatorSupportsDouble()
-        {
-            LastValueAggregator<double> aggregator = new LastValueAggregator<double>();
-        }
-
-        [Fact]
-        public void LastValueAggregatorConstructorThrowsForUnSupportedTypeInt()
-        {
-            Assert.Throws<Exception>(() => new LastValueAggregator<int>());
-        }
-
-        [Fact]
-        public void LastValueAggregatorConstructorThrowsForUnSupportedTypeByte()
-        {
-            Assert.Throws<Exception>(() => new LastValueAggregator<byte>());
-        }
-
-        [Fact]
         public void LastValueAggregatorAggregatesCorrectly()
         {
             // create an aggregator
-            LastValueAggregator<long> aggregator = new LastValueAggregator<long>();
+            var aggregator = new Int64LastValueAggregator();
             var sum = aggregator.ToMetricData() as SumData<long>;
 
             // we start with 0.

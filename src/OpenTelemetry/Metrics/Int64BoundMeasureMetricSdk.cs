@@ -1,4 +1,4 @@
-﻿// <copyright file="BoundMeasureMetricSdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Int64BoundMeasureMetricSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,37 +14,27 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using OpenTelemetry.Context;
 using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class BoundMeasureMetricSdk<T> : BoundMeasureMetric<T>
-        where T : struct
+    internal class Int64BoundMeasureMetricSdk : BoundMeasureMetricSdkBase<long>
     {
-        private readonly MeasureMinMaxSumCountAggregator<T> measureAggregator = new MeasureMinMaxSumCountAggregator<T>();
+        private readonly Int64MeasureMinMaxSumCountAggregator measureAggregator = new Int64MeasureMinMaxSumCountAggregator();
 
-        internal BoundMeasureMetricSdk()
-        {
-            if (typeof(T) != typeof(long) && typeof(T) != typeof(double))
-            {
-                throw new Exception("Invalid Type");
-            }
-        }
-
-        public override void Record(in SpanContext context, T value)
+        public override void Record(in SpanContext context, long value)
         {
             this.measureAggregator.Update(value);
         }
 
-        public override void Record(in DistributedContext context, T value)
+        public override void Record(in DistributedContext context, long value)
         {
             this.measureAggregator.Update(value);
         }
 
-        internal MeasureMinMaxSumCountAggregator<T> GetAggregator()
+        public override Aggregator<long> GetAggregator()
         {
             return this.measureAggregator;
         }
