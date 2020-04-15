@@ -63,12 +63,12 @@ namespace OpenTelemetry.Metrics.Test
             // and not greater than 2 more additional collections.
             // "2" because the buffer wait is 2 times push interval.
             Assert.True(meter1CollectCount >= collectionCountExpectedMin
-                && meter1CollectCount < collectionCountExpectedMin + 2,
+                && meter1CollectCount <= collectionCountExpectedMin + 2,
                 $"Actual Collect Count for Meter1 is {meter1CollectCount} vs Expected Range of between {collectionCountExpectedMin}" +
                 $" and {collectionCountExpectedMin + 2}.");
 
             Assert.True(meter2CollectCount >= collectionCountExpectedMin
-                && meter2CollectCount < collectionCountExpectedMin + 2,
+                && meter2CollectCount <= collectionCountExpectedMin + 2,
                 $"Actual Collect Count for Meter2 is {meter2CollectCount} vs Expected Range of between {collectionCountExpectedMin}" +
                 $" and {collectionCountExpectedMin + 2}");
         }
