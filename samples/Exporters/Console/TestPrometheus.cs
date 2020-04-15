@@ -60,7 +60,7 @@ namespace Samples
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
             var defaultContext = default(SpanContext);
 
-            // This sample runs indefinitely. Replace with actual shutdown logic.
+            // TODO: This sample runs indefinitely. Replace with actual shutdown logic.
             while (true)
             {
                 testCounter.Add(defaultContext, 100, meter.GetLabelSet(labels1));

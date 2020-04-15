@@ -62,42 +62,28 @@ namespace OpenTelemetry.Metrics.Test
             meter2Counter1.Add(context, 300, ls);
             meter2Counter2.Add(context, 400, ls);
 
-            Task.Delay(controllerPushIntervalInMsec).ContinueWith(t=>
-            {
-                meter1Counter1.Add(context, 100, ls);
-                meter1Counter2.Add(context, 200, ls);
-                meter2Counter1.Add(context, 300, ls);
-                meter2Counter2.Add(context, 400, ls);
-            });
-
-            Task.Delay(2 * controllerPushIntervalInMsec).ContinueWith(t =>
-            {
-                meter1Counter1.Add(context, 100, ls);
-                meter1Counter2.Add(context, 200, ls);
-                meter2Counter1.Add(context, 300, ls);
-                meter2Counter2.Add(context, 400, ls);
-            });
+            meter1Counter1.Add(context, 100, ls);
+            meter1Counter2.Add(context, 200, ls);
+            meter2Counter1.Add(context, 300, ls);
+            meter2Counter2.Add(context, 400, ls);
 
             Task.Delay(waitIntervalInMsec).Wait();
-
-            // We expect 3 occurence of each metric as 3 cycles must be complete by now.
-            // Once Batcher implements Merging+Stateful, we would see each metric merged.
-            // Then the sums will be one metric each with sums 300, 600,900, 1200 respectively.
-            Assert.Equal(3, testExporter.LongMetrics.Count(m => m.MetricName == "testCounter1"
-            && m.MetricNamespace == "library1"
-            && ((m.Data as SumData<long>).Sum == 100)));
-
-            Assert.Equal(3, testExporter.LongMetrics.Count(m => m.MetricName == "testCounter2"
+            
+            Assert.Equal(1, testExporter.LongMetrics.Count(m => m.MetricName == "testCounter1"
             && m.MetricNamespace == "library1"
             && ((m.Data as SumData<long>).Sum == 200)));
 
-            Assert.Equal(3, testExporter.LongMetrics.Count(m => m.MetricName == "testCounter1"
-            && m.MetricNamespace == "library2"
-            && ((m.Data as SumData<long>).Sum == 300)));
-
-            Assert.Equal(3, testExporter.LongMetrics.Count(m => m.MetricName == "testCounter2"
-            && m.MetricNamespace == "library2"
+            Assert.Equal(1, testExporter.LongMetrics.Count(m => m.MetricName == "testCounter2"
+            && m.MetricNamespace == "library1"
             && ((m.Data as SumData<long>).Sum == 400)));
+
+            Assert.Equal(1, testExporter.LongMetrics.Count(m => m.MetricName == "testCounter1"
+            && m.MetricNamespace == "library2"
+            && ((m.Data as SumData<long>).Sum == 600)));
+
+            Assert.Equal(1, testExporter.LongMetrics.Count(m => m.MetricName == "testCounter2"
+            && m.MetricNamespace == "library2"
+            && ((m.Data as SumData<long>).Sum == 800)));
         }
     }
 }

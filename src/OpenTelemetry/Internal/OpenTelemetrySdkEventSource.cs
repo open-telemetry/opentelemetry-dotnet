@@ -184,7 +184,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(18, msec);
         }
 
-        [Event(19, Message = "Exception occured in Metric Controller. Exception: '{0}'", Level = EventLevel.Warning)]
+        [Event(19, Message = "Exception occurred in Metric Controller. Exception: '{0}'", Level = EventLevel.Warning)]
         public void MetricObserverException(string exception)
         {
             this.WriteEvent(19, exception);
