@@ -68,6 +68,24 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
+        public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.TracestateKeyIsInvalid(key.ToString());
+            }
+        }
+
+        [NonEvent]
+        public void TracestateValueIsInvalid(ReadOnlySpan<char> value)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.TracestateValueIsInvalid(value.ToString());
+            }
+        }
+
+        [NonEvent]
         public void MetricControllerException(Exception ex)
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
@@ -143,15 +161,15 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(12, Message = "Tracestate key is invalid, key = '{0}'", Level = EventLevel.Warning)]
-        public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
+        public void TracestateKeyIsInvalid(string key)
         {
-            this.WriteEvent(12, key.ToString());
+            this.WriteEvent(12, key);
         }
 
         [Event(13, Message = "Tracestate value is invalid, value = '{0}'", Level = EventLevel.Warning)]
-        public void TracestateValueIsInvalid(ReadOnlySpan<char> value)
+        public void TracestateValueIsInvalid(string value)
         {
-            this.WriteEvent(13, value.ToString());
+            this.WriteEvent(13, value);
         }
 
         [Event(14, Message = "Tracestate parse error: '{0}'", Level = EventLevel.Warning)]

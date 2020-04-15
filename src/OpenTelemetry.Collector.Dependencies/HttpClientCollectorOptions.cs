@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Net;
 using System.Net.Http;
+using OpenTelemetry.Collector.Dependencies.Implementation;
 using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Collector.Dependencies
@@ -63,12 +65,9 @@ namespace OpenTelemetry.Collector.Dependencies
             // TODO: there is some preliminary consensus that we should introduce 'terminal' spans or context.
             // exporters should ensure they set it
 
-            if (activityName == "System.Net.Http.HttpRequestOut" &&
-                arg1 is HttpRequestMessage request &&
-                request.RequestUri != null &&
-                request.Method == HttpMethod.Post)
+            if (IsHttpOutgoingPostRequest(activityName, arg1, out Uri requestUri))
             {
-                var originalString = request.RequestUri.OriginalString;
+                var originalString = requestUri.OriginalString;
 
                 // zipkin
                 if (originalString.Contains(":9411/api/v2/spans"))
@@ -88,6 +87,35 @@ namespace OpenTelemetry.Collector.Dependencies
             }
 
             return true;
+        }
+
+        private static bool IsHttpOutgoingPostRequest(string activityName, object arg1, out Uri requestUri)
+        {
+            if (activityName == "System.Net.Http.HttpRequestOut")
+            {
+                if (arg1 is HttpRequestMessage request &&
+                    request.RequestUri != null &&
+                    request.Method == HttpMethod.Post)
+                {
+                    requestUri = request.RequestUri;
+                    return true;
+                }
+            }
+#if NET461
+            else if (activityName == HttpWebRequestDiagnosticSource.ActivityName)
+            {
+                if (arg1 is HttpWebRequest request &&
+                    request.RequestUri != null &&
+                    request.Method == "POST")
+                {
+                    requestUri = request.RequestUri;
+                    return true;
+                }
+            }
+#endif
+
+            requestUri = null;
+            return false;
         }
     }
 }

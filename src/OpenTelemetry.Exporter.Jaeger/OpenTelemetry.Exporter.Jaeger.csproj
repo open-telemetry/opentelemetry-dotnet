@@ -14,8 +14,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\OpenTelemetry\Internal\EnumerationHelper.cs" Link="Implementation\EnumerationHelper.cs" />
+    <Compile Include="..\OpenTelemetry\Internal\PooledList.cs" Link="Implementation\PooledList.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="ApacheThrift" Version="0.13.0.1" IncludeAssets="all" ExcludeAssets="compile;runtime" GeneratePathProperty="true" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" Condition="'$(TargetFramework)' != 'netstandard2.1'" />
   </ItemGroup>
 

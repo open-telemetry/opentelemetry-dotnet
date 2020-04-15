@@ -24,14 +24,14 @@ using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class Process : TUnionBase
+    public class Process
     {
         public Process(string serviceName)
         {
             this.ServiceName = serviceName;
         }
 
-        public Process(string serviceName, IDictionary<string, object> processTags)
+        public Process(string serviceName, IEnumerable<KeyValuePair<string, object>> processTags)
             : this(serviceName, processTags?.Select(pt => pt.ToJaegerTag()).ToDictionary(pt => pt.Key, pt => pt))
         {
         }
@@ -51,7 +51,23 @@ namespace OpenTelemetry.Exporter.Jaeger
 
         internal byte[] Message { get; set; }
 
-        public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+        public override string ToString()
+        {
+            var sb = new StringBuilder("Process(");
+            sb.Append(", ServiceName: ");
+            sb.Append(this.ServiceName);
+
+            if (this.Tags != null)
+            {
+                sb.Append(", Tags: ");
+                sb.Append(this.Tags);
+            }
+
+            sb.Append(")");
+            return sb.ToString();
+        }
+
+        internal async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
 
@@ -99,22 +115,6 @@ namespace OpenTelemetry.Exporter.Jaeger
             {
                 oprot.DecrementRecursionDepth();
             }
-        }
-
-        public override string ToString()
-        {
-            var sb = new StringBuilder("Process(");
-            sb.Append(", ServiceName: ");
-            sb.Append(this.ServiceName);
-
-            if (this.Tags != null)
-            {
-                sb.Append(", Tags: ");
-                sb.Append(this.Tags);
-            }
-
-            sb.Append(")");
-            return sb.ToString();
         }
     }
 }
