@@ -31,9 +31,9 @@ namespace OpenTelemetry.Metrics.Export
         private readonly Task worker;
         private MetricExporter metricExporter;
         private MetricProcessor metricProcessor;
-        private Dictionary<MeterRegistryKey, Meter> meters;
+        private Dictionary<MeterRegistryKey, MeterSdk> meters;
 
-        public PushMetricController(Dictionary<MeterRegistryKey, Meter> meters,
+        public PushMetricController(Dictionary<MeterRegistryKey, MeterSdk> meters,
             MetricProcessor metricProcessor,
             MetricExporter metricExporter,
             TimeSpan pushInterval,
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Metrics.Export
 
                     foreach (var meter in this.meters.Values)
                     {
-                        (meter as MeterSdk).Collect();
+                        meter.Collect();
                     }
 
                     OpenTelemetrySdkEventSource.Log.CollectionCompleted(sw.ElapsedMilliseconds);

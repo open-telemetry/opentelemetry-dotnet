@@ -26,12 +26,12 @@ namespace OpenTelemetry.Metrics.Configuration
     {
         // TODO: make MeterFactory IDisposable to call Dispose on Exporter/Controller.
         private readonly object lck = new object();
-        private readonly Dictionary<MeterRegistryKey, Meter> meterRegistry = new Dictionary<MeterRegistryKey, Meter>();
+        private readonly Dictionary<MeterRegistryKey, MeterSdk> meterRegistry = new Dictionary<MeterRegistryKey, MeterSdk>();
         private readonly MetricProcessor metricProcessor;
         private readonly MetricExporter metricExporter;
         private readonly PushMetricController pushMetricController;
         private readonly TimeSpan defaultPushInterval = TimeSpan.FromSeconds(60);
-        private Meter defaultMeter;
+        private MeterSdk defaultMeter;
 
         private MeterFactory(MeterBuilder meterBuilder)
         {
