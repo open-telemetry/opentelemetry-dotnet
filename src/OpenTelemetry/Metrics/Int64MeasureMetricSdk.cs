@@ -18,7 +18,8 @@ namespace OpenTelemetry.Metrics
 {
     internal class Int64MeasureMetricSdk : MeasureMetricSdk<long>
     {
-        public Int64MeasureMetricSdk(string name) : base(name)
+        public Int64MeasureMetricSdk(string name)
+            : base(name)
         {
         }
 

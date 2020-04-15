@@ -36,7 +36,7 @@ namespace OpenTelemetry.Resources
         // this implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/sdk-resource.md
 
         /// <summary>
-        /// Creates a new <see cref="Resource"/>.
+        /// Initializes a new instance of the <see cref="Resource"/> class.
         /// </summary>
         /// <param name="attributes">An <see cref="IDictionary{String, Object}"/> of attributes that describe the resource.</param>
         public Resource(IEnumerable<KeyValuePair<string, object>> attributes)

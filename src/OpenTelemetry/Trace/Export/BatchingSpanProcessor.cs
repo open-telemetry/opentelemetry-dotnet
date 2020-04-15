@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace.Export
         private bool stopping = false;
 
         /// <summary>
-        /// Constructs batching processor with default parameters:
+        /// Initializes a new instance of the <see cref="BatchingSpanProcessor"/> class with default parameters:
         /// <list type="bullet">
         /// <item>
         /// <description>maxQueueSize = 2048,</description>
@@ -55,12 +55,13 @@ namespace OpenTelemetry.Trace.Export
         /// </list>
         /// </summary>
         /// <param name="exporter">Exporter instance.</param>
-        public BatchingSpanProcessor(SpanExporter exporter) : this(exporter, DefaultMaxQueueSize, DefaultScheduleDelay, DefaultMaxExportBatchSize)
+        public BatchingSpanProcessor(SpanExporter exporter)
+            : this(exporter, DefaultMaxQueueSize, DefaultScheduleDelay, DefaultMaxExportBatchSize)
         {
         }
 
         /// <summary>
-        /// Constructs batching processor with custom settings.
+        /// Initializes a new instance of the <see cref="BatchingSpanProcessor"/> class with custom settings.
         /// </summary>
         /// <param name="exporter">Exporter instance.</param>
         /// <param name="maxQueueSize">Maximum queue size. After the size is reached spans are dropped by processor.</param>

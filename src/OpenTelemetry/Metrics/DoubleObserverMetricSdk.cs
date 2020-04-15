@@ -37,6 +37,7 @@ namespace OpenTelemetry.Metrics
             if (!this.observerHandles.TryGetValue(labelset, out var boundInstrument))
             {
                 boundInstrument = new DoubleObserverMetricHandleSdk();
+
                 // TODO cleanup of handle/aggregator.   Issue #530
                 this.observerHandles.Add(labelset, boundInstrument);
             }

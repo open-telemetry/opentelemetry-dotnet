@@ -43,6 +43,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Configures sampler.
         /// </summary>
         /// <param name="sampler">Sampler instance.</param>
+        /// <returns>Returns <see cref="TracerBuilder"/> for chaining.</returns>
         public TracerBuilder SetSampler(Sampler sampler)
         {
             this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
@@ -50,10 +51,10 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Sets the <see cref="Resource"/> describing the app associated with all traces. Overwrites currently set resource. 
+        /// Sets the <see cref="Resource"/> describing the app associated with all traces. Overwrites currently set resource.
         /// </summary>
         /// <param name="resource">Resource to be associate with all traces.</param>
-        /// <returns>Trace builder for chaining.</returns>
+        /// <returns>Returns <see cref="TracerBuilder"/> for chaining.</returns>
         public TracerBuilder SetResource(Resource resource)
         {
             this.Resource = resource ?? Resource.Empty;
@@ -64,6 +65,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Adds processing and exporting pipeline. Pipelines are executed sequentially in the order they are added.
         /// </summary>
         /// <param name="configure">Function that configures pipeline.</param>
+        /// <returns>Returns <see cref="TracerBuilder"/> for chaining.</returns>
         public TracerBuilder AddProcessorPipeline(Action<SpanProcessorPipelineBuilder> configure)
         {
             if (configure == null)
@@ -87,6 +89,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <typeparam name="TCollector">Type of collector class.</typeparam>
         /// <param name="collectorFactory">Function that builds collector from <see cref="Tracer"/>.</param>
+        /// <returns>Returns <see cref="TracerBuilder"/> for chaining.</returns>
         public TracerBuilder AddCollector<TCollector>(
             Func<Tracer, TCollector> collectorFactory)
             where TCollector : class
@@ -114,6 +117,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Configures tracing options.
         /// </summary>
         /// <param name="options">Instance of <see cref="TracerConfiguration"/>.</param>
+        /// <returns>Returns <see cref="TracerBuilder"/> for chaining.</returns>
         public TracerBuilder SetTracerOptions(TracerConfiguration options)
         {
             this.TracerConfigurationOptions = options ?? throw new ArgumentNullException(nameof(options));
