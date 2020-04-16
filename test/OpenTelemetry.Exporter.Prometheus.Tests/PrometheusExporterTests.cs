@@ -123,8 +123,14 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 response = await client.GetAsync("/metrics");
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 var s = response.Content.ReadAsStringAsync().Result;
+
+                // Validaye counters.
                 Assert.Contains("testCounter{dim1=\"value1\"}", response.Content.ReadAsStringAsync().Result);
                 Assert.Contains("testCounter{dim1=\"value2\"}", response.Content.ReadAsStringAsync().Result);
+
+                // Validate measure.
+                Assert.Contains("testMeasure{dim1=\"value1\"}", response.Content.ReadAsStringAsync().Result);
+
             }
         }
 
@@ -138,6 +144,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             }).GetMeter("library1");
 
             var testCounter = meter.CreateInt64Counter("testCounter");
+            var testMeasure = meter.CreateInt64Measure("testMeasure");
 
             var labels1 = new List<KeyValuePair<string, string>>();
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
@@ -154,6 +161,11 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels1));
                 testCounter.Add(defaultContext, 200, meter.GetLabelSet(labels2));
                 testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels2));
+
+                testMeasure.Record(defaultContext, 10, meter.GetLabelSet(labels1));
+                testMeasure.Record(defaultContext, 100, meter.GetLabelSet(labels1));
+                testMeasure.Record(defaultContext, 5, meter.GetLabelSet(labels1));
+                testMeasure.Record(defaultContext, 500, meter.GetLabelSet(labels1));
             }
         }
     }
