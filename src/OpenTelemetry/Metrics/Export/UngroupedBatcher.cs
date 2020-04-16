@@ -14,11 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics.Aggregators;
 
 namespace OpenTelemetry.Metrics.Export
@@ -28,38 +25,16 @@ namespace OpenTelemetry.Metrics.Export
     /// </summary>
     public class UngroupedBatcher : MetricProcessor
     {
-        private readonly MetricExporter exporter;
-        private readonly Task worker;
-        private readonly TimeSpan aggregationInterval;
-        private CancellationTokenSource cts;
         private List<Metric<long>> longMetrics;
         private List<Metric<double>> doubleMetrics;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UngroupedBatcher"/> class.
         /// </summary>
-        /// <param name="exporter">Metric exporter instance.</param>
-        /// <param name="aggregationInterval">Interval at which metrics are pushed to Exporter.</param>
-        public UngroupedBatcher(MetricExporter exporter, TimeSpan aggregationInterval)
+        public UngroupedBatcher()
         {
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
-
-            // TODO make this thread safe.
             this.longMetrics = new List<Metric<long>>();
             this.doubleMetrics = new List<Metric<double>>();
-            this.aggregationInterval = aggregationInterval;
-            this.cts = new CancellationTokenSource();
-            this.worker = Task.Factory.StartNew(
-                s => this.Worker((CancellationToken)s), this.cts.Token).ContinueWith((task) => Console.WriteLine("error"), TaskContinuationOptions.OnlyOnFaulted);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="UngroupedBatcher"/> class.
-        /// </summary>
-        /// <param name="exporter">Metric exporter instance.</param>
-        public UngroupedBatcher(MetricExporter exporter)
-            : this(exporter, TimeSpan.FromSeconds(5))
-        {
         }
 
         public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
@@ -76,45 +51,19 @@ namespace OpenTelemetry.Metrics.Export
             this.doubleMetrics.Add(metric);
         }
 
-        private async Task Worker(CancellationToken cancellationToken)
+        public override void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics)
         {
-            try
-            {
-                await Task.Delay(this.aggregationInterval, cancellationToken).ConfigureAwait(false);
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    var sw = Stopwatch.StartNew();
+            // The batcher is currently stateless. i.e it forgets state after collection is done.
+            // Once the spec is ready for stateless vs stateful, we need to modify batcher
+            // to remember or clear state after each cycle.
+            longMetrics = this.longMetrics;
+            doubleMetrics = this.doubleMetrics;
 
-                    if (this.longMetrics.Count > 0)
-                    {
-                        var metricToExport = this.longMetrics;
-                        this.longMetrics = new List<Metric<long>>();
-                        await this.exporter.ExportAsync<long>(metricToExport, cancellationToken);
-                    }
+            var count = this.longMetrics.Count + this.doubleMetrics.Count;
+            this.longMetrics = new List<Metric<long>>();
+            this.doubleMetrics = new List<Metric<double>>();
 
-                    if (this.doubleMetrics.Count > 0)
-                    {
-                        var metricToExport = this.doubleMetrics;
-                        this.doubleMetrics = new List<Metric<double>>();
-                        await this.exporter.ExportAsync<double>(metricToExport, cancellationToken);
-                    }
-
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    var remainingWait = this.aggregationInterval - sw.Elapsed;
-                    if (remainingWait > TimeSpan.Zero)
-                    {
-                        await Task.Delay(remainingWait, cancellationToken).ConfigureAwait(false);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                var s = ex.Message;
-            }
+            OpenTelemetrySdkEventSource.Log.BatcherCollectionCompleted(count);
         }
     }
 }

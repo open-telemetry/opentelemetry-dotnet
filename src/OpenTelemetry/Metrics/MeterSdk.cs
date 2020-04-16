@@ -22,8 +22,7 @@ using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics
 {
-    // TODO: make MeterSdk internal
-    public class MeterSdk : Meter
+    internal class MeterSdk : Meter
     {
         private readonly string meterName;
         private readonly MetricProcessor metricProcessor;
@@ -46,10 +45,12 @@ namespace OpenTelemetry.Metrics
             return new LabelSetSdk(labels);
         }
 
-        public void Collect()
+        public virtual void Collect()
         {
             lock (this.collectLock)
             {
+                OpenTelemetrySdkEventSource.Log.MeterCollectInvoked(this.meterName);
+
                 // collect all pending metric updates and send to batcher.
                 // must sync to prevent multiple Collect occuring at same time.
                 var boundInstrumentsToRemove = new List<LabelSet>();

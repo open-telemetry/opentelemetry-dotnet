@@ -117,6 +117,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             using var stream = new MemoryStream();
             using var writer = new StreamWriter(stream);
             WriteMetricsCollection(exporter, writer);
+            writer.Flush();
 
             return Encoding.UTF8.GetString(stream.ToArray(), 0, (int)stream.Length);
         }
