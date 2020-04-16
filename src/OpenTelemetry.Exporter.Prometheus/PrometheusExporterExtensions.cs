@@ -110,6 +110,16 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                             foreach (var label in labels)
                             {
+                                /* For Summary we emit one row for Sum, Count, Min, Max.
+                                Min,Max exportes as quantile 0 and 1.
+                                In future, when OT implements more aggregation algorithms,
+                                this section will need to be revisited.
+                                Sample output:
+                                MyMeasure_sum{dim1="value1"} 750 1587013352982
+                                MyMeasure_count{dim1="value1"} 5 1587013352982
+                                MyMeasure{dim1="value2",quantile="0.0"} 150 1587013352982
+                                MyMeasure{dim1="value2",quantile="1.0"} 150 1587013352982
+                                */
                                 var metricValueBuilder = builder.AddValue();
                                 metricValueBuilder.WithName(metric.MetricName + "_sum");
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueSum);
