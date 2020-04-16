@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Metrics.Export;
 
@@ -83,8 +79,8 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 Sample output:
                                 MyMeasure_sum{dim1="value1"} 750 1587013352982
                                 MyMeasure_count{dim1="value1"} 5 1587013352982
-                                MyMeasure{dim1="value2",quantile="0.0"} 150 1587013352982
-                                MyMeasure{dim1="value2",quantile="1.0"} 150 1587013352982
+                                MyMeasure{dim1="value2",quantile="0"} 150 1587013352982
+                                MyMeasure{dim1="value2",quantile="1"} 150 1587013352982
                                 */
                                 var metricValueBuilder = builder.AddValue();
                                 metricValueBuilder.WithName(metric.MetricName + "_sum");
@@ -100,13 +96,13 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 metricValueBuilder.WithName(metric.MetricName);
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueMin);
                                 metricValueBuilder.WithLabel(label.Key, label.Value);
-                                metricValueBuilder.WithLabel("quantile", "0.0");
+                                metricValueBuilder.WithLabel("quantile", "0");
 
                                 metricValueBuilder = builder.AddValue();
                                 metricValueBuilder.WithName(metric.MetricName);
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueMax);
                                 metricValueBuilder.WithLabel(label.Key, label.Value);
-                                metricValueBuilder.WithLabel("quantile", "1.0");
+                                metricValueBuilder.WithLabel("quantile", "1");
                             }
 
                             builder.Write(writer);
@@ -160,8 +156,8 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 Sample output:
                                 MyMeasure_sum{dim1="value1"} 750 1587013352982
                                 MyMeasure_count{dim1="value1"} 5 1587013352982
-                                MyMeasure{dim1="value2",quantile="0.0"} 150 1587013352982
-                                MyMeasure{dim1="value2",quantile="1.0"} 150 1587013352982
+                                MyMeasure{dim1="value2",quantile="0"} 150 1587013352982
+                                MyMeasure{dim1="value2",quantile="1"} 150 1587013352982
                                 */
                                 var metricValueBuilder = builder.AddValue();
                                 metricValueBuilder.WithName(metric.MetricName + "_sum");
@@ -177,13 +173,13 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 metricValueBuilder.WithName(metric.MetricName);
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueMin);
                                 metricValueBuilder.WithLabel(label.Key, label.Value);
-                                metricValueBuilder.WithLabel("quantile", "0.0");
+                                metricValueBuilder.WithLabel("quantile", "0");
 
                                 metricValueBuilder = builder.AddValue();
                                 metricValueBuilder.WithName(metric.MetricName);
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueMax);
                                 metricValueBuilder.WithLabel(label.Key, label.Value);
-                                metricValueBuilder.WithLabel("quantile", "1.0");
+                                metricValueBuilder.WithLabel("quantile", "1");
                             }
 
                             builder.Write(writer);

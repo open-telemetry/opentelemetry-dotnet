@@ -63,7 +63,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 var response = await client.GetAsync("http://localhost:9184/metrics/");
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 var responseText = response.Content.ReadAsStringAsync().Result;
-                this.output.WriteLine($"Respone from metrics API is {responseText}");
+                this.output.WriteLine($"Respone from metrics API is \n {responseText}");
                 ValidateResponse(responseText);
                 metricsHttpServer.Stop();
             }
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 response = await client.GetAsync("/metrics");
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 var responseText = response.Content.ReadAsStringAsync().Result;
-                this.output.WriteLine($"Respone from metrics API is {responseText}");
+                this.output.WriteLine($"Respone from metrics API is \n {responseText}");
                 ValidateResponse(responseText);
 
             }
@@ -159,9 +159,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             // count is 10 * 4
             Assert.Contains("testMeasure_count{dim1=\"value1\"} 40", responseText);
             // Min is 5
-            Assert.Contains("testMeasure{dim1=\"value1\",quantile=\"0.0\"} 5", responseText);
+            Assert.Contains("testMeasure{dim1=\"value1\",quantile=\"0\"} 5", responseText);
             // Max is 500
-            Assert.Contains("testMeasure{dim1=\"value1\",quantile=\"1.0\"} 500", responseText);
+            Assert.Contains("testMeasure{dim1=\"value1\",quantile=\"1\"} 500", responseText);
 
             // TODO: Validate that # TYPE occurs only once per metric.
             // Also validate that for every metric+dimension, there is only one row in the response.
