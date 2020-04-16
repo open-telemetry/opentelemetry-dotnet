@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestMeter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,26 +15,29 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using OpenTelemetry.Metrics.Aggregators;
+using OpenTelemetry.Metrics.Export;
 
-namespace OpenTelemetry.Metrics.Export
+namespace OpenTelemetry.Metrics.Test
 {
-    internal class NoOpMetricProcessor : MetricProcessor
+    internal class TestMeter : MeterSdk
     {
-        public override void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics)
+        Action collectAction;
+
+        internal TestMeter(string meterName, MetricProcessor metricProcessor, Action collectAction)
+            : base(meterName, metricProcessor)
         {
-            longMetrics = Enumerable.Empty<Metric<long>>();
-            doubleMetrics = Enumerable.Empty<Metric<double>>();
+            this.collectAction = collectAction;
         }
 
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
+        public override void Collect()
         {
-        }
-
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator)
-        {
+            this.collectAction();
         }
     }
 }
