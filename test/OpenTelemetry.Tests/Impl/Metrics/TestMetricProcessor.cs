@@ -27,6 +27,14 @@ namespace OpenTelemetry.Metrics.Test
         public ConcurrentBag<Metric<long>> longMetrics = new ConcurrentBag<Metric<long>>();
         public ConcurrentBag<Metric<double>> doubleMetrics = new ConcurrentBag<Metric<double>>();
 
+        public override void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics)
+        {
+            longMetrics = this.longMetrics;
+            doubleMetrics = this.doubleMetrics;
+            this.longMetrics = new ConcurrentBag<Metric<long>>();
+            this.doubleMetrics = new ConcurrentBag<Metric<double>>();
+        }
+
         public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
         {
             var metric = new Metric<long>(meterName, metricName, meterName + metricName, labelSet.Labels, aggregator.GetAggregationType());

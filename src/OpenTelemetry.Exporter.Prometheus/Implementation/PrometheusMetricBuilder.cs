@@ -116,7 +116,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 writer.Write("\n");
             }
 
-            if (string.IsNullOrEmpty(this.type))
+            if (!string.IsNullOrEmpty(this.type))
             {
                 // If the token is TYPE, exactly two more tokens are expected. The first is the
                 // metric name, and the second is either counter, gauge, histogram, summary, or
@@ -125,8 +125,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 // before the first sample is reported for that metric name. If there is no TYPE
                 // line for a metric name, the type is set to untyped.
 
-                writer.Write("# HELP ");
+                writer.Write("# TYPE ");
                 writer.Write(this.name);
+                writer.Write(" ");
                 writer.Write(this.type);
                 writer.Write("\n");
             }

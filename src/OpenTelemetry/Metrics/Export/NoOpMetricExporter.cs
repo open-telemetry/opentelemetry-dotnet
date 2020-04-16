@@ -1,4 +1,4 @@
-﻿// <copyright file="MetricExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoOpMetricExporter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,32 +17,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Metrics.Aggregators;
 
 namespace OpenTelemetry.Metrics.Export
 {
-    public abstract class MetricExporter
+    internal class NoOpMetricExporter : MetricExporter
     {
-        public enum ExportResult
+        public override Task<ExportResult> ExportAsync<T>(IEnumerable<Metric<T>> metrics, CancellationToken cancellationToken)
         {
-            /// <summary>
-            /// Batch is successfully exported.
-            /// </summary>
-            Success = 0,
-
-            /// <summary>
-            /// Batch export failed. Caller must not retry.
-            /// </summary>
-            FailedNotRetryable = 1,
-
-            /// <summary>
-            /// Batch export failed transiently. Caller should record error and may retry.
-            /// </summary>
-            FailedRetryable = 2,
+            return Task.FromResult(ExportResult.Success);
         }
-
-        public abstract Task<ExportResult> ExportAsync<T>(IEnumerable<Metric<T>> metrics, CancellationToken cancellationToken);
     }
 }
