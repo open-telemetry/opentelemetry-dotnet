@@ -88,5 +88,15 @@ namespace OpenTelemetry.Collector.AspNetCore.Tests
             Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));
             Assert.Equal(503L, span.Attributes.GetValue("http.status_code"));
         }
+
+        public class TestCallbackMiddlewareImpl : CallbackMiddleware.CallbackMiddlewareImpl
+        {
+            public override async Task<bool> ProcessAsync(HttpContext context)
+            {
+                context.Response.StatusCode = 503;
+                await context.Response.WriteAsync("empty");
+                return false;
+            }
+        }
     }
 }
