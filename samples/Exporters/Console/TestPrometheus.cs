@@ -69,7 +69,7 @@ namespace Samples
                 Task.Delay(100).Wait();
             }
 
-            // Stopping 
+            // Stopping
             // metricsHttpServer.Stop();
         }
     }
