@@ -5,6 +5,11 @@
     <RootNamespace>OpenTelemetry</RootNamespace>
     <DefineConstants>$(DefineConstants);API</DefineConstants>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))/build/OpenTelemetry.prod.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  
   <ItemGroup>
     <Compile Remove="Trace\Internal\**" />
     <EmbeddedResource Remove="Trace\Internal\**" />
