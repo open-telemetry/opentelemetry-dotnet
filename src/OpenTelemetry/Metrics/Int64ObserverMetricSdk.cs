@@ -37,6 +37,7 @@ namespace OpenTelemetry.Metrics
             if (!this.observerHandles.TryGetValue(labelset, out var boundInstrument))
             {
                 boundInstrument = new Int64ObserverMetricHandleSdk();
+
                 // TODO cleanup of handle/aggregator.   Issue #530
                 this.observerHandles.Add(labelset, boundInstrument);
             }
@@ -57,6 +58,6 @@ namespace OpenTelemetry.Metrics
         internal IDictionary<LabelSet, Int64ObserverMetricHandleSdk> GetAllHandles()
         {
             return this.observerHandles;
-        }    
+        }
     }
 }

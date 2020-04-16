@@ -23,9 +23,10 @@ namespace OpenTelemetry.Metrics.Export
 {
     internal class NoOpMetricProcessor : MetricProcessor
     {
-        public override Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>> FinishCollectionCycle()
+        public override void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics)
         {
-            return Tuple.Create<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>>(Enumerable.Empty<Metric<long>>(), Enumerable.Empty<Metric<double>>());
+            longMetrics = Enumerable.Empty<Metric<long>>();
+            doubleMetrics = Enumerable.Empty<Metric<double>>();
         }
 
         public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)

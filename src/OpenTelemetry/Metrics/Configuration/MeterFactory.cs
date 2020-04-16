@@ -37,16 +37,16 @@ namespace OpenTelemetry.Metrics.Configuration
         {
             this.metricProcessor = meterBuilder.MetricProcessor ?? new NoOpMetricProcessor();
             this.metricExporter = meterBuilder.MetricExporter ?? new NoOpMetricExporter();
+
             // We only have PushMetricController now with only configurable thing being the push interval
             this.pushMetricController = new PushMetricController(
                 this.meterRegistry,
                 this.metricProcessor,
-                this.metricExporter,                
+                this.metricExporter,
                 meterBuilder.MetricPushInterval == default(TimeSpan) ? this.defaultPushInterval : meterBuilder.MetricPushInterval,
                 new CancellationTokenSource());
 
-            this.defaultMeter = new MeterSdk(string.Empty,
-                this.metricProcessor);
+            this.defaultMeter = new MeterSdk(string.Empty, this.metricProcessor);
         }
 
         public static MeterFactory Create(Action<MeterBuilder> configure)
@@ -74,8 +74,7 @@ namespace OpenTelemetry.Metrics.Configuration
                 var key = new MeterRegistryKey(name, version);
                 if (!this.meterRegistry.TryGetValue(key, out var meter))
                 {
-                    meter = this.defaultMeter = new MeterSdk(name,
-                        this.metricProcessor);
+                    meter = this.defaultMeter = new MeterSdk(name, this.metricProcessor);
 
                     this.meterRegistry.Add(key, meter);
                 }

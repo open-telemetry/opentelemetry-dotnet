@@ -40,7 +40,7 @@ namespace TestApp.AspNetCore._3._1
 
         public async Task InvokeAsync(HttpContext context)
         {
-            if (_impl== null || await _impl.ProcessAsync(context))
+            if (_impl == null || await _impl.ProcessAsync(context))
             {
                 await _next(context);
             }

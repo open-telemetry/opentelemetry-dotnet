@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Export
             /// Batch export failed. Caller must not retry.
             /// </summary>
             FailedNotRetryable = 1,
-            
+
             /// <summary>
             /// Batch export failed transiently. Caller should record error and may retry.
             /// </summary>
@@ -54,6 +54,7 @@ namespace OpenTelemetry.Trace.Export
         /// Shuts down exporter asynchronously.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Returns <see cref="Task"/>.</returns>
         public abstract Task ShutdownAsync(CancellationToken cancellationToken);
     }
 }

@@ -45,7 +45,8 @@ namespace OpenTelemetry.Metrics.Export
         /// This is called at the end of one collection cycle by the Controller.
         /// MetricProcessor can use this to clear its Metrics (in case of stateless).
         /// </summary>
-        /// <returns>The tuple containing long and double metrics, which is expected to be exported.</returns>
-        public abstract Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>> FinishCollectionCycle(); 
+        /// <param name="longMetrics">The list of long metrics from this cycle, which are to be exported.</param>
+        /// <param name="doubleMetrics">The list of double metrics from this cycle, which are to be exported.</param>
+        public abstract void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics);
     }
 }

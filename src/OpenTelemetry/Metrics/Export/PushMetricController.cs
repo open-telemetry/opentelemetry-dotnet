@@ -33,7 +33,8 @@ namespace OpenTelemetry.Metrics.Export
         private MetricProcessor metricProcessor;
         private Dictionary<MeterRegistryKey, MeterSdk> meters;
 
-        public PushMetricController(Dictionary<MeterRegistryKey, MeterSdk> meters,
+        public PushMetricController(
+            Dictionary<MeterRegistryKey, MeterSdk> meters,
             MetricProcessor metricProcessor,
             MetricExporter metricExporter,
             TimeSpan pushInterval,
@@ -48,19 +49,16 @@ namespace OpenTelemetry.Metrics.Export
         }
 
         private async Task Worker(CancellationToken cancellationToken)
-        {           
-            List<Metric<long>> longMetricToExport = new List<Metric<long>>();
-            List<Metric<double>> doubleMetricToExport = new List<Metric<double>>();
+        {
+            IEnumerable<Metric<long>> longMetricToExport;
+            IEnumerable<Metric<double>> doubleMetricToExport;
 
             await Task.Delay(this.pushInterval, cancellationToken).ConfigureAwait(false);
             while (!cancellationToken.IsCancellationRequested)
             {
                 var sw = Stopwatch.StartNew();
                 try
-                {                    
-                    longMetricToExport.Clear();
-                    doubleMetricToExport.Clear();
-
+                {
                     foreach (var meter in this.meters.Values)
                     {
                         meter.Collect();
@@ -73,16 +71,7 @@ namespace OpenTelemetry.Metrics.Export
                     // Let MetricProcessor know that this cycle is ending,
                     // and send the metrics from MetricProcessor
                     // to the MetricExporter.
-                    var metricsToExportTuple = this.metricProcessor.FinishCollectionCycle();
-                    if (metricsToExportTuple.Item1 != null)
-                    {
-                        longMetricToExport.AddRange(metricsToExportTuple.Item1);
-                    }
-
-                    if (metricsToExportTuple.Item2 != null)
-                    {
-                        doubleMetricToExport.AddRange(metricsToExportTuple.Item2);
-                    }
+                    this.metricProcessor.FinishCollectionCycle(out longMetricToExport, out doubleMetricToExport);
 
                     var longExportResult = await this.metricExporter.ExportAsync<long>(longMetricToExport, cancellationToken);
                     if (longExportResult != MetricExporter.ExportResult.Success)
@@ -102,7 +91,7 @@ namespace OpenTelemetry.Metrics.Export
                         // we do not support retries for now and leave it up to exporter
                         // as only exporter implementation knows how to retry: which items failed
                         // and what is the reasonable policy for that exporter.
-                    }                    
+                    }
                 }
                 catch (Exception ex)
                 {

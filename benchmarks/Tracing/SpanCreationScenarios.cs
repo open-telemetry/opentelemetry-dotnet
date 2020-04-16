@@ -69,7 +69,7 @@ namespace Benchmarks.Tracing
         public static TelemetrySpan CreateSpan_Active_GetCurrent(Tracer tracer)
         {
             TelemetrySpan span;
-            
+
             using (tracer.StartActiveSpan("span", out _))
             {
                 span = tracer.CurrentSpan;

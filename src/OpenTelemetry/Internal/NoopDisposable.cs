@@ -20,7 +20,7 @@ namespace OpenTelemetry.Internal
     internal class NoopDisposable : IDisposable
     {
         internal static readonly IDisposable Instance = new NoopDisposable();
-        
+
         public void Dispose()
         {
         }

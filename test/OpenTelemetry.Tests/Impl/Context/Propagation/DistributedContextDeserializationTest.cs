@@ -48,7 +48,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             var dc = serializer.FromByteArray(serializer.ToByteArray(DistributedContext.Empty));
             Assert.Empty(dc.CorrelationContext.Entries);
 
-            dc = serializer.FromByteArray(new byte[] {SerializationUtils.VersionId}); // One byte that represents Version ID.
+            dc = serializer.FromByteArray(new byte[] { SerializationUtils.VersionId }); // One byte that represents Version ID.
             Assert.Empty(dc.CorrelationContext.Entries);
         }
 
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             EncodeTagToOutPut("Key2", "Value2", output);
 
             var expected = DistributedContextBuilder.CreateContext(
-                new List<CorrelationContextEntry>(2) {new CorrelationContextEntry("Key1", "Value1"), new CorrelationContextEntry("Key2", "Value2")}
+                new List<CorrelationContextEntry>(2) { new CorrelationContextEntry("Key1", "Value1"), new CorrelationContextEntry("Key2", "Value2") }
             );
             Assert.Equal(expected, serializer.FromByteArray(output.ToArray()));
         }
@@ -204,7 +204,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
             // Write unknown field ID 1.
             output.WriteByte(1);
-            output.Write(new byte[] {1, 2, 3, 4}, 0, 4);
+            output.Write(new byte[] { 1, 2, 3, 4 }, 0, 4);
 
             EncodeTagToOutPut("Key3", "Value3", output);
 
@@ -226,7 +226,7 @@ namespace OpenTelemetry.Context.Propagation.Test
 
             // Write unknown field ID 1.
             output.WriteByte(1);
-            output.Write(new byte[] {1, 2, 3, 4}, 0, 4);
+            output.Write(new byte[] { 1, 2, 3, 4 }, 0, 4);
 
             EncodeTagToOutPut("Key", "Value", output);
             Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(output.ToArray()));
@@ -242,13 +242,13 @@ namespace OpenTelemetry.Context.Propagation.Test
         [Fact]
         public void TestDeserializeWrongVersionId()
         {
-            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(new byte[] {SerializationUtils.VersionId + 1}));
+            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(new byte[] { SerializationUtils.VersionId + 1 }));
         }
 
         [Fact]
         public void TestDeserializeNegativeVersionId()
         {
-            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(new byte[] {0xff}));
+            Assert.Equal(DistributedContext.Empty, serializer.FromByteArray(new byte[] { 0xff }));
         }
 
         // <tag_encoding> ==
@@ -270,7 +270,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             var bytes = new byte[VarInt.VarIntSize(length)];
             VarInt.PutVarInt(length, bytes, 0);
             output.Write(bytes, 0, bytes.Length);
-            var inPutBytes= Encoding.UTF8.GetBytes(input);
+            var inPutBytes = Encoding.UTF8.GetBytes(input);
             output.Write(inPutBytes, 0, inPutBytes.Length);
         }
     }

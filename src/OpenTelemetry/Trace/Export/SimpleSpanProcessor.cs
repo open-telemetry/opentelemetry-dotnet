@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace.Export
         private long spanCount = 0;
 
         /// <summary>
-        /// Constructs simple processor.
+        /// Initializes a new instance of the <see cref="SimpleSpanProcessor"/> class.
         /// </summary>
         /// <param name="exporter">Span processor instance.</param>
         public SimpleSpanProcessor(SpanExporter exporter)

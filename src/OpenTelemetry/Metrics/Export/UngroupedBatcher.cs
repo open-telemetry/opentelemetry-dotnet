@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics.Aggregators;
@@ -30,10 +29,10 @@ namespace OpenTelemetry.Metrics.Export
         private List<Metric<double>> doubleMetrics;
 
         /// <summary>
-        /// Constructs UngroupedBatcher.
+        /// Initializes a new instance of the <see cref="UngroupedBatcher"/> class.
         /// </summary>
         public UngroupedBatcher()
-        {                        
+        {
             this.longMetrics = new List<Metric<long>>();
             this.doubleMetrics = new List<Metric<double>>();
         }
@@ -52,29 +51,19 @@ namespace OpenTelemetry.Metrics.Export
             this.doubleMetrics.Add(metric);
         }
 
-        public override Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>> FinishCollectionCycle()
+        public override void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics)
         {
             // The batcher is currently stateless. i.e it forgets state after collection is done.
             // Once the spec is ready for stateless vs stateful, we need to modify batcher
             // to remember or clear state after each cycle.
-            List<Metric<long>> longMetricToExport = null;
-            List<Metric<double>> doubleMetricToExport = null;
+            longMetrics = this.longMetrics;
+            doubleMetrics = this.doubleMetrics;
 
-            if (this.longMetrics.Count > 0)
-            {
-                longMetricToExport = this.longMetrics;
-                this.longMetrics = new List<Metric<long>>();                
-            }
+            var count = this.longMetrics.Count + this.doubleMetrics.Count;
+            this.longMetrics = new List<Metric<long>>();
+            this.doubleMetrics = new List<Metric<double>>();
 
-            if (this.doubleMetrics.Count > 0)
-            {
-                doubleMetricToExport = this.doubleMetrics;
-                this.doubleMetrics = new List<Metric<double>>();                
-            }
-
-            var count = longMetricToExport?.Count + doubleMetricToExport?.Count;
-            OpenTelemetrySdkEventSource.Log.BatcherCollectionCompleted(count.HasValue ? count.Value : 0);
-            return new Tuple<IEnumerable<Metric<long>>, IEnumerable<Metric<double>>>(longMetricToExport, doubleMetricToExport);
+            OpenTelemetrySdkEventSource.Log.BatcherCollectionCompleted(count);
         }
     }
 }

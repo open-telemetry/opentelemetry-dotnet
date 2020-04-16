@@ -45,7 +45,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         private List<Metric<double>> DoubleMetrics { get; set; }
 
         /// <inheritdoc/>
-        public override Task<ExportResult> ExportAsync<T>(List<Metric<T>> metrics, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync<T>(IEnumerable<Metric<T>> metrics, CancellationToken cancellationToken)
         {
             // Prometheus uses a pull model, not a push.
             // Accumulate the exported metrics internally, return success.
