@@ -30,6 +30,7 @@ namespace OpenTelemetry.Resources
         /// <param name="serviceInstanceId">Unique identifier of the service instance.</param>
         /// <param name="serviceNamespace">Optional namespace of the service.</param>
         /// <param name="serviceVersion">Optional version of the service.</param>
+        /// <returns>Returns a new <see cref="Resource"/>.</returns>
         public static Resource CreateServiceResource(string serviceName, string serviceInstanceId = null, string serviceNamespace = null, string serviceVersion = null)
         {
             if (serviceName == null)

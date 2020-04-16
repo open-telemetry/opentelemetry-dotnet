@@ -24,7 +24,8 @@ namespace OpenTelemetry.Metrics
     {
         private readonly Int64CounterSumAggregator sumAggregator = new Int64CounterSumAggregator();
 
-        public Int64BoundCounterMetricSdk(RecordStatus recordStatus) : base(recordStatus)
+        public Int64BoundCounterMetricSdk(RecordStatus recordStatus)
+            : base(recordStatus)
         {
         }
 

@@ -40,6 +40,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Adds chained processor to the pipeline. Processors are executed in the order they were added.
         /// </summary>
         /// <param name="processorFactory">Function that creates processor from the next one.</param>
+        /// <returns>Returns <see cref="SpanProcessorPipelineBuilder"/>.</returns>
         public SpanProcessorPipelineBuilder AddProcessor(Func<SpanProcessor, SpanProcessor> processorFactory)
         {
             if (processorFactory == null)
@@ -61,6 +62,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Configures last processor that invokes exporter. When not set, <see cref="BatchingSpanProcessor"/> is used.
         /// </summary>
         /// <param name="processorFactory">Factory that creates exporting processor from the exporter.</param>
+        /// <returns>Returns <see cref="SpanProcessorPipelineBuilder"/>.</returns>
         public SpanProcessorPipelineBuilder SetExportingProcessor(Func<SpanExporter, SpanProcessor> processorFactory)
         {
             this.lastProcessorFactory = processorFactory ?? throw new ArgumentNullException(nameof(processorFactory));
@@ -71,6 +73,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Configures exporter.
         /// </summary>
         /// <param name="exporter">Exporter instance.</param>
+        /// <returns>Returns <see cref="SpanProcessorPipelineBuilder"/>.</returns>
         public SpanProcessorPipelineBuilder SetExporter(SpanExporter exporter)
         {
             this.Exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));

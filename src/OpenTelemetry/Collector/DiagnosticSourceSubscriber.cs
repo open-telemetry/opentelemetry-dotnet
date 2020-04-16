@@ -31,7 +31,8 @@ namespace OpenTelemetry.Collector
 
         public DiagnosticSourceSubscriber(
             ListenerHandler handler,
-            Func<string, object, object, bool> isEnabledFilter) : this(_ => handler, value => handler.SourceName == value.Name, isEnabledFilter)
+            Func<string, object, object, bool> isEnabledFilter)
+            : this(_ => handler, value => handler.SourceName == value.Name, isEnabledFilter)
         {
         }
 

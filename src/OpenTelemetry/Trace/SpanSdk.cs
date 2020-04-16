@@ -730,7 +730,8 @@ namespace OpenTelemetry.Trace
             IEnumerable<KeyValuePair<string, string>> tracestate = null;
             if (parentContext.IsValid)
             {
-                activity.SetParentId(parentContext.TraceId,
+                activity.SetParentId(
+                    parentContext.TraceId,
                     parentContext.SpanId,
                     parentContext.TraceOptions);
                 if (parentContext.Tracestate != null && parentContext.Tracestate.Any())
@@ -808,7 +809,8 @@ namespace OpenTelemetry.Trace
                     }
                     else
                     {
-                        this.Links = parentLinks.GetRange(parentLinks.Count - this.tracerConfiguration.MaxNumberOfLinks,
+                        this.Links = parentLinks.GetRange(
+                            parentLinks.Count - this.tracerConfiguration.MaxNumberOfLinks,
                             this.tracerConfiguration.MaxNumberOfLinks);
                     }
                 }

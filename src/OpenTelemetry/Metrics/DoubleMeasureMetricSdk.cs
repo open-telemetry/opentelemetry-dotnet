@@ -18,7 +18,8 @@ namespace OpenTelemetry.Metrics
 {
     internal class DoubleMeasureMetricSdk : MeasureMetricSdk<double>
     {
-        public DoubleMeasureMetricSdk(string name) : base(name)
+        public DoubleMeasureMetricSdk(string name)
+            : base(name)
         {
         }
 

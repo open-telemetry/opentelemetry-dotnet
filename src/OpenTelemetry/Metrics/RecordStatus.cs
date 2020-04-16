@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
         UpdatePending,
 
         /// <summary>
-        /// This status is applied to UpdatePending instruments after Collect() is done.        
+        /// This status is applied to UpdatePending instruments after Collect() is done.
         /// This will be moved to  CandidateForRemoval during the next Collect() cycle.
         /// If an update occurs, the instrument promotes them to UpdatePending.
         /// </summary>

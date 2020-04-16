@@ -36,13 +36,14 @@ namespace OpenTelemetry.Metrics.Export
         private List<Metric<double>> doubleMetrics;
 
         /// <summary>
-        /// Constructs UngroupedBatcher.
+        /// Initializes a new instance of the <see cref="UngroupedBatcher"/> class.
         /// </summary>
         /// <param name="exporter">Metric exporter instance.</param>
         /// <param name="aggregationInterval">Interval at which metrics are pushed to Exporter.</param>
         public UngroupedBatcher(MetricExporter exporter, TimeSpan aggregationInterval)
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+
             // TODO make this thread safe.
             this.longMetrics = new List<Metric<long>>();
             this.doubleMetrics = new List<Metric<double>>();
@@ -53,10 +54,11 @@ namespace OpenTelemetry.Metrics.Export
         }
 
         /// <summary>
-        /// Constructs UngroupedBatcher.
+        /// Initializes a new instance of the <see cref="UngroupedBatcher"/> class.
         /// </summary>
         /// <param name="exporter">Metric exporter instance.</param>
-        public UngroupedBatcher(MetricExporter exporter) : this(exporter, TimeSpan.FromSeconds(5))
+        public UngroupedBatcher(MetricExporter exporter)
+            : this(exporter, TimeSpan.FromSeconds(5))
         {
         }
 

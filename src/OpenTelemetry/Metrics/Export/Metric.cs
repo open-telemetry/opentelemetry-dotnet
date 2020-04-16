@@ -24,7 +24,8 @@ namespace OpenTelemetry.Metrics.Export
     /// <typeparam name="T">Type of the metric - long or double currently.</typeparam>
     public class Metric<T>
     {
-        public Metric(string metricNamespace,
+        public Metric(
+            string metricNamespace,
             string metricName,
             string desc,
             IEnumerable<KeyValuePair<string, string>> labels,

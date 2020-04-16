@@ -82,6 +82,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Creates tracerSdk factory.
         /// </summary>
         /// <param name="configure">Function that configures tracerSdk factory.</param>
+        /// <returns>Returns new <see cref="TracerFactory"/>.</returns>
         public static TracerFactory Create(Action<TracerBuilder> configure)
         {
             if (configure == null)

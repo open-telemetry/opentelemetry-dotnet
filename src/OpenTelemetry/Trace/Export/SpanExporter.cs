@@ -54,6 +54,7 @@ namespace OpenTelemetry.Trace.Export
         /// Shuts down exporter asynchronously.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Returns <see cref="Task"/>.</returns>
         public abstract Task ShutdownAsync(CancellationToken cancellationToken);
     }
 }
