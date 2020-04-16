@@ -83,7 +83,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         {
             var startTimestamp = DateTime.UtcNow;
             var endTimestamp = startTimestamp.AddSeconds(60);
-            var eventTimestamp = DateTime.UtcNow;
+            var eventTimestamp = startTimestamp;
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
 
             var spanId = ActivitySpanId.CreateRandom();
