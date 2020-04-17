@@ -4,6 +4,11 @@
     <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))/build/OpenTelemetry.test.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  
   <ItemGroup>
     <ProjectReference Include="..\..\src\OpenTelemetry.Collector.StackExchangeRedis\OpenTelemetry.Collector.StackExchangeRedis.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />

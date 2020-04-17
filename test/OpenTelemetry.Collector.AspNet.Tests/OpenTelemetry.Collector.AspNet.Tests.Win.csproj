@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))/build/OpenTelemetry.prod.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))/build/OpenTelemetry.test.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   
   <ItemGroup>
