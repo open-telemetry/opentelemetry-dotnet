@@ -36,18 +36,8 @@ namespace Benchmarks.Exporter
         {
             using var tracerFactory = TracerFactory.Create(builder => builder
                 .SetResource(Resources.CreateServiceResource("my-service-name")));
-            var tracer = tracerFactory.GetTracer("no-exporter-test");
 
-            for (int iTrace = 0; iTrace < this.NumberOfTraces; iTrace++)
-            {
-                using (tracer.StartActiveSpan("incoming request", out var span))
-                {
-                    for (int iSpan = 0; iSpan < this.NumberOfSpans; iSpan++)
-                    {
-                        span.AddEvent("internal span");
-                    }
-                }
-            }
+            this.RunTest(tracerFactory);
         }
 
         [Benchmark]
@@ -57,6 +47,12 @@ namespace Benchmarks.Exporter
                 .SetResource(Resources.CreateServiceResource("my-service-name"))
                 .AddProcessorPipeline(p => p.SetExporter(new NoOpExporter())));
 
+            this.RunTest(tracerFactory);
+        }
+
+
+        private void RunTest(TracerFactory tracerFactory)
+        {
             var tracer = tracerFactory.GetTracer("console-exporter-test");
 
             for (int iTrace = 0; iTrace < this.NumberOfTraces; iTrace++)
