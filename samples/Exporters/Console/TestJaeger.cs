@@ -44,6 +44,9 @@ namespace Samples
                 {
                     DoWork(i, tracer);
                 }
+
+                Console.WriteLine("Completed doing busy work");
+                Console.WriteLine("Press Enter key to exit.");
             }
 
             return null;

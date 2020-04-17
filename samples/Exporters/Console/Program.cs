@@ -27,9 +27,13 @@ namespace Samples
         /// Main method - invoke this using command line.
         /// For example:
         ///
-        /// Samples.dll zipkin -u http://localhost:9411/api/v2/spans
-        /// Sample.dll appInsights
-        /// Sample.dll prometheus.
+        /// dotnet Exporters.dll zipkin -u http://localhost:9411/api/v2/spans
+        /// dotnet Exporters.dll jaeger -h localhost -o 6831
+        /// dotnet Exporters.dll appInsights
+        /// dotnet Exporters.dll prometheus -i 15 -p 9184 -d 2
+        ///
+        /// The above must be run from the project bin folder
+        /// (eg: C:\repos\opentelemetry-dotnet\src\samples\Exporters\Console\bin\Debug\netcoreapp3.1).
         /// </summary>
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
@@ -39,7 +43,7 @@ namespace Samples
                     (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri),
                     (ApplicationInsightsOptions options) => TestApplicationInsights.Run(),
-                    (PrometheusOptions options) => TestPrometheus.Run(),
+                    (PrometheusOptions options) => TestPrometheus.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (StackdriverOptions options) => TestStackdriver.Run(options.ProjectId),
@@ -92,6 +96,14 @@ namespace Samples
     [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
     internal class PrometheusOptions
     {
+        [Option('i', "pushIntervalInSecs", Default = 15, HelpText = "The interval at which Push controller pushes metrics.", Required = false)]
+        public int PushIntervalInSecs { get; set; }
+
+        [Option('p', "port", Default = 9184, HelpText = "The port to expose metrics. The endpoint will be http://localhost:port/metrics (This is the port from which your Prometheus server scraps metrics from.)", Required = false)]
+        public int Port { get; set; }
+
+        [Option('d', "duration", Default = 2, HelpText = "Total duration in minutes to run the demo. Run atleast for a min to see metrics flowing.", Required = false)]
+        public int DurationInMins { get; set; }
     }
 
     [Verb("httpclient", HelpText = "Specify the options required to test HttpClient")]
