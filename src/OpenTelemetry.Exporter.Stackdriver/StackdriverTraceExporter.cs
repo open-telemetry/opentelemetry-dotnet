@@ -61,7 +61,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
         }
 
         /// <summary>
-        /// Initializes a new instance of <see cref="StackdriverTraceExporter"/> class.
+        /// Initializes a new instance of the <see cref="StackdriverTraceExporter"/> class.
         /// </summary>
         /// <param name="projectId">Project ID to send telemetry to.</param>
         public StackdriverTraceExporter(string projectId)
