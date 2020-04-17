@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics.Test
         public void CounterSendsAggregateToRegisteredProcessor()
         {
             var testProcessor = new TestMetricProcessor();
-            var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
+            var meter = MeterFactory.Create(mb => mb.SetMetricProcessor(testProcessor)).GetMeter("library1") as MeterSdk;
             var testCounter = meter.CreateInt64Counter("testCounter");
 
             var labels1 = new List<KeyValuePair<string, string>>();
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Metrics.Test
         public void MeasureSendsAggregateToRegisteredProcessor()
         {
             var testProcessor = new TestMetricProcessor();
-            var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
+            var meter = MeterFactory.Create(mb => mb.SetMetricProcessor(testProcessor)).GetMeter("library1") as MeterSdk;
             var testMeasure = meter.CreateInt64Measure("testMeasure");
 
             var labels1 = new List<KeyValuePair<string, string>>();
@@ -103,7 +103,7 @@ namespace OpenTelemetry.Metrics.Test
         public void LongObserverSendsAggregateToRegisteredProcessor()
         {
             var testProcessor = new TestMetricProcessor();
-            var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
+            var meter = MeterFactory.Create(mb => mb.SetMetricProcessor(testProcessor)).GetMeter("library1") as MeterSdk;
             var testObserver = meter.CreateInt64Observer("testObserver", TestCallbackLong);
 
             meter.Collect();
@@ -118,7 +118,7 @@ namespace OpenTelemetry.Metrics.Test
         public void DoubleObserverSendsAggregateToRegisteredProcessor()
         {
             var testProcessor = new TestMetricProcessor();
-            var meter = MeterFactory.Create(testProcessor).GetMeter("library1") as MeterSdk;
+            var meter = MeterFactory.Create(mb => mb.SetMetricProcessor(testProcessor)).GetMeter("library1") as MeterSdk;
             var testObserver = meter.CreateDoubleObserver("testObserver", TestCallbackDouble);
 
             meter.Collect();

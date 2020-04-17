@@ -73,15 +73,19 @@ namespace OpenTelemetry.Collector.AspNet.Tests
                     break;
                 case 4: // Attribute routing WebAPI.
                     routeData = new RouteData();
-                    routeData.Values.Add("MS_SubRoutes", new[] {
-                        new
+                    var value = new[]
                         {
-                            Route = new
+                            new
                             {
-                                RouteTemplate = routeTemplate,
+                                Route = new
+                                {
+                                    RouteTemplate = routeTemplate,
+                                },
                             },
-                        },
-                    });
+                        };
+                    routeData.Values.Add(
+                        "MS_SubRoutes",
+                        value);
                     break;
                 default:
                     throw new NotSupportedException();
@@ -98,7 +102,7 @@ namespace OpenTelemetry.Collector.AspNet.Tests
             });
 
             HttpContext.Current = new HttpContext(
-                new HttpRequest("", url, "")
+                new HttpRequest(string.Empty, url, string.Empty)
                 {
                     RequestContext = new RequestContext()
                     {
@@ -125,10 +129,14 @@ namespace OpenTelemetry.Collector.AspNet.Tests
                         RequestFilter = httpContext =>
                         {
                             if (string.IsNullOrEmpty(filter))
+                            {
                                 return true;
+                            }
 
                             if (filter == "{ThrowException}")
+                            {
                                 throw new InvalidOperationException();
+                            }
 
                             return httpContext.Request.Path != filter;
                         },
@@ -162,6 +170,7 @@ namespace OpenTelemetry.Collector.AspNet.Tests
                 var actualUrl = (string)span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value;
 
                 Assert.Equal(expectedUri.ToString(), actualUrl);
+
                 // Url strips 80 or 443 if the scheme matches.
                 if ((expectedUri.Port == 80 && expectedUri.Scheme == "http") || (expectedUri.Port == 443 && expectedUri.Scheme == "https"))
                 {

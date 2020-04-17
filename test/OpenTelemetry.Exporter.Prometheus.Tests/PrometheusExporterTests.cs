@@ -14,8 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
@@ -60,23 +62,28 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void E2ETestMetricsHttpServer()
+        public async Task E2ETestMetricsHttpServerAsync()
         {
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
             var promExporter = new PrometheusExporter(promOptions);
-            var simpleProcessor = new UngroupedBatcher(promExporter);
-
+            var simpleProcessor = new UngroupedBatcher();
+            
             var metricsHttpServer = new PrometheusExporterMetricsHttpServer(promExporter);
             try
             {
                 metricsHttpServer.Start();
-                CollectMetrics(simpleProcessor);
+                CollectMetrics(simpleProcessor, promExporter);
             }
             finally
-            {
-                // Change delay to higher value to manually check Promtheus.
-                // These tests are just to temporarily validate export to prometheus.
-                Task.Delay(100).Wait();
+            {                
+                Task.Delay(400).Wait();
+
+                var client = new HttpClient();
+                var response = await client.GetAsync("http://localhost:9184/metrics/");
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                var responseText = response.Content.ReadAsStringAsync().Result;
+                Assert.Contains("testCounter{dim1=\"value1\"}", responseText);
+                Assert.Contains("testCounter{dim1=\"value2\"}", responseText);
                 metricsHttpServer.Stop();
             }
         }
@@ -86,7 +93,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         {
             var promOptions = new PrometheusExporterOptions() { Url = "/metrics" };
             var promExporter = new PrometheusExporter(promOptions);
-            var simpleProcessor = new UngroupedBatcher(promExporter, new System.TimeSpan(100));
+            var simpleProcessor = new UngroupedBatcher();
 
             var builder = new WebHostBuilder()
                 .Configure(app =>
@@ -104,7 +111,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             try
             {
-                CollectMetrics(simpleProcessor);
+                CollectMetrics(simpleProcessor, promExporter);
             }
             finally
             {
@@ -112,17 +119,24 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 var response = await client.GetAsync("/foo");
                 Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
-                Task.Delay(200).Wait();
+                Task.Delay(2000).Wait();
                 response = await client.GetAsync("/metrics");
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                var s = response.Content.ReadAsStringAsync().Result;
                 Assert.Contains("testCounter{dim1=\"value1\"}", response.Content.ReadAsStringAsync().Result);
                 Assert.Contains("testCounter{dim1=\"value2\"}", response.Content.ReadAsStringAsync().Result);
             }
         }
 
-        private static void CollectMetrics(UngroupedBatcher simpleProcessor)
+        private static void CollectMetrics(UngroupedBatcher simpleProcessor, MetricExporter exporter)
         {
-            var meter = MeterFactory.Create(simpleProcessor).GetMeter("library1") as MeterSdk;
+            var meter = MeterFactory.Create(mb =>
+            {
+                mb.SetMetricProcessor(simpleProcessor);
+                mb.SetMetricExporter(exporter);
+                mb.SetMetricPushInterval(TimeSpan.FromMilliseconds(100));
+            }).GetMeter("library1");
+
             var testCounter = meter.CreateInt64Counter("testCounter");
 
             var labels1 = new List<KeyValuePair<string, string>>();
@@ -140,11 +154,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels1));
                 testCounter.Add(defaultContext, 200, meter.GetLabelSet(labels2));
                 testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels2));
-
-                if (i % 10 == 0)
-                {
-                    meter.Collect();
-                }
             }
         }
     }
