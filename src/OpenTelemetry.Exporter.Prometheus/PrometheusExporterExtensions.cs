@@ -26,6 +26,14 @@ namespace OpenTelemetry.Exporter.Prometheus
     /// </summary>
     public static class PrometheusExporterExtensions
     {
+        private const string PrometheusCounterType = "counter";
+        private const string PrometheusSummaryType = "summary";
+        private const string PrometheusSummarySumPostFix = "_sum";
+        private const string PrometheusSummaryCountPostFix = "_count";
+        private const string PrometheusSummaryQuantileLabelName = "quantile";
+        private const string PrometheusSummaryQuantileLabelValueForMin = "0";
+        private const string PrometheusSummaryQuantileLabelValueForMax = "1";
+
         /// <summary>
         /// Serialize to Prometheus Format.
         /// </summary>
@@ -47,7 +55,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                             var doubleSum = metric.Data as SumData<double>;
                             var doubleValue = doubleSum.Sum;
 
-                            builder = builder.WithType("counter");
+                            builder = builder.WithType(PrometheusCounterType);
 
                             foreach (var label in labels)
                             {
@@ -68,7 +76,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                             var longValueMin = longSummary.Min;
                             var longValueMax = longSummary.Max;
 
-                            builder = builder.WithType("summary");
+                            builder = builder.WithType(PrometheusSummaryType);
 
                             foreach (var label in labels)
                             {
@@ -83,12 +91,12 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 MyMeasure{dim1="value2",quantile="1"} 150 1587013352982
                                 */
                                 var metricValueBuilder = builder.AddValue();
-                                metricValueBuilder.WithName(metric.MetricName + "_sum");
+                                metricValueBuilder.WithName(metric.MetricName + PrometheusSummarySumPostFix);
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueSum);
                                 metricValueBuilder.WithLabel(label.Key, label.Value);
 
                                 metricValueBuilder = builder.AddValue();
-                                metricValueBuilder.WithName(metric.MetricName + "_count");
+                                metricValueBuilder.WithName(metric.MetricName + PrometheusSummaryCountPostFix);
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueCount);
                                 metricValueBuilder.WithLabel(label.Key, label.Value);
 
@@ -96,13 +104,13 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 metricValueBuilder.WithName(metric.MetricName);
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueMin);
                                 metricValueBuilder.WithLabel(label.Key, label.Value);
-                                metricValueBuilder.WithLabel("quantile", "0");
+                                metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMin);
 
                                 metricValueBuilder = builder.AddValue();
                                 metricValueBuilder.WithName(metric.MetricName);
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueMax);
                                 metricValueBuilder.WithLabel(label.Key, label.Value);
-                                metricValueBuilder.WithLabel("quantile", "1");
+                                metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMax);
                             }
 
                             builder.Write(writer);
@@ -124,7 +132,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                         {
                             var longSum = metric.Data as SumData<long>;
                             var longValue = longSum.Sum;
-                            builder = builder.WithType("counter");
+                            builder = builder.WithType(PrometheusCounterType);
 
                             foreach (var label in labels)
                             {
@@ -145,7 +153,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                             var longValueMin = longSummary.Min;
                             var longValueMax = longSummary.Max;
 
-                            builder = builder.WithType("summary");
+                            builder = builder.WithType(PrometheusSummaryType);
 
                             foreach (var label in labels)
                             {
@@ -160,12 +168,12 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 MyMeasure{dim1="value2",quantile="1"} 150 1587013352982
                                 */
                                 var metricValueBuilder = builder.AddValue();
-                                metricValueBuilder.WithName(metric.MetricName + "_sum");
+                                metricValueBuilder.WithName(metric.MetricName + PrometheusSummarySumPostFix);
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueSum);
                                 metricValueBuilder.WithLabel(label.Key, label.Value);
 
                                 metricValueBuilder = builder.AddValue();
-                                metricValueBuilder.WithName(metric.MetricName + "_count");
+                                metricValueBuilder.WithName(metric.MetricName + PrometheusSummaryCountPostFix);
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueCount);
                                 metricValueBuilder.WithLabel(label.Key, label.Value);
 
@@ -173,13 +181,13 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 metricValueBuilder.WithName(metric.MetricName);
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueMin);
                                 metricValueBuilder.WithLabel(label.Key, label.Value);
-                                metricValueBuilder.WithLabel("quantile", "0");
+                                metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMin);
 
                                 metricValueBuilder = builder.AddValue();
                                 metricValueBuilder.WithName(metric.MetricName);
                                 metricValueBuilder = metricValueBuilder.WithValue(longValueMax);
                                 metricValueBuilder.WithLabel(label.Key, label.Value);
-                                metricValueBuilder.WithLabel("quantile", "1");
+                                metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMax);
                             }
 
                             builder.Write(writer);

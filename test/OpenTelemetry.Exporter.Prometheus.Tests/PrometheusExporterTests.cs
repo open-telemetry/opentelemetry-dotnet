@@ -57,7 +57,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             }
             finally
             {                
-                Task.Delay(waitDuration).Wait();
+                await Task.Delay(waitDuration);
 
                 var client = new HttpClient();
                 var response = await client.GetAsync("http://localhost:9184/metrics/");
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 ValidateResponse(responseText);
                 metricsHttpServer.Stop();
             }
-        }        
+        }
 
         [Fact]
         public async Task E2ETestMiddleware()
@@ -100,13 +100,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 var response = await client.GetAsync("/foo");
                 Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
-                Task.Delay(waitDuration).Wait();
+                await Task.Delay(waitDuration);
                 response = await client.GetAsync("/metrics");
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 var responseText = response.Content.ReadAsStringAsync().Result;
                 this.output.WriteLine($"Respone from metrics API is \n {responseText}");
                 ValidateResponse(responseText);
-
             }
         }
 
