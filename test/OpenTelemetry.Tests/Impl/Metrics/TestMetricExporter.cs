@@ -29,13 +29,20 @@ namespace OpenTelemetry.Metrics.Test
     {
         public List<Metric<long>> LongMetrics = new List<Metric<long>>();
         public List<Metric<double>> DoubleMetrics = new List<Metric<double>>();
-        public int count = 0;
+        private readonly Action onLongExport;
+        private readonly Action onDoubleExport;
+
+        public TestMetricExporter(Action onLongExport, Action onDoubleExport)
+        {
+            this.onDoubleExport = onDoubleExport;
+            this.onLongExport = onLongExport;
+        }
 
         public override Task<ExportResult> ExportAsync<T>(IEnumerable<Metric<T>> metrics, CancellationToken cancellationToken)
-        {
-            count++;
+        {            
             if (typeof(T) == typeof(double))
             {
+                this.onDoubleExport?.Invoke();
                 var doubleList = metrics
                 .Select(x => (x as Metric<double>))
                 .ToList();
@@ -44,6 +51,7 @@ namespace OpenTelemetry.Metrics.Test
             }
             else
             {
+                this.onLongExport?.Invoke();
                 var longList = metrics
                 .Select(x => (x as Metric<long>))
                 .ToList();
