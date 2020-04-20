@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <param name="builder">Trace builder to use.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder AddDependencyCollector(this TracerBuilder builder)
+        public static TracerBuilder AddDependencyAdapter(this TracerBuilder builder)
         {
             if (builder == null)
             {
@@ -37,42 +37,42 @@ namespace OpenTelemetry.Trace.Configuration
             }
 
             return builder
-                .AddCollector((t) => new AzureClientsCollector(t))
-                .AddCollector((t) => new AzurePipelineCollector(t))
-                .AddCollector((t) => new HttpClientCollector(t))
-                .AddCollector((t) => new HttpWebRequestCollector(t))
-                .AddCollector((t) => new SqlClientCollector(t));
+                .AddAdapter((t) => new AzureClientsAdapter(t))
+                .AddAdapter((t) => new AzurePipelineAdapter(t))
+                .AddAdapter((t) => new HttpClientAdapter(t))
+                .AddAdapter((t) => new HttpWebRequestAdapter(t))
+                .AddAdapter((t) => new SqlClientAdapter(t));
         }
 
         /// <summary>
         /// Enables the outgoing requests automatic data collection.
         /// </summary>
         /// <param name="builder">Trace builder to use.</param>
-        /// <param name="configureHttpCollectorOptions">Http configuration options.</param>
-        /// <param name="configureSqlCollectorOptions">Sql configuration options.</param>
+        /// <param name="configureHttpAdapterOptions">Http configuration options.</param>
+        /// <param name="configureSqlAdapterOptions">Sql configuration options.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder AddDependencyCollector(
+        public static TracerBuilder AddDependencyAdapter(
             this TracerBuilder builder,
-            Action<HttpClientCollectorOptions> configureHttpCollectorOptions = null,
-            Action<SqlClientCollectorOptions> configureSqlCollectorOptions = null)
+            Action<HttpClientAdapterOptions> configureHttpAdapterOptions = null,
+            Action<SqlClientAdapterOptions> configureSqlAdapterOptions = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var httpOptions = new HttpClientCollectorOptions();
-            configureHttpCollectorOptions?.Invoke(httpOptions);
+            var httpOptions = new HttpClientAdapterOptions();
+            configureHttpAdapterOptions?.Invoke(httpOptions);
 
-            var sqlOptions = new SqlClientCollectorOptions();
-            configureSqlCollectorOptions?.Invoke(sqlOptions);
+            var sqlOptions = new SqlClientAdapterOptions();
+            configureSqlAdapterOptions?.Invoke(sqlOptions);
 
             return builder
-                .AddCollector((t) => new AzureClientsCollector(t))
-                .AddCollector((t) => new AzurePipelineCollector(t))
-                .AddCollector((t) => new HttpClientCollector(t, httpOptions))
-                .AddCollector((t) => new HttpWebRequestCollector(t, httpOptions))
-                .AddCollector((t) => new SqlClientCollector(t, sqlOptions));
+                .AddAdapter((t) => new AzureClientsAdapter(t))
+                .AddAdapter((t) => new AzurePipelineAdapter(t))
+                .AddAdapter((t) => new HttpClientAdapter(t, httpOptions))
+                .AddAdapter((t) => new HttpWebRequestAdapter(t, httpOptions))
+                .AddAdapter((t) => new SqlClientAdapter(t, sqlOptions));
         }
     }
 }

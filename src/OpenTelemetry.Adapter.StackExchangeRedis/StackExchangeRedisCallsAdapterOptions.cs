@@ -1,4 +1,4 @@
-﻿// <copyright file="StackExchangeRedisCallsCollectorOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="StackExchangeRedisCallsAdapterOptions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,9 +17,9 @@
 namespace OpenTelemetry.Adapter.StackExchangeRedis
 {
     /// <summary>
-    /// Options for dependencies collector.
+    /// Options for dependencies adapter.
     /// </summary>
-    public class StackExchangeRedisCallsCollectorOptions
+    public class StackExchangeRedisCallsAdapterOptions
     {
     }
 }

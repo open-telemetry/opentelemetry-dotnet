@@ -49,15 +49,15 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         }
 
         [Fact]
-        public void AddDependencyCollector_BadArgs()
+        public void AddDependencyAdapter_BadArgs()
         {
             TracerBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.AddDependencyCollector());
-            Assert.Throws<ArgumentNullException>(() => builder.AddDependencyCollector(null, null));
+            Assert.Throws<ArgumentNullException>(() => builder.AddDependencyAdapter());
+            Assert.Throws<ArgumentNullException>(() => builder.AddDependencyAdapter(null, null));
         }
 
         [Fact]
-        public async Task HttpDependenciesCollectorInjectsHeadersAsync()
+        public async Task HttpDependenciesAdapterInjectsHeadersAsync()
         {
             var spanProcessor = new Mock<SpanProcessor>();
             var tracer = TracerFactory.Create(b => b.AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
+            using (new HttpClientAdapter(tracer, new HttpClientAdapterOptions()))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesCollectorInjectsHeadersAsync_CustomFormat()
+        public async Task HttpDependenciesAdapterInjectsHeadersAsync_CustomFormat()
         {
             var textFormat = new Mock<ITextFormat>();
             textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<SpanContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
@@ -126,7 +126,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions { TextFormat = textFormat.Object }))
+            using (new HttpClientAdapter(tracer, new HttpClientAdapterOptions { TextFormat = textFormat.Object }))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -150,13 +150,13 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesCollector_AddViaFactory_HttpCollector_CollectsSpans()
+        public async Task HttpDependenciesAdapter_AddViaFactory_HttpAdapter_CollectsSpans()
         {
             var spanProcessor = new Mock<SpanProcessor>();
 
             using (TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
-                .AddCollector(t => new HttpClientCollector(t))))
+                .AddAdapter(t => new HttpClientAdapter(t))))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -168,13 +168,13 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesCollector_AddViaFactory_DependencyCollector_CollectsSpans()
+        public async Task HttpDependenciesAdapter_AddViaFactory_DependencyAdapter_CollectsSpans()
         {
             var spanProcessor = new Mock<SpanProcessor>();
 
             using (TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
-                .AddDependencyCollector()))
+                .AddDependencyAdapter()))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -186,7 +186,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesCollectorBacksOffIfAlreadyInstrumented()
+        public async Task HttpDependenciesAdapterBacksOffIfAlreadyInstrumented()
         {
             var spanProcessor = new Mock<SpanProcessor>();
             var tracer = TracerFactory.Create(b => b
@@ -201,7 +201,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions()))
+            using (new HttpClientAdapter(tracer, new HttpClientAdapterOptions()))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -211,7 +211,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesCollectorFiltersOutRequests()
+        public async Task HttpDependenciesAdapterFiltersOutRequests()
         {
             var spanProcessor = new Mock<SpanProcessor>();
 
@@ -219,11 +219,11 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            var options = new HttpClientCollectorOptions((activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
+            var options = new HttpClientAdapterOptions((activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
                                                                                         arg1 is HttpRequestMessage request &&
                                                                                         request.RequestUri.OriginalString.Contains(this.url)));
 
-            using (new HttpClientCollector(tracer, options))
+            using (new HttpClientAdapter(tracer, options))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -233,7 +233,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesCollectorFiltersOutRequestsToExporterEndpoints()
+        public async Task HttpDependenciesAdapterFiltersOutRequestsToExporterEndpoints()
         {
             var spanProcessor = new Mock<SpanProcessor>();
 
@@ -241,9 +241,9 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            var options = new HttpClientCollectorOptions();
+            var options = new HttpClientAdapterOptions();
 
-            using (new HttpClientCollector(tracer, options))
+            using (new HttpClientAdapter(tracer, options))
             {
                 using var c = new HttpClient();
                 using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));

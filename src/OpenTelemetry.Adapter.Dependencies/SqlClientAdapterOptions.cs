@@ -1,4 +1,4 @@
-﻿// <copyright file="SqlClientCollectorOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SqlClientAdapterOptions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,24 +18,24 @@ using System.Data;
 namespace OpenTelemetry.Adapter.Dependencies
 {
     /// <summary>
-    /// Options for <see cref="SqlClientCollector"/>.
+    /// Options for <see cref="SqlClientAdapter"/>.
     /// </summary>
-    public class SqlClientCollectorOptions
+    public class SqlClientAdapterOptions
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SqlClientCollectorOptions"/> class.
+        /// Initializes a new instance of the <see cref="SqlClientAdapterOptions"/> class.
         /// </summary>
-        public SqlClientCollectorOptions()
+        public SqlClientAdapterOptions()
         {
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientCollector"/> should capture the names of <see cref="CommandType.StoredProcedure"/> commands. Default value: True.
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientAdapter"/> should capture the names of <see cref="CommandType.StoredProcedure"/> commands. Default value: True.
         /// </summary>
         public bool CaptureStoredProcedureCommandName { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientCollector"/> should capture the text of <see cref="CommandType.Text"/> commands. Default value: False.
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientAdapter"/> should capture the text of <see cref="CommandType.Text"/> commands. Default value: False.
         /// </summary>
         public bool CaptureTextCommandContent { get; set; }
     }

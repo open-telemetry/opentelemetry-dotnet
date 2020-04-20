@@ -1,4 +1,4 @@
-﻿// <copyright file="CollectorEventSource.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AdapterEventSource.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,10 +24,10 @@ namespace OpenTelemetry.Adapter
     /// <summary>
     /// EventSource events emitted from the project.
     /// </summary>
-    [EventSource(Name = "OpenTelemetry-Collector")]
-    public class CollectorEventSource : EventSource
+    [EventSource(Name = "OpenTelemetry-Adapter")]
+    public class AdapterEventSource : EventSource
     {
-        public static CollectorEventSource Log = new CollectorEventSource();
+        public static AdapterEventSource Log = new AdapterEventSource();
 
         [NonEvent]
         public void ExceptionInCustomSampler(Exception ex)

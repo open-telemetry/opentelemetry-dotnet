@@ -40,9 +40,9 @@ namespace OpenTelemetry.Adapter.Dependencies.Implementation
         private readonly PropertyFetcher commandTypeFetcher = new PropertyFetcher("CommandType");
         private readonly PropertyFetcher commandTextFetcher = new PropertyFetcher("CommandText");
         private readonly PropertyFetcher exceptionFetcher = new PropertyFetcher("Exception");
-        private readonly SqlClientCollectorOptions options;
+        private readonly SqlClientAdapterOptions options;
 
-        public SqlClientDiagnosticListener(string sourceName, Tracer tracer, SqlClientCollectorOptions options)
+        public SqlClientDiagnosticListener(string sourceName, Tracer tracer, SqlClientAdapterOptions options)
             : base(sourceName, tracer)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Implementation
 
                         if (command == null)
                         {
-                            CollectorEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
+                            AdapterEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
                             return;
                         }
 
@@ -118,7 +118,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Implementation
                         {
                             if (span == null || !span.Context.IsValid)
                             {
-                                CollectorEventSource.Log.NullOrBlankSpan($"{nameof(SqlClientDiagnosticListener)}-{name}");
+                                AdapterEventSource.Log.NullOrBlankSpan($"{nameof(SqlClientDiagnosticListener)}-{name}");
                                 return;
                             }
                         }
@@ -137,7 +137,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Implementation
                         {
                             if (span == null || !span.Context.IsValid)
                             {
-                                CollectorEventSource.Log.NullOrBlankSpan($"{nameof(SqlClientDiagnosticListener)}-{name}");
+                                AdapterEventSource.Log.NullOrBlankSpan($"{nameof(SqlClientDiagnosticListener)}-{name}");
                                 return;
                             }
 
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Implementation
                                 }
                                 else
                                 {
-                                    CollectorEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
+                                    AdapterEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
                                 }
                             }
                         }

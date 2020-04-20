@@ -55,7 +55,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
 
             using (serverLifeTime)
 
-            using (new HttpClientCollector(tracer, new HttpClientCollectorOptions() { SetHttpFlavor = tc.SetHttpFlavor }))
+            using (new HttpClientAdapter(tracer, new HttpClientAdapterOptions() { SetHttpFlavor = tc.SetHttpFlavor }))
             {
                 try
                 {

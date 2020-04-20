@@ -29,14 +29,14 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <param name="builder">Trace builder to use.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder AddRequestCollector(this TracerBuilder builder)
+        public static TracerBuilder AddRequestAdapter(this TracerBuilder builder)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            return builder.AddCollector(t => new AspNetCollector(t));
+            return builder.AddAdapter(t => new AspNetAdapter(t));
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// <param name="builder">Trace builder to use.</param>
         /// <param name="configure">Configuration options.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder AddRequestCollector(this TracerBuilder builder, Action<AspNetCollectorOptions> configure)
+        public static TracerBuilder AddRequestAdapter(this TracerBuilder builder, Action<AspNetAdapterOptions> configure)
         {
             if (builder == null)
             {
@@ -57,10 +57,10 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            var options = new AspNetCollectorOptions();
+            var options = new AspNetAdapterOptions();
             configure(options);
 
-            return builder.AddCollector(t => new AspNetCollector(t, options));
+            return builder.AddAdapter(t => new AspNetAdapter(t, options));
         }
     }
 }

@@ -38,7 +38,7 @@ namespace OpenTelemetry.Adapter
 
             if (span == null || !span.Context.IsValid)
             {
-                CollectorEventSource.Log.NullOrBlankSpan("ListenerHandler.OnStopActivity");
+                AdapterEventSource.Log.NullOrBlankSpan("ListenerHandler.OnStopActivity");
                 return;
             }
 

@@ -51,7 +51,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
                 .GetTracer(null);
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
-            using (new HttpWebRequestCollector(tracer, new HttpClientCollectorOptions() { SetHttpFlavor = tc.SetHttpFlavor }))
+            using (new HttpWebRequestAdapter(tracer, new HttpClientAdapterOptions() { SetHttpFlavor = tc.SetHttpFlavor }))
             {
                 try
                 {

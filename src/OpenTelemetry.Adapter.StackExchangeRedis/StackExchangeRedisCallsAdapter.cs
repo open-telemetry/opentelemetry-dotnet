@@ -1,4 +1,4 @@
-﻿// <copyright file="StackExchangeRedisCallsCollector.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="StackExchangeRedisCallsAdapter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,9 +27,9 @@ using StackExchange.Redis.Profiling;
 namespace OpenTelemetry.Adapter.StackExchangeRedis
 {
     /// <summary>
-    /// Redis calls collector.
+    /// Redis calls adapter.
     /// </summary>
-    public class StackExchangeRedisCallsCollector : IDisposable
+    public class StackExchangeRedisCallsAdapter : IDisposable
     {
         private readonly Tracer tracer;
 
@@ -42,10 +42,10 @@ namespace OpenTelemetry.Adapter.StackExchangeRedis
         private readonly PropertyInfo spanEndTimestampInfo;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="StackExchangeRedisCallsCollector"/> class.
+        /// Initializes a new instance of the <see cref="StackExchangeRedisCallsAdapter"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public StackExchangeRedisCallsCollector(Tracer tracer)
+        public StackExchangeRedisCallsAdapter(Tracer tracer)
         {
             this.tracer = tracer;
 

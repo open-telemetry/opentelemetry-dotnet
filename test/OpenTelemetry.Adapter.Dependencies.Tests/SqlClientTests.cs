@@ -65,9 +65,9 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            using (new SqlClientCollector(
+            using (new SqlClientAdapter(
                 tracer,
-                new SqlClientCollectorOptions
+                new SqlClientAdapterOptions
                 {
                     CaptureStoredProcedureCommandName = captureStoredProcedureCommandName,
                     CaptureTextCommandContent = captureTextCommandContent,
@@ -168,7 +168,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            using (new SqlClientCollector(tracer))
+            using (new SqlClientAdapter(tracer))
             {
                 var operationId = Guid.NewGuid();
                 var sqlConnection = new SqlConnection(TestConnectionString);
@@ -229,7 +229,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
 
             public FakeSqlClientDiagnosticSource()
             {
-                this.listener = new DiagnosticListener(SqlClientCollector.SqlClientDiagnosticListenerName);
+                this.listener = new DiagnosticListener(SqlClientAdapter.SqlClientDiagnosticListenerName);
             }
 
             public void Write(string name, object value)

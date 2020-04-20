@@ -35,9 +35,9 @@ namespace OpenTelemetry.Adapter.Dependencies.Implementation
         private readonly PropertyFetcher stopExceptionFetcher = new PropertyFetcher("Exception");
         private readonly PropertyFetcher stopRequestStatusFetcher = new PropertyFetcher("RequestTaskStatus");
         private readonly bool httpClientSupportsW3C = false;
-        private readonly HttpClientCollectorOptions options;
+        private readonly HttpClientAdapterOptions options;
 
-        public HttpHandlerDiagnosticListener(Tracer tracer, HttpClientCollectorOptions options)
+        public HttpHandlerDiagnosticListener(Tracer tracer, HttpClientAdapterOptions options)
             : base("HttpHandlerDiagnosticListener", tracer)
         {
             var framework = Assembly
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Implementation
             const string EventNameSuffix = ".OnStartActivity";
             if (!(this.startRequestFetcher.Fetch(payload) is HttpRequestMessage request))
             {
-                CollectorEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
+                AdapterEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
                 return;
             }
 
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Implementation
             {
                 if (span == null || !span.Context.IsValid)
                 {
-                    CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
+                    AdapterEventSource.Log.NullOrBlankSpan(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
                     return;
                 }
 
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Implementation
 
             if (span == null || !span.Context.IsValid)
             {
-                CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
+                AdapterEventSource.Log.NullOrBlankSpan(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
                 return;
             }
 
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Implementation
             {
                 if (!(this.stopExceptionFetcher.Fetch(payload) is Exception exc))
                 {
-                    CollectorEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
+                    AdapterEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
                     return;
                 }
 

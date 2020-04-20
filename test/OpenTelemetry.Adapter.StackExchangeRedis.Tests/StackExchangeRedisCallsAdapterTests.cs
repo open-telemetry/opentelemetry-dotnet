@@ -1,4 +1,4 @@
-﻿// <copyright file="StackExchangeRedisCallsCollectorTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="StackExchangeRedisCallsAdapterTests.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ using Xunit;
 
 namespace OpenTelemetry.Adapter.StackExchangeRedis
 {
-    public class StackExchangeRedisCallsCollectorTests
+    public class StackExchangeRedisCallsAdapterTests
     {
         [Fact]
         public async void ProfilerSessionUsesTheSameDefault()
@@ -33,8 +33,8 @@ namespace OpenTelemetry.Adapter.StackExchangeRedis
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                 .GetTracer(null);
 
-            using var collector = new StackExchangeRedisCallsCollector(tracer);
-            var profilerFactory = collector.GetProfilerSessionsFactory();
+            using var adapter = new StackExchangeRedisCallsAdapter(tracer);
+            var profilerFactory = adapter.GetProfilerSessionsFactory();
             var first = profilerFactory();
             var second = profilerFactory();
 

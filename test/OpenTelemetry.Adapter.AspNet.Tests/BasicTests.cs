@@ -23,11 +23,11 @@ namespace OpenTelemetry.Adapter.AspNet.Tests
     public class BasicTests
     {
         [Fact]
-        public void AddRequestCollector_BadArgs()
+        public void AddRequestAdapter_BadArgs()
         {
             TracerBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.AddRequestCollector());
-            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddRequestCollector(null)));
+            Assert.Throws<ArgumentNullException>(() => builder.AddRequestAdapter());
+            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddRequestAdapter(null)));
         }
     }
 }

@@ -34,9 +34,9 @@ namespace OpenTelemetry.Adapter.AspNetCore.Implementation
         private readonly PropertyFetcher beforeActionAttributeRouteInfoFetcher = new PropertyFetcher("AttributeRouteInfo");
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
         private readonly bool hostingSupportsW3C = false;
-        private readonly AspNetCoreCollectorOptions options;
+        private readonly AspNetCoreAdapterOptions options;
 
-        public HttpInListener(string name, Tracer tracer, AspNetCoreCollectorOptions options)
+        public HttpInListener(string name, Tracer tracer, AspNetCoreAdapterOptions options)
             : base(name, tracer)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
@@ -50,13 +50,13 @@ namespace OpenTelemetry.Adapter.AspNetCore.Implementation
 
             if (context == null)
             {
-                CollectorEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
+                AdapterEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
                 return;
             }
 
             if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
-                CollectorEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                AdapterEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 return;
             }
 
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Adapter.AspNetCore.Implementation
 
             if (span == null || !span.Context.IsValid)
             {
-                CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpInListener) + EventNameSuffix);
+                AdapterEventSource.Log.NullOrBlankSpan(nameof(HttpInListener) + EventNameSuffix);
                 return;
             }
 
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Adapter.AspNetCore.Implementation
             {
                 if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
                 {
-                    CollectorEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
+                    AdapterEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
                     return;
                 }
 
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Adapter.AspNetCore.Implementation
 
                 if (span == null)
                 {
-                    CollectorEventSource.Log.NullOrBlankSpan(name);
+                    AdapterEventSource.Log.NullOrBlankSpan(name);
                     return;
                 }
 

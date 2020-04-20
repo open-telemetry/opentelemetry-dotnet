@@ -122,9 +122,9 @@ namespace OpenTelemetry.Adapter.AspNet.Tests
                         .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
                     .GetTracer(null);
 
-                using (new AspNetCollector(
+                using (new AspNetAdapter(
                     tracer,
-                    new AspNetCollectorOptions
+                    new AspNetAdapterOptions
                     {
                         RequestFilter = httpContext =>
                         {
@@ -217,7 +217,7 @@ namespace OpenTelemetry.Adapter.AspNet.Tests
 
             public FakeAspNetDiagnosticSource()
             {
-                this.listener = new DiagnosticListener(AspNetCollector.AspNetDiagnosticListenerName);
+                this.listener = new DiagnosticListener(AspNetAdapter.AspNetDiagnosticListenerName);
             }
 
             public void Write(string name, object value)

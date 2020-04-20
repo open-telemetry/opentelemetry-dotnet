@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpClientCollector.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AzurePipelineAdapter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,36 +14,24 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.Adapter.Dependencies.Implementation;
-using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Adapter.Dependencies
 {
     /// <summary>
-    /// Dependencies collector.
+    /// Dependencies adapter.
     /// </summary>
-    public class HttpClientCollector : IDisposable
+    public class AzurePipelineAdapter : IDisposable
     {
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="HttpClientCollector"/> class.
+        /// Initializes a new instance of the <see cref="AzurePipelineAdapter"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public HttpClientCollector(Tracer tracer)
-            : this(tracer, new HttpClientCollectorOptions())
+        public AzurePipelineAdapter(Tracer tracer)
         {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="HttpClientCollector"/> class.
-        /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
-        /// <param name="options">Configuration options for dependencies collector.</param>
-        public HttpClientCollector(Tracer tracer, HttpClientCollectorOptions options)
-        {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(tracer, options), options.EventFilter);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new AzureSdkDiagnosticListener("Azure.Pipeline", tracer), null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

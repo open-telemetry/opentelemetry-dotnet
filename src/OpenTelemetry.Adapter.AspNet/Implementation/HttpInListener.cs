@@ -27,9 +27,9 @@ namespace OpenTelemetry.Adapter.AspNet.Implementation
     {
         private readonly PropertyFetcher routeFetcher = new PropertyFetcher("Route");
         private readonly PropertyFetcher routeTemplateFetcher = new PropertyFetcher("RouteTemplate");
-        private readonly AspNetCollectorOptions options;
+        private readonly AspNetAdapterOptions options;
 
-        public HttpInListener(string name, Tracer tracer, AspNetCollectorOptions options)
+        public HttpInListener(string name, Tracer tracer, AspNetAdapterOptions options)
             : base(name, tracer)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
@@ -42,13 +42,13 @@ namespace OpenTelemetry.Adapter.AspNet.Implementation
             var context = HttpContext.Current;
             if (context == null)
             {
-                CollectorEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
+                AdapterEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
                 return;
             }
 
             if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
-                CollectorEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                AdapterEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 return;
             }
 
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Adapter.AspNet.Implementation
 
             if (span == null || !span.Context.IsValid)
             {
-                CollectorEventSource.Log.NullOrBlankSpan(nameof(HttpInListener) + EventNameSuffix);
+                AdapterEventSource.Log.NullOrBlankSpan(nameof(HttpInListener) + EventNameSuffix);
                 return;
             }
 
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Adapter.AspNet.Implementation
                 var context = HttpContext.Current;
                 if (context == null)
                 {
-                    CollectorEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
+                    AdapterEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
                     return;
                 }
 

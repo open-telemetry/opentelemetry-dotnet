@@ -1,4 +1,4 @@
-﻿// <copyright file="AzurePipelineCollector.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SqlClientAdapter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +14,40 @@
 // limitations under the License.
 // </copyright>
 using System;
+using OpenTelemetry.Adapter.Dependencies.Implementation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Adapter.Dependencies
 {
     /// <summary>
-    /// Dependencies collector.
+    /// SqlClient adapter.
     /// </summary>
-    public class AzurePipelineCollector : IDisposable
+    public class SqlClientAdapter : IDisposable
     {
+        internal const string SqlClientDiagnosticListenerName = "SqlClientDiagnosticListener";
+
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AzurePipelineCollector"/> class.
+        /// Initializes a new instance of the <see cref="SqlClientAdapter"/> class.
         /// </summary>
         /// <param name="tracer">Tracer to record traced with.</param>
-        public AzurePipelineCollector(Tracer tracer)
+        public SqlClientAdapter(Tracer tracer)
+            : this(tracer, new SqlClientAdapterOptions())
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new AzureSdkDiagnosticListener("Azure.Pipeline", tracer), null);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SqlClientAdapter"/> class.
+        /// </summary>
+        /// <param name="tracer">Tracer to record traced with.</param>
+        /// <param name="options">Configuration options for sql adapter.</param>
+        public SqlClientAdapter(Tracer tracer, SqlClientAdapterOptions options)
+        {
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
+               name => new SqlClientDiagnosticListener(name, tracer, options),
+               listener => listener.Name == SqlClientDiagnosticListenerName,
+               null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

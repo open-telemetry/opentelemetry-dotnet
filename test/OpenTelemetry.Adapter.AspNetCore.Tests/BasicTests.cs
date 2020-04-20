@@ -47,11 +47,11 @@ namespace OpenTelemetry.Adapter.AspNetCore.Tests
         }
 
         [Fact]
-        public void AddRequestCollector_BadArgs()
+        public void AddRequestAdapter_BadArgs()
         {
             TracerBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.AddRequestCollector());
-            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddRequestCollector(null)));
+            Assert.Throws<ArgumentNullException>(() => builder.AddRequestAdapter());
+            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddRequestAdapter(null)));
         }
 
         [Fact]
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Adapter.AspNetCore.Tests
                     TracerFactory.Create(b => b
                         .SetSampler(new AlwaysOnSampler())
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
-                        .AddRequestCollector()));
+                        .AddRequestAdapter()));
             }
 
             // Arrange
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Adapter.AspNetCore.Tests
                         services.AddSingleton<TracerFactory>(_ =>
                             TracerFactory.Create(b => b
                                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
-                                .AddRequestCollector()));
+                                .AddRequestAdapter()));
                     })))
             {
                 using var client = testFactory.CreateClient();
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Adapter.AspNetCore.Tests
                         services.AddSingleton<TracerFactory>(_ =>
                             TracerFactory.Create(b => b
                                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
-                                .AddRequestCollector(o => o.TextFormat = textFormat.Object)));
+                                .AddRequestAdapter(o => o.TextFormat = textFormat.Object)));
                     })))
             {
                 using var client = testFactory.CreateClient();
@@ -189,7 +189,7 @@ namespace OpenTelemetry.Adapter.AspNetCore.Tests
                 services.AddSingleton<TracerFactory>(_ =>
                     TracerFactory.Create(b => b
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
-                        .AddRequestCollector(o => o.RequestFilter = (httpContext) => httpContext.Request.Path != "/api/values/2")));
+                        .AddRequestAdapter(o => o.RequestFilter = (httpContext) => httpContext.Request.Path != "/api/values/2")));
             }
 
             // Arrange

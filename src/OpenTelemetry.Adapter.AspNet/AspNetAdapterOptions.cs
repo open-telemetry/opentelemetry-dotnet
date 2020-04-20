@@ -1,4 +1,4 @@
-﻿// <copyright file="AspNetCoreCollectorOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AspNetAdapterOptions.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +15,15 @@
 // </copyright>
 
 using System;
-using Microsoft.AspNetCore.Http;
+using System.Web;
 using OpenTelemetry.Context.Propagation;
 
-namespace OpenTelemetry.Adapter.AspNetCore
+namespace OpenTelemetry.Adapter.AspNet
 {
     /// <summary>
-    /// Options for requests collector.
+    /// Options for requests adapter.
     /// </summary>
-    public class AspNetCoreCollectorOptions
+    public class AspNetAdapterOptions
     {
         /// <summary>
         /// Gets or sets <see cref="ITextFormat"/> for context propagation.

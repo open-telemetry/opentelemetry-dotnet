@@ -41,7 +41,7 @@ namespace OpenTelemetry.Adapter
         {
             if (Activity.Current == null)
             {
-                CollectorEventSource.Log.NullActivity(value.Key);
+                AdapterEventSource.Log.NullActivity(value.Key);
                 return;
             }
 
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Adapter
             }
             catch (Exception ex)
             {
-                CollectorEventSource.Log.UnknownErrorProcessingEvent(this.handler?.SourceName, value.Key, ex);
+                AdapterEventSource.Log.UnknownErrorProcessingEvent(this.handler?.SourceName, value.Key, ex);
             }
         }
     }

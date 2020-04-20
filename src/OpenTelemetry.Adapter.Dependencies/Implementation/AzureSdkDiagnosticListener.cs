@@ -94,7 +94,7 @@ namespace OpenTelemetry.Adapter.Dependencies
             {
                 if (span == null || !span.Context.IsValid)
                 {
-                    CollectorEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnStopActivity");
+                    AdapterEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnStopActivity");
                     return;
                 }
 
@@ -118,7 +118,7 @@ namespace OpenTelemetry.Adapter.Dependencies
 
             if (span == null || !span.Context.IsValid)
             {
-                CollectorEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnException");
+                AdapterEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnException");
                 return;
             }
 
