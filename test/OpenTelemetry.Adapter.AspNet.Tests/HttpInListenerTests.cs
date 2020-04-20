@@ -27,7 +27,7 @@ using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
 
-namespace OpenTelemetry.Collector.AspNet.Tests
+namespace OpenTelemetry.Adapter.AspNet.Tests
 {
     public class HttpInListenerTests : IDisposable
     {

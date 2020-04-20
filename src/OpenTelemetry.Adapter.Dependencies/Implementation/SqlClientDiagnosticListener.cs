@@ -18,7 +18,7 @@ using System.Data;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.Dependencies.Implementation
+namespace OpenTelemetry.Adapter.Dependencies.Implementation
 {
     internal class SqlClientDiagnosticListener : ListenerHandler
     {

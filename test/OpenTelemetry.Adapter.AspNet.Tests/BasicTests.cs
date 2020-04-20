@@ -18,7 +18,7 @@ using System;
 using OpenTelemetry.Trace.Configuration;
 using Xunit;
 
-namespace OpenTelemetry.Collector.AspNet.Tests
+namespace OpenTelemetry.Adapter.AspNet.Tests
 {
     public class BasicTests
     {

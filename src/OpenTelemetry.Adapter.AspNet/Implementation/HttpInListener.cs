@@ -21,7 +21,7 @@ using System.Web.Routing;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.AspNet.Implementation
+namespace OpenTelemetry.Adapter.AspNet.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {

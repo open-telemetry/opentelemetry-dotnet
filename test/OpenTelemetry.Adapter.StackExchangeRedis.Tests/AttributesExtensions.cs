@@ -17,7 +17,7 @@
 using System.Linq;
 using System.Collections.Generic;
 
-namespace OpenTelemetry.Collector.StackExchangeRedis.Tests
+namespace OpenTelemetry.Adapter.StackExchangeRedis.Tests
 {
     internal static class AttributesExtensions
     {

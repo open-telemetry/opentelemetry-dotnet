@@ -15,7 +15,7 @@
 // </copyright>
 using System.Data;
 
-namespace OpenTelemetry.Collector.Dependencies
+namespace OpenTelemetry.Adapter.Dependencies
 {
     /// <summary>
     /// Options for <see cref="SqlClientCollector"/>.

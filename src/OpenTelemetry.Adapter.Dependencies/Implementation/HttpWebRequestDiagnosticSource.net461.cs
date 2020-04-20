@@ -23,7 +23,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 
-namespace OpenTelemetry.Collector.Dependencies.Implementation
+namespace OpenTelemetry.Adapter.Dependencies.Implementation
 {
     /// <summary>
     /// Hooks into the <see cref="HttpWebRequest"/> class reflectively and writes diagnostic events as requests are processed.

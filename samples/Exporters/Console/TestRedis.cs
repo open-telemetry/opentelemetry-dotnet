@@ -16,7 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using OpenTelemetry.Collector.StackExchangeRedis;
+using OpenTelemetry.Adapter.StackExchangeRedis;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using StackExchange.Redis;

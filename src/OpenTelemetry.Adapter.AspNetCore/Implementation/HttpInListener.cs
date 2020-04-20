@@ -23,7 +23,7 @@ using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.AspNetCore.Implementation
+namespace OpenTelemetry.Adapter.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {

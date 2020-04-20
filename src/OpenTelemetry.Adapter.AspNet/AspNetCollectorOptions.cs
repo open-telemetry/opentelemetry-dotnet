@@ -18,7 +18,7 @@ using System;
 using System.Web;
 using OpenTelemetry.Context.Propagation;
 
-namespace OpenTelemetry.Collector.AspNet
+namespace OpenTelemetry.Adapter.AspNet
 {
     /// <summary>
     /// Options for requests collector.

@@ -17,7 +17,7 @@ using System;
 using System.Collections.Generic;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.Dependencies
+namespace OpenTelemetry.Adapter.Dependencies
 {
     /// <summary>
     /// Instrumentation adaptor that automatically collect calls to Http, SQL, and Azure SDK.

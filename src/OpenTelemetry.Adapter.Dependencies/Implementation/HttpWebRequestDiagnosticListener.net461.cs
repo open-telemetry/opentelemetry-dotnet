@@ -20,7 +20,7 @@ using System.Net;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.Dependencies.Implementation
+namespace OpenTelemetry.Adapter.Dependencies.Implementation
 {
     internal class HttpWebRequestDiagnosticListener : ListenerHandler
     {

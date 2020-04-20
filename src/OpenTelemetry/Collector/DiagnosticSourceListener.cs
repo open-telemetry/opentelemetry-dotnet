@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace OpenTelemetry.Collector
+namespace OpenTelemetry.Adapter
 {
     internal class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>
     {

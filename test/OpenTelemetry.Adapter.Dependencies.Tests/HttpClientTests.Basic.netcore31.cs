@@ -27,7 +27,7 @@ using System.Threading.Tasks;
 using OpenTelemetry.Context.Propagation;
 using Xunit;
 
-namespace OpenTelemetry.Collector.Dependencies.Tests
+namespace OpenTelemetry.Adapter.Dependencies.Tests
 {
     public partial class HttpClientTests : IDisposable
     {

@@ -16,10 +16,10 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using OpenTelemetry.Collector.Dependencies.Implementation;
+using OpenTelemetry.Adapter.Dependencies.Implementation;
 using OpenTelemetry.Context.Propagation;
 
-namespace OpenTelemetry.Collector.Dependencies
+namespace OpenTelemetry.Adapter.Dependencies
 {
     /// <summary>
     /// Options for dependencies collector.

@@ -33,7 +33,7 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace.Samplers;
 using TestApp.AspNetCore._3._1;
 
-namespace OpenTelemetry.Collector.AspNetCore.Tests
+namespace OpenTelemetry.Adapter.AspNetCore.Tests
 {
     // See https://github.com/aspnet/Docs/tree/master/aspnetcore/test/integration-tests/samples/2.x/IntegrationTestsSample
     public class BasicTests

@@ -15,7 +15,7 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Collector.AspNet;
+using OpenTelemetry.Adapter.AspNet;
 
 namespace OpenTelemetry.Trace.Configuration
 {

@@ -9,8 +9,8 @@ namespace LoggingTracer.Demo.AspNetCore
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
-    using OpenTelemetry.Collector.AspNetCore;
-    using OpenTelemetry.Collector.Dependencies;
+    using OpenTelemetry.Adapter.AspNetCore;
+    using OpenTelemetry.Adapter.Dependencies;
 
     public class Startup
     {

@@ -19,12 +19,12 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Collector.StackExchangeRedis.Implementation;
+using OpenTelemetry.Adapter.StackExchangeRedis.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using StackExchange.Redis.Profiling;
 
-namespace OpenTelemetry.Collector.StackExchangeRedis
+namespace OpenTelemetry.Adapter.StackExchangeRedis
 {
     /// <summary>
     /// Redis calls collector.

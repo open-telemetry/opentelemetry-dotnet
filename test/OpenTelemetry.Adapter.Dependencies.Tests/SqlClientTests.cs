@@ -20,13 +20,13 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.Data.SqlClient;
 using Moq;
-using OpenTelemetry.Collector.Dependencies.Implementation;
+using OpenTelemetry.Adapter.Dependencies.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
 
-namespace OpenTelemetry.Collector.Dependencies.Tests
+namespace OpenTelemetry.Adapter.Dependencies.Tests
 {
     public class SqlClientTests : IDisposable
     {

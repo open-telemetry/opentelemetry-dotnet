@@ -21,7 +21,7 @@ using StackExchange.Redis.Profiling;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace OpenTelemetry.Collector.StackExchangeRedis
+namespace OpenTelemetry.Adapter.StackExchangeRedis
 {
     public class StackExchangeRedisCallsCollectorTests
     {

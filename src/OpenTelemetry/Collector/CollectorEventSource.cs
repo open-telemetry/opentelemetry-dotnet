@@ -19,7 +19,7 @@ using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Threading;
 
-namespace OpenTelemetry.Collector
+namespace OpenTelemetry.Adapter
 {
     /// <summary>
     /// EventSource events emitted from the project.

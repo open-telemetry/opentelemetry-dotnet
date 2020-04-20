@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Collector.StackExchangeRedis
+namespace OpenTelemetry.Adapter.StackExchangeRedis
 {
     /// <summary>
     /// Options for dependencies collector.

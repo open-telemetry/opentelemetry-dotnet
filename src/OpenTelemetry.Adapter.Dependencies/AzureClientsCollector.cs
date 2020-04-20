@@ -16,7 +16,7 @@
 using System;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.Dependencies
+namespace OpenTelemetry.Adapter.Dependencies
 {
     /// <summary>
     /// Dependencies collector.

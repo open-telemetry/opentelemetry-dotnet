@@ -27,9 +27,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-using OpenTelemetry.Collector.Dependencies.Implementation;
+using OpenTelemetry.Adapter.Dependencies.Implementation;
 
-namespace OpenTelemetry.Collector.Dependencies.Tests
+namespace OpenTelemetry.Adapter.Dependencies.Tests
 {
     public class HttpWebRequestDiagnosticSourceTests : IDisposable
     {

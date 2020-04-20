@@ -24,7 +24,7 @@ using System.Threading.Tasks;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.Dependencies.Implementation
+namespace OpenTelemetry.Adapter.Dependencies.Implementation
 {
     internal class HttpHandlerDiagnosticListener : ListenerHandler
     {

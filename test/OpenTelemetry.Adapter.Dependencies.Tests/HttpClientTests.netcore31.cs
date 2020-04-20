@@ -28,7 +28,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace OpenTelemetry.Collector.Dependencies.Tests
+namespace OpenTelemetry.Adapter.Dependencies.Tests
 {
     public partial class HttpClientTests
     {

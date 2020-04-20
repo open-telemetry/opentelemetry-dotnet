@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.Collector.AspNet.Implementation;
+using OpenTelemetry.Adapter.AspNet.Implementation;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.AspNet
+namespace OpenTelemetry.Adapter.AspNet
 {
     /// <summary>
     /// Requests collector.

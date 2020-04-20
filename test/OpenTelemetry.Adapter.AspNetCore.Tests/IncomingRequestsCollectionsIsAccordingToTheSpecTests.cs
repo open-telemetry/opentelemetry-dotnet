@@ -27,7 +27,7 @@ using System;
 using Microsoft.AspNetCore.Http;
 using TestApp.AspNetCore._3._1;
 
-namespace OpenTelemetry.Collector.AspNetCore.Tests
+namespace OpenTelemetry.Adapter.AspNetCore.Tests
 {
     public class IncomingRequestsCollectionsIsAccordingToTheSpecTests
         : IClassFixture<WebApplicationFactory<Startup>>

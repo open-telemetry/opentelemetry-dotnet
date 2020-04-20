@@ -17,10 +17,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Collector.Dependencies.Implementation;
+using OpenTelemetry.Adapter.Dependencies.Implementation;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Collector.Dependencies
+namespace OpenTelemetry.Adapter.Dependencies
 {
     internal class AzureSdkDiagnosticListener : ListenerHandler
     {

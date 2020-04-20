@@ -15,7 +15,7 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Collector.Dependencies;
+using OpenTelemetry.Adapter.Dependencies;
 
 namespace OpenTelemetry.Trace.Configuration
 {
