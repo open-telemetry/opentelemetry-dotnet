@@ -33,11 +33,15 @@ namespace OpenTelemetry.Metrics.Test
         [Fact]
         public void PushControllerCollectsAllMeters()
         {
-            // Setup controller to collect every 100 msec.
-            var controllerPushIntervalInMsec = 100;
+            // Setup controller to collect every 25 msec.
+            var controllerPushIntervalInMsec = 25;
             var collectionCountExpectedMin = 3;
-            var waitIntervalInMsec = (controllerPushIntervalInMsec * collectionCountExpectedMin) + 400;
-            var testExporter = new TestMetricExporter();
+            var maxWaitInMsec = (controllerPushIntervalInMsec * collectionCountExpectedMin) + 2000;
+
+            int longExportCalledCount = 0;
+            int doubleExportCalledCount = 0;
+            var testExporter = new TestMetricExporter(() => longExportCalledCount++, () => doubleExportCalledCount++);
+
             var testProcessor = new TestMetricProcessor();
 
             // Setup 2 meters whose Collect will increment the collect count.
@@ -56,78 +60,27 @@ namespace OpenTelemetry.Metrics.Test
                 pushInterval,
                 new CancellationTokenSource());
 
-            // Wait 3 times collection interval, plus a comfortable buffer.
-            Task.Delay(waitIntervalInMsec).Wait();
+            // Validate that collect is called on Meter1, Meter2.
+            ValidateMeterCollect(ref meter1CollectCount, collectionCountExpectedMin, "meter1", TimeSpan.FromMilliseconds(maxWaitInMsec));
+            ValidateMeterCollect(ref meter2CollectCount, collectionCountExpectedMin, "meter2", TimeSpan.FromMilliseconds(maxWaitInMsec));
 
-            // Validate that collectCount is incremented atleast 3
-            // and not greater than 4 more additional collections.
-            // "4" because the buffer wait is 4 times push interval.
-            Assert.True(meter1CollectCount >= collectionCountExpectedMin
-                && meter1CollectCount <= collectionCountExpectedMin + 4,
-                $"Actual Collect Count for Meter1 is {meter1CollectCount} vs Expected Range of between {collectionCountExpectedMin}" +
-                $" and {collectionCountExpectedMin + 4}.");
-
-            Assert.True(meter2CollectCount >= collectionCountExpectedMin
-                && meter2CollectCount <= collectionCountExpectedMin + 4,
-                $"Actual Collect Count for Meter2 is {meter2CollectCount} vs Expected Range of between {collectionCountExpectedMin}" +
-                $" and {collectionCountExpectedMin + 4}");
+            // Export must be called same no: of times as Collect.
+            Assert.True(longExportCalledCount >= collectionCountExpectedMin);
+            Assert.True(doubleExportCalledCount >= collectionCountExpectedMin);
         }
 
-        [Fact]
-        public void PushControllerPushesMetricAtConfiguredInterval()
+        private void ValidateMeterCollect(ref int meterCollectCount, int expectedMeterCollectCount, string meterName, TimeSpan timeout)
         {
-            var controllerPushIntervalInMsec = 100;
-            var waitIntervalInMsec = (controllerPushIntervalInMsec * 3) + 400;
-            var testExporter = new TestMetricExporter();
-            var testProcessor = new TestMetricProcessor();
-            var meterFactory = MeterFactory.Create(
-                mb =>
-                {
-                    mb.SetMetricProcessor(testProcessor);
-                    mb.SetMetricExporter(testExporter);
-                    mb.SetMetricPushInterval(TimeSpan.FromMilliseconds(controllerPushIntervalInMsec));
-                }
-                );
-            var meter1 = meterFactory.GetMeter("library1");
-            var meter2 = meterFactory.GetMeter("library2");                       
+            // Sleep in short intervals, so the actual test duration is not always the max wait time.
+            var sw = Stopwatch.StartNew();
+            while (meterCollectCount < expectedMeterCollectCount && sw.Elapsed <= timeout)
+            {
+                Thread.Sleep(10);
+            }
 
-            var meter1Counter1 = meter1.CreateInt64Counter("testCounter1");
-            var meter1Counter2 = meter1.CreateInt64Counter("testCounter2");
-            var meter2Counter1 = meter2.CreateInt64Counter("testCounter1");
-            var meter2Counter2 = meter2.CreateInt64Counter("testCounter2");
-
-            var labels1 = new List<KeyValuePair<string, string>>();
-            labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
-            var ls = meter1.GetLabelSet(labels1);
-            var context = default(SpanContext);
-
-            meter1Counter1.Add(context, 100, ls);
-            meter1Counter2.Add(context, 200, ls);
-            meter2Counter1.Add(context, 300, ls);
-            meter2Counter2.Add(context, 400, ls);
-
-            meter1Counter1.Add(context, 100, ls);
-            meter1Counter2.Add(context, 200, ls);
-            meter2Counter1.Add(context, 300, ls);
-            meter2Counter2.Add(context, 400, ls);
-
-            Task.Delay(waitIntervalInMsec).Wait();
-            
-            Assert.Equal(1, testExporter.LongMetrics.Count(m => m.MetricName == "testCounter1"
-            && m.MetricNamespace == "library1"
-            && ((m.Data as SumData<long>).Sum == 200)));
-
-            Assert.Equal(1, testExporter.LongMetrics.Count(m => m.MetricName == "testCounter2"
-            && m.MetricNamespace == "library1"
-            && ((m.Data as SumData<long>).Sum == 400)));
-
-            Assert.Equal(1, testExporter.LongMetrics.Count(m => m.MetricName == "testCounter1"
-            && m.MetricNamespace == "library2"
-            && ((m.Data as SumData<long>).Sum == 600)));
-
-            Assert.Equal(1, testExporter.LongMetrics.Count(m => m.MetricName == "testCounter2"
-            && m.MetricNamespace == "library2"
-            && ((m.Data as SumData<long>).Sum == 800)));
+            Assert.True(meterCollectCount >= expectedMeterCollectCount
+                && meterCollectCount <= expectedMeterCollectCount,
+                $"Actual Collect Count for meter: {meterName} is {meterCollectCount} vs Expected count of {expectedMeterCollectCount}");                
         }
     }
 }

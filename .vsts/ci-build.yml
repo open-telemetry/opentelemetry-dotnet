@@ -39,8 +39,6 @@ jobs:
         test/**/*.Tests.Win.csproj
       arguments: "--configuration Release"
 
-  - task: PublishTestResults@2
-
 - job: Linux
   pool:
     vmImage: 'ubuntu-latest'
@@ -64,5 +62,3 @@ jobs:
       command: "test"
       projects: "test/**/*.Tests.csproj"
       arguments: "--configuration Release"
-
-  - task: PublishTestResults@2
