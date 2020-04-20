@@ -63,7 +63,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
 
             Assert.Equal(parentContext.TraceId, spanData.Context.TraceId);
             Assert.Equal(span.Context.SpanId, spanData.Context.SpanId);
-            Assert.Equal(ActivityTraceFlags.Recorded, spanData.Context.TraceOptions);
+            Assert.Equal(ActivityTraceFlags.Recorded, spanData.Context.TraceFlags);
             Assert.False(spanData.Context.IsRemote);
             Assert.Empty(spanData.Context.Tracestate);
 

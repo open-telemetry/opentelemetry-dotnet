@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
             Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
             Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
-            Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
+            Assert.Equal(parentSpan.Context.TraceFlags, span.Context.TraceFlags);
             Assert.Same(traceState, span.Context.Tracestate);
 
             Assert.True(span.IsRecording);
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
                 Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
                 Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
-                Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
+                Assert.Equal(parentSpan.Context.TraceFlags, span.Context.TraceFlags);
             }
         }
 
@@ -182,7 +182,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
                 Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
                 Assert.Equal(default, span.ParentSpanId);
-                Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceOptions);
+                Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceFlags);
             }
         }
 
@@ -199,7 +199,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
             Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
             Assert.Equal(default, span.ParentSpanId);
-            Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceOptions);
+            Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceFlags);
 
             outerActivity.Stop();
         }
@@ -216,7 +216,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
             Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
             Assert.Equal(default, span.ParentSpanId);
-            Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceOptions);
+            Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceFlags);
             Assert.Empty(span.Context.Tracestate);
 
             Assert.True(span.IsRecording);
@@ -289,7 +289,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(parentContext.TraceId, span.Context.TraceId);
             Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
             Assert.Equal(parentContext.SpanId, span.ParentSpanId);
-            Assert.Equal(parentContext.TraceOptions, span.Context.TraceOptions);
+            Assert.Equal(parentContext.TraceFlags, span.Context.TraceFlags);
             Assert.Same(traceState, span.Context.Tracestate);
 
             Assert.True(span.IsRecording);
@@ -312,7 +312,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(default, span.ParentSpanId);
 
             // always sample sampler
-            Assert.Equal(ActivityTraceFlags.Recorded, span.Context.TraceOptions);
+            Assert.Equal(ActivityTraceFlags.Recorded, span.Context.TraceFlags);
             Assert.True(span.IsRecording);
         }
 
@@ -332,7 +332,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(parentContext.TraceId, span.Context.TraceId);
                 Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
                 Assert.Equal(parentContext.SpanId, span.ParentSpanId);
-                Assert.Equal(parentContext.TraceOptions, span.Context.TraceOptions);
+                Assert.Equal(parentContext.TraceFlags, span.Context.TraceFlags);
             }
         }
 
@@ -404,7 +404,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(activity.TraceId, span.Context.TraceId);
             Assert.Equal(activity.SpanId, span.Context.SpanId);
             Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
-            Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
+            Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceFlags);
             Assert.Equal(2, span.Context.Tracestate.Count());
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k1" && pair.Value == "v1");
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k2" && pair.Value == "v2");
@@ -430,7 +430,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(activity.TraceId, span.Context.TraceId);
                 Assert.Equal(activity.SpanId, span.Context.SpanId);
                 Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
-                Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
+                Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceFlags);
             }
         }
 
@@ -448,7 +448,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(activity.TraceId, span.Context.TraceId);
             Assert.Equal(activity.SpanId, span.Context.SpanId);
             Assert.Equal(activity.ParentSpanId, span.ParentSpanId);
-            Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceOptions);
+            Assert.Equal(activity.ActivityTraceFlags, span.Context.TraceFlags);
             Assert.Equal(2, span.Context.Tracestate.Count());
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k1" && pair.Value == "v1");
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k2" && pair.Value == "v2");
@@ -623,7 +623,7 @@ namespace OpenTelemetry.Trace.Test
                 Assert.Equal(parentSpan.Context.TraceId, span.Context.TraceId);
                 Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
                 Assert.Equal(parentSpan.Context.SpanId, span.ParentSpanId);
-                Assert.Equal(parentSpan.Context.TraceOptions, span.Context.TraceOptions);
+                Assert.Equal(parentSpan.Context.TraceFlags, span.Context.TraceFlags);
                 Assert.Same(traceState, span.Context.Tracestate);
 
                 Assert.True(span.IsRecording);
@@ -649,7 +649,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(parentActivity.TraceId, span.Context.TraceId);
             Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
             Assert.Equal(parentActivity.SpanId, span.ParentSpanId);
-            Assert.Equal(parentActivity.ActivityTraceFlags, span.Context.TraceOptions);
+            Assert.Equal(parentActivity.ActivityTraceFlags, span.Context.TraceFlags);
             Assert.Equal(2, span.Context.Tracestate.Count());
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k1" && pair.Value == "v1");
             Assert.Contains(span.Context.Tracestate, pair => pair.Key == "k2" && pair.Value == "v2");
@@ -829,7 +829,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
             Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
             Assert.Equal(span.Activity.ParentSpanId, span.ParentSpanId);
-            Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceOptions);
+            Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceFlags);
             Assert.Empty(span.Context.Tracestate);
 
             Assert.Equal(SpanName, span.Name);
@@ -899,7 +899,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
             Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
             Assert.Equal(span.Activity.ParentSpanId, span.ParentSpanId);
-            Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceOptions);
+            Assert.Equal(span.Activity.ActivityTraceFlags, span.Context.TraceFlags);
 
             Assert.Equal(SpanName, span.Name);
             Assert.Equal(span.Activity.ParentSpanId, span.ParentSpanId);

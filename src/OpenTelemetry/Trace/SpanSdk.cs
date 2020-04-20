@@ -733,7 +733,7 @@ namespace OpenTelemetry.Trace
                 activity.SetParentId(
                     parentContext.TraceId,
                     parentContext.SpanId,
-                    parentContext.TraceOptions);
+                    parentContext.TraceFlags);
                 if (parentContext.Tracestate != null && parentContext.Tracestate.Any())
                 {
                     activity.TraceStateString = TracestateUtils.GetString(parentContext.Tracestate);
