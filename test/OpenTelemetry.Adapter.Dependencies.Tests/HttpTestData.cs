@@ -51,7 +51,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
         {
             var assembly = Assembly.GetExecutingAssembly();
             var serializer = new JsonSerializer();
-            var input = serializer.Deserialize<HttpOutTestCase[]>(new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream("OpenTelemetry.Collector.Dependencies.Tests.http-out-test-cases.json"))));
+            var input = serializer.Deserialize<HttpOutTestCase[]>(new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream("OpenTelemetry.Adapter.Dependencies.Tests.http-out-test-cases.json"))));
 
             return GetArgumentsFromTestCaseObject(input);
         }
