@@ -8,10 +8,6 @@
     <NoWarn>$(NoWarn),1591</NoWarn>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))/build/OpenTelemetry.prod.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-
   <ItemGroup>
     <Compile Remove="Implementation\**" />
     <EmbeddedResource Remove="Implementation\**" />

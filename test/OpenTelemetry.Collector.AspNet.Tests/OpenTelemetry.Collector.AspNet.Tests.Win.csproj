@@ -4,10 +4,6 @@
     <TargetFrameworks>net46</TargetFrameworks>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))/build/OpenTelemetry.test.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  
   <ItemGroup>
     <None Remove="xunit.runner.json" />
   </ItemGroup>
