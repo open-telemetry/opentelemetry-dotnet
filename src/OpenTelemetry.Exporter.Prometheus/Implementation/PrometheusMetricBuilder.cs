@@ -141,7 +141,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             foreach (var m in this.values)
             {
                 // metric_name and label_name carry the usual Prometheus expression language restrictions.
-                writer.Write(this.name);
+                writer.Write(m.Name ?? this.name);
 
                 // label_value can be any sequence of UTF-8 characters, but the backslash
                 // (\, double-quote ("}, and line feed (\n) characters have to be escaped
@@ -330,6 +330,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
         {
             public readonly ICollection<Tuple<string, string>> Labels = new List<Tuple<string, string>>();
             public double Value;
+            public string Name;
 
             public PrometheusMetricValueBuilder WithLabel(string name, string value)
             {
@@ -346,6 +347,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             public PrometheusMetricValueBuilder WithValue(double metricValue)
             {
                 this.Value = metricValue;
+                return this;
+            }
+
+            public PrometheusMetricValueBuilder WithName(string name)
+            {
+                this.Name = name;
                 return this;
             }
         }
