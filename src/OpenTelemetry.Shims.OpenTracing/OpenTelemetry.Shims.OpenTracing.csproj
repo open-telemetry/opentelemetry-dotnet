@@ -9,10 +9,6 @@
       <NoWarn>$(NoWarn),1591</NoWarn>
     </PropertyGroup>
 
-  <PropertyGroup>
-    <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))/build/OpenTelemetry.prod.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="OpenTracing" Version="0.12.1" />
   </ItemGroup>
