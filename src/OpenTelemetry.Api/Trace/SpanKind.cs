@@ -49,5 +49,10 @@ namespace OpenTelemetry.Trace
         /// spans.
         /// </summary>
         Consumer = 5,
+
+        /// <summary>
+        /// Terminal span represents outgoing telemetry data that is not typically recorded.
+        /// </summary>
+        Terminal = 6,
     }
 }

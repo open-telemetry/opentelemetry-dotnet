@@ -82,8 +82,9 @@ namespace OpenTelemetry.Trace.Configuration
         /// Creates tracerSdk factory.
         /// </summary>
         /// <param name="configure">Function that configures tracerSdk factory.</param>
+        /// <param name="useAsDefaultFactory">Set to <see langword="true"/> to use the created Tracer as the <see cref="TracerFactoryBase.Default"/> instance.</param>
         /// <returns>Returns new <see cref="TracerFactory"/>.</returns>
-        public static TracerFactory Create(Action<TracerBuilder> configure)
+        public static TracerFactory Create(Action<TracerBuilder> configure, bool useAsDefaultFactory = true)
         {
             if (configure == null)
             {
@@ -101,6 +102,11 @@ namespace OpenTelemetry.Trace.Configuration
                     var tracer = factory.GetTracer(collector.Name, collector.Version);
                     factory.collectors.Add(collector.Factory(tracer));
                 }
+            }
+
+            if (useAsDefaultFactory)
+            {
+                SetDefault(factory);
             }
 
             return factory;

@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using Thrift.Protocol;
 using Thrift.Transport;
@@ -37,6 +38,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private readonly TimeSpan maxFlushInterval;
         private readonly System.Timers.Timer maxFlushIntervalTimer;
 
+        private Tracer tracer;
         private Dictionary<string, Process> processCache;
         private int batchByteSize;
 
@@ -212,6 +214,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         private async ValueTask<int> FlushAsyncInternal(bool lockAlreadyHeld, CancellationToken cancellationToken)
         {
+            if (this.tracer == null)
+            {
+                this.tracer = TracerFactoryBase.Default.GetTracer("OpenTelemetry");
+            }
+
+            using var scope = this.tracer.StartActiveSpan("OpenTelemetry.Jaeger.Flush", SpanKind.Terminal, out _);
+
             if (!lockAlreadyHeld)
             {
                 await this.flushLock.WaitAsync().ConfigureAwait(false);

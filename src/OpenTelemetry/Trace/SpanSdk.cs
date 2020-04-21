@@ -157,15 +157,18 @@ namespace OpenTelemetry.Trace
             this.Activity = activityAndTracestate.Activity;
             var tracestate = activityAndTracestate.Tracestate;
 
-            this.IsRecording = MakeSamplingDecision(
-                parentSpanContext,
-                name,
-                spanKind,
-                spanCreationOptions?.Attributes,
-                links, // we'll enumerate again, but double enumeration over small collection is cheaper than allocation
-                this.Activity.TraceId,
-                this.Activity.SpanId,
-                this.sampler);
+            this.IsRecording =
+                spanKind != SpanKind.Terminal // Don't record Terminal spans.
+                && (!parentSpanContext.IsValid || parentSpanContext.TraceOptions.HasFlag(ActivityTraceFlags.Recorded)) // If parent is not recording, don't sample child.
+                && MakeSamplingDecision(
+                    parentSpanContext,
+                    name,
+                    spanKind,
+                    spanCreationOptions?.Attributes,
+                    links, // we'll enumerate again, but double enumeration over small collection is cheaper than allocation
+                    this.Activity.TraceId,
+                    this.Activity.SpanId,
+                    this.sampler);
 
             this.Activity.ActivityTraceFlags =
                 this.IsRecording

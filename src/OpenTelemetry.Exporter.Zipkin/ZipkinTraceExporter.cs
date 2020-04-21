@@ -24,6 +24,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Zipkin
@@ -35,6 +36,8 @@ namespace OpenTelemetry.Exporter.Zipkin
     {
         private readonly ZipkinTraceExporterOptions options;
         private readonly HttpClient httpClient;
+
+        private Tracer tracer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZipkinTraceExporter"/> class.
@@ -73,6 +76,13 @@ namespace OpenTelemetry.Exporter.Zipkin
 
         private Task SendSpansAsync(IEnumerable<SpanData> spans)
         {
+            if (this.tracer == null)
+            {
+                this.tracer = TracerFactoryBase.Default.GetTracer("OpenTelemetry");
+            }
+
+            using var scope = this.tracer.StartActiveSpan("OpenTelemetry.Zipkin.SendSpans", SpanKind.Terminal, out _);
+
             var requestUri = this.options.Endpoint;
 
             var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
