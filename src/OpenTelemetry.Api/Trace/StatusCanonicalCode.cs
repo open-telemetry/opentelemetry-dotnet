@@ -21,7 +21,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     /// <remarks>
     /// This follows the standard GRPC codes.
-    /// https://github.com/grpc/grpc/blob/master/doc/statuscodes.md
+    /// https://github.com/grpc/grpc/blob/master/doc/statuscodes.md.
     /// </remarks>
     public enum StatusCanonicalCode
     {
