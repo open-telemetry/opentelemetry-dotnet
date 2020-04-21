@@ -79,16 +79,16 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override TelemetrySpan StartSpan(string operationName, TelemetrySpan parent, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartSpan(string operationName, TelemetrySpan parentSpan, SpanKind kind, SpanCreationOptions options)
         {
-            if (parent == null)
+            if (parentSpan == null)
             {
-                parent = this.CurrentSpan;
+                parentSpan = this.CurrentSpan;
             }
 
             return SpanSdk.CreateFromParentSpan(
                 operationName,
-                parent,
+                parentSpan,
                 kind,
                 options,
                 this.sampler,
@@ -98,13 +98,13 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override TelemetrySpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartSpan(string operationName, in SpanContext parentContext, SpanKind kind, SpanCreationOptions options)
         {
-            if (parent.IsValid)
+            if (parentContext.IsValid)
             {
                 return SpanSdk.CreateFromParentContext(
                     operationName,
-                    parent,
+                    parentContext,
                     kind,
                     options,
                     this.sampler,
