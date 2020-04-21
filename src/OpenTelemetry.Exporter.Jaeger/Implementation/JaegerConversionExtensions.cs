@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             ["db.instance"] = 4, // peer.service for Redis.
         };
 
-        private static readonly Dictionary<CanonicalCode, string> CanonicalCodeDictionary = new Dictionary<CanonicalCode, string>();
+        private static readonly Dictionary<StatusCanonicalCode, string> CanonicalCodeDictionary = new Dictionary<StatusCanonicalCode, string>();
 
         private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessAttributeRef = ProcessAttribute;
         private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessLibraryAttributeRef = ProcessLibraryAttribute;
@@ -127,10 +127,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             if (status.IsValid)
             {
-                if (!CanonicalCodeDictionary.TryGetValue(status.CanonicalCode, out string statusCode))
+                if (!CanonicalCodeDictionary.TryGetValue(status.StatusCanonicalCode, out string statusCode))
                 {
-                    statusCode = status.CanonicalCode.ToString();
-                    CanonicalCodeDictionary.Add(status.CanonicalCode, statusCode);
+                    statusCode = status.StatusCanonicalCode.ToString();
+                    CanonicalCodeDictionary.Add(status.StatusCanonicalCode, statusCode);
                 }
 
                 PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(StatusCode, JaegerTagType.STRING, vStr: statusCode));

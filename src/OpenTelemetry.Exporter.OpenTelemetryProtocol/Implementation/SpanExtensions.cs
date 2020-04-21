@@ -68,7 +68,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         ? null
                         : new Opentelemetry.Proto.Trace.V1.Status
                         {
-                            Code = (int)otelSpan.Status.CanonicalCode,
+                            Code = (int)otelSpan.Status.StatusCanonicalCode,
                             Message = otelSpan.Status.Description ?? string.Empty,
                         },
                     ChildSpanCount = null,

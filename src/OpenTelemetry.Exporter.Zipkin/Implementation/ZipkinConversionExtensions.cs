@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> LocalEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
-        private static readonly ConcurrentDictionary<CanonicalCode, string> CanonicalCodeCache = new ConcurrentDictionary<CanonicalCode, string>();
+        private static readonly ConcurrentDictionary<StatusCanonicalCode, string> CanonicalCodeCache = new ConcurrentDictionary<StatusCanonicalCode, string>();
 
         private static readonly DictionaryEnumerator<string, object, AttributeEnumerationState>.ForEachDelegate ProcessAttributesRef = ProcessAttributes;
         private static readonly DictionaryEnumerator<string, object, AttributeEnumerationState>.ForEachDelegate ProcessLibraryResourcesRef = ProcessLibraryResources;
@@ -96,10 +96,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             if (status.IsValid)
             {
-                if (!CanonicalCodeCache.TryGetValue(status.CanonicalCode, out string canonicalCode))
+                if (!CanonicalCodeCache.TryGetValue(status.StatusCanonicalCode, out string canonicalCode))
                 {
-                    canonicalCode = status.CanonicalCode.ToString();
-                    CanonicalCodeCache.TryAdd(status.CanonicalCode, canonicalCode);
+                    canonicalCode = status.StatusCanonicalCode.ToString();
+                    CanonicalCodeCache.TryAdd(status.StatusCanonicalCode, canonicalCode);
                 }
 
                 PooledList<KeyValuePair<string, string>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, string>(StatusCode, canonicalCode));
