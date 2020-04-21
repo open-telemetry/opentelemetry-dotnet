@@ -142,12 +142,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         public static readonly Status DataLoss = new Status(StatusCanonicalCode.DataLoss);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Status"/> struct.
-        /// </summary>
-        /// <param name="statusCanonicalCode">The <see cref="Trace.StatusCanonicalCode"/> of the status.</param>
-        /// <param name="description">Description of the status.</param>
-        public Status(StatusCanonicalCode statusCanonicalCode, string description = null)
+        internal Status(StatusCanonicalCode statusCanonicalCode, string description = null)
         {
             this.StatusCanonicalCode = statusCanonicalCode;
             this.Description = description;
