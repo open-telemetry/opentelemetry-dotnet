@@ -43,6 +43,6 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Initial set of Attributes for the Span being constructed.</param>
         /// <param name="links">Links associated with the span.</param>
         /// <returns>Sampling decision on whether Span needs to be sampled or not.</returns>
-        public abstract SamplingResult ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IDictionary<string, object> attributes, IEnumerable<Link> links);
+        public abstract SamplingResult ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IEnumerable<KeyValuePair<string, object>> attributes, IEnumerable<Link> links);
     }
 }
