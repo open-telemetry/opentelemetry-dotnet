@@ -104,7 +104,7 @@ namespace OpenTelemetry.Context.Propagation
             }
 
             var traceparent = string.Concat("00-", spanContext.TraceId.ToHexString(), "-", spanContext.SpanId.ToHexString());
-            traceparent = string.Concat(traceparent, (spanContext.TraceOptions & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
+            traceparent = string.Concat(traceparent, (spanContext.TraceFlags & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
 
             setter(carrier, TraceParent, traceparent);
 

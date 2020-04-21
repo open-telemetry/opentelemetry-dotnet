@@ -159,7 +159,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 spanId: spanId.Low,
                 parentSpanId: parentSpanId.Low,
                 operationName: span.Name,
-                flags: (span.Context.TraceOptions & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
+                flags: (span.Context.TraceFlags & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
                 startTime: ToEpochMicroseconds(span.StartTimestamp),
                 duration: ToEpochMicroseconds(span.EndTimestamp) - ToEpochMicroseconds(span.StartTimestamp),
                 references: span.Links.ToJaegerSpanRefs(),
