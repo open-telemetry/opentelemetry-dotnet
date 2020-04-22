@@ -163,7 +163,7 @@ namespace OpenTelemetry.Collector.AspNet.Tests
 
                 Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.Name);
                 Assert.Equal(SpanKind.Server, span.Kind);
-                Assert.Equal(StatusCanonicalCode.Ok, span.Status.StatusCanonicalCode);
+                Assert.Equal(StatusCanonicalCode.Ok, span.Status.CanonicalCode);
                 Assert.Equal("OK", span.Status.Description);
 
                 var expectedUri = new Uri(url);

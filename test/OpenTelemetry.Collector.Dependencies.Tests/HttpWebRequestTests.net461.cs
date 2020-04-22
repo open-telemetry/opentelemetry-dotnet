@@ -106,7 +106,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
                 { StatusCanonicalCode.Unauthenticated, "UNAUTHENTICATED"},
             };
 
-            Assert.Equal(tc.SpanStatus, d[span.Status.StatusCanonicalCode]);
+            Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
             if (tc.SpanStatusHasDescription.HasValue)
                 Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(span.Status.Description));
 

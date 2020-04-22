@@ -127,10 +127,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             if (status.IsValid)
             {
-                if (!CanonicalCodeDictionary.TryGetValue(status.StatusCanonicalCode, out string statusCode))
+                if (!CanonicalCodeDictionary.TryGetValue(status.CanonicalCode, out string statusCode))
                 {
-                    statusCode = status.StatusCanonicalCode.ToString();
-                    CanonicalCodeDictionary.Add(status.StatusCanonicalCode, statusCode);
+                    statusCode = status.CanonicalCode.ToString();
+                    CanonicalCodeDictionary.Add(status.CanonicalCode, statusCode);
                 }
 
                 PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(StatusCode, JaegerTagType.STRING, vStr: statusCode));

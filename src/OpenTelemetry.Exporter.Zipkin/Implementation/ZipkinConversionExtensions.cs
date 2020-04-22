@@ -96,10 +96,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             if (status.IsValid)
             {
-                if (!CanonicalCodeCache.TryGetValue(status.StatusCanonicalCode, out string canonicalCode))
+                if (!CanonicalCodeCache.TryGetValue(status.CanonicalCode, out string canonicalCode))
                 {
-                    canonicalCode = status.StatusCanonicalCode.ToString();
-                    CanonicalCodeCache.TryAdd(status.StatusCanonicalCode, canonicalCode);
+                    canonicalCode = status.CanonicalCode.ToString();
+                    CanonicalCodeCache.TryAdd(status.CanonicalCode, canonicalCode);
                 }
 
                 PooledList<KeyValuePair<string, string>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, string>(StatusCode, canonicalCode));

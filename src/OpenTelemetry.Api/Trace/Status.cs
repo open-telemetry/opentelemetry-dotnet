@@ -144,7 +144,7 @@ namespace OpenTelemetry.Trace
 
         internal Status(StatusCanonicalCode statusCanonicalCode, string description = null)
         {
-            this.StatusCanonicalCode = statusCanonicalCode;
+            this.CanonicalCode = statusCanonicalCode;
             this.Description = description;
             this.IsValid = true;
         }
@@ -158,7 +158,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the canonical code from this status.
         /// </summary>
-        public StatusCanonicalCode StatusCanonicalCode { get; }
+        public StatusCanonicalCode CanonicalCode { get; }
 
         /// <summary>
         /// Gets the status description.
@@ -168,7 +168,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets a value indicating whether span completed sucessfully.
         /// </summary>
-        public bool IsOk => this.StatusCanonicalCode == StatusCanonicalCode.Ok;
+        public bool IsOk => this.CanonicalCode == StatusCanonicalCode.Ok;
 
         /// <summary>
         /// Compare two <see cref="Status"/> for equality.
@@ -196,7 +196,7 @@ namespace OpenTelemetry.Trace
                 return this;
             }
 
-            return new Status(this.StatusCanonicalCode, description);
+            return new Status(this.CanonicalCode, description);
         }
 
         /// <inheritdoc/>
@@ -208,14 +208,14 @@ namespace OpenTelemetry.Trace
             }
 
             var that = (Status)obj;
-            return this.IsValid == that.IsValid && this.StatusCanonicalCode == that.StatusCanonicalCode && this.Description == that.Description;
+            return this.IsValid == that.IsValid && this.CanonicalCode == that.CanonicalCode && this.Description == that.Description;
         }
 
         /// <inheritdoc/>
         public override int GetHashCode()
         {
             var result = 1;
-            result = (31 * result) + this.StatusCanonicalCode.GetHashCode();
+            result = (31 * result) + this.CanonicalCode.GetHashCode();
             result = (31 * result) + this.Description.GetHashCode();
             return result;
         }
@@ -225,7 +225,7 @@ namespace OpenTelemetry.Trace
         {
             return nameof(Status)
                 + "{"
-                + nameof(this.StatusCanonicalCode) + "=" + this.StatusCanonicalCode + ", "
+                + nameof(this.CanonicalCode) + "=" + this.CanonicalCode + ", "
                 + nameof(this.Description) + "=" + this.Description
                 + "}";
         }

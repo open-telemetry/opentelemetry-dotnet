@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Status_Ok()
         {
-            Assert.Equal(StatusCanonicalCode.Ok, Status.Ok.StatusCanonicalCode);
+            Assert.Equal(StatusCanonicalCode.Ok, Status.Ok.CanonicalCode);
             Assert.Null(Status.Ok.Description);
             Assert.True(Status.Ok.IsOk);
         }
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Test
         public void CreateStatus_WithDescription()
         {
             var status = Status.Unknown.WithDescription("This is an error.");
-            Assert.Equal(StatusCanonicalCode.Unknown, status.StatusCanonicalCode);
+            Assert.Equal(StatusCanonicalCode.Unknown, status.CanonicalCode);
             Assert.Equal("This is an error.", status.Description);
             Assert.False(status.IsOk);
         }

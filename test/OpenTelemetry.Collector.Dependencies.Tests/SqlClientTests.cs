@@ -108,7 +108,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             Assert.Equal("master", span.Name);
             Assert.Equal(SpanKind.Client, span.Kind);
-            Assert.Equal(StatusCanonicalCode.Ok, span.Status.StatusCanonicalCode);
+            Assert.Equal(StatusCanonicalCode.Ok, span.Status.CanonicalCode);
             Assert.Null(span.Status.Description);
 
             Assert.Equal("sql", span.Attributes.FirstOrDefault(i =>
@@ -206,7 +206,7 @@ namespace OpenTelemetry.Collector.Dependencies.Tests
 
             Assert.Equal("master", span.Name);
             Assert.Equal(SpanKind.Client, span.Kind);
-            Assert.Equal(StatusCanonicalCode.Unknown, span.Status.StatusCanonicalCode);
+            Assert.Equal(StatusCanonicalCode.Unknown, span.Status.CanonicalCode);
             Assert.Equal("Boom!", span.Status.Description);
 
             Assert.Equal("sql", span.Attributes.FirstOrDefault(i =>
