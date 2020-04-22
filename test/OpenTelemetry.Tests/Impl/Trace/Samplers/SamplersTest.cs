@@ -254,7 +254,8 @@ namespace OpenTelemetry.Trace.Samplers.Test
         [Fact]
         public void ProbabilitySampler_GetDescription()
         {
-            Assert.Equal($"ProbabilitySampler({0.5:F6})", new ProbabilitySampler(0.5).Description);
+            var expectedDescription = "ProbabilitySampler{0.500000}";
+            Assert.Equal(expectedDescription, new ProbabilitySampler(0.5).Description);
         }
 
         // Applies the given sampler to NUM_SAMPLE_TRIES random traceId/spanId pairs.
