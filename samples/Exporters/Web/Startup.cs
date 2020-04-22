@@ -45,8 +45,8 @@ namespace API
                         var instrumentationKey = this.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
                         telemetryConfiguration.InstrumentationKey = instrumentationKey;
                     })
-                    .AddRequestCollector()
-                    .AddDependencyCollector();
+                    .AddRequestAdapter()
+                    .AddDependencyAdapter();
             });
         }
 
