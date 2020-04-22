@@ -1,4 +1,4 @@
-﻿// <copyright file="StackExchangeRedisCallsCollectorTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="StackExchangeRedisCallsAdapterTests.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,19 +27,19 @@ namespace OpenTelemetry.Hosting
     public class HostingIntegrationTests
     {
         [Fact]
-        public async Task AddOpenTelemetry_RegisterCollector_CollectorCreatedAndDisposed()
+        public async Task AddOpenTelemetry_RegisterAdapter_AdapterCreatedAndDisposed()
         {
-            var testCollector = new TestCollector();
+            var testAdapter = new TestAdapter();
             var callbackRun = false;
 
             var builder = new HostBuilder().ConfigureServices(services =>
             {
                 services.AddOpenTelemetry(telemetry =>
                 {
-                    telemetry.AddCollector(t =>
+                    telemetry.AddAdapter(t =>
                     {
                         callbackRun = true;
-                        return testCollector;
+                        return testAdapter;
                     });
                 });
             });
@@ -47,22 +47,22 @@ namespace OpenTelemetry.Hosting
             var host = builder.Build();
 
             Assert.False(callbackRun);
-            Assert.False(testCollector.Disposed);
+            Assert.False(testAdapter.Disposed);
 
             await host.StartAsync();
 
             Assert.True(callbackRun);
-            Assert.False(testCollector.Disposed);
+            Assert.False(testAdapter.Disposed);
 
             await host.StopAsync();
 
             Assert.True(callbackRun);
-            Assert.False(testCollector.Disposed);
+            Assert.False(testAdapter.Disposed);
 
             host.Dispose();
 
             Assert.True(callbackRun);
-            Assert.True(testCollector.Disposed);
+            Assert.True(testAdapter.Disposed);
         }
 
         [Fact]
@@ -89,13 +89,13 @@ namespace OpenTelemetry.Hosting
         [Fact]
         public void AddOpenTelemetry_ServiceProviderArgument_ServicesRegistered()
         {
-            var testCollector = new TestCollector();
+            var testAdapter = new TestAdapter();
 
             var services = new ServiceCollection();
-            services.AddSingleton(testCollector);
+            services.AddSingleton(testAdapter);
             services.AddOpenTelemetry((provider, builder) =>
             {
-                builder.AddCollector<TestCollector>(tracer => provider.GetRequiredService<TestCollector>());
+                builder.AddAdapter<TestAdapter>(tracer => provider.GetRequiredService<TestAdapter>());
             });
 
             var serviceProvider = services.BuildServiceProvider();
@@ -103,14 +103,14 @@ namespace OpenTelemetry.Hosting
             var tracerFactory = serviceProvider.GetRequiredService<TracerFactory>();
             Assert.NotNull(tracerFactory);
 
-            Assert.False(testCollector.Disposed);
+            Assert.False(testAdapter.Disposed);
 
             serviceProvider.Dispose();
 
-            Assert.True(testCollector.Disposed);
+            Assert.True(testAdapter.Disposed);
         }
 
-        internal class TestCollector : IDisposable
+        internal class TestAdapter : IDisposable
         {
             public bool Disposed { get; private set; }
 

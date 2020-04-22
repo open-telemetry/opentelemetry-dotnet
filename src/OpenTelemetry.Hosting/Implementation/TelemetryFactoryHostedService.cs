@@ -35,7 +35,7 @@ namespace OpenTelemetry.Hosting.Implementation
         public Task StartAsync(CancellationToken cancellationToken)
         {
             // Ensure the factory was created when the app starts.
-            // This will create and start any configured collectors.
+            // This will create and start any configured adapters.
             this.serviceProvider.GetRequiredService<TracerFactoryBase>();
 
             return Task.CompletedTask;

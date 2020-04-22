@@ -65,8 +65,8 @@ namespace OpenTelemetry.Trace.Test
                 Assert.IsType<SpanData>(spans.Single());
             });
 
-            TestCollector collector1 = null;
-            TestCollector collector2 = null;
+            TestAdapter adapter1 = null;
+            TestAdapter adapter2 = null;
             TestProcessor processor = null;
             var tracerFactory = TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p
@@ -76,15 +76,15 @@ namespace OpenTelemetry.Trace.Test
                         processor = new TestProcessor(e);
                         return processor;
                     }))
-                .AddCollector(t =>
+                .AddAdapter(t =>
                 {
-                    collector1 = new TestCollector(t);
-                    return collector1;
+                    adapter1 = new TestAdapter(t);
+                    return adapter1;
                 })
-                .AddCollector(t =>
+                .AddAdapter(t =>
                 {
-                    collector2 = new TestCollector(t);
-                    return collector2;
+                    adapter2 = new TestAdapter(t);
+                    return adapter2;
                 }));
 
             var tracer = tracerFactory.GetTracer("my-app");
@@ -97,26 +97,26 @@ namespace OpenTelemetry.Trace.Test
             Assert.Single(((SpanSdk)span).LibraryResource.Attributes);
             Assert.Single(((SpanSdk)span).LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value.ToString() == "my-app"));
 
-            Assert.NotNull(collector1);
-            Assert.NotNull(collector2);
+            Assert.NotNull(adapter1);
+            Assert.NotNull(adapter2);
             Assert.NotNull(processor);
 
-            var span1 = collector1.Collect();
-            var span2 = collector1.Collect();
+            var span1 = adapter1.Collect();
+            var span2 = adapter1.Collect();
 
             Assert.Equal(3, exporterCalledCount);
 
             Assert.Equal(2, span1.LibraryResource.Attributes.Count());
             Assert.Equal(2, span2.LibraryResource.Attributes.Count());
-            Assert.Single(span1.LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value is string sv && sv == "TestCollector"));
-            Assert.Single(span2.LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value is string sv && sv == "TestCollector"));
+            Assert.Single(span1.LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value is string sv && sv == "TestAdapter"));
+            Assert.Single(span2.LibraryResource.Attributes.Where(kvp => kvp.Key == "name" && kvp.Value is string sv && sv == "TestAdapter"));
 
             Assert.Single(span1.LibraryResource.Attributes.Where(kvp => kvp.Key == "version" && kvp.Value is string sv && sv == "semver:1.0.0.0"));
             Assert.Single(span2.LibraryResource.Attributes.Where(kvp => kvp.Key == "version" && kvp.Value is string sv && sv == "semver:1.0.0.0"));
 
             tracerFactory.Dispose();
-            Assert.True(collector1.IsDisposed);
-            Assert.True(collector2.IsDisposed);
+            Assert.True(adapter1.IsDisposed);
+            Assert.True(adapter2.IsDisposed);
             Assert.True(processor.IsDisposed);
         }
 
@@ -281,12 +281,12 @@ namespace OpenTelemetry.Trace.Test
             }
         }
 
-        private class TestCollector : IDisposable
+        private class TestAdapter : IDisposable
         {
             private readonly Tracer tracer;
             public bool IsDisposed { get; private set; }
 
-            public TestCollector(Tracer tracer)
+            public TestAdapter(Tracer tracer)
             {
                 this.tracer = tracer;
             }
