@@ -20,8 +20,8 @@ namespace OpenTelemetry.Exporter.AspNet
                          c.AgentHost = "localhost";
                          c.AgentPort = 6831;
                      })
-                    .AddRequestCollector()
-                    .AddDependencyCollector();
+                    .AddRequestAdapter()
+                    .AddDependencyAdapter();
             });
 
             GlobalConfiguration.Configure(WebApiConfig.Register);

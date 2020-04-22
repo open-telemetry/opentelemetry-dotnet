@@ -11,8 +11,8 @@ just call `AddOpenTelemetry` during host builder configuration in `ConfigureServ
 1. Install packages (latest version)
 ``` xml
     <PackageReference Include="OpenTelemetry" Version="0.2.0-alpha.182" />
-    <PackageReference Include="OpenTelemetry.Collector.AspNetCore" Version="0.2.0-alpha.182" />
-    <PackageReference Include="OpenTelemetry.Collector.Dependencies" Version="0.2.0-alpha.182" />
+    <PackageReference Include="OpenTelemetry.Adapter.AspNetCore" Version="0.2.0-alpha.182" />
+    <PackageReference Include="OpenTelemetry.Adapter.Dependencies" Version="0.2.0-alpha.182" />
     <PackageReference Include="OpenTelemetry.Exporter.ApplicationInsights" Version="0.2.0-alpha.182" />
     <PackageReference Include="OpenTelemetry.Hosting" Version="0.2.0-alpha.182" />
 ```
@@ -27,8 +27,8 @@ services.AddOpenTelemetry((sp, builder) =>
         {
             telemetryConfiguration.InstrumentationKey = Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
         })
-        .AddRequestCollector() // regirsters ASP.NET Core incoming requests tracking 
-        .AddDependencyCollector(); // regirsters outgoing requests tracking
+        .AddRequestAdapter() // regirsters ASP.NET Core incoming requests tracking 
+        .AddDependencyAdapter(); // regirsters outgoing requests tracking
 });
 ```
 
@@ -38,7 +38,7 @@ services.AddOpenTelemetry((sp, builder) =>
 
 ``` xml
 <PackageReference Include="OpenTelemetry" Version="0.2.0-alpha.182" />
-<PackageReference Include="OpenTelemetry.Collector.Dependencies" Version="0.2.0-alpha.182" />
+<PackageReference Include="OpenTelemetry.Adapter.Dependencies" Version="0.2.0-alpha.182" />
 <PackageReference Include="OpenTelemetry.Exporter.ApplicationInsights" Version="0.2.0-alpha.182" />
 ```
 
@@ -53,7 +53,7 @@ var tracerFactory = TracerFactory.Create(builder =>
         {
             telemetryConfiguration.InstrumentationKey = "your instrumentation key";
         })
-        .AddDependencyCollector(); // regirsters outgoing requests tracking
+        .AddDependencyAdapter(); // regirsters outgoing requests tracking
 
                 var tracer = tracerFactory.GetTracer("http-client-test");
 
@@ -95,8 +95,8 @@ public static IHostBuilder CreateHostBuilder(string[] args) =>
             services.AddOpenTelemetry(b => b
                 .SetResource(Resources.CreateServiceResource("line-counter")) // use unique name 
                 .UseApplicationInsights(o => o.InstrumentationKey = instrumentationKey)
-                .AddDependencyCollector()
-                .AddRequestCollector());
+                .AddDependencyAdapter()
+                .AddRequestAdapter());
 
             // set up correlation between spans and logs
             services.Configure<TelemetryConfiguration>(telemetryConfiguration =>

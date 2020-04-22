@@ -50,9 +50,9 @@ namespace OpenTelemetry.Shims.OpenTracing
         private readonly List<KeyValuePair<string, object>> attributes = new List<KeyValuePair<string, object>>();
 
         /// <summary>
-        /// The set of operation names for System.Diagnostics.Activity based automatic collectors that indicate a root span.
+        /// The set of operation names for System.Diagnostics.Activity based automatic adapters that indicate a root span.
         /// </summary>
-        private readonly IList<string> rootOperationNamesForActivityBasedAutoCollectors = new List<string>
+        private readonly IList<string> rootOperationNamesForActivityBasedAutoAdapters = new List<string>
         {
             "Microsoft.AspNetCore.Hosting.HttpRequestIn",
         };
@@ -78,12 +78,12 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         private bool error;
 
-        public SpanBuilderShim(Trace.Tracer tracer, string spanName, IList<string> rootOperationNamesForActivityBasedAutoCollectors = null)
+        public SpanBuilderShim(Trace.Tracer tracer, string spanName, IList<string> rootOperationNamesForActivityBasedAutoAdapters = null)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             this.spanName = spanName ?? throw new ArgumentNullException(nameof(spanName));
             this.ScopeManager = new ScopeManagerShim(this.tracer);
-            this.rootOperationNamesForActivityBasedAutoCollectors = rootOperationNamesForActivityBasedAutoCollectors ?? this.rootOperationNamesForActivityBasedAutoCollectors;
+            this.rootOperationNamesForActivityBasedAutoAdapters = rootOperationNamesForActivityBasedAutoAdapters ?? this.rootOperationNamesForActivityBasedAutoAdapters;
         }
 
         private global::OpenTracing.IScopeManager ScopeManager { get; }
@@ -187,7 +187,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 if (System.Diagnostics.Activity.Current != null && System.Diagnostics.Activity.Current.IdFormat == System.Diagnostics.ActivityIdFormat.W3C)
                 {
                     var currentActivity = System.Diagnostics.Activity.Current;
-                    if (this.rootOperationNamesForActivityBasedAutoCollectors.Contains(currentActivity.OperationName))
+                    if (this.rootOperationNamesForActivityBasedAutoAdapters.Contains(currentActivity.OperationName))
                     {
                         this.tracer.StartSpanFromActivity(this.spanName, currentActivity, this.spanKind, this.links);
                         span = this.tracer.CurrentSpan;

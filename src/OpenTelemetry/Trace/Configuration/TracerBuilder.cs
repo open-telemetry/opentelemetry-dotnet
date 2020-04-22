@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal List<SpanProcessorPipelineBuilder> ProcessingPipelines { get; private set; }
 
-        internal List<CollectorFactory> CollectorFactories { get; private set; }
+        internal List<AdapterFactory> AdapterFactories { get; private set; }
 
         /// <summary>
         /// Configures sampler.
@@ -85,30 +85,30 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Adds auto-collectors for spans.
+        /// Adds auto-adapters for spans.
         /// </summary>
-        /// <typeparam name="TCollector">Type of collector class.</typeparam>
-        /// <param name="collectorFactory">Function that builds collector from <see cref="Tracer"/>.</param>
+        /// <typeparam name="TAdapter">Type of adapter class.</typeparam>
+        /// <param name="adapterFactory">Function that builds adapter from <see cref="Tracer"/>.</param>
         /// <returns>Returns <see cref="TracerBuilder"/> for chaining.</returns>
-        public TracerBuilder AddCollector<TCollector>(
-            Func<Tracer, TCollector> collectorFactory)
-            where TCollector : class
+        public TracerBuilder AddAdapter<TAdapter>(
+            Func<Tracer, TAdapter> adapterFactory)
+            where TAdapter : class
         {
-            if (collectorFactory == null)
+            if (adapterFactory == null)
             {
-                throw new ArgumentNullException(nameof(collectorFactory));
+                throw new ArgumentNullException(nameof(adapterFactory));
             }
 
-            if (this.CollectorFactories == null)
+            if (this.AdapterFactories == null)
             {
-                this.CollectorFactories = new List<CollectorFactory>();
+                this.AdapterFactories = new List<AdapterFactory>();
             }
 
-            this.CollectorFactories.Add(
-                new CollectorFactory(
-                    typeof(TCollector).Name,
-                    "semver:" + typeof(TCollector).Assembly.GetName().Version,
-                    collectorFactory));
+            this.AdapterFactories.Add(
+                new AdapterFactory(
+                    typeof(TAdapter).Name,
+                    "semver:" + typeof(TAdapter).Assembly.GetName().Version,
+                    adapterFactory));
 
             return this;
         }
@@ -124,13 +124,13 @@ namespace OpenTelemetry.Trace.Configuration
             return this;
         }
 
-        internal readonly struct CollectorFactory
+        internal readonly struct AdapterFactory
         {
             public readonly string Name;
             public readonly string Version;
             public readonly Func<Tracer, object> Factory;
 
-            internal CollectorFactory(string name, string version, Func<Tracer, object> factory)
+            internal AdapterFactory(string name, string version, Func<Tracer, object> factory)
             {
                 this.Name = name;
                 this.Version = version;
