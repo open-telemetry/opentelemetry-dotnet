@@ -18,8 +18,13 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Trace.Samplers
 {
+    /// <summary>
+    /// Sampler implementation which will sample in all the spans.
+    /// This sampler will be used as the default Sampler, if no other Sampler is configured.
+    /// </summary>
     public sealed class AlwaysOnSampler : Sampler
     {
+        /// <inheritdoc />
         public override string Description { get; } = nameof(AlwaysOnSampler);
 
         /// <inheritdoc />
