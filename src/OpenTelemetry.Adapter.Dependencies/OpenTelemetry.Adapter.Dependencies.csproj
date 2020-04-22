@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <Description>OpenTelemetry adapter for calls to dependencies</Description>
+    <PackageTags>$(PackageTags);distributed-tracing;HttpClient</PackageTags>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+  </ItemGroup>
+
+</Project>

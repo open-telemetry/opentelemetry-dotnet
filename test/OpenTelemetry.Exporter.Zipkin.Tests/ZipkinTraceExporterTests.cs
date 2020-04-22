@@ -21,7 +21,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Collector.Dependencies.Tests;
+using OpenTelemetry.Adapter.Dependencies.Tests;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Exporter.Zipkin.Tests.Implementation;
 using OpenTelemetry.Trace.Export;
