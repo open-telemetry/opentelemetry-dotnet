@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\OpenTelemetry.Collector.Dependencies.Tests\TestServer.cs" Link="TestServer.cs" />
+    <Compile Include="..\OpenTelemetry.Adapter.Dependencies.Tests\TestServer.cs" Link="TestServer.cs" />
   </ItemGroup>
 
   <ItemGroup>

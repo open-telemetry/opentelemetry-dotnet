@@ -35,7 +35,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetSampler(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().AddProcessorPipeline(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetTracerOptions(null));
-            Assert.Throws<ArgumentNullException>(() => new TracerBuilder().AddCollector<object>(null));
+            Assert.Throws<ArgumentNullException>(() => new TracerBuilder().AddAdapter<object>(null));
         }
 
         [Fact]
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Null(builder.Sampler);
             Assert.Null(builder.ProcessingPipelines);
             Assert.Null(builder.TracerConfigurationOptions);
-            Assert.Null(builder.CollectorFactories);
+            Assert.Null(builder.AdapterFactories);
         }
 
         [Fact]
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             var builder = new TracerBuilder();
 
             bool processorFactoryCalled = false;
-            bool collectorFactoryCalled = true;
+            bool adapterFactoryCalled = true;
 
             var sampler = new ProbabilitySampler(0.1);
             var exporter = new TestExporter(_ => { });
@@ -71,10 +71,10 @@ namespace OpenTelemetry.Tests.Impl.Trace
                         return new SimpleSpanProcessor(e);
                     }))
                 .SetTracerOptions(options)
-                .AddCollector(t =>
+                .AddAdapter(t =>
                 {
                     Assert.NotNull(t);
-                    return new TestCollector(t);
+                    return new TestAdapter(t);
                 });
 
             Assert.Same(sampler, builder.Sampler);
@@ -87,22 +87,22 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.True(processorFactoryCalled);
 
             Assert.Same(options, builder.TracerConfigurationOptions);
-            Assert.Single(builder.CollectorFactories);
+            Assert.Single(builder.AdapterFactories);
 
-            var collectorFactory = builder.CollectorFactories.Single();
-            Assert.Equal(nameof(TestCollector), collectorFactory.Name);
-            Assert.Equal("semver:" + typeof(TestCollector).Assembly.GetName().Version, collectorFactory.Version);
+            var adapterFactory = builder.AdapterFactories.Single();
+            Assert.Equal(nameof(TestAdapter), adapterFactory.Name);
+            Assert.Equal("semver:" + typeof(TestAdapter).Assembly.GetName().Version, adapterFactory.Version);
 
-            Assert.NotNull(collectorFactory.Factory);
-            collectorFactory.Factory(new TracerSdk(new SimpleSpanProcessor(exporter), new AlwaysOnSampler(), options, Resource.Empty));
+            Assert.NotNull(adapterFactory.Factory);
+            adapterFactory.Factory(new TracerSdk(new SimpleSpanProcessor(exporter), new AlwaysOnSampler(), options, Resource.Empty));
 
-            Assert.True(collectorFactoryCalled);
+            Assert.True(adapterFactoryCalled);
         }
 
-        private class TestCollector
+        private class TestAdapter
         {
             private readonly Tracer tracer;
-            public TestCollector(Tracer tracer)
+            public TestAdapter(Tracer tracer)
             {
                 this.tracer = tracer;
             }
