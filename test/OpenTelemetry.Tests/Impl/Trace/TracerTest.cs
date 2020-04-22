@@ -133,6 +133,13 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
+        public void GetCurrentSpanBlankWontThrowOnEnd()
+        {
+            var current = this.tracerSdk.CurrentSpan;
+            current.End();
+        }
+
+        [Fact]
         public void GetCurrentSpan()
         {
             var span = this.tracerSdk.StartSpan("foo");
