@@ -18,8 +18,13 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Trace.Samplers
 {
+    /// <summary>
+    /// Sampler implementation which will sample in, if parent span is sampled in.
+    /// If parent span is invalid, span is sampled out.
+    /// </summary>
     public sealed class AlwaysParentSampler : Sampler
     {
+        /// <inheritdoc />
         public override string Description { get; } = nameof(AlwaysParentSampler);
 
         /// <inheritdoc />
