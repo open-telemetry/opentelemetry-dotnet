@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace.Samplers
         /// <inheritdoc />
         public override SamplingResult ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IDictionary<string, object> attributes, IEnumerable<Link> parentLinks)
         {
-            if (parentContext.IsValid && parentContext.TraceOptions.HasFlag(ActivityTraceFlags.Recorded))
+            if (parentContext.IsValid && parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded))
             {
                 return new SamplingResult(true);
             }

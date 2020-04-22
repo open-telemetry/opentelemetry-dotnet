@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace.Test
         {
             Assert.Equal(default, default(SpanContext).TraceId);
             Assert.Equal(default, default(SpanContext).SpanId);
-            Assert.Equal(ActivityTraceFlags.None, default(SpanContext).TraceOptions);
+            Assert.Equal(ActivityTraceFlags.None, default(SpanContext).TraceFlags);
         }
 
         [Fact]
@@ -80,8 +80,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetTraceOptions()
         {
-            Assert.Equal(ActivityTraceFlags.None, First.TraceOptions);
-            Assert.Equal(ActivityTraceFlags.Recorded, Second.TraceOptions);
+            Assert.Equal(ActivityTraceFlags.None, First.TraceFlags);
+            Assert.Equal(ActivityTraceFlags.Recorded, Second.TraceFlags);
         }
 
         [Fact]

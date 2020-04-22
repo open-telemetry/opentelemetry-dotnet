@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace.Samplers
         {
             // If the parent is sampled keep the sampling decision.
             if (parentContext.IsValid &&
-                (parentContext.TraceOptions & ActivityTraceFlags.Recorded) != 0)
+                (parentContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
             {
                 return new SamplingResult(true);
             }
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Trace.Samplers
                 // If any parent link is sampled keep the sampling decision.
                 foreach (var parentLink in links)
                 {
-                    if ((parentLink.Context.TraceOptions & ActivityTraceFlags.Recorded) != 0)
+                    if ((parentLink.Context.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                     {
                         return new SamplingResult(true);
                     }
