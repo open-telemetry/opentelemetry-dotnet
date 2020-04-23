@@ -1,4 +1,4 @@
-﻿// <copyright file="CanonicalCode.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="StatusCanonicalCode.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,11 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Canonical result code of span execution.
     /// </summary>
-    public enum CanonicalCode
+    /// <remarks>
+    /// This follows the standard GRPC codes.
+    /// https://github.com/grpc/grpc/blob/master/doc/statuscodes.md.
+    /// </remarks>
+    public enum StatusCanonicalCode
     {
         /// <summary>
         /// The operation completed successfully.

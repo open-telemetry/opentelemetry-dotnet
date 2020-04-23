@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Status_Ok()
         {
-            Assert.Equal(CanonicalCode.Ok, Status.Ok.CanonicalCode);
+            Assert.Equal(StatusCanonicalCode.Ok, Status.Ok.CanonicalCode);
             Assert.Null(Status.Ok.Description);
             Assert.True(Status.Ok.IsOk);
         }
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Test
         public void CreateStatus_WithDescription()
         {
             var status = Status.Unknown.WithDescription("This is an error.");
-            Assert.Equal(CanonicalCode.Unknown, status.CanonicalCode);
+            Assert.Equal(StatusCanonicalCode.Unknown, status.CanonicalCode);
             Assert.Equal("This is an error.", status.Description);
             Assert.False(status.IsOk);
         }
@@ -39,8 +39,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Equality()
         {
-            var status1 = new Status(CanonicalCode.Ok);
-            var status2 = new Status(CanonicalCode.Ok);
+            var status1 = new Status(StatusCanonicalCode.Ok);
+            var status2 = new Status(StatusCanonicalCode.Ok);
 
             Assert.Equal(status1, status2);
             Assert.True(status1 == status2);
@@ -49,8 +49,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Equality_WithDescription()
         {
-            var status1 = new Status(CanonicalCode.Unknown, "error");
-            var status2 = new Status(CanonicalCode.Unknown, "error");
+            var status1 = new Status(StatusCanonicalCode.Unknown, "error");
+            var status2 = new Status(StatusCanonicalCode.Unknown, "error");
 
             Assert.Equal(status1, status2);
             Assert.True(status1 == status2);
@@ -60,8 +60,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Not_Equality()
         {
-            var status1 = new Status(CanonicalCode.Ok);
-            var status2 = new Status(CanonicalCode.Unknown);
+            var status1 = new Status(StatusCanonicalCode.Ok);
+            var status2 = new Status(StatusCanonicalCode.Unknown);
 
             Assert.NotEqual(status1, status2);
             Assert.True(status1 != status2);
@@ -70,8 +70,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Not_Equality_WithDescription1()
         {
-            var status1 = new Status(CanonicalCode.Ok, "ok");
-            var status2 = new Status(CanonicalCode.Unknown, "error");
+            var status1 = new Status(StatusCanonicalCode.Ok, "ok");
+            var status2 = new Status(StatusCanonicalCode.Unknown, "error");
 
             Assert.NotEqual(status1, status2);
             Assert.True(status1 != status2);
@@ -81,8 +81,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Not_Equality_WithDescription2()
         {
-            var status1 = new Status(CanonicalCode.Ok);
-            var status2 = new Status(CanonicalCode.Unknown, "error");
+            var status1 = new Status(StatusCanonicalCode.Ok);
+            var status2 = new Status(StatusCanonicalCode.Unknown, "error");
 
             Assert.NotEqual(status1, status2);
             Assert.True(status1 != status2);
