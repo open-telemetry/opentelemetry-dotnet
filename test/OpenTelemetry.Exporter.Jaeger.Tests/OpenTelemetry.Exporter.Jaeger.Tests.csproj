@@ -21,7 +21,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
-    <PackageReference Include="ApacheThrift" Version="0.13.0.1" ExcludeAssets="Compile" GeneratePathProperty="true" />
     <PackageReference Update="coverlet.msbuild" Version="2.8.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -31,12 +30,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="ApacheThrift">
-      <HintPath>$(PkgApacheThrift)\lib\netstandard2.0\Thrift.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>
