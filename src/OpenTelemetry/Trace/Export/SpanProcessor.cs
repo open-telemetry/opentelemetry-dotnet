@@ -24,13 +24,15 @@ namespace OpenTelemetry.Trace.Export
     public abstract class SpanProcessor
     {
         /// <summary>
-        /// Span start hook.
+        /// Span start hook. Only invoked if <see cref="TelemetrySpan.IsRecording"/> is true.
+        /// This method is called synchronously on the thread that started the span.
         /// </summary>
         /// <param name="span">Instance of span to process.</param>
         public abstract void OnStart(SpanData span);
 
         /// <summary>
-        /// Span end hook.
+        /// Span end hook. Only invoked if <see cref="TelemetrySpan.IsRecording"/> is true.
+        /// This method is called synchronously on the execution thread.
         /// </summary>
         /// <param name="span">Instance of Span to process.</param>
         public abstract void OnEnd(SpanData span);
