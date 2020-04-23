@@ -175,37 +175,7 @@ using (tracer.StartActiveSpan("incoming HTTP request", SpanKind.Server, out var 
 
 ### Context propagation out of process
 
-When instrumenting transport-layer operations, instrumentation should support context propagation.
-
-```csharp
-// this extracts W3C trace-context from incoming HTTP request
-// context may be valid if present and correct in the headers
-// or invalid if there was no context (or it was not valid)
-// instrumentation code should not care about it
-var context = tracer.TextFormat.Extract(incomingRequest.Headers, (headers, name) => headers[name]);
-
-var incomingSpan = tracer.StartSpan("incoming http request", context, SpanKind.Server);
-
-var outgoingRequest = new HttpRequestMessage(HttpMethod.Get, "http://microsoft.com");
-var outgoingSpan = tracer.StartSpan("outgoing http request", SpanKind.Client);
-
-// now that we have outgoing span, we can inject it's context
-// Note that if there is no SDK configured, tracer is noop -
-// it creates noop spans with invalid context. we should not propagate it.
-if (outgoingSpan.Context.IsValid)
-{
-    tracer.TextFormat.Inject(
-        outgoingSpan.Context,
-        outgoingRequest.Headers,
-        (headers, name, value) => headers.Add(name, value));
-}
-
-// make outgoing call
-// ...
-
-outgoingSpan.End();
-incomingSpan.End();
-```
+Examples will be added once [Global Propagators API is added.](https://github.com/open-telemetry/opentelemetry-dotnet/issues/581)
 
 ### Auto-adapter implementation for Activity/DiagnosticSource
 
