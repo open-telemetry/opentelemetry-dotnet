@@ -213,7 +213,7 @@ namespace OpenTelemetry.Trace.Export
             }
             catch (Exception ex)
             {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException("OnStart", ex);
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.ExportBatchAsync), ex);
             }
         }
 
