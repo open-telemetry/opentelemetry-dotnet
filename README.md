@@ -186,7 +186,7 @@ Leaving aside subscription mechanism, here is an example how you may implement c
 ```csharp
 void StartActivity()
 {
-    var span = tracer.StartSpanFromActivity("GET api/values", Activity.Current);
+    tracer.StartActiveSpanFromActivity ("GET api/values", Activity.Current, out var span);
 
     // extract other things from Activity and set them on span (tags to attributes)
     // ...
@@ -217,11 +217,12 @@ Configuration is done by user application: it should configure exporter and may 
 2. Create `TracerFactory`
 
     ```csharp
-    using (TracerFactory.Create(builder => builder
+    using (var tracerFactory = TracerFactory.Create(builder => builder
             .UseZipkin(options => {})
             .SetResource(Resources.CreateServiceResource("http-client-test")))
     {
-        // ...
+        // Obtain Tracer from the factory above.
+        var tracer = tracerFactory.GetTracer("zipkin-test");
     }
     ```
 
@@ -232,7 +233,7 @@ Configuration is done by user application: it should configure exporter and may 
    [OpenTelemetry.Adapter.AspNetCore][OpenTelemetry-adapter-aspnetcore-nuget-url] to collect incoming HTTP requests
    [OpenTelemetry.Adapter.Dependencies][OpenTelemetry-adapter-deps-nuget-url] to collect outgoing HTTP requests, SqlClient calls, and Azure SDK calls
 
-2. Make sure `TracerFactory`, is registered in DI.
+2. Use the `AddOpenTelemetry` helper method to add Open Telemetry. This registers `TracerFactory` in the Dependency Injection Container.
 
     ```csharp
     services.AddOpenTelemetry(builder =>
@@ -247,6 +248,7 @@ Configuration is done by user application: it should configure exporter and may 
             .SetResource(Resources.CreateServiceResource("my-service"))
     });
     ```
+3. Obtain `TracerFactory` using DI, and create `Tracer` from it.
 
 ### Configuration with ASP.NET (Full .NET Framework) running in IIS or IIS Express (if supported)
 
