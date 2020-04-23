@@ -19,7 +19,7 @@ namespace OpenTelemetry.Utils
 {
     internal static class CanonicalCodeExtensions
     {
-        public static Status ToStatus(this CanonicalCode code)
+        public static Status ToStatus(this StatusCanonicalCode code)
         {
             return new Status(code);
         }

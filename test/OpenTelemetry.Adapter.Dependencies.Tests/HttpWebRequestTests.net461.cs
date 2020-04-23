@@ -85,25 +85,25 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
             Assert.Equal(tc.SpanName, span.Name);
             Assert.Equal(tc.SpanKind, span.Kind.ToString());
 
-            var d = new Dictionary<CanonicalCode, string>()
+            var d = new Dictionary<StatusCanonicalCode, string>()
             {
-                { CanonicalCode.Ok, "OK"},
-                { CanonicalCode.Cancelled, "CANCELLED"},
-                { CanonicalCode.Unknown, "UNKNOWN"},
-                { CanonicalCode.InvalidArgument, "INVALID_ARGUMENT"},
-                { CanonicalCode.DeadlineExceeded, "DEADLINE_EXCEEDED"},
-                { CanonicalCode.NotFound, "NOT_FOUND"},
-                { CanonicalCode.AlreadyExists, "ALREADY_EXISTS"},
-                { CanonicalCode.PermissionDenied, "PERMISSION_DENIED"},
-                { CanonicalCode.ResourceExhausted, "RESOURCE_EXHAUSTED"},
-                { CanonicalCode.FailedPrecondition, "FAILED_PRECONDITION"},
-                { CanonicalCode.Aborted, "ABORTED"},
-                { CanonicalCode.OutOfRange, "OUT_OF_RANGE"},
-                { CanonicalCode.Unimplemented, "UNIMPLEMENTED"},
-                { CanonicalCode.Internal, "INTERNAL"},
-                { CanonicalCode.Unavailable, "UNAVAILABLE"},
-                { CanonicalCode.DataLoss, "DATA_LOSS"},
-                { CanonicalCode.Unauthenticated, "UNAUTHENTICATED"},
+                { StatusCanonicalCode.Ok, "OK"},
+                { StatusCanonicalCode.Cancelled, "CANCELLED"},
+                { StatusCanonicalCode.Unknown, "UNKNOWN"},
+                { StatusCanonicalCode.InvalidArgument, "INVALID_ARGUMENT"},
+                { StatusCanonicalCode.DeadlineExceeded, "DEADLINE_EXCEEDED"},
+                { StatusCanonicalCode.NotFound, "NOT_FOUND"},
+                { StatusCanonicalCode.AlreadyExists, "ALREADY_EXISTS"},
+                { StatusCanonicalCode.PermissionDenied, "PERMISSION_DENIED"},
+                { StatusCanonicalCode.ResourceExhausted, "RESOURCE_EXHAUSTED"},
+                { StatusCanonicalCode.FailedPrecondition, "FAILED_PRECONDITION"},
+                { StatusCanonicalCode.Aborted, "ABORTED"},
+                { StatusCanonicalCode.OutOfRange, "OUT_OF_RANGE"},
+                { StatusCanonicalCode.Unimplemented, "UNIMPLEMENTED"},
+                { StatusCanonicalCode.Internal, "INTERNAL"},
+                { StatusCanonicalCode.Unavailable, "UNAVAILABLE"},
+                { StatusCanonicalCode.DataLoss, "DATA_LOSS"},
+                { StatusCanonicalCode.Unauthenticated, "UNAUTHENTICATED"},
             };
 
             Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
