@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             ["db.instance"] = 4, // peer.service for Redis.
         };
 
-        private static readonly Dictionary<CanonicalCode, string> CanonicalCodeDictionary = new Dictionary<CanonicalCode, string>();
+        private static readonly Dictionary<StatusCanonicalCode, string> CanonicalCodeDictionary = new Dictionary<StatusCanonicalCode, string>();
 
         private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessAttributeRef = ProcessAttribute;
         private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessLibraryAttributeRef = ProcessLibraryAttribute;

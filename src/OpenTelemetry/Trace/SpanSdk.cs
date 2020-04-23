@@ -483,7 +483,7 @@ namespace OpenTelemetry.Trace
 
             if (!this.createdFromActivity)
             {
-                this.Activity.SetEndTime(endTimestamp.UtcDateTime);
+                this.Activity?.SetEndTime(endTimestamp.UtcDateTime);
             }
 
             if (this.endOnDispose)

@@ -19,12 +19,22 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Trace.Samplers
 {
-    /// <inheritdoc />
+    /// <summary>
+    /// Sampler implementation which will sample in, if parent span or any linked span is sampled in.
+    /// Otherwise, samples in a percentage of the spans.
+    /// The probability of sampling a span is equal to that of the specified probability.
+    /// </summary>
     public sealed class ProbabilitySampler : Sampler
     {
         private readonly long idUpperBound;
         private readonly double probability;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ProbabilitySampler"/> class.
+        /// </summary>
+        /// <param name="probability">The desired probability of sampling. This must be between 0.0 and 1.0.
+        /// Higher the value, higher is the probability of a given span to be sampled in.
+        /// </param>
         public ProbabilitySampler(double probability)
         {
             if (probability < 0.0 || probability > 1.0)
@@ -33,7 +43,10 @@ namespace OpenTelemetry.Trace.Samplers
             }
 
             this.probability = probability;
-            this.Description = $"ProbabilitySampler({this.probability:F6})";
+
+            // The expected description is like ProbabilitySampler{0.000100}
+            // https://docs.microsoft.com/dotnet/standard/base-types/composite-formatting#escaping-braces
+            this.Description = string.Format("{0}{1:F6}{2}", "ProbabilitySampler{", this.probability, "}");
 
             // Special case the limits, to avoid any possible issues with lack of precision across
             // double/long boundaries. For probability == 0.0, we use Long.MIN_VALUE as this guarantees
