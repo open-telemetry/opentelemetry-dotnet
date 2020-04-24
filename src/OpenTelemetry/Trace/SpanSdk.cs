@@ -182,7 +182,7 @@ namespace OpenTelemetry.Trace
 
                 if (spanCreationOptions?.Attributes != null)
                 {
-                    foreach (var attribute in spanCreationOptions.Attributes)
+                    foreach (KeyValuePair<string, string> attribute in spanCreationOptions.Attributes)
                     {
                         this.SetAttribute(attribute.Key, attribute.Value);
                     }
@@ -620,7 +620,7 @@ namespace OpenTelemetry.Trace
             {
                 spanCreationOptions = new SpanCreationOptions
                 {
-                    Attributes = activity.Tags.Cast<KeyValuePair<string, object>>(),
+                    Attributes = new TagsCollection(activity.Tags),
                 };
             }
 
