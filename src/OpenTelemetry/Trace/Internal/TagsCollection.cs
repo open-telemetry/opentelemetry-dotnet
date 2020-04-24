@@ -18,12 +18,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Trace.Internal
 {
     /// <summary>
     /// Tags collection.
     /// </summary>
-    public struct TagsCollection : IEnumerable<KeyValuePair<string, object>>
+    internal struct TagsCollection : IEnumerable<KeyValuePair<string, object>>
     {
         private IEnumerable<KeyValuePair<string, string>> enumerable;
 
