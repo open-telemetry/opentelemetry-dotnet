@@ -3,7 +3,7 @@
     "name": "Successful GET call to https://example.com",
     "method": "GET",
     "url": "https://example.com/",
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
@@ -18,7 +18,7 @@
     "name": "Successfully POST call to https://example.com",
     "method": "POST",
     "url": "https://example.com/",
-    "spanName": "/",
+    "spanName": "HTTP POST",
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
@@ -34,7 +34,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/path/to/resource/",
     "responseCode": 200,
-    "spanName": "/path/to/resource/",
+    "spanName": "HTTP GET",
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
@@ -49,7 +49,7 @@
     "name": "Call that cannot resolve DNS will be reported as error span",
     "method": "GET",
     "url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/",
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "INVALID_ARGUMENT",
     "spanStatusHasDescription": true,
     "spanKind": "Client",
@@ -65,7 +65,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 200,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
@@ -81,7 +81,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 200,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
@@ -97,7 +97,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 399,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
@@ -113,7 +113,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 400,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "INVALID_ARGUMENT",
     "spanKind": "Client",
     "spanAttributes": {
@@ -129,7 +129,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 401,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "UNAUTHENTICATED",
     "spanKind": "Client",
     "spanAttributes": {
@@ -145,7 +145,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 403,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "PERMISSION_DENIED",
     "spanKind": "Client",
     "spanAttributes": {
@@ -161,7 +161,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 404,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "NOT_FOUND",
     "spanKind": "Client",
     "spanAttributes": {
@@ -177,7 +177,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 429,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "RESOURCE_EXHAUSTED",
     "spanKind": "Client",
     "spanAttributes": {
@@ -193,7 +193,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 501,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "UNIMPLEMENTED",
     "spanKind": "Client",
     "spanAttributes": {
@@ -209,7 +209,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 503,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "UNAVAILABLE",
     "spanKind": "Client",
     "spanAttributes": {
@@ -225,7 +225,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 504,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "DEADLINE_EXCEEDED",
     "spanKind": "Client",
     "spanAttributes": {
@@ -241,7 +241,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 600,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "UNKNOWN",
     "spanKind": "Client",
     "spanAttributes": {
@@ -257,7 +257,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 200,
-    "spanName": "/",
+    "spanName": "HTTP GET",
     "spanStatus": "OK",
     "spanKind": "Client",
     "setHttpFlavor": true,

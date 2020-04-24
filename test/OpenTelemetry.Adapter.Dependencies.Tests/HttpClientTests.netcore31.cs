@@ -131,7 +131,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
     ""method"": ""GET"",
     ""url"": ""http://{host}:{port}/"",
     ""responseCode"": 399,
-    ""spanName"": ""/"",
+    ""spanName"": ""HTTP GET"",
     ""spanStatus"": ""OK"",
     ""spanKind"": ""Client"",
     ""spanAttributes"": {
