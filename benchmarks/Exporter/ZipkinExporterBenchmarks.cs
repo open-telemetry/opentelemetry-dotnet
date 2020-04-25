@@ -16,10 +16,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
+using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Exporter.Zipkin;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
@@ -45,7 +45,7 @@ namespace Benchmarks.Exporter
         public void GlobalSetup()
         {
             this.testSpan = this.CreateTestSpan();
-            this.server = TestServer.RunServer(
+            this.server = TestHttpServer.RunServer(
                 (ctx) =>
                 {
                     ctx.Response.StatusCode = 200;
@@ -136,97 +136,6 @@ namespace Benchmarks.Exporter
                 null,
                 Status.Ok,
                 endTimestamp);
-        }
-
-        public class TestServer
-        {
-            private static readonly Random GlobalRandom = new Random();
-
-            private class RunningServer : IDisposable
-            {
-                private readonly Task httpListenerTask;
-                private readonly HttpListener listener;
-                private readonly CancellationTokenSource cts;
-                private readonly AutoResetEvent initialized = new AutoResetEvent(false);
-
-                public RunningServer(Action<HttpListenerContext> action, string host, int port)
-                {
-                    this.cts = new CancellationTokenSource();
-                    this.listener = new HttpListener();
-
-                    var token = this.cts.Token;
-
-                    this.listener.Prefixes.Add($"http://{host}:{port}/");
-                    this.listener.Start();
-
-                    this.httpListenerTask = new Task(() =>
-                    {
-                        while (!token.IsCancellationRequested)
-                        {
-                            var ctxTask = this.listener.GetContextAsync();
-
-                            this.initialized.Set();
-
-                            try
-                            {
-                                ctxTask.Wait(token);
-
-                                if (ctxTask.Status == TaskStatus.RanToCompletion)
-                                {
-                                    action(ctxTask.Result);
-                                }
-                            }
-                            catch (OperationCanceledException)
-                            {
-                            }
-                        }
-                    });
-                }
-
-                public void Start()
-                {
-                    this.httpListenerTask.Start();
-                    this.initialized.WaitOne();
-                }
-
-                public void Dispose()
-                {
-                    try
-                    {
-                        this.listener?.Stop();
-                        this.cts.Cancel();
-                    }
-                    catch (ObjectDisposedException)
-                    {
-                        // swallow this exception just in case
-                    }
-                }
-            }
-
-            public static IDisposable RunServer(Action<HttpListenerContext> action, out string host, out int port)
-            {
-                host = "localhost";
-                port = 0;
-                RunningServer server = null;
-
-                var retryCount = 5;
-                while (retryCount > 0)
-                {
-                    try
-                    {
-                        port = GlobalRandom.Next(2000, 5000);
-                        server = new RunningServer(action, host, port);
-                        server.Start();
-                        break;
-                    }
-                    catch (HttpListenerException)
-                    {
-                        retryCount--;
-                    }
-                }
-
-                return server;
-            }
         }
     }
 }
