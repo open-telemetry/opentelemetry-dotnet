@@ -48,5 +48,10 @@ namespace OpenTelemetry.Metrics.Export
         /// <param name="longMetrics">The list of long metrics from this cycle, which are to be exported.</param>
         /// <param name="doubleMetrics">The list of double metrics from this cycle, which are to be exported.</param>
         public abstract void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics);
+
+        public abstract void Process(Metric<long> metric)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics.Export;
 
@@ -58,12 +59,17 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = longCounter.Key;
                     var counterInstrument = longCounter.Value;
+                    var metric = new Metric<long>(this.meterName, metricName, this.meterName + metricName, AggregationType.LongSum);
                     foreach (var handle in counterInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
+                        var metricData = aggregator.ToMetricData();
+                        metricData.Labels = labelSet.Labels;
+                        metric.Data.Add(metricData);
+
+                        // this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
 
                         // Updates so far are pushed to Processor/Exporter.
                         // Adjust status accordinly.
@@ -86,6 +92,7 @@ namespace OpenTelemetry.Metrics
                         }
                     }
 
+                    this.metricProcessor.Process(metric);
                     foreach (var boundInstrumentToRemove in boundInstrumentsToRemove)
                     {
                         // This actual unbinding or removal of the record occurs inside UnBind
