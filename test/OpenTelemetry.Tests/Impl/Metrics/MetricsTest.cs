@@ -20,7 +20,6 @@ using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Trace;
 using Xunit;
 using OpenTelemetry.Metrics.Export;
-using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics.Test
 {
@@ -54,14 +53,27 @@ namespace OpenTelemetry.Metrics.Test
 
             meter.Collect();
 
-            Assert.Equal(3, testProcessor.longMetrics.Count);
-            Assert.Equal(3, testProcessor.longMetrics.Count(m => m.MetricName == "testCounter"));
+            Assert.Single(testProcessor.longMetrics);
+            var metric = testProcessor.longMetrics[0];
 
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 110));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 200));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 210));
+            Assert.Equal("testCounter", metric.MetricName);
+            Assert.Equal("library1", metric.MetricNamespace);
+
+            // 3 time series, as 3 unique label sets.
+            Assert.Equal(3, metric.Data.Count);
+            var metricSeries = metric.Data.Single(data => data.Labels.Any(l => l.Key == "dim1" && l.Value == "value1"));
+            var metricLong = metricSeries as SumData<long>;
+            Assert.Equal(110, metricLong.Sum);
+
+            metricSeries = metric.Data.Single(data => data.Labels.Any(l => l.Key == "dim1" && l.Value == "value2"));
+            metricLong = metricSeries as SumData<long>;
+            Assert.Equal(200, metricLong.Sum);
+
+            metricSeries = metric.Data.Single(data => data.Labels.Any(l => l.Key == "dim1" && l.Value == "value3"));
+            metricLong = metricSeries as SumData<long>;
+            Assert.Equal(210, metricLong.Sum);
         }
-
+        
         [Fact]
         public void MeasureSendsAggregateToRegisteredProcessor()
         {
@@ -84,19 +96,27 @@ namespace OpenTelemetry.Metrics.Test
 
             meter.Collect();
 
-            Assert.Equal(2, testProcessor.longMetrics.Count);
-            Assert.Equal(2, testProcessor.longMetrics.Count(m => m.MetricName == "testMeasure"));
+            Assert.Single(testProcessor.longMetrics);
+            var metric = testProcessor.longMetrics[0];
+            Assert.Equal("testMeasure", metric.MetricName);
+            Assert.Equal("library1", metric.MetricNamespace);
 
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Sum == 111));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Count == 3));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Min == 1));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Max == 100));
+            // 2 time series, as 2 unique label sets.
+            Assert.Equal(2, metric.Data.Count);
 
+            var metricSeries = metric.Data.Single(data => data.Labels.Any(l => l.Key == "dim1" && l.Value == "value1"));
+            var metricSummary = metricSeries as SummaryData<long>;
+            Assert.Equal(111, metricSummary.Sum);
+            Assert.Equal(3, metricSummary.Count);
+            Assert.Equal(1, metricSummary.Min);
+            Assert.Equal(100, metricSummary.Max);
 
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Sum == 220));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Count == 2));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Min == 20));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SummaryData<long>).Max == 200));
+            metricSeries = metric.Data.Single(data => data.Labels.Any(l => l.Key == "dim1" && l.Value == "value2"));
+            metricSummary = metricSeries as SummaryData<long>;
+            Assert.Equal(220, metricSummary.Sum);
+            Assert.Equal(2, metricSummary.Count);
+            Assert.Equal(20, metricSummary.Min);
+            Assert.Equal(200, metricSummary.Max);
         }
 
         [Fact]
@@ -108,10 +128,21 @@ namespace OpenTelemetry.Metrics.Test
 
             meter.Collect();
 
-            Assert.Equal(2, testProcessor.longMetrics.Count);
-            Assert.Equal(2, testProcessor.longMetrics.Count(m => m.MetricName == "testObserver"));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 30));
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 300));
+            Assert.Single(testProcessor.longMetrics);
+            var metric = testProcessor.longMetrics[0];
+            Assert.Equal("testObserver", metric.MetricName);
+            Assert.Equal("library1", metric.MetricNamespace);
+
+            // 2 time series, as 2 unique label sets.
+            Assert.Equal(2, metric.Data.Count);
+
+            var metricSeries = metric.Data.Single(data => data.Labels.Any(l => l.Key == "dim1" && l.Value == "value1"));
+            var metricLong = metricSeries as SumData<long>;
+            Assert.Equal(30, metricLong.Sum);
+
+            metricSeries = metric.Data.Single(data => data.Labels.Any(l => l.Key == "dim1" && l.Value == "value2"));
+            metricLong = metricSeries as SumData<long>;
+            Assert.Equal(300, metricLong.Sum);
         }
 
         [Fact]
@@ -123,10 +154,21 @@ namespace OpenTelemetry.Metrics.Test
 
             meter.Collect();
 
-            Assert.Equal(2, testProcessor.doubleMetrics.Count);
-            Assert.Equal(2, testProcessor.doubleMetrics.Count(m => m.MetricName == "testObserver"));
-            Assert.Single(testProcessor.doubleMetrics.Where(m => (m.Data as SumData<double>).Sum == 30.5));
-            Assert.Single(testProcessor.doubleMetrics.Where(m => (m.Data as SumData<double>).Sum == 300.5));
+            Assert.Single(testProcessor.doubleMetrics);
+            var metric = testProcessor.doubleMetrics[0];
+            Assert.Equal("testObserver", metric.MetricName);
+            Assert.Equal("library1", metric.MetricNamespace);
+
+            // 2 time series, as 2 unique label sets.
+            Assert.Equal(2, metric.Data.Count);
+
+            var metricSeries = metric.Data.Single(data => data.Labels.Any(l => l.Key == "dim1" && l.Value == "value1"));
+            var metricLong = metricSeries as SumData<double>;
+            Assert.Equal(30.5, metricLong.Sum);
+
+            metricSeries = metric.Data.Single(data => data.Labels.Any(l => l.Key == "dim1" && l.Value == "value2"));
+            metricLong = metricSeries as SumData<double>;
+            Assert.Equal(300.5, metricLong.Sum);
         }
 
         private void TestCallbackLong(Int64ObserverMetric observerMetric)

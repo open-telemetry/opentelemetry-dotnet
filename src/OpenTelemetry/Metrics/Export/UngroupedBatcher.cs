@@ -37,20 +37,6 @@ namespace OpenTelemetry.Metrics.Export
             this.doubleMetrics = new List<Metric<double>>();
         }
 
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
-        {
-            var metric = new Metric<long>(meterName, metricName, meterName + metricName, labelSet.Labels, aggregator.GetAggregationType());
-            metric.Data = aggregator.ToMetricData();
-            this.longMetrics.Add(metric);
-        }
-
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator)
-        {
-            var metric = new Metric<double>(meterName, metricName, meterName + metricName, labelSet.Labels, aggregator.GetAggregationType());
-            metric.Data = aggregator.ToMetricData();
-            this.doubleMetrics.Add(metric);
-        }
-
         public override void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics)
         {
             // The batcher is currently stateless. i.e it forgets state after collection is done.
@@ -64,6 +50,16 @@ namespace OpenTelemetry.Metrics.Export
             this.doubleMetrics = new List<Metric<double>>();
 
             OpenTelemetrySdkEventSource.Log.BatcherCollectionCompleted(count);
+        }
+
+        public override void Process(Metric<long> metric)
+        {
+            this.longMetrics.Add(metric);
+        }
+
+        public override void Process(Metric<double> metric)
+        {
+            this.doubleMetrics.Add(metric);
         }
     }
 }
