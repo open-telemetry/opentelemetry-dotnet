@@ -1,4 +1,4 @@
-﻿// <copyright file="TestServer.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestHttpServer.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,11 +17,10 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Xunit;
 
-namespace OpenTelemetry.Adapter.Dependencies.Tests
+namespace OpenTelemetry.Internal.Test
 {
-    public class TestServer
+    internal class TestHttpServer
     {
         private static readonly Random GlobalRandom = new Random();
 
@@ -33,20 +32,20 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
 
             public RunningServer(Action<HttpListenerContext> action, string host, int port)
             {
-                listener = new HttpListener();
+                this.listener = new HttpListener();
 
-                listener.Prefixes.Add($"http://{host}:{port}/");
-                listener.Start();
+                this.listener.Prefixes.Add($"http://{host}:{port}/");
+                this.listener.Start();
 
-                httpListenerTask = new Task(async () =>
+                this.httpListenerTask = new Task(async () =>
                 {
                     while (true)
                     {
                         try
                         {
-                            var ctxTask = listener.GetContextAsync();
+                            var ctxTask = this.listener.GetContextAsync();
 
-                            initialized.Set();
+                            this.initialized.Set();
 
                             action(await ctxTask.ConfigureAwait(false));
                         }
@@ -57,7 +56,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
                             {
                                 break;
                             }
-                            Assert.True(false, ex.ToString());
+                            throw;
                         }
                     }
                 });
@@ -65,15 +64,15 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
 
             public void Start()
             {
-                httpListenerTask.Start();
-                initialized.WaitOne();
+                this.httpListenerTask.Start();
+                this.initialized.WaitOne();
             }
 
             public void Dispose()
             {
                 try
                 {
-                    listener?.Stop();
+                    this.listener?.Stop();
                 }
                 catch (ObjectDisposedException)
                 {
