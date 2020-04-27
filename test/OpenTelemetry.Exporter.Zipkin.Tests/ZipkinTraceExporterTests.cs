@@ -21,7 +21,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Adapter.Dependencies.Tests;
+using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Exporter.Zipkin.Tests.Implementation;
 using OpenTelemetry.Trace.Export;
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
         public ZipkinTraceExporterTests()
         {
-            this.testServer = TestServer.RunServer(
+            this.testServer = TestHttpServer.RunServer(
                 ctx => ProcessServerRequest(ctx),
                 out this.testServerHost,
                 out this.testServerPort);
