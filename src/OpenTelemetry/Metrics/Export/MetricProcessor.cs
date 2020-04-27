@@ -14,32 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using OpenTelemetry.Metrics.Aggregators;
 
 namespace OpenTelemetry.Metrics.Export
 {
     public abstract class MetricProcessor
     {
-        /// <summary>
-        /// Process the metric. This method is called once every collection interval.
-        /// </summary>
-        /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
-        /// <param name="metricName">the name of the instrument.</param>
-        /// <param name="labelSet">the labelSet associated with the instrument.</param>
-        /// <param name="aggregator">the aggregator used.</param>
-        public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator);
-
-        /// <summary>
-        /// Process the metric. This method is called once every collection interval.
-        /// </summary>
-        /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
-        /// <param name="metricName">the name of the instrument.</param>
-        /// <param name="labelSet">the labelSet associated with the instrument.</param>
-        /// <param name="aggregator">the aggregator used.</param>
-        public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator);
-
         /// <summary>
         /// Finish the current collection cycle and return the metrics it holds.
         /// This is called at the end of one collection cycle by the Controller.
@@ -48,5 +28,17 @@ namespace OpenTelemetry.Metrics.Export
         /// <param name="longMetrics">The list of long metrics from this cycle, which are to be exported.</param>
         /// <param name="doubleMetrics">The list of double metrics from this cycle, which are to be exported.</param>
         public abstract void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics);
+
+        /// <summary>
+        /// Process the metric. This method is called once every collection interval.
+        /// </summary>
+        /// <param name="metric">the metric record.</param>
+        public abstract void Process(Metric<long> metric);
+
+        /// <summary>
+        /// Process the metric. This method is called once every collection interval.
+        /// </summary>
+        /// <param name="metric">the metric record.</param>
+        public abstract void Process(Metric<double> metric);
     }
 }

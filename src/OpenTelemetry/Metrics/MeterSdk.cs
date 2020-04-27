@@ -58,12 +58,15 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = longCounter.Key;
                     var counterInstrument = longCounter.Value;
+                    var metric = new Metric<long>(this.meterName, metricName, this.meterName + metricName, AggregationType.LongSum);
                     foreach (var handle in counterInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
+                        var metricData = aggregator.ToMetricData();
+                        metricData.Labels = labelSet.Labels;
+                        metric.Data.Add(metricData);
 
                         // Updates so far are pushed to Processor/Exporter.
                         // Adjust status accordinly.
@@ -86,6 +89,7 @@ namespace OpenTelemetry.Metrics
                         }
                     }
 
+                    this.metricProcessor.Process(metric);
                     foreach (var boundInstrumentToRemove in boundInstrumentsToRemove)
                     {
                         // This actual unbinding or removal of the record occurs inside UnBind
@@ -101,12 +105,15 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = doubleCounter.Key;
                     var counterInstrument = doubleCounter.Value;
+                    var metric = new Metric<double>(this.meterName, metricName, this.meterName + metricName, AggregationType.DoubleSum);
                     foreach (var handle in counterInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
+                        var metricData = aggregator.ToMetricData();
+                        metricData.Labels = labelSet.Labels;
+                        metric.Data.Add(metricData);
 
                         // Updates so far are pushed to Processor/Exporter.
                         // Adjust status accordinly.
@@ -129,6 +136,7 @@ namespace OpenTelemetry.Metrics
                         }
                     }
 
+                    this.metricProcessor.Process(metric);
                     foreach (var boundInstrumentToRemove in boundInstrumentsToRemove)
                     {
                         // This actual unbinding or removal of the record occurs inside UnBind
@@ -144,32 +152,43 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = longMeasure.Key;
                     var measureInstrument = longMeasure.Value;
+                    var metric = new Metric<long>(this.meterName, metricName, this.meterName + metricName, AggregationType.Summary);
                     foreach (var handle in measureInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
+                        var metricData = aggregator.ToMetricData();
+                        metricData.Labels = labelSet.Labels;
+                        metric.Data.Add(metricData);
                     }
+
+                    this.metricProcessor.Process(metric);
                 }
 
                 foreach (var doubleMeasure in this.doubleMeasures)
                 {
                     var metricName = doubleMeasure.Key;
                     var measureInstrument = doubleMeasure.Value;
+                    var metric = new Metric<double>(this.meterName, metricName, this.meterName + metricName, AggregationType.Summary);
                     foreach (var handle in measureInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
+                        var metricData = aggregator.ToMetricData();
+                        metricData.Labels = labelSet.Labels;
+                        metric.Data.Add(metricData);
                     }
+
+                    this.metricProcessor.Process(metric);
                 }
 
                 foreach (var longObserver in this.longObservers)
                 {
                     var metricName = longObserver.Key;
                     var observerInstrument = longObserver.Value;
+                    var metric = new Metric<long>(this.meterName, metricName, this.meterName + metricName, AggregationType.LongSum);
                     try
                     {
                         // TODO: Decide if we want to enforce a timeout. Issue # 542
@@ -185,14 +204,19 @@ namespace OpenTelemetry.Metrics
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
+                        var metricData = aggregator.ToMetricData();
+                        metricData.Labels = labelSet.Labels;
+                        metric.Data.Add(metricData);
                     }
+
+                    this.metricProcessor.Process(metric);
                 }
 
                 foreach (var doubleObserver in this.doubleObservers)
                 {
                     var metricName = doubleObserver.Key;
                     var observerInstrument = doubleObserver.Value;
+                    var metric = new Metric<double>(this.meterName, metricName, this.meterName + metricName, AggregationType.LongSum);
                     try
                     {
                         // TODO: Decide if we want to enforce a timeout. Issue # 542
@@ -208,8 +232,12 @@ namespace OpenTelemetry.Metrics
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        this.metricProcessor.Process(this.meterName, metricName, labelSet, aggregator);
+                        var metricData = aggregator.ToMetricData();
+                        metricData.Labels = labelSet.Labels;
+                        metric.Data.Add(metricData);
                     }
+
+                    this.metricProcessor.Process(metric);
                 }
             }
         }

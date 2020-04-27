@@ -29,11 +29,11 @@ namespace OpenTelemetry.Metrics.Export
             doubleMetrics = Enumerable.Empty<Metric<double>>();
         }
 
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
+        public override void Process(Metric<long> metric)
         {
         }
 
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator)
+        public override void Process(Metric<double> metric)
         {
         }
     }

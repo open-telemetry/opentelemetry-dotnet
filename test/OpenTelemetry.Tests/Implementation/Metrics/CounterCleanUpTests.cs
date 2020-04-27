@@ -20,7 +20,6 @@ using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Trace;
 using Xunit;
 using OpenTelemetry.Metrics.Export;
-using System.Diagnostics;
 using System.Threading;
 using System;
 using Xunit.Abstractions;
@@ -192,7 +191,6 @@ namespace OpenTelemetry.Metrics.Test
 
             // This collect should mark ls1 NoPendingUpdate
             meter.Collect();
-            Assert.Single(testProcessor.longMetrics.Where(m => (m.Data as SumData<long>).Sum == 110));
 
             // Validate collect() has marked records correctly.
             Assert.Equal(RecordStatus.NoPendingUpdate, testCounter.GetAllBoundInstruments()[ls1].Status);
@@ -236,7 +234,7 @@ namespace OpenTelemetry.Metrics.Test
             long sum = 0;
             foreach (var exportedData in testProcessor.longMetrics)
             {
-                sum = sum + (exportedData.Data as SumData<long>).Sum;
+                exportedData.Data.ForEach((data => sum += (data as SumData<long>).Sum));
             }
 
             // 210 = 110 from initial update, 100 from the multi-thread test case.
@@ -261,8 +259,7 @@ namespace OpenTelemetry.Metrics.Test
             testCounter.Add(context, 10.0, ls1);
 
             // This collect should mark ls1 NoPendingUpdate
-            meter.Collect();
-            Assert.Single(testProcessor.doubleMetrics.Where(m => (m.Data as SumData<double>).Sum == 110.0));
+            meter.Collect();            
 
             // Validate collect() has marked records correctly.
             Assert.Equal(RecordStatus.NoPendingUpdate, testCounter.GetAllBoundInstruments()[ls1].Status);
@@ -304,9 +301,10 @@ namespace OpenTelemetry.Metrics.Test
             meter.Collect();
 
             double sum = 0;
+            
             foreach (var exportedData in testProcessor.doubleMetrics)
             {
-                sum = sum + (exportedData.Data as SumData<double>).Sum;
+                exportedData.Data.ForEach((data => sum += (data as SumData<double>).Sum));
             }
 
             // 210 = 110 from initial update, 100 from the multi-thread test case.
