@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Export
         private bool disposed = false;
 
         /// <summary>
-        /// Constructs simple processor.
+        /// Initializes a new instance of the <see cref="SimpleSpanProcessor"/> class.
         /// </summary>
         /// <param name="exporter">Span processor instance.</param>
         public SimpleSpanProcessor(SpanExporter exporter)

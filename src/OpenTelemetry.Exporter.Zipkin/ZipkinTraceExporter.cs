@@ -33,19 +33,8 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// </summary>
     public class ZipkinTraceExporter : SpanExporter
     {
-        private const long MillisPerSecond = 1000L;
-        private const long NanosPerMillisecond = 1000 * 1000;
-        private const long NanosPerSecond = NanosPerMillisecond * MillisPerSecond;
-
-        private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        };
-
         private readonly ZipkinTraceExporterOptions options;
-        private readonly ZipkinEndpoint localEndpoint;
         private readonly HttpClient httpClient;
-        private readonly string serviceEndpoint;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZipkinTraceExporter"/> class.
@@ -55,48 +44,18 @@ namespace OpenTelemetry.Exporter.Zipkin
         public ZipkinTraceExporter(ZipkinTraceExporterOptions options, HttpClient client = null)
         {
             this.options = options;
-            this.localEndpoint = this.GetLocalZipkinEndpoint();
+            this.LocalEndpoint = this.GetLocalZipkinEndpoint();
             this.httpClient = client ?? new HttpClient();
-            this.serviceEndpoint = options.Endpoint?.ToString();
         }
 
+        internal ZipkinEndpoint LocalEndpoint { get; }
+
         /// <inheritdoc/>
-        public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> otelSpanList, CancellationToken cancellationToken)
+        public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
         {
-            var zipkinSpans = new List<ZipkinSpan>();
-
-            foreach (var data in otelSpanList)
-            {
-                bool shouldExport = true;
-                foreach (var label in data.Attributes)
-                {
-                    if (label.Key == "http.url")
-                    {
-                        if (label.Value is string urlStr && urlStr == this.serviceEndpoint)
-                        {
-                            // do not track calls to Zipkin
-                            shouldExport = false;
-                        }
-
-                        break;
-                    }
-                }
-
-                if (shouldExport)
-                {
-                    var zipkinSpan = data.ToZipkinSpan(this.localEndpoint, this.options.UseShortTraceIds);
-                    zipkinSpans.Add(zipkinSpan);
-                }
-            }
-
-            if (zipkinSpans.Count == 0)
-            {
-                return ExportResult.Success;
-            }
-
             try
             {
-                await this.SendSpansAsync(zipkinSpans, cancellationToken);
+                await this.SendSpansAsync(batch).ConfigureAwait(false);
                 return ExportResult.Success;
             }
             catch (Exception)
@@ -112,51 +71,37 @@ namespace OpenTelemetry.Exporter.Zipkin
             return Task.CompletedTask;
         }
 
-        private Task SendSpansAsync(IEnumerable<ZipkinSpan> spans, CancellationToken cancellationToken)
+        private Task SendSpansAsync(IEnumerable<SpanData> spans)
         {
             var requestUri = this.options.Endpoint;
-            var request = this.GetHttpRequestMessage(HttpMethod.Post, requestUri);
-            request.Content = this.GetRequestContent(spans);
+
+            var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new JsonContent(this, spans),
+            };
 
             // avoid cancelling here: this is no return point: if we reached this point
             // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
-            return this.DoPostAsync(this.httpClient, request);
-        }
-
-        private async Task DoPostAsync(HttpClient client, HttpRequestMessage request)
-        {
-            await client.SendAsync(request).ConfigureAwait(false);
-        }
-
-        private HttpRequestMessage GetHttpRequestMessage(HttpMethod method, Uri requestUri)
-        {
-            var request = new HttpRequestMessage(method, requestUri);
-
-            return request;
-        }
-
-        private HttpContent GetRequestContent(IEnumerable<ZipkinSpan> toSerialize)
-        {
-            return new JsonContent(toSerialize, Options);
+            return this.httpClient.SendAsync(request);
         }
 
         private ZipkinEndpoint GetLocalZipkinEndpoint()
         {
-            var result = new ZipkinEndpoint()
-            {
-                ServiceName = this.options.ServiceName,
-            };
-
             var hostName = this.ResolveHostName();
 
+            string ipv4 = null;
+            string ipv6 = null;
             if (!string.IsNullOrEmpty(hostName))
             {
-                result.Ipv4 = this.ResolveHostAddress(hostName, AddressFamily.InterNetwork);
-
-                result.Ipv6 = this.ResolveHostAddress(hostName, AddressFamily.InterNetworkV6);
+                ipv4 = this.ResolveHostAddress(hostName, AddressFamily.InterNetwork);
+                ipv6 = this.ResolveHostAddress(hostName, AddressFamily.InterNetworkV6);
             }
 
-            return result;
+            return new ZipkinEndpoint(
+                this.options.ServiceName,
+                ipv4,
+                ipv6,
+                null);
         }
 
         private string ResolveHostAddress(string hostName, AddressFamily family)
@@ -222,19 +167,45 @@ namespace OpenTelemetry.Exporter.Zipkin
                 CharSet = "utf-8",
             };
 
-            private readonly IEnumerable<ZipkinSpan> spans;
-            private readonly JsonSerializerOptions options;
+            private static Utf8JsonWriter writer;
 
-            public JsonContent(IEnumerable<ZipkinSpan> spans, JsonSerializerOptions options)
+            private readonly ZipkinTraceExporter exporter;
+            private readonly IEnumerable<SpanData> spans;
+
+            public JsonContent(ZipkinTraceExporter exporter, IEnumerable<SpanData> spans)
             {
+                this.exporter = exporter;
                 this.spans = spans;
-                this.options = options;
 
                 this.Headers.ContentType = JsonHeader;
             }
 
-            protected override async Task SerializeToStreamAsync(Stream stream, TransportContext context)
-                => await JsonSerializer.SerializeAsync(stream, this.spans, this.options).ConfigureAwait(false);
+            protected override Task SerializeToStreamAsync(Stream stream, TransportContext context)
+            {
+                if (writer == null)
+                {
+                    writer = new Utf8JsonWriter(stream);
+                }
+                else
+                {
+                    writer.Reset(stream);
+                }
+
+                writer.WriteStartArray();
+
+                foreach (var span in this.spans)
+                {
+                    var zipkinSpan = span.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
+
+                    zipkinSpan.Write(writer);
+
+                    zipkinSpan.Return();
+                }
+
+                writer.WriteEndArray();
+
+                return writer.FlushAsync();
+            }
 
             protected override bool TryComputeLength(out long length)
             {

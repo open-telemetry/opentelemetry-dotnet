@@ -37,12 +37,13 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal List<SpanProcessorPipelineBuilder> ProcessingPipelines { get; private set; }
 
-        internal List<CollectorFactory> CollectorFactories { get; private set; }
+        internal List<AdapterFactory> AdapterFactories { get; private set; }
 
         /// <summary>
         /// Configures sampler.
         /// </summary>
         /// <param name="sampler">Sampler instance.</param>
+        /// <returns>Returns <see cref="TracerBuilder"/> for chaining.</returns>
         public TracerBuilder SetSampler(Sampler sampler)
         {
             this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
@@ -50,10 +51,10 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Sets the <see cref="Resource"/> describing the app associated with all traces. Overwrites currently set resource. 
+        /// Sets the <see cref="Resource"/> describing the app associated with all traces. Overwrites currently set resource.
         /// </summary>
         /// <param name="resource">Resource to be associate with all traces.</param>
-        /// <returns>Trace builder for chaining.</returns>
+        /// <returns>Returns <see cref="TracerBuilder"/> for chaining.</returns>
         public TracerBuilder SetResource(Resource resource)
         {
             this.Resource = resource ?? Resource.Empty;
@@ -64,6 +65,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Adds processing and exporting pipeline. Pipelines are executed sequentially in the order they are added.
         /// </summary>
         /// <param name="configure">Function that configures pipeline.</param>
+        /// <returns>Returns <see cref="TracerBuilder"/> for chaining.</returns>
         public TracerBuilder AddProcessorPipeline(Action<SpanProcessorPipelineBuilder> configure)
         {
             if (configure == null)
@@ -83,29 +85,30 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Adds auto-collectors for spans.
+        /// Adds auto-adapters for spans.
         /// </summary>
-        /// <typeparam name="TCollector">Type of collector class.</typeparam>
-        /// <param name="collectorFactory">Function that builds collector from <see cref="Tracer"/>.</param>
-        public TracerBuilder AddCollector<TCollector>(
-            Func<Tracer, TCollector> collectorFactory)
-            where TCollector : class
+        /// <typeparam name="TAdapter">Type of adapter class.</typeparam>
+        /// <param name="adapterFactory">Function that builds adapter from <see cref="Tracer"/>.</param>
+        /// <returns>Returns <see cref="TracerBuilder"/> for chaining.</returns>
+        public TracerBuilder AddAdapter<TAdapter>(
+            Func<Tracer, TAdapter> adapterFactory)
+            where TAdapter : class
         {
-            if (collectorFactory == null)
+            if (adapterFactory == null)
             {
-                throw new ArgumentNullException(nameof(collectorFactory));
+                throw new ArgumentNullException(nameof(adapterFactory));
             }
 
-            if (this.CollectorFactories == null)
+            if (this.AdapterFactories == null)
             {
-                this.CollectorFactories = new List<CollectorFactory>();
+                this.AdapterFactories = new List<AdapterFactory>();
             }
 
-            this.CollectorFactories.Add(
-                new CollectorFactory(
-                    typeof(TCollector).Name, 
-                    "semver:" + typeof(TCollector).Assembly.GetName().Version,
-                    collectorFactory));
+            this.AdapterFactories.Add(
+                new AdapterFactory(
+                    typeof(TAdapter).Name,
+                    "semver:" + typeof(TAdapter).Assembly.GetName().Version,
+                    adapterFactory));
 
             return this;
         }
@@ -114,19 +117,20 @@ namespace OpenTelemetry.Trace.Configuration
         /// Configures tracing options.
         /// </summary>
         /// <param name="options">Instance of <see cref="TracerConfiguration"/>.</param>
+        /// <returns>Returns <see cref="TracerBuilder"/> for chaining.</returns>
         public TracerBuilder SetTracerOptions(TracerConfiguration options)
         {
             this.TracerConfigurationOptions = options ?? throw new ArgumentNullException(nameof(options));
             return this;
         }
 
-        internal readonly struct CollectorFactory
+        internal readonly struct AdapterFactory
         {
             public readonly string Name;
             public readonly string Version;
             public readonly Func<Tracer, object> Factory;
 
-            internal CollectorFactory(string name, string version, Func<Tracer, object> factory)
+            internal AdapterFactory(string name, string version, Func<Tracer, object> factory)
             {
                 this.Name = name;
                 this.Version = version;

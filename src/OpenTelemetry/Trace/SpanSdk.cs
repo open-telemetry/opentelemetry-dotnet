@@ -333,7 +333,7 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, sanitizedValue));
+                this.AddOrReplaceAttribute(key, sanitizedValue);
             }
         }
 
@@ -359,7 +359,7 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+                this.AddOrReplaceAttribute(key, value);
             }
         }
 
@@ -385,7 +385,7 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+                this.AddOrReplaceAttribute(key, value);
             }
         }
 
@@ -411,7 +411,7 @@ namespace OpenTelemetry.Trace
                         new EvictingQueue<KeyValuePair<string, object>>(this.tracerConfiguration.MaxNumberOfAttributes);
                 }
 
-                this.attributes.Add(new KeyValuePair<string, object>(key ?? string.Empty, value));
+                this.AddOrReplaceAttribute(key, value);
             }
         }
 
@@ -483,7 +483,7 @@ namespace OpenTelemetry.Trace
 
             if (!this.createdFromActivity)
             {
-                this.Activity.SetEndTime(endTimestamp.UtcDateTime);
+                this.Activity?.SetEndTime(endTimestamp.UtcDateTime);
             }
 
             if (this.endOnDispose)
@@ -615,13 +615,22 @@ namespace OpenTelemetry.Trace
             SpanProcessor spanProcessor,
             Resource libraryResource)
         {
+            SpanCreationOptions spanCreationOptions = null;
+            if (activity.Tags.Any())
+            {
+                spanCreationOptions = new SpanCreationOptions
+                {
+                    Attributes = new TagsCollection(activity.Tags),
+                };
+            }
+
             var span = new SpanSdk(
                 name,
                 ParentContextFromActivity(activity),
                 FromActivity(activity),
                 true,
                 spanKind,
-                null,
+                spanCreationOptions,
                 sampler,
                 tracerConfiguration,
                 spanProcessor,
@@ -665,7 +674,7 @@ namespace OpenTelemetry.Trace
             SpanContext parent,
             string name,
             SpanKind spanKind,
-            IDictionary<string, object> attributes,
+            IEnumerable<KeyValuePair<string, object>> attributes,
             IEnumerable<Link> parentLinks,
             ActivityTraceId traceId,
             ActivitySpanId spanId,
@@ -721,9 +730,10 @@ namespace OpenTelemetry.Trace
             IEnumerable<KeyValuePair<string, string>> tracestate = null;
             if (parentContext.IsValid)
             {
-                activity.SetParentId(parentContext.TraceId,
+                activity.SetParentId(
+                    parentContext.TraceId,
                     parentContext.SpanId,
-                    parentContext.TraceOptions);
+                    parentContext.TraceFlags);
                 if (parentContext.Tracestate != null && parentContext.Tracestate.Any())
                 {
                     activity.TraceStateString = TracestateUtils.GetString(parentContext.Tracestate);
@@ -799,7 +809,8 @@ namespace OpenTelemetry.Trace
                     }
                     else
                     {
-                        this.Links = parentLinks.GetRange(parentLinks.Count - this.tracerConfiguration.MaxNumberOfLinks,
+                        this.Links = parentLinks.GetRange(
+                            parentLinks.Count - this.tracerConfiguration.MaxNumberOfLinks,
                             this.tracerConfiguration.MaxNumberOfLinks);
                     }
                 }
@@ -876,6 +887,20 @@ namespace OpenTelemetry.Trace
                    || attributeValue is ushort
                    || attributeValue is float
                    || attributeValue is decimal;
+        }
+
+        private void AddOrReplaceAttribute(string key, object value)
+        {
+            var attribute = this.attributes.FirstOrDefault(a => a.Key == (key ?? string.Empty));
+            var newAttribute = new KeyValuePair<string, object>(key ?? string.Empty, value);
+            if (attribute.Equals(default(KeyValuePair<string, object>)))
+            {
+                this.attributes.Add(newAttribute);
+            }
+            else
+            {
+                this.attributes.Replace(attribute, newAttribute);
+            }
         }
 
         private readonly struct ActivityAndTracestate

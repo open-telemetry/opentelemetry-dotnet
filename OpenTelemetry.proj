@@ -4,16 +4,17 @@
   <ItemGroup>
     <SolutionProjects Include="**\*.csproj" />
     <SolutionProjects Remove="**\*.Win.csproj" Condition="'$(OS)' != 'Windows_NT'" />
+    
+    <PackProjects Include="src\**\*.csproj" />
+    <PackProjects Remove="**\*.Win.csproj" Condition="'$(OS)' != 'Windows_NT'" />
   </ItemGroup>
 
-  <!-- The only need for this file is to synchronize the PreReleaseVersion -->
-
   <Target Name="Build">
-    <MSBuild Projects="@(SolutionProjects)" Targets="Restore;Build" ContinueOnError="ErrorAndStop" Properties="PreReleaseVersion=$(PreReleaseVersion)"/>
+    <MSBuild Projects="@(SolutionProjects)" Targets="Restore;Build" ContinueOnError="ErrorAndStop" />
   </Target>
 
   <Target Name="Pack">
-    <MSBuild Projects="@(SolutionProjects)" Targets="Pack" ContinueOnError="ErrorAndStop" Properties="PreReleaseVersion=$(PreReleaseVersion)"/>
+    <MSBuild Projects="@(PackProjects)" Targets="Pack" ContinueOnError="ErrorAndStop" />
   </Target>
 
 </Project>

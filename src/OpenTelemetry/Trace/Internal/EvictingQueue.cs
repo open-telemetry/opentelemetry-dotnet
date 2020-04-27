@@ -59,6 +59,21 @@ namespace OpenTelemetry.Trace.Internal
             return new Enumerator(this);
         }
 
+        internal void Replace(T item, T newItem)
+        {
+            Debug.Assert(item != null, "Item must not be null");
+            Debug.Assert(newItem != null, "Item must not be null");
+
+            var index = Array.IndexOf(this.items, item);
+
+            if (index < 0)
+            {
+                return;
+            }
+
+            this.items[index] = newItem;
+        }
+
         internal void Add(T item)
         {
             Debug.Assert(item != null, "Item must not be null");

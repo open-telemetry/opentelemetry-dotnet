@@ -14,28 +14,31 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Metrics.Aggregators;
+using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics.Export
 {
     public abstract class MetricProcessor
     {
         /// <summary>
-        /// Process the metric.
+        /// Finish the current collection cycle and return the metrics it holds.
+        /// This is called at the end of one collection cycle by the Controller.
+        /// MetricProcessor can use this to clear its Metrics (in case of stateless).
         /// </summary>
-        /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
-        /// <param name="metricName">the name of the instrument.</param>
-        /// <param name="labelSet">the labelSet associated with the instrument.</param>
-        /// <param name="aggregator">the aggregator used.</param>
-        public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator);
+        /// <param name="longMetrics">The list of long metrics from this cycle, which are to be exported.</param>
+        /// <param name="doubleMetrics">The list of double metrics from this cycle, which are to be exported.</param>
+        public abstract void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics);
 
         /// <summary>
-        /// Process the metric.
+        /// Process the metric. This method is called once every collection interval.
         /// </summary>
-        /// <param name="meterName">the name of the meter, used as a namespace for the metric instruments.</param>
-        /// <param name="metricName">the name of the instrument.</param>
-        /// <param name="labelSet">the labelSet associated with the instrument.</param>
-        /// <param name="aggregator">the aggregator used.</param>
-        public abstract void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator);        
+        /// <param name="metric">the metric record.</param>
+        public abstract void Process(Metric<long> metric);
+
+        /// <summary>
+        /// Process the metric. This method is called once every collection interval.
+        /// </summary>
+        /// <param name="metric">the metric record.</param>
+        public abstract void Process(Metric<double> metric);
     }
 }

@@ -123,7 +123,7 @@ namespace OpenTelemetry.Context.Propagation
                 sb.Append(spanContext.TraceId.ToHexString());
                 sb.Append(XB3CombinedDelimiter);
                 sb.Append(spanContext.SpanId.ToHexString());
-                if ((spanContext.TraceOptions & ActivityTraceFlags.Recorded) != 0)
+                if ((spanContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                 {
                     sb.Append(XB3CombinedDelimiter);
                     sb.Append(SampledValue);
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Context.Propagation
             {
                 setter(carrier, XB3TraceId, spanContext.TraceId.ToHexString());
                 setter(carrier, XB3SpanId, spanContext.SpanId.ToHexString());
-                if ((spanContext.TraceOptions & ActivityTraceFlags.Recorded) != 0)
+                if ((spanContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                 {
                     setter(carrier, XB3Sampled, SampledValue);
                 }

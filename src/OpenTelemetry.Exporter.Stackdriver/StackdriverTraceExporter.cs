@@ -61,7 +61,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
         }
 
         /// <summary>
-        /// Initializes a new instance of <see cref="StackdriverTraceExporter"/> class.
+        /// Initializes a new instance of the <see cref="StackdriverTraceExporter"/> class.
         /// </summary>
         /// <param name="projectId">Project ID to send telemetry to.</param>
         public StackdriverTraceExporter(string projectId)
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Exporter.Stackdriver
         public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> spanDataList, CancellationToken cancellationToken)
         {
             var traceWriter = TraceServiceClient.Create(settings: this.traceServiceSettings);
-            
+
             var batchSpansRequest = new BatchWriteSpansRequest
             {
                 ProjectName = this.googleCloudProjectId,

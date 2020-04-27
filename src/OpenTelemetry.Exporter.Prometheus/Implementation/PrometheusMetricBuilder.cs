@@ -116,7 +116,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 writer.Write("\n");
             }
 
-            if (string.IsNullOrEmpty(this.type))
+            if (!string.IsNullOrEmpty(this.type))
             {
                 // If the token is TYPE, exactly two more tokens are expected. The first is the
                 // metric name, and the second is either counter, gauge, histogram, summary, or
@@ -125,8 +125,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 // before the first sample is reported for that metric name. If there is no TYPE
                 // line for a metric name, the type is set to untyped.
 
-                writer.Write("# HELP ");
+                writer.Write("# TYPE ");
                 writer.Write(this.name);
+                writer.Write(" ");
                 writer.Write(this.type);
                 writer.Write("\n");
             }
@@ -140,7 +141,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             foreach (var m in this.values)
             {
                 // metric_name and label_name carry the usual Prometheus expression language restrictions.
-                writer.Write(this.name);
+                writer.Write(m.Name ?? this.name);
 
                 // label_value can be any sequence of UTF-8 characters, but the backslash
                 // (\, double-quote ("}, and line feed (\n) characters have to be escaped
@@ -329,6 +330,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
         {
             public readonly ICollection<Tuple<string, string>> Labels = new List<Tuple<string, string>>();
             public double Value;
+            public string Name;
 
             public PrometheusMetricValueBuilder WithLabel(string name, string value)
             {
@@ -345,6 +347,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             public PrometheusMetricValueBuilder WithValue(double metricValue)
             {
                 this.Value = metricValue;
+                return this;
+            }
+
+            public PrometheusMetricValueBuilder WithName(string name)
+            {
+                this.Name = name;
                 return this;
             }
         }

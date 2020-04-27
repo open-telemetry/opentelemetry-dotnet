@@ -10,14 +10,14 @@ Approvers ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telem
 
 - [Bruno Garcia](https://github.com/bruno-garcia), Sentry
 - [Christoph Neumueller](https://github.com/discostu105), Dynatrace
+- [Cijo Thomas](https://github.com/cijothomas), Microsoft
 - [Liudmila Molkova](https://github.com/lmolkova), Microsoft
-- [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
 
 *Find more about the approver role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).*
 
 Maintainers ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
-- [Austin Parker](https://github.com/austinlparker), LightStep
+- [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
 - [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Microsoft
 
 *Find more about the maintainer role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
@@ -52,14 +52,14 @@ Myget feeds:
 | OpenTelemetry              | [![MyGet Nightly][OpenTelemetry-myget-image]][OpenTelemetry-myget-url]         | [![NuGet Release][OpenTelemetry-nuget-image]][OpenTelemetry-nuget-url]         |
 | OpenTelemetry.Api | [![MyGet Nightly][OpenTelemetry-abs-myget-image]][OpenTelemetry-abs-myget-url] | [![NuGet Release][OpenTelemetry-abs-nuget-image]][OpenTelemetry-abs-nuget-url] |
 
-### Data Collectors
+### Data Adapters
 
 | Package                           | MyGet (CI)                                                                                                                     | NuGet (releases)                                                                                                               |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| ASP.NET Core                      | [![MyGet Nightly][OpenTelemetry-collect-aspnetcore-myget-image]][OpenTelemetry-collect-aspnetcore-myget-url]                   | [![NuGet Release][OpenTelemetry-collect-aspnetcore-nuget-image]][OpenTelemetry-collect-aspnetcore-nuget-url]                   |
-| ASP.NET (WebForms, MVC, & WebAPI) | [![MyGet Nightly][OpenTelemetry-collect-aspnet-myget-image]][OpenTelemetry-collect-aspnet-myget-url]                           | [![NuGet Release][OpenTelemetry-collect-aspnet-nuget-image]][OpenTelemetry-collect-aspnet-nuget-url]                           |
-| .NET Core HttpClient, Microsoft.Data.SqlClient, System.Data.SqlClient, & Azure SDKs | [![MyGet Nightly][OpenTelemetry-collect-deps-myget-image]][OpenTelemetry-collect-deps-myget-url]                               | [![NuGet Release][OpenTelemetry-collect-deps-nuget-image]][OpenTelemetry-collect-deps-nuget-url]                               |
-| StackExchange.Redis               | [![MyGet Nightly][OpenTelemetry-collect-stackexchange-redis-myget-image]][OpenTelemetry-collect-stackexchange-redis-myget-url] | [![NuGet Release][OpenTelemetry-collect-stackexchange-redis-nuget-image]][OpenTelemetry-collect-stackexchange-redis-nuget-url] |
+| ASP.NET Core                      | [![MyGet Nightly][OpenTelemetry-adapter-aspnetcore-myget-image]][OpenTelemetry-adapter-aspnetcore-myget-url]                   | [![NuGet Release][OpenTelemetry-adapter-aspnetcore-nuget-image]][OpenTelemetry-adapter-aspnetcore-nuget-url]                   |
+| ASP.NET (WebForms, MVC, & WebAPI) | [![MyGet Nightly][OpenTelemetry-adapter-aspnet-myget-image]][OpenTelemetry-adapter-aspnet-myget-url]                           | [![NuGet Release][OpenTelemetry-adapter-aspnet-nuget-image]][OpenTelemetry-adapter-aspnet-nuget-url]                           |
+| .NET Core HttpClient, .NET Framework HttpClient & HttpWebRequest, Microsoft.Data.SqlClient, System.Data.SqlClient, & Azure SDKs | [![MyGet Nightly][OpenTelemetry-adapter-deps-myget-image]][OpenTelemetry-adapter-deps-myget-url]                               | [![NuGet Release][OpenTelemetry-adapter-deps-nuget-image]][OpenTelemetry-adapter-deps-nuget-url]                               |
+| StackExchange.Redis               | [![MyGet Nightly][OpenTelemetry-adapter-stackexchange-redis-myget-image]][OpenTelemetry-adapter-stackexchange-redis-myget-url] | [![NuGet Release][OpenTelemetry-adapter-stackexchange-redis-nuget-image]][OpenTelemetry-adapter-stackexchange-redis-nuget-url] |
 
 ### Exporters Packages
 
@@ -76,13 +76,13 @@ Myget feeds:
 | Console              | [![MyGet Nightly][OpenTelemetry-exporter-console-myget-image]][OpenTelemetry-exporter-console-myget-url]         |                                                                                                                  |
 
 
-## OpenTelemetry Tracing QuickStart: collecting data
+## OpenTelemetry Tracing QuickStart: Collecting Data
 
 You can use OpenTelemetry API to instrument code and report data.  Check out [Tracing API overview](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md) to learn more about distributed tracing.
 
 In the examples below we demonstrate how to create and enrich spans though OpenTelemetry API.
 
-OpenTelemetry also provides auto-collectors for ASP.NET Core, HttpClient calls (.NET Core) and Azure SDKs - [configuration](#configuration) section demonstrates how to enable it.
+OpenTelemetry also provides auto-adapters for ASP.NET Core & ASP.NET incoming requests and HttpClient (.NET Core & .NET Framework), SqlClient, & Azure SDK outgoing requests. See the [configuration](#configuration) section for examples detailing how to enable auto-adapter.
 
 ### Obtaining tracer
 
@@ -176,48 +176,18 @@ using (tracer.StartActiveSpan("incoming HTTP request", SpanKind.Server, out var 
 
 ### Context propagation out of process
 
-When instrumenting transport-layer operations, instrumentation should support context propagation.
+Examples will be added once [Global Propagators API is added.](https://github.com/open-telemetry/opentelemetry-dotnet/issues/581)
 
-```csharp
-// this extracts W3C trace-context from incoming HTTP request
-// context may be valid if present and correct in the headers
-// or invalid if there was no context (or it was not valid)
-// instrumentation code should not care about it
-var context = tracer.TextFormat.Extract(incomingRequest.Headers, (headers, name) => headers[name]);
+### Auto-adapter implementation for Activity/DiagnosticSource
 
-var incomingSpan = tracer.StartSpan("incoming http request", context, SpanKind.Server);
-
-var outgoingRequest = new HttpRequestMessage(HttpMethod.Get, "http://microsoft.com");
-var outgoingSpan = tracer.StartSpan("outgoing http request", SpanKind.Client);
-
-// now that we have outgoing span, we can inject it's context
-// Note that if there is no SDK configured, tracer is noop -
-// it creates noop spans with invalid context. we should not propagate it.
-if (outgoingSpan.Context.IsValid)
-{
-    tracer.TextFormat.Inject(
-        outgoingSpan.Context,
-        outgoingRequest.Headers,
-        (headers, name, value) => headers.Add(name, value));
-}
-
-// make outgoing call
-// ...
-
-outgoingSpan.End();
-incomingSpan.End();
-```
-
-### Auto-collector implementation for Activity/DiagnosticSource
-
-`System.Diagnostics.Activity` is similar to OpenTelemetry Span. HttpClient, ASP.NET Core, Azure SDKs use them to expose diagnostics events and context.
+`System.Diagnostics.Activity` is similar to OpenTelemetry Span. HttpClient, ASP.NET Core, SqlClient, & Azure SDKs use them to expose diagnostics events and context.
 
 Leaving aside subscription mechanism, here is an example how you may implement callbacks for Start/Stop Activity
 
 ```csharp
 void StartActivity()
 {
-    var span = tracer.StartSpanFromActivity("GET api/values", Activity.Current);
+    tracer.StartActiveSpanFromActivity ("GET api/values", Activity.Current, out var span);
 
     // extract other things from Activity and set them on span (tags to attributes)
     // ...
@@ -248,22 +218,23 @@ Configuration is done by user application: it should configure exporter and may 
 2. Create `TracerFactory`
 
     ```csharp
-    using (TracerFactory.Create(builder => builder
+    using (var tracerFactory = TracerFactory.Create(builder => builder
             .UseZipkin(options => {})
             .SetResource(Resources.CreateServiceResource("http-client-test")))
     {
-        // ...
+        // Obtain Tracer from the factory above.
+        var tracer = tracerFactory.GetTracer("zipkin-test");
     }
     ```
 
 ### Configuration with Microsoft.Extensions.DependencyInjection
 
 1. Install packages to your project:
-   [OpenTelemetry.Hosting][OpenTelemetry-hosting-nuget-url] to provide `AddOpenTelemetry` helper method
-   [OpenTelemetry.Collector.AspNetCore][OpenTelemetry-collect-aspnetcore-nuget-url] to collect incoming HTTP requests
-   [OpenTelemetry.Collector.Dependencies](OpenTelemetry-collect-deps-nuget-url) to collect outgoing HTTP requests and Azure SDK calls
+   [OpenTelemetry.Extensions.Hosting][OpenTelemetry-extensions-hosting-nuget-url] to provide `AddOpenTelemetry` helper method
+   [OpenTelemetry.Adapter.AspNetCore][OpenTelemetry-adapter-aspnetcore-nuget-url] to collect incoming HTTP requests
+   [OpenTelemetry.Adapter.Dependencies][OpenTelemetry-adapter-deps-nuget-url] to collect outgoing HTTP requests, SqlClient calls, and Azure SDK calls
 
-2. Make sure `TracerFactory`, is registered in DI.
+2. Use the `AddOpenTelemetry` helper method to add Open Telemetry. This registers `TracerFactory` in the Dependency Injection Container.
 
     ```csharp
     services.AddOpenTelemetry(builder =>
@@ -272,16 +243,17 @@ Configuration is done by user application: it should configure exporter and may 
             .SetSampler(new AlwaysSampleSampler())
             .UseZipkin(options => {})
 
-            // you may also configure request and dependencies collectors
-            .AddRequestCollector()
-            .AddDependencyCollector()
+            // you may also configure request and dependencies adapters
+            .AddRequestAdapter()
+            .AddDependencyAdapter()
             .SetResource(Resources.CreateServiceResource("my-service"))
     });
     ```
+3. Obtain `TracerFactory` using DI, and create `Tracer` from it.
 
 ### Configuration with ASP.NET (Full .NET Framework) running in IIS or IIS Express (if supported)
 
-1. Add a reference to the `OpenTelemetry.Collector.AspNet` package. Add any other collectors & exporters you will need.
+1. Add a reference to the `OpenTelemetry.Adapter.AspNet` package. Add any other adapters & exporters you will need.
 
 2. Add the Microsoft telemetry module in your `Web.config`:
     ```xml
@@ -308,8 +280,8 @@ Configuration is done by user application: it should configure exporter and may 
                         c.AgentHost = "localhost";
                         c.AgentPort = 6831;
                     })
-                    .AddRequestCollector()
-                    .AddDependencyCollector();
+                    .AddRequestAdapter()
+                    .AddDependencyAdapter();
             });
         }
 
@@ -320,14 +292,14 @@ Configuration is done by user application: it should configure exporter and may 
     }
     ```
 
-### Using StackExchange.Redis collector
+### Using StackExchange.Redis adapter
 
 Outgoing http calls to Redis made using StackExchange.Redis library can be automatically tracked.
 
 1. Install package to your project:
-   [OpenTelemetry.Collector.StackExchangeRedis][OpenTelemetry-collect-stackexchange-redis-nuget-url]
+   [OpenTelemetry.Adapter.StackExchangeRedis][OpenTelemetry-adapter-stackexchange-redis-nuget-url]
 
-2. Configure Redis collector
+2. Configure Redis adapter
 
     ```csharp
     // connect to the server
@@ -337,11 +309,11 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
                 .SetSampler(new AlwaysSampleSampler())
                 .UseZipkin(options => {})
                 .SetResource(Resources.CreateServiceResource("my-service"))
-                .AddCollector(t =>
+                .AddAdapter(t =>
                 {
-                    var collector = new StackExchangeRedisCallsCollector(t);
-                    connection.RegisterProfiler(collector.GetProfilerSessionsFactory());
-                    return collector;
+                    var adapter = new StackExchangeRedisCallsAdapter(t);
+                    connection.RegisterProfiler(adapter.GetProfilerSessionsFactory());
+                    return adapter;
                 })))
     {
 
@@ -389,7 +361,7 @@ class MySampler : Sampler
 }
 ```
 
-## OpenTelemetry QuickStart: exporting data
+## OpenTelemetry QuickStart: Exporting Data
 
 ### Using the Jaeger exporter
 
@@ -430,18 +402,24 @@ Configure Zipkin exporter to see traces in Zipkin UI.
 3. See [sample][zipkin-sample] for example use.
 
 ```csharp
-using (var tracerFactory = TracerFactory.Create(
-    builder => builder.UseZipkin(o =>
-        o.ServiceName = "my-service";
-        o.Endpoint = new Uri("https://<zipkin-server:9411>/api/v2/spans"))))
+using (var tracerFactory = TracerFactory.Create(builder => builder
+    .UseZipkin(o =>
+    {
+        o.ServiceName = "test-zipkin";
+        o.Endpoint = new Uri(zipkinUri);
+    })))
 {
     var tracer = tracerFactory.GetTracer("zipkin-test");
-    var span = tracer
-        .SpanBuilder("incoming request")
-        .StartSpan();
 
-    await Task.Delay(1000);
-    span.End();
+    // Create a scoped span. It will end automatically when using statement ends
+    using (tracer.WithSpan(tracer.StartSpan("Main")))
+    {
+        Console.WriteLine("About to do a busy work");
+        for (var i = 0; i < 10; i++)
+        {
+            DoWork(i, tracer);
+        }
+    }
 }
 ```
 
@@ -524,16 +502,21 @@ using (var tracerFactory = TracerFactory.Create(builder => builder
 #### Traces
 
 ```csharp
-using (var tracerFactory = TracerFactory.Create(builder => builder
-    .AddProcessorPipeline(c => c.SetExporter(new StackdriverTraceExporter("YOUR-GOOGLE-PROJECT-ID")))))
-{
-    var tracer = tracerFactory.GetTracer("stackdriver-test");
-    var span = tracer
-        .SpanBuilder("incoming request")
-        .StartSpan();
+var spanExporter = new StackdriverTraceExporter(projectId);
 
-    await Task.Delay(1000);
-    span.End();
+using var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(spanExporter)));
+var tracer = tracerFactory.GetTracer("stackdriver-test");
+
+using (tracer.StartActiveSpan("/getuser", out TelemetrySpan span))
+{
+    span.AddEvent("Processing video.");
+    span.PutHttpMethodAttribute("GET");
+    span.PutHttpHostAttribute("localhost", 8080);
+    span.PutHttpPathAttribute("/resource");
+    span.PutHttpStatusCodeAttribute(200);
+    span.PutHttpUserAgentAttribute("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0");
+
+    Thread.Sleep(TimeSpan.FromMilliseconds(10));
 }
 ```
 
@@ -556,16 +539,16 @@ metricExporter.Start();
 4. See [sample][ai-sample] for example use.
 
 ``` csharp
-using (var tracerFactory = TracerFactory.Create(builder => builder
-    .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key")))
-{
-    var tracer = tracerFactory.GetTracer("application-insights-test");
-    var span = tracer
-        .SpanBuilder("incoming request")
-        .StartSpan();
+using var tracerFactory = TracerFactory.Create(builder => builder
+    .SetResource(Resources.CreateServiceResource("my-service"))
+    .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key"));
+var tracer = tracerFactory.GetTracer("application-insights-test");
 
-    await Task.Delay(1000);
-    span.End();
+using (tracer.StartActiveSpan("incoming request", out var span))
+{
+    span.AddEvent("Start processing video.");
+    Thread.Sleep(TimeSpan.FromMilliseconds(10));
+    span.AddEvent("Finished processing video.");
 }
 ```
 ### Using Application Insights exporter in Web App
@@ -585,8 +568,8 @@ using (var tracerFactory = TracerFactory.Create(builder => builder
                         var instrumentationKey = this.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
                         telemetryConfiguration.InstrumentationKey = instrumentationKey;
                     })
-                    .AddRequestCollector()
-                    .AddDependencyCollector();
+                    .AddRequestAdapter()
+                    .AddDependencyAdapter();
             });
 ```
 
@@ -697,18 +680,18 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-exporter-lightstep-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.LightStep
 [OpenTelemetry-exporter-console-myget-image]: https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Exporter.Console.svg
 [OpenTelemetry-exporter-console-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Exporter.Console
-[OpenTelemetry-collect-aspnetcore-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.AspNetCore.svg
-[OpenTelemetry-collect-aspnetcore-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Collector.AspNetCore
-[OpenTelemetry-collect-aspnet-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.AspNet.svg
-[OpenTelemetry-collect-aspnet-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Collector.AspNet
-[OpenTelemetry-collect-deps-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.Dependencies.svg
-[OpenTelemetry-collect-deps-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Collector.Dependencies
-[OpenTelemetry-collect-stackexchange-redis-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Collector.StackExchangeRedis.svg
-[OpenTelemetry-collect-stackexchange-redis-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Collector.StackExchangeRedis
+[OpenTelemetry-adapter-aspnetcore-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Adapter.AspNetCore.svg
+[OpenTelemetry-adapter-aspnetcore-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Adapter.AspNetCore
+[OpenTelemetry-adapter-aspnet-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Adapter.AspNet.svg
+[OpenTelemetry-adapter-aspnet-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Adapter.AspNet
+[OpenTelemetry-adapter-deps-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Adapter.Dependencies.svg
+[OpenTelemetry-adapter-deps-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Adapter.Dependencies
+[OpenTelemetry-adapter-stackexchange-redis-myget-image]:https://img.shields.io/myget/opentelemetry/vpre/OpenTelemetry.Adapter.StackExchangeRedis.svg
+[OpenTelemetry-adapter-stackexchange-redis-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Adapter.StackExchangeRedis
 [OpenTelemetry-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.svg
 [OpenTelemetry-nuget-url]:https://www.nuget.org/packages/OpenTelemetry
-[OpenTelemetry-hosting-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Hosting.svg
-[OpenTelemetry-hosting-nuget-url]:https://www.nuget.org/packages/OpenTelemetry.Hosting
+[OpenTelemetry-extensions-hosting-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Extensions.Hosting.svg
+[OpenTelemetry-extensions-hosting-nuget-url]:https://www.nuget.org/packages/OpenTelemetry.Extensions.Hosting
 [OpenTelemetry-abs-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Api.svg
 [OpenTelemetry-abs-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Api
 [OpenTelemetry-exporter-zipkin-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Zipkin.svg
@@ -727,14 +710,14 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-exporter-honeycomb-nuget-url]: https://www.nuget.org/packages/Honeycomb.OpenTelemetry
 [OpenTelemetry-exporter-newrelic-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.NewRelic.svg
 [OpenTelemetry-exporter-newrelic-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.NewRelic
-[OpenTelemetry-collect-aspnetcore-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Collector.AspNetCore.svg
-[OpenTelemetry-collect-aspnetcore-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Collector.AspNetCore
-[OpenTelemetry-collect-aspnet-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Collector.AspNet.svg
-[OpenTelemetry-collect-aspnet-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Collector.AspNet
-[OpenTelemetry-collect-deps-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Collector.Dependencies.svg
-[OpenTelemetry-collect-deps-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Collector.Dependencies
-[OpenTelemetry-collect-stackexchange-redis-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Collector.StackExchangeRedis.svg
-[OpenTelemetry-collect-stackexchange-redis-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Collector.StackExchangeRedis
+[OpenTelemetry-adapter-aspnetcore-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Adapter.AspNetCore.svg
+[OpenTelemetry-adapter-aspnetcore-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Adapter.AspNetCore
+[OpenTelemetry-adapter-aspnet-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Adapter.AspNet.svg
+[OpenTelemetry-adapter-aspnet-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Adapter.AspNet
+[OpenTelemetry-adapter-deps-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Adapter.Dependencies.svg
+[OpenTelemetry-adapter-deps-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Adapter.Dependencies
+[OpenTelemetry-adapter-stackexchange-redis-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Adapter.StackExchangeRedis.svg
+[OpenTelemetry-adapter-stackexchange-redis-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Adapter.StackExchangeRedis
 [up-for-grabs-issues]: https://github.com/open-telemetry/OpenTelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3Aup-for-grabs
 [good-first-issues]: https://github.com/open-telemetry/OpenTelemetry-dotnet/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [zipkin-get-started]: https://zipkin.io/pages/quickstart.html

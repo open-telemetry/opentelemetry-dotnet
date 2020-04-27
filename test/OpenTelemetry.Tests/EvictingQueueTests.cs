@@ -53,7 +53,7 @@ namespace OpenTelemetry.Tests
         [Fact]
         public void NoEviction()
         {
-            var eq = new EvictingQueue<int>(4) {0, 1, 2};
+            var eq = new EvictingQueue<int>(4) { 0, 1, 2 };
 
             var items = eq.ToArray();
             Assert.Equal(3, items.Length);
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Tests
         [Fact]
         public void Eviction()
         {
-            var eq = new EvictingQueue<int>(4) {0, 1, 2, 3, 4};
+            var eq = new EvictingQueue<int>(4) { 0, 1, 2, 3, 4 };
             Assert.Equal(4, eq.Count);
             Assert.Equal(1, eq.DroppedItems);
 
@@ -80,11 +80,33 @@ namespace OpenTelemetry.Tests
         [Fact]
         public void MaxItems0()
         {
-            var eq = new EvictingQueue<int>(0) {0};
+            var eq = new EvictingQueue<int>(0) { 0 };
             Assert.Equal(0, eq.Count);
             Assert.Equal(1, eq.DroppedItems);
 
             Assert.Empty(eq);
+        }
+
+        [Fact]
+        public void Replacing()
+        {
+            var eq = new EvictingQueue<int>(1) { 0 };
+            eq.Replace(0, 1);
+
+            var items = eq.ToArray();
+
+            Assert.Equal(1, items[0]);
+        }
+
+        [Fact]
+        public void NoReplacing()
+        {
+            var eq = new EvictingQueue<int>(1) { 0 };
+            eq.Replace(1, 1);
+
+            var items = eq.ToArray();
+
+            Assert.Equal(0, items[0]);
         }
     }
 }

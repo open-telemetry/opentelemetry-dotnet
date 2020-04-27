@@ -11,7 +11,7 @@ trigger:
 # no PR builds
 pr: none
 
-queue:
+pool:
   vmImage: 'windows-latest'
 
 steps:
@@ -28,7 +28,7 @@ steps:
     vsVersion: "latest"
     platform: "AnyCPU"
     configuration: "Release"
-    msbuildArgs: "/p:OS=$(Agent.OS)"
+    msbuildArgs: "/target:build /p:OS=$(Agent.OS)"
 
 - task: DotNetCoreCLI@2
   displayName: test using CLI
@@ -41,15 +41,20 @@ steps:
 
 - task: PublishTestResults@2
 
-- task: DotNetCoreCLI@2
+- task: VSBuild@1
   displayName: pack solution with symbols (Release)
   inputs:
-    command: "pack"
-    projects: OpenTelemetry.proj
-    configurationToPack: 'Release'
-    packDirectory: '$(build.artifactStagingDirectory)'
-    buildProperties: "SymbolPackageFormat=snupkg"
-    arguments: "-p:OS=$(Agent.OS)"
+    solution: OpenTelemetry.proj
+    vsVersion: "latest"
+    platform: "AnyCPU"
+    configuration: "Release"
+    msbuildArgs: "/target:pack /p:OS=$(Agent.OS) /p:SymbolPackageFormat=snupkg /p:NoBuild=true"
+
+- task: CopyFiles@2
+  inputs:
+    contents: '**/bin/**/*.*nupkg'
+    targetFolder: $(Build.ArtifactStagingDirectory)
+    flattenFolders: true
 
 - task: NuGetCommand@2
   displayName: 'Publish nugets to MyGet'
@@ -57,10 +62,11 @@ steps:
     command: push
     nuGetFeedType: external
     publishFeedCredentials: 'myget-opentelemetry'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
 
 # this task is required as symbols packages needs to be published manually.
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: "$(build.artifactstagingdirectory)"
+    PathtoPublish: "$(Build.ArtifactStagingDirectory)"
     ArtifactName: "drop"
     ArtifactType: "Container"

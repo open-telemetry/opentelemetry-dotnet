@@ -18,12 +18,16 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Trace.Samplers
 {
+    /// <summary>
+    /// Sampler implementation which will sample out all the spans.
+    /// </summary>
     public sealed class AlwaysOffSampler : Sampler
     {
+        /// <inheritdoc />
         public override string Description { get; } = nameof(AlwaysOffSampler);
 
         /// <inheritdoc />
-        public override SamplingResult ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IDictionary<string, object> attributes, IEnumerable<Link> links)
+        public override SamplingResult ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IEnumerable<KeyValuePair<string, object>> attributes, IEnumerable<Link> links)
         {
             return new SamplingResult(false);
         }

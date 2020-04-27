@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         public void UseApplicationInsights_ConfiguresExporter()
         {
             var sentItems = new ConcurrentQueue<ITelemetry>();
-            
+
             ITelemetryChannel channel = new StubTelemetryChannel
             {
                 OnSend = t => sentItems.Enqueue(t),

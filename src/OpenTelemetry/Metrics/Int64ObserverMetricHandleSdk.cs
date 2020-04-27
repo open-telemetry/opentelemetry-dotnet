@@ -20,16 +20,16 @@ namespace OpenTelemetry.Metrics
 {
     internal class Int64ObserverMetricHandleSdk : Int64ObserverMetricHandle
     {
-        private readonly LastValueAggregator<long> aggregator = new LastValueAggregator<long>();
+        private readonly Int64LastValueAggregator aggregator = new Int64LastValueAggregator();
 
         public override void Observe(long value)
         {
             this.aggregator.Update(value);
         }
 
-        internal LastValueAggregator<long> GetAggregator()
+        internal Int64LastValueAggregator GetAggregator()
         {
             return this.aggregator;
-        }        
+        }
     }
 }

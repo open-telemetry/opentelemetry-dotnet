@@ -15,157 +15,170 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
+using System.Text.Json;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
-    internal class ZipkinSpan
+    internal readonly struct ZipkinSpan
     {
-        public string TraceId { get; set; }
-
-        public string ParentId { get; set; }
-
-        public string Id { get; set; }
-
-        [JsonConverter(typeof(JsonStringEnumConverter))]
-        public ZipkinSpanKind Kind { get; set; }
-
-        public string Name { get; set; }
-
-        public long Timestamp { get; set; }
-
-        public long Duration { get; set; }
-
-        public ZipkinEndpoint LocalEndpoint { get; set; }
-
-        public ZipkinEndpoint RemoteEndpoint { get; set; }
-
-        public IList<ZipkinAnnotation> Annotations { get; set; }
-
-        public Dictionary<string, string> Tags { get; set; }
-
-        public bool Debug { get; set; }
-
-        public bool Shared { get; set; }
-
-        public static Builder NewBuilder()
+        public ZipkinSpan(
+            string traceId,
+            string parentId,
+            string id,
+            string kind,
+            string name,
+            long? timestamp,
+            long? duration,
+            ZipkinEndpoint localEndpoint,
+            ZipkinEndpoint remoteEndpoint,
+            in PooledList<ZipkinAnnotation>? annotations,
+            in PooledList<KeyValuePair<string, string>>? tags,
+            bool? debug,
+            bool? shared)
         {
-            return new Builder();
+            if (string.IsNullOrWhiteSpace(traceId))
+            {
+                throw new ArgumentNullException(nameof(traceId));
+            }
+
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                throw new ArgumentNullException(nameof(id));
+            }
+
+            this.TraceId = traceId;
+            this.ParentId = parentId;
+            this.Id = id;
+            this.Kind = kind;
+            this.Name = name;
+            this.Timestamp = timestamp;
+            this.Duration = duration;
+            this.LocalEndpoint = localEndpoint;
+            this.RemoteEndpoint = remoteEndpoint;
+            this.Annotations = annotations;
+            this.Tags = tags;
+            this.Debug = debug;
+            this.Shared = shared;
         }
 
-        public class Builder
+        public string TraceId { get; }
+
+        public string ParentId { get; }
+
+        public string Id { get; }
+
+        public string Kind { get; }
+
+        public string Name { get; }
+
+        public long? Timestamp { get; }
+
+        public long? Duration { get; }
+
+        public ZipkinEndpoint LocalEndpoint { get; }
+
+        public ZipkinEndpoint RemoteEndpoint { get; }
+
+        public PooledList<ZipkinAnnotation>? Annotations { get; }
+
+        public PooledList<KeyValuePair<string, string>>? Tags { get; }
+
+        public bool? Debug { get; }
+
+        public bool? Shared { get; }
+
+        public void Return()
         {
-            private readonly ZipkinSpan result = new ZipkinSpan();
+            this.Annotations?.Return();
+            this.Tags?.Return();
+        }
 
-            internal Builder TraceId(string val)
+        public void Write(Utf8JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WriteString("traceId", this.TraceId);
+
+            if (this.Name != null)
             {
-                this.result.TraceId = val;
-                return this;
+                writer.WriteString("name", this.Name);
             }
 
-            internal Builder Id(string val)
+            if (this.ParentId != null)
             {
-                this.result.Id = val;
-                return this;
+                writer.WriteString("parentId", this.ParentId);
             }
 
-            internal Builder ParentId(string val)
+            writer.WriteString("id", this.Id);
+
+            writer.WriteString("kind", this.Kind);
+
+            if (this.Timestamp.HasValue)
             {
-                this.result.ParentId = val;
-                return this;
+                writer.WriteNumber("timestamp", this.Timestamp.Value);
             }
 
-            internal Builder Kind(ZipkinSpanKind val)
+            if (this.Duration.HasValue)
             {
-                this.result.Kind = val;
-                return this;
+                writer.WriteNumber("duration", this.Duration.Value);
             }
 
-            internal Builder Name(string val)
+            if (this.Debug.HasValue)
             {
-                this.result.Name = val;
-                return this;
+                writer.WriteBoolean("debug", this.Debug.Value);
             }
 
-            internal Builder Timestamp(long val)
+            if (this.Shared.HasValue)
             {
-                this.result.Timestamp = val;
-                return this;
+                writer.WriteBoolean("shared", this.Shared.Value);
             }
 
-            internal Builder Duration(long val)
+            if (this.LocalEndpoint != null)
             {
-                this.result.Duration = val;
-                return this;
+                writer.WritePropertyName("localEndpoint");
+                this.LocalEndpoint.Write(writer);
             }
 
-            internal Builder LocalEndpoint(ZipkinEndpoint val)
+            if (this.RemoteEndpoint != null)
             {
-                this.result.LocalEndpoint = val;
-                return this;
+                writer.WritePropertyName("remoteEndpoint");
+                this.RemoteEndpoint.Write(writer);
             }
 
-            internal Builder RemoteEndpoint(ZipkinEndpoint val)
+            if (this.Annotations.HasValue)
             {
-                this.result.RemoteEndpoint = val;
-                return this;
-            }
+                writer.WritePropertyName("annotations");
+                writer.WriteStartArray();
 
-            internal Builder Debug(bool val)
-            {
-                this.result.Debug = val;
-                return this;
-            }
-
-            internal Builder Shared(bool val)
-            {
-                this.result.Shared = val;
-                return this;
-            }
-
-            internal Builder PutTag(string key, string value)
-            {
-                if (this.result.Tags == null)
+                foreach (var annotation in this.Annotations.Value)
                 {
-                    this.result.Tags = new Dictionary<string, string>();
+                    writer.WriteStartObject();
+
+                    writer.WriteNumber("timestamp", annotation.Timestamp);
+
+                    writer.WriteString("value", annotation.Value);
+
+                    writer.WriteEndObject();
                 }
 
-                if (key == null)
-                {
-                    throw new ArgumentNullException(nameof(key));
-                }
-
-                this.result.Tags[key] = value ?? throw new ArgumentNullException(nameof(value));
-
-                return this;
+                writer.WriteEndArray();
             }
 
-            internal Builder AddAnnotation(long timestamp, string value)
+            if (this.Tags.HasValue)
             {
-                if (this.result.Annotations == null)
+                writer.WritePropertyName("tags");
+                writer.WriteStartObject();
+
+                foreach (var tag in this.Tags.Value)
                 {
-                    this.result.Annotations = new List<ZipkinAnnotation>(2);
+                    writer.WriteString(tag.Key, tag.Value);
                 }
 
-                this.result.Annotations.Add(new ZipkinAnnotation() { Timestamp = timestamp, Value = value });
-
-                return this;
+                writer.WriteEndObject();
             }
 
-            internal ZipkinSpan Build()
-            {
-                if (this.result.TraceId == null)
-                {
-                    throw new ArgumentException("Trace ID should not be null");
-                }
-
-                if (this.result.Id == null)
-                {
-                    throw new ArgumentException("ID should not be null");
-                }
-
-                return this.result;
-            }
+            writer.WriteEndObject();
         }
     }
 }
