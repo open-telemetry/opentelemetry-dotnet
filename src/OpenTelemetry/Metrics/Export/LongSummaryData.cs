@@ -1,4 +1,4 @@
-﻿// <copyright file="SumData.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="LongSummaryData.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,23 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
 namespace OpenTelemetry.Metrics.Export
 {
-    public class SumData<T> : MetricData<T>
+    public class LongSummaryData : MetricData
     {
-        public T Sum { get; set; }
+        public long Count { get; set; }
+
+        public long Sum { get; set; }
+
+        public long Min { get; set; }
+
+        public long Max { get; set; }
     }
 }
