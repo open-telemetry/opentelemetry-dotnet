@@ -620,7 +620,7 @@ namespace OpenTelemetry.Trace
             {
                 spanCreationOptions = new SpanCreationOptions
                 {
-                    Attributes = activity.Tags.ToDictionary(k => k.Key, v => (object)v.Value),
+                    Attributes = new TagsCollection(activity.Tags),
                 };
             }
 
@@ -674,7 +674,7 @@ namespace OpenTelemetry.Trace
             SpanContext parent,
             string name,
             SpanKind spanKind,
-            IDictionary<string, object> attributes,
+            IEnumerable<KeyValuePair<string, object>> attributes,
             IEnumerable<Link> parentLinks,
             ActivityTraceId traceId,
             ActivitySpanId spanId,
