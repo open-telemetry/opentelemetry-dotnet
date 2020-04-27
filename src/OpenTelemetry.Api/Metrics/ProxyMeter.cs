@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMeter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ProxyMeter.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,49 +15,66 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
-    internal sealed class NoOpMeter : Meter
+    /// <summary>
+    /// Proxy Meter which act as a No-Op Meter, until real meter is provided.
+    /// </summary>
+    internal sealed class ProxyMeter : Meter
     {
-        public NoOpMeter()
+        private Meter realMeter;
+
+        public ProxyMeter()
         {
         }
 
         public override CounterMetric<double> CreateDoubleCounter(string name, bool monotonic = true)
         {
-            return NoOpCounterMetric<double>.Instance;
+            return this.realMeter != null ? this.realMeter.CreateDoubleCounter(name, monotonic) : NoOpCounterMetric<double>.Instance;
         }
 
         public override MeasureMetric<double> CreateDoubleMeasure(string name, bool absolute = true)
         {
-            return NoOpMeasureMetric<double>.Instance;
+            return this.realMeter != null ? this.realMeter.CreateDoubleMeasure(name, absolute) : NoOpMeasureMetric<double>.Instance;
         }
 
         public override DoubleObserverMetric CreateDoubleObserver(string name, Action<DoubleObserverMetric> callback, bool absolute = true)
         {
-            return NoOpDoubleObserverMetric.Instance;
+            return this.realMeter != null ? this.realMeter.CreateDoubleObserver(name, callback, absolute) : NoOpDoubleObserverMetric.Instance;
         }
 
         public override CounterMetric<long> CreateInt64Counter(string name, bool monotonic = true)
         {
-            return NoOpCounterMetric<long>.Instance;
+            return this.realMeter != null ? this.realMeter.CreateInt64Counter(name, monotonic) : NoOpCounterMetric<long>.Instance;
         }
 
         public override MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true)
         {
-            return NoOpMeasureMetric<long>.Instance;
+            return this.realMeter != null ? this.realMeter.CreateInt64Measure(name, absolute) : NoOpMeasureMetric<long>.Instance;
         }
 
         public override Int64ObserverMetric CreateInt64Observer(string name, Action<Int64ObserverMetric> callback, bool absolute = true)
         {
-            return NoOpInt64ObserverMetric.Instance;
+            return this.realMeter != null ? this.realMeter.CreateInt64Observer(name, callback, absolute) : NoOpInt64ObserverMetric.Instance;
         }
 
         public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)
         {
             // return no op
-            return LabelSet.BlankLabelSet;
+            return this.realMeter != null ? this.realMeter.GetLabelSet(labels) : LabelSet.BlankLabelSet;
+        }
+
+        public void UpdateMeter(Meter realMeter)
+        {
+            if (this.realMeter != null)
+            {
+                return;
+            }
+
+            // just in case user calls init concurrently
+            Interlocked.CompareExchange(ref this.realMeter, realMeter, null);
         }
     }
 }
