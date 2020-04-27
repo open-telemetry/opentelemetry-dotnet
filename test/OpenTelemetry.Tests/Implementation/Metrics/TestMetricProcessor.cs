@@ -24,28 +24,24 @@ namespace OpenTelemetry.Metrics.Test
 {
     internal class TestMetricProcessor : MetricProcessor
     {
-        public ConcurrentBag<Metric<long>> longMetrics = new ConcurrentBag<Metric<long>>();
-        public ConcurrentBag<Metric<double>> doubleMetrics = new ConcurrentBag<Metric<double>>();
+        public List<Metric<long>> longMetrics = new List<Metric<long>>();
+        public List<Metric<double>> doubleMetrics = new List<Metric<double>>();
 
         public override void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics)
         {
             longMetrics = this.longMetrics;
             doubleMetrics = this.doubleMetrics;
-            this.longMetrics = new ConcurrentBag<Metric<long>>();
-            this.doubleMetrics = new ConcurrentBag<Metric<double>>();
+            this.longMetrics = new List<Metric<long>>();
+            this.doubleMetrics = new List<Metric<double>>();
         }
 
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
+        public override void Process(Metric<long> metric)
         {
-            var metric = new Metric<long>(meterName, metricName, meterName + metricName, labelSet.Labels, aggregator.GetAggregationType());
-            metric.Data = aggregator.ToMetricData();
             this.longMetrics.Add(metric);
         }
 
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator)
+        public override void Process(Metric<double> metric)
         {
-            var metric = new Metric<double>(meterName, metricName, meterName + metricName, labelSet.Labels, aggregator.GetAggregationType());
-            metric.Data = aggregator.ToMetricData();
             this.doubleMetrics.Add(metric);
         }
     }

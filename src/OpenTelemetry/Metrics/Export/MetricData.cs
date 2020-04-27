@@ -15,11 +15,14 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics.Export
 {
     public abstract class MetricData<T>
     {
         public DateTime Timestamp { get; set; }
+
+        public IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
     }
 }
