@@ -229,7 +229,7 @@ Configuration is done by user application: it should configure exporter and may 
 ### Configuration with Microsoft.Extensions.DependencyInjection
 
 1. Install packages to your project:
-   [OpenTelemetry.Hosting][OpenTelemetry-hosting-nuget-url] to provide `AddOpenTelemetry` helper method
+   [OpenTelemetry.Extensions.Hosting][OpenTelemetry-extensions-hosting-nuget-url] to provide `AddOpenTelemetry` helper method
    [OpenTelemetry.Adapter.AspNetCore][OpenTelemetry-adapter-aspnetcore-nuget-url] to collect incoming HTTP requests
    [OpenTelemetry.Adapter.Dependencies][OpenTelemetry-adapter-deps-nuget-url] to collect outgoing HTTP requests, SqlClient calls, and Azure SDK calls
 
@@ -689,8 +689,8 @@ deprecate it for 18 months before removing it, if possible.
 [OpenTelemetry-adapter-stackexchange-redis-myget-url]: https://www.myget.org/feed/opentelemetry/package/nuget/OpenTelemetry.Adapter.StackExchangeRedis
 [OpenTelemetry-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.svg
 [OpenTelemetry-nuget-url]:https://www.nuget.org/packages/OpenTelemetry
-[OpenTelemetry-hosting-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Hosting.svg
-[OpenTelemetry-hosting-nuget-url]:https://www.nuget.org/packages/OpenTelemetry.Hosting
+[OpenTelemetry-extensions-hosting-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Extensions.Hosting.svg
+[OpenTelemetry-extensions-hosting-nuget-url]:https://www.nuget.org/packages/OpenTelemetry.Extensions.Hosting
 [OpenTelemetry-abs-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Api.svg
 [OpenTelemetry-abs-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Api
 [OpenTelemetry-exporter-zipkin-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Zipkin.svg

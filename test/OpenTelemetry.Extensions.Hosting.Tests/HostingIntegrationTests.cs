@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Hosting
+namespace OpenTelemetry.Extensions.Hosting
 {
     using System;
     using System.Threading.Tasks;
