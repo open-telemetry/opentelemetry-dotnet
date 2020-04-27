@@ -44,12 +44,12 @@ namespace OpenTelemetry.Adapter.Dependencies.Implementation
                 return;
             }
 
-            this.Tracer.StartActiveSpanFromActivity(request.RequestUri.AbsolutePath, activity, SpanKind.Client, out var span);
+            this.Tracer.StartActiveSpanFromActivity(Constants.HttpSpanPrefix + request.Method, activity, SpanKind.Client, out var span);
 
             if (span.IsRecording)
             {
                 span.PutComponentAttribute("http");
-                span.PutHttpMethodAttribute(request.Method.ToString());
+                span.PutHttpMethodAttribute(request.Method);
                 span.PutHttpHostAttribute(request.RequestUri.Host, request.RequestUri.Port);
                 span.PutHttpRawUrlAttribute(request.RequestUri.OriginalString);
 
