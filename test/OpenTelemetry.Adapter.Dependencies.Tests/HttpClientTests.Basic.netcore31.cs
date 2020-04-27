@@ -16,6 +16,7 @@
 #if NETCOREAPP3_1
 using OpenTelemetry.Trace.Configuration;
 using Moq;
+using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using System;
@@ -36,7 +37,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
 
         public HttpClientTests()
         {
-            this.serverLifeTime = TestServer.RunServer(
+            this.serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
                     ctx.Response.StatusCode = 200;

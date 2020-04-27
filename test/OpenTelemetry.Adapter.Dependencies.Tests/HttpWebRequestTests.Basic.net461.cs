@@ -22,6 +22,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
@@ -41,7 +42,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = false;
 
-            this.serverLifeTime = TestServer.RunServer(
+            this.serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
                     ctx.Response.StatusCode = 200;
