@@ -15,7 +15,7 @@
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Adapter.AspNetCore\OpenTelemetry.Adapter.AspNetCore.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Adapter.Dependencies\OpenTelemetry.Adapter.Dependencies.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.ApplicationInsights\OpenTelemetry.Exporter.ApplicationInsights.csproj" />
-    <ProjectReference Include="..\..\..\src\OpenTelemetry.Hosting\OpenTelemetry.Hosting.csproj" />
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj" />
   </ItemGroup>
 
 
