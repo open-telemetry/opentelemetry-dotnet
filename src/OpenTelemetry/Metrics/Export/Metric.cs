@@ -21,7 +21,8 @@ namespace OpenTelemetry.Metrics.Export
     /// <summary>
     /// This class would evolve to become the export record.
     /// </summary>
-    public class Metric
+    /// <typeparam name="T">Type of the metric - long or double currently.</typeparam>
+    public class Metric<T>
     {
         public Metric(
             string metricNamespace,
@@ -33,7 +34,7 @@ namespace OpenTelemetry.Metrics.Export
             this.MetricName = metricName;
             this.MetricDescription = desc;
             this.AggregationType = type;
-            this.Data = new List<MetricData>();
+            this.Data = new List<MetricData<T>>();
         }
 
         public string MetricNamespace { get; private set; }
@@ -44,6 +45,6 @@ namespace OpenTelemetry.Metrics.Export
 
         public AggregationType AggregationType { get; private set; }
 
-        public List<MetricData> Data { get; internal set; }
+        public List<MetricData<T>> Data { get; internal set; }
     }
 }

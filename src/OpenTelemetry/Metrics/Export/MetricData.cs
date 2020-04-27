@@ -19,7 +19,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics.Export
 {
-    public abstract class MetricData
+    public abstract class MetricData<T>
     {
         public DateTime Timestamp { get; set; }
 
