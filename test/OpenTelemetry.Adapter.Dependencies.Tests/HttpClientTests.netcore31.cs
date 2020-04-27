@@ -16,6 +16,7 @@
 #if NETCOREAPP3_1
 using Moq;
 using Newtonsoft.Json;
+using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
@@ -38,7 +39,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         [MemberData(nameof(TestData))]
         public async Task HttpOutCallsAreCollectedSuccessfullyAsync(HttpTestData.HttpOutTestCase tc)
         {
-            var serverLifeTime = TestServer.RunServer(
+            var serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
                     ctx.Response.StatusCode = tc.ResponseCode == 0 ? 200 : tc.ResponseCode;

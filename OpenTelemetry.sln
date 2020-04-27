@@ -96,9 +96,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "benchmarks\Benchmarks.csproj", "{CEB7F146-81DC-41DB-8015-140EC6A64E6C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Hosting", "src\OpenTelemetry.Hosting\OpenTelemetry.Hosting.csproj", "{A03102CD-A996-4418-BA19-7141C34B5A7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Hosting", "src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj", "{A03102CD-A996-4418-BA19-7141C34B5A7D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Hosting.Tests", "test\OpenTelemetry.Hosting.Tests\OpenTelemetry.Hosting.Tests.csproj", "{4CB1187F-27F2-48F9-83F4-3A7567F73B5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Hosting.Tests", "test\OpenTelemetry.Extensions.Hosting.Tests\OpenTelemetry.Extensions.Hosting.Tests.csproj", "{4CB1187F-27F2-48F9-83F4-3A7567F73B5F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj", "{A38AC295-2745-4B85-8B6B-DCA864CEDD5B}"
 EndProject

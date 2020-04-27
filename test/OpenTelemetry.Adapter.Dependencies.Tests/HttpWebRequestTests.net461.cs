@@ -21,6 +21,7 @@ using System.Linq;
 using System.Net;
 using Moq;
 using Newtonsoft.Json;
+using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
@@ -36,7 +37,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
         [MemberData(nameof(TestData))]
         public void HttpOutCallsAreCollectedSuccessfullyAsync(HttpTestData.HttpOutTestCase tc)
         {
-            using var serverLifeTime = TestServer.RunServer(
+            using var serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
                     ctx.Response.StatusCode = tc.ResponseCode == 0 ? 200 : tc.ResponseCode;

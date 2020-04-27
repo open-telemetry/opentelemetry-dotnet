@@ -6,9 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Impl\Trace\Internal\**" />
-    <EmbeddedResource Remove="Impl\Trace\Internal\**" />
-    <None Remove="Impl\Trace\Internal\**" />
+    <Compile Remove="Implementation\Trace\Internal\**" />
+    <EmbeddedResource Remove="Implementation\Trace\Internal\**" />
+    <None Remove="Implementation\Trace\Internal\**" />
   </ItemGroup>
 
   <ItemGroup>
