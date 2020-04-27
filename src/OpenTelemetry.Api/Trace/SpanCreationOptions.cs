@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets or sets attributes known prior to span creation.
         /// </summary>
-        public IDictionary<string, object> Attributes { get; set; }
+        public IEnumerable<KeyValuePair<string, object>> Attributes { get; set; }
 
         /// <summary>
         /// Gets or sets Links factory. Use it to deserialize list of <see cref="Link"/> lazily
