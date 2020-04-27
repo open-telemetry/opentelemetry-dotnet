@@ -27,6 +27,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
+using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Adapter.Dependencies.Implementation;
 
 namespace OpenTelemetry.Adapter.Dependencies.Tests
@@ -48,7 +49,7 @@ namespace OpenTelemetry.Adapter.Dependencies.Tests
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = false;
 
-            this.testServer = TestServer.RunServer(
+            this.testServer = TestHttpServer.RunServer(
                 ctx => ProcessServerRequest(ctx),
                 out this.testServerHost,
                 out this.testServerPort);
