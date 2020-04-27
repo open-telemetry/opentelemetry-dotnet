@@ -14,7 +14,7 @@ just call `AddOpenTelemetry` during host builder configuration in `ConfigureServ
     <PackageReference Include="OpenTelemetry.Adapter.AspNetCore" Version="0.2.0-alpha.182" />
     <PackageReference Include="OpenTelemetry.Adapter.Dependencies" Version="0.2.0-alpha.182" />
     <PackageReference Include="OpenTelemetry.Exporter.ApplicationInsights" Version="0.2.0-alpha.182" />
-    <PackageReference Include="OpenTelemetry.Hosting" Version="0.2.0-alpha.182" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="0.2.0-alpha.182" />
 ```
 
 2. Set up OpenTelemetry
