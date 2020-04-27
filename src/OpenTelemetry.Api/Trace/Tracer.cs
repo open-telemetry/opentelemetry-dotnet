@@ -38,8 +38,6 @@ namespace OpenTelemetry.Trace
         /// <returns>Disposable object to control span to current context association.</returns>
         public abstract IDisposable WithSpan(TelemetrySpan span, bool endSpanOnDispose);
 
-        // TODO: add sampling hints
-
         /// <summary>
         /// Starts root span.
         /// </summary>
