@@ -19,7 +19,7 @@ namespace Microsoft.Extensions.DependencyInjection
     using System;
     using Microsoft.Extensions.DependencyInjection.Extensions;
     using Microsoft.Extensions.Hosting;
-    using OpenTelemetry.Hosting.Implementation;
+    using OpenTelemetry.Extensions.Hosting.Implementation;
     using OpenTelemetry.Trace;
     using OpenTelemetry.Trace.Configuration;
 
