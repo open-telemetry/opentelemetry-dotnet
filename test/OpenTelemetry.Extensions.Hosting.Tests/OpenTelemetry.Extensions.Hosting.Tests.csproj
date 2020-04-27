@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OpenTelemetry.Hosting\OpenTelemetry.Hosting.csproj" />
+    <ProjectReference Include="..\..\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
@@ -19,5 +19,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="2.1.0" />
   </ItemGroup>
  </Project>
