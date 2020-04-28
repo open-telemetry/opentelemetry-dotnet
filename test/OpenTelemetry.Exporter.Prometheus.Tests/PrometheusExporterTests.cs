@@ -123,9 +123,11 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var labels1 = new List<KeyValuePair<string, string>>();
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
+            labels1.Add(new KeyValuePair<string, string>("dim2", "value1"));
 
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
+            labels2.Add(new KeyValuePair<string, string>("dim2", "value2"));
 
 
             var defaultContext = default(SpanContext);
@@ -148,8 +150,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         {
             // Validate counters.
             Assert.Contains("TYPE testCounter counter", responseText);
-            Assert.Contains("testCounter{dim1=\"value1\"}", responseText);
-            Assert.Contains("testCounter{dim1=\"value2\"}", responseText);
+            Assert.Contains("testCounter{dim1=\"value1\",dim2=\"value1\"}", responseText);
+            Assert.Contains("testCounter{dim1=\"value2\",dim2=\"value2\"}", responseText);
 
             // Validate measure.
             Assert.Contains("# TYPE testMeasure summary", responseText);

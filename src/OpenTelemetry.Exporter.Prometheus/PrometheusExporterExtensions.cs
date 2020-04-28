@@ -114,10 +114,11 @@ namespace OpenTelemetry.Exporter.Prometheus
         {
             builder = builder.WithType(PrometheusCounterType);
 
+            var metricValueBuilder = builder.AddValue();
+            metricValueBuilder = metricValueBuilder.WithValue(doubleValue);
+
             foreach (var label in labels)
             {
-                var metricValueBuilder = builder.AddValue();
-                metricValueBuilder = metricValueBuilder.WithValue(doubleValue);
                 metricValueBuilder.WithLabel(label.Key, label.Value);
             }
 
