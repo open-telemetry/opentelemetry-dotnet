@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics.Test
         {
             // create an aggregator
             var aggregator = new Int64LastValueAggregator();
-            var sum = aggregator.ToMetricData() as SumData<long>;
+            var sum = aggregator.ToMetricData() as Int64SumData;
 
             // we start with 0.
             Assert.Equal(0, sum.Sum);
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Metrics.Test
             aggregator.Update(40);
 
             aggregator.Checkpoint();
-            sum = aggregator.ToMetricData() as SumData<long>;
+            sum = aggregator.ToMetricData() as Int64SumData;
             Assert.Equal(40, sum.Sum);
         }
     }

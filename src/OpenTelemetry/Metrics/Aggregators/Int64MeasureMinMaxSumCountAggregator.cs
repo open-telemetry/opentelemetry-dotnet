@@ -36,12 +36,12 @@ namespace OpenTelemetry.Metrics.Aggregators
 
         public override AggregationType GetAggregationType()
         {
-            return AggregationType.Summary;
+            return AggregationType.Int64Summary;
         }
 
-        public override MetricData<long> ToMetricData()
+        public override MetricData ToMetricData()
         {
-            return new SummaryData<long>
+            return new Int64SummaryData
             {
                 Count = this.checkPoint.Count,
                 Sum = this.checkPoint.Sum,

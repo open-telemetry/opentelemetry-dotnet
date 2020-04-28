@@ -19,18 +19,23 @@ namespace OpenTelemetry.Metrics.Export
     public enum AggregationType
     {
         /// <summary>
-        /// Sum of type Double which is reported with <see cref="SumData{T}"/>
+        /// Sum of type Double which is reported with <see cref="DoubleSumData"/>
         /// </summary>
         DoubleSum,
 
         /// <summary>
-        /// Sum of type Long which is reported with <see cref="SumData{T}"/>
+        /// Sum of type Long which is reported with <see cref="Int64SumData"/>
         /// </summary>
         LongSum,
 
         /// <summary>
-        /// Summary of measurements (Min, Max, Sum, Count), which is reported with <see cref="SummaryData{T}"/>
+        /// Summary of measurements (Min, Max, Sum, Count), which is reported with <see cref="DoubleSummaryData"/>
         /// </summary>
-        Summary,
+        DoubleSummary,
+
+        /// <summary>
+        /// Summary of measurements (Min, Max, Sum, Count), which is reported with <see cref="Int64SummaryData"/>
+        /// </summary>
+        Int64Summary,
     }
 }

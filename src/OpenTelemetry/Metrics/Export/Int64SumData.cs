@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Int64SumData.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace OpenTelemetry.Metrics.Export
 {
-    internal class NoOpMetricExporter : MetricExporter
+    public class Int64SumData : MetricData
     {
-        public override Task<ExportResult> ExportAsync(IEnumerable<Metric> metrics, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(ExportResult.Success);
-        }
+        public long Sum { get; set; }
     }
 }

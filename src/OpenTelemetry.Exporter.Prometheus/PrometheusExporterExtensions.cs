@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="writer">StreamWriter to write to.</param>
         public static void WriteMetricsCollection(this PrometheusExporter exporter, StreamWriter writer)
         {
-            foreach (var metric in exporter.GetAndClearDoubleMetrics())
+            foreach (var metric in exporter.GetAndClearMetrics())
             {
                 var builder = new PrometheusMetricBuilder()
                     .WithName(metric.MetricName)
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     {
                         case AggregationType.DoubleSum:
                             {
-                                var doubleSum = metricData as SumData<double>;
+                                var doubleSum = metricData as DoubleSumData;
                                 var doubleValue = doubleSum.Sum;
 
                                 builder = builder.WithType(PrometheusCounterType);
@@ -70,9 +70,27 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 break;
                             }
 
-                        case AggregationType.Summary:
+                        case AggregationType.LongSum:
                             {
-                                var longSummary = metricData as SummaryData<double>;
+                                var doubleSum = metricData as Int64SumData;
+                                var doubleValue = doubleSum.Sum;
+
+                                builder = builder.WithType(PrometheusCounterType);
+
+                                foreach (var label in labels)
+                                {
+                                    var metricValueBuilder = builder.AddValue();
+                                    metricValueBuilder = metricValueBuilder.WithValue(doubleValue);
+                                    metricValueBuilder.WithLabel(label.Key, label.Value);
+                                }
+
+                                builder.Write(writer);
+                                break;
+                            }
+
+                        case AggregationType.DoubleSummary:
+                            {
+                                var longSummary = metricData as DoubleSummaryData;
                                 var longValueCount = longSummary.Count;
                                 var longValueSum = longSummary.Sum;
                                 var longValueMin = longSummary.Min;
@@ -118,41 +136,10 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 builder.Write(writer);
                                 break;
                             }
-                    }
-                }
-            }
 
-            foreach (var metric in exporter.GetAndClearLongMetrics())
-            {
-                var builder = new PrometheusMetricBuilder()
-                    .WithName(metric.MetricName)
-                    .WithDescription(metric.MetricDescription);
-
-                foreach (var metricData in metric.Data)
-                {
-                    var labels = metricData.Labels;
-                    switch (metric.AggregationType)
-                    {
-                        case AggregationType.LongSum:
+                        case AggregationType.Int64Summary:
                             {
-                                var longSum = metricData as SumData<long>;
-                                var longValue = longSum.Sum;
-                                builder = builder.WithType(PrometheusCounterType);
-
-                                foreach (var label in labels)
-                                {
-                                    var metricValueBuilder = builder.AddValue();
-                                    metricValueBuilder = metricValueBuilder.WithValue(longValue);
-                                    metricValueBuilder.WithLabel(label.Key, label.Value);
-                                }
-
-                                builder.Write(writer);
-                                break;
-                            }
-
-                        case AggregationType.Summary:
-                            {
-                                var longSummary = metricData as SummaryData<long>;
+                                var longSummary = metricData as Int64SummaryData;
                                 var longValueCount = longSummary.Count;
                                 var longValueSum = longSummary.Sum;
                                 var longValueMin = longSummary.Min;

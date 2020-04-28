@@ -36,54 +36,27 @@ namespace OpenTelemetry.Exporter.Prometheus
         public PrometheusExporter(PrometheusExporterOptions options)
         {
             this.Options = options;
-            this.LongMetrics = new List<Metric<long>>();
-            this.DoubleMetrics = new List<Metric<double>>();
+            this.Metrics = new List<Metric>();
         }
 
-        private List<Metric<long>> LongMetrics { get; set; }
-
-        private List<Metric<double>> DoubleMetrics { get; set; }
+        private List<Metric> Metrics { get; set; }
 
         /// <inheritdoc/>
-        public override Task<ExportResult> ExportAsync<T>(IEnumerable<Metric<T>> metrics, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync(IEnumerable<Metric> metrics, CancellationToken cancellationToken)
         {
             // Prometheus uses a pull model, not a push.
             // Accumulate the exported metrics internally, return success.
             // The pull process will read this internally stored metrics
             // at its own schedule.
-            if (typeof(T) == typeof(double))
-            {
-                var doubleList = metrics
-                .Select(x => (x as Metric<double>))
-                .ToList();
-
-                this.DoubleMetrics.AddRange(doubleList);
-            }
-            else
-            {
-                var longList = metrics
-                .Select(x => (x as Metric<long>))
-                .ToList();
-
-                this.LongMetrics.AddRange(longList);
-            }
-
+            this.Metrics.AddRange(metrics);
             return Task.FromResult(ExportResult.Success);
         }
 
-        internal List<Metric<long>> GetAndClearLongMetrics()
+        internal List<Metric> GetAndClearMetrics()
         {
             // TODO harden this so as to not lose data if Export fails.
-            List<Metric<long>> current = this.LongMetrics;
-            this.LongMetrics = new List<Metric<long>>();
-            return current;
-        }
-
-        internal List<Metric<double>> GetAndClearDoubleMetrics()
-        {
-            // TODO harden this so as to not lose data if Export fails.
-            List<Metric<double>> current = this.DoubleMetrics;
-            this.DoubleMetrics = new List<Metric<double>>();
+            List<Metric> current = this.Metrics;
+            this.Metrics = new List<Metric>();
             return current;
         }
     }

@@ -33,9 +33,9 @@ namespace OpenTelemetry.Metrics.Aggregators
             Interlocked.Exchange(ref this.checkpoint, this.value);
         }
 
-        public override MetricData<double> ToMetricData()
+        public override MetricData ToMetricData()
         {
-            return new SumData<double>
+            return new DoubleSumData
             {
                 Sum = this.checkpoint,
                 Timestamp = DateTime.UtcNow,

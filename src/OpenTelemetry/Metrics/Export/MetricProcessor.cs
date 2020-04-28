@@ -25,20 +25,13 @@ namespace OpenTelemetry.Metrics.Export
         /// This is called at the end of one collection cycle by the Controller.
         /// MetricProcessor can use this to clear its Metrics (in case of stateless).
         /// </summary>
-        /// <param name="longMetrics">The list of long metrics from this cycle, which are to be exported.</param>
-        /// <param name="doubleMetrics">The list of double metrics from this cycle, which are to be exported.</param>
-        public abstract void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics);
+        /// <param name="metrics">The list of metrics from this cycle, which are to be exported.</param>
+        public abstract void FinishCollectionCycle(out IEnumerable<Metric> metrics);
 
         /// <summary>
         /// Process the metric. This method is called once every collection interval.
         /// </summary>
         /// <param name="metric">the metric record.</param>
-        public abstract void Process(Metric<long> metric);
-
-        /// <summary>
-        /// Process the metric. This method is called once every collection interval.
-        /// </summary>
-        /// <param name="metric">the metric record.</param>
-        public abstract void Process(Metric<double> metric);
+        public abstract void Process(Metric metric);
     }
 }
