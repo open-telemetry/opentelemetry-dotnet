@@ -23,41 +23,45 @@ using OpenTelemetry.Context.Propagation;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// No-op tracer.
+    /// Proxy tracer.
     /// </summary>
     internal sealed class ProxyTracer : Tracer
     {
-        private static readonly IDisposable NoopScope = new NoopDisposable();
-
+        private readonly Tracer defaultTracer;
         private Tracer realTracer;
 
+        public ProxyTracer(Tracer defaultTracer)
+        {
+            this.defaultTracer = defaultTracer;
+        }
+
         /// <inheritdoc/>
-        public override TelemetrySpan CurrentSpan => this.realTracer?.CurrentSpan ?? BlankSpan.Instance;
+        public override TelemetrySpan CurrentSpan => this.realTracer?.CurrentSpan ?? this.defaultTracer.CurrentSpan;
 
         /// <inheritdoc/>
         public override IDisposable WithSpan(TelemetrySpan span, bool endOnDispose)
         {
-            return this.realTracer != null ? this.realTracer.WithSpan(span, endOnDispose) : NoopScope;
+            return this.realTracer != null ? this.realTracer.WithSpan(span, endOnDispose) : this.defaultTracer.WithSpan(span, endOnDispose);
         }
 
         public override TelemetrySpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options)
         {
-            return this.realTracer != null ? this.realTracer.StartRootSpan(operationName, kind, options) : BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartRootSpan(operationName, kind, options) : this.defaultTracer.StartRootSpan(operationName, kind, options);
         }
 
         public override TelemetrySpan StartSpan(string operationName, TelemetrySpan parent, SpanKind kind, SpanCreationOptions options)
         {
-            return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : this.defaultTracer.StartSpan(operationName, parent, kind, options);
         }
 
         public override TelemetrySpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
         {
-            return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartSpan(operationName, parent, kind, options) : this.defaultTracer.StartSpan(operationName, parent, kind, options);
         }
 
         public override TelemetrySpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links)
         {
-            return this.realTracer != null ? this.realTracer.StartSpanFromActivity(operationName, activity, kind, links) : BlankSpan.Instance;
+            return this.realTracer != null ? this.realTracer.StartSpanFromActivity(operationName, activity, kind, links) : this.defaultTracer.StartSpanFromActivity(operationName, activity, kind, links);
         }
 
         public void UpdateTracer(Tracer realTracer)
@@ -69,13 +73,6 @@ namespace OpenTelemetry.Trace
 
             // just in case user calls init concurrently
             Interlocked.CompareExchange(ref this.realTracer, realTracer, null);
-        }
-
-        private class NoopDisposable : IDisposable
-        {
-            public void Dispose()
-            {
-            }
         }
     }
 }

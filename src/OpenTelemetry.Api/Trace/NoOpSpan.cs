@@ -1,4 +1,4 @@
-﻿// <copyright file="BlankSpan.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoOpSpan.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,19 +18,10 @@ using System;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Blank span.
+    /// No-op span.
     /// </summary>
-    internal sealed class BlankSpan : TelemetrySpan
+    internal sealed class NoOpSpan : TelemetrySpan
     {
-        /// <summary>
-        /// Blank span instance.
-        /// </summary>
-        public static readonly BlankSpan Instance = new BlankSpan();
-
-        private BlankSpan()
-        {
-        }
-
         /// <inheritdoc />
         public override SpanContext Context => default;
 

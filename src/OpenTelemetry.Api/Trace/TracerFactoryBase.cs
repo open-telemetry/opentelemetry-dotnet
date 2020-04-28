@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class TracerFactoryBase
     {
-        private static ProxyTracer proxy = new ProxyTracer();
+        private static ProxyTracer proxy = new ProxyTracer(new NoOpTracer());
         private static bool isInitialized;
         private static TracerFactoryBase defaultFactory = new TracerFactoryBase();
 
@@ -76,9 +76,9 @@ namespace OpenTelemetry.Trace
         // for tests
         internal void Reset()
         {
-            proxy = new ProxyTracer();
-            isInitialized = false;
             defaultFactory = new TracerFactoryBase();
+            proxy = new ProxyTracer(new NoOpTracer());
+            isInitialized = false;
         }
     }
 }

@@ -86,13 +86,13 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Tracer_StartSpan_FromParent_BadArgs_NullSpanName()
         {
-            var span1 = (SpanSdk)this.tracerSdk.StartSpan(null, BlankSpan.Instance);
+            var span1 = (SpanSdk)this.tracerSdk.StartSpan(null, new NoOpSpan());
             Assert.Equal(string.Empty, span1.Name);
 
-            var span2 = (SpanSdk)this.tracerSdk.StartSpan(null, BlankSpan.Instance, SpanKind.Client);
+            var span2 = (SpanSdk)this.tracerSdk.StartSpan(null, new NoOpSpan(), SpanKind.Client);
             Assert.Equal(string.Empty, span2.Name);
 
-            var span3 = (SpanSdk)this.tracerSdk.StartSpan(null, BlankSpan.Instance, SpanKind.Client, null);
+            var span3 = (SpanSdk)this.tracerSdk.StartSpan(null, new NoOpSpan(), SpanKind.Client, null);
             Assert.Equal(string.Empty, span3.Name);
         }
 

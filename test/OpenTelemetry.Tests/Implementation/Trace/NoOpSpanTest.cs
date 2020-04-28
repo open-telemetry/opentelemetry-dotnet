@@ -1,4 +1,4 @@
-﻿// <copyright file="BlankSpanTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoOpSpanTest.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Test
 {
-    public class BlankSpanTest
+    public class NoOpSpanTest
     {
         [Fact]
         public void DoNotCrash()
@@ -35,43 +35,45 @@ namespace OpenTelemetry.Trace.Test
             multipleAttributes.Add("MyLongAttributeKey", 123);
             multipleAttributes.Add("MyDoubleAttributeKey", 0.005);
             // Tests only that all the methods are not crashing/throwing errors.
-            BlankSpan.Instance.SetAttribute(
+            var noOpSpan = new NoOpSpan();
+            noOpSpan.SetAttribute(
                 "MyStringAttributeKey2", "MyStringAttributeValue2");
             foreach (var a in attributes)
             {
-                BlankSpan.Instance.SetAttribute(a.Key, a.Value);
+                noOpSpan.SetAttribute(a.Key, a.Value);
             }
 
             foreach (var a in multipleAttributes)
             {
-                BlankSpan.Instance.SetAttribute(a.Key, a.Value);
+                noOpSpan.SetAttribute(a.Key, a.Value);
             }
 
-            BlankSpan.Instance.AddEvent("MyEvent");
-            BlankSpan.Instance.AddEvent(new Event("MyEvent", attributes));
-            BlankSpan.Instance.AddEvent(new Event("MyEvent", multipleAttributes));
-            BlankSpan.Instance.AddEvent(new Event("MyEvent"));
+            noOpSpan.AddEvent("MyEvent");
+            noOpSpan.AddEvent(new Event("MyEvent", attributes));
+            noOpSpan.AddEvent(new Event("MyEvent", multipleAttributes));
+            noOpSpan.AddEvent(new Event("MyEvent"));
 
-            Assert.False(BlankSpan.Instance.Context.IsValid);
-            Assert.False(BlankSpan.Instance.IsRecording);
+            Assert.False(noOpSpan.Context.IsValid);
+            Assert.False(noOpSpan.IsRecording);
 
-            BlankSpan.Instance.Status = Status.Ok;
-            BlankSpan.Instance.End();
+            noOpSpan.Status = Status.Ok;
+            noOpSpan.End();
         }
 
         [Fact]
         public void BadArguments_DoesNotThrow()
         {
-            BlankSpan.Instance.Status = new Status();
-            BlankSpan.Instance.UpdateName(null);
-            BlankSpan.Instance.SetAttribute(null, string.Empty);
-            BlankSpan.Instance.SetAttribute(string.Empty, null);
-            BlankSpan.Instance.SetAttribute(null, "foo");
-            BlankSpan.Instance.SetAttribute(null, 1L);
-            BlankSpan.Instance.SetAttribute(null, 0.1d);
-            BlankSpan.Instance.SetAttribute(null, true);
-            BlankSpan.Instance.AddEvent((string)null);
-            BlankSpan.Instance.AddEvent((Event)null);
+            var noOpSpan = new NoOpSpan();
+            noOpSpan.Status = new Status();
+            noOpSpan.UpdateName(null);
+            noOpSpan.SetAttribute(null, string.Empty);
+            noOpSpan.SetAttribute(string.Empty, null);
+            noOpSpan.SetAttribute(null, "foo");
+            noOpSpan.SetAttribute(null, 1L);
+            noOpSpan.SetAttribute(null, 0.1d);
+            noOpSpan.SetAttribute(null, true);
+            noOpSpan.AddEvent((string)null);
+            noOpSpan.AddEvent((Event)null);
         }
     }
 }
