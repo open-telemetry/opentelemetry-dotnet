@@ -26,14 +26,14 @@ namespace Samples
         internal static object Run(string host, int port)
         {
             // Create a tracer.
-            using var tracerFactory = TracerFactory.Create(
+            using var tracerProvider = TracerProviderSdk.Create(
                 builder => builder.UseJaeger(o =>
                 {
                     o.ServiceName = "jaeger-test";
                     o.AgentHost = host;
                     o.AgentPort = port;
                 }));
-            var tracer = tracerFactory.GetTracer("jaeger-test");
+            var tracer = tracerProvider.GetTracer("jaeger-test");
 
             // Create a scoped span. It will end automatically when using statement ends
             using (tracer.StartActiveSpan("Main", out var span))

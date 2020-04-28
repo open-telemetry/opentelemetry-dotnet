@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerFactoryBaseTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerFactoryTests.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,20 +21,20 @@ using Xunit;
 
 namespace OpenTelemetry.Tests.Impl.Trace.Config
 {
-    public class TracerFactoryBaseTests : IDisposable
+    public class TracerFactoryTests : IDisposable
     {
-        public TracerFactoryBaseTests()
+        public TracerFactoryTests()
         {
-            TracerFactoryBase.Default.Reset();
+            TracerFactory.Reset();
         }
 
         [Fact]
         public void TraceFactory_Default()
         {
-            Assert.NotNull(TracerFactoryBase.Default);
-            var defaultTracer = TracerFactoryBase.Default.GetTracer("");
+            Assert.NotNull(TracerFactory.Default);
+            var defaultTracer = TracerFactory.Default.GetTracer("");
             Assert.NotNull(defaultTracer);
-            Assert.Same(defaultTracer, TracerFactoryBase.Default.GetTracer("named tracerSdk"));
+            Assert.Same(defaultTracer, TracerFactory.Default.GetTracer("named tracerSdk"));
 
             var span = defaultTracer.StartSpan("foo");
             Assert.IsType<NoOpSpan>(span);
@@ -43,14 +43,14 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
         [Fact]
         public void TraceFactory_SetDefault()
         {
-            var factory = TracerFactory.Create(b => { });
-            TracerFactoryBase.SetDefault(factory);
+            var factory = TracerProviderSdk.Create(b => { });
+            TracerFactory.SetDefault(factory);
 
-            var defaultTracer = TracerFactoryBase.Default.GetTracer("");
+            var defaultTracer = TracerFactory.Default.GetTracer("");
             Assert.NotNull(defaultTracer);
             Assert.IsType<TracerSdk>(defaultTracer);
 
-            Assert.NotSame(defaultTracer, TracerFactoryBase.Default.GetTracer("named tracerSdk"));
+            Assert.NotSame(defaultTracer, TracerFactory.Default.GetTracer("named tracerSdk"));
 
             var span = defaultTracer.StartSpan("foo");
             Assert.IsType<SpanSdk>(span);
@@ -59,35 +59,35 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
         [Fact]
         public void TraceFactory_SetDefaultNull()
         {
-            Assert.Throws<ArgumentNullException>(() => TracerFactoryBase.SetDefault(null));
+            Assert.Throws<ArgumentNullException>(() => TracerFactory.SetDefault(null));
         }
 
         [Fact]
         public void TraceFactory_SetDefaultTwice_Throws()
         {
-            TracerFactoryBase.SetDefault(TracerFactory.Create(b => { }));
-            Assert.Throws<InvalidOperationException>(() => TracerFactoryBase.SetDefault(TracerFactory.Create(b => { })));
+            TracerFactory.SetDefault(TracerProviderSdk.Create(b => { }));
+            Assert.Throws<InvalidOperationException>(() => TracerFactory.SetDefault(TracerProviderSdk.Create(b => { })));
         }
 
         [Fact]
         public void TraceFactory_UpdateDefault_CachedTracer()
         {
-            var defaultTracer = TracerFactoryBase.Default.GetTracer("");
+            var defaultTracer = TracerFactory.Default.GetTracer("");
             var noopSpan = defaultTracer.StartSpan("foo");
             Assert.IsType<NoOpSpan>(noopSpan);
 
-            TracerFactoryBase.SetDefault(TracerFactory.Create(b => { }));
+            TracerFactory.SetDefault(TracerProviderSdk.Create(b => { }));
             var span = defaultTracer.StartSpan("foo");
             Assert.IsType<SpanSdk>(span);
 
-            var newDefaultTracer = TracerFactoryBase.Default.GetTracer("");
+            var newDefaultTracer = TracerFactory.Default.GetTracer("");
             Assert.NotSame(defaultTracer, newDefaultTracer);
             Assert.IsType<TracerSdk>(newDefaultTracer);
         }
 
         public void Dispose()
         {
-            TracerFactoryBase.Default.Reset();
+            TracerFactory.Reset();
         }
     }
 }

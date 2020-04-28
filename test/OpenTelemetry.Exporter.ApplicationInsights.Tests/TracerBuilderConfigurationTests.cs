@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
                 EndpointAddress = "http://foo",
             };
 
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProviderSdk.Create(b => b
                     .UseApplicationInsights(
                         o => o.TelemetryChannel = channel,
                         p => p.SetExportingProcessor(e => new SimpleSpanProcessor(e))))
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
         {
             TracerBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.UseApplicationInsights(_ => { }));
-            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.UseApplicationInsights(null)));
+            Assert.Throws<ArgumentNullException>(() => TracerProviderSdk.Create(b => b.UseApplicationInsights(null)));
         }
     }
 }

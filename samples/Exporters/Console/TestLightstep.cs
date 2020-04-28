@@ -16,13 +16,13 @@ namespace Samples
         internal static object Run(string accessToken)
         {
             // Create a tracer.
-            using var tracerFactory = TracerFactory.Create(
+            using var tracerProvider = TracerProviderSdk.Create(
                 builder => builder.UseLightStep(o =>
                 {
                     o.AccessToken = accessToken;
                     o.ServiceName = "lightstep-test";
                 }));
-            var tracer = tracerFactory.GetTracer("lightstep-test");
+            var tracer = tracerProvider.GetTracer("lightstep-test");
             using (tracer.StartActiveSpan("Main", out var span))
             {
                 span.SetAttribute("custom-attribute", 55);

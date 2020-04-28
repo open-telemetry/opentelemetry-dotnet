@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerFactory.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderSdk.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,7 @@ using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace.Configuration
 {
-    public class TracerFactory : TracerFactoryBase, IDisposable
+    public class TracerProviderSdk : TracerProvider, IDisposable
     {
         private readonly object lck = new object();
         private readonly Dictionary<TracerRegistryKey, Tracer> tracerRegistry = new Dictionary<TracerRegistryKey, Tracer>();
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         private Tracer defaultTracer;
 
-        private TracerFactory(TracerBuilder builder)
+        private TracerProviderSdk(TracerBuilder builder)
         {
             this.sampler = builder.Sampler ?? new AlwaysOnSampler();
             this.defaultResource = builder.Resource;
@@ -82,8 +82,8 @@ namespace OpenTelemetry.Trace.Configuration
         /// Creates tracerSdk factory.
         /// </summary>
         /// <param name="configure">Function that configures tracerSdk factory.</param>
-        /// <returns>Returns new <see cref="TracerFactory"/>.</returns>
-        public static TracerFactory Create(Action<TracerBuilder> configure)
+        /// <returns>Returns new <see cref="TracerProviderSdk"/>.</returns>
+        public static TracerProviderSdk Create(Action<TracerBuilder> configure)
         {
             if (configure == null)
             {
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Trace.Configuration
 
             var builder = new TracerBuilder();
             configure(builder);
-            var factory = new TracerFactory(builder);
+            var factory = new TracerProviderSdk(builder);
 
             if (builder.AdapterFactories != null)
             {

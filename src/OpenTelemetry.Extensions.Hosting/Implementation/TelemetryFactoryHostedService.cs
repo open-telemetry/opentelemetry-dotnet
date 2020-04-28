@@ -36,7 +36,7 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
         {
             // Ensure the factory was created when the app starts.
             // This will create and start any configured adapters.
-            this.serviceProvider.GetRequiredService<TracerFactoryBase>();
+            this.serviceProvider.GetRequiredService<TracerProvider>();
 
             return Task.CompletedTask;
         }

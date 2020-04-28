@@ -23,12 +23,12 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void DefaultTracerFactory()
         {
-            Assert.Equal(typeof(TracerFactoryBase), TracerFactoryBase.Default.GetType());
-            Assert.Equal(typeof(ProxyTracer), TracerFactoryBase.Default.GetTracer(null).GetType());
+            Assert.Equal(typeof(ProxyTracerProvider), TracerFactory.Default.GetType());
+            Assert.Equal(typeof(ProxyTracer), TracerFactory.Default.GetTracer(null).GetType());
 
-            var newFactory = TracerFactory.Create(_ => { });
-            TracerFactoryBase.SetDefault(newFactory);
-            Assert.IsAssignableFrom<TracerFactory>(TracerFactoryBase.Default);
+            var newTracerProvider = TracerProviderSdk.Create(_ => { });
+            TracerFactory.SetDefault(newTracerProvider);
+            Assert.IsAssignableFrom<TracerProviderSdk>(TracerFactory.Default);
         }
 
         [Fact]

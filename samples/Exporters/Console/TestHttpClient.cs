@@ -26,10 +26,10 @@ namespace Samples
         {
             Console.WriteLine("Hello World!");
 
-            using var tracerFactory = TracerFactory.Create(builder => builder
+            using var tracerProvider = TracerProviderSdk.Create(builder => builder
                 .UseZipkin(o => o.ServiceName = "http-client-test")
                 .AddDependencyAdapter());
-            var tracer = tracerFactory.GetTracer("http-client-test");
+            var tracer = tracerProvider.GetTracer("http-client-test");
 
             using (tracer.StartActiveSpan("incoming request", out _))
             {

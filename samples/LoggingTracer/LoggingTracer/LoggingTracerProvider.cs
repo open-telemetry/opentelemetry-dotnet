@@ -1,4 +1,4 @@
-﻿// <copyright file="LoggingTracerFactory.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="LoggingTracerProvider.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,9 @@ using OpenTelemetry.Trace;
 
 namespace LoggingTracer
 {
-    public class LoggingTracerFactory : TracerFactoryBase
+    public class LoggingTracerProvider : TracerProvider
+
     {
-        /// <inheritdoc/>
         public override Tracer GetTracer(string name, string version = null)
         {
             Logger.Log($"ITracerFactory.GetTracer('{name}', '{version}')");

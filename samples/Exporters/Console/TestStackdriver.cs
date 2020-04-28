@@ -31,8 +31,8 @@ namespace Samples
         {
             var spanExporter = new StackdriverTraceExporter(projectId);
 
-            using var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(spanExporter)));
-            var tracer = tracerFactory.GetTracer("stackdriver-test");
+            using var tracerProvider = TracerProviderSdk.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(spanExporter)));
+            var tracer = tracerProvider.GetTracer("stackdriver-test");
 
             DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance; // Enable asynclocal carrier for the context
             DistributedContext dc = DistributedContextBuilder.CreateContext(FrontendKey, "mobile-ios9.3.5");

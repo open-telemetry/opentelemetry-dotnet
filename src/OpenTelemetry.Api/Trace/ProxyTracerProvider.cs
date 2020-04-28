@@ -1,4 +1,4 @@
-﻿// <copyright file="BasicTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ProxyTracerProvider.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,21 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-
 using System;
-using OpenTelemetry.Trace.Configuration;
-using Xunit;
 
-namespace OpenTelemetry.Adapter.AspNet.Tests
+namespace OpenTelemetry.Trace
 {
-    public class BasicTests
+    /// <summary>
+    /// Proxy tracer provider.
+    /// </summary>
+    internal sealed class ProxyTracerProvider : TracerProvider
     {
-        [Fact]
-        public void AddRequestAdapter_BadArgs()
+        private readonly ProxyTracer tracer;
+
+        public ProxyTracerProvider(ProxyTracer tracer)
         {
-            TracerBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.AddRequestAdapter());
-            Assert.Throws<ArgumentNullException>(() => TracerProviderSdk.Create(b => b.AddRequestAdapter(null)));
+            this.tracer = tracer;
+        }
+
+        /// <inheritdoc/>
+        public override Tracer GetTracer(string name, string version = null)
+        {
+            return this.tracer;
         }
     }
 }

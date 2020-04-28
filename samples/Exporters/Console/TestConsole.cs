@@ -20,10 +20,10 @@ namespace Samples
             var exporter = new ConsoleExporter(exporterOptions);
 
             // Create tracer
-            using var tracerFactory = TracerFactory.Create(builder => {
+            using var tracerProvider = TracerProviderSdk.Create(builder => {
                 builder.AddProcessorPipeline(p => p.SetExporter(exporter));
             });
-            var tracer = tracerFactory.GetTracer("console-test");
+            var tracer = tracerProvider.GetTracer("console-test");
 
             using (tracer.StartActiveSpan("parent", out var parent))
             {

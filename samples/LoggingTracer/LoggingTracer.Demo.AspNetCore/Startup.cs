@@ -18,13 +18,13 @@ namespace LoggingTracer.Demo.AspNetCore
         {
             services.AddOpenTelemetry(() =>
             {
-                var tracerFactory = new LoggingTracerFactory();
-                var tracer = tracerFactory.GetTracer("ServerApp", "semver:1.0.0");
+                var tracerProvider = new LoggingTracerProvider();
+                var tracer = tracerProvider.GetTracer("ServerApp", "semver:1.0.0");
 
-                var dependenciesAdapter = new DependenciesAdapter(tracerFactory);
+                var dependenciesAdapter = new DependenciesAdapter(tracerProvider);
                 var aspNetCoreAdapter = new AspNetCoreAdapter(tracer);
 
-                return tracerFactory;
+                return tracerProvider;
             });
         }
 

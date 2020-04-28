@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
         public ApplicationInsightsTraceExporterTests()
         {
-            tracer = TracerFactory.Create(_ => { }).GetTracer(null);
+            tracer = TracerProviderSdk.Create(_ => { }).GetTracer(null);
         }
 
         private ConcurrentQueue<ITelemetry> ConvertSpan(SpanData otSpan)
@@ -2278,7 +2278,7 @@ namespace OpenTelemetry.Exporter.ApplicationInsights.Tests
 
             processor.Setup(p => p.OnEnd(It.IsAny<SpanData>()));
 
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProviderSdk.Create(b => b
                     .SetResource(resource)
                     .AddProcessorPipeline(p => p.AddProcessor(_ => processor.Object)))
                 .GetTracer(null);

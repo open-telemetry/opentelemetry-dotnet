@@ -34,7 +34,7 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
 
         public LightStepSpanConverterTest()
         {
-            tracer = TracerFactory.Create(b => { }).GetTracer(null);
+            tracer = TracerProviderSdk.Create(b => { }).GetTracer(null);
         }
 
         [Fact]
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Exporter.LightStep.Tests
 
             processor.Setup(p => p.OnEnd(It.IsAny<SpanData>()));
 
-            var tracer = TracerFactory.Create(b =>
+            var tracer = TracerProviderSdk.Create(b =>
                     b.AddProcessorPipeline(p =>
                         p.AddProcessor(_ => processor.Object)))
                 .GetTracer(null);

@@ -32,7 +32,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         public void SpanData_FromSpan()
         {
             var resource = new Resource(new[] { new KeyValuePair<string, object>("resourceKey", "resourceValue") });
-            var tracer = TracerFactory.Create(b => b.SetResource(resource)).GetTracer(null);
+            var tracer = TracerProviderSdk.Create(b => b.SetResource(resource)).GetTracer(null);
 
             var tracestate = new KeyValuePair<string, string>[0];
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         [Fact]
         public void SpanData_FromSpan_Defaults()
         {
-            var tracer = TracerFactory.Create(b => { }).GetTracer(null);
+            var tracer = TracerProviderSdk.Create(b => { }).GetTracer(null);
 
             var span = (SpanSdk)tracer.StartSpan("name");
             span.End();
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         [Fact]
         public void SpanData_FromSpan_ReflectsSpanChanges()
         {
-            var tracer = TracerFactory.Create(b => { }).GetTracer(null);
+            var tracer = TracerProviderSdk.Create(b => { }).GetTracer(null);
 
             var span = (SpanSdk)tracer.StartSpan("name");
             var spanData = new SpanData(span);
@@ -183,7 +183,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         [Fact]
         public void SpanData_FromSpan_Equal()
         {
-            var tracer = TracerFactory.Create(b => { }).GetTracer(null);
+            var tracer = TracerProviderSdk.Create(b => { }).GetTracer(null);
 
             var span1 = (SpanSdk)tracer.StartSpan("name1");
             var span2 = (SpanSdk)tracer.StartSpan("name2");

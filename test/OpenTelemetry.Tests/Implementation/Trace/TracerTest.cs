@@ -37,15 +37,15 @@ namespace OpenTelemetry.Trace.Test
         private readonly SpanProcessor spanProcessor;
         private readonly TracerConfiguration tracerConfiguration;
         private readonly TracerSdk tracerSdk;
-        private readonly TracerFactory tracerFactory;
+        private readonly TracerProviderSdk tracerProvider;
 
         public TracerTest()
         {
             spanProcessor = new SimpleSpanProcessor(new TestExporter(null));
             tracerConfiguration = new TracerConfiguration();
-            tracerFactory = TracerFactory.Create(b => b
+            tracerProvider = TracerProviderSdk.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor)));
-            this.tracerSdk = (TracerSdk)tracerFactory.GetTracer(null);
+            this.tracerSdk = (TracerSdk)tracerProvider.GetTracer(null);
         }
 
         [Fact]
@@ -161,7 +161,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void CreateSpan_NotSampled()
         {
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProviderSdk.Create(b => b
                     .SetSampler(new AlwaysOffSampler())
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor)))
                 .GetTracer(null);
@@ -173,7 +173,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void CreateSpan_ByTracerWithResource()
         {
-            var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.0.0");
+            var tracer = (TracerSdk)tracerProvider.GetTracer("foo", "semver:1.0.0");
             var span = (SpanSdk)tracer.StartSpan("some span");
             Assert.Equal(tracer.LibraryResource, span.LibraryResource);
         }
@@ -196,7 +196,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var maxNumberOfAttributes = 8;
             var traceConfig = new TracerConfiguration(maxNumberOfAttributes, 128, 32);
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProviderSdk.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
                     .SetTracerOptions(traceConfig)
                     .SetSampler(new AlwaysOnSampler()))
@@ -248,7 +248,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var maxNumberOfEvents = 8;
             var traceConfig = new TracerConfiguration(32, maxNumberOfEvents, 32);
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProviderSdk.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
                     .SetTracerOptions(traceConfig)
                     .SetSampler(new AlwaysOnSampler()))
@@ -287,7 +287,7 @@ namespace OpenTelemetry.Trace.Test
 
             var maxNumberOfLinks = 8;
             var traceConfig = new TracerConfiguration(32, 128, maxNumberOfLinks);
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProviderSdk.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
                     .SetTracerOptions(traceConfig)
                     .SetSampler(new AlwaysOnSampler()))
@@ -329,7 +329,7 @@ namespace OpenTelemetry.Trace.Test
 
             var maxNumberOfLinks = 8;
             var traceConfig = new TracerConfiguration(32, 128, maxNumberOfLinks);
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProviderSdk.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor))
                     .SetTracerOptions(traceConfig)
                     .SetSampler(new AlwaysOnSampler()))
@@ -367,7 +367,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var maxNumberOfAttributes = 8;
             var traceConfig = new TracerConfiguration(maxNumberOfAttributes, 128, 32);
-            var tracer = TracerFactory.Create(b => b
+            var tracer = TracerProviderSdk.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(_ => this.spanProcessor))
                     .SetTracerOptions(traceConfig)
                     .SetSampler(new AlwaysOnSampler()))

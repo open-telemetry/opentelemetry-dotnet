@@ -66,7 +66,7 @@ namespace OpenTelemetry.Extensions.Hosting
         }
 
         [Fact]
-        public void AddOpenTelemetry_HostBuilt_TracerFactoryRegisteredAsSingleton()
+        public void AddOpenTelemetry_HostBuilt_TracerProviderRegisteredAsSingleton()
         {
             var builder = new HostBuilder().ConfigureServices(services =>
             {
@@ -75,15 +75,10 @@ namespace OpenTelemetry.Extensions.Hosting
 
             var host = builder.Build();
 
-            var tracerFactoryBase1 = host.Services.GetRequiredService<TracerFactoryBase>();
-            var tracerFactoryBase2 = host.Services.GetRequiredService<TracerFactoryBase>();
+            var tracerProviderBase1 = host.Services.GetRequiredService<TracerProvider>();
+            var tracerProviderBase2 = host.Services.GetRequiredService<TracerProvider>();
 
-            Assert.Same(tracerFactoryBase1, tracerFactoryBase2);
-
-            var tracerFactory1 = host.Services.GetRequiredService<TracerFactory>();
-            var tracerFactory2 = host.Services.GetRequiredService<TracerFactory>();
-
-            Assert.Same(tracerFactory1, tracerFactory2);
+            Assert.Same(tracerProviderBase1, tracerProviderBase2);
         }
 
         [Fact]
@@ -100,8 +95,8 @@ namespace OpenTelemetry.Extensions.Hosting
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var tracerFactory = serviceProvider.GetRequiredService<TracerFactory>();
-            Assert.NotNull(tracerFactory);
+            var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+            Assert.NotNull(tracerProvider);
 
             Assert.False(testAdapter.Disposed);
 

@@ -29,23 +29,23 @@ namespace OpenTelemetry.Adapter.Dependencies
         /// <summary>
         /// Initializes a new instance of the <see cref="DependenciesAdapter"/> class.
         /// </summary>
-        /// <param name="tracerFactory">Tracer factory to get a tracer from.</param>
+        /// <param name="tracerProvider">Tracer provider to get a tracer from.</param>
         /// <param name="httpOptions">Http configuration options.</param>
         /// <param name="sqlOptions">Sql configuration options.</param>
-        public DependenciesAdapter(TracerFactoryBase tracerFactory, HttpClientAdapterOptions httpOptions = null, SqlClientAdapterOptions sqlOptions = null)
+        public DependenciesAdapter(TracerProvider tracerProvider, HttpClientAdapterOptions httpOptions = null, SqlClientAdapterOptions sqlOptions = null)
         {
-            if (tracerFactory == null)
+            if (tracerProvider == null)
             {
-                throw new ArgumentNullException(nameof(tracerFactory));
+                throw new ArgumentNullException(nameof(tracerProvider));
             }
 
             var assemblyVersion = typeof(DependenciesAdapter).Assembly.GetName().Version;
 
-            var httpClientListener = new HttpClientAdapter(tracerFactory.GetTracer(nameof(HttpClientAdapter), "semver:" + assemblyVersion), httpOptions ?? new HttpClientAdapterOptions());
-            var httpWebRequestAdapter = new HttpWebRequestAdapter(tracerFactory.GetTracer(nameof(HttpWebRequestAdapter), "semver:" + assemblyVersion), httpOptions ?? new HttpClientAdapterOptions());
-            var azureClientsListener = new AzureClientsAdapter(tracerFactory.GetTracer(nameof(AzureClientsAdapter), "semver:" + assemblyVersion));
-            var azurePipelineListener = new AzurePipelineAdapter(tracerFactory.GetTracer(nameof(AzurePipelineAdapter), "semver:" + assemblyVersion));
-            var sqlClientListener = new SqlClientAdapter(tracerFactory.GetTracer(nameof(AzurePipelineAdapter), "semver:" + assemblyVersion), sqlOptions ?? new SqlClientAdapterOptions());
+            var httpClientListener = new HttpClientAdapter(tracerProvider.GetTracer(nameof(HttpClientAdapter), "semver:" + assemblyVersion), httpOptions ?? new HttpClientAdapterOptions());
+            var httpWebRequestAdapter = new HttpWebRequestAdapter(tracerProvider.GetTracer(nameof(HttpWebRequestAdapter), "semver:" + assemblyVersion), httpOptions ?? new HttpClientAdapterOptions());
+            var azureClientsListener = new AzureClientsAdapter(tracerProvider.GetTracer(nameof(AzureClientsAdapter), "semver:" + assemblyVersion));
+            var azurePipelineListener = new AzurePipelineAdapter(tracerProvider.GetTracer(nameof(AzurePipelineAdapter), "semver:" + assemblyVersion));
+            var sqlClientListener = new SqlClientAdapter(tracerProvider.GetTracer(nameof(AzurePipelineAdapter), "semver:" + assemblyVersion), sqlOptions ?? new SqlClientAdapterOptions());
 
             this.adapters.Add(httpClientListener);
             this.adapters.Add(httpWebRequestAdapter);

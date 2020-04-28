@@ -51,7 +51,7 @@ namespace OpenTelemetry.Adapter.StackExchangeRedis
 
             this.cancellationTokenSource = new CancellationTokenSource();
             this.cancellationToken = this.cancellationTokenSource.Token;
-            var spanType = typeof(TracerFactory).Assembly.GetType("OpenTelemetry.Trace.SpanSdk");
+            var spanType = typeof(TracerProviderSdk).Assembly.GetType("OpenTelemetry.Trace.SpanSdk");
 
             this.spanEndTimestampInfo = spanType?.GetProperty("EndTimestamp");
             if (this.spanEndTimestampInfo == null)

@@ -36,11 +36,11 @@ namespace Samples
             httpServer.Start();
 
             // Configure exporter
-            using var tracerFactory = TracerFactory.Create(builder => builder
+            using var tracerProvider = TracerProviderSdk.Create(builder => builder
                 .AddProcessorPipeline(b => b
                     .SetExporter(zpagesExporter)
                     .SetExportingProcessor(e => spanProcessor)));
-            var tracer = tracerFactory.GetTracer("zpages-test");
+            var tracer = tracerProvider.GetTracer("zpages-test");
 
             while (true)
             {

@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public SimpleSpanProcessorTest()
         {
             spanExporter = new TestExporter(null);
-            tracer = TracerFactory.Create(b => b
+            tracer = TracerProviderSdk.Create(b => b
                 .AddProcessorPipeline(p => p
                         .SetExporter(spanExporter)
                         .SetExportingProcessor(e => new SimpleSpanProcessor(e)))
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ThrowsInExporter()
         {
             spanExporter = new TestExporter(_ => throw new ArgumentException("123"));
-            tracer = TracerFactory.Create(b => b
+            tracer = TracerProviderSdk.Create(b => b
                     .AddProcessorPipeline(p => p
                         .SetExporter(spanExporter)
                         .SetExportingProcessor(e => new SimpleSpanProcessor(e))))
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ProcessorDoesNotBlockOnExporter()
         {
             spanExporter = new TestExporter(async _ => await Task.Delay(500));
-            tracer = TracerFactory.Create(b => b
+            tracer = TracerProviderSdk.Create(b => b
                     .AddProcessorPipeline(p => p
                         .SetExporter(spanExporter)
                         .SetExportingProcessor(e => new SimpleSpanProcessor(e))))
