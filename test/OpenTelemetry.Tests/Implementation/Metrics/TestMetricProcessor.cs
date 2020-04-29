@@ -14,35 +14,24 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Test
 {
     internal class TestMetricProcessor : MetricProcessor
     {
-        public List<Metric<long>> longMetrics = new List<Metric<long>>();
-        public List<Metric<double>> doubleMetrics = new List<Metric<double>>();
+        public List<Metric> metrics = new List<Metric>();
 
-        public override void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics)
+        public override void FinishCollectionCycle(out IEnumerable<Metric> metrics)
         {
-            longMetrics = this.longMetrics;
-            doubleMetrics = this.doubleMetrics;
-            this.longMetrics = new List<Metric<long>>();
-            this.doubleMetrics = new List<Metric<double>>();
+            metrics = this.metrics;            
+            this.metrics = new List<Metric>();            
         }
 
-        public override void Process(Metric<long> metric)
+        public override void Process(Metric metric)
         {
-            this.longMetrics.Add(metric);
-        }
-
-        public override void Process(Metric<double> metric)
-        {
-            this.doubleMetrics.Add(metric);
+            this.metrics.Add(metric);
         }
     }
 }

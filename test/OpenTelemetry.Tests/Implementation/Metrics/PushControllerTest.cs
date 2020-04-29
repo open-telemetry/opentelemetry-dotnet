@@ -14,16 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using System.Linq;
 using System.Collections.Generic;
-using OpenTelemetry.Metrics.Configuration;
-using OpenTelemetry.Trace;
 using Xunit;
 using OpenTelemetry.Metrics.Export;
 using System.Diagnostics;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using static OpenTelemetry.Metrics.Configuration.MeterFactory;
 
 namespace OpenTelemetry.Metrics.Test
@@ -38,9 +34,8 @@ namespace OpenTelemetry.Metrics.Test
             var collectionCountExpectedMin = 3;
             var maxWaitInMsec = (controllerPushIntervalInMsec * collectionCountExpectedMin) + 2000;
 
-            int longExportCalledCount = 0;
-            int doubleExportCalledCount = 0;
-            var testExporter = new TestMetricExporter(() => longExportCalledCount++, () => doubleExportCalledCount++);
+            int exportCalledCount = 0;
+            var testExporter = new TestMetricExporter(() => exportCalledCount++);
 
             var testProcessor = new TestMetricProcessor();
 
@@ -65,8 +60,7 @@ namespace OpenTelemetry.Metrics.Test
             ValidateMeterCollect(ref meter2CollectCount, collectionCountExpectedMin, "meter2", TimeSpan.FromMilliseconds(maxWaitInMsec));
 
             // Export must be called same no: of times as Collect.
-            Assert.True(longExportCalledCount >= collectionCountExpectedMin);
-            Assert.True(doubleExportCalledCount >= collectionCountExpectedMin);
+            Assert.True(exportCalledCount >= collectionCountExpectedMin);
         }
 
         private void ValidateMeterCollect(ref int meterCollectCount, int expectedMeterCollectCount, string meterName, TimeSpan timeout)

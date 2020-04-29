@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using OpenTelemetry.Exporter.Prometheus.Implementation;
@@ -41,7 +42,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="writer">StreamWriter to write to.</param>
         public static void WriteMetricsCollection(this PrometheusExporter exporter, StreamWriter writer)
         {
-            foreach (var metric in exporter.GetAndClearDoubleMetrics())
+            foreach (var metric in exporter.GetAndClearMetrics())
             {
                 var builder = new PrometheusMetricBuilder()
                     .WithName(metric.MetricName)
@@ -54,148 +55,39 @@ namespace OpenTelemetry.Exporter.Prometheus
                     {
                         case AggregationType.DoubleSum:
                             {
-                                var doubleSum = metricData as SumData<double>;
-                                var doubleValue = doubleSum.Sum;
-
-                                builder = builder.WithType(PrometheusCounterType);
-
-                                foreach (var label in labels)
-                                {
-                                    var metricValueBuilder = builder.AddValue();
-                                    metricValueBuilder = metricValueBuilder.WithValue(doubleValue);
-                                    metricValueBuilder.WithLabel(label.Key, label.Value);
-                                }
-
-                                builder.Write(writer);
+                                var sum = metricData as DoubleSumData;
+                                var sumValue = sum.Sum;
+                                WriteSum(writer, builder, labels, sumValue);
                                 break;
                             }
 
-                        case AggregationType.Summary:
-                            {
-                                var longSummary = metricData as SummaryData<double>;
-                                var longValueCount = longSummary.Count;
-                                var longValueSum = longSummary.Sum;
-                                var longValueMin = longSummary.Min;
-                                var longValueMax = longSummary.Max;
-
-                                builder = builder.WithType(PrometheusSummaryType);
-
-                                foreach (var label in labels)
-                                {
-                                    /* For Summary we emit one row for Sum, Count, Min, Max.
-                                    Min,Max exportes as quantile 0 and 1.
-                                    In future, when OT implements more aggregation algorithms,
-                                    this section will need to be revisited.
-                                    Sample output:
-                                    MyMeasure_sum{dim1="value1"} 750 1587013352982
-                                    MyMeasure_count{dim1="value1"} 5 1587013352982
-                                    MyMeasure{dim1="value2",quantile="0"} 150 1587013352982
-                                    MyMeasure{dim1="value2",quantile="1"} 150 1587013352982
-                                    */
-                                    var metricValueBuilder = builder.AddValue();
-                                    metricValueBuilder.WithName(metric.MetricName + PrometheusSummarySumPostFix);
-                                    metricValueBuilder = metricValueBuilder.WithValue(longValueSum);
-                                    metricValueBuilder.WithLabel(label.Key, label.Value);
-
-                                    metricValueBuilder = builder.AddValue();
-                                    metricValueBuilder.WithName(metric.MetricName + PrometheusSummaryCountPostFix);
-                                    metricValueBuilder = metricValueBuilder.WithValue(longValueCount);
-                                    metricValueBuilder.WithLabel(label.Key, label.Value);
-
-                                    metricValueBuilder = builder.AddValue();
-                                    metricValueBuilder.WithName(metric.MetricName);
-                                    metricValueBuilder = metricValueBuilder.WithValue(longValueMin);
-                                    metricValueBuilder.WithLabel(label.Key, label.Value);
-                                    metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMin);
-
-                                    metricValueBuilder = builder.AddValue();
-                                    metricValueBuilder.WithName(metric.MetricName);
-                                    metricValueBuilder = metricValueBuilder.WithValue(longValueMax);
-                                    metricValueBuilder.WithLabel(label.Key, label.Value);
-                                    metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMax);
-                                }
-
-                                builder.Write(writer);
-                                break;
-                            }
-                    }
-                }
-            }
-
-            foreach (var metric in exporter.GetAndClearLongMetrics())
-            {
-                var builder = new PrometheusMetricBuilder()
-                    .WithName(metric.MetricName)
-                    .WithDescription(metric.MetricDescription);
-
-                foreach (var metricData in metric.Data)
-                {
-                    var labels = metricData.Labels;
-                    switch (metric.AggregationType)
-                    {
                         case AggregationType.LongSum:
                             {
-                                var longSum = metricData as SumData<long>;
-                                var longValue = longSum.Sum;
-                                builder = builder.WithType(PrometheusCounterType);
-
-                                foreach (var label in labels)
-                                {
-                                    var metricValueBuilder = builder.AddValue();
-                                    metricValueBuilder = metricValueBuilder.WithValue(longValue);
-                                    metricValueBuilder.WithLabel(label.Key, label.Value);
-                                }
-
-                                builder.Write(writer);
+                                var sum = metricData as Int64SumData;
+                                var sumValue = sum.Sum;
+                                WriteSum(writer, builder, labels, sumValue);
                                 break;
                             }
 
-                        case AggregationType.Summary:
+                        case AggregationType.DoubleSummary:
                             {
-                                var longSummary = metricData as SummaryData<long>;
-                                var longValueCount = longSummary.Count;
-                                var longValueSum = longSummary.Sum;
-                                var longValueMin = longSummary.Min;
-                                var longValueMax = longSummary.Max;
+                                var summary = metricData as DoubleSummaryData;
+                                var count = summary.Count;
+                                var sum = summary.Sum;
+                                var min = summary.Min;
+                                var max = summary.Max;
+                                WriteSummary(writer, builder, labels, metric.MetricName, sum, count, min, max);
+                                break;
+                            }
 
-                                builder = builder.WithType(PrometheusSummaryType);
-
-                                foreach (var label in labels)
-                                {
-                                    /* For Summary we emit one row for Sum, Count, Min, Max.
-                                    Min,Max exportes as quantile 0 and 1.
-                                    In future, when OT implements more aggregation algorithms,
-                                    this section will need to be revisited.
-                                    Sample output:
-                                    MyMeasure_sum{dim1="value1"} 750 1587013352982
-                                    MyMeasure_count{dim1="value1"} 5 1587013352982
-                                    MyMeasure{dim1="value2",quantile="0"} 150 1587013352982
-                                    MyMeasure{dim1="value2",quantile="1"} 150 1587013352982
-                                    */
-                                    var metricValueBuilder = builder.AddValue();
-                                    metricValueBuilder.WithName(metric.MetricName + PrometheusSummarySumPostFix);
-                                    metricValueBuilder = metricValueBuilder.WithValue(longValueSum);
-                                    metricValueBuilder.WithLabel(label.Key, label.Value);
-
-                                    metricValueBuilder = builder.AddValue();
-                                    metricValueBuilder.WithName(metric.MetricName + PrometheusSummaryCountPostFix);
-                                    metricValueBuilder = metricValueBuilder.WithValue(longValueCount);
-                                    metricValueBuilder.WithLabel(label.Key, label.Value);
-
-                                    metricValueBuilder = builder.AddValue();
-                                    metricValueBuilder.WithName(metric.MetricName);
-                                    metricValueBuilder = metricValueBuilder.WithValue(longValueMin);
-                                    metricValueBuilder.WithLabel(label.Key, label.Value);
-                                    metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMin);
-
-                                    metricValueBuilder = builder.AddValue();
-                                    metricValueBuilder.WithName(metric.MetricName);
-                                    metricValueBuilder = metricValueBuilder.WithValue(longValueMax);
-                                    metricValueBuilder.WithLabel(label.Key, label.Value);
-                                    metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMax);
-                                }
-
-                                builder.Write(writer);
+                        case AggregationType.Int64Summary:
+                            {
+                                var summary = metricData as Int64SummaryData;
+                                var count = summary.Count;
+                                var sum = summary.Sum;
+                                var min = summary.Min;
+                                var max = summary.Max;
+                                WriteSummary(writer, builder, labels, metric.MetricName, sum, count, min, max);
                                 break;
                             }
                     }
@@ -216,6 +108,71 @@ namespace OpenTelemetry.Exporter.Prometheus
             writer.Flush();
 
             return Encoding.UTF8.GetString(stream.ToArray(), 0, (int)stream.Length);
+        }
+
+        private static void WriteSum(StreamWriter writer, PrometheusMetricBuilder builder, IEnumerable<KeyValuePair<string, string>> labels, double doubleValue)
+        {
+            builder = builder.WithType(PrometheusCounterType);
+
+            var metricValueBuilder = builder.AddValue();
+            metricValueBuilder = metricValueBuilder.WithValue(doubleValue);
+
+            foreach (var label in labels)
+            {
+                metricValueBuilder.WithLabel(label.Key, label.Value);
+            }
+
+            builder.Write(writer);
+        }
+
+        private static void WriteSummary(
+            StreamWriter writer,
+            PrometheusMetricBuilder builder,
+            IEnumerable<KeyValuePair<string, string>> labels,
+            string metricName,
+            double sum,
+            long count,
+            double min,
+            double max)
+        {
+            builder = builder.WithType(PrometheusSummaryType);
+
+            foreach (var label in labels)
+            {
+                /* For Summary we emit one row for Sum, Count, Min, Max.
+                Min,Max exportes as quantile 0 and 1.
+                In future, when OT implements more aggregation algorithms,
+                this section will need to be revisited.
+                Sample output:
+                MyMeasure_sum{dim1="value1"} 750 1587013352982
+                MyMeasure_count{dim1="value1"} 5 1587013352982
+                MyMeasure{dim1="value2",quantile="0"} 150 1587013352982
+                MyMeasure{dim1="value2",quantile="1"} 150 1587013352982
+                */
+                var metricValueBuilder = builder.AddValue();
+                metricValueBuilder.WithName(metricName + PrometheusSummarySumPostFix);
+                metricValueBuilder = metricValueBuilder.WithValue(sum);
+                metricValueBuilder.WithLabel(label.Key, label.Value);
+
+                metricValueBuilder = builder.AddValue();
+                metricValueBuilder.WithName(metricName + PrometheusSummaryCountPostFix);
+                metricValueBuilder = metricValueBuilder.WithValue(count);
+                metricValueBuilder.WithLabel(label.Key, label.Value);
+
+                metricValueBuilder = builder.AddValue();
+                metricValueBuilder.WithName(metricName);
+                metricValueBuilder = metricValueBuilder.WithValue(min);
+                metricValueBuilder.WithLabel(label.Key, label.Value);
+                metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMin);
+
+                metricValueBuilder = builder.AddValue();
+                metricValueBuilder.WithName(metricName);
+                metricValueBuilder = metricValueBuilder.WithValue(max);
+                metricValueBuilder.WithLabel(label.Key, label.Value);
+                metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMax);
+            }
+
+            builder.Write(writer);
         }
     }
 }

@@ -58,7 +58,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = longCounter.Key;
                     var counterInstrument = longCounter.Value;
-                    var metric = new Metric<long>(this.meterName, metricName, this.meterName + metricName, AggregationType.LongSum);
+                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, AggregationType.LongSum);
                     foreach (var handle in counterInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
@@ -105,7 +105,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = doubleCounter.Key;
                     var counterInstrument = doubleCounter.Value;
-                    var metric = new Metric<double>(this.meterName, metricName, this.meterName + metricName, AggregationType.DoubleSum);
+                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, AggregationType.DoubleSum);
                     foreach (var handle in counterInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = longMeasure.Key;
                     var measureInstrument = longMeasure.Value;
-                    var metric = new Metric<long>(this.meterName, metricName, this.meterName + metricName, AggregationType.Summary);
+                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, AggregationType.Int64Summary);
                     foreach (var handle in measureInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
@@ -170,7 +170,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = doubleMeasure.Key;
                     var measureInstrument = doubleMeasure.Value;
-                    var metric = new Metric<double>(this.meterName, metricName, this.meterName + metricName, AggregationType.Summary);
+                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, AggregationType.DoubleSummary);
                     foreach (var handle in measureInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
@@ -188,7 +188,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = longObserver.Key;
                     var observerInstrument = longObserver.Value;
-                    var metric = new Metric<long>(this.meterName, metricName, this.meterName + metricName, AggregationType.LongSum);
+                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, AggregationType.LongSum);
                     try
                     {
                         // TODO: Decide if we want to enforce a timeout. Issue # 542
@@ -216,7 +216,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = doubleObserver.Key;
                     var observerInstrument = doubleObserver.Value;
-                    var metric = new Metric<double>(this.meterName, metricName, this.meterName + metricName, AggregationType.LongSum);
+                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, AggregationType.LongSum);
                     try
                     {
                         // TODO: Decide if we want to enforce a timeout. Issue # 542

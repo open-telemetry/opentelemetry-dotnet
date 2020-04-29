@@ -36,7 +36,7 @@ namespace OpenTelemetry.Metrics.Test
         {
             // create an aggregator
             var aggregator = new Int64CounterSumAggregator();
-            var sum = aggregator.ToMetricData() as SumData<long>;
+            var sum = aggregator.ToMetricData() as Int64SumData;
 
             // we start with 0.
             Assert.Equal(0, sum.Sum);
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Metrics.Test
 
             // check point.
             aggregator.Checkpoint();
-            sum = aggregator.ToMetricData() as SumData<long>;
+            sum = aggregator.ToMetricData() as Int64SumData;
 
             // 1000000 times 10 by each thread. times 10 as there are 10 threads
             Assert.Equal(100000000, sum.Sum);
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Metrics.Test
         {
             // create an aggregator
             var aggregator = new DoubleCounterSumAggregator();
-            var sum = aggregator.ToMetricData() as SumData<double>;
+            var sum = aggregator.ToMetricData() as DoubleSumData;
 
             // we start with 0.0
             Assert.Equal(0.0, sum.Sum);
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Metrics.Test
 
             // check point.
             aggregator.Checkpoint();
-            sum = aggregator.ToMetricData() as SumData<double>;
+            sum = aggregator.ToMetricData() as DoubleSumData;
 
             // 1000000 times 10.5 by each thread. times 10 as there are 10 threads
             Assert.Equal(105000000, sum.Sum);

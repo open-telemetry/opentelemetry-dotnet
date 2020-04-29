@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DoubleSummaryData.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace OpenTelemetry.Metrics.Export
 {
-    internal class NoOpMetricExporter : MetricExporter
+    public class DoubleSummaryData : MetricData
     {
-        public override Task<ExportResult> ExportAsync(IEnumerable<Metric> metrics, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(ExportResult.Success);
-        }
+        public long Count { get; set; }
+
+        public double Sum { get; set; }
+
+        public double Min { get; set; }
+
+        public double Max { get; set; }
     }
 }

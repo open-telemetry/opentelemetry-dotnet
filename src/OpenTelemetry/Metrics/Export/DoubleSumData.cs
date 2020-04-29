@@ -1,4 +1,4 @@
-﻿// <copyright file="SumData.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DoubleSumData.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,8 @@
 
 namespace OpenTelemetry.Metrics.Export
 {
-    public class SumData<T> : MetricData<T>
+    public class DoubleSumData : MetricData
     {
-        public T Sum { get; set; }
+        public double Sum { get; set; }
     }
 }
