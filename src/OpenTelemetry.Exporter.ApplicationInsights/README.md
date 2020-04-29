@@ -42,11 +42,11 @@ services.AddOpenTelemetry((sp, builder) =>
 <PackageReference Include="OpenTelemetry.Exporter.ApplicationInsights" Version="0.2.0-alpha.182" />
 ```
 
-2. Create `TraceFactory` and make sure to keep it alive during application lifetime.
-Avoid creating multiple `TracerFactories` and dispose factory before application exits.
+2. Create `TracerProvider` and make sure to keep it alive during application lifetime.
+Avoid creating multiple `TracerProvider` and dispose provider before application exits.
 
 ```csharp
-var tracerFactory = TracerFactory.Create(builder => 
+var tracerProvider = TracerProviderSdk.Create(builder => 
     builder
         .SetResource(Resources.CreateServiceResource("my-service"))   // set any service name as you would like to appear on the Application Map
         .UseApplicationInsights(telemetryConfiguration =>
@@ -55,7 +55,7 @@ var tracerFactory = TracerFactory.Create(builder =>
         })
         .AddDependencyAdapter(); // regirsters outgoing requests tracking
 
-                var tracer = tracerFactory.GetTracer("http-client-test");
+var tracer = tracerProvider.GetTracer("http-client-test");
 
 // start root span
 using (tracer.StartActiveSpan("root span", out _))
@@ -64,7 +64,7 @@ using (tracer.StartActiveSpan("root span", out _))
 }
 
 // dispose before exit to flush all spans
-tracerFactory.Dispose();
+tracerProvider.Dispose();
 ```
 
 ### Export exception and logs from ILogger

@@ -215,15 +215,15 @@ Configuration is done by user application: it should configure exporter and may 
    [OpenTelemetry][OpenTelemetry-nuget-url]
    [OpenTelemetry.Exporter.Zipkin][OpenTelemetry-exporter-zipkin-nuget-url]
 
-2. Create `TracerFactory`
+2. Create `TracerProvider`
 
     ```csharp
-    using (var tracerFactory = TracerFactory.Create(builder => builder
+    using (var tracerProvider = TracerProviderSdk.Create(builder => builder
             .UseZipkin(options => {})
             .SetResource(Resources.CreateServiceResource("http-client-test")))
     {
         // Obtain Tracer from the factory above.
-        var tracer = tracerFactory.GetTracer("zipkin-test");
+        var tracer = tracerProvider.GetTracer("zipkin-test");
     }
     ```
 
@@ -234,7 +234,7 @@ Configuration is done by user application: it should configure exporter and may 
    [OpenTelemetry.Adapter.AspNetCore][OpenTelemetry-adapter-aspnetcore-nuget-url] to collect incoming HTTP requests
    [OpenTelemetry.Adapter.Dependencies][OpenTelemetry-adapter-deps-nuget-url] to collect outgoing HTTP requests, SqlClient calls, and Azure SDK calls
 
-2. Use the `AddOpenTelemetry` helper method to add Open Telemetry. This registers `TracerFactory` in the Dependency Injection Container.
+2. Use the `AddOpenTelemetry` helper method to add Open Telemetry. This registers `TracerProvider` in the Dependency Injection Container.
 
     ```csharp
     services.AddOpenTelemetry(builder =>
@@ -249,7 +249,7 @@ Configuration is done by user application: it should configure exporter and may 
             .SetResource(Resources.CreateServiceResource("my-service"))
     });
     ```
-3. Obtain `TracerFactory` using DI, and create `Tracer` from it.
+3. Obtain `TracerProvider` using DI, and create `Tracer` from it.
 
 ### Configuration with ASP.NET (Full .NET Framework) running in IIS or IIS Express (if supported)
 
@@ -268,11 +268,11 @@ Configuration is done by user application: it should configure exporter and may 
     ```csharp
     public class WebApiApplication : HttpApplication
     {
-        private TracerFactory tracerFactory;
+        private TracerProviderSdk tracerProvider;
 
         protected void Application_Start()
         {
-            this.tracerFactory = TracerFactory.Create(builder =>
+            this.tracerProvider = TracerProviderSdk.Create(builder =>
             {
                 builder
                     .UseJaeger(c =>
@@ -287,7 +287,7 @@ Configuration is done by user application: it should configure exporter and may 
 
         protected void Application_End()
         {
-            this.tracerFactory?.Dispose();
+            this.tracerProvider?.Dispose();
         }
     }
     ```
@@ -305,7 +305,7 @@ Outgoing http calls to Redis made using StackExchange.Redis library can be autom
     // connect to the server
     var connection = ConnectionMultiplexer.Connect("localhost:6379");
 
-    using (TracerFactory.Create(b => b
+    using (TracerProviderSdk.Create(b => b
                 .SetSampler(new AlwaysSampleSampler())
                 .UseZipkin(options => {})
                 .SetResource(Resources.CreateServiceResource("my-service"))
@@ -327,7 +327,7 @@ You can combine it with dependency injection as shown in previous example.
 You may configure sampler of your choice
 
 ```csharp
- using (TracerFactory.Create(b => b
+ using (TracerProviderSdk.Create(b => b
             .SetSampler(new ProbabilitySampler(0.1))
             .UseZipkin(options => {})
             .SetResource(Resources.CreateServiceResource("my-service")))
@@ -377,14 +377,14 @@ the Compact Thrift API port. You can configure the Jaeger exporter by following 
 3. See the [sample][jaeger-sample] for an example of how to use the exporter.
 
 ```csharp
-using (var tracerFactory = TracerFactory.Create(
+using (var tracerProvider = TracerProviderSdk.Create(
     builder => builder.UseJaeger(o =>
     {
         o.ServiceName = "jaeger-test";
         o.AgentHost = "<jaeger server>";
     })))
 {
-    var tracer = tracerFactory.GetTracer("jaeger-test");
+    var tracer = tracerProvider.GetTracer("jaeger-test");
     using (tracer.StartActiveSpan("incoming request", out var span))
     {
         span.SetAttribute("custom-attribute", 55);
@@ -402,14 +402,14 @@ Configure Zipkin exporter to see traces in Zipkin UI.
 3. See [sample][zipkin-sample] for example use.
 
 ```csharp
-using (var tracerFactory = TracerFactory.Create(builder => builder
+using (var tracerProvider = TracerProviderSdk.Create(builder => builder
     .UseZipkin(o =>
     {
         o.ServiceName = "test-zipkin";
         o.Endpoint = new Uri(zipkinUri);
     })))
 {
-    var tracer = tracerFactory.GetTracer("zipkin-test");
+    var tracer = tracerProvider.GetTracer("zipkin-test");
 
     // Create a scoped span. It will end automatically when using statement ends
     using (tracer.WithSpan(tracer.StartSpan("Main")))
@@ -483,7 +483,7 @@ In this example
 3. Third pipeline adds custom `DebuggingSpanProcessor` that simply logs all calls to debug output
 
 ```csharp
-using (var tracerFactory = TracerFactory.Create(builder => builder
+using (var tracerProvider = TracerProviderSdk.Create(builder => builder
     .UseZipkin(o =>
     {
         o.Endpoint = new Uri(zipkinUri);
@@ -504,8 +504,8 @@ using (var tracerFactory = TracerFactory.Create(builder => builder
 ```csharp
 var spanExporter = new StackdriverTraceExporter(projectId);
 
-using var tracerFactory = TracerFactory.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(spanExporter)));
-var tracer = tracerFactory.GetTracer("stackdriver-test");
+using var tracerProvider = TracerProviderSdk.Create(builder => builder.AddProcessorPipeline(c => c.SetExporter(spanExporter)));
+var tracer = tracerProvider.GetTracer("stackdriver-test");
 
 using (tracer.StartActiveSpan("/getuser", out TelemetrySpan span))
 {
@@ -539,10 +539,10 @@ metricExporter.Start();
 4. See [sample][ai-sample] for example use.
 
 ``` csharp
-using var tracerFactory = TracerFactory.Create(builder => builder
+using var tracerProvider = TracerProviderSdk.Create(builder => builder
     .SetResource(Resources.CreateServiceResource("my-service"))
     .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key"));
-var tracer = tracerFactory.GetTracer("application-insights-test");
+var tracer = tracerProvider.GetTracer("application-insights-test");
 
 using (tracer.StartActiveSpan("incoming request", out var span))
 {
@@ -582,14 +582,14 @@ Configure LightStep exporter to see traces in [LightStep](https://lightstep.com/
 3. See [sample](lightstep-sample) for example use
 
 ```csharp
-using (var tracerFactory = TracerFactory.Create(
+using (var tracerProvider = TracerProviderSdk.Create(
     builder => builder.UseLightStep(o =>
         {
             o.AccessToken = "<access-token>";
             o.ServiceName = "lightstep-test";
         })))
 {
-    var tracer = tracerFactory.GetTracer("lightstep-test");
+    var tracer = tracerProvider.GetTracer("lightstep-test");
     using (tracer.StartActiveSpan("incoming request", out var span))
     {
         span.SetAttribute("custom-attribute", 55);
@@ -633,7 +633,7 @@ You should also provide additional methods to simplify configuration similarly t
 
 ```csharp
 var exporter = new MyExporter();
-using (var tracerFactory = TracerFactory.Create(
+using (var tracerProvider = TracerProviderSdk.Create(
     builder => builder.AddProcessorPipeline(b => b.SetExporter(new MyExporter())))
 {
     // ...
