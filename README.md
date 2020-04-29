@@ -7,9 +7,9 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 ## Installation
 
 This repository includes multiple installable packages. The `OpenTelemetry.Api`
-package includes abstract classes and no-op implementations that comprise the OpenTelemetry API following
-[the
+package includes abstract classes and no-op implementations for the [OpenTelemetry API 
 specification](https://github.com/open-telemetry/opentelemetry-specification).
+
 The `OpenTelemetry` package is the reference implementation of the API.
 
 Libraries that produce telemetry data should only depend on `OpenTelemetry.Api`,
