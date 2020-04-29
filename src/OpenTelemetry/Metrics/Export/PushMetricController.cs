@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Metrics.Configuration;
 using static OpenTelemetry.Metrics.Configuration.MeterFactory;
 
 namespace OpenTelemetry.Metrics.Export
@@ -50,8 +49,7 @@ namespace OpenTelemetry.Metrics.Export
 
         private async Task Worker(CancellationToken cancellationToken)
         {
-            IEnumerable<Metric<long>> longMetricToExport;
-            IEnumerable<Metric<double>> doubleMetricToExport;
+            IEnumerable<Metric> metricToExport;
 
             await Task.Delay(this.pushInterval, cancellationToken).ConfigureAwait(false);
             while (!cancellationToken.IsCancellationRequested)
@@ -71,22 +69,12 @@ namespace OpenTelemetry.Metrics.Export
                     // Let MetricProcessor know that this cycle is ending,
                     // and send the metrics from MetricProcessor
                     // to the MetricExporter.
-                    this.metricProcessor.FinishCollectionCycle(out longMetricToExport, out doubleMetricToExport);
+                    this.metricProcessor.FinishCollectionCycle(out metricToExport);
 
-                    var longExportResult = await this.metricExporter.ExportAsync<long>(longMetricToExport, cancellationToken);
-                    if (longExportResult != MetricExporter.ExportResult.Success)
+                    var exportResult = await this.metricExporter.ExportAsync(metricToExport, cancellationToken);
+                    if (exportResult != MetricExporter.ExportResult.Success)
                     {
-                        OpenTelemetrySdkEventSource.Log.MetricExporterErrorResult((int)longExportResult);
-
-                        // we do not support retries for now and leave it up to exporter
-                        // as only exporter implementation knows how to retry: which items failed
-                        // and what is the reasonable policy for that exporter.
-                    }
-
-                    var doubleExportResult = await this.metricExporter.ExportAsync<double>(doubleMetricToExport, cancellationToken);
-                    if (doubleExportResult != MetricExporter.ExportResult.Success)
-                    {
-                        OpenTelemetrySdkEventSource.Log.MetricExporterErrorResult((int)doubleExportResult);
+                        OpenTelemetrySdkEventSource.Log.MetricExporterErrorResult((int)exportResult);
 
                         // we do not support retries for now and leave it up to exporter
                         // as only exporter implementation knows how to retry: which items failed

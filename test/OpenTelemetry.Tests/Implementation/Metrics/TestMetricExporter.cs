@@ -15,50 +15,27 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Test
 {
     internal class TestMetricExporter : MetricExporter
     {
-        public List<Metric<long>> LongMetrics = new List<Metric<long>>();
-        public List<Metric<double>> DoubleMetrics = new List<Metric<double>>();
-        private readonly Action onLongExport;
-        private readonly Action onDoubleExport;
+        public List<Metric> Metrics = new List<Metric>();
+        private readonly Action onExport;        
 
-        public TestMetricExporter(Action onLongExport, Action onDoubleExport)
+        public TestMetricExporter(Action onExport)
         {
-            this.onDoubleExport = onDoubleExport;
-            this.onLongExport = onLongExport;
+            this.onExport = onExport;
         }
 
-        public override Task<ExportResult> ExportAsync<T>(IEnumerable<Metric<T>> metrics, CancellationToken cancellationToken)
-        {            
-            if (typeof(T) == typeof(double))
-            {
-                this.onDoubleExport?.Invoke();
-                var doubleList = metrics
-                .Select(x => (x as Metric<double>))
-                .ToList();
-
-                this.DoubleMetrics.AddRange(doubleList);
-            }
-            else
-            {
-                this.onLongExport?.Invoke();
-                var longList = metrics
-                .Select(x => (x as Metric<long>))
-                .ToList();
-
-                this.LongMetrics.AddRange(longList);
-            }
-
+        public override Task<ExportResult> ExportAsync(IEnumerable<Metric> metrics, CancellationToken cancellationToken)
+        {
+            this.onExport?.Invoke();
+            this.Metrics.AddRange(metrics);
             return Task.FromResult(ExportResult.Success);
         }
     }

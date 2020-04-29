@@ -1,4 +1,4 @@
-﻿// <copyright file="SummaryData.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Int64SummaryData.cs" company="OpenTelemetry Authors">
 // Copyright 2018, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace OpenTelemetry.Metrics.Export
 {
-    public class SummaryData<T> : MetricData<T>
+    public class Int64SummaryData : MetricData
     {
         public long Count { get; set; }
 
-        public T Sum { get; set; }
+        public long Sum { get; set; }
 
-        public T Min { get; set; }
+        public long Min { get; set; }
 
-        public T Max { get; set; }
+        public long Max { get; set; }
     }
 }

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Linq;
 using System.Collections.Generic;
 using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Trace;
@@ -232,9 +231,9 @@ namespace OpenTelemetry.Metrics.Test
             meter.Collect();
 
             long sum = 0;
-            foreach (var exportedData in testProcessor.longMetrics)
+            foreach (var exportedData in testProcessor.metrics)
             {
-                exportedData.Data.ForEach((data => sum += (data as SumData<long>).Sum));
+                exportedData.Data.ForEach((data => sum += (data as Int64SumData).Sum));
             }
 
             // 210 = 110 from initial update, 100 from the multi-thread test case.
@@ -302,9 +301,9 @@ namespace OpenTelemetry.Metrics.Test
 
             double sum = 0;
             
-            foreach (var exportedData in testProcessor.doubleMetrics)
+            foreach (var exportedData in testProcessor.metrics)
             {
-                exportedData.Data.ForEach((data => sum += (data as SumData<double>).Sum));
+                exportedData.Data.ForEach((data => sum += (data as DoubleSumData).Sum));
             }
 
             // 210 = 110 from initial update, 100 from the multi-thread test case.

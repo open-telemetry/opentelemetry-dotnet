@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics.Aggregators
 
         public abstract void Checkpoint();
 
-        public abstract MetricData<T> ToMetricData();
+        public abstract MetricData ToMetricData();
 
         public abstract AggregationType GetAggregationType();
     }

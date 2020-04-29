@@ -16,7 +16,6 @@
 
 using System.Collections.Generic;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Metrics.Aggregators;
 
 namespace OpenTelemetry.Metrics.Export
 {
@@ -25,41 +24,29 @@ namespace OpenTelemetry.Metrics.Export
     /// </summary>
     public class UngroupedBatcher : MetricProcessor
     {
-        private List<Metric<long>> longMetrics;
-        private List<Metric<double>> doubleMetrics;
+        private List<Metric> metrics;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UngroupedBatcher"/> class.
         /// </summary>
         public UngroupedBatcher()
         {
-            this.longMetrics = new List<Metric<long>>();
-            this.doubleMetrics = new List<Metric<double>>();
+            this.metrics = new List<Metric>();
         }
 
-        public override void FinishCollectionCycle(out IEnumerable<Metric<long>> longMetrics, out IEnumerable<Metric<double>> doubleMetrics)
+        public override void FinishCollectionCycle(out IEnumerable<Metric> metrics)
         {
             // The batcher is currently stateless. i.e it forgets state after collection is done.
             // Once the spec is ready for stateless vs stateful, we need to modify batcher
             // to remember or clear state after each cycle.
-            longMetrics = this.longMetrics;
-            doubleMetrics = this.doubleMetrics;
-
-            var count = this.longMetrics.Count + this.doubleMetrics.Count;
-            this.longMetrics = new List<Metric<long>>();
-            this.doubleMetrics = new List<Metric<double>>();
-
-            OpenTelemetrySdkEventSource.Log.BatcherCollectionCompleted(count);
+            metrics = this.metrics;
+            this.metrics = new List<Metric>();
+            OpenTelemetrySdkEventSource.Log.BatcherCollectionCompleted(this.metrics.Count);
         }
 
-        public override void Process(Metric<long> metric)
+        public override void Process(Metric metric)
         {
-            this.longMetrics.Add(metric);
-        }
-
-        public override void Process(Metric<double> metric)
-        {
-            this.doubleMetrics.Add(metric);
+            this.metrics.Add(metric);
         }
     }
 }

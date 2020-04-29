@@ -43,6 +43,6 @@ namespace OpenTelemetry.Metrics.Export
             FailedRetryable = 2,
         }
 
-        public abstract Task<ExportResult> ExportAsync<T>(IEnumerable<Metric<T>> metrics, CancellationToken cancellationToken);
+        public abstract Task<ExportResult> ExportAsync(IEnumerable<Metric> metrics, CancellationToken cancellationToken);
     }
 }
