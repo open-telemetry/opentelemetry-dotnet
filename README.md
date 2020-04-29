@@ -23,12 +23,6 @@ The API and SDK packages are available on the following NuGet feeds:
 * [MyGet V2](https://www.myget.org/F/opentelemetry/api/v2)
 * [MyGet V3](https://www.myget.org/F/opentelemetry/api/v3/index.json)
 
-To install the development versions of these packages instead, clone or fork this repo and do an editable install:
-
-```
-TBD
-```
-
 ## Documentation
 
 The online documentation is available at TBD.
