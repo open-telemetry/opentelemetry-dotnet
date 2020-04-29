@@ -10,11 +10,11 @@ This repository includes multiple installable packages. The `OpenTelemetry.Api`
 package includes abstract classes and no-op implementations that comprise the OpenTelemetry API following
 [the
 specification](https://github.com/open-telemetry/opentelemetry-specification).
-The `Opentelemetry` package is the reference implementation of the API.
+The `OpenTelemetry` package is the reference implementation of the API.
 
-Libraries that produce telemetry data should only depend on `Opentelemetry.Api`,
+Libraries that produce telemetry data should only depend on `OpenTelemetry.Api`,
 and defer the choice of the SDK to the application developer. Applications may
-depend on `Opentelemetry` or another package that implements the API.
+depend on `OpenTelemetry` or another package that implements the API.
 
 **Please note** that this library is currently in _alpha_, and shouldn't
 generally be used in production environments.
