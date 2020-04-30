@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// <param name="builder">Trace builder to use.</param>
         /// <param name="configure">Configuration action.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder UseOtlpExporter(this TracerBuilder builder, Action<ExporterOptions> configure)
+        public static TracerBuilder UseOpenTelemetryProtocolExporter(this TracerBuilder builder, Action<ExporterOptions> configure)
         {
             if (builder == null)
             {
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// <param name="configure">Configuration action.</param>
         /// <param name="processorConfigure">Span processor configuration action.</param>
         /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder UseOtlpExporter(
+        public static TracerBuilder UseOpenTelemetryProtocolExporter(
             this TracerBuilder builder, Action<ExporterOptions> configure, Action<SpanProcessorPipelineBuilder> processorConfigure)
         {
             if (builder == null)

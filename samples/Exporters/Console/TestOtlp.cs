@@ -28,7 +28,7 @@ namespace Samples
         {
             using var tracerFactory = TracerFactory.Create(builder => builder
                 .SetResource(Resources.CreateServiceResource("otlp-test"))
-                .UseOtlpExporter(config => config.Endpoint = endpoint));
+                .UseOpenTelemetryProtocolExporter(config => config.Endpoint = endpoint));
             var tracer = tracerFactory.GetTracer("otlp.test.tracer");
 
             using (tracer.StartActiveSpan("parent", out var parent))
