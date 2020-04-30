@@ -38,7 +38,7 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions, ZPagesOptions, ConsoleOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri),
@@ -50,6 +50,7 @@ namespace Samples
                     (LightStepOptions options) => TestLightstep.Run(options.AccessToken),
                     (ZPagesOptions options) => TestZPages.Run(),
                     (ConsoleOptions options) => TestConsole.Run(options),
+                    (OtlpOptions options) => TestOtlp.Run(options.Endpoint),
                     errs => 1);
 
             Console.ReadLine();
@@ -128,6 +129,13 @@ namespace Samples
     {
         [Option('p', "pretty", HelpText = "Specify if the output should be pretty printed (default: false)", Default = false)]
         public bool Pretty { get; set; }
+    }
+
+    [Verb("otlp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP)")]
+    internal class OtlpOptions
+    {
+        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "localhost:55680")]
+        public string Endpoint { get; set; }
     }
 
 #pragma warning restore SA1402 // File may only contain a single type
