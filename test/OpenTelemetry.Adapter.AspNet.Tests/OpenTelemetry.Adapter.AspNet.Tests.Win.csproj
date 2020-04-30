@@ -3,7 +3,7 @@
     <Description>Unit test project for OpenTelemetry ASP.NET adapter</Description>
     <TargetFrameworks>net46</TargetFrameworks>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <None Remove="xunit.runner.json" />
   </ItemGroup>
