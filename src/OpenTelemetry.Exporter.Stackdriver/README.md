@@ -69,29 +69,6 @@ var metricExporter = new StackdriverExporter(
 metricExporter.Start();
 ```
 
-### Using Application Insights exporter in Console App
-
-1. Create [Application Insights][ai-get-started] resource.
-2. Set instrumentation key via telemetry configuration object
-   (`new TelemetryConfiguration("iKey")`). This object may be injected via
-   dependency injection as well.
-3. Instantiate a new instance of `ApplicationInsightsExporter`.
-4. See [sample][ai-sample] for example use.
-
-``` csharp
-using var tracerFactory = TracerFactory.Create(builder => builder
-    .SetResource(Resources.CreateServiceResource("my-service"))
-    .UseApplicationInsights(config => config.InstrumentationKey = "instrumentation-key"));
-var tracer = tracerFactory.GetTracer("application-insights-test");
-
-using (tracer.StartActiveSpan("incoming request", out var span))
-{
-    span.AddEvent("Start processing video.");
-    Thread.Sleep(TimeSpan.FromMilliseconds(10));
-    span.AddEvent("Finished processing video.");
-}
-```
-
 [OpenTelemetry-exporter-stackdriver-nuget-image]:https://img.shields.io/nuget/vpre/OpenTelemetry.Exporter.Stackdriver.svg
 [OpenTelemetry-exporter-stackdriver-nuget-url]: https://www.nuget.org/packages/OpenTelemetry.Exporter.Stackdriver
 [stackdriver-trace-setup]: https://cloud.google.com/trace/docs/setup/
