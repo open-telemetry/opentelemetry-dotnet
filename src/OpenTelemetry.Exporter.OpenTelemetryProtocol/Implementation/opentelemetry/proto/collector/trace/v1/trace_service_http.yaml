@@ -4,9 +4,6 @@ type: google.api.Service
 config_version: 3
 http:
  rules:
- - selector: Opentelemetry.Proto.agent.trace.v1.TraceService.Export
-   post: /v1/trace
-   body: "*"
- - selector: Opentelemetry.Proto.agent.metrics.v1.MetricsService.Export
+ - selector: opentelemetry.proto.collector.trace.v1.TraceService.Export
    post: /v1/trace
    body: "*"

@@ -14,14 +14,21 @@
 
 syntax = "proto3";
 
-package Opentelemetry.Proto.resource.v1;
+package opentelemetry.proto.resource.v1;
+
+import "opentelemetry/proto/common/v1/common.proto";
 
 option java_multiple_files = true;
-option java_package = "io.Opentelemetry.Proto.resource.v1";
+option java_package = "io.opentelemetry.proto.resource.v1";
 option java_outer_classname = "ResourceProto";
+option go_package = "github.com/open-telemetry/opentelemetry-proto/gen/go/resource/v1";
 
 // Resource information.
 message Resource {
   // Set of labels that describe the resource.
-  map<string,string> labels = 1;
+  repeated opentelemetry.proto.common.v1.AttributeKeyValue attributes = 1;
+
+  // dropped_attributes_count is the number of dropped attributes. If the value is 0, then
+  // no attributes were dropped.
+  uint32 dropped_attributes_count = 2;
 }
