@@ -161,7 +161,4 @@ This project includes a [`.editorconfig`](https://github.com/open-telemetry/open
 file which is supported by all the IDEs/editor mentioned above.
 It works with the IDE/editor only and does not affect the actual build of the project.
 
-This repository also includes a
-[test, prod and prod.loose](https://github.com/open-telemetry/opentelemetry-dotnet/tree/master/build) stylecop ruleset files.
-
-These files are used to configure the _StyleCop.Analyzers_ which runs during build. Breaking the rules will result in a build failure.
+This repository also includes [stylecop ruleset files](https://github.com/open-telemetry/opentelemetry-dotnet/tree/master/build). These files are used to configure the _StyleCop.Analyzers_ which runs during build. Breaking the rules will result in a build failure.
