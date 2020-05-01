@@ -42,8 +42,8 @@ namespace API
                     //.SetSampler(Samplers.AlwaysSample)
                     .UseZipkin(options =>
                     {
-                        o.ServiceName = "test-zipkin";
-                        o.Endpoint = this.Configuration.GetValue<string>("Zipkin:Endpoint");
+                        options.ServiceName = "test-zipkin";
+                        options.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
                     })
                     .AddRequestAdapter()
                     .AddDependencyAdapter();
