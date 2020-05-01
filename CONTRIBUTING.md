@@ -122,7 +122,7 @@ Open a pull request against the main `opentelemetry-dotnet` repo.
 ### How to Get PRs Merged
 
 A PR is considered to be **ready to merge** when:
-* It has received approval from [Approvers](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver)
+* It has received approval from [Approvers](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).
   / [Maintainers](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).
 * Major feedbacks are resolved.
 * It has been open for review for at least one working day. This gives people
