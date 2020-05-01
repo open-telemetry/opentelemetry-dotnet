@@ -19,8 +19,11 @@ If you are looking for someone to help you find a starting point and be a resour
 Gitter and find a buddy!
 
 1. Join [Gitter.im](https://gitter.im) and join our [chat room](https://gitter.im/open-telemetry/opentelemetry-dotnet).
-2. Post in the room with an introduction to yourself, what area you are interested in (check issues marked "Help Wanted"),
-and say you are looking for a buddy. We will match you with someone who has experience in that area.
+2. Post in the room with an introduction to yourself, what area you are
+   interested in (check issues marked with [good first
+   issue](https://github.com/open-telemetry/opentelemetry-dotnet/labels/good%20first%20issue)
+   or [help wanted](https://github.com/open-telemetry/opentelemetry-dotnet/labels/help%20wanted)),
+   and say you are looking for a buddy. We will match you with someone who has experience in that area.
 
 Your OpenTelemetry buddy is your resource to talk to directly on all aspects of contributing to OpenTelemetry: providing
 context, reviewing PRs, and helping those get merged. Buddies will not be available 24/7, but is committed to responding
