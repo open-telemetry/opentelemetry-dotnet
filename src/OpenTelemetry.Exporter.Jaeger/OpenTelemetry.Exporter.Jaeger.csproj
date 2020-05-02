@@ -6,7 +6,6 @@
     <PackageIconUrl>https://opentelemetry.io/img/logos/opentelemetry-icon-color.png</PackageIconUrl>
     <PackageProjectUrl>https://OpenTelemetry.io</PackageProjectUrl>
     <PackageTags>Tracing;OpenTelemetry;Management;Monitoring;Jaeger;distributed-tracing</PackageTags>
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyReferencesToPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
 
   <PropertyGroup>
