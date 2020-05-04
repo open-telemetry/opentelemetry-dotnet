@@ -29,7 +29,6 @@ namespace Samples
         ///
         /// dotnet Exporters.dll zipkin -u http://localhost:9411/api/v2/spans
         /// dotnet Exporters.dll jaeger -h localhost -o 6831
-        /// dotnet Exporters.dll appInsights
         /// dotnet Exporters.dll prometheus -i 15 -p 9184 -d 2
         ///
         /// The above must be run from the project bin folder
@@ -38,11 +37,10 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri),
-                    (ApplicationInsightsOptions options) => TestApplicationInsights.Run(),
                     (PrometheusOptions options) => TestPrometheus.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
@@ -87,11 +85,6 @@ namespace Samples
     {
         [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
         public string Uri { get; set; }
-    }
-
-    [Verb("appInsights", HelpText = "Specify the options required to test ApplicationInsights")]
-    internal class ApplicationInsightsOptions
-    {
     }
 
     [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]

@@ -27,7 +27,6 @@
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.ZPages\OpenTelemetry.Exporter.ZPages.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj" />
-    <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.ApplicationInsights\OpenTelemetry.Exporter.ApplicationInsights.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
   </ItemGroup>
 </Project>
