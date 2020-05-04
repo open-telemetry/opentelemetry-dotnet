@@ -2,10 +2,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
-    <Authors>OpenTelemetry authors</Authors>
-    <PackageIconUrl>https://opentelemetry.io/img/logos/opentelemetry-icon-color.png</PackageIconUrl>
-    <PackageProjectUrl>https://OpenTelemetry.io</PackageProjectUrl>
-    <PackageTags>Tracing;OpenTelemetry;Management;Monitoring;Console;distributed-tracing;Debug;Experimental</PackageTags>
+    <Description>Console exporter for Open Telemetry.</Description>
+    <PackageTags>$(PackageTags);Console;distributed-tracing;Debug;Experimental</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup>

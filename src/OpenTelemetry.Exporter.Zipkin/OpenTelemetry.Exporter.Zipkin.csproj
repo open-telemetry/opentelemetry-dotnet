@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Description>Zipkin exporter for OpenTelemetry</Description>
+    <Description>Zipkin exporter for OpenTelemetry.</Description>
     <PackageTags>$(PackageTags);Zipkin;distributed-tracing</PackageTags>
   </PropertyGroup>
   <ItemGroup>

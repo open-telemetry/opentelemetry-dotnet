@@ -2,10 +2,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
-    <Authors>OpenTelemetry authors</Authors>
-    <PackageIconUrl>https://opentelemetry.io/img/logos/opentelemetry-icon-color.png</PackageIconUrl>
-    <PackageProjectUrl>https://OpenTelemetry.io</PackageProjectUrl>
-    <PackageTags>Tracing;OpenTelemetry;Management;Monitoring;Jaeger;distributed-tracing</PackageTags>
+    <Description>Jaeger exporter for Open Telemetry.</Description>
+    <PackageTags>$(PackageTags);Jaeger;distributed-tracing</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup>
