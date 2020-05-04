@@ -40,10 +40,10 @@ namespace API
             {
                 builder
                     //.SetSampler(Samplers.AlwaysSample)
-                    .UseApplicationInsights(telemetryConfiguration =>
+                    .UseZipkin(options =>
                     {
-                        var instrumentationKey = this.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
-                        telemetryConfiguration.InstrumentationKey = instrumentationKey;
+                        options.ServiceName = "test-zipkin";
+                        options.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
                     })
                     .AddRequestAdapter()
                     .AddDependencyAdapter();
