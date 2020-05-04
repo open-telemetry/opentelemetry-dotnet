@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
-    <Description>OpenTelemetry .NET instrumentation API</Description>
+    <Description>OpenTelemetry .NET instrumentation API.</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
     <DefineConstants>$(DefineConstants);API</DefineConstants>
   </PropertyGroup>
@@ -13,7 +13,7 @@
 
   <!--
   Uncomment for development. This will disable the verification that every public method needs to be documented.
-  
+
   <PropertyGroup>
     <NoWarn>$(NoWarn),1591</NoWarn>
   </PropertyGroup>

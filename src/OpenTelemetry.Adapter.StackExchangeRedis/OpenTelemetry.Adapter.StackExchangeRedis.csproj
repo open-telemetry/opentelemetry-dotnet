@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
-    <Description>OpenTelemetry adapter for Redis calls made by StackExchange.Redis library.</Description>
+    <Description>OpenTelemetry adapter for Redis calls made by the StackExchange.Redis library.</Description>
     <PackageTags>$(PackageTags);distributed-tracing;Redis;StackExchange.Redis</PackageTags>
   </PropertyGroup>
 

@@ -1,19 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Description>Lightstep exporter for Open Telemetry.</Description>
+    <PackageTags>$(PackageTags);LightStep;distributed-tracing</PackageTags>
+  </PropertyGroup>
 
-    <PropertyGroup>
-      <NoWarn>$(NoWarn),1591</NoWarn>
-    </PropertyGroup>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn),1591</NoWarn>
+  </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+  </ItemGroup>
 
 </Project>
