@@ -133,7 +133,7 @@ A PR is considered to be **ready to merge** when:
 * Trivial change (typo, cosmetic, doc, etc.) doesn't have to wait for one day.
 * Urgent fix can take exception as long as it has been actively communicated.
 
-Any Maintainer can merge the PR once it is **ready to merge**.
+Any Maintainer can merge the PR once it is **ready to merge**. Note, that some PR may not be merged immediately if repo is being in process of a major release and the new feature doesn't fit it.
 
 ## Design Choices
 
