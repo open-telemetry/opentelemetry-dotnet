@@ -8,7 +8,7 @@ See the [public meeting notes](https://docs.google.com/document/d/1yjjD6aBcLxlRa
 for a summary description of past meetings. To request edit access, join the
 meeting or get in touch on [Gitter](https://gitter.im/open-telemetry/opentelemetry-dotnet).
 
-See to the [community membership document](https://github.com/open-telemetry/community/blob/master/community-membership.md)
+Even though, anybody can contribute, there are benefits of being a member of our community. See to the [community membership document](https://github.com/open-telemetry/community/blob/master/community-membership.md)
 on how to become a [**Member**](https://github.com/open-telemetry/community/blob/master/community-membership.md#member),
 [**Approver**](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver)
 and [**Maintainer**](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).
