@@ -52,6 +52,6 @@ namespace OpenTelemetry.Exporter.Jaeger
         /// <summary>
         /// Gets or sets the tags that should be sent with telemetry.
         /// </summary>
-        public Dictionary<string, object> ProcessTags { get; set; }
+        public IEnumerable<KeyValuePair<string, object>> ProcessTags { get; set; }
     }
 }

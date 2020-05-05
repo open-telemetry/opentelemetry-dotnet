@@ -17,9 +17,9 @@
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("OpenTelemetry.Tests" + AssemblyInfo.PublicKey)]
-[assembly: InternalsVisibleTo("OpenTelemetry.Collector.Dependencies.Tests" + AssemblyInfo.PublicKey)]
-[assembly: InternalsVisibleTo("OpenTelemetry.Collector.AspNetCore.Tests" + AssemblyInfo.PublicKey)]
-[assembly: InternalsVisibleTo("OpenTelemetry.Collector.StackExchangeRedis.Tests" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Adapter.Dependencies.Tests" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Adapter.AspNetCore.Tests" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Adapter.StackExchangeRedis.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2" + AssemblyInfo.MoqPublicKey)]
 
 #if SIGNED

@@ -39,21 +39,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".vsts", ".vsts", "{61188153
 		.vsts\ci-myget-update.yml = .vsts\ci-myget-update.yml
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.ApplicationInsights", "src\OpenTelemetry.Exporter.ApplicationInsights\OpenTelemetry.Exporter.ApplicationInsights.csproj", "{4493F5D9-874E-4FBF-B2F3-37890BD910E0}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Stackdriver", "src\OpenTelemetry.Exporter.Stackdriver\OpenTelemetry.Exporter.Stackdriver.csproj", "{DE1B4783-C01F-4672-A6EB-695F1717105B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api", "src\OpenTelemetry.Api\OpenTelemetry.Api.csproj", "{99F8A331-05E9-45A5-89BA-4C54E825E5B2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus", "src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj", "{AD9B2B54-EC9C-448E-BD3C-EDCC3F7AD022}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.Dependencies", "src\OpenTelemetry.Collector.Dependencies\OpenTelemetry.Collector.Dependencies.csproj", "{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Adapter.Dependencies", "src\OpenTelemetry.Adapter.Dependencies\OpenTelemetry.Adapter.Dependencies.csproj", "{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.Dependencies.Tests", "test\OpenTelemetry.Collector.Dependencies.Tests\OpenTelemetry.Collector.Dependencies.Tests.csproj", "{56E2647A-B814-4BAC-B854-BEA0051B5F2E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Adapter.Dependencies.Tests", "test\OpenTelemetry.Adapter.Dependencies.Tests\OpenTelemetry.Adapter.Dependencies.Tests.csproj", "{56E2647A-B814-4BAC-B854-BEA0051B5F2E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.AspNetCore", "src\OpenTelemetry.Collector.AspNetCore\OpenTelemetry.Collector.AspNetCore.csproj", "{752D2182-A351-41D8-99EE-DD363D7D5B43}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Adapter.AspNetCore", "src\OpenTelemetry.Adapter.AspNetCore\OpenTelemetry.Adapter.AspNetCore.csproj", "{752D2182-A351-41D8-99EE-DD363D7D5B43}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.AspNetCore.Tests", "test\OpenTelemetry.Collector.AspNetCore.Tests\OpenTelemetry.Collector.AspNetCore.Tests.csproj", "{2A47F6A8-63E5-4237-8046-94CAF321E797}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Adapter.AspNetCore.Tests", "test\OpenTelemetry.Adapter.AspNetCore.Tests\OpenTelemetry.Adapter.AspNetCore.Tests.csproj", "{2A47F6A8-63E5-4237-8046-94CAF321E797}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "testdata", "testdata", "{77C7929A-2EED-4AA6-8705-B5C443C8AA0F}"
 EndProject
@@ -61,11 +59,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.3.1", "t
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Stackdriver.Tests", "test\OpenTelemetry.Exporter.Stackdriver.Tests\OpenTelemetry.Exporter.Stackdriver.Tests.csproj", "{6875032B-DFDC-4CDE-A283-37CA7F99926A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.ApplicationInsights.Tests", "test\OpenTelemetry.Exporter.ApplicationInsights.Tests\OpenTelemetry.Exporter.ApplicationInsights.Tests.csproj", "{1FA1F509-7722-48E3-9A35-16CBB6774957}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Adapter.StackExchangeRedis", "src\OpenTelemetry.Adapter.StackExchangeRedis\OpenTelemetry.Adapter.StackExchangeRedis.csproj", "{6B681D72-D68A-44CC-8C75-53B9A322E6EC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.StackExchangeRedis", "src\OpenTelemetry.Collector.StackExchangeRedis\OpenTelemetry.Collector.StackExchangeRedis.csproj", "{6B681D72-D68A-44CC-8C75-53B9A322E6EC}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.StackExchangeRedis.Tests", "test\OpenTelemetry.Collector.StackExchangeRedis.Tests\OpenTelemetry.Collector.StackExchangeRedis.Tests.csproj", "{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Adapter.StackExchangeRedis.Tests", "test\OpenTelemetry.Adapter.StackExchangeRedis.Tests\OpenTelemetry.Adapter.StackExchangeRedis.Tests.csproj", "{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{E359BB2B-9AEC-497D-B321-7DF2450C3B8E}"
 EndProject
@@ -96,9 +92,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "benchmarks\Benchmarks.csproj", "{CEB7F146-81DC-41DB-8015-140EC6A64E6C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Hosting", "src\OpenTelemetry.Hosting\OpenTelemetry.Hosting.csproj", "{A03102CD-A996-4418-BA19-7141C34B5A7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Hosting", "src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj", "{A03102CD-A996-4418-BA19-7141C34B5A7D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Hosting.Tests", "test\OpenTelemetry.Hosting.Tests\OpenTelemetry.Hosting.Tests.csproj", "{4CB1187F-27F2-48F9-83F4-3A7567F73B5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Hosting.Tests", "test\OpenTelemetry.Extensions.Hosting.Tests\OpenTelemetry.Extensions.Hosting.Tests.csproj", "{4CB1187F-27F2-48F9-83F4-3A7567F73B5F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj", "{A38AC295-2745-4B85-8B6B-DCA864CEDD5B}"
 EndProject
@@ -116,9 +112,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Zipk
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.AspNet.Win", "samples\Exporters\AspNet\OpenTelemetry.Exporter.AspNet.Win.csproj", "{9A4E3A68-904B-4835-A3C8-F664B73098DB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.AspNet.Win", "src\OpenTelemetry.Collector.AspNet\OpenTelemetry.Collector.AspNet.Win.csproj", "{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Adapter.AspNet.Win", "src\OpenTelemetry.Adapter.AspNet\OpenTelemetry.Adapter.AspNet.Win.csproj", "{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Collector.AspNet.Tests.Win", "test\OpenTelemetry.Collector.AspNet.Tests\OpenTelemetry.Collector.AspNet.Tests.Win.csproj", "{55CBAADE-7040-46D6-A845-F207B4F0E281}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Adapter.AspNet.Tests.Win", "test\OpenTelemetry.Adapter.AspNet.Tests\OpenTelemetry.Adapter.AspNet.Tests.Win.csproj", "{55CBAADE-7040-46D6-A845-F207B4F0E281}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests", "test\OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests\OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj", "{7C4026CA-6434-4762-8B77-D657EAEE1325}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -278,6 +276,10 @@ Global
 		{55CBAADE-7040-46D6-A845-F207B4F0E281}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{55CBAADE-7040-46D6-A845-F207B4F0E281}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{55CBAADE-7040-46D6-A845-F207B4F0E281}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

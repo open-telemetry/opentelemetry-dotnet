@@ -22,7 +22,6 @@ namespace OpenTelemetry.Exporter.Jaeger
 {
     public interface IJaegerUdpBatcher : IDisposable
     {
-        // TODO: Internal Thrift type shouldn't really be on public interface.
         Process Process { get; }
 
         ValueTask<int> AppendAsync(SpanData span, CancellationToken cancellationToken);

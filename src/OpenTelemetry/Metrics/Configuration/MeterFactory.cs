@@ -14,36 +14,51 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Configuration
 {
     public class MeterFactory : MeterFactoryBase
     {
+        // TODO: make MeterFactory IDisposable to call Dispose on Exporter/Controller.
         private readonly object lck = new object();
-        private readonly Dictionary<MeterRegistryKey, Meter> meterRegistry = new Dictionary<MeterRegistryKey, Meter>();
+        private readonly Dictionary<MeterRegistryKey, MeterSdk> meterRegistry = new Dictionary<MeterRegistryKey, MeterSdk>();
         private readonly MetricProcessor metricProcessor;
-        private Meter defaultMeter;
+        private readonly MetricExporter metricExporter;
+        private readonly PushMetricController pushMetricController;
+        private readonly TimeSpan defaultPushInterval = TimeSpan.FromSeconds(60);
+        private MeterSdk defaultMeter;
 
-        private MeterFactory(MetricProcessor metricProcessor)
+        private MeterFactory(MeterBuilder meterBuilder)
         {
-            if (metricProcessor == null)
-            {
-                this.metricProcessor = new NoOpMetricProcessor();
-            }
-            else
-            {
-                this.metricProcessor = metricProcessor;
-            }
-           
-            this.defaultMeter = new MeterSdk(string.Empty,
-                this.metricProcessor);
+            this.metricProcessor = meterBuilder.MetricProcessor ?? new NoOpMetricProcessor();
+            this.metricExporter = meterBuilder.MetricExporter ?? new NoOpMetricExporter();
+
+            // We only have PushMetricController now with only configurable thing being the push interval
+            this.pushMetricController = new PushMetricController(
+                this.meterRegistry,
+                this.metricProcessor,
+                this.metricExporter,
+                meterBuilder.MetricPushInterval == default(TimeSpan) ? this.defaultPushInterval : meterBuilder.MetricPushInterval,
+                new CancellationTokenSource());
+
+            this.defaultMeter = new MeterSdk(string.Empty, this.metricProcessor);
         }
 
-        public static MeterFactory Create(MetricProcessor metricProcessor)
+        public static MeterFactory Create(Action<MeterBuilder> configure)
         {
-            return new MeterFactory(metricProcessor);
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            var builder = new MeterBuilder();
+            configure(builder);
+
+            return new MeterFactory(builder);
         }
 
         public override Meter GetMeter(string name, string version = null)
@@ -58,8 +73,7 @@ namespace OpenTelemetry.Metrics.Configuration
                 var key = new MeterRegistryKey(name, version);
                 if (!this.meterRegistry.TryGetValue(key, out var meter))
                 {
-                    meter = this.defaultMeter = new MeterSdk(name,
-                        this.metricProcessor);
+                    meter = this.defaultMeter = new MeterSdk(name, this.metricProcessor);
 
                     this.meterRegistry.Add(key, meter);
                 }
@@ -79,7 +93,7 @@ namespace OpenTelemetry.Metrics.Configuration
             return labels;
         }
 
-        private readonly struct MeterRegistryKey
+        internal readonly struct MeterRegistryKey
         {
             private readonly string name;
             private readonly string version;

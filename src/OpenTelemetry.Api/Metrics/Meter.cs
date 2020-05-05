@@ -77,7 +77,7 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Constructs or retrieves the <see cref="LabelSet"/> from the given label key-value pairs.
         /// </summary>
-        /// <param name="labels">Label key value pairs.</param>
+        /// <param name="labels">Label key-value pairs.</param>
         /// <returns>The <see cref="LabelSet"/> with given label key value pairs.</returns>
         public abstract LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels);
     }

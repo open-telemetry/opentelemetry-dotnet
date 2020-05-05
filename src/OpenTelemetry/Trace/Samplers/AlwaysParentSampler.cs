@@ -18,14 +18,19 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Trace.Samplers
 {
+    /// <summary>
+    /// Sampler implementation which will sample in, if parent span is sampled in.
+    /// If parent span is invalid, span is sampled out.
+    /// </summary>
     public sealed class AlwaysParentSampler : Sampler
     {
+        /// <inheritdoc />
         public override string Description { get; } = nameof(AlwaysParentSampler);
 
         /// <inheritdoc />
-        public override SamplingResult ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IDictionary<string, object> attributes, IEnumerable<Link> parentLinks)
+        public override SamplingResult ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IEnumerable<KeyValuePair<string, object>> attributes, IEnumerable<Link> parentLinks)
         {
-            if (parentContext.IsValid && parentContext.TraceOptions.HasFlag(ActivityTraceFlags.Recorded))
+            if (parentContext.IsValid && parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded))
             {
                 return new SamplingResult(true);
             }

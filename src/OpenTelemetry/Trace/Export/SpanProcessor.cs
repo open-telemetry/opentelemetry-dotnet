@@ -19,18 +19,20 @@ using System.Threading.Tasks;
 namespace OpenTelemetry.Trace.Export
 {
     /// <summary>
-    /// Span processor base class. 
+    /// Span processor base class.
     /// </summary>
     public abstract class SpanProcessor
     {
         /// <summary>
-        /// Span start hook.
+        /// Span start hook. Only invoked if <see cref="TelemetrySpan.IsRecording"/> is true.
+        /// This method is called synchronously on the thread that started the span.
         /// </summary>
         /// <param name="span">Instance of span to process.</param>
         public abstract void OnStart(SpanData span);
-        
+
         /// <summary>
-        /// Span end hook.
+        /// Span end hook. Only invoked if <see cref="TelemetrySpan.IsRecording"/> is true.
+        /// This method is called synchronously on the execution thread.
         /// </summary>
         /// <param name="span">Instance of Span to process.</param>
         public abstract void OnEnd(SpanData span);
@@ -39,6 +41,7 @@ namespace OpenTelemetry.Trace.Export
         /// Shuts down span processor asynchronously.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Returns <see cref="Task"/>.</returns>
         public abstract Task ShutdownAsync(CancellationToken cancellationToken);
     }
 }

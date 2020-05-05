@@ -25,10 +25,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
 {
     public class ZipkinTraceExporterRemoteEndpointTests
     {
-        private static readonly ZipkinEndpoint DefaultZipkinEndpoint = new ZipkinEndpoint
-        {
-            ServiceName = "TestService",
-        };
+        private static readonly ZipkinEndpoint DefaultZipkinEndpoint = new ZipkinEndpoint("TestService");
 
         [Fact]
         public void ZipkinSpanConverterTest_GenerateSpan_RemoteEndpointOmittedByDefault()
@@ -78,7 +75,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             Assert.Equal("RemoteServiceName", zipkinSpan.RemoteEndpoint.ServiceName);
         }
 
-        internal SpanData CreateTestSpan(
+        internal static SpanData CreateTestSpan(
             bool setAttributes = true,
             Dictionary<string, object> additionalAttributes = null,
             bool addEvents = true,
@@ -86,7 +83,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         {
             var startTimestamp = DateTime.UtcNow;
             var endTimestamp = startTimestamp.AddSeconds(60);
-            var eventTimestamp = DateTime.UtcNow;
+            var eventTimestamp = startTimestamp;
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
 
             var spanId = ActivitySpanId.CreateRandom();

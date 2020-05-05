@@ -27,6 +27,8 @@
   </ItemGroup>
 
   <PropertyGroup>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/open-telemetry/opentelemetry-dotnet</RepositoryUrl>
     <PackageTags>Tracing;OpenTelemetry;Management;Monitoring</PackageTags>
     <PackageIcon>opentelemetry-icon-color.png</PackageIcon>
     <PackageProjectUrl>https://OpenTelemetry.io</PackageProjectUrl>

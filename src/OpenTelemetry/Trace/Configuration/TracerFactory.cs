@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Configuration
     {
         private readonly object lck = new object();
         private readonly Dictionary<TracerRegistryKey, Tracer> tracerRegistry = new Dictionary<TracerRegistryKey, Tracer>();
-        private readonly List<object> collectors = new List<object>();
+        private readonly List<object> adapters = new List<object>();
 
         private readonly Sampler sampler;
         private readonly Resource defaultResource;
@@ -82,6 +82,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// Creates tracerSdk factory.
         /// </summary>
         /// <param name="configure">Function that configures tracerSdk factory.</param>
+        /// <returns>Returns new <see cref="TracerFactory"/>.</returns>
         public static TracerFactory Create(Action<TracerBuilder> configure)
         {
             if (configure == null)
@@ -93,12 +94,12 @@ namespace OpenTelemetry.Trace.Configuration
             configure(builder);
             var factory = new TracerFactory(builder);
 
-            if (builder.CollectorFactories != null)
+            if (builder.AdapterFactories != null)
             {
-                foreach (var collector in builder.CollectorFactories)
+                foreach (var adapter in builder.AdapterFactories)
                 {
-                    var tracer = factory.GetTracer(collector.Name, collector.Version);
-                    factory.collectors.Add(collector.Factory(tracer));
+                    var tracer = factory.GetTracer(adapter.Name, adapter.Version);
+                    factory.adapters.Add(adapter.Factory(tracer));
                 }
             }
 
@@ -131,7 +132,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         public void Dispose()
         {
-            foreach (var item in this.collectors)
+            foreach (var item in this.adapters)
             {
                 if (item is IDisposable disposable)
                 {
@@ -139,7 +140,7 @@ namespace OpenTelemetry.Trace.Configuration
                 }
             }
 
-            this.collectors.Clear();
+            this.adapters.Clear();
 
             if (this.spanProcessor is IDisposable disposableProcessor)
             {

@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
@@ -38,7 +37,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Creates an instance of <see cref="TracerSdk"/>.
+        /// Initializes a new instance of the <see cref="TracerSdk"/> class.
         /// </summary>
         /// <param name="spanProcessor">Span processor.</param>
         /// <param name="sampler">Sampler to use.</param>
@@ -79,28 +78,48 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override TelemetrySpan StartSpan(string operationName, TelemetrySpan parent, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartSpan(string operationName, TelemetrySpan parentSpan, SpanKind kind, SpanCreationOptions options)
         {
-            if (parent == null)
+            if (parentSpan == null)
             {
-                parent = this.CurrentSpan;
+                parentSpan = this.CurrentSpan;
             }
 
-            return SpanSdk.CreateFromParentSpan(operationName, parent, kind, options, this.sampler, this.tracerConfiguration,
-                this.spanProcessor, this.LibraryResource);
+            return SpanSdk.CreateFromParentSpan(
+                operationName,
+                parentSpan,
+                kind,
+                options,
+                this.sampler,
+                this.tracerConfiguration,
+                this.spanProcessor,
+                this.LibraryResource);
         }
 
         /// <inheritdoc/>
-        public override TelemetrySpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options)
+        public override TelemetrySpan StartSpan(string operationName, in SpanContext parentContext, SpanKind kind, SpanCreationOptions options)
         {
-            if (parent.IsValid)
+            if (parentContext.IsValid)
             {
-                return SpanSdk.CreateFromParentContext(operationName, parent, kind, options, this.sampler, this.tracerConfiguration,
-                    this.spanProcessor, this.LibraryResource);
+                return SpanSdk.CreateFromParentContext(
+                    operationName,
+                    parentContext,
+                    kind,
+                    options,
+                    this.sampler,
+                    this.tracerConfiguration,
+                    this.spanProcessor,
+                    this.LibraryResource);
             }
 
-            return SpanSdk.CreateRoot(operationName, kind, options, this.sampler, this.tracerConfiguration,
-                this.spanProcessor, this.LibraryResource);
+            return SpanSdk.CreateRoot(
+                operationName,
+                kind,
+                options,
+                this.sampler,
+                this.tracerConfiguration,
+                this.spanProcessor,
+                this.LibraryResource);
         }
 
         /// <inheritdoc/>

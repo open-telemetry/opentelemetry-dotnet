@@ -27,25 +27,28 @@ namespace Samples
         /// Main method - invoke this using command line.
         /// For example:
         ///
-        /// Samples.dll zipkin -u http://localhost:9411/api/v2/spans
-        /// Sample.dll appInsights
-        /// Sample.dll prometheus.
+        /// dotnet Exporters.dll zipkin -u http://localhost:9411/api/v2/spans
+        /// dotnet Exporters.dll jaeger -h localhost -o 6831
+        /// dotnet Exporters.dll prometheus -i 15 -p 9184 -d 2
+        ///
+        /// The above must be run from the project bin folder
+        /// (eg: C:\repos\opentelemetry-dotnet\src\samples\Exporters\Console\bin\Debug\netcoreapp3.1).
         /// </summary>
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, ApplicationInsightsOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions, ZPagesOptions, ConsoleOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri),
-                    (ApplicationInsightsOptions options) => TestApplicationInsights.Run(),
-                    (PrometheusOptions options) => TestPrometheus.Run(),
+                    (PrometheusOptions options) => TestPrometheus.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (StackdriverOptions options) => TestStackdriver.Run(options.ProjectId),
                     (LightStepOptions options) => TestLightstep.Run(options.AccessToken),
                     (ZPagesOptions options) => TestZPages.Run(),
                     (ConsoleOptions options) => TestConsole.Run(options),
+                    (OtlpOptions options) => TestOtlp.Run(options.Endpoint),
                     errs => 1);
 
             Console.ReadLine();
@@ -84,14 +87,17 @@ namespace Samples
         public string Uri { get; set; }
     }
 
-    [Verb("appInsights", HelpText = "Specify the options required to test ApplicationInsights")]
-    internal class ApplicationInsightsOptions
-    {
-    }
-
     [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
     internal class PrometheusOptions
     {
+        [Option('i', "pushIntervalInSecs", Default = 15, HelpText = "The interval at which Push controller pushes metrics.", Required = false)]
+        public int PushIntervalInSecs { get; set; }
+
+        [Option('p', "port", Default = 9184, HelpText = "The port to expose metrics. The endpoint will be http://localhost:port/metrics (This is the port from which your Prometheus server scraps metrics from.)", Required = false)]
+        public int Port { get; set; }
+
+        [Option('d', "duration", Default = 2, HelpText = "Total duration in minutes to run the demo. Run atleast for a min to see metrics flowing.", Required = false)]
+        public int DurationInMins { get; set; }
     }
 
     [Verb("httpclient", HelpText = "Specify the options required to test HttpClient")]
@@ -116,6 +122,13 @@ namespace Samples
     {
         [Option('p', "pretty", HelpText = "Specify if the output should be pretty printed (default: false)", Default = false)]
         public bool Pretty { get; set; }
+    }
+
+    [Verb("otlp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP)")]
+    internal class OtlpOptions
+    {
+        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "localhost:55680")]
+        public string Endpoint { get; set; }
     }
 
 #pragma warning restore SA1402 // File may only contain a single type

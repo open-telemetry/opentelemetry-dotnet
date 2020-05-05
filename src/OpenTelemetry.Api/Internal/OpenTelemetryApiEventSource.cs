@@ -47,6 +47,24 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        [NonEvent]
+        public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.TracestateKeyIsInvalid(key.ToString());
+            }
+        }
+
+        [NonEvent]
+        public void TracestateValueIsInvalid(ReadOnlySpan<char> value)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.TracestateValueIsInvalid(value.ToString());
+            }
+        }
+
         [Event(1, Message = "Failed to extract span context: '{0}'", Level = EventLevel.Warning)]
         public void FailedToExtractSpanContext(string exception)
         {
@@ -66,15 +84,15 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(4, Message = "Tracestate key is invalid, key = '{0}'", Level = EventLevel.Warning)]
-        public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
+        public void TracestateKeyIsInvalid(string key)
         {
-            this.WriteEvent(4, key.ToString());
+            this.WriteEvent(4, key);
         }
 
         [Event(5, Message = "Tracestate value is invalid, value = '{0}'", Level = EventLevel.Warning)]
-        public void TracestateValueIsInvalid(ReadOnlySpan<char> value)
+        public void TracestateValueIsInvalid(string value)
         {
-            this.WriteEvent(5, value.ToString());
+            this.WriteEvent(5, value);
         }
 
         [Event(6, Message = "Tracestate parse error: '{0}'", Level = EventLevel.Warning)]

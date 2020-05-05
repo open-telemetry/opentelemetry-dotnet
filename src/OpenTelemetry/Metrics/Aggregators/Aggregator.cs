@@ -18,13 +18,14 @@ using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Aggregators
 {
-    public abstract class Aggregator<T> where T : struct
+    public abstract class Aggregator<T>
+        where T : struct
     {
         public abstract void Update(T value);
 
         public abstract void Checkpoint();
 
-        public abstract MetricData<T> ToMetricData();
+        public abstract MetricData ToMetricData();
 
         public abstract AggregationType GetAggregationType();
     }

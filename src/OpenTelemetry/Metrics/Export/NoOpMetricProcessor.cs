@@ -14,17 +14,19 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Metrics.Aggregators;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace OpenTelemetry.Metrics.Export
 {
     internal class NoOpMetricProcessor : MetricProcessor
     {
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<long> aggregator)
+        public override void FinishCollectionCycle(out IEnumerable<Metric> metric)
         {
+            metric = Enumerable.Empty<Metric>();
         }
 
-        public override void Process(string meterName, string metricName, LabelSet labelSet, Aggregator<double> aggregator)
+        public override void Process(Metric metric)
         {
         }
     }

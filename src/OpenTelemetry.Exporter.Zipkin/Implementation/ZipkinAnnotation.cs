@@ -15,10 +15,18 @@
 // </copyright>
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
-    internal class ZipkinAnnotation
+    internal readonly struct ZipkinAnnotation
     {
-        public long Timestamp { get; set; }
+        public ZipkinAnnotation(
+            long timestamp,
+            string value)
+        {
+            this.Timestamp = timestamp;
+            this.Value = value;
+        }
 
-        public string Value { get; set; }
+        public long Timestamp { get; }
+
+        public string Value { get; }
     }
 }

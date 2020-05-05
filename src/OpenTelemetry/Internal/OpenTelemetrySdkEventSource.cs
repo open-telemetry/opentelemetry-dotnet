@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Threading;
+using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Internal
@@ -63,6 +64,33 @@ namespace OpenTelemetry.Internal
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
                 this.MetricObserverCallbackError(metricName, ToInvariantString(ex));
+            }
+        }
+
+        [NonEvent]
+        public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.TracestateKeyIsInvalid(key.ToString());
+            }
+        }
+
+        [NonEvent]
+        public void TracestateValueIsInvalid(ReadOnlySpan<char> value)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.TracestateValueIsInvalid(value.ToString());
+            }
+        }
+
+        [NonEvent]
+        public void MetricControllerException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.MetricControllerException(ToInvariantString(ex));
             }
         }
 
@@ -133,15 +161,15 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(12, Message = "Tracestate key is invalid, key = '{0}'", Level = EventLevel.Warning)]
-        public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
+        public void TracestateKeyIsInvalid(string key)
         {
-            this.WriteEvent(12, key.ToString());
+            this.WriteEvent(12, key);
         }
 
         [Event(13, Message = "Tracestate value is invalid, value = '{0}'", Level = EventLevel.Warning)]
-        public void TracestateValueIsInvalid(ReadOnlySpan<char> value)
+        public void TracestateValueIsInvalid(string value)
         {
-            this.WriteEvent(13, value.ToString());
+            this.WriteEvent(13, value);
         }
 
         [Event(14, Message = "Tracestate parse error: '{0}'", Level = EventLevel.Warning)]
@@ -160,6 +188,36 @@ namespace OpenTelemetry.Internal
         public void MetricObserverCallbackError(string metricName, string exception)
         {
             this.WriteEvent(16, metricName, exception);
+        }
+
+        [Event(17, Message = "Batcher finished collection with '{0}' metrics.", Level = EventLevel.Informational)]
+        public void BatcherCollectionCompleted(int count)
+        {
+            this.WriteEvent(17, count);
+        }
+
+        [Event(18, Message = "Collection completed in '{0}' msecs.", Level = EventLevel.Informational)]
+        public void CollectionCompleted(long msec)
+        {
+            this.WriteEvent(18, msec);
+        }
+
+        [Event(19, Message = "Exception occurred in Metric Controller while processing metrics from one Collect cycle. This does not shutdown controller and subsequent collections will be done. Exception: '{0}'", Level = EventLevel.Warning)]
+        public void MetricControllerException(string exception)
+        {
+            this.WriteEvent(19, exception);
+        }
+
+        [Event(20, Message = "Meter Collect Invoked for Meter: '{0}'", Level = EventLevel.Verbose)]
+        public void MeterCollectInvoked(string meterName)
+        {
+            this.WriteEvent(20, meterName);
+        }
+
+        [Event(21, Message = "Metric Export failed with error '{0}'.", Level = EventLevel.Warning)]
+        public void MetricExporterErrorResult(int exportResult)
+        {
+            this.WriteEvent(21, exportResult);
         }
 
         /// <summary>

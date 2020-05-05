@@ -1,15 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>
-    <Description>OpenTelemetry .NET API</Description>
+    <Description>OpenTelemetry .NET SDK.</Description>
   </PropertyGroup>
 
   <PropertyGroup>
     <NoWarn>$(NoWarn),1591</NoWarn>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))/build/OpenTelemetry.prod.loose.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,7 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.Collections.Immutable" Version="1.4.0" />
-    <PackageReference Condition="'$(TargetFramework)' == 'netstandard2.0'" Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
@@ -55,7 +56,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             ["db.instance"] = 4, // peer.service for Redis.
         };
 
-        private static readonly Dictionary<CanonicalCode, string> CanonicalCodeDictionary = new Dictionary<CanonicalCode, string>();
+        private static readonly Dictionary<StatusCanonicalCode, string> CanonicalCodeDictionary = new Dictionary<StatusCanonicalCode, string>();
 
         private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessAttributeRef = ProcessAttribute;
         private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessLibraryAttributeRef = ProcessLibraryAttribute;
@@ -75,12 +76,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 ref jaegerTags,
                 ProcessAttributeRef);
 
-            // Send peer.service for remote calls. If priority = 0 that means peer.service was already included.
-            if ((span.Kind == SpanKind.Client || span.Kind == SpanKind.Producer)
-                && jaegerTags.PeerService != null
-                && jaegerTags.PeerServicePriority > 0)
+            string peerServiceName = null;
+            if ((span.Kind == SpanKind.Client || span.Kind == SpanKind.Producer) && jaegerTags.PeerService != null)
             {
-                PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("peer.service", JaegerTagType.STRING, vStr: jaegerTags.PeerService));
+                // Send peer.service for remote calls.
+                peerServiceName = jaegerTags.PeerService;
+
+                // If priority = 0 that means peer.service was already included in tags.
+                if (jaegerTags.PeerServicePriority > 0)
+                {
+                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(SpanAttributeConstants.PeerServiceKey, JaegerTagType.STRING, vStr: peerServiceName));
+                }
             }
 
             // The Span.Kind must translate into a tag.
@@ -147,13 +153,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
 
             return new JaegerSpan(
-                peerServiceName: jaegerTags.PeerService,
+                peerServiceName: peerServiceName,
                 traceIdLow: traceId.Low,
                 traceIdHigh: traceId.High,
                 spanId: spanId.Low,
                 parentSpanId: parentSpanId.Low,
                 operationName: span.Name,
-                flags: (span.Context.TraceOptions & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
+                flags: (span.Context.TraceFlags & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
                 startTime: ToEpochMicroseconds(span.StartTimestamp),
                 duration: ToEpochMicroseconds(span.EndTimestamp) - ToEpochMicroseconds(span.StartTimestamp),
                 references: span.Links.ToJaegerSpanRefs(),
