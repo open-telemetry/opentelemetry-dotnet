@@ -20,7 +20,6 @@
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Adapter.Dependencies\OpenTelemetry.Adapter.Dependencies.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Adapter.StackExchangeRedis\OpenTelemetry.Adapter.StackExchangeRedis.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj" />
-    <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.LightStep\OpenTelemetry.Exporter.LightStep.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Stackdriver\OpenTelemetry.Exporter.Stackdriver.csproj" />
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj" />
