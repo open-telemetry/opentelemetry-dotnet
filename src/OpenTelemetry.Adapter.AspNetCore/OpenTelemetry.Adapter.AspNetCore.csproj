@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <Description>OpenTelemetry adapter for ASP.NET Core requests</Description>
+    <Description>OpenTelemetry adapter for ASP.NET Core requests.</Description>
     <PackageTags>$(PackageTags);distributed-tracing;AspNetCore</PackageTags>
   </PropertyGroup>
 

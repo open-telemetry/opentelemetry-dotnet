@@ -37,7 +37,7 @@ jobs:
       projects: |
         test/**/*.Tests.csproj
         test/**/*.Tests.Win.csproj
-      arguments: "--configuration Release"
+      arguments: "-p:CollectCoverage=false --configuration Release"
 
 - job: Linux
   pool:
@@ -61,4 +61,4 @@ jobs:
     inputs:
       command: "test"
       projects: "test/**/*.Tests.csproj"
-      arguments: "--configuration Release"
+      arguments: "-p:CollectCoverage=false --configuration Release"
