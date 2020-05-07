@@ -23,16 +23,12 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
 
-  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+  <PropertyGroup Condition="$(MSBuildProjectName.Contains('.Tests'))">
     <IsTestProject>true</IsTestProject>
-    <!--CollectCoverage Condition="$(CollectCoverage) == ''">true</CollectCoverage-->
+    <CollectCoverage Condition="$(CollectCoverage) == ''">true</CollectCoverage>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <CollectCoverage Condition="$(CollectCoverage) == '' OR !$(TargetFramework.StartsWith('netcoreapp'))">false</CollectCoverage>
-  </PropertyGroup>
-
-  <PropertyGroup Label="CollectCodeCoverageResults" Condition="$(CollectCoverage)">
+  <PropertyGroup Label="CollectCodeCoverageResults" Condition="$(CollectCoverage) == 'true'">
     <CoverletOutputFormat>cobertura</CoverletOutputFormat>
     <_BaseDir>..\..\TestResults\</_BaseDir>
     <CoverletBaseDir>$(_BaseDir)Coverage\</CoverletBaseDir>

@@ -3,7 +3,7 @@
 
   <ItemGroup>
     <DotNetCliToolReference Include="dotnet-reportgenerator-cli" Version="4.1.10" />
-    <PackageReference Include="coverlet.msbuild" Version="2.6.2">
+    <PackageReference Include="coverlet.msbuild" Version="2.8.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
@@ -13,6 +13,6 @@
     <!-- Merges the reports into one -->
     <Exec Command="dotnet reportgenerator -reports:$(CoverletBaseDir)*.xml -targetdir:$(CoverletResultsDir) -reporttypes:Cobertura -verbosity:Verbose" WorkingDirectory="$(ProjectDir)" />
     <!-- Gives the summary in an Azure Pipelines look & feel -->
-    <Exec Command="dotnet reportgenerator -reports:$(CoverletResultsDir)Cobertura.xml -targetdir:$(CoverletResultsDir) -reporttypes:HtmlInline_AzurePipelines;Cobertura -verbosity:Verbose" WorkingDirectory="$(ProjectDir)" />
+    <Exec Command="dotnet reportgenerator -reports:$(CoverletResultsDir)Cobertura.xml -targetdir:$(CoverletResultsDir) -reporttypes:'HtmlInline_AzurePipelines;Cobertura' -verbosity:Verbose" WorkingDirectory="$(ProjectDir)" />
   </Target>
 </Project>
