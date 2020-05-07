@@ -37,7 +37,7 @@ steps:
     projects: |
       test/**/*.Tests.csproj
       test/**/*.Tests.Win.csproj
-    arguments: "--configuration Release"
+    arguments: "-p:CollectCoverage=false --configuration Release"
 
 - task: PublishTestResults@2
 

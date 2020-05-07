@@ -1,5 +1,5 @@
 ﻿// <copyright file="RecordStatus.cs" company="OpenTelemetry Authors">
-// Copyright 2018, OpenTelemetry Authors
+// Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
