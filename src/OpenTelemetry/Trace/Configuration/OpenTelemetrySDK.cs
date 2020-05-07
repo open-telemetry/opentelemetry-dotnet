@@ -1,5 +1,5 @@
 ﻿// <copyright file="OpenTelemetrySDK.cs" company="OpenTelemetry Authors">
-// Copyright 2018, OpenTelemetry Authors
+// Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,12 +29,16 @@ namespace OpenTelemetry.Trace.Configuration
 
         public static void EnableOpenTelemetry(string source, ActivityProcessor activityProcessor)
         {
-            ActivitySource.AddActivityListener(
-            activitySource => activitySource.Name.Equals(source),
-            (activitySource, name, kind, context, tags, links) => ActivityDataRequest.AllData,
-            (activitySource, name, kind, parentId, tags, links) => ActivityDataRequest.AllData,
-            activityProcessor.OnStart,
-            activityProcessor.OnEnd);
+            ActivityListener listener = new ActivityListener
+            {
+                ActivityStopped = activityProcessor.OnStart,
+                ActivityStarted = activityProcessor.OnEnd,
+                ShouldListenTo = (activitySource) => activitySource.Name.Equals(source),
+                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
+            };
+
+            ActivitySource.AddActivityListener(listener);
         }
     }
 }
