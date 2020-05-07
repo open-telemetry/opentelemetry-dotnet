@@ -107,7 +107,7 @@ namespace OpenTelemetry.Trace.Configuration
             this.AdapterFactories.Add(
                 new AdapterFactory(
                     typeof(TAdapter).Name,
-                    "semver:" + typeof(TAdapter).Assembly.GetName().Version,
+                    "server:" + typeof(TAdapter).Assembly.GetName().Version,
                     adapterFactory));
 
             return this;
