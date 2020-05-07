@@ -71,11 +71,12 @@ namespace Samples
             var testCounter = meter.CreateInt64Counter("MyCounter");
             var testMeasure = meter.CreateInt64Measure("MyMeasure");
             var testObserver = meter.CreateInt64Observer("MyObservation", CallBackForMyObservation);
-            var labels1 = new List<KeyValuePair<string, string>>();
-            labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
+            var labels1 = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("dim1", "value1"),
+                new KeyValuePair<string, string>("dim2", "value2"),
+            };
 
-            var labels2 = new List<KeyValuePair<string, string>>();
-            labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
             var defaultContext = default(SpanContext);
 
             Stopwatch sw = Stopwatch.StartNew();
@@ -88,7 +89,7 @@ namespace Samples
                 testMeasure.Record(defaultContext, 5, meter.GetLabelSet(labels1));
                 testMeasure.Record(defaultContext, 750, meter.GetLabelSet(labels1));
 
-                // Obviously there is no testObserver.Oberve() here, as Observer instruments
+                // Obviously there is no testObserver.Observe() here, as Observer instruments
                 // have callbacks that are called by the Meter automatically at each collection interval.
 
                 await Task.Delay(1000);
@@ -96,7 +97,7 @@ namespace Samples
                 Console.WriteLine("Running and emitting metrics. Remaining time:" + (int)remaining + " seconds");
             }
 
-            // Stopping 
+            // Stopping
             metricsHttpServer.Stop();
             Console.WriteLine("Metrics server shutdown.");
             Console.WriteLine("Press Enter key to exit.");
@@ -105,8 +106,11 @@ namespace Samples
 
         internal static void CallBackForMyObservation(Int64ObserverMetric observerMetric)
         {
-            var labels1 = new List<KeyValuePair<string, string>>();
-            labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
+            var labels1 = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("obs_dim1", "obs_value1"),
+                new KeyValuePair<string, string>("obs_dim2", "obs_value2"),
+            };
 
             observerMetric.Observe(Process.GetCurrentProcess().WorkingSet64, labels1);
         }

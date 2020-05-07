@@ -71,7 +71,7 @@ namespace OpenTelemetry.Metrics.Export
                     // to the MetricExporter.
                     this.metricProcessor.FinishCollectionCycle(out metricToExport);
 
-                    var exportResult = await this.metricExporter.ExportAsync(metricToExport, cancellationToken);
+                    var exportResult = await this.metricExporter.ExportAsync(metricToExport, cancellationToken).ConfigureAwait(false);
                     if (exportResult != MetricExporter.ExportResult.Success)
                     {
                         OpenTelemetrySdkEventSource.Log.MetricExporterErrorResult((int)exportResult);

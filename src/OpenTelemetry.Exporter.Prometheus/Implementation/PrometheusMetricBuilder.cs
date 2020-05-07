@@ -179,11 +179,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 // positive infinity, and negative infinity, respectively.
                 writer.Write(" ");
                 writer.Write(m.Value);
-                writer.Write(" ");
-
-                // The timestamp is an int64 (milliseconds since epoch, i.e. 1970-01-01 00:00:00 UTC, excluding
-                // leap seconds), represented as required by Go's ParseInt() function.
-                writer.Write(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
 
                 // Prometheus' text-based format is line oriented. Lines are separated
                 // by a line feed character (\n). The last line must end with a line

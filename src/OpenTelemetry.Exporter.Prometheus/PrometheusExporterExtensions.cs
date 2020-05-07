@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="writer">StreamWriter to write to.</param>
         public static void WriteMetricsCollection(this PrometheusExporter exporter, StreamWriter writer)
         {
-            foreach (var metric in exporter.GetAndClearMetrics())
+            foreach (var metric in exporter.Metrics)
             {
                 var builder = new PrometheusMetricBuilder()
                     .WithName(metric.MetricName)
@@ -92,6 +92,8 @@ namespace OpenTelemetry.Exporter.Prometheus
                             }
                     }
                 }
+
+                builder.Write(writer);
             }
         }
 
@@ -121,8 +123,6 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 metricValueBuilder.WithLabel(label.Key, label.Value);
             }
-
-            builder.Write(writer);
         }
 
         private static void WriteSummary(
@@ -137,6 +137,22 @@ namespace OpenTelemetry.Exporter.Prometheus
         {
             builder = builder.WithType(PrometheusSummaryType);
 
+            var minBuilder = builder.AddValue();
+            minBuilder.WithName(metricName);
+            minBuilder.WithValue(min);
+
+            var maxBuilder = builder.AddValue();
+            maxBuilder.WithName(metricName);
+            maxBuilder.WithValue(max);
+
+            var sumBuilder = builder.AddValue();
+            sumBuilder.WithName(metricName + PrometheusSummarySumPostFix);
+            sumBuilder.WithValue(sum);
+
+            var countBuilder = builder.AddValue();
+            countBuilder.WithName(metricName + PrometheusSummaryCountPostFix);
+            countBuilder.WithValue(count);
+
             foreach (var label in labels)
             {
                 /* For Summary we emit one row for Sum, Count, Min, Max.
@@ -146,33 +162,17 @@ namespace OpenTelemetry.Exporter.Prometheus
                 Sample output:
                 MyMeasure_sum{dim1="value1"} 750 1587013352982
                 MyMeasure_count{dim1="value1"} 5 1587013352982
-                MyMeasure{dim1="value2",quantile="0"} 150 1587013352982
-                MyMeasure{dim1="value2",quantile="1"} 150 1587013352982
+                MyMeasure{dim1="value1",quantile="0"} 150 1587013352982
+                MyMeasure{dim1="value1",quantile="1"} 150 1587013352982
                 */
-                var metricValueBuilder = builder.AddValue();
-                metricValueBuilder.WithName(metricName + PrometheusSummarySumPostFix);
-                metricValueBuilder = metricValueBuilder.WithValue(sum);
-                metricValueBuilder.WithLabel(label.Key, label.Value);
-
-                metricValueBuilder = builder.AddValue();
-                metricValueBuilder.WithName(metricName + PrometheusSummaryCountPostFix);
-                metricValueBuilder = metricValueBuilder.WithValue(count);
-                metricValueBuilder.WithLabel(label.Key, label.Value);
-
-                metricValueBuilder = builder.AddValue();
-                metricValueBuilder.WithName(metricName);
-                metricValueBuilder = metricValueBuilder.WithValue(min);
-                metricValueBuilder.WithLabel(label.Key, label.Value);
-                metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMin);
-
-                metricValueBuilder = builder.AddValue();
-                metricValueBuilder.WithName(metricName);
-                metricValueBuilder = metricValueBuilder.WithValue(max);
-                metricValueBuilder.WithLabel(label.Key, label.Value);
-                metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMax);
+                minBuilder.WithLabel(label.Key, label.Value);
+                maxBuilder.WithLabel(label.Key, label.Value);
+                sumBuilder.WithLabel(label.Key, label.Value);
+                countBuilder.WithLabel(label.Key, label.Value);
             }
 
-            builder.Write(writer);
+            minBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMin);
+            maxBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMax);
         }
     }
 }

@@ -36,28 +36,20 @@ namespace OpenTelemetry.Exporter.Prometheus
         public PrometheusExporter(PrometheusExporterOptions options)
         {
             this.Options = options;
-            this.Metrics = new List<Metric>();
+            this.Metrics = Enumerable.Empty<Metric>();
         }
 
-        private List<Metric> Metrics { get; set; }
+        internal IEnumerable<Metric> Metrics { get; private set; }
 
         /// <inheritdoc/>
         public override Task<ExportResult> ExportAsync(IEnumerable<Metric> metrics, CancellationToken cancellationToken)
         {
             // Prometheus uses a pull model, not a push.
-            // Accumulate the exported metrics internally, return success.
+            // Update the reference to the current metrics and return success.
             // The pull process will read this internally stored metrics
             // at its own schedule.
-            this.Metrics.AddRange(metrics);
+            this.Metrics = metrics;
             return Task.FromResult(ExportResult.Success);
-        }
-
-        internal List<Metric> GetAndClearMetrics()
-        {
-            // TODO harden this so as to not lose data if Export fails.
-            List<Metric> current = this.Metrics;
-            this.Metrics = new List<Metric>();
-            return current;
         }
     }
 }

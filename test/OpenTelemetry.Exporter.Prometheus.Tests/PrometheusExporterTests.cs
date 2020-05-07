@@ -16,6 +16,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -34,8 +36,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
     {
         private readonly ITestOutputHelper output;
         private const int metricPushIntervalMsec = 100;
-        private const int waitDuration = metricPushIntervalMsec + 100;
-
+        private const int waitDuration = metricPushIntervalMsec + 10;
+        private const int numOperationBatches = 10;
 
         public PrometheusExporterTests(ITestOutputHelper output)
         {
@@ -48,7 +50,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
             var promExporter = new PrometheusExporter(promOptions);
             var simpleProcessor = new UngroupedBatcher();
-            
+
             var metricsHttpServer = new PrometheusExporterMetricsHttpServer(promExporter);
             try
             {
@@ -56,14 +58,14 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 CollectMetrics(simpleProcessor, promExporter);
             }
             finally
-            {                
+            {
                 await Task.Delay(waitDuration);
 
                 var client = new HttpClient();
                 var response = await client.GetAsync("http://localhost:9184/metrics/");
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 var responseText = response.Content.ReadAsStringAsync().Result;
-                this.output.WriteLine($"Respone from metrics API is \n {responseText}");
+                this.output.WriteLine($"Response from metrics API is\n{responseText}");
                 ValidateResponse(responseText);
                 metricsHttpServer.Stop();
             }
@@ -104,7 +106,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 response = await client.GetAsync("/metrics");
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 var responseText = response.Content.ReadAsStringAsync().Result;
-                this.output.WriteLine($"Respone from metrics API is \n {responseText}");
+                this.output.WriteLine($"Response from metrics API is\n{responseText}");
                 ValidateResponse(responseText);
             }
         }
@@ -132,7 +134,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var defaultContext = default(SpanContext);
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < numOperationBatches; i++)
             {
                 testCounter.Add(defaultContext, 100, meter.GetLabelSet(labels1));
                 testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels1));
@@ -141,42 +143,67 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
                 testMeasure.Record(defaultContext, 10, meter.GetLabelSet(labels1));
                 testMeasure.Record(defaultContext, 100, meter.GetLabelSet(labels1));
-                testMeasure.Record(defaultContext, 5, meter.GetLabelSet(labels1));
-                testMeasure.Record(defaultContext, 500, meter.GetLabelSet(labels1));
+                testMeasure.Record(defaultContext, 5, meter.GetLabelSet(labels2));
+                testMeasure.Record(defaultContext, 500, meter.GetLabelSet(labels2));
             }
         }
 
-        private void ValidateResponse(string responseText)
+        private static void ValidateResponse(string responseText)
         {
+            var prometheusLabels = new []
+            {
+                "dim1=\"value1\",dim2=\"value1\"",
+                "dim1=\"value2\",dim2=\"value2\"",
+            };
+
+            var counterCases = new []
+            {
+                new { labels = prometheusLabels[0], adds = new [] { 100, 10} },
+                new { labels = prometheusLabels[1], adds = new [] { 200, 10} },
+            };
+
+            var measureCases = new []
+            {
+                new { labels = prometheusLabels[0], measures = new []{ 10, 100 } },
+                new { labels = prometheusLabels[1], measures = new []{ 5, 500 } },
+            };
+
             // Validate counters.
-            Assert.Contains("TYPE testCounter counter", responseText);
-            Assert.Contains("testCounter{dim1=\"value1\",dim2=\"value1\"}", responseText);
-            Assert.Contains("testCounter{dim1=\"value2\",dim2=\"value2\"}", responseText);
+            var responseLines = responseText.Split('\n');
+            Assert.Single(responseLines, l  => l == "# TYPE testCounter counter");
+            foreach (var counterCase in counterCases)
+            {
+                var counter = numOperationBatches * counterCase.adds.Sum();
+                var counterLine = $"testCounter{{{counterCase.labels}}} {counter.ToString(CultureInfo.InvariantCulture)}";
+                Assert.Single(responseLines, l  => l == counterLine);
+            }
 
-            // Validate measure.
-            Assert.Contains("# TYPE testMeasure summary", responseText);
-            // sum is 6150 = 10 * (10+100+5+500)
-            Assert.Contains("testMeasure_sum{dim1=\"value1\"} 6150", responseText);
-            // count is 10 * 4
-            Assert.Contains("testMeasure_count{dim1=\"value1\"} 40", responseText);
-            // Min is 5
-            Assert.Contains("testMeasure{dim1=\"value1\",quantile=\"0\"} 5", responseText);
-            // Max is 500
-            Assert.Contains("testMeasure{dim1=\"value1\",quantile=\"1\"} 500", responseText);
+            // Validate measures.
+            Assert.Single(responseLines, l => l == "# TYPE testMeasure summary");
+            foreach (var measureCase in measureCases)
+            {
+                var min = measureCase.measures.Min();
+                var max = measureCase.measures.Max();
+                var sum = numOperationBatches * measureCase.measures.Sum();
+                var count = numOperationBatches * measureCase.measures.Length;
 
-            // TODO: Validate that # TYPE occurs only once per metric.
-            // Also validate that for every metric+dimension, there is only one row in the response.
-            // Though the above are Prometheus Server requirements, we haven't enforced it in code.
-            // This is because we have implemented Prometheus using a Push Controller, where
-            // we accumulate metrics from each Push into exporter, and is used to construct
-            // out for /metrics call. Because of this, its possible that multiple Push has occured
-            // before Prometheus server makes /metrics call. (i.e Prometheus scrape interval is much more
-            // than Push interval scenario)
-            // Once a pull model is implemented, we'll not have this issue and we need to add tests
-            // at that time.
+                var minLine = $"testMeasure{{{measureCase.labels},quantile=\"0\"}} {min.ToString(CultureInfo.InvariantCulture)}";
+                Assert.Single(responseLines, l => l == minLine);
+
+                var maxLine = $"testMeasure{{{measureCase.labels},quantile=\"1\"}} {max.ToString(CultureInfo.InvariantCulture)}";
+                Assert.Single(responseLines, l => l == maxLine);
+
+                var sumLine = $"testMeasure_sum{{{measureCase.labels}}} {sum.ToString(CultureInfo.InvariantCulture)}";
+                Assert.Single(responseLines, l => l == sumLine);
+
+                var countLine = $"testMeasure_count{{{measureCase.labels}}} {count.ToString(CultureInfo.InvariantCulture)}";
+                Assert.Single(responseLines, l => l == countLine);
+            }
+
+            // TODO: Validate order of the lines.
 
             // If in future, there is a official .NET Prometheus Client library, and OT Exporter
-            // choses to take a dependency on it, then none of these concerns arise.
+            // chooses to take a dependency on it.
         }
     }
 }
