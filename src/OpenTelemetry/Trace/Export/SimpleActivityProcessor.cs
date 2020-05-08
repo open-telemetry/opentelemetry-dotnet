@@ -50,6 +50,7 @@ namespace OpenTelemetry.Trace.Export
             {
                 // do not await, just start export
                 // it can still throw in synchronous part
+
                 _ = this.exporter.ExportAsync(new[] { activity }, CancellationToken.None);
             }
             catch (Exception ex)

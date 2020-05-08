@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.Console;
 using OpenTelemetry.Trace.Configuration;
@@ -26,31 +27,61 @@ namespace Samples
         internal static object Run(ConsoleActivityOptions options)
         {
             // Setup exporter
-            var exporterOptions = new ConsoleExporterOptions
+            var exporterOptions = new ConsoleActivityExporterOptions
             {
-                Pretty = options.Pretty,
+                DisplayAsJson = options.DisplayAsJson,
             };
             var activityExporter = new ConsoleActivityExporter(exporterOptions);
 
             // Setup processor
             var activityProcessor = new SimpleActivityProcessor(activityExporter);
 
-            // Enable OpenTelemetry for the "source" named "DemoSource".
-            OpenTelemetrySDK.EnableOpenTelemetry("DemoSource", activityProcessor);
+            // Enable OpenTelemetry for the "source" named "MyCompany.MyProduct.MyWebServer".
+            OpenTelemetrySDK.EnableOpenTelemetry("MyCompany.MyProduct.MyWebServer", activityProcessor);
 
             // Everything above this line is required only in Applications
             // which decide to use OT.
 
             // The following is generating activity.
             // A library would simply write the following line of code.
-            var source = new ActivitySource("DemoSource");
-            using (var parent = source.StartActivity("parent"))
+            var source = new ActivitySource("MyCompany.MyProduct.MyWebServer");
+            using (var parent = source.StartActivity("HttpIn", ActivityKind.Server))
             {
-                parent?.AddTag("parent location", "parent location");
-
-                using (var child = source.StartActivity("child"))
+                parent?.AddTag("http.method", "GET");
+                parent?.AddTag("http.host", "MyHostName");
+                if (parent != null)
                 {
-                    child?.AddTag("child location", "child location");
+                    parent.DisplayName = "HttpIn DisplayName";
+                }
+
+                try
+                {
+                    // Actual code to achieve the purpose of the library.
+                    // For websebserver example, this would be calling
+                    // user middlware pipeline.
+
+                    // There can be child activities.
+                    // In this example HttpOut is a child of HttpIn.
+                    using (var child = source.StartActivity("HttpOut", ActivityKind.Client))
+                    {
+                        child?.AddTag("http.url", "www.mydependencyapi.com");
+                        try
+                        {
+                            // do actual work.
+
+                            child?.AddTag("http.status_code", "200");
+                        }
+                        catch (Exception)
+                        {
+                            child?.AddTag("http.status_code", "500");
+                        }
+                    }
+
+                    parent?.AddTag("http.status_code", "200");
+                }
+                catch (Exception)
+                {
+                    parent?.AddTag("http.status_code", "500");
                 }
             }
 

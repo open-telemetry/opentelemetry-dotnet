@@ -31,8 +31,8 @@ namespace OpenTelemetry.Trace.Configuration
         {
             ActivityListener listener = new ActivityListener
             {
-                ActivityStopped = activityProcessor.OnStart,
-                ActivityStarted = activityProcessor.OnEnd,
+                ActivityStarted = activityProcessor.OnStart,
+                ActivityStopped = activityProcessor.OnEnd,
                 ShouldListenTo = (activitySource) => activitySource.Name.Equals(source),
                 GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,

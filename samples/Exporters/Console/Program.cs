@@ -106,15 +106,15 @@ namespace Samples
     [Verb("console", HelpText = "Specify the options required to test console exporter")]
     internal class ConsoleOptions
     {
-        [Option('p', "pretty", HelpText = "Specify if the output should be pretty printed (default: false)", Default = true)]
+        [Option('p', "pretty", HelpText = "Specify if the output should be pretty printed (default: true)", Default = true)]
         public bool Pretty { get; set; }
     }
 
     [Verb("consoleactivity", HelpText = "Specify the options required to test console activity exporter")]
     internal class ConsoleActivityOptions
     {
-        [Option('p', "pretty", HelpText = "Specify if the output should be pretty printed (default: false)", Default = true)]
-        public bool Pretty { get; set; }
+        [Option('p', "displayasjson", HelpText = "Specify if the output should be displayed as json or not (default: false)", Default = true)]
+        public bool DisplayAsJson { get; set; }
     }
 
     [Verb("otlp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP)")]

@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -27,24 +28,53 @@ namespace OpenTelemetry.Exporter.Console
     public class ConsoleActivityExporter : ActivityExporter
     {
         private readonly JsonSerializerOptions serializerOptions;
+        private bool displayAsJson;
 
-        public ConsoleActivityExporter(ConsoleExporterOptions options)
+        public ConsoleActivityExporter(ConsoleActivityExporterOptions options)
         {
-            this.serializerOptions = new JsonSerializerOptions
+            this.serializerOptions = new JsonSerializerOptions()
             {
-                WriteIndented = options.Pretty,
+                WriteIndented = true,
             };
+
+            this.displayAsJson = options.DisplayAsJson;
 
             this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
             this.serializerOptions.Converters.Add(new ActivitySpanIdConverter());
             this.serializerOptions.Converters.Add(new ActivityTraceIdConverter());
         }
 
-        public override Task<ExportResult> ExportAsync(IEnumerable<Activity> batch, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync(IEnumerable<Activity> activityBatch, CancellationToken cancellationToken)
         {
-            foreach (var span in batch)
+            foreach (var activity in activityBatch)
             {
-                System.Console.WriteLine(JsonSerializer.Serialize(span, this.serializerOptions));
+                if (this.displayAsJson)
+                {
+                    System.Console.WriteLine(JsonSerializer.Serialize(activity, this.serializerOptions));
+                }
+                else
+                {
+                    System.Console.WriteLine("Activity ID - " + activity.Id);
+                    if (!string.IsNullOrEmpty(activity.ParentId))
+                    {
+                        System.Console.WriteLine("Activity ParentId - " + activity.ParentId);
+                    }
+
+                    System.Console.WriteLine("Activity OperationName - " + activity.OperationName);
+                    System.Console.WriteLine("Activity DisplayName - " + activity.DisplayName);
+                    System.Console.WriteLine("Activity StartTime - " + activity.StartTimeUtc);
+                    System.Console.WriteLine("Activity Duration - " + activity.Duration);
+                    if (activity.Tags.Count() > 0)
+                    {
+                        System.Console.WriteLine("Activity Tags");
+                        foreach (var tag in activity.Tags)
+                        {
+                            System.Console.WriteLine($"TagName: {tag.Key} TagValue: {tag.Value}");
+                        }
+                    }
+
+                    System.Console.WriteLine("\n");
+                }
             }
 
             return Task.FromResult(ExportResult.Success);
