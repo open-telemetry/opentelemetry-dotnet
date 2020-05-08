@@ -25,15 +25,15 @@ namespace OpenTelemetry.Trace.Export
     public abstract class ActivityProcessor
     {
         /// <summary>
-        /// Span Activity hook.
+        /// Activity start hook.
         /// </summary>
-        /// <param name="activity">Instance of span to process.</param>
+        /// <param name="activity">Instance of activity to process.</param>
         public abstract void OnStart(Activity activity);
 
         /// <summary>
-        /// Span Activity hook.
+        /// Activity end hook.
         /// </summary>
-        /// <param name="activity">Instance of Span to process.</param>
+        /// <param name="activity">Instance of activity to process.</param>
         public abstract void OnEnd(Activity activity);
 
         /// <summary>

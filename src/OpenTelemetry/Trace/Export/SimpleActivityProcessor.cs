@@ -28,7 +28,6 @@ namespace OpenTelemetry.Trace.Export
     {
         private readonly ActivityExporter exporter;
         private bool disposed = false;
-        private long spanCount = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleActivityProcessor"/> class.
@@ -39,15 +38,9 @@ namespace OpenTelemetry.Trace.Export
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
-        public long GetSpanCount()
-        {
-            return this.spanCount;
-        }
-
         /// <inheritdoc />
         public override void OnStart(Activity activity)
         {
-            Interlocked.Increment(ref this.spanCount);
         }
 
         /// <inheritdoc />
