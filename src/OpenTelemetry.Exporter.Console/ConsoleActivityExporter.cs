@@ -73,6 +73,15 @@ namespace OpenTelemetry.Exporter.Console
                         }
                     }
 
+                    if (activity.Events.Count() > 0)
+                    {
+                        System.Console.WriteLine("Activity Events");
+                        foreach (var activityEvent in activity.Events)
+                        {
+                            System.Console.WriteLine($"Event Name: {activityEvent.Name} TimeStamp: {activityEvent.Timestamp}");
+                        }
+                    }
+
                     System.Console.WriteLine("\n");
                 }
             }

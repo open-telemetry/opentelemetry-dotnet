@@ -113,7 +113,7 @@ namespace Samples
     [Verb("consoleactivity", HelpText = "Specify the options required to test console activity exporter")]
     internal class ConsoleActivityOptions
     {
-        [Option('p', "displayasjson", HelpText = "Specify if the output should be displayed as json or not (default: false)", Default = true)]
+        [Option('p', "displayasjson", HelpText = "Specify if the output should be displayed as json or not (default: false)", Default = false)]
         public bool DisplayAsJson { get; set; }
     }
 

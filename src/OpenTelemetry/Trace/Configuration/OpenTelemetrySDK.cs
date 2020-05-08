@@ -27,6 +27,14 @@ namespace OpenTelemetry.Trace.Configuration
             Activity.ForceDefaultIdFormat = true;
         }
 
+        /// <summary>
+        /// Enables OpenTelemetry for the ActivitySource with given name.
+        /// </summary>
+        /// <param name="source">Name of the ActivitySource.</param>
+        /// <param name="activityProcessor">ActivityProcessor which receives activity start/stop notifications.</param>
+        /// <remarks>
+        /// A trivial implementation. Most logic from TracerBuilder will be ported here.
+        /// </remarks>
         public static void EnableOpenTelemetry(string source, ActivityProcessor activityProcessor)
         {
             ActivityListener listener = new ActivityListener
@@ -34,6 +42,8 @@ namespace OpenTelemetry.Trace.Configuration
                 ActivityStarted = activityProcessor.OnStart,
                 ActivityStopped = activityProcessor.OnEnd,
                 ShouldListenTo = (activitySource) => activitySource.Name.Equals(source),
+
+                // The following parameters are not used now.
                 GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
             };

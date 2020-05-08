@@ -43,8 +43,11 @@ namespace Samples
             // which decide to use OT.
 
             // The following is generating activity.
-            // A library would simply write the following line of code.
+            // Libraries would simply write the following lines of code.
             var source = new ActivitySource("MyCompany.MyProduct.MyWebServer");
+
+            // The below commented out line shows more likely code a in real world webserver.
+            // using (var parent = source.StartActivity("HttpIn", ActivityKind.Server, HttpContext.Request.Headers["traceparent"] ))
             using (var parent = source.StartActivity("HttpIn", ActivityKind.Server))
             {
                 parent?.AddTag("http.method", "GET");
@@ -69,6 +72,7 @@ namespace Samples
                         {
                             // do actual work.
 
+                            child?.AddEvent(new ActivityEvent("sample activity event."));
                             child?.AddTag("http.status_code", "200");
                         }
                         catch (Exception)
