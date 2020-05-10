@@ -29,7 +29,7 @@ namespace Samples
             // and use Console exporter
             OpenTelemetrySDK.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
-                .UseConsoleActivity(opt => opt.DisplayAsJson = options.DisplayAsJson));
+                .UseConsoleActivityExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
 
             // The above line is required only in Applications
             // which decide to use OT.

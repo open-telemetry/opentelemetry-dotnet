@@ -16,19 +16,18 @@
 
 using System;
 using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Console
 {
     public static class OpenTelemetryBuilderExtensions
     {
         /// <summary>
-        /// Registers a Console exporter.
+        /// Registers a ConsoleActivity exporter.
         /// </summary>
         /// <param name="builder">Open Telemetry builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseConsoleActivity(this OpenTelemetryBuilder builder, Action<ConsoleActivityExporterOptions> configure)
+        public static OpenTelemetryBuilder UseConsoleActivityExporter(this OpenTelemetryBuilder builder, Action<ConsoleActivityExporterOptions> configure)
         {
             if (builder == null)
             {
@@ -44,39 +43,6 @@ namespace OpenTelemetry.Exporter.Console
             configure(exporterOptions);
             var consoleExporter = new ConsoleActivityExporter(exporterOptions);
             return builder.SetProcessorPipeline(pipeline => pipeline.SetExporter(consoleExporter));
-        }
-
-        /// <summary>
-        /// Registers Console exporter.
-        /// </summary>
-        /// <param name="builder">Trace builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
-        /// <param name="processorConfigure">Span processor configuration.</param>
-        /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
-        public static TracerBuilder UseConsole(this TracerBuilder builder, Action<ConsoleExporterOptions> configure, Action<SpanProcessorPipelineBuilder> processorConfigure)
-        {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            if (processorConfigure == null)
-            {
-                throw new ArgumentNullException(nameof(processorConfigure));
-            }
-
-            var options = new ConsoleExporterOptions();
-            configure(options);
-            return builder.AddProcessorPipeline(b =>
-            {
-                b.SetExporter(new ConsoleExporter(options));
-                processorConfigure.Invoke(b);
-            });
         }
     }
 }
