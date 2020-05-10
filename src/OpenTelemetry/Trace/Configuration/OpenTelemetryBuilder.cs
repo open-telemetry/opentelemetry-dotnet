@@ -30,22 +30,9 @@ namespace OpenTelemetry.Trace.Configuration
         {
         }
 
-        internal Resource Resource { get; private set; } = Resource.Empty;
-
         internal ActivityProcessorPipelineBuilder ProcessingPipeline { get; private set; }
 
         internal HashSet<string> ActivitySourceNames { get; private set; }
-
-        /// <summary>
-        /// Sets the <see cref="Resource"/> describing the app associated with all traces. Overwrites currently set resource.
-        /// </summary>
-        /// <param name="resource">Resource to be associate with all traces.</param>
-        /// <returns>Returns <see cref="OpenTelemetryBuilder"/> for chaining.</returns>
-        public OpenTelemetryBuilder SetResource(Resource resource)
-        {
-            this.Resource = resource ?? Resource.Empty;
-            return this;
-        }
 
         /// <summary>
         /// Sets processing and exporting pipeline.
