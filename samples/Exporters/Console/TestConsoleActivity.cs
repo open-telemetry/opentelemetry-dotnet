@@ -38,10 +38,12 @@ namespace Samples
             // emit activities, which are the .NET representation of OT Spans.
             var source = new ActivitySource("MyCompany.MyProduct.MyWebServer");
 
-            // The below commented out line shows more likely code a in real world webserver.
+            // The below commented out line shows more likely code in a real world webserver.
             // using (var parent = source.StartActivity("HttpIn", ActivityKind.Server, HttpContext.Request.Headers["traceparent"] ))
             using (var parent = source.StartActivity("HttpIn", ActivityKind.Server))
             {
+                // TagNames can follow the OT guidelines
+                // from https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions
                 parent?.AddTag("http.method", "GET");
                 parent?.AddTag("http.host", "MyHostName");
                 if (parent != null)
@@ -59,8 +61,6 @@ namespace Samples
                     // In this example HttpOut is a child of HttpIn.
                     using (var child = source.StartActivity("HttpOut", ActivityKind.Client))
                     {
-                        // TagNames can follow the OT guidelines
-                        // from https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions
                         child?.AddTag("http.url", "www.mydependencyapi.com");
                         try
                         {
