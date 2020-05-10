@@ -18,7 +18,6 @@ using System;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.Console;
 using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
 
 namespace Samples
 {
@@ -26,24 +25,17 @@ namespace Samples
     {
         internal static object Run(ConsoleActivityOptions options)
         {
-            // Setup exporter
-            var exporterOptions = new ConsoleActivityExporterOptions
-            {
-                DisplayAsJson = options.DisplayAsJson,
-            };
-            var activityExporter = new ConsoleActivityExporter(exporterOptions);
+            // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
+            // and use Console exporter
+            OpenTelemetrySDK.EnableOpenTelemetry(
+                (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
+                .UseConsoleActivity(opt => opt.DisplayAsJson = options.DisplayAsJson));
 
-            // Setup processor
-            var activityProcessor = new SimpleActivityProcessor(activityExporter);
-
-            // Enable OpenTelemetry for the "source" named "MyCompany.MyProduct.MyWebServer".
-            OpenTelemetrySDK.EnableOpenTelemetry("MyCompany.MyProduct.MyWebServer", activityProcessor);
-
-            // Everything above this line is required only in Applications
+            // The above line is required only in Applications
             // which decide to use OT.
 
-            // The following is generating activity.
-            // Libraries would simply write the following lines of code.
+            // Libraries would simply write the following lines of code to
+            // emit activities, which are the .NET representation of OT Spans.
             var source = new ActivitySource("MyCompany.MyProduct.MyWebServer");
 
             // The below commented out line shows more likely code a in real world webserver.
@@ -67,6 +59,8 @@ namespace Samples
                     // In this example HttpOut is a child of HttpIn.
                     using (var child = source.StartActivity("HttpOut", ActivityKind.Client))
                     {
+                        // TagNames can follow the OT guidelines
+                        // from https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions
                         child?.AddTag("http.url", "www.mydependencyapi.com");
                         try
                         {

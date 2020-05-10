@@ -69,7 +69,7 @@ namespace OpenTelemetry.Exporter.Console
                         System.Console.WriteLine("Activity Tags");
                         foreach (var tag in activity.Tags)
                         {
-                            System.Console.WriteLine($"TagName: {tag.Key} TagValue: {tag.Value}");
+                            System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
                         }
                     }
 

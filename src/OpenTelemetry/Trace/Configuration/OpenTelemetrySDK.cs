@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using OpenTelemetry.Trace.Export;
 
@@ -28,20 +29,33 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Enables OpenTelemetry for the ActivitySource with given name.
+        /// Enables OpenTelemetry.
         /// </summary>
-        /// <param name="source">Name of the ActivitySource.</param>
-        /// <param name="activityProcessor">ActivityProcessor which receives activity start/stop notifications.</param>
+        /// <param name="configureOpenTelemetryBuilder">Function that configures OpenTelemetryBuilder.</param>
         /// <remarks>
-        /// A trivial implementation. Most logic from TracerBuilder will be ported here.
+        /// Basic implementation only. Most logic from TracerBuilder will be ported here.
         /// </remarks>
-        public static void EnableOpenTelemetry(string source, ActivityProcessor activityProcessor)
+        public static void EnableOpenTelemetry(Action<OpenTelemetryBuilder> configureOpenTelemetryBuilder)
         {
+            var openTelemetryBuilder = new OpenTelemetryBuilder();
+            configureOpenTelemetryBuilder(openTelemetryBuilder);
+
+            ActivityProcessor activityProcessor;
+            if (openTelemetryBuilder.ProcessingPipeline == null)
+            {
+                // if there are no pipelines are configured, use noop processor
+                activityProcessor = new NoopActivityProcessor();
+            }
+            else
+            {
+                activityProcessor = openTelemetryBuilder.ProcessingPipeline.Build();
+            }
+
             ActivityListener listener = new ActivityListener
             {
                 ActivityStarted = activityProcessor.OnStart,
                 ActivityStopped = activityProcessor.OnEnd,
-                ShouldListenTo = (activitySource) => activitySource.Name.Equals(source),
+                ShouldListenTo = (activitySource) => openTelemetryBuilder.ActivitySourceNames.Contains(activitySource.Name.ToLowerInvariant()),
 
                 // The following parameters are not used now.
                 GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
