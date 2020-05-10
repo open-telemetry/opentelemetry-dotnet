@@ -51,10 +51,18 @@ namespace OpenTelemetry.Trace.Configuration
                 activityProcessor = openTelemetryBuilder.ProcessingPipeline.Build();
             }
 
+            // This is what subscribes to Activities.
+            // Think of this as the replacement for DiagnosticListener.AllListeners.Subscribe(onNext => diagnosticListener.Subscribe(..));
             ActivityListener listener = new ActivityListener
             {
+                // Callback when Activity is started.
                 ActivityStarted = activityProcessor.OnStart,
+
+                // Callback when Activity is started.
                 ActivityStopped = activityProcessor.OnEnd,
+
+                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
+                // or not
                 ShouldListenTo = (activitySource) => openTelemetryBuilder.ActivitySourceNames.Contains(activitySource.Name.ToLowerInvariant()),
 
                 // The following parameters are not used now.
