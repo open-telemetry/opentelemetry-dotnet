@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenTelemetrySdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="OpenTelemetrySdk1.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +20,9 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace.Configuration
 {
-    public class OpenTelemetrySdk
+    public class OpenTelemetrySdk1
     {
-        static OpenTelemetrySdk()
+        static OpenTelemetrySdk1()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
