@@ -73,7 +73,7 @@ namespace OpenTelemetry.Exporter.Console
                         }
                     }
 
-                    if (activity.Events.Count() > 0)
+                    if (activity.Events.Any())
                     {
                         System.Console.WriteLine("Activity Events");
                         foreach (var activityEvent in activity.Events)

@@ -64,7 +64,7 @@ namespace OpenTelemetry.Trace.Configuration
                 this.ActivitySourceNames = new HashSet<string>();
             }
 
-            this.ActivitySourceNames.Add(activitySourceName.ToLowerInvariant());
+            this.ActivitySourceNames.Add(activitySourceName.ToUpperInvariant());
             return this;
         }
     }

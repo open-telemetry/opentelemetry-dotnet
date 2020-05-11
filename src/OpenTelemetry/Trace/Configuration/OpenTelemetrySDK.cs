@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenTelemetrySDK.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="OpenTelemetrySdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +20,9 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace.Configuration
 {
-    public class OpenTelemetrySDK
+    public class OpenTelemetrySdk
     {
-        static OpenTelemetrySDK()
+        static OpenTelemetrySdk()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Trace.Configuration
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                 // or not
-                ShouldListenTo = (activitySource) => openTelemetryBuilder.ActivitySourceNames.Contains(activitySource.Name.ToLowerInvariant()),
+                ShouldListenTo = (activitySource) => openTelemetryBuilder.ActivitySourceNames.Contains(activitySource.Name.ToUpperInvariant()),
 
                 // The following parameters are not used now.
                 GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
