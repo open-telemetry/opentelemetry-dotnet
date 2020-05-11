@@ -20,9 +20,9 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace.Configuration
 {
-    public class OpenTelemetrySdk1
+    public class OpenTelemetrySdk
     {
-        static OpenTelemetrySdk1()
+        static OpenTelemetrySdk()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
