@@ -42,7 +42,6 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc />
         public override void OnStart(SpanData span)
         {
-            _ = this.exporter.ExportAsync(new[] { span }, CancellationToken.None);
         }
 
         /// <inheritdoc />

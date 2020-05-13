@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter.ZPages
     public class ZPagesExporterStatsHttpServer : IDisposable
     {
         private readonly ZPagesExporter exporter;
-        private readonly SimpleSpanProcessor spanProcessor;
+        private readonly ZPagesSpanProcessor spanProcessor;
         private readonly HttpListener httpListener = new HttpListener();
         private readonly object lck = new object();
 
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.ZPages
         /// </summary>
         /// <param name="exporter">The <see cref="ZPagesExporterStatsHttpServer"/> instance.</param>
         /// <param name="spanProcessor">The <see cref="SimpleSpanProcessor"/> instance.</param>
-        public ZPagesExporterStatsHttpServer(ZPagesExporter exporter, SimpleSpanProcessor spanProcessor)
+        public ZPagesExporterStatsHttpServer(ZPagesExporter exporter, ZPagesSpanProcessor spanProcessor)
         {
             this.exporter = exporter;
             this.spanProcessor = spanProcessor;
@@ -130,20 +130,43 @@ namespace OpenTelemetry.Exporter.ZPages
                                              "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js\"></script></head>");
                             writer.WriteLine("<body><div class=\"col-sm-1\"></div><div class=\"container col-sm-10\"><div class=\"jumbotron table-responsive\"><h1>RPC Stats</h2>" +
                                              "<table class=\"table table-bordered table-hover table-striped\">" +
-                                             "<thead style=\"color: white;background-color: Teal;\"><tr><th>Span Name</th><th>Total Count</th><th>Count in last minute</th><th>Count in last hour</th><th>Average Latency</th>" +
-                                             "<th>Average Latency in last minute</th><th>Average Latency in last hour</th><th>Total Errors</th><th>Errors in last minute</th><th>Errors in last minute</th><th>Last Updated</th></tr></thead>" +
+                                             "<thead style=\"color: white;background-color: Teal;\"><tr><th>Span Name</th><th>Total Count</th><th>Count in last minute</th><th>Count in last hour</th><th>Average Latency (ms)</th>" +
+                                             "<th>Average Latency in last minute (ms)</th><th>Average Latency in last hour (ms)</th><th>Total Errors</th><th>Errors in last minute</th><th>Errors in last minute</th><th>Last Updated</th></tr></thead>" +
                                              "<tbody style=\"background-color: white;\">");
 
-                            Dictionary<string, ZPagesSpanInformation> spanList = this.exporter.GetSpanList();
+                            Dictionary<string, ZPagesSpanInformation> currentHourSpanList = ZPagesSpans.CurrentHourSpanList;
+                            Dictionary<string, ZPagesSpanInformation> currentMinuteSpanList = ZPagesSpans.CurrentMinuteSpanList;
 
                             // Put span information in each row of the table
-                            foreach (var spanName in spanList.Keys)
+                            foreach (var spanName in currentHourSpanList.Keys)
                             {
-                                ZPagesSpanInformation spanInformation = new ZPagesSpanInformation();
-                                spanList.TryGetValue(spanName, out spanInformation);
-                                writer.WriteLine("<tr><td>" + spanInformation.Name + "</td><td>" + spanInformation.CountTotal + "</td><td>" + spanInformation.CountMinute + "</td><td>" + spanInformation.CountHour + "</td>" +
-                                                 "<td>" + spanInformation.AvgLatencyTotal + "</td><td>" + spanInformation.AvgLatencyMinute + "</td><td>" + spanInformation.AvgLatencyHour + "</td>" +
-                                                 "<td>" + spanInformation.ErrorTotal + "</td><td>" + spanInformation.ErrorMinute + "</td><td>" + spanInformation.ErrorHour + "</td><td>" + DateTimeOffset.FromUnixTimeMilliseconds(spanInformation.LastUpdated) + " GMT" + "</td></tr>");
+                                ZPagesSpanInformation minuteSpanInformation = new ZPagesSpanInformation();
+                                ZPagesSpanInformation hourSpanInformation = new ZPagesSpanInformation();
+                                long countInLastMinute = 0;
+                                long countInLastHour = 0;
+                                long averageLatencyInLastMinute = 0;
+                                long averageLatencyInLastHour = 0;
+                                long errorCountInLastMinute = 0;
+                                long errorCountInLastHour = 0;
+
+                                if (currentMinuteSpanList.ContainsKey(spanName))
+                                {
+                                    currentMinuteSpanList.TryGetValue(spanName, out minuteSpanInformation);
+                                    countInLastMinute = minuteSpanInformation.EndedCount + ZPagesSpans.ProcessingSpanList[spanName];
+                                    averageLatencyInLastMinute = minuteSpanInformation.AvgLatencyTotal;
+                                    errorCountInLastMinute = minuteSpanInformation.ErrorTotal;
+                                }
+
+                                currentHourSpanList.TryGetValue(spanName, out hourSpanInformation);
+                                countInLastHour = hourSpanInformation.EndedCount + ZPagesSpans.ProcessingSpanList[spanName];
+                                averageLatencyInLastHour = hourSpanInformation.AvgLatencyTotal;
+                                errorCountInLastHour = hourSpanInformation.ErrorTotal;
+
+                                long totalAverageLatency = ZPagesSpans.TotalSpanLatency[spanName] / ZPagesSpans.TotalEndedSpanCount[spanName];
+
+                                writer.WriteLine("<tr><td>" + hourSpanInformation.Name + "</td><td>" + ZPagesSpans.TotalSpanCount[spanName] + "</td><td>" + countInLastMinute + "</td><td>" + countInLastHour + "</td>" +
+                                                 "<td>" + totalAverageLatency + "</td><td>" + averageLatencyInLastMinute + "</td><td>" + averageLatencyInLastHour + "</td>" +
+                                                 "<td>" + ZPagesSpans.TotalSpanErrorCount[spanName] + "</td><td>" + errorCountInLastMinute + "</td><td>" + errorCountInLastHour + "</td><td>" + DateTimeOffset.FromUnixTimeMilliseconds(hourSpanInformation.LastUpdated) + " GMT" + "</td></tr>");
                             }
 
                             writer.WriteLine("</tbody></table>");

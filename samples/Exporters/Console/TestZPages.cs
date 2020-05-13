@@ -17,6 +17,7 @@
 using System;
 using System.Threading;
 using OpenTelemetry.Exporter.ZPages;
+using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
@@ -29,7 +30,8 @@ namespace Samples
         {
             var zpagesOptions = new ZPagesExporterOptions() { Url = "http://localhost:7284/rpcz/" };
             var zpagesExporter = new ZPagesExporter(zpagesOptions);
-            var spanProcessor = new SimpleSpanProcessor(zpagesExporter);
+            var spanProcessor = new ZPagesSpanProcessor(zpagesExporter);
+            ZPagesSpans.RetentionTime = 360000;
             var httpServer = new ZPagesExporterStatsHttpServer(zpagesExporter, spanProcessor);
 
             // Start the server
@@ -45,7 +47,7 @@ namespace Samples
 
                 while (true)
                 {
-                    // Create a scoped span. It will end automatically when using statement ends
+                    // Create a scoped span.
                     TelemetrySpan telemetrySpan = tracer.StartSpan("Main");
                     telemetrySpan.Status = Status.Unavailable;
 
@@ -57,6 +59,19 @@ namespace Samples
                     Thread.Sleep(3000);
 
                     telemetrySpan.End();
+
+                    // Create a scoped span.
+                    TelemetrySpan telemetrySpan2 = tracer.StartSpan("TestSpan");
+                    telemetrySpan2.Status = Status.Ok;
+
+                    using (tracer.WithSpan(telemetrySpan2))
+                    {
+                        Console.WriteLine("Starting Span2");
+                    }
+
+                    Thread.Sleep(5000);
+
+                    telemetrySpan2.End();
                 }
             }
         }
