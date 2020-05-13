@@ -1,5 +1,5 @@
 ﻿// <copyright file="Program.cs" company="OpenTelemetry Authors">
-// Copyright 2018, OpenTelemetry Authors
+// Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,15 +37,13 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, StackdriverOptions, LightStepOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheus.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
-                    (StackdriverOptions options) => TestStackdriver.Run(options.ProjectId),
-                    (LightStepOptions options) => TestLightstep.Run(options.AccessToken),
                     (ZPagesOptions options) => TestZPages.Run(),
                     (ConsoleOptions options) => TestConsole.Run(options),
                     (OtlpOptions options) => TestOtlp.Run(options.Endpoint),
@@ -55,20 +53,7 @@ namespace Samples
         }
     }
 
-    [Verb("lightstep", HelpText = "Specify the LightStep access token", Hidden = false)]
 #pragma warning disable SA1402 // File may only contain a single type
-    internal class LightStepOptions
-    {
-        [Option('t', "accessToken", HelpText = "Please specify the access token for your LightStep project", Required = true)]
-        public string AccessToken { get; set; }
-    }
-
-    [Verb("stackdriver", HelpText = "Specify the options required to test Stackdriver exporter", Hidden = false)]
-    internal class StackdriverOptions
-    {
-        [Option('p', "projectId", HelpText = "Please specify the projectId of your GCP project", Required = true)]
-        public string ProjectId { get; set; }
-    }
 
     [Verb("jaeger", HelpText = "Specify the options required to test Jaeger exporter")]
     internal class JaegerOptions

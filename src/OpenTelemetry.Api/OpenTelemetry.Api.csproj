@@ -19,7 +19,7 @@
   </PropertyGroup>
   -->
   <ItemGroup>
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.6.0" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="5.0.0-preview.4.20251.6" />
   </ItemGroup>
 
 </Project>
