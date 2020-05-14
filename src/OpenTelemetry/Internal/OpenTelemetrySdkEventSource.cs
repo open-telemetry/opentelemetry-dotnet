@@ -107,7 +107,7 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(3, Message = "Exporter returned error '{0}'.", Level = EventLevel.Warning)]
-        public void ExporterErrorResult(SpanExporter.ExportResult exportResult)
+        public void ExporterErrorResult(ExportResult exportResult)
         {
             this.WriteEvent(3, exportResult.ToString());
         }

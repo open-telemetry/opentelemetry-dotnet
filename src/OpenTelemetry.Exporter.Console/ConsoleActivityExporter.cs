@@ -62,6 +62,7 @@ namespace OpenTelemetry.Exporter.Console
 
                     System.Console.WriteLine("Activity OperationName - " + activity.OperationName);
                     System.Console.WriteLine("Activity DisplayName - " + activity.DisplayName);
+                    System.Console.WriteLine("Activity Kind - " + activity.Kind);
                     System.Console.WriteLine("Activity StartTime - " + activity.StartTimeUtc);
                     System.Console.WriteLine("Activity Duration - " + activity.Duration);
                     if (activity.Tags.Count() > 0)
@@ -79,6 +80,19 @@ namespace OpenTelemetry.Exporter.Console
                         foreach (var activityEvent in activity.Events)
                         {
                             System.Console.WriteLine($"Event Name: {activityEvent.Name} TimeStamp: {activityEvent.Timestamp}");
+                            foreach (var attribute in activityEvent.Attributes)
+                            {
+                                System.Console.WriteLine($"\t {attribute.Key} : {attribute.Value}");
+                            }
+                        }
+                    }
+
+                    if (activity.Baggage.Any())
+                    {
+                        System.Console.WriteLine("Activity Baggage");
+                        foreach (var baggage in activity.Baggage)
+                        {
+                            System.Console.WriteLine($"\t {baggage.Key} : {baggage.Value}");
                         }
                     }
 
