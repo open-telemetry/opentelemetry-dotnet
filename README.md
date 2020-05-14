@@ -53,7 +53,7 @@ Approvers ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telem
 Maintainers ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
 - [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
-- [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Microsoft
+- [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
 
 *Find more about the maintainer role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
 
