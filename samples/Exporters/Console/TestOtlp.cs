@@ -60,8 +60,8 @@ namespace Samples
 
         private static object RunWithActivitySource(string endpoint)
         {
-            // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
-            // and use Console exporter
+            // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
+            // and use OTLP exporter.
             OpenTelemetrySdk.EnableOpenTelemetry(
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")

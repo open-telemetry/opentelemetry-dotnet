@@ -1,4 +1,4 @@
-// <copyright file="ActivitySourceExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpActivityExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,17 +25,18 @@ using OpenTelemetry.Trace.Export;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 {
     /// <summary>
-    /// Exporter consuming data from <see cref="ActivitySource"/> sending OpenTelemetry protocol (OTLP).
+    /// Exporter consuming <see cref="Activity"/> and exporting the data using
+    /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class ActivitySourceExporter : ActivityExporter
+    public class OtlpActivityExporter : ActivityExporter
     {
         private readonly TraceExporter traceExporter;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ActivitySourceExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpActivityExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
-        public ActivitySourceExporter(ExporterOptions options)
+        public OtlpActivityExporter(ExporterOptions options)
         {
             this.traceExporter = new TraceExporter(options);
         }

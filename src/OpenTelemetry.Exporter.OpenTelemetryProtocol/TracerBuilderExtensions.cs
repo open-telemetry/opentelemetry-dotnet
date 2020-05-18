@@ -107,7 +107,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
                 var exporterOptions = new ExporterOptions();
                 configure(exporterOptions);
 
-                var activityExporter = new ActivitySourceExporter(exporterOptions);
+                var activityExporter = new OtlpActivityExporter(exporterOptions);
                 pipeline.SetExporter(activityExporter);
             });
         }

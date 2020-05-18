@@ -69,20 +69,21 @@ namespace Samples
                                 $"{context.Request.HttpMethod}:{context.Request.Url.AbsolutePath}",
                                 ActivityKind.Server);
 
+                            var headerKeys = context.Request.Headers.AllKeys;
+                            foreach (var headerKey in headerKeys)
+                            {
+                                string headerValue = context.Request.Headers[headerKey];
+                                activity?.AddTag($"http.header.{headerKey}", headerValue);
+                            }
+
                             string requestContent;
                             using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
                             {
-                                var headerKeys = context.Request.Headers.AllKeys;
-                                foreach (var headerKey in headerKeys)
-                                {
-                                    string headerValue = context.Request.Headers[headerKey];
-                                    activity?.AddTag($"http.header.{headerKey}", headerValue);
-                                }
-
                                 requestContent = reader.ReadToEnd();
-                                activity?.AddTag("request.content", requestContent);
-                                activity?.AddTag("request.length", requestContent.Length.ToString());
                             }
+
+                            activity?.AddTag("request.content", requestContent);
+                            activity?.AddTag("request.length", requestContent.Length.ToString());
 
                             var echo = Encoding.UTF8.GetBytes("echo: " + requestContent);
                             context.Response.ContentEncoding = Encoding.UTF8;
@@ -126,28 +127,27 @@ namespace Samples
 
                             using (var activity = source.StartActivity("POST:" + RequestPath, ActivityKind.Client))
                             {
-                                activity.AddBaggage("client.request.count", count.ToString(CultureInfo.InvariantCulture));
                                 count++;
 
-                                activity.AddEvent(new ActivityEvent("PostAsync:Started"));
+                                activity?.AddEvent(new ActivityEvent("PostAsync:Started"));
                                 using var response = await client.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
-                                activity.AddEvent(new ActivityEvent("PostAsync:Ended"));
+                                activity?.AddEvent(new ActivityEvent("PostAsync:Ended"));
 
-                                activity.AddTag("http.status_code", $"{response.StatusCode:D}");
+                                activity?.AddTag("http.status_code", $"{response.StatusCode:D}");
 
                                 var responseContent = await response.Content.ReadAsStringAsync();
-                                activity.AddTag("response.content", responseContent);
-                                activity.AddTag("response.length", responseContent.Length.ToString(CultureInfo.InvariantCulture));
+                                activity?.AddTag("response.content", responseContent);
+                                activity?.AddTag("response.length", responseContent.Length.ToString(CultureInfo.InvariantCulture));
 
                                 foreach (var header in response.Headers)
                                 {
                                     if (header.Value is IEnumerable<object> enumerable)
                                     {
-                                        activity.AddTag($"http.header.{header.Key}", string.Join(",", enumerable));
+                                        activity?.AddTag($"http.header.{header.Key}", string.Join(",", enumerable));
                                     }
                                     else
                                     {
-                                        activity.AddTag($"http.header.{header.Key}", header.Value.ToString());
+                                        activity?.AddTag($"http.header.{header.Key}", header.Value.ToString());
                                     }
                                 }
                             }
