@@ -74,7 +74,7 @@ To test from command line you need `dotnet` version `3.1+`.
 dotnet test OpenTelemetry.sln
 ```
 
-To see test coverage, run `dotnet test` from a console window and you will see the following output:
+To see code coverage, run `dotnet test` from a console window and you will see the following output:
 
 ![image](https://user-images.githubusercontent.com/20248180/59361025-1e1e7980-8d29-11e9-8449-548caf0d7823.png)
 

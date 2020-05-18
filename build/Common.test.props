@@ -25,7 +25,7 @@
 
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('.Tests'))">
     <IsTestProject>true</IsTestProject>
-    <CollectCoverage Condition="$(CollectCoverage) == ''">true</CollectCoverage>
+    <CollectCoverage Condition="$(CollectCoverage) == '' AND $([MSBuild]::IsOSUnixLike())">true</CollectCoverage>
   </PropertyGroup>
 
   <PropertyGroup Label="CollectCodeCoverageResults" Condition="$(CollectCoverage) == 'true'">
