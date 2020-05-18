@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal List<SpanProcessorPipelineBuilder> ProcessingPipelines { get; private set; }
 
-        internal List<AdapterFactory> AdapterFactories { get; private set; }
+        internal List<InstrumentationFactory> InstrumentationFactories { get; private set; }
 
         /// <summary>
         /// Configures sampler.
@@ -85,30 +85,30 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Adds auto-adapters for spans.
+        /// Adds auto-instrumentations for spans.
         /// </summary>
-        /// <typeparam name="TAdapter">Type of adapter class.</typeparam>
-        /// <param name="adapterFactory">Function that builds adapter from <see cref="Tracer"/>.</param>
+        /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
+        /// <param name="instrumentationFactory">Function that builds instrumentation from <see cref="Tracer"/>.</param>
         /// <returns>Returns <see cref="TracerBuilder"/> for chaining.</returns>
-        public TracerBuilder AddAdapter<TAdapter>(
-            Func<Tracer, TAdapter> adapterFactory)
-            where TAdapter : class
+        public TracerBuilder AddInstrumentation<TInstrumentation>(
+            Func<Tracer, TInstrumentation> instrumentationFactory)
+            where TInstrumentation : class
         {
-            if (adapterFactory == null)
+            if (instrumentationFactory == null)
             {
-                throw new ArgumentNullException(nameof(adapterFactory));
+                throw new ArgumentNullException(nameof(instrumentationFactory));
             }
 
-            if (this.AdapterFactories == null)
+            if (this.InstrumentationFactories == null)
             {
-                this.AdapterFactories = new List<AdapterFactory>();
+                this.InstrumentationFactories = new List<InstrumentationFactory>();
             }
 
-            this.AdapterFactories.Add(
-                new AdapterFactory(
-                    typeof(TAdapter).Name,
-                    "semver:" + typeof(TAdapter).Assembly.GetName().Version,
-                    adapterFactory));
+            this.InstrumentationFactories.Add(
+                new InstrumentationFactory(
+                    typeof(TInstrumentation).Name,
+                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
+                    instrumentationFactory));
 
             return this;
         }
@@ -124,13 +124,13 @@ namespace OpenTelemetry.Trace.Configuration
             return this;
         }
 
-        internal readonly struct AdapterFactory
+        internal readonly struct InstrumentationFactory
         {
             public readonly string Name;
             public readonly string Version;
             public readonly Func<Tracer, object> Factory;
 
-            internal AdapterFactory(string name, string version, Func<Tracer, object> factory)
+            internal InstrumentationFactory(string name, string version, Func<Tracer, object> factory)
             {
                 this.Name = name;
                 this.Version = version;
