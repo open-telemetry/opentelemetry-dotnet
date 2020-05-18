@@ -140,6 +140,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             foreach (var activity in activityBatch)
             {
                 var protoSpan = activity.ToOtlpSpan();
+                if (protoSpan == null)
+                {
+                    // If it could not be translated ignore it.
+                    // TODO: report this issue.
+                    continue;
+                }
 
                 // TODO: Retrieve resources for trace (not library/ActivitySource)
                 var resource = fakeResource;
