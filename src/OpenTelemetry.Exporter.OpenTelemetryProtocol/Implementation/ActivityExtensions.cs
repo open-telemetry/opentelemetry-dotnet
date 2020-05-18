@@ -73,6 +73,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
         internal static OtlpTrace.Span ToOtlpSpan(this Activity activity)
         {
+            if (activity.IdFormat != ActivityIdFormat.W3C)
+            {
+                // Only ActivityIdFormat.W3C is supported, in principle this should never be
+                // hit under the OpenTelemetry SDK.
+                return null;
+            }
+
             // protobuf doesn't understand Span<T> yet: https://github.com/protocolbuffers/protobuf/issues/3431
             Span<byte> traceIdBytes = stackalloc byte[16];
             Span<byte> spanIdBytes = stackalloc byte[8];
@@ -91,7 +98,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             var startTimeUnixNano = activity.StartTimeUtc.ToUnixTimeNanoseconds();
             var otlpSpan = new OtlpTrace.Span
             {
-                Name = activity.OperationName, // TODO: map DisplayName to anything?
+                Name = activity.DisplayName,
 
                 Kind = (OtlpTrace.Span.Types.SpanKind)(activity.Kind + 1), // TODO: there is an offset of 1 on the enum.
 
