@@ -78,6 +78,7 @@ namespace OpenTelemetry.Trace.Configuration
                 // Library authors can check activity.IsAllDataRequested and avoid
                 // doing any additional telemetry population.
                 // Activity.IsAllDataRequested is the equivalent of Span.IsRecording
+                //
                 // If Sampler returns IsSampled as false, returns ActivityDataRequest.None
                 // This prevents Activity from being created at all.
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
@@ -85,7 +86,7 @@ namespace OpenTelemetry.Trace.Configuration
                     var shouldSample = sampler.ShouldSample(
                         options.Parent,
                         options.Parent.TraceId,
-                        default(ActivitySpanId),
+                        default(ActivitySpanId), // Passing default SpanId here. The actual SpanId is not known before actual Activity creation
                         options.Name,
                         options.Kind,
                         options.Tags,
