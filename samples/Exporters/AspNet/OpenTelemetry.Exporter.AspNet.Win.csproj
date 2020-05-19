@@ -84,13 +84,13 @@
       <Project>{99f8a331-05e9-45a5-89ba-4c54e825e5b2}</Project>
       <Name>OpenTelemetry.Api</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\src\OpenTelemetry.Adapter.AspNet\OpenTelemetry.Adapter.AspNet.Win.csproj">
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Instrumentation.AspNet.Win\OpenTelemetry.Instrumentation.AspNet.Win.csproj">
       <Project>{b9eeacdd-cafa-4b75-a18d-898e7de21b17}</Project>
-      <Name>OpenTelemetry.Adapter.AspNet.Win</Name>
+      <Name>OpenTelemetry.Instrumentation.AspNet.Win</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\src\OpenTelemetry.Adapter.Dependencies\OpenTelemetry.Adapter.Dependencies.csproj">
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Instrumentation.Dependencies\OpenTelemetry.Instrumentation.Dependencies.csproj">
       <Project>{d3ffbc59-2486-4f8f-bff1-fa95c84929e1}</Project>
-      <Name>OpenTelemetry.Adapter.Dependencies</Name>
+      <Name>OpenTelemetry.Instrumentation.Dependencies</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj">
       <Project>{8d47e3cf-9ae3-42fe-9084-feb72d9ad769}</Project>
@@ -111,8 +111,8 @@
     <AspNetCompiler VirtualPath="temp" PhysicalPath="$(WebProjectOutputDir)" />
   </Target>
   <Target Name="SkipBuildWithoutVisualStudio">
-    <Message Text="Skipping build because Visual Studio is not available." Condition="!Exists('$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets')"/>
-    <CallTarget Targets="$(BuildDependsOnOriginalValue)" Condition="Exists('$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets')"/>
+    <Message Text="Skipping build because Visual Studio is not available." Condition="!Exists('$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets')" />
+    <CallTarget Targets="$(BuildDependsOnOriginalValue)" Condition="Exists('$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets')" />
   </Target>
   <PropertyGroup>
     <BuildDependsOnOriginalValue>$(BuildDependsOn)</BuildDependsOnOriginalValue>
