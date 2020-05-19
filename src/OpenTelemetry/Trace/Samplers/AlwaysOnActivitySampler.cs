@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace.Samplers
     public sealed class AlwaysOnActivitySampler : ActivitySampler
     {
         /// <inheritdoc />
-        public override string Description { get; } = nameof(AlwaysOnSampler);
+        public override string Description { get; } = nameof(AlwaysOnActivitySampler);
 
         /// <inheritdoc />
         public override SamplingResult ShouldSample(in ActivityContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, ActivityKind activityKind, IEnumerable<KeyValuePair<string, string>> tags, IEnumerable<ActivityLink> links)
