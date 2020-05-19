@@ -16,7 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using OpenTelemetry.Adapter.StackExchangeRedis;
+using OpenTelemetry.Instrumentation.StackExchangeRedis;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using StackExchange.Redis;
@@ -37,11 +37,11 @@ namespace Samples
                     o.ServiceName = "redis-test";
                     o.Endpoint = new Uri(zipkinUri);
                 })
-                .AddAdapter(t =>
+                .AddInstrumentation(t =>
                 {
-                    var adapter = new StackExchangeRedisCallsAdapter(t);
-                    connection.RegisterProfiler(adapter.GetProfilerSessionsFactory());
-                    return adapter;
+                    var instrumentation = new StackExchangeRedisCallsInstrumentation(t);
+                    connection.RegisterProfiler(instrumentation.GetProfilerSessionsFactory());
+                    return instrumentation;
                 }));
             var tracer = tracerFactory.GetTracer("redis-test");
 
