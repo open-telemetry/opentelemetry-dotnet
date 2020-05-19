@@ -24,7 +24,17 @@ namespace Samples
 {
     internal static class TestOtlp
     {
-        internal static object Run(string endpoint)
+        internal static object Run(string endpoint, bool useActivitySource)
+        {
+            if (useActivitySource)
+            {
+                return RunWithActivitySource(endpoint);
+            }
+
+            return RunWithSdk(endpoint);
+        }
+
+        private static object RunWithSdk(string endpoint)
         {
             using var tracerFactory = TracerFactory.Create(builder => builder
                 .SetResource(Resources.CreateServiceResource("otlp-test"))
@@ -44,6 +54,29 @@ namespace Samples
 
             Console.WriteLine("Done... wait for events to arrive to backend!");
             Console.ReadLine();
+
+            return null;
+        }
+
+        private static object RunWithActivitySource(string endpoint)
+        {
+            // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
+            // and use OTLP exporter.
+            OpenTelemetrySdk.EnableOpenTelemetry(
+                builder => builder
+                    .AddActivitySource("Samples.SampleServer")
+                    .AddActivitySource("Samples.SampleClient")
+                    .UseOpenTelemetryProtocolActivityExporter(opt => opt.Endpoint = endpoint));
+
+            // The above line is required only in Applications
+            // which decide to use OT.
+            using (var sample = new InstrumentationWithActivitySource())
+            {
+                sample.Start();
+
+                Console.WriteLine("Sample is running on the background, press ENTER to stop");
+                Console.ReadLine();
+            }
 
             return null;
         }
