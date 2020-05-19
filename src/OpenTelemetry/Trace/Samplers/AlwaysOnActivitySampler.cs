@@ -19,7 +19,7 @@ using System.Diagnostics;
 namespace OpenTelemetry.Trace.Samplers
 {
     /// <summary>
-    /// Sampler implementation which will sample in all the spans.
+    /// Sampler implementation which samples every activities.
     /// This sampler will be used as the default Sampler, if no other Sampler is configured.
     /// </summary>
     public sealed class AlwaysOnActivitySampler : ActivitySampler
@@ -30,14 +30,7 @@ namespace OpenTelemetry.Trace.Samplers
         /// <inheritdoc />
         public override SamplingResult ShouldSample(in ActivityContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, ActivityKind activityKind, IEnumerable<KeyValuePair<string, string>> tags, IEnumerable<ActivityLink> links)
         {
-            if (name.Contains("HttpOut"))
-            {
-                return new SamplingResult(true);
-            }
-            else
-            {
-                return new SamplingResult(true);
-            }
+            return new SamplingResult(true);
         }
     }
 }

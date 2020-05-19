@@ -19,7 +19,7 @@ using System.Diagnostics;
 namespace OpenTelemetry.Trace.Samplers
 {
     /// <summary>
-    /// Sampler implementation which will sample out all the activities.
+    /// Sampler implementation which never samples any activities.
     /// </summary>
     public sealed class AlwaysOffActivitySampler : ActivitySampler
     {
