@@ -114,7 +114,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
-                this.textFormat.Inject(shim.SpanContext, textMapCarrier, (adapter, key, value) => adapter.Set(key, value));
+                this.textFormat.Inject(shim.SpanContext, textMapCarrier, (instrumentation, key, value) => instrumentation.Set(key, value));
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿// <copyright file="StackExchangeRedisCallsAdapterTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="StackExchangeRedisCallsInstrumentationTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,19 +27,19 @@ namespace OpenTelemetry.Extensions.Hosting
     public class HostingIntegrationTests
     {
         [Fact]
-        public async Task AddOpenTelemetry_RegisterAdapter_AdapterCreatedAndDisposed()
+        public async Task AddOpenTelemetry_RegisterInstrumentation_InstrumentationCreatedAndDisposed()
         {
-            var testAdapter = new TestAdapter();
+            var testInstrumentation = new TestInstrumentation();
             var callbackRun = false;
 
             var builder = new HostBuilder().ConfigureServices(services =>
             {
                 services.AddOpenTelemetry(telemetry =>
                 {
-                    telemetry.AddAdapter(t =>
+                    telemetry.AddInstrumentation(t =>
                     {
                         callbackRun = true;
-                        return testAdapter;
+                        return testInstrumentation;
                     });
                 });
             });
@@ -47,22 +47,22 @@ namespace OpenTelemetry.Extensions.Hosting
             var host = builder.Build();
 
             Assert.False(callbackRun);
-            Assert.False(testAdapter.Disposed);
+            Assert.False(testInstrumentation.Disposed);
 
             await host.StartAsync();
 
             Assert.True(callbackRun);
-            Assert.False(testAdapter.Disposed);
+            Assert.False(testInstrumentation.Disposed);
 
             await host.StopAsync();
 
             Assert.True(callbackRun);
-            Assert.False(testAdapter.Disposed);
+            Assert.False(testInstrumentation.Disposed);
 
             host.Dispose();
 
             Assert.True(callbackRun);
-            Assert.True(testAdapter.Disposed);
+            Assert.True(testInstrumentation.Disposed);
         }
 
         [Fact]
@@ -89,13 +89,13 @@ namespace OpenTelemetry.Extensions.Hosting
         [Fact]
         public void AddOpenTelemetry_ServiceProviderArgument_ServicesRegistered()
         {
-            var testAdapter = new TestAdapter();
+            var testInstrumentation = new TestInstrumentation();
 
             var services = new ServiceCollection();
-            services.AddSingleton(testAdapter);
+            services.AddSingleton(testInstrumentation);
             services.AddOpenTelemetry((provider, builder) =>
             {
-                builder.AddAdapter<TestAdapter>(tracer => provider.GetRequiredService<TestAdapter>());
+                builder.AddInstrumentation<TestInstrumentation>(tracer => provider.GetRequiredService<TestInstrumentation>());
             });
 
             var serviceProvider = services.BuildServiceProvider();
@@ -103,14 +103,14 @@ namespace OpenTelemetry.Extensions.Hosting
             var tracerFactory = serviceProvider.GetRequiredService<TracerFactory>();
             Assert.NotNull(tracerFactory);
 
-            Assert.False(testAdapter.Disposed);
+            Assert.False(testInstrumentation.Disposed);
 
             serviceProvider.Dispose();
 
-            Assert.True(testAdapter.Disposed);
+            Assert.True(testInstrumentation.Disposed);
         }
 
-        internal class TestAdapter : IDisposable
+        internal class TestInstrumentation : IDisposable
         {
             public bool Disposed { get; private set; }
 
