@@ -46,12 +46,14 @@ namespace OpenTelemetry.Adapter.Dependencies
             var azureClientsListener = new AzureClientsAdapter(tracerFactory.GetTracer(nameof(AzureClientsAdapter), "semver:" + assemblyVersion));
             var azurePipelineListener = new AzurePipelineAdapter(tracerFactory.GetTracer(nameof(AzurePipelineAdapter), "semver:" + assemblyVersion));
             var sqlClientListener = new SqlClientAdapter(tracerFactory.GetTracer(nameof(AzurePipelineAdapter), "semver:" + assemblyVersion), sqlOptions ?? new SqlClientAdapterOptions());
+            var grpcClientListener = new GrpcClientAdapter(tracerFactory.GetTracer(nameof(GrpcClientAdapter), "semver:" + assemblyVersion));
 
             this.adapters.Add(httpClientListener);
             this.adapters.Add(httpWebRequestAdapter);
             this.adapters.Add(azureClientsListener);
             this.adapters.Add(azurePipelineListener);
             this.adapters.Add(sqlClientListener);
+            this.adapters.Add(grpcClientListener);
         }
 
         /// <inheritdoc />

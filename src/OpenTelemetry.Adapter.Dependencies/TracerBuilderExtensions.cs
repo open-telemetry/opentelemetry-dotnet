@@ -41,7 +41,8 @@ namespace OpenTelemetry.Trace.Configuration
                 .AddAdapter((t) => new AzurePipelineAdapter(t))
                 .AddAdapter((t) => new HttpClientAdapter(t))
                 .AddAdapter((t) => new HttpWebRequestAdapter(t))
-                .AddAdapter((t) => new SqlClientAdapter(t));
+                .AddAdapter((t) => new SqlClientAdapter(t))
+                .AddAdapter((t) => new GrpcClientAdapter(t));
         }
 
         /// <summary>
@@ -72,7 +73,8 @@ namespace OpenTelemetry.Trace.Configuration
                 .AddAdapter((t) => new AzurePipelineAdapter(t))
                 .AddAdapter((t) => new HttpClientAdapter(t, httpOptions))
                 .AddAdapter((t) => new HttpWebRequestAdapter(t, httpOptions))
-                .AddAdapter((t) => new SqlClientAdapter(t, sqlOptions));
+                .AddAdapter((t) => new SqlClientAdapter(t, sqlOptions))
+                .AddAdapter((t) => new GrpcClientAdapter(t));
         }
     }
 }
