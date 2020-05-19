@@ -47,7 +47,7 @@ namespace Samples
                     (ZPagesOptions options) => TestZPages.Run(),
                     (ConsoleOptions options) => TestConsole.Run(options),
                     (ConsoleActivityOptions options) => TestConsoleActivity.Run(options),
-                    (OtlpOptions options) => TestOtlp.Run(options.Endpoint),
+                    (OtlpOptions options) => TestOtlp.Run(options.Endpoint, options.UseActivitySource),
                     errs => 1);
 
             Console.ReadLine();
@@ -122,6 +122,9 @@ namespace Samples
     {
         [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "localhost:55680")]
         public string Endpoint { get; set; }
+
+        [Option('a', "activity", HelpText = "Set it to true to export ActivitySource data", Default = false)]
+        public bool UseActivitySource { get; set; }
     }
 
 #pragma warning restore SA1402 // File may only contain a single type
