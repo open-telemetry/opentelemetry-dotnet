@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             var configuration = new ExporterOptions();
             configure(configuration);
             return builder.AddProcessorPipeline(b => b
-                .SetExporter(new TraceExporter(configuration))
+                .SetExporter(new SpanDataExporter(configuration))
                 .SetExportingProcessor(e => new BatchingSpanProcessor(e)));
         }
 
@@ -79,8 +79,36 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             configure(configuration);
             return builder.AddProcessorPipeline(b =>
             {
-                b.SetExporter(new TraceExporter(configuration));
+                b.SetExporter(new SpanDataExporter(configuration));
                 processorConfigure.Invoke(b);
+            });
+        }
+
+        /// <summary>
+        /// Enables the OpenTelemetry Protocol (OTLP) exporter.
+        /// </summary>
+        /// <param name="builder">Open Telemetry builder to use.</param>
+        /// <param name="configure">Exporter configuration options.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder UseOpenTelemetryProtocolActivityExporter(this OpenTelemetryBuilder builder, Action<ExporterOptions> configure)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            return builder.SetProcessorPipeline(pipeline =>
+            {
+                var exporterOptions = new ExporterOptions();
+                configure(exporterOptions);
+
+                var activityExporter = new OtlpActivityExporter(exporterOptions);
+                pipeline.SetExporter(activityExporter);
             });
         }
     }

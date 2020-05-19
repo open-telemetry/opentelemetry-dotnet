@@ -116,8 +116,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                 Status = ToOtlpStatus(spanData.Status),
 
-                StartTimeUnixNano = spanData.StartTimestamp.ToUnixTimeNanoseconds(),
-                EndTimeUnixNano = spanData.EndTimestamp.ToUnixTimeNanoseconds(),
+                StartTimeUnixNano = (ulong)spanData.StartTimestamp.ToUnixTimeNanoseconds(),
+                EndTimeUnixNano = (ulong)spanData.EndTimestamp.ToUnixTimeNanoseconds(),
             };
 
             if (!ReferenceEquals(spanData.Attributes, EmptySpanDataAttributes))
@@ -164,14 +164,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
 
             return otlpStatus;
-        }
-
-        private static ulong ToUnixTimeNanoseconds(this DateTimeOffset dto)
-        {
-            const ulong nanosPerTicks = 100;
-            const long unixEpochTicks = 621355968000000000; // = DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks
-
-            return (ulong)(dto.Ticks - unixEpochTicks) * nanosPerTicks;
         }
 
         private static Dictionary<Resource, Dictionary<Resource, List<OtlpTrace.Span>>> GroupByResourceAndLibrary(
@@ -250,7 +242,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             var otlpEvent = new OtlpTrace.Span.Types.Event
             {
                 Name = source.Name,
-                TimeUnixNano = source.Timestamp.ToUnixTimeNanoseconds(),
+                TimeUnixNano = (ulong)source.Timestamp.ToUnixTimeNanoseconds(),
             };
 
             if (!ReferenceEquals(source.Attributes, EmptySpanDataAttributes))
