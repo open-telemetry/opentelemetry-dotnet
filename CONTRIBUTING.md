@@ -74,11 +74,17 @@ To test from command line you need `dotnet` version `3.1+`.
 dotnet test OpenTelemetry.sln
 ```
 
-To see test coverage, run `dotnet test` from a console window and you will see the following output:
+### Code Coverage
+
+On Linux and macOS run `dotnet test` from a terminal window and you will see the following output:
 
 ![image](https://user-images.githubusercontent.com/20248180/59361025-1e1e7980-8d29-11e9-8449-548caf0d7823.png)
 
 Or, after running the tests, open the file `TestResults\Results\index.htm` in a browser.
+
+On Windows use the `Analyze Code Coverage for All Tests` on Visual Studio `Test` menu.
+
+![image](docs/vs-code-coverage.png)
 
 ## Pull Requests
 
