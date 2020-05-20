@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Configuration
     {
         private readonly object lck = new object();
         private readonly Dictionary<TracerRegistryKey, Tracer> tracerRegistry = new Dictionary<TracerRegistryKey, Tracer>();
-        private readonly List<object> adapters = new List<object>();
+        private readonly List<object> instrumentations = new List<object>();
 
         private readonly Sampler sampler;
         private readonly Resource defaultResource;
@@ -94,12 +94,12 @@ namespace OpenTelemetry.Trace.Configuration
             configure(builder);
             var factory = new TracerFactory(builder);
 
-            if (builder.AdapterFactories != null)
+            if (builder.InstrumentationFactories != null)
             {
-                foreach (var adapter in builder.AdapterFactories)
+                foreach (var instrumentation in builder.InstrumentationFactories)
                 {
-                    var tracer = factory.GetTracer(adapter.Name, adapter.Version);
-                    factory.adapters.Add(adapter.Factory(tracer));
+                    var tracer = factory.GetTracer(instrumentation.Name, instrumentation.Version);
+                    factory.instrumentations.Add(instrumentation.Factory(tracer));
                 }
             }
 
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         public void Dispose()
         {
-            foreach (var item in this.adapters)
+            foreach (var item in this.instrumentations)
             {
                 if (item is IDisposable disposable)
                 {
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Trace.Configuration
                 }
             }
 
-            this.adapters.Clear();
+            this.instrumentations.Clear();
 
             if (this.spanProcessor is IDisposable disposableProcessor)
             {

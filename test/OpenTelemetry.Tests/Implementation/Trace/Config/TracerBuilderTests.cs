@@ -35,7 +35,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetSampler(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().AddProcessorPipeline(null));
             Assert.Throws<ArgumentNullException>(() => new TracerBuilder().SetTracerOptions(null));
-            Assert.Throws<ArgumentNullException>(() => new TracerBuilder().AddAdapter<object>(null));
+            Assert.Throws<ArgumentNullException>(() => new TracerBuilder().AddInstrumentation<object>(null));
         }
 
         [Fact]
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.Null(builder.Sampler);
             Assert.Null(builder.ProcessingPipelines);
             Assert.Null(builder.TracerConfigurationOptions);
-            Assert.Null(builder.AdapterFactories);
+            Assert.Null(builder.InstrumentationFactories);
         }
 
         [Fact]
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             var builder = new TracerBuilder();
 
             bool processorFactoryCalled = false;
-            bool adapterFactoryCalled = true;
+            bool instrumentationFactoryCalled = true;
 
             var sampler = new ProbabilitySampler(0.1);
             var exporter = new TestExporter(_ => { });
@@ -71,10 +71,10 @@ namespace OpenTelemetry.Tests.Impl.Trace
                         return new SimpleSpanProcessor(e);
                     }))
                 .SetTracerOptions(options)
-                .AddAdapter(t =>
+                .AddInstrumentation(t =>
                 {
                     Assert.NotNull(t);
-                    return new TestAdapter(t);
+                    return new TestInstrumentation(t);
                 });
 
             Assert.Same(sampler, builder.Sampler);
@@ -87,22 +87,22 @@ namespace OpenTelemetry.Tests.Impl.Trace
             Assert.True(processorFactoryCalled);
 
             Assert.Same(options, builder.TracerConfigurationOptions);
-            Assert.Single(builder.AdapterFactories);
+            Assert.Single(builder.InstrumentationFactories);
 
-            var adapterFactory = builder.AdapterFactories.Single();
-            Assert.Equal(nameof(TestAdapter), adapterFactory.Name);
-            Assert.Equal("semver:" + typeof(TestAdapter).Assembly.GetName().Version, adapterFactory.Version);
+            var instrumentationFactory = builder.InstrumentationFactories.Single();
+            Assert.Equal(nameof(TestInstrumentation), instrumentationFactory.Name);
+            Assert.Equal("semver:" + typeof(TestInstrumentation).Assembly.GetName().Version, instrumentationFactory.Version);
 
-            Assert.NotNull(adapterFactory.Factory);
-            adapterFactory.Factory(new TracerSdk(new SimpleSpanProcessor(exporter), new AlwaysOnSampler(), options, Resource.Empty));
+            Assert.NotNull(instrumentationFactory.Factory);
+            instrumentationFactory.Factory(new TracerSdk(new SimpleSpanProcessor(exporter), new AlwaysOnSampler(), options, Resource.Empty));
 
-            Assert.True(adapterFactoryCalled);
+            Assert.True(instrumentationFactoryCalled);
         }
 
-        private class TestAdapter
+        private class TestInstrumentation
         {
             private readonly Tracer tracer;
-            public TestAdapter(Tracer tracer)
+            public TestInstrumentation(Tracer tracer)
             {
                 this.tracer = tracer;
             }

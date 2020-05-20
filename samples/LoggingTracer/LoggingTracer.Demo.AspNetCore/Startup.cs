@@ -9,8 +9,8 @@ namespace LoggingTracer.Demo.AspNetCore
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
-    using OpenTelemetry.Adapter.AspNetCore;
-    using OpenTelemetry.Adapter.Dependencies;
+    using OpenTelemetry.Instrumentation.AspNetCore;
+    using OpenTelemetry.Instrumentation.Dependencies;
 
     public class Startup
     {
@@ -21,8 +21,8 @@ namespace LoggingTracer.Demo.AspNetCore
                 var tracerFactory = new LoggingTracerFactory();
                 var tracer = tracerFactory.GetTracer("ServerApp", "semver:1.0.0");
 
-                var dependenciesAdapter = new DependenciesAdapter(tracerFactory);
-                var aspNetCoreAdapter = new AspNetCoreAdapter(tracer);
+                var dependenciesInstrumentation = new DependenciesInstrumentation(tracerFactory);
+                var aspNetCoreInstrumentation = new AspNetCoreInstrumentation(tracer);
 
                 return tracerFactory;
             });
