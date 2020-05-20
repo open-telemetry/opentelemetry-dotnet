@@ -52,7 +52,7 @@ namespace OpenTelemetry.Metrics.Config.Test
             Assert.NotSame(defaultMeter, MeterFactoryBase.Default.GetMeter("named meter"));
 
             var counter = defaultMeter.CreateDoubleCounter("ctr");
-            Assert.IsType<DoubleCounterMetricSdk>(counter);            
+            Assert.IsType<DoubleCounterMetricSdk>(counter);
         }
 
         [Fact]
