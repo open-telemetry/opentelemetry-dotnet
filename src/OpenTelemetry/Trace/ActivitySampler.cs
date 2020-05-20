@@ -19,7 +19,7 @@ using System.Diagnostics;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Sampler to reduce data volume. This sampler executes before Activity object is created.
+    /// Sampler to select data to be exported. This sampler executes before Activity object is created.
     /// </summary>
     public abstract class ActivitySampler
     {
@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace
         /// <param name="parentContext">Parent activity context. Typically taken from the wire.</param>
         /// <param name="traceId">Trace ID of a activity to be created.</param>
         /// <param name="spanId">Span ID of a activity to be created.</param>
-        /// <param name="name"> Name (DiplayName) of a activity to be created. Note, that the name of the activity is settable.
+        /// <param name="name"> Name (DisplayName) of the activity to be created. Note, that the name of the activity is settable.
         /// So this name can be changed later and Sampler implementation should assume that.
         /// Typical example of a name change is when <see cref="Activity"/> representing incoming http request
         /// has a name of url path and then being updated with route name when routing complete.
