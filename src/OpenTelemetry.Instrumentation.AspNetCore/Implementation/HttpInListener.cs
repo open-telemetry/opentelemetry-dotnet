@@ -65,6 +65,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
+            activity.DisplayName = path;
+
             TelemetrySpan span;
             if (this.hostingSupportsW3C && this.options.TextFormat is TraceContextFormat)
             {
@@ -90,6 +92,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 span.PutHttpUserAgentAttribute(userAgent);
                 span.PutHttpRawUrlAttribute(GetUri(request));
             }
+
+            if (activity.IsAllDataRequested)
+            {
+                var userAgent = request.Headers["User-Agent"].FirstOrDefault();
+                activity.AddTag("http.user_agent", userAgent);
+                activity.AddTag("http.url", GetUri(request));
+            }
         }
 
         public override void OnStopActivity(Activity activity, object payload)
@@ -114,6 +123,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var response = context.Response;
 
                 span.PutHttpStatusCode(response.StatusCode, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
+
+                if (activity.IsAllDataRequested)
+                {
+                    activity.AddTag("http.status_code", response.StatusCode.ToString());
+                }
             }
 
             span.End();

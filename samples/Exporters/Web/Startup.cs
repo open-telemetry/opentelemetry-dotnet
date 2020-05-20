@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Exporter.Console;
 using OpenTelemetry.Trace.Configuration;
 
 namespace API
@@ -35,6 +36,11 @@ namespace API
                     c.IncludeXmlComments(xmlPath);
                 }
             });
+
+
+            OpenTelemetrySdk.EnableOpenTelemetry(
+                (builder) => builder.AddActivitySource(string.Empty)
+                .UseConsoleActivityExporter(opt => opt.DisplayAsJson = opt.DisplayAsJson));
 
             services.AddOpenTelemetry((sp, builder) =>
             {
