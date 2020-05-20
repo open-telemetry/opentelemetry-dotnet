@@ -47,6 +47,7 @@ Approvers ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telem
 - [Christoph Neumueller](https://github.com/discostu105), Dynatrace
 - [Cijo Thomas](https://github.com/cijothomas), Microsoft
 - [Liudmila Molkova](https://github.com/lmolkova), Microsoft
+- [Paulo Janotti](https://github.com/pjanotti), Splunk
 
 Triagers:
 
