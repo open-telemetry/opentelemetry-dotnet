@@ -45,7 +45,6 @@ Approvers ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telem
 
 - [Bruno Garcia](https://github.com/bruno-garcia), Sentry
 - [Christoph Neumueller](https://github.com/discostu105), Dynatrace
-- [Cijo Thomas](https://github.com/cijothomas), Microsoft
 - [Liudmila Molkova](https://github.com/lmolkova), Microsoft
 - [Paulo Janotti](https://github.com/pjanotti), Splunk
 
@@ -57,6 +56,7 @@ Triagers:
 
 Maintainers ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
+- [Cijo Thomas](https://github.com/cijothomas), Microsoft
 - [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
 - [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
 
