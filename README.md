@@ -45,15 +45,20 @@ Approvers ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telem
 
 - [Bruno Garcia](https://github.com/bruno-garcia), Sentry
 - [Christoph Neumueller](https://github.com/discostu105), Dynatrace
-- [Cijo Thomas](https://github.com/cijothomas), Microsoft
 - [Liudmila Molkova](https://github.com/lmolkova), Microsoft
+- [Paulo Janotti](https://github.com/pjanotti), Splunk
+
+Triagers:
+
+- [Reiley Yang](https://github.com/reyang), Microsoft
 
 *Find more about the approver role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).*
 
 Maintainers ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
+- [Cijo Thomas](https://github.com/cijothomas), Microsoft
 - [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
-- [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Microsoft
+- [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
 
 *Find more about the maintainer role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
 

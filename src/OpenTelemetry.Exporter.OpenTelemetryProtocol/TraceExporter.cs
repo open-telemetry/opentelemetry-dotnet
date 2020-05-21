@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,8 +24,6 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Trace.Export;
 
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
-using OtlpCommon = Opentelemetry.Proto.Common.V1;
-using OtlpResource = Opentelemetry.Proto.Resource.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
@@ -34,7 +31,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// <summary>
     /// The trace exporter using the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class TraceExporter : SpanExporter
+    internal class TraceExporter
     {
         private readonly Channel channel;
         private readonly OtlpCollector.TraceService.TraceServiceClient traceClient;
@@ -43,23 +40,22 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// Initializes a new instance of the <see cref="TraceExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
-        public TraceExporter(ExporterOptions options)
+        internal TraceExporter(ExporterOptions options)
         {
             this.channel = new Channel(options.Endpoint, options.Credentials);
             this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
         }
 
-        /// <inheritdoc/>
-        public override async Task<ExportResult> ExportAsync(
-            IEnumerable<SpanData> spanDataList,
+        internal async Task<ExportResult> ExportAsync(
+            IEnumerable<OtlpTrace.ResourceSpans> resourceSpansList,
             CancellationToken cancellationToken)
         {
             var spanExportRequest = new OtlpCollector.ExportTraceServiceRequest();
-            spanExportRequest.ResourceSpans.AddRange(spanDataList.ToOtlpResourceSpans());
+            spanExportRequest.ResourceSpans.AddRange(resourceSpansList);
 
             try
             {
-                await this.traceClient.ExportAsync(spanExportRequest);
+                await this.traceClient.ExportAsync(spanExportRequest, cancellationToken: cancellationToken);
             }
             catch (RpcException ex)
             {
@@ -71,8 +67,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             return ExportResult.Success;
         }
 
-        /// <inheritdoc/>
-        public override async Task ShutdownAsync(CancellationToken cancellationToken)
+        internal async Task ShutdownAsync(CancellationToken cancellationToken)
         {
             await this.channel.ShutdownAsync().ConfigureAwait(false);
         }

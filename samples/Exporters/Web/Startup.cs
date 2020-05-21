@@ -45,8 +45,8 @@ namespace API
                         options.ServiceName = "test-zipkin";
                         options.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
                     })
-                    .AddRequestAdapter()
-                    .AddDependencyAdapter();
+                    .AddRequestInstrumentation()
+                    .AddDependencyInstrumentation();
             });
         }
 
