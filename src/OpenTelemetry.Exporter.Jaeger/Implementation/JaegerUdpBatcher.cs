@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Trace.Export;
 using Thrift.Protocol;
 using Thrift.Transport;
 
@@ -81,7 +80,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         internal Dictionary<string, Batch> CurrentBatches { get; } = new Dictionary<string, Batch>();
 
-        public async ValueTask<int> AppendAsync(SpanData span, CancellationToken cancellationToken)
+        public async ValueTask<int> AppendAsync(JaegerSpan jaegerSpan, CancellationToken cancellationToken)
         {
             if (this.processCache == null)
             {
@@ -91,8 +90,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     [this.Process.ServiceName] = this.Process,
                 };
             }
-
-            var jaegerSpan = span.ToJaegerSpan();
 
             var spanServiceName = jaegerSpan.PeerServiceName ?? this.Process.ServiceName;
 
