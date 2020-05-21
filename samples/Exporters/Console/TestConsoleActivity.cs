@@ -49,6 +49,12 @@ namespace Samples
                 if (parent != null)
                 {
                     parent.DisplayName = "HttpIn DisplayName";
+
+                    // IsAllDataRequested is equivalent of Span.IsRecording
+                    if (parent.IsAllDataRequested)
+                    {
+                        parent.AddTag("expensive data", "This data is expensive to obtain. Avoid it if activity is not being recorded");
+                    }
                 }
 
                 try
