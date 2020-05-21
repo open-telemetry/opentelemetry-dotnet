@@ -36,6 +36,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly bool hostingSupportsW3C = false;
         private readonly AspNetCoreInstrumentationOptions options;
 
+        // Create an ActivitySource here to re-create Activity.
+        private ActivitySource activitySource = new ActivitySource("Microsoft.AspNetCore");
+
         public HttpInListener(string name, Tracer tracer, AspNetCoreInstrumentationOptions options)
             : base(name, tracer)
         {
@@ -60,12 +63,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
+            // Create a brand new activity using ActivitySource
+            // and populate its tags correctly.
+            // This is double allocation of Activity! and probably bad for performance.
+            var newActivity = this.activitySource.StartActivity("HttpRequestIn", ActivityKind.Server);
+
             var request = context.Request;
 
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
 
-            activity.DisplayName = path;
+            if (newActivity != null)
+            {
+                newActivity.DisplayName = path;
+            }
 
             TelemetrySpan span;
             if (this.hostingSupportsW3C && this.options.TextFormat is TraceContextFormat)
@@ -93,11 +104,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 span.PutHttpRawUrlAttribute(GetUri(request));
             }
 
-            if (activity.IsAllDataRequested)
+            if (newActivity.IsAllDataRequested)
             {
+                if (request.Host.Port == 80 || request.Host.Port == 443)
+                {
+                    newActivity.AddTag("http.host", request.Host.Host);
+                }
+                else
+                {
+                    newActivity.AddTag("http.host", request.Host.Host + ":" + request.Host.Port);
+                }
+
+                newActivity.AddTag("http.method", request.Method);
+                newActivity.AddTag("http.path", path);
+
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
-                activity.AddTag("http.user_agent", userAgent);
-                activity.AddTag("http.url", GetUri(request));
+                newActivity.AddTag("http.user_agent", userAgent);
+                newActivity.AddTag("http.url", GetUri(request));
             }
         }
 
@@ -124,12 +147,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 span.PutHttpStatusCode(response.StatusCode, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
 
+                // activity here will be the activity which we created using ActivitySource in the Start callback.
                 if (activity.IsAllDataRequested)
                 {
                     activity.AddTag("http.status_code", response.StatusCode.ToString());
                 }
             }
 
+            activity.Stop();
             span.End();
         }
 

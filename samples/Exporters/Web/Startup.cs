@@ -39,7 +39,7 @@ namespace API
 
 
             OpenTelemetrySdk.EnableOpenTelemetry(
-                (builder) => builder.AddActivitySource(string.Empty)
+                (builder) => builder.AddActivitySource("Microsoft.AspNetCore")
                 .UseConsoleActivityExporter(opt => opt.DisplayAsJson = opt.DisplayAsJson));
 
             services.AddOpenTelemetry((sp, builder) =>
