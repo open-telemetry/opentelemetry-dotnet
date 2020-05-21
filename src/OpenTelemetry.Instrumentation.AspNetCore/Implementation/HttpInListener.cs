@@ -104,23 +104,26 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 span.PutHttpRawUrlAttribute(GetUri(request));
             }
 
-            if (newActivity.IsAllDataRequested)
+            if (newActivity != null)
             {
-                if (request.Host.Port == 80 || request.Host.Port == 443)
+                if (newActivity.IsAllDataRequested)
                 {
-                    newActivity.AddTag("http.host", request.Host.Host);
-                }
-                else
-                {
-                    newActivity.AddTag("http.host", request.Host.Host + ":" + request.Host.Port);
-                }
+                    if (request.Host.Port == 80 || request.Host.Port == 443)
+                    {
+                        newActivity.AddTag("http.host", request.Host.Host);
+                    }
+                    else
+                    {
+                        newActivity.AddTag("http.host", request.Host.Host + ":" + request.Host.Port);
+                    }
 
-                newActivity.AddTag("http.method", request.Method);
-                newActivity.AddTag("http.path", path);
+                    newActivity.AddTag("http.method", request.Method);
+                    newActivity.AddTag("http.path", path);
 
-                var userAgent = request.Headers["User-Agent"].FirstOrDefault();
-                newActivity.AddTag("http.user_agent", userAgent);
-                newActivity.AddTag("http.url", GetUri(request));
+                    var userAgent = request.Headers["User-Agent"].FirstOrDefault();
+                    newActivity.AddTag("http.user_agent", userAgent);
+                    newActivity.AddTag("http.url", GetUri(request));
+                }
             }
         }
 
