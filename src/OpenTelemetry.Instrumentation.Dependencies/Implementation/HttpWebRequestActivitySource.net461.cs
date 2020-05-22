@@ -19,7 +19,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Tracing;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -32,7 +31,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     /// Hooks into the <see cref="HttpWebRequest"/> class reflectively and writes diagnostic events as requests are processed.
     /// </summary>
     /// <remarks>
-    /// Created from the System.Diagnostics.DiagnosticSource.HttpHandlerDiagnosticListener class which has some bugs and feature gaps.
+    /// Inspired from the System.Diagnostics.DiagnosticSource.HttpHandlerDiagnosticListener class which has some bugs and feature gaps.
     /// See https://github.com/dotnet/runtime/pull/33732 for details.
     /// </remarks>
     internal sealed class HttpWebRequestActivitySource
@@ -42,7 +41,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         internal static readonly HttpWebRequestActivitySource Instance = new HttpWebRequestActivitySource();
 
-        private const string InitializationFailedActivityName = ActivitySourceName + ".InitializationFailed";
         private const string CorrelationContextHeaderName = "Correlation-Context";
         private const string TraceParentHeaderName = "traceparent";
         private const string TraceStateHeaderName = "tracestate";
