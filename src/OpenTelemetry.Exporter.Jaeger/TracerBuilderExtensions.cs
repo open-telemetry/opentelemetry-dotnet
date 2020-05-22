@@ -86,7 +86,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// <summary>
         /// Registers a Jaeger exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
         /// </summary>
-        /// <param name="builder">Trace builder to use.</param>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
         public static OpenTelemetryBuilder UseJaegerActivityExporter(this OpenTelemetryBuilder builder, Action<JaegerExporterOptions> configure)
