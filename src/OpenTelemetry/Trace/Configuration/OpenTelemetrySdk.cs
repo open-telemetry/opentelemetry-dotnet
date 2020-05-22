@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace.Configuration
 {
@@ -39,6 +40,8 @@ namespace OpenTelemetry.Trace.Configuration
         {
             var openTelemetryBuilder = new OpenTelemetryBuilder();
             configureOpenTelemetryBuilder(openTelemetryBuilder);
+
+            ActivitySampler sampler = openTelemetryBuilder.Sampler ?? new AlwaysOnActivitySampler();
 
             ActivityProcessor activityProcessor;
             if (openTelemetryBuilder.ProcessingPipeline == null)
@@ -65,9 +68,40 @@ namespace OpenTelemetry.Trace.Configuration
                 // or not
                 ShouldListenTo = (activitySource) => openTelemetryBuilder.ActivitySourceNames.Contains(activitySource.Name.ToUpperInvariant()),
 
-                // The following parameters are not used now.
+                // The following parameter is not used now.
                 GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
-                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
+
+                // This delegate informs ActivitySource about sampling decision.
+                // Following simple behavior is enabled now:
+                // If Sampler returns IsSampled as true, returns ActivityDataRequest.AllDataAndRecorded
+                // This creates Activity and sets its IsAllDataRequested to true.
+                // Library authors can check activity.IsAllDataRequested and avoid
+                // doing any additional telemetry population.
+                // Activity.IsAllDataRequested is the equivalent of Span.IsRecording
+                //
+                // If Sampler returns IsSampled as false, returns ActivityDataRequest.None
+                // This prevents Activity from being created at all.
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
+                {
+                    var shouldSample = sampler.ShouldSample(
+                        options.Parent,
+                        options.Parent.TraceId,
+                        default(ActivitySpanId), // Passing default SpanId here. The actual SpanId is not known before actual Activity creation
+                        options.Name,
+                        options.Kind,
+                        options.Tags,
+                        options.Links);
+                    if (shouldSample.IsSampled)
+                    {
+                        return ActivityDataRequest.AllDataAndRecorded;
+                    }
+                    else
+                    {
+                        return ActivityDataRequest.None;
+                    }
+
+                    // TODO: Improve this to properly use ActivityDataRequest.AllData, PropagationData as well.
+                },
             };
 
             ActivitySource.AddActivityListener(listener);

@@ -32,6 +32,8 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal ActivityProcessorPipelineBuilder ProcessingPipeline { get; private set; }
 
+        internal ActivitySampler Sampler { get; private set; }
+
         internal HashSet<string> ActivitySourceNames { get; private set; }
 
         /// <summary>
@@ -49,6 +51,17 @@ namespace OpenTelemetry.Trace.Configuration
             var pipelineBuilder = new ActivityProcessorPipelineBuilder();
             configure(pipelineBuilder);
             this.ProcessingPipeline = pipelineBuilder;
+            return this;
+        }
+
+        /// <summary>
+        /// Configures sampler.
+        /// </summary>
+        /// <param name="sampler">Sampler instance.</param>
+        /// <returns>Returns <see cref="OpenTelemetryBuilder"/> for chaining.</returns>
+        public OpenTelemetryBuilder SetSampler(ActivitySampler sampler)
+        {
+            this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             return this;
         }
 
