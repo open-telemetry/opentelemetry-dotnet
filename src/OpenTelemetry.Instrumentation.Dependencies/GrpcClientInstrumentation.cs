@@ -20,7 +20,7 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Instrumentation.Dependencies
 {
     /// <summary>
-    /// Dependencies adapter.
+    /// GrpcClient instrumentation.
     /// </summary>
     public class GrpcClientInstrumentation : IDisposable
     {
@@ -29,7 +29,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <summary>
         /// Initializes a new instance of the <see cref="GrpcClientInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
+        /// <param name="tracer">Tracer to record traces with.</param>
         public GrpcClientInstrumentation(Tracer tracer)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new GrpcClientDiagnosticListener(tracer), null);
