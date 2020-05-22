@@ -16,6 +16,7 @@
 #if NET461
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -46,7 +47,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private const string TraceStateHeaderName = "tracestate";
 
         private static readonly Version Version = typeof(HttpWebRequestActivitySource).Assembly.GetName().Version;
-        private static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        private static readonly ConcurrentDictionary<Version, string> ProtocolVersionToStringCache = new ConcurrentDictionary<Version, string>();
+        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<int, string>> HostAndPortToStringCache = new ConcurrentDictionary<string, ConcurrentDictionary<int, string>>();
+        private static readonly ConcurrentDictionary<HttpStatusCode, string> StatusCodeToStringCache = new ConcurrentDictionary<HttpStatusCode, string>();
 
         // Fields for reflection
         private static FieldInfo connectionGroupListField;
@@ -86,7 +90,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             catch (Exception ex)
             {
                 // If anything went wrong, just no-op. Write an event so at least we can find out.
-                var activity = ActivitySource.StartActivity(InitializationFailedActivityName, ActivityKind.Server);
+                var activity = WebRequestActivitySource.StartActivity(InitializationFailedActivityName, ActivityKind.Server);
                 activity?.SetCustomProperty("exception", ex);
                 activity?.Stop();
             }
@@ -446,20 +450,23 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         private void RaiseRequestEvent(HttpWebRequest request)
         {
-            if (!ActivitySource.HasListeners() || this.IsRequestInstrumented(request))
+            if (!WebRequestActivitySource.HasListeners() || this.IsRequestInstrumented(request))
             {
                 // No subscribers to the ActivitySource or this request was instrumented by previous
                 // RaiseRequestEvent, such is the case with redirect responses where the same request is sent again.
                 return;
             }
 
-            var activity = ActivitySource.StartActivity(
+            var activity = WebRequestActivitySource.StartActivity(
                 ActivityName,
                 ActivityKind.Client,
                 Activity.Current?.Context ?? default,
                 this.BuildRequestTags(request));
 
-            Debug.Assert(activity != null, "Activity null check failed.");
+            if (activity == null)
+            {
+                return;
+            }
 
             IAsyncResult asyncContext = readAResultAccessor(request);
             if (asyncContext != null)
@@ -491,7 +498,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 return;
             }
 
-            activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, ((int)response.StatusCode).ToString());
+            activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, this.BuildStatusCodeTagValue(response));
             activity.AddTag(SpanAttributeConstants.HttpStatusTextKey, response.StatusDescription);
 
             activity.SetCustomProperty("response", response);
@@ -507,7 +514,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if (exception is WebException wexc && wexc.Response is HttpWebResponse response)
             {
-                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, ((int)response.StatusCode).ToString());
+                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, this.BuildStatusCodeTagValue(response));
                 activity.AddTag(SpanAttributeConstants.HttpStatusTextKey, response.StatusDescription);
             }
             else
@@ -527,20 +534,58 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             {
                 [SpanAttributeConstants.ComponentKey] = "http",
                 [SpanAttributeConstants.HttpMethodKey] = request.Method,
-                [SpanAttributeConstants.HttpHostKey] = this.BuildRequestHostTagValue(request.RequestUri.Host, request.RequestUri.Port),
+                [SpanAttributeConstants.HttpHostKey] = this.BuildRequestHostTagValue(request.RequestUri),
                 [SpanAttributeConstants.HttpUrlKey] = request.RequestUri.OriginalString,
-                [SpanAttributeConstants.HttpFlavorKey] = request.ProtocolVersion.ToString(),
+                [SpanAttributeConstants.HttpFlavorKey] = this.BuildProtocolVersionTagValue(request),
             };
         }
 
-        private string BuildRequestHostTagValue(string hostName, int port)
+        private string BuildProtocolVersionTagValue(HttpWebRequest request)
         {
-            if (port == 80 || port == 443)
+            if (!ProtocolVersionToStringCache.TryGetValue(request.ProtocolVersion, out string protocolVersion))
             {
-                return hostName;
+                protocolVersion = request.ProtocolVersion.ToString();
+                ProtocolVersionToStringCache.TryAdd(request.ProtocolVersion, protocolVersion);
             }
 
-            return $"{hostName}:{port}";
+            return protocolVersion;
+        }
+
+        private string BuildRequestHostTagValue(Uri requestUri)
+        {
+            string host = requestUri.Host;
+
+            if (requestUri.IsDefaultPort)
+            {
+                return host;
+            }
+
+            int port = requestUri.Port;
+
+            if (!HostAndPortToStringCache.TryGetValue(host, out ConcurrentDictionary<int, string> portCache))
+            {
+                portCache = new ConcurrentDictionary<int, string>();
+                HostAndPortToStringCache.TryAdd(host, portCache);
+            }
+
+            if (!portCache.TryGetValue(port, out string hostTagValue))
+            {
+                hostTagValue = $"{requestUri.Host}:{requestUri.Port}";
+                portCache.TryAdd(port, hostTagValue);
+            }
+
+            return hostTagValue;
+        }
+
+        private string BuildStatusCodeTagValue(HttpWebResponse response)
+        {
+            if (!StatusCodeToStringCache.TryGetValue(response.StatusCode, out string statusCode))
+            {
+                statusCode = ((int)response.StatusCode).ToString();
+                StatusCodeToStringCache.TryAdd(response.StatusCode, statusCode);
+            }
+
+            return statusCode;
         }
 
         private class HashtableWrapper : Hashtable, IEnumerable
