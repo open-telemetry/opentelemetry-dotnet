@@ -36,7 +36,7 @@ namespace Samples
         internal static object RunWithActivity(string host, int port)
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
-            // and use OTLP exporter.
+            // and use the Jaeger exporter.
             OpenTelemetrySdk.EnableOpenTelemetry(
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")

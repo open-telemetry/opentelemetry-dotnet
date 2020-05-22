@@ -88,7 +88,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <param name="builder">Trace builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
-        /// <returns>The instance of <see cref="TracerBuilder"/> to chain the calls.</returns>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
         public static OpenTelemetryBuilder UseJaegerActivityExporter(this OpenTelemetryBuilder builder, Action<JaegerExporterOptions> configure)
         {
             if (builder == null)
