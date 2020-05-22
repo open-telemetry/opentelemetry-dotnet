@@ -16,7 +16,6 @@
 
 using System;
 using OpenTelemetry.Instrumentation.Dependencies;
-using OpenTelemetry.Instrumentation.Dependencies.Implementation;
 
 namespace OpenTelemetry.Trace.Configuration
 {
@@ -72,26 +71,6 @@ namespace OpenTelemetry.Trace.Configuration
                 .AddInstrumentation((t) => new AzurePipelineInstrumentation(t))
                 .AddInstrumentation((t) => new HttpClientInstrumentation(t, httpOptions))
                 .AddInstrumentation((t) => new SqlClientInstrumentation(t, sqlOptions));
-        }
-
-        /// <summary>
-        /// Enables the outgoing requests automatic data collection.
-        /// </summary>
-        /// <param name="builder">OpenTelemetry builder.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder AddDependencyInstrumentation(this OpenTelemetryBuilder builder)
-        {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-#if NET461
-            GC.KeepAlive(HttpWebRequestActivitySource.Instance);
-
-            builder.AddActivitySource(HttpWebRequestActivitySource.ActivitySourceName);
-#endif
-            return builder;
         }
     }
 }
