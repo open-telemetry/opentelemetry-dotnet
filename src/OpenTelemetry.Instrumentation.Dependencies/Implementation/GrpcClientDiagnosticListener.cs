@@ -23,6 +23,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
+        private static readonly Regex GrpcMethodRegex = new Regex(@"(?<package>\w+).(?<service>\w+)/(?<method>\w+)", RegexOptions.Compiled);
+
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
 
         public GrpcClientDiagnosticListener(Tracer tracer)
@@ -51,8 +53,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if (span.IsRecording)
             {
-                var rx = new Regex(@"(?<package>\w+).(?<service>\w+)/(?<method>\w+)", RegexOptions.Compiled);
-                var rpcService = rx.Match(path).Groups["service"].Value;
+                var rpcService = GrpcMethodRegex.Match(path).Groups["service"].Value;
 
                 span.SetAttribute("rpc.service", rpcService);
 
