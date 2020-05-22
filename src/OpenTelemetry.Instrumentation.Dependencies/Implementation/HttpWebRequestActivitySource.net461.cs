@@ -19,6 +19,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -90,9 +91,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             catch (Exception ex)
             {
                 // If anything went wrong, just no-op. Write an event so at least we can find out.
-                var activity = WebRequestActivitySource.StartActivity(InitializationFailedActivityName, ActivityKind.Server);
-                activity?.SetCustomProperty("exception", ex);
-                activity?.Stop();
+                InstrumentationEventSource.Log.ExceptionInitializingInstrumentation(typeof(HttpWebRequestActivitySource).FullName, ex);
             }
         }
 

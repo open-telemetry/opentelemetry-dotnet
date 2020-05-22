@@ -85,6 +85,21 @@ namespace OpenTelemetry.Instrumentation
             this.WriteEvent(6, eventName);
         }
 
+        [NonEvent]
+        public void ExceptionInitializingInstrumentation(string instrumentationType, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.ExceptionInitializingInstrumentation(instrumentationType, ToInvariantString(ex));
+            }
+        }
+
+        [Event(7, Message = "Error initializing instrumentation type {0}. Exception : {1}", Level = EventLevel.Error)]
+        public void ExceptionInitializingInstrumentation(string instrumentationType, string ex)
+        {
+            this.WriteEvent(7, instrumentationType, ex);
+        }
+
         /// <summary>
         /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
         /// appropriate for diagnostics tracing.
