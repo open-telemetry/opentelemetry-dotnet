@@ -27,6 +27,7 @@ namespace OpenTelemetry.Trace
 
         public const string HttpMethodKey = "http.method";
         public const string HttpStatusCodeKey = "http.status_code";
+        public const string HttpStatusTextKey = "http.status_text";
         public const string HttpUserAgentKey = "http.user_agent";
         public const string HttpPathKey = "http.path";
         public const string HttpHostKey = "http.host";

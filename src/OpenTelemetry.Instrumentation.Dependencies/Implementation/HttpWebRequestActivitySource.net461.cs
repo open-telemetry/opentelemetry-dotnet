@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpWebRequestDiagnosticSource.net461.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpWebRequestActivitySource.net461.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
@@ -32,20 +33,20 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     /// Created from the System.Diagnostics.DiagnosticSource.HttpHandlerDiagnosticListener class which has some bugs and feature gaps.
     /// See https://github.com/dotnet/runtime/pull/33732 for details.
     /// </remarks>
-    internal sealed class HttpWebRequestDiagnosticSource : DiagnosticListener
+    internal sealed class HttpWebRequestActivitySource
     {
-        internal const string DiagnosticListenerName = "HttpWebRequestDiagnosticListener";
-        internal const string ActivityName = DiagnosticListenerName + ".HttpRequestOut";
-        internal const string RequestStartName = ActivityName + ".Start";
-        internal const string RequestStopName = ActivityName + ".Stop";
-        internal const string RequestExceptionName = ActivityName + ".Exception";
+        internal const string ActivitySourceName = "HttpWebRequest";
+        internal const string ActivityName = ActivitySourceName + ".HttpRequestOut";
 
-        internal static readonly HttpWebRequestDiagnosticSource Instance = new HttpWebRequestDiagnosticSource();
+        internal static readonly HttpWebRequestActivitySource Instance = new HttpWebRequestActivitySource();
 
-        private const string InitializationFailed = DiagnosticListenerName + ".InitializationFailed";
+        private const string InitializationFailedActivityName = ActivitySourceName + ".InitializationFailed";
         private const string CorrelationContextHeaderName = "Correlation-Context";
         private const string TraceParentHeaderName = "traceparent";
         private const string TraceStateHeaderName = "tracestate";
+
+        private static readonly Version Version = typeof(HttpWebRequestActivitySource).Assembly.GetName().Version;
+        private static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 
         // Fields for reflection
         private static FieldInfo connectionGroupListField;
@@ -75,33 +76,20 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private static Func<HttpWebResponse, bool> isWebSocketResponseAccessor;
         private static Func<HttpWebResponse, string> connectionGroupNameAccessor;
 
-        // Fields for controlling initialization of the HttpWebRequestDiagnosticSource singleton
-        private bool initialized = false;
-
-        private HttpWebRequestDiagnosticSource()
-            : base(DiagnosticListenerName)
+        internal HttpWebRequestActivitySource()
         {
-        }
-
-        public override IDisposable Subscribe(IObserver<KeyValuePair<string, object>> observer, Predicate<string> isEnabled)
-        {
-            IDisposable result = base.Subscribe(observer, isEnabled);
-            this.Initialize();
-            return result;
-        }
-
-        public override IDisposable Subscribe(IObserver<KeyValuePair<string, object>> observer, Func<string, object, object, bool> isEnabled)
-        {
-            IDisposable result = base.Subscribe(observer, isEnabled);
-            this.Initialize();
-            return result;
-        }
-
-        public override IDisposable Subscribe(IObserver<KeyValuePair<string, object>> observer)
-        {
-            IDisposable result = base.Subscribe(observer);
-            this.Initialize();
-            return result;
+            try
+            {
+                PrepareReflectionObjects();
+                PerformInjection();
+            }
+            catch (Exception ex)
+            {
+                // If anything went wrong, just no-op. Write an event so at least we can find out.
+                var activity = ActivitySource.StartActivity(InitializationFailedActivityName, ActivityKind.Server);
+                activity?.SetCustomProperty("exception", ex);
+                activity?.Stop();
+            }
         }
 
         private static void InstrumentRequest(HttpWebRequest request, Activity activity)
@@ -163,7 +151,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             if (endCalledAccessor.Invoke(readAsyncContext) || readAsyncContext.CompletedSynchronously)
             {
                 // We need to process the result directly because the read callback has already fired. Force a copy because response has likely already been disposed.
-                ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Request, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true);
+                ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true);
                 return;
             }
 
@@ -172,7 +160,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             asyncCallbackModifier(readAsyncContext, callback.AsyncCallback);
         }
 
-        private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, HttpWebRequest request, Activity activity, object result, bool forceResponseCopy)
+        private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy)
         {
             // We could be executing on a different thread now so set the activity.
             Activity.Current = activity;
@@ -181,7 +169,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             {
                 if (result is Exception ex)
                 {
-                    Instance.RaiseExceptionEvent(request, ex);
+                    Instance.RaiseExceptionEvent(ex);
                 }
                 else
                 {
@@ -202,11 +190,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                 isWebSocketResponseAccessor(response), connectionGroupNameAccessor(response),
                             });
 
-                        Instance.RaiseResponseEvent(request, responseCopy);
+                        Instance.RaiseResponseEvent(responseCopy);
                     }
                     else
                     {
-                        Instance.RaiseResponseEvent(request, response);
+                        Instance.RaiseResponseEvent(response);
                     }
                 }
             }
@@ -456,96 +444,104 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             return (Func<object[], T>)setterMethod.CreateDelegate(typeof(Func<object[], T>));
         }
 
-        /// <summary>
-        /// Initializes all the reflection objects it will ever need. Reflection is costly, but it's better to take
-        /// this one time performance hit than to get it multiple times later, or do it lazily and have to worry about
-        /// threading issues. If Initialize has been called before, it will not doing anything.
-        /// </summary>
-        private void Initialize()
-        {
-            lock (this)
-            {
-                if (!this.initialized)
-                {
-                    try
-                    {
-                        // This flag makes sure we only do this once. Even if we failed to initialize in an
-                        // earlier time, we should not retry because this initialization is not cheap and
-                        // the likelihood it will succeed the second time is very small.
-                        this.initialized = true;
-
-                        PrepareReflectionObjects();
-                        PerformInjection();
-                    }
-                    catch (Exception ex)
-                    {
-                        // If anything went wrong, just no-op. Write an event so at least we can find out.
-                        this.Write(InitializationFailed, new { Exception = ex });
-                    }
-                }
-            }
-        }
-
         private void RaiseRequestEvent(HttpWebRequest request)
         {
-            if (this.IsRequestInstrumented(request))
+            if (!ActivitySource.HasListeners() || this.IsRequestInstrumented(request))
             {
-                // This request was instrumented by previous RaiseRequestEvent, such is the case with redirect responses where the same request is sent again.
+                // No subscribers to the ActivitySource or this request was instrumented by previous
+                // RaiseRequestEvent, such is the case with redirect responses where the same request is sent again.
                 return;
             }
 
-            if (this.IsEnabled(ActivityName, request))
+            var activity = ActivitySource.StartActivity(
+                ActivityName,
+                ActivityKind.Client,
+                Activity.Current?.Context ?? default,
+                this.BuildRequestTags(request));
+
+            Debug.Assert(activity != null, "Activity null check failed.");
+
+            IAsyncResult asyncContext = readAResultAccessor(request);
+            if (asyncContext != null)
             {
-                // We don't call StartActivity here because it will fire into user code before the headers are added.
+                // Flow here is for [Begin]GetResponse[Async] without a prior call to [Begin]GetRequestStream[Async].
 
-                var activity = new Activity(ActivityName);
-                activity.Start();
-
-                IAsyncResult asyncContext = readAResultAccessor(request);
-                if (asyncContext != null)
-                {
-                    // Flow here is for [Begin]GetResponse[Async] without a prior call to [Begin]GetRequestStream[Async].
-
-                    AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
-                    asyncCallbackModifier(asyncContext, callback.AsyncCallback);
-                }
-                else
-                {
-                    // Flow here is for [Begin]GetRequestStream[Async].
-
-                    asyncContext = writeAResultAccessor(request);
-                    AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
-                    asyncCallbackModifier(asyncContext, callback.AsyncCallback);
-                }
-
-                InstrumentRequest(request, activity);
-
-                // Only send start event to users who subscribed for it, but start activity anyway
-                if (this.IsEnabled(RequestStartName))
-                {
-                    this.Write(activity.OperationName + ".Start", new { Request = request });
-                }
+                AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
+                asyncCallbackModifier(asyncContext, callback.AsyncCallback);
             }
+            else
+            {
+                // Flow here is for [Begin]GetRequestStream[Async].
+
+                asyncContext = writeAResultAccessor(request);
+                AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
+                asyncCallbackModifier(asyncContext, callback.AsyncCallback);
+            }
+
+            InstrumentRequest(request, activity);
+
+            activity.SetCustomProperty("request", request);
         }
 
-        private void RaiseResponseEvent(HttpWebRequest request, HttpWebResponse response)
+        private void RaiseResponseEvent(HttpWebResponse response)
         {
-            if (this.IsEnabled(RequestStopName))
+            Activity activity = Activity.Current;
+            if (activity == null)
             {
-                this.Write(RequestStopName, new { Request = request, Response = response });
+                return;
             }
+
+            activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, ((int)response.StatusCode).ToString());
+            activity.AddTag(SpanAttributeConstants.HttpStatusTextKey, response.StatusDescription);
+
+            activity.SetCustomProperty("response", response);
         }
 
-        private void RaiseExceptionEvent(HttpWebRequest request, Exception exception)
+        private void RaiseExceptionEvent(Exception exception)
         {
-            if (this.IsEnabled(RequestExceptionName))
+            Activity activity = Activity.Current;
+            if (activity == null)
             {
-                this.Write(RequestExceptionName, new { Request = request, Exception = exception });
+                return;
             }
+
+            if (exception is WebException wexc && wexc.Response is HttpWebResponse response)
+            {
+                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, ((int)response.StatusCode).ToString());
+                activity.AddTag(SpanAttributeConstants.HttpStatusTextKey, response.StatusDescription);
+            }
+            else
+            {
+                activity.AddTag("error", exception.Message);
+            }
+
+            activity.SetCustomProperty("exception", exception);
         }
 
         private bool IsRequestInstrumented(HttpWebRequest request)
             => request.Headers.Get(TraceParentHeaderName) != null;
+
+        private Dictionary<string, string> BuildRequestTags(HttpWebRequest request)
+        {
+            return new Dictionary<string, string>
+            {
+                [SpanAttributeConstants.ComponentKey] = "http",
+                [SpanAttributeConstants.HttpMethodKey] = request.Method,
+                [SpanAttributeConstants.HttpHostKey] = this.BuildRequestHostTagValue(request.RequestUri.Host, request.RequestUri.Port),
+                [SpanAttributeConstants.HttpUrlKey] = request.RequestUri.OriginalString,
+                [SpanAttributeConstants.HttpFlavorKey] = request.ProtocolVersion.ToString(),
+            };
+        }
+
+        private string BuildRequestHostTagValue(string hostName, int port)
+        {
+            if (port == 80 || port == 443)
+            {
+                return hostName;
+            }
+
+            return $"{hostName}:{port}";
+        }
 
         private class HashtableWrapper : Hashtable, IEnumerable
         {
@@ -1011,7 +1007,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 object result = resultAccessor(asyncResult);
                 if (result is Exception || result is HttpWebResponse)
                 {
-                    ProcessResult(asyncResult, this.OriginalCallback, this.Request, this.Activity, result, false);
+                    ProcessResult(asyncResult, this.OriginalCallback, this.Activity, result, false);
                 }
 
                 this.OriginalCallback?.Invoke(asyncResult);

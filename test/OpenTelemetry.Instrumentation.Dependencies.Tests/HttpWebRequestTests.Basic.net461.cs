@@ -218,7 +218,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 .GetTracer(null);
 
             var options = new HttpClientInstrumentationOptions((activityName, arg1, _)
-                => !(activityName == HttpWebRequestDiagnosticSource.ActivityName &&
+                => !(activityName == HttpWebRequestActivitySource.ActivityName &&
                 arg1 is HttpWebRequest request &&
                 request.RequestUri.OriginalString.Contains(this.url)));
 

@@ -36,7 +36,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
     {
         static HttpWebRequestDiagnosticSourceTests()
         {
-            GC.KeepAlive(HttpWebRequestDiagnosticSource.Instance);
+            GC.KeepAlive(HttpWebRequestActivitySource.Instance);
         }
 
         private readonly IDisposable testServer;
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             bool listenerFound = false;
             using (DiagnosticListener.AllListeners.Subscribe(new CallbackObserver<DiagnosticListener>(diagnosticListener =>
             {
-                if (diagnosticListener.Name == HttpWebRequestDiagnosticSource.DiagnosticListenerName)
+                if (diagnosticListener.Name == HttpWebRequestActivitySource.ActivitySourceName)
                 {
                     listenerFound = true;
                 }
@@ -219,7 +219,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 VerifyHeaders(startRequest);
 
                 Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
-                Assert.Equal(HttpWebRequestDiagnosticSource.RequestStopName, stopEvent.Key);
+                Assert.Equal(HttpWebRequestActivitySource.RequestStopName, stopEvent.Key);
                 HttpWebRequest stopRequest = ReadPublicProperty<HttpWebRequest>(stopEvent.Value, "Request");
                 Assert.Equal(startRequest, stopRequest);
                 HttpWebResponse response = ReadPublicProperty<HttpWebResponse>(stopEvent.Value, "Response");
@@ -369,7 +369,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 VerifyHeaders(startRequest);
 
                 Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
-                Assert.Equal(HttpWebRequestDiagnosticSource.RequestStopName, stopEvent.Key);
+                Assert.Equal(HttpWebRequestActivitySource.RequestStopName, stopEvent.Key);
                 HttpWebRequest stopRequest = ReadPublicProperty<HttpWebRequest>(stopEvent.Value, "Request");
                 Assert.Equal(startRequest, stopRequest);
                 HttpWebResponse response = ReadPublicProperty<HttpWebResponse>(stopEvent.Value, "Response");
@@ -484,7 +484,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             VerifyHeaders(startRequest);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
-            Assert.Equal(HttpWebRequestDiagnosticSource.RequestStopName, stopEvent.Key);
+            Assert.Equal(HttpWebRequestActivitySource.RequestStopName, stopEvent.Key);
             HttpWebRequest stopRequest = ReadPublicProperty<HttpWebRequest>(stopEvent.Value, "Request");
             Assert.Equal(startRequest, stopRequest);
             HttpWebResponse stopResponse = ReadPublicProperty<HttpWebResponse>(stopEvent.Value, "Response");
@@ -545,7 +545,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             HttpWebRequest startRequest = AssertFirstEventWasStart(eventRecords);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, object> exceptionEvent));
-            Assert.Equal(HttpWebRequestDiagnosticSource.RequestExceptionName, exceptionEvent.Key);
+            Assert.Equal(HttpWebRequestActivitySource.RequestExceptionName, exceptionEvent.Key);
             HttpWebRequest exceptionRequest = ReadPublicProperty<HttpWebRequest>(exceptionEvent.Value, "Request");
             Assert.Equal(startRequest, exceptionRequest);
             Exception exceptionException = ReadPublicProperty<Exception>(exceptionEvent.Value, "Exception");
@@ -682,16 +682,16 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             {
                 if (eventNumber == 0)
                 {
-                    Assert.True(evnt == HttpWebRequestDiagnosticSource.ActivityName);
+                    Assert.True(evnt == HttpWebRequestActivitySource.ActivityName);
                     Assert.True(arg1 is WebRequest);
                 }
                 else if (eventNumber == 1)
                 {
-                    Assert.True(evnt == HttpWebRequestDiagnosticSource.RequestStartName);
+                    Assert.True(evnt == HttpWebRequestActivitySource.RequestStartName);
                 }
                 else if (eventNumber == 2)
                 {
-                    Assert.True(evnt == HttpWebRequestDiagnosticSource.RequestStopName);
+                    Assert.True(evnt == HttpWebRequestActivitySource.RequestStopName);
                 }
 
                 eventNumber++;
@@ -732,7 +732,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             static bool IsEnabled(string evnt, object arg1, object arg2)
             {
-                if (evnt == HttpWebRequestDiagnosticSource.ActivityName)
+                if (evnt == HttpWebRequestActivitySource.ActivityName)
                 {
                     return (arg1 as WebRequest).RequestUri.Query.Contains("passFilter");
                 }
@@ -802,14 +802,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 object eventFields = pair.Value;
 
                 Assert.True(
-                    pair.Key == HttpWebRequestDiagnosticSource.RequestStartName ||
-                    pair.Key == HttpWebRequestDiagnosticSource.RequestStopName,
+                    pair.Key == HttpWebRequestActivitySource.RequestStartName ||
+                    pair.Key == HttpWebRequestActivitySource.RequestStopName,
                     "An unexpected event of name " + pair.Key + "was received");
 
                 WebRequest request = ReadPublicProperty<WebRequest>(eventFields, "Request");
                 Assert.Equal("HttpWebRequest", request.GetType().Name);
 
-                if (pair.Key == HttpWebRequestDiagnosticSource.RequestStartName)
+                if (pair.Key == HttpWebRequestActivitySource.RequestStartName)
                 {
                     // Make sure this is an URL that we recognize. If not, just skip
                     if (!requestData.TryGetValue(request.RequestUri, out var tuple))
@@ -887,7 +887,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         private static HttpWebRequest AssertFirstEventWasStart(EventObserverAndRecorder eventRecords)
         {
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, object> startEvent));
-            Assert.Equal(HttpWebRequestDiagnosticSource.RequestStartName, startEvent.Key);
+            Assert.Equal(HttpWebRequestActivitySource.RequestStartName, startEvent.Key);
             HttpWebRequest startRequest = ReadPublicProperty<HttpWebRequest>(startEvent.Value, "Request");
             Assert.NotNull(startRequest);
             return startRequest;
@@ -929,7 +929,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             {
                 this.listSubscription = DiagnosticListener.AllListeners.Subscribe(new CallbackObserver<DiagnosticListener>(diagnosticListener =>
                 {
-                    if (diagnosticListener.Name == HttpWebRequestDiagnosticSource.DiagnosticListenerName)
+                    if (diagnosticListener.Name == HttpWebRequestActivitySource.ActivitySourceName)
                     {
                         this.httpSubscription = diagnosticListener.Subscribe(this);
                     }
@@ -942,7 +942,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             {
                 this.listSubscription = DiagnosticListener.AllListeners.Subscribe(new CallbackObserver<DiagnosticListener>(diagnosticListener =>
                 {
-                    if (diagnosticListener.Name == HttpWebRequestDiagnosticSource.DiagnosticListenerName)
+                    if (diagnosticListener.Name == HttpWebRequestActivitySource.ActivitySourceName)
                     {
                         this.httpSubscription = diagnosticListener.Subscribe(this, isEnabled);
                     }
@@ -953,7 +953,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             {
                 this.listSubscription = DiagnosticListener.AllListeners.Subscribe(new CallbackObserver<DiagnosticListener>(diagnosticListener =>
                 {
-                    if (diagnosticListener.Name == HttpWebRequestDiagnosticSource.DiagnosticListenerName)
+                    if (diagnosticListener.Name == HttpWebRequestActivitySource.ActivitySourceName)
                     {
                         this.httpSubscription = diagnosticListener.Subscribe(this, isEnabled);
                     }
