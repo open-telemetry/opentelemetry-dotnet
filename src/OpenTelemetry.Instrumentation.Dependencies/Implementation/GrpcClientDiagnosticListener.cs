@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Trace;
@@ -47,13 +48,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 return;
             }
 
-            // The path is also available from the grpc.method tag on the activity. Maybe that should be used instead
-            var path = request.RequestUri.AbsolutePath.Trim('/');
-            this.Tracer.StartActiveSpanFromActivity(path, activity, SpanKind.Client, out var span);
+            var grpcMethodTag = activity.Tags.FirstOrDefault(tag => tag.Key == "grpc.method");
+            var grpcMethod = grpcMethodTag.Value?.Trim('/');
+
+            this.Tracer.StartActiveSpanFromActivity(grpcMethod, activity, SpanKind.Client, out var span);
 
             if (span.IsRecording)
             {
-                var rpcService = GrpcMethodRegex.Match(path).Groups["service"].Value;
+                var rpcService = GrpcMethodRegex.Match(grpcMethod).Groups["service"].Value;
 
                 span.SetAttribute("rpc.service", rpcService);
 
