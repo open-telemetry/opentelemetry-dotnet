@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.Adapter.Dependencies.Implementation;
+using OpenTelemetry.Instrumentation.Dependencies.Implementation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Dependencies
