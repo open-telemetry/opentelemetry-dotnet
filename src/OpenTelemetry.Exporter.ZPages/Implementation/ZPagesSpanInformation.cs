@@ -41,12 +41,12 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
         public ZPagesSpanInformation(SpanData spanData)
         {
             this.Name = spanData.Name;
-            this.CountTotal = 1;
+            this.Count = 1;
             this.EndedCount = 0;
             this.LastUpdated = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
             this.TotalLatency = 0;
             this.AvgLatencyTotal = 0;
-            this.ErrorTotal = 0;
+            this.ErrorCount = 0;
         }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
         /// <summary>
         /// Gets or sets the total count of the span.
         /// </summary>
-        public long CountTotal { get; set; }
+        public long Count { get; set; }
 
         /// <summary>
         /// Gets or sets the total count of the ended span.
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
         /// <summary>
         /// Gets or sets the total error count of the span.
         /// </summary>
-        public long ErrorTotal { get; set; }
+        public long ErrorCount { get; set; }
 
         /// <summary>
         /// Gets or sets the total average latency of the span.

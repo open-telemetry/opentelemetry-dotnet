@@ -45,12 +45,12 @@ namespace OpenTelemetry.Exporter.ZPages
 
             // Create a timer with one minute interval
             this.minuteTimer = new Timer(60000);
-            this.minuteTimer.Elapsed += new ElapsedEventHandler(ZPagesSpans.TriggerMinuteCalculations);
+            this.minuteTimer.Elapsed += new ElapsedEventHandler(ZPagesSpans.PurgeCurrentMinuteData);
             this.minuteTimer.Enabled = true;
 
             // Create a timer with one hour interval
             this.hourTimer = new Timer(3600000);
-            this.hourTimer.Elapsed += new ElapsedEventHandler(ZPagesSpans.TriggerHourCalculations);
+            this.hourTimer.Elapsed += new ElapsedEventHandler(ZPagesSpans.PurgeCurrentHourData);
             this.hourTimer.Enabled = true;
         }
 

@@ -18,6 +18,6 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
 {
     internal class ZPagesStatsBuilder
     {
-        public const string ContentType = "text/htm";
+        public const string ContentType = "text/html";
     }
 }

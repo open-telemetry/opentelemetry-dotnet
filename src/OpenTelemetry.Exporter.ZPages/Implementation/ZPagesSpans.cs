@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Timers;
 
@@ -25,7 +26,6 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
     /// </summary>
     public static class ZPagesSpans
     {
-        // private static Timer timer;
         private static long startTime;
 
         /// <summary>
@@ -35,8 +35,8 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
         {
             ZQueue = new LinkedList<Dictionary<string, ZPagesSpanInformation>>();
             ProcessingSpanList = new Dictionary<string, long>();
-            CurrentMinuteSpanList = new Dictionary<string, ZPagesSpanInformation>();
-            CurrentHourSpanList = new Dictionary<string, ZPagesSpanInformation>();
+            CurrentMinuteSpanList = new ConcurrentDictionary<string, ZPagesSpanInformation>();
+            CurrentHourSpanList = new ConcurrentDictionary<string, ZPagesSpanInformation>();
             TotalSpanCount = new Dictionary<string, long>();
             TotalEndedSpanCount = new Dictionary<string, long>();
             TotalSpanErrorCount = new Dictionary<string, long>();
@@ -52,12 +52,12 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
         /// <summary>
         /// Gets or sets the current minute span information list.
         /// </summary>
-        public static Dictionary<string, ZPagesSpanInformation> CurrentMinuteSpanList { get; set; }
+        public static ConcurrentDictionary<string, ZPagesSpanInformation> CurrentMinuteSpanList { get; set; }
 
         /// <summary>
         /// Gets or sets the current hour span information list.
         /// </summary>
-        public static Dictionary<string, ZPagesSpanInformation> CurrentHourSpanList { get; set; }
+        public static ConcurrentDictionary<string, ZPagesSpanInformation> CurrentHourSpanList { get; set; }
 
         /// <summary>
         /// Gets or sets the processing span information list. This holds the names of the spans which have not ended yet, along with the active count.
@@ -94,12 +94,13 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
         /// </summary>
         /// <param name="source">Source.</param>
         /// <param name="e">Event Arguments.</param>
-        public static void TriggerMinuteCalculations(object source, ElapsedEventArgs e)
+        public static void PurgeCurrentMinuteData(object source, ElapsedEventArgs e)
         {
-            // Enqueue the last minute's span information list
-            ZQueue.AddFirst(CurrentMinuteSpanList);
+            // Enqueue the last minute's span information list to ZQueue
+            ZQueue.AddFirst(new Dictionary<string, ZPagesSpanInformation>(CurrentMinuteSpanList));
+
+            // Clear the current minute span list to start recording new spans only
             CurrentMinuteSpanList.Clear();
-            Console.WriteLine("Here");
 
             // Remove the stale span information which is at the end of the list
             if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - startTime >= RetentionTime)
@@ -113,7 +114,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
         /// </summary>
         /// <param name="source">Source.</param>
         /// <param name="e">Event Arguments.</param>
-        public static void TriggerHourCalculations(object source, ElapsedEventArgs e)
+        public static void PurgeCurrentHourData(object source, ElapsedEventArgs e)
         {
             // Clear the last hour's span information list
             CurrentHourSpanList.Clear();

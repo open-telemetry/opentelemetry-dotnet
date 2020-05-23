@@ -31,7 +31,7 @@ namespace Samples
             var zpagesOptions = new ZPagesExporterOptions() { Url = "http://localhost:7284/rpcz/" };
             var zpagesExporter = new ZPagesExporter(zpagesOptions);
             var spanProcessor = new ZPagesSpanProcessor(zpagesExporter);
-            ZPagesSpans.RetentionTime = 360000;
+            ZPagesSpans.RetentionTime = 3600000;
             var httpServer = new ZPagesExporterStatsHttpServer(zpagesExporter, spanProcessor);
 
             // Start the server

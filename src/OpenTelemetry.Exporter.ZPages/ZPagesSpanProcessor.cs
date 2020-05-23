@@ -75,13 +75,13 @@ namespace OpenTelemetry.Exporter.ZPages
                 // If the span name is not in the current minute list, add it to the span list.
                 if (!ZPagesSpans.CurrentMinuteSpanList.ContainsKey(span.Name))
                 {
-                    ZPagesSpans.CurrentMinuteSpanList.Add(span.Name, new ZPagesSpanInformation(span));
+                    ZPagesSpans.CurrentMinuteSpanList.TryAdd(span.Name, new ZPagesSpanInformation(span));
                 }
 
                 // If the span name is not in the current hour list, add it to the span list.
                 if (!ZPagesSpans.CurrentHourSpanList.ContainsKey(span.Name))
                 {
-                    ZPagesSpans.CurrentHourSpanList.Add(span.Name, new ZPagesSpanInformation(span));
+                    ZPagesSpans.CurrentHourSpanList.TryAdd(span.Name, new ZPagesSpanInformation(span));
                 }
 
                 ZPagesSpans.CurrentMinuteSpanList.TryGetValue(span.Name, out var minuteSpanInformation);
@@ -103,8 +103,8 @@ namespace OpenTelemetry.Exporter.ZPages
                 // Increment the error count, if it applies in all applicable lists.
                 if (!span.Status.IsOk)
                 {
-                    minuteSpanInformation.ErrorTotal++;
-                    hourSpanInformation.ErrorTotal++;
+                    minuteSpanInformation.ErrorCount++;
+                    hourSpanInformation.ErrorCount++;
                     ZPagesSpans.TotalSpanErrorCount.TryGetValue(span.Name, out var errorCount);
                     ZPagesSpans.TotalSpanErrorCount[span.Name] = errorCount + 1;
                 }

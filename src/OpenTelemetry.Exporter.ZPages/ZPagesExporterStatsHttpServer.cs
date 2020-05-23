@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -127,15 +128,16 @@ namespace OpenTelemetry.Exporter.ZPages
                                              "<meta charset=\"utf-8\">" +
                                              "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css\">" +
                                              "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js\"></script>" +
-                                             "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js\"></script></head>");
+                                             "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js\"></script>" +
+                                             "</head>");
                             writer.WriteLine("<body><div class=\"col-sm-1\"></div><div class=\"container col-sm-10\"><div class=\"jumbotron table-responsive\"><h1>RPC Stats</h2>" +
                                              "<table class=\"table table-bordered table-hover table-striped\">" +
-                                             "<thead style=\"color: white;background-color: Teal;\"><tr><th>Span Name</th><th>Total Count</th><th>Count in last minute</th><th>Count in last hour</th><th>Average Latency (ms)</th>" +
+                                             "<thead><tr><th>Span Name</th><th>Total Count</th><th>Count in last minute</th><th>Count in last hour</th><th>Average Latency (ms)</th>" +
                                              "<th>Average Latency in last minute (ms)</th><th>Average Latency in last hour (ms)</th><th>Total Errors</th><th>Errors in last minute</th><th>Errors in last minute</th><th>Last Updated</th></tr></thead>" +
-                                             "<tbody style=\"background-color: white;\">");
+                                             "<tbody>");
 
-                            Dictionary<string, ZPagesSpanInformation> currentHourSpanList = ZPagesSpans.CurrentHourSpanList;
-                            Dictionary<string, ZPagesSpanInformation> currentMinuteSpanList = ZPagesSpans.CurrentMinuteSpanList;
+                            ConcurrentDictionary<string, ZPagesSpanInformation> currentHourSpanList = ZPagesSpans.CurrentHourSpanList;
+                            ConcurrentDictionary<string, ZPagesSpanInformation> currentMinuteSpanList = ZPagesSpans.CurrentMinuteSpanList;
 
                             // Put span information in each row of the table
                             foreach (var spanName in currentHourSpanList.Keys)
@@ -154,13 +156,13 @@ namespace OpenTelemetry.Exporter.ZPages
                                     currentMinuteSpanList.TryGetValue(spanName, out minuteSpanInformation);
                                     countInLastMinute = minuteSpanInformation.EndedCount + ZPagesSpans.ProcessingSpanList[spanName];
                                     averageLatencyInLastMinute = minuteSpanInformation.AvgLatencyTotal;
-                                    errorCountInLastMinute = minuteSpanInformation.ErrorTotal;
+                                    errorCountInLastMinute = minuteSpanInformation.ErrorCount;
                                 }
 
                                 currentHourSpanList.TryGetValue(spanName, out hourSpanInformation);
                                 countInLastHour = hourSpanInformation.EndedCount + ZPagesSpans.ProcessingSpanList[spanName];
                                 averageLatencyInLastHour = hourSpanInformation.AvgLatencyTotal;
-                                errorCountInLastHour = hourSpanInformation.ErrorTotal;
+                                errorCountInLastHour = hourSpanInformation.ErrorCount;
 
                                 long totalAverageLatency = ZPagesSpans.TotalSpanLatency[spanName] / ZPagesSpans.TotalEndedSpanCount[spanName];
 
