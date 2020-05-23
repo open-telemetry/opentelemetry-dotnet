@@ -202,7 +202,7 @@ namespace OpenTelemetry.Trace.Export
                 }
 
                 var result = await this.exporter.ExportAsync(batch, cancellationToken).ConfigureAwait(false);
-                if (result != SpanExporter.ExportResult.Success)
+                if (result != ExportResult.Success)
                 {
                     OpenTelemetrySdkEventSource.Log.ExporterErrorResult(result);
 

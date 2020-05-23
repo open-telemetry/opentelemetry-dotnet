@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <Description>OpenTelemetry instrumentation for Redis calls made by the StackExchange.Redis library.</Description>
+    <PackageTags>$(PackageTags);distributed-tracing;Redis;StackExchange.Redis</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+    <PackageReference Include="StackExchange.Redis" Version="2.0.519" />
+  </ItemGroup>
+
+</Project>

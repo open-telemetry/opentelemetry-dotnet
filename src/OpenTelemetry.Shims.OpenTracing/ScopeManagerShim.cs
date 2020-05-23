@@ -57,7 +57,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return openTracingScope;
                 }
 
-                return new ScopeAdapter(currentSpan);
+                return new ScopeInstrumentation(currentSpan);
             }
         }
 
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             var scope = this.tracer.WithSpan(shim.Span, false);
 
-            var adapter = new ScopeAdapter(
+            var instrumentation = new ScopeInstrumentation(
                 shim.Span,
                 () =>
                 {
@@ -85,19 +85,19 @@ namespace OpenTelemetry.Shims.OpenTracing
                     scope.Dispose();
                 });
 
-            SpanScopeTable.Add(shim.Span, adapter);
+            SpanScopeTable.Add(shim.Span, instrumentation);
 #if DEBUG
             Interlocked.Increment(ref this.spanScopeTableCount);
 #endif
 
-            return adapter;
+            return instrumentation;
         }
 
-        private class ScopeAdapter : global::OpenTracing.IScope
+        private class ScopeInstrumentation : global::OpenTracing.IScope
         {
             private readonly Action disposeAction;
 
-            public ScopeAdapter(TelemetrySpan span, Action disposeAction = null)
+            public ScopeInstrumentation(TelemetrySpan span, Action disposeAction = null)
             {
                 this.Span = new SpanShim(span);
                 this.disposeAction = disposeAction;
