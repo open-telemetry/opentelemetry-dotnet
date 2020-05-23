@@ -91,7 +91,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
                 if (span.IsRecording)
                 {
-                    // set span.Status
+                    var grpcStatusCodeTag = activity.Tags.FirstOrDefault(tag => tag.Key == "grpc.status_code").Value;
+
+                    if (int.TryParse(grpcStatusCodeTag, out var grpcStatusCode)
+                        && typeof(StatusCanonicalCode).IsEnumDefined(grpcStatusCode))
+                    {
+                        // The Status constructor was previously internal. We need a way to get a Status from the integer code.
+                        span.Status = new Status((StatusCanonicalCode)grpcStatusCode);
+                    }
                 }
             }
             finally
