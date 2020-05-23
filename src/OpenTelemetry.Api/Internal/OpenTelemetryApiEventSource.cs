@@ -39,7 +39,7 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void TraceStateExtractException(Exception ex)
+        public void TracestateExtractException(Exception ex)
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void TraceStateKeyIsInvalid(ReadOnlySpan<char> key)
+        public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void TraceStateValueIsInvalid(ReadOnlySpan<char> value)
+        public void TracestateValueIsInvalid(ReadOnlySpan<char> value)
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
