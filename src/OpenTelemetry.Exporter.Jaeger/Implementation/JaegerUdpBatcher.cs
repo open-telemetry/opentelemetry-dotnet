@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Instrumentation;
 using OpenTelemetry.Trace.Export;
 using Thrift.Protocol;
 using Thrift.Transport;
@@ -73,7 +74,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             this.maxFlushIntervalTimer.Elapsed += async (sender, args) =>
             {
-                await this.FlushAsyncInternal(false, CancellationToken.None).ConfigureAwait(false);
+                try
+                {
+                    await this.FlushAsyncInternal(false, CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    JaegerExporterEventSource.Log.ExceptionOnSend(ex);
+                }
             };
         }
 
