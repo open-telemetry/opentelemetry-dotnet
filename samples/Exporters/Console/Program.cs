@@ -39,7 +39,7 @@ namespace Samples
         {
             Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, ZPagesOptions, ConsoleOptions, ConsoleActivityOptions, OtlpOptions>(args)
                 .MapResult(
-                    (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
+                    (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port, options.UseActivitySource),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheus.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
                     (HttpClientOptions options) => TestHttpClient.Run(),
@@ -59,11 +59,14 @@ namespace Samples
     [Verb("jaeger", HelpText = "Specify the options required to test Jaeger exporter")]
     internal class JaegerOptions
     {
-        [Option('h', "host", HelpText = "Please specify the host of the Jaeger Agent", Required = true)]
+        [Option('h', "host", HelpText = "Host of the Jaeger Agent", Default = "localhost")]
         public string Host { get; set; }
 
-        [Option('p', "port", HelpText = "Please specify the port of the Jaeger Agent", Required = true)]
+        [Option('p', "port", HelpText = "Port of the Jaeger Agent", Default = 6831)]
         public int Port { get; set; }
+
+        [Option('a', "activity", HelpText = "Set it to true to export ActivitySource data", Default = false)]
+        public bool UseActivitySource { get; set; }
     }
 
     [Verb("zipkin", HelpText = "Specify the options required to test Zipkin exporter")]

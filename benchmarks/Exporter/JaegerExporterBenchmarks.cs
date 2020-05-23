@@ -89,7 +89,7 @@ namespace Benchmarks.Exporter
             {
                 for (int c = 0; c < this.NumberOfSpans; c++)
                 {
-                    await jaegerUdpBatcher.AppendAsync(this.testSpan, CancellationToken.None).ConfigureAwait(false);
+                    await jaegerUdpBatcher.AppendAsync(this.testSpan.ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
                 }
 
                 await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
