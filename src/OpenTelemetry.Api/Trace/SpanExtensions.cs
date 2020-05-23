@@ -113,6 +113,23 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Helper method that populates span properties from host and port
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="hostAndPort">Host and port value.</param>
+        /// <returns>Span with populated host properties.</returns>
+        public static TelemetrySpan PutHttpHostAttribute(this TelemetrySpan span, string hostAndPort)
+        {
+            if (!string.IsNullOrEmpty(hostAndPort))
+            {
+                span.SetAttribute(SpanAttributeConstants.HttpHostKey, hostAndPort);
+            }
+
+            return span;
+        }
+
+        /// <summary>
         /// Helper method that populates span properties from route
         /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>

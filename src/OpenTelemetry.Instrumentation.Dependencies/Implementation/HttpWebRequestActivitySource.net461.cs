@@ -16,7 +16,6 @@
 #if NET461
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -48,10 +47,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         private static readonly Version Version = typeof(HttpWebRequestActivitySource).Assembly.GetName().Version;
         private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
-        private static readonly ConcurrentDictionary<string, string> MethodToDisplayNameCache = new ConcurrentDictionary<string, string>();
-        private static readonly ConcurrentDictionary<Version, string> ProtocolVersionToStringCache = new ConcurrentDictionary<Version, string>();
-        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<int, string>> HostAndPortToStringCache = new ConcurrentDictionary<string, ConcurrentDictionary<int, string>>();
-        private static readonly ConcurrentDictionary<HttpStatusCode, string> StatusCodeToStringCache = new ConcurrentDictionary<HttpStatusCode, string>();
 
         // Fields for reflection
         private static FieldInfo connectionGroupListField;
@@ -98,13 +93,13 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddRequestTagsAndInstrumentRequest(HttpWebRequest request, Activity activity)
         {
-            activity.DisplayName = BuildDisplayName(request);
+            activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
             activity.AddTag(SpanAttributeConstants.ComponentKey, "http");
             activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
-            activity.AddTag(SpanAttributeConstants.HttpHostKey, BuildRequestHostTagValue(request.RequestUri));
+            activity.AddTag(SpanAttributeConstants.HttpHostKey, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
             activity.AddTag(SpanAttributeConstants.HttpUrlKey, request.RequestUri.OriginalString);
-            activity.AddTag(SpanAttributeConstants.HttpFlavorKey, BuildProtocolVersionTagValue(request));
+            activity.AddTag(SpanAttributeConstants.HttpFlavorKey, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
 
             InstrumentRequest(request, activity);
 
@@ -114,7 +109,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddResponseTags(HttpWebResponse response, Activity activity)
         {
-            activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, BuildStatusCodeTagValue(response));
+            activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
             activity.AddTag(SpanAttributeConstants.HttpStatusTextKey, response.StatusDescription);
 
             activity.SetCustomProperty("HttpWebRequest.Response", response);
@@ -125,7 +120,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         {
             if (exception is WebException wexc && wexc.Response is HttpWebResponse response)
             {
-                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, BuildStatusCodeTagValue(response));
+                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
                 activity.AddTag(SpanAttributeConstants.HttpStatusTextKey, response.StatusDescription);
             }
             else
@@ -134,69 +129,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             }
 
             activity.SetCustomProperty("HttpWebRequest.Exception", exception);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static string BuildDisplayName(HttpWebRequest request)
-        {
-            if (!MethodToDisplayNameCache.TryGetValue(request.Method, out string displayName))
-            {
-                displayName = $"{Constants.HttpSpanPrefix}{request.Method}";
-                MethodToDisplayNameCache.TryAdd(request.Method, displayName);
-            }
-
-            return displayName;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static string BuildProtocolVersionTagValue(HttpWebRequest request)
-        {
-            if (!ProtocolVersionToStringCache.TryGetValue(request.ProtocolVersion, out string protocolVersion))
-            {
-                protocolVersion = request.ProtocolVersion.ToString();
-                ProtocolVersionToStringCache.TryAdd(request.ProtocolVersion, protocolVersion);
-            }
-
-            return protocolVersion;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static string BuildRequestHostTagValue(Uri requestUri)
-        {
-            string host = requestUri.Host;
-
-            if (requestUri.IsDefaultPort)
-            {
-                return host;
-            }
-
-            int port = requestUri.Port;
-
-            if (!HostAndPortToStringCache.TryGetValue(host, out ConcurrentDictionary<int, string> portCache))
-            {
-                portCache = new ConcurrentDictionary<int, string>();
-                HostAndPortToStringCache.TryAdd(host, portCache);
-            }
-
-            if (!portCache.TryGetValue(port, out string hostTagValue))
-            {
-                hostTagValue = $"{requestUri.Host}:{requestUri.Port}";
-                portCache.TryAdd(port, hostTagValue);
-            }
-
-            return hostTagValue;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static string BuildStatusCodeTagValue(HttpWebResponse response)
-        {
-            if (!StatusCodeToStringCache.TryGetValue(response.StatusCode, out string statusCode))
-            {
-                statusCode = ((int)response.StatusCode).ToString();
-                StatusCodeToStringCache.TryAdd(response.StatusCode, statusCode);
-            }
-
-            return statusCode;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
