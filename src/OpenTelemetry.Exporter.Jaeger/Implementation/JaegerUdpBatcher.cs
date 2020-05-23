@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Instrumentation;
 using OpenTelemetry.Trace.Export;
 using Thrift.Protocol;
 using Thrift.Transport;
