@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Text;
 using OpenTelemetry.Trace;
 
@@ -47,6 +48,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         private static readonly Version Version = typeof(HttpWebRequestActivitySource).Assembly.GetName().Version;
         private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        private static readonly ConcurrentDictionary<string, string> MethodToDisplayNameCache = new ConcurrentDictionary<string, string>();
         private static readonly ConcurrentDictionary<Version, string> ProtocolVersionToStringCache = new ConcurrentDictionary<Version, string>();
         private static readonly ConcurrentDictionary<string, ConcurrentDictionary<int, string>> HostAndPortToStringCache = new ConcurrentDictionary<string, ConcurrentDictionary<int, string>>();
         private static readonly ConcurrentDictionary<HttpStatusCode, string> StatusCodeToStringCache = new ConcurrentDictionary<HttpStatusCode, string>();
@@ -93,6 +95,111 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void AddRequestTagsAndInstrumentRequest(HttpWebRequest request, Activity activity)
+        {
+            activity.DisplayName = BuildDisplayName(request);
+
+            activity.AddTag(SpanAttributeConstants.ComponentKey, "http");
+            activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
+            activity.AddTag(SpanAttributeConstants.HttpHostKey, BuildRequestHostTagValue(request.RequestUri));
+            activity.AddTag(SpanAttributeConstants.HttpUrlKey, request.RequestUri.OriginalString);
+            activity.AddTag(SpanAttributeConstants.HttpFlavorKey, BuildProtocolVersionTagValue(request));
+
+            InstrumentRequest(request, activity);
+
+            activity.SetCustomProperty("HttpWebRequest.Request", request);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void AddResponseTags(HttpWebResponse response, Activity activity)
+        {
+            activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, BuildStatusCodeTagValue(response));
+            activity.AddTag(SpanAttributeConstants.HttpStatusTextKey, response.StatusDescription);
+
+            activity.SetCustomProperty("HttpWebRequest.Response", response);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void AddExceptionTags(Exception exception, Activity activity)
+        {
+            if (exception is WebException wexc && wexc.Response is HttpWebResponse response)
+            {
+                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, BuildStatusCodeTagValue(response));
+                activity.AddTag(SpanAttributeConstants.HttpStatusTextKey, response.StatusDescription);
+            }
+            else
+            {
+                activity.AddTag("error", exception.Message);
+            }
+
+            activity.SetCustomProperty("HttpWebRequest.Exception", exception);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static string BuildDisplayName(HttpWebRequest request)
+        {
+            if (!MethodToDisplayNameCache.TryGetValue(request.Method, out string displayName))
+            {
+                displayName = $"{Constants.HttpSpanPrefix}{request.Method}";
+                MethodToDisplayNameCache.TryAdd(request.Method, displayName);
+            }
+
+            return displayName;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static string BuildProtocolVersionTagValue(HttpWebRequest request)
+        {
+            if (!ProtocolVersionToStringCache.TryGetValue(request.ProtocolVersion, out string protocolVersion))
+            {
+                protocolVersion = request.ProtocolVersion.ToString();
+                ProtocolVersionToStringCache.TryAdd(request.ProtocolVersion, protocolVersion);
+            }
+
+            return protocolVersion;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static string BuildRequestHostTagValue(Uri requestUri)
+        {
+            string host = requestUri.Host;
+
+            if (requestUri.IsDefaultPort)
+            {
+                return host;
+            }
+
+            int port = requestUri.Port;
+
+            if (!HostAndPortToStringCache.TryGetValue(host, out ConcurrentDictionary<int, string> portCache))
+            {
+                portCache = new ConcurrentDictionary<int, string>();
+                HostAndPortToStringCache.TryAdd(host, portCache);
+            }
+
+            if (!portCache.TryGetValue(port, out string hostTagValue))
+            {
+                hostTagValue = $"{requestUri.Host}:{requestUri.Port}";
+                portCache.TryAdd(port, hostTagValue);
+            }
+
+            return hostTagValue;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static string BuildStatusCodeTagValue(HttpWebResponse response)
+        {
+            if (!StatusCodeToStringCache.TryGetValue(response.StatusCode, out string statusCode))
+            {
+                statusCode = ((int)response.StatusCode).ToString();
+                StatusCodeToStringCache.TryAdd(response.StatusCode, statusCode);
+            }
+
+            return statusCode;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InstrumentRequest(HttpWebRequest request, Activity activity)
         {
             // do not inject header if it was injected already
@@ -126,6 +233,47 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                     request.Headers.Add(CorrelationContextHeaderName, baggage.ToString());
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsRequestInstrumented(HttpWebRequest request)
+            => request.Headers.Get(TraceParentHeaderName) != null;
+
+        private static void ProcessRequest(HttpWebRequest request)
+        {
+            if (!WebRequestActivitySource.HasListeners() || IsRequestInstrumented(request))
+            {
+                // No subscribers to the ActivitySource or this request was instrumented by previous
+                // RaiseRequestEvent, such is the case with redirect responses where the same request is sent again.
+                return;
+            }
+
+            var activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+
+            if (activity == null)
+            {
+                // There is a listener but it decided not to sample the current request.
+                return;
+            }
+
+            IAsyncResult asyncContext = writeAResultAccessor(request);
+            if (asyncContext != null)
+            {
+                // Flow here is for [Begin]GetRequestStream[Async].
+
+                AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
+                asyncCallbackModifier(asyncContext, callback.AsyncCallback);
+            }
+            else
+            {
+                // Flow here is for [Begin]GetResponse[Async] without a prior call to [Begin]GetRequestStream[Async].
+
+                asyncContext = readAResultAccessor(request);
+                AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
+                asyncCallbackModifier(asyncContext, callback.AsyncCallback);
+            }
+
+            AddRequestTagsAndInstrumentRequest(request, activity);
         }
 
         private static void HookOrProcessResult(HttpWebRequest request)
@@ -164,13 +312,17 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy)
         {
             // We could be executing on a different thread now so set the activity.
-            Activity.Current = activity;
+            Debug.Assert(Activity.Current == null || Activity.Current == activity, "There was an unexpected active Activity on the result thread.");
+            if (Activity.Current == null)
+            {
+                Activity.Current = activity;
+            }
 
             try
             {
                 if (result is Exception ex)
                 {
-                    Instance.RaiseExceptionEvent(ex);
+                    AddExceptionTags(ex, activity);
                 }
                 else
                 {
@@ -191,11 +343,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                 isWebSocketResponseAccessor(response), connectionGroupNameAccessor(response),
                             });
 
-                        Instance.RaiseResponseEvent(responseCopy);
+                        AddResponseTags(responseCopy, activity);
                     }
                     else
                     {
-                        Instance.RaiseResponseEvent(response);
+                        AddResponseTags(response, activity);
                     }
                 }
             }
@@ -443,146 +595,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             generator.Emit(OpCodes.Ret);
 
             return (Func<object[], T>)setterMethod.CreateDelegate(typeof(Func<object[], T>));
-        }
-
-        private void RaiseRequestEvent(HttpWebRequest request)
-        {
-            if (!WebRequestActivitySource.HasListeners() || this.IsRequestInstrumented(request))
-            {
-                // No subscribers to the ActivitySource or this request was instrumented by previous
-                // RaiseRequestEvent, such is the case with redirect responses where the same request is sent again.
-                return;
-            }
-
-            var activity = WebRequestActivitySource.StartActivity(
-                ActivityName,
-                ActivityKind.Client,
-                Activity.Current?.Context ?? default,
-                this.BuildRequestTags(request));
-
-            if (activity == null)
-            {
-                return;
-            }
-
-            IAsyncResult asyncContext = readAResultAccessor(request);
-            if (asyncContext != null)
-            {
-                // Flow here is for [Begin]GetResponse[Async] without a prior call to [Begin]GetRequestStream[Async].
-
-                AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
-                asyncCallbackModifier(asyncContext, callback.AsyncCallback);
-            }
-            else
-            {
-                // Flow here is for [Begin]GetRequestStream[Async].
-
-                asyncContext = writeAResultAccessor(request);
-                AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
-                asyncCallbackModifier(asyncContext, callback.AsyncCallback);
-            }
-
-            InstrumentRequest(request, activity);
-
-            activity.SetCustomProperty("request", request);
-        }
-
-        private void RaiseResponseEvent(HttpWebResponse response)
-        {
-            Activity activity = Activity.Current;
-            if (activity == null)
-            {
-                return;
-            }
-
-            activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, this.BuildStatusCodeTagValue(response));
-            activity.AddTag(SpanAttributeConstants.HttpStatusTextKey, response.StatusDescription);
-
-            activity.SetCustomProperty("response", response);
-        }
-
-        private void RaiseExceptionEvent(Exception exception)
-        {
-            Activity activity = Activity.Current;
-            if (activity == null)
-            {
-                return;
-            }
-
-            if (exception is WebException wexc && wexc.Response is HttpWebResponse response)
-            {
-                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, this.BuildStatusCodeTagValue(response));
-                activity.AddTag(SpanAttributeConstants.HttpStatusTextKey, response.StatusDescription);
-            }
-            else
-            {
-                activity.AddTag("error", exception.Message);
-            }
-
-            activity.SetCustomProperty("exception", exception);
-        }
-
-        private bool IsRequestInstrumented(HttpWebRequest request)
-            => request.Headers.Get(TraceParentHeaderName) != null;
-
-        private Dictionary<string, string> BuildRequestTags(HttpWebRequest request)
-        {
-            return new Dictionary<string, string>
-            {
-                [SpanAttributeConstants.ComponentKey] = "http",
-                [SpanAttributeConstants.HttpMethodKey] = request.Method,
-                [SpanAttributeConstants.HttpHostKey] = this.BuildRequestHostTagValue(request.RequestUri),
-                [SpanAttributeConstants.HttpUrlKey] = request.RequestUri.OriginalString,
-                [SpanAttributeConstants.HttpFlavorKey] = this.BuildProtocolVersionTagValue(request),
-            };
-        }
-
-        private string BuildProtocolVersionTagValue(HttpWebRequest request)
-        {
-            if (!ProtocolVersionToStringCache.TryGetValue(request.ProtocolVersion, out string protocolVersion))
-            {
-                protocolVersion = request.ProtocolVersion.ToString();
-                ProtocolVersionToStringCache.TryAdd(request.ProtocolVersion, protocolVersion);
-            }
-
-            return protocolVersion;
-        }
-
-        private string BuildRequestHostTagValue(Uri requestUri)
-        {
-            string host = requestUri.Host;
-
-            if (requestUri.IsDefaultPort)
-            {
-                return host;
-            }
-
-            int port = requestUri.Port;
-
-            if (!HostAndPortToStringCache.TryGetValue(host, out ConcurrentDictionary<int, string> portCache))
-            {
-                portCache = new ConcurrentDictionary<int, string>();
-                HostAndPortToStringCache.TryAdd(host, portCache);
-            }
-
-            if (!portCache.TryGetValue(port, out string hostTagValue))
-            {
-                hostTagValue = $"{requestUri.Host}:{requestUri.Port}";
-                portCache.TryAdd(port, hostTagValue);
-            }
-
-            return hostTagValue;
-        }
-
-        private string BuildStatusCodeTagValue(HttpWebResponse response)
-        {
-            if (!StatusCodeToStringCache.TryGetValue(response.StatusCode, out string statusCode))
-            {
-                statusCode = ((int)response.StatusCode).ToString();
-                StatusCodeToStringCache.TryAdd(response.StatusCode, statusCode);
-            }
-
-            return statusCode;
         }
 
         private class HashtableWrapper : Hashtable, IEnumerable
@@ -995,7 +1007,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
                 if (value is HttpWebRequest request)
                 {
-                    Instance.RaiseRequestEvent(request);
+                    ProcessRequest(request);
                 }
 
                 return index;

@@ -84,6 +84,10 @@
       <Project>{99f8a331-05e9-45a5-89ba-4c54e825e5b2}</Project>
       <Name>OpenTelemetry.Api</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\src\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj">
+      <Project>{1afff251-3b0c-47ca-be94-937083732c0a}</Project>
+      <Name>OpenTelemetry.Exporter.Console</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\src\OpenTelemetry.Instrumentation.AspNet.Win\OpenTelemetry.Instrumentation.AspNet.Win.csproj">
       <Project>{b9eeacdd-cafa-4b75-a18d-898e7de21b17}</Project>
       <Name>OpenTelemetry.Instrumentation.AspNet.Win</Name>
