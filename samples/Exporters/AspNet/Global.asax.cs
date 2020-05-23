@@ -3,7 +3,6 @@ using System.Web;
 using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Routing;
-using OpenTelemetry.Exporter.Console;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
@@ -32,7 +31,11 @@ namespace OpenTelemetry.Exporter.AspNet
 
             this.openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddDependencyInstrumentation()
-                .UseConsoleActivityExporter(opt => opt.DisplayAsJson = true)); // Temporary until the Jaeger Activity Exporter is done (https://github.com/open-telemetry/opentelemetry-dotnet/pull/693)
+                .UseJaegerActivityExporter(c =>
+                {
+                    c.AgentHost = "localhost";
+                    c.AgentPort = 6831;
+                }));
 
             GlobalConfiguration.Configure(WebApiConfig.Register);
 
