@@ -80,7 +80,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 }
                 catch (Exception ex)
                 {
-                    JaegerExporterEventSource.Log.ExceptionOnSend(ex);
+                    JaegerExporterEventSource.Log.FailedToSend(ex);
                 }
             };
         }

@@ -8,22 +8,22 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     /// <summary>
     /// EventSource events emitted from the project.
     /// </summary>
-    [EventSource(Name = "OpenTelemetry-Instrumentation")]
+    [EventSource(Name = "OpenTelemetry-Exporter-Jaeger")]
     internal class JaegerExporterEventSource : EventSource
     {
         public static JaegerExporterEventSource Log = new JaegerExporterEventSource();
 
         [NonEvent]
-        public void ExceptionOnSend(Exception ex)
+        public void FailedToSend(Exception ex)
         {
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                this.FailedSend(ToInvariantString(ex));
+                this.FailedToSend(ToInvariantString(ex));
             }
         }
 
-        [Event(1, Message = "Failed spans send: '{0}'", Level = EventLevel.Error)]
-        public void FailedSend(string exception)
+        [Event(1, Message = "Failed to send spans: '{0}'", Level = EventLevel.Error)]
+        public void FailedToSend(string exception)
         {
             this.WriteEvent(1, exception);
         }
