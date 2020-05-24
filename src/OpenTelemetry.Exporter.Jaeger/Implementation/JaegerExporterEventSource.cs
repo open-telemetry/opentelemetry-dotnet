@@ -30,16 +30,31 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public static JaegerExporterEventSource Log = new JaegerExporterEventSource();
 
         [NonEvent]
-        public void FailedToSend(Exception ex)
+        public void FailedFlush(Exception ex)
         {
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                this.FailedToSend(ToInvariantString(ex));
+                this.FailedFlush(ToInvariantString(ex));
+            }
+        }
+
+        [NonEvent]
+        public void UnexpectedError(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.UnexpectedError(ToInvariantString(ex));
             }
         }
 
         [Event(1, Message = "Failed to send spans: '{0}'", Level = EventLevel.Error)]
-        public void FailedToSend(string exception)
+        public void FailedFlush(string exception)
+        {
+            this.WriteEvent(1, exception);
+        }
+
+        [Event(2, Message = "Error: '{0}'", Level = EventLevel.Error)]
+        public void UnexpectedError(string exception)
         {
             this.WriteEvent(1, exception);
         }

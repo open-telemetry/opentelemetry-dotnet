@@ -79,7 +79,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 }
                 catch (Exception ex)
                 {
-                    JaegerExporterEventSource.Log.FailedToSend(ex);
+                    JaegerExporterEventSource.Log.UnexpectedError(ex);
                 }
             };
         }
@@ -247,6 +247,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 }
 
                 return n;
+            }
+            catch (Exception ex)
+            {
+                JaegerExporterEventSource.Log.FailedFlush(ex);
             }
             finally
             {
