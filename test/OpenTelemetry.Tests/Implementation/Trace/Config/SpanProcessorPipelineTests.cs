@@ -55,7 +55,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
         {
             var builder = new SpanProcessorPipelineBuilder();
 
-            var exporter = new TestExporter(null);
+            var exporter = new TestSpanExporter(null);
             builder.SetExporter(exporter);
 
             Assert.Same(exporter, builder.Exporter);
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
         {
             var builder = new SpanProcessorPipelineBuilder();
 
-            var exporter = new TestExporter(null);
+            var exporter = new TestSpanExporter(null);
             builder.SetExporter(exporter);
 
             bool processorFactoryCalled = false;
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
                     Assert.NotNull(exporter);
                     return new SimpleSpanProcessor(exporter);
                 })
-                .SetExporter(new TestExporter(null));
+                .SetExporter(new TestSpanExporter(null));
 
             var firstProcessor = (TestProcessor)builder.Build();
 

@@ -30,12 +30,12 @@ namespace OpenTelemetry.Trace.Export.Test
         private const string SpanName1 = "MySpanName/1";
         private const string SpanName2 = "MySpanName/2";
 
-        private TestExporter spanExporter;
+        private TestSpanExporter spanExporter;
         private Tracer tracer;
 
         public SimpleSpanProcessorTest()
         {
-            spanExporter = new TestExporter(null);
+            spanExporter = new TestSpanExporter(null);
             tracer = TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p
                         .SetExporter(spanExporter)
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ThrowsInExporter()
         {
-            spanExporter = new TestExporter(_ => throw new ArgumentException("123"));
+            spanExporter = new TestSpanExporter(_ => throw new ArgumentException("123"));
             tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p
                         .SetExporter(spanExporter)
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ProcessorDoesNotBlockOnExporter()
         {
-            spanExporter = new TestExporter(async _ => await Task.Delay(500));
+            spanExporter = new TestSpanExporter(async _ => await Task.Delay(500));
             tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p
                         .SetExporter(spanExporter)
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public async Task ShutdownTwice()
         {
-            var spanProcessor = new SimpleSpanProcessor(new TestExporter(null));
+            var spanProcessor = new SimpleSpanProcessor(new TestSpanExporter(null));
 
             await spanProcessor.ShutdownAsync(CancellationToken.None).ConfigureAwait(false);
 
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Activity.Current = null;
         }
 
-        private SpanData[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
+        private SpanData[] WaitForSpans(TestSpanExporter exporter, int spanCount, TimeSpan timeout)
         {
             Assert.True(
                 SpinWait.SpinUntil(() =>
