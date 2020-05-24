@@ -20,6 +20,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using Xunit;
@@ -41,9 +42,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var jaegerUdpBatcher = new JaegerUdpBatcher(options);
 
             // Act
-            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
-            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
-            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(CreateTestJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(CreateTestJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(CreateTestJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
 
             var batches = jaegerUdpBatcher.CurrentBatches.Values;
 
@@ -62,15 +63,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var jaegerUdpBatcher = new JaegerUdpBatcher(options);
 
             // Act
-            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(CreateTestJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
             await jaegerUdpBatcher.AppendAsync(
-                JaegerSpanConverterTest.CreateTestSpan(
+                CreateTestJaegerSpan(
                     additionalAttributes: new Dictionary<string, object>
                     {
                         ["peer.service"] = "MySQL",
                     }),
                 CancellationToken.None).ConfigureAwait(false);
-            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(CreateTestJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
 
             var batches = jaegerUdpBatcher.CurrentBatches.Values;
 
@@ -95,9 +96,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var jaegerUdpBatcher = new JaegerUdpBatcher(options);
 
             // Act
-            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
-            await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
-            var flushCount = await jaegerUdpBatcher.AppendAsync(JaegerSpanConverterTest.CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(CreateTestJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(CreateTestJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+            var flushCount = await jaegerUdpBatcher.AppendAsync(CreateTestJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
 
             var batches = jaegerUdpBatcher.CurrentBatches.Values;
 
@@ -120,7 +121,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 memoryTransport);
             jaegerUdpBatcher.Process = TestProcess;
 
-            await jaegerUdpBatcher.AppendAsync(CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(CreateTestPayloadJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
 
             await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
@@ -128,7 +129,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             memoryTransport.Reset();
 
-            await jaegerUdpBatcher.AppendAsync(CreateTestSpan(), CancellationToken.None).ConfigureAwait(false);
+            await jaegerUdpBatcher.AppendAsync(CreateTestPayloadJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
 
             await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
@@ -138,7 +139,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.ToArray()));
         }
 
-        internal static SpanData CreateTestSpan()
+        internal static JaegerSpan CreateTestPayloadJaegerSpan()
         {
             var startTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
             var endTimestamp = startTimestamp.AddSeconds(60);
@@ -194,7 +195,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 new[] { link, },
                 null,
                 Status.Ok,
-                endTimestamp);
+                endTimestamp).ToJaegerSpan();
+        }
+
+        internal static JaegerSpan CreateTestJaegerSpan(
+            bool setAttributes = true,
+            Dictionary<string, object> additionalAttributes = null,
+            bool addEvents = true,
+            bool addLinks = true,
+            Resource resource = null,
+            SpanKind kind = SpanKind.Client)
+        {
+            return JaegerSpanConverterTest.CreateTestSpan(
+                setAttributes, additionalAttributes, addEvents, addLinks, resource, kind).ToJaegerSpan();
         }
     }
 }
