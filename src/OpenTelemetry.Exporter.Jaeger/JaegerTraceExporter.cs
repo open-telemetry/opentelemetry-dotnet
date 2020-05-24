@@ -35,11 +35,6 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.JaegerAgentUdpBatcher = new JaegerUdpBatcher(options);
         }
 
-        public JaegerTraceExporter(IJaegerUdpBatcher jaegerAgentUdpBatcher)
-        {
-            this.JaegerAgentUdpBatcher = jaegerAgentUdpBatcher;
-        }
-
         internal IJaegerUdpBatcher JaegerAgentUdpBatcher { get; }
 
         public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> otelSpanList, CancellationToken cancellationToken)
@@ -60,7 +55,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                 {
                     // avoid cancelling here: this is no return point: if we reached this point
                     // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
-                    await this.JaegerAgentUdpBatcher.AppendAsync(s, CancellationToken.None).ConfigureAwait(false);
+                    await this.JaegerAgentUdpBatcher.AppendAsync(s.ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
                 }
 
                 // TODO jaeger status to ExportResult
