@@ -251,6 +251,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             catch (Exception ex)
             {
                 JaegerExporterEventSource.Log.FailedFlush(ex);
+
+                return 0;
             }
             finally
             {
