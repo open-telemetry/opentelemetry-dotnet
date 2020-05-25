@@ -23,7 +23,46 @@ namespace Samples
 {
     internal class TestJaeger
     {
-        internal static object Run(string host, int port)
+        internal static object Run(string host, int port, bool useActivitySource)
+        {
+            if (useActivitySource)
+            {
+                return RunWithActivity(host, port);
+            }
+
+            return RunWithSdk(host, port);
+        }
+
+        internal static object RunWithActivity(string host, int port)
+        {
+            // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
+            // and use the Jaeger exporter.
+            OpenTelemetrySdk.EnableOpenTelemetry(
+                builder => builder
+                    .AddActivitySource("Samples.SampleServer")
+                    .AddActivitySource("Samples.SampleClient")
+                    .UseJaegerActivityExporter(o =>
+                    {
+                        o.ServiceName = "jaeger-test";
+                        o.AgentHost = host;
+                        o.AgentPort = port;
+                    }));
+
+            // The above lines are required only in Applications
+            // which decide to use OT.
+
+            using (var sample = new InstrumentationWithActivitySource())
+            {
+                sample.Start();
+
+                Console.WriteLine("Sample is running on the background, press ENTER to stop");
+                Console.ReadLine();
+            }
+
+            return null;
+        }
+
+        internal static object RunWithSdk(string host, int port)
         {
             // Create a tracer.
             using var tracerFactory = TracerFactory.Create(
