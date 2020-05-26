@@ -91,7 +91,13 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
                 if (span.IsRecording)
                 {
-                    // set span.Status
+                    span.Status = Status.Unknown;
+
+                    var grpcStatusCodeTag = activity.Tags.FirstOrDefault(tag => tag.Key == "grpc.status_code").Value;
+                    if (int.TryParse(grpcStatusCodeTag, out var statusCode))
+                    {
+                        span.PutRpcStatusCode(statusCode);
+                    }
                 }
             }
             finally
