@@ -539,7 +539,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
             Assert.Equal(webException, exceptionException);
 
-            Assert.Contains(activity.Tags, i => i.Key == "error");
+            Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
+            Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
         }
 
         /// <summary>
@@ -575,7 +576,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             VerifyHeaders(startRequest);
             VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
-            Assert.Contains(eventRecords.Records.First().Value.Tags, i => i.Key == "error");
+            Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
+            Assert.Equal("Stop", exceptionEvent.Key);
+            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
+
+            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
+            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
         }
 
         /// <summary>
@@ -611,7 +617,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             VerifyHeaders(startRequest);
             VerifyActivityStartTags(null, method, url, activity);
 
-            Assert.Contains(eventRecords.Records.First().Value.Tags, i => i.Key == "error");
+            Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
+            Assert.Equal("Stop", exceptionEvent.Key);
+            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
+
+            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
+            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
         }
 
         /// <summary>
@@ -651,7 +662,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             VerifyHeaders(startRequest);
             VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
-            Assert.Contains(eventRecords.Records.First().Value.Tags, i => i.Key == "error");
+            Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
+            Assert.Equal("Stop", exceptionEvent.Key);
+            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
+
+            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
+            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
         }
 
         [Fact]
@@ -842,7 +858,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         private static void VerifyActivityStopTags(string statusCode, string statusText, Activity activity)
         {
             Assert.Equal(statusCode, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpStatusCodeKey).Value);
-            Assert.Equal(statusText, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpStatusTextKey).Value);
+            Assert.Equal(statusText, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
         }
 
         /// <summary>

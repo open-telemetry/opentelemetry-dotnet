@@ -23,6 +23,7 @@ using System.Net;
 using Moq;
 using Newtonsoft.Json;
 using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
@@ -86,31 +87,26 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(tc.SpanName, activity.DisplayName);
             Assert.Equal(tc.SpanKind, activity.Kind.ToString());
 
-            /* TBD: Span Status is not currently support on Activity.
-            var d = new Dictionary<StatusCanonicalCode, string>()
+            var d = new Dictionary<string, string>()
             {
-                { StatusCanonicalCode.Ok, "OK"},
-                { StatusCanonicalCode.Cancelled, "CANCELLED"},
-                { StatusCanonicalCode.Unknown, "UNKNOWN"},
-                { StatusCanonicalCode.InvalidArgument, "INVALID_ARGUMENT"},
-                { StatusCanonicalCode.DeadlineExceeded, "DEADLINE_EXCEEDED"},
-                { StatusCanonicalCode.NotFound, "NOT_FOUND"},
-                { StatusCanonicalCode.AlreadyExists, "ALREADY_EXISTS"},
-                { StatusCanonicalCode.PermissionDenied, "PERMISSION_DENIED"},
-                { StatusCanonicalCode.ResourceExhausted, "RESOURCE_EXHAUSTED"},
-                { StatusCanonicalCode.FailedPrecondition, "FAILED_PRECONDITION"},
-                { StatusCanonicalCode.Aborted, "ABORTED"},
-                { StatusCanonicalCode.OutOfRange, "OUT_OF_RANGE"},
-                { StatusCanonicalCode.Unimplemented, "UNIMPLEMENTED"},
-                { StatusCanonicalCode.Internal, "INTERNAL"},
-                { StatusCanonicalCode.Unavailable, "UNAVAILABLE"},
-                { StatusCanonicalCode.DataLoss, "DATA_LOSS"},
-                { StatusCanonicalCode.Unauthenticated, "UNAUTHENTICATED"},
+                { StatusCanonicalCode.Ok.ToString(), "OK"},
+                { StatusCanonicalCode.Cancelled.ToString(), "CANCELLED"},
+                { StatusCanonicalCode.Unknown.ToString(), "UNKNOWN"},
+                { StatusCanonicalCode.InvalidArgument.ToString(), "INVALID_ARGUMENT"},
+                { StatusCanonicalCode.DeadlineExceeded.ToString(), "DEADLINE_EXCEEDED"},
+                { StatusCanonicalCode.NotFound.ToString(), "NOT_FOUND"},
+                { StatusCanonicalCode.AlreadyExists.ToString(), "ALREADY_EXISTS"},
+                { StatusCanonicalCode.PermissionDenied.ToString(), "PERMISSION_DENIED"},
+                { StatusCanonicalCode.ResourceExhausted.ToString(), "RESOURCE_EXHAUSTED"},
+                { StatusCanonicalCode.FailedPrecondition.ToString(), "FAILED_PRECONDITION"},
+                { StatusCanonicalCode.Aborted.ToString(), "ABORTED"},
+                { StatusCanonicalCode.OutOfRange.ToString(), "OUT_OF_RANGE"},
+                { StatusCanonicalCode.Unimplemented.ToString(), "UNIMPLEMENTED"},
+                { StatusCanonicalCode.Internal.ToString(), "INTERNAL"},
+                { StatusCanonicalCode.Unavailable.ToString(), "UNAVAILABLE"},
+                { StatusCanonicalCode.DataLoss.ToString(), "DATA_LOSS"},
+                { StatusCanonicalCode.Unauthenticated.ToString(), "UNAUTHENTICATED"},
             };
-
-            Assert.Equal(tc.SpanStatus, d[activity.Status.CanonicalCode]);
-            if (tc.SpanStatusHasDescription.HasValue)
-                Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(activity.Status.Description));*/
 
             tc.SpanAttributes = tc.SpanAttributes.ToDictionary(
                 x => x.Key,
@@ -125,14 +121,27 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             {
                 if (!tc.SpanAttributes.TryGetValue(tag.Key, out string value))
                 {
-                    if (tag.Key == "http.status_text" || tag.Key == "http.flavor" || tag.Key == "error")
+                    if (tag.Key == "http.flavor")
                     {
-                        // TODO:
-                        //  * Update TestData to include http.status_text when .NET Core instrumentation is updated to ActivitySource.
-                        //  * http.flavor is optional in .NET Core instrumentation but there is no way to pass that option to the new ActivitySource model so it always shows up here.
-                        //  * error is currently how we return unknown exceptions. That might change, probably with a Span.Status solution.
+                        // http.flavor is optional in .NET Core instrumentation but there is no way to pass that option to the new ActivitySource model so it always shows up here.
+                        if (tc.SetHttpFlavor)
+                        {
+                            Assert.Equal(value, tag.Value);
+                        }
                         continue;
                     }
+                    if (tag.Key == SpanAttributeConstants.StatusCodeKey)
+                    {
+                        Assert.Equal(tc.SpanStatus, d[tag.Value]);
+                        continue;
+                    }
+                    if (tag.Key == SpanAttributeConstants.StatusDescriptionKey)
+                    {
+                        if (tc.SpanStatusHasDescription.HasValue)
+                            Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(tag.Value));
+                        continue;
+                    }
+
                     Assert.True(false, $"Tag {tag.Key} was not found in test data.");
                 }
                 Assert.Equal(value, tag.Value);

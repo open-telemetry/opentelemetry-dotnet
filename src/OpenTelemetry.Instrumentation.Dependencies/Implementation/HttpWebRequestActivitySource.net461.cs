@@ -110,7 +110,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private static void AddResponseTags(HttpWebResponse response, Activity activity)
         {
             activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
-            activity.AddTag(SpanAttributeConstants.HttpStatusTextKey, response.StatusDescription);
+
+            Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
+
+            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.StatusDescription);
 
             activity.SetCustomProperty("HttpWebRequest.Response", response);
         }
@@ -118,15 +122,53 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddExceptionTags(Exception exception, Activity activity)
         {
-            if (exception is WebException wexc && wexc.Response is HttpWebResponse response)
+            Status status;
+            if (exception is WebException wexc)
             {
-                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
-                activity.AddTag(SpanAttributeConstants.HttpStatusTextKey, response.StatusDescription);
+                if (wexc.Response is HttpWebResponse response)
+                {
+                    activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
+
+                    status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode).WithDescription(response.StatusDescription);
+                }
+                else
+                {
+                    switch (wexc.Status)
+                    {
+                        case WebExceptionStatus.Timeout:
+                            status = Status.DeadlineExceeded;
+                            break;
+                        case WebExceptionStatus.NameResolutionFailure:
+                            status = Status.InvalidArgument.WithDescription(exception.Message);
+                            break;
+                        case WebExceptionStatus.SendFailure:
+                        case WebExceptionStatus.ConnectFailure:
+                        case WebExceptionStatus.SecureChannelFailure:
+                        case WebExceptionStatus.TrustFailure:
+                            status = Status.FailedPrecondition.WithDescription(exception.Message);
+                            break;
+                        case WebExceptionStatus.ServerProtocolViolation:
+                            status = Status.Unimplemented.WithDescription(exception.Message);
+                            break;
+                        case WebExceptionStatus.RequestCanceled:
+                            status = Status.Cancelled;
+                            break;
+                        case WebExceptionStatus.MessageLengthLimitExceeded:
+                            status = Status.ResourceExhausted.WithDescription(exception.Message);
+                            break;
+                        default:
+                            status = Status.Unknown.WithDescription(exception.Message);
+                            break;
+                    }
+                }
             }
             else
             {
-                activity.AddTag("error", exception.Message);
+                status = Status.Unknown.WithDescription(exception.Message);
             }
+
+            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
 
             activity.SetCustomProperty("HttpWebRequest.Exception", exception);
         }
