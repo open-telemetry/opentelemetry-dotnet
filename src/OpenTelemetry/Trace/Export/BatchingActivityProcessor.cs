@@ -89,9 +89,8 @@ namespace OpenTelemetry.Trace.Export
             this.exportQueue = new ConcurrentQueue<Activity>();
 
             // worker task that will last for lifetime of processor.
-            // No need to specify long running - it is useless if any async calls are made internally.
             // Threads are also useless as exporter tasks run in thread pool threads.
-            Task.Factory.StartNew(s => this.Worker((CancellationToken)s), this.cts.Token);
+            Task.Run(() => this.Worker(this.cts.Token), this.cts.Token);
         }
 
         /// <inheritdoc/>
