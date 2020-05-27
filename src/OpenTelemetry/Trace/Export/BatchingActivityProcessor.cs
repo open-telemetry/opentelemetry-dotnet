@@ -25,7 +25,7 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Trace.Export
 {
     /// <summary>
-    /// Implements processor that batches astivities before calling exporter.
+    /// Implements processor that batches activities before calling exporter.
     /// </summary>
     public class BatchingActivityProcessor : ActivityProcessor, IDisposable
     {
