@@ -37,6 +37,7 @@ namespace OpenTelemetry.Trace.Export
         private readonly int maxExportBatchSize;
         private readonly TimeSpan scheduleDelay;
         private readonly ActivityExporter exporter;
+        private readonly List<Activity> batch = new List<Activity>();
         private CancellationTokenSource cts;
         private volatile int currentQueueSize;
         private bool stopping = false;
@@ -186,11 +187,10 @@ namespace OpenTelemetry.Trace.Export
                     return;
                 }
 
-                List<Activity> batch = null;
                 if (this.exportQueue.TryDequeue(out var nextActivity))
                 {
                     Interlocked.Decrement(ref this.currentQueueSize);
-                    batch = new List<Activity> { nextActivity };
+                    this.batch.Add(nextActivity);
                 }
                 else
                 {
@@ -198,13 +198,13 @@ namespace OpenTelemetry.Trace.Export
                     return;
                 }
 
-                while (batch.Count < this.maxExportBatchSize && this.exportQueue.TryDequeue(out nextActivity))
+                while (this.batch.Count < this.maxExportBatchSize && this.exportQueue.TryDequeue(out nextActivity))
                 {
                     Interlocked.Decrement(ref this.currentQueueSize);
-                    batch.Add(nextActivity);
+                    this.batch.Add(nextActivity);
                 }
 
-                var result = await this.exporter.ExportAsync(batch, cancellationToken).ConfigureAwait(false);
+                var result = await this.exporter.ExportAsync(this.batch, cancellationToken).ConfigureAwait(false);
                 if (result != ExportResult.Success)
                 {
                     OpenTelemetrySdkEventSource.Log.ExporterErrorResult(result);
@@ -217,6 +217,10 @@ namespace OpenTelemetry.Trace.Export
             catch (Exception ex)
             {
                 OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.ExportBatchAsync), ex);
+            }
+            finally
+            {
+                this.batch.Clear();
             }
         }
 
