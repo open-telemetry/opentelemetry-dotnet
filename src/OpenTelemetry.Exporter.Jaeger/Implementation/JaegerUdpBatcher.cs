@@ -72,7 +72,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             this.maxFlushIntervalTimer.Elapsed += async (sender, args) =>
             {
-                await this.FlushAsyncInternal(false, CancellationToken.None).ConfigureAwait(false);
+                try
+                {
+                    await this.FlushAsyncInternal(false, CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    JaegerExporterEventSource.Log.UnexpectedError(ex);
+                }
             };
         }
 
@@ -237,6 +244,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 }
 
                 return n;
+            }
+            catch (Exception ex)
+            {
+                JaegerExporterEventSource.Log.FailedFlush(ex);
+
+                return 0;
             }
             finally
             {
