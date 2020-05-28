@@ -680,7 +680,7 @@ namespace OpenTelemetry.Trace
             ActivitySpanId spanId,
             Sampler sampler)
         {
-            return sampler.ShouldSample(parent, traceId, spanId, name, spanKind, attributes, parentLinks).IsSampled;
+            return sampler.ShouldSample(parent, traceId, name, spanKind, attributes, parentLinks).IsSampled;
         }
 
         private static ActivityAndTracestate FromCurrentParentActivity(string spanName, Activity current)
