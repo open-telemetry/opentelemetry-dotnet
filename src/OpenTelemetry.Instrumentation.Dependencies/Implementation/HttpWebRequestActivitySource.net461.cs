@@ -218,7 +218,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             if (!WebRequestActivitySource.HasListeners() || IsRequestInstrumented(request))
             {
                 // No subscribers to the ActivitySource or this request was instrumented by previous
-                // RaiseRequestEvent, such is the case with redirect responses where the same request is sent again.
+                // ProcessRequest, such is the case with redirect responses where the same request is sent again.
                 return;
             }
 
@@ -255,7 +255,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             IAsyncResult writeAsyncContext = writeAResultAccessor(request);
             if (writeAsyncContext == null || !(asyncCallbackAccessor(writeAsyncContext)?.Target is AsyncCallbackWrapper writeAsyncContextCallback))
             {
-                // If we already hooked into the read result during RaiseRequestEvent or we hooked up after the fact already we don't need to do anything here.
+                // If we already hooked into the read result during ProcessRequest or we hooked up after the fact already we don't need to do anything here.
                 return;
             }
 
