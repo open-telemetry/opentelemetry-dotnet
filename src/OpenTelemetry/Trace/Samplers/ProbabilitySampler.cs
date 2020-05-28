@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace OpenTelemetry.Trace.Samplers
 {
@@ -46,7 +47,7 @@ namespace OpenTelemetry.Trace.Samplers
 
             // The expected description is like ProbabilitySampler{0.000100}
             // https://docs.microsoft.com/dotnet/standard/base-types/composite-formatting#escaping-braces
-            this.Description = string.Format("{0}{1:F6}{2}", "ProbabilitySampler{", this.probability, "}");
+            this.Description = "ProbabilitySampler{" + this.probability.ToString("F6", CultureInfo.InvariantCulture) + "}";
 
             // Special case the limits, to avoid any possible issues with lack of precision across
             // double/long boundaries. For probability == 0.0, we use Long.MIN_VALUE as this guarantees

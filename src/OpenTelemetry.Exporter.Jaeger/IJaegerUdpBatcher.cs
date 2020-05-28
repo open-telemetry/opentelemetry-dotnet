@@ -16,15 +16,16 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public interface IJaegerUdpBatcher : IDisposable
+    internal interface IJaegerUdpBatcher : IDisposable
     {
         Process Process { get; }
 
-        ValueTask<int> AppendAsync(SpanData span, CancellationToken cancellationToken);
+        ValueTask<int> AppendAsync(JaegerSpan jaegerSpan, CancellationToken cancellationToken);
 
         ValueTask<int> CloseAsync(CancellationToken cancellationToken);
 
