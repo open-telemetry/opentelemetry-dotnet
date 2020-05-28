@@ -194,7 +194,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [InlineData("POST")]
         public async Task TestBasicReceiveAndResponseEventsWithoutSampling(string method)
         {
-            using var eventRecords = new ActivitySourceRecorder(sample: false);
+            using var eventRecords = new ActivitySourceRecorder(activityDataRequest: ActivityDataRequest.None);
 
             // Send a random Http request to generate some events
             using (var client = new HttpClient())
@@ -206,6 +206,39 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             // There should be no events because we turned off sampling.
             Assert.Empty(eventRecords.Records);
+        }
+
+        [Theory]
+        [InlineData("GET")]
+        [InlineData("POST")]
+        public async Task TestBasicReceiveAndResponseEventsWitPassThroughSampling(string method)
+        {
+            using var eventRecords = new ActivitySourceRecorder(activityDataRequest: ActivityDataRequest.PropagationData);
+
+            // Send a random Http request to generate some events
+            using (var client = new HttpClient())
+            {
+                (method == "GET"
+                    ? await client.GetAsync(this.BuildRequestUrl())
+                    : await client.PostAsync(this.BuildRequestUrl(), new StringContent("hello world"))).Dispose();
+            }
+
+            // We should have exactly one Start and one Stop event
+            Assert.Equal(2, eventRecords.Records.Count);
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+
+            // Check to make sure: The first record must be a request, the next record must be a response.
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+
+            VerifyHeaders(startRequest);
+
+            Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
+            Assert.Equal("Stop", stopEvent.Key);
+            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
+            Assert.NotNull(response);
+
+            Assert.Empty(activity.Tags);
         }
 
         [Theory]
@@ -868,14 +901,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             private readonly Action<KeyValuePair<string, Activity>> onEvent;
 
-            public ActivitySourceRecorder(Action<KeyValuePair<string, Activity>> onEvent = null, bool sample = true)
+            public ActivitySourceRecorder(Action<KeyValuePair<string, Activity>> onEvent = null, ActivityDataRequest activityDataRequest = ActivityDataRequest.AllDataAndRecorded)
             {
                 this.activityListener = new ActivityListener
                 {
                     ShouldListenTo = (activitySource) => activitySource.Name == HttpWebRequestActivitySource.ActivitySourceName,
                     ActivityStarted = ActivityStarted,
                     ActivityStopped = ActivityStopped,
-                    GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => sample ? ActivityDataRequest.AllData : ActivityDataRequest.None,
+                    GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => activityDataRequest,
                 };
 
                 ActivitySource.AddActivityListener(this.activityListener);

@@ -95,33 +95,46 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         {
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            activity.AddTag(SpanAttributeConstants.ComponentKey, "http");
-            activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
-            activity.AddTag(SpanAttributeConstants.HttpHostKey, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
-            activity.AddTag(SpanAttributeConstants.HttpUrlKey, request.RequestUri.OriginalString);
-            activity.AddTag(SpanAttributeConstants.HttpFlavorKey, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
-
             InstrumentRequest(request, activity);
 
             activity.SetCustomProperty("HttpWebRequest.Request", request);
+
+            if (activity.IsAllDataRequested)
+            {
+                activity.AddTag(SpanAttributeConstants.ComponentKey, "http");
+                activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
+                activity.AddTag(SpanAttributeConstants.HttpHostKey, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
+                activity.AddTag(SpanAttributeConstants.HttpUrlKey, request.RequestUri.OriginalString);
+                activity.AddTag(SpanAttributeConstants.HttpFlavorKey, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddResponseTags(HttpWebResponse response, Activity activity)
         {
-            activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
-
-            Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
-
-            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.StatusDescription);
-
             activity.SetCustomProperty("HttpWebRequest.Response", response);
+
+            if (activity.IsAllDataRequested)
+            {
+                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
+
+                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
+
+                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.StatusDescription);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddExceptionTags(Exception exception, Activity activity)
         {
+            activity.SetCustomProperty("HttpWebRequest.Exception", exception);
+
+            if (!activity.IsAllDataRequested)
+            {
+                return;
+            }
+
             Status status;
             if (exception is WebException wexc)
             {
@@ -169,8 +182,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
             activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
-
-            activity.SetCustomProperty("HttpWebRequest.Exception", exception);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
