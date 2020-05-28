@@ -34,14 +34,14 @@ namespace OpenTelemetry.Tests.Implementation.Trace
         {
             using var activitySource = new ActivitySource(nameof(BuildSamplingParametersHandlesCurrentActivity));
 
-            var samplingParameters = new ActivitySamplingParameters();
+            var latestSamplingParameters = new ActivitySamplingParameters();
 
             using var listener = new ActivityListener
             {
                 ShouldListenTo = _ => true,
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
                 {
-                    OpenTelemetrySdk.BuildSamplingParameters(options, out samplingParameters);
+                    OpenTelemetrySdk.BuildSamplingParameters(options, out latestSamplingParameters);
                     return ActivityDataRequest.AllDataAndRecorded;
                 },
             };
@@ -54,14 +54,17 @@ namespace OpenTelemetry.Tests.Implementation.Trace
 
                 // This enforces the current behavior that the traceId passed to the sampler for the
                 // root span/activity is not the traceId actually used.
-                Assert.NotEqual(root.TraceId, samplingParameters.TraceId);
+                Assert.NotEqual(root.TraceId, latestSamplingParameters.TraceId);
             }
 
             using (var parent = activitySource.StartActivity("parent", ActivityKind.Client))
             {
+                // This enforces the current behavior that the traceId passed to the sampler for the
+                // root span/activity is not the traceId actually used.
+                Assert.NotEqual(parent.TraceId, latestSamplingParameters.TraceId);
                 using (var child = activitySource.StartActivity("child"))
                 {
-                    Assert.Equal(parent.TraceId, samplingParameters.TraceId);
+                    Assert.Equal(parent.TraceId, latestSamplingParameters.TraceId);
                     Assert.Equal(parent.TraceId, child.TraceId);
                     Assert.Equal(parent.SpanId, child.ParentSpanId);
                 }

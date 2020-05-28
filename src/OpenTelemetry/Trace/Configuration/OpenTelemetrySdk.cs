@@ -108,13 +108,13 @@ namespace OpenTelemetry.Trace.Configuration
             in ActivityCreationOptions<ActivityContext> options, out ActivitySamplingParameters samplingParameters)
         {
             ActivityContext parentContext = options.Parent;
-            if (options.Parent == default)
+            if (parentContext == default)
             {
-                // Check if there is already a parent for the current span.
-                var parentSpan = Activity.Current;
-                if (parentSpan != null)
+                // Check if there is already a parent for the current activity.
+                var parentActivity = Activity.Current;
+                if (parentActivity != null)
                 {
-                    parentContext = parentSpan.Context;
+                    parentContext = parentActivity.Context;
                 }
             }
 

@@ -20,7 +20,7 @@ using System.Globalization;
 namespace OpenTelemetry.Trace.Samplers
 {
     /// <summary>
-    /// Sampler implementation which will take a sample if parent span or any linked span is sampled.
+    /// Sampler implementation which will take a sample if parent Activity or any linked Activity is sampled.
     /// Otherwise, samples traces according to the specified probability.
     /// </summary>
     public sealed class ProbabilityActivitySampler : ActivitySampler
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace.Samplers
         /// Initializes a new instance of the <see cref="ProbabilityActivitySampler"/> class.
         /// </summary>
         /// <param name="probability">The desired probability of sampling. This must be between 0.0 and 1.0.
-        /// Higher the value, higher is the probability of a given span to be sampled in.
+        /// Higher the value, higher is the probability of a given Activity to be sampled in.
         /// </param>
         public ProbabilityActivitySampler(double probability)
         {
@@ -89,13 +89,13 @@ namespace OpenTelemetry.Trace.Samplers
                 }
             }
 
-            // Always sample if we are within probability range. This is true even for child spans (that
+            // Always sample if we are within probability range. This is true even for child activities (that
             // may have had a different sampling decision made) to allow for different sampling policies,
             // and dynamic increases to sampling probabilities for debugging purposes.
             // Note use of '<' for comparison. This ensures that we never sample for probability == 0.0,
             // while allowing for a (very) small chance of *not* sampling if the id == Long.MAX_VALUE.
-            // This is considered a reasonable tradeoff for the simplicity/performance requirements (this
-            // code is executed in-line for every Span creation).
+            // This is considered a reasonable trade-off for the simplicity/performance requirements (this
+            // code is executed in-line for every Activity creation).
             Span<byte> traceIdBytes = stackalloc byte[16];
             samplingParameters.TraceId.CopyTo(traceIdBytes);
             return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.idUpperBound ? new SamplingResult(true) : new SamplingResult(false);
