@@ -27,7 +27,6 @@ namespace OpenTelemetry.Exporter.Prometheus
     /// </summary>
     public class PrometheusExporterMiddleware
     {
-        private readonly RequestDelegate next;
         private readonly PrometheusExporter exporter;
 
         /// <summary>
@@ -37,7 +36,6 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
         public PrometheusExporterMiddleware(RequestDelegate next, PrometheusExporter exporter)
         {
-            this.next = next ?? throw new ArgumentNullException(nameof(next));
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
@@ -46,7 +44,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// </summary>
         /// <param name="httpContext"> context. </param>
         /// <returns>Task. </returns>
-        public async Task InvokeAsync(HttpContext httpContext)
+        public Task InvokeAsync(HttpContext httpContext)
         {
             if (httpContext is null)
             {
@@ -55,7 +53,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
             var result = this.exporter.GetMetricsCollection();
 
-            await httpContext.Response.WriteAsync(result).ConfigureAwait(false);
+            return httpContext.Response.WriteAsync(result);
         }
     }
 }
