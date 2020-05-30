@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace.Configuration
                 ShouldListenTo = (activitySource) => openTelemetryBuilder.ActivitySourceNames?.Contains(activitySource.Name.ToUpperInvariant()) ?? false,
 
                 // The following parameter is not used now.
-                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
+                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.None, // Defer to parent whether or not we should record.
 
                 // This delegate informs ActivitySource about sampling decision.
                 // Following simple behavior is enabled now:

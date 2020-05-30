@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace OpenTelemetry.Trace
 {
@@ -22,7 +22,26 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public static class SpanHelper
     {
-        private static readonly ConcurrentDictionary<StatusCanonicalCode, string> CanonicalCodeToStringCache = new ConcurrentDictionary<StatusCanonicalCode, string>();
+        private static readonly Dictionary<StatusCanonicalCode, string> StatusCanonicalCodeToStringCache = new Dictionary<StatusCanonicalCode, string>()
+        {
+            [StatusCanonicalCode.Ok] = StatusCanonicalCode.Ok.ToString(),
+            [StatusCanonicalCode.Cancelled] = StatusCanonicalCode.Cancelled.ToString(),
+            [StatusCanonicalCode.Unknown] = StatusCanonicalCode.Unknown.ToString(),
+            [StatusCanonicalCode.InvalidArgument] = StatusCanonicalCode.InvalidArgument.ToString(),
+            [StatusCanonicalCode.DeadlineExceeded] = StatusCanonicalCode.DeadlineExceeded.ToString(),
+            [StatusCanonicalCode.NotFound] = StatusCanonicalCode.NotFound.ToString(),
+            [StatusCanonicalCode.AlreadyExists] = StatusCanonicalCode.AlreadyExists.ToString(),
+            [StatusCanonicalCode.PermissionDenied] = StatusCanonicalCode.PermissionDenied.ToString(),
+            [StatusCanonicalCode.ResourceExhausted] = StatusCanonicalCode.ResourceExhausted.ToString(),
+            [StatusCanonicalCode.FailedPrecondition] = StatusCanonicalCode.FailedPrecondition.ToString(),
+            [StatusCanonicalCode.Aborted] = StatusCanonicalCode.Aborted.ToString(),
+            [StatusCanonicalCode.OutOfRange] = StatusCanonicalCode.OutOfRange.ToString(),
+            [StatusCanonicalCode.Unimplemented] = StatusCanonicalCode.Unimplemented.ToString(),
+            [StatusCanonicalCode.Internal] = StatusCanonicalCode.Internal.ToString(),
+            [StatusCanonicalCode.Unavailable] = StatusCanonicalCode.Unavailable.ToString(),
+            [StatusCanonicalCode.DataLoss] = StatusCanonicalCode.DataLoss.ToString(),
+            [StatusCanonicalCode.Unauthenticated] = StatusCanonicalCode.Unauthenticated.ToString(),
+        };
 
         /// <summary>
         /// Helper method that returns the string version of a <see cref="StatusCanonicalCode"/> using a cache to save on allocations.
@@ -31,10 +50,9 @@ namespace OpenTelemetry.Trace
         /// <returns>String version of the supplied <see cref="StatusCanonicalCode"/>.</returns>
         public static string GetCachedCanonicalCodeString(StatusCanonicalCode statusCanonicalCode)
         {
-            if (!CanonicalCodeToStringCache.TryGetValue(statusCanonicalCode, out string canonicalCode))
+            if (!StatusCanonicalCodeToStringCache.TryGetValue(statusCanonicalCode, out string canonicalCode))
             {
-                canonicalCode = statusCanonicalCode.ToString();
-                CanonicalCodeToStringCache.TryAdd(statusCanonicalCode, canonicalCode);
+                return statusCanonicalCode.ToString();
             }
 
             return canonicalCode;
