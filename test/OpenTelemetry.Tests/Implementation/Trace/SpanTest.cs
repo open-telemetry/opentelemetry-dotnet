@@ -1607,7 +1607,6 @@ namespace OpenTelemetry.Trace.Test
             samplerMock.Setup(s => s.ShouldSample(
                 in It.Ref<SpanContext>.IsAny,
                 in It.Ref<ActivityTraceId>.IsAny,
-                in It.Ref<ActivitySpanId>.IsAny,
                 It.IsAny<string>(),
                 It.IsAny<SpanKind>(),
                 It.IsAny<IDictionary<string, object>>(),
@@ -1619,7 +1618,6 @@ namespace OpenTelemetry.Trace.Test
             samplerMock.Verify(o => o.ShouldSample(
                 in It.Ref<SpanContext>.IsAny,
                 in It.Ref<ActivityTraceId>.IsAny,
-                in It.Ref<ActivitySpanId>.IsAny,
                 It.IsAny<string>(),
                 It.IsAny<SpanKind>(),
                 It.Is<IDictionary<string, object>>(a => a == this.attributes),
@@ -1638,7 +1636,6 @@ namespace OpenTelemetry.Trace.Test
             samplerMock.Setup(s => s.ShouldSample(
                 in It.Ref<SpanContext>.IsAny,
                 in It.Ref<ActivityTraceId>.IsAny,
-                in It.Ref<ActivitySpanId>.IsAny,
                 It.IsAny<string>(),
                 It.IsAny<SpanKind>(),
                 It.IsAny<IDictionary<string, object>>(),
@@ -1650,7 +1647,6 @@ namespace OpenTelemetry.Trace.Test
             samplerMock.Verify(o => o.ShouldSample(
                 in It.Ref<SpanContext>.IsAny,
                 in It.Ref<ActivityTraceId>.IsAny,
-                in It.Ref<ActivitySpanId>.IsAny,
                 It.IsAny<string>(),
                 It.IsAny<SpanKind>(),
                 It.Is<IDictionary<string, object>>(a => a == this.attributes),
