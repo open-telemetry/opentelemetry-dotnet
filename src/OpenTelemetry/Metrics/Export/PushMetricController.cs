@@ -47,39 +47,47 @@ namespace OpenTelemetry.Metrics.Export
                 s => this.Worker((CancellationToken)s), cts.Token);
         }
 
+        internal IEnumerable<Metric> Collect(Stopwatch sw)
+        {
+            foreach (var meter in this.meters.Values)
+            {
+                meter.Collect();
+            }
+
+            OpenTelemetrySdkEventSource.Log.CollectionCompleted(sw.ElapsedMilliseconds);
+
+            // Collection is over at this point. All metrics are given
+            // to the MetricProcesor(Batcher).
+            // Let MetricProcessor know that this cycle is ending,
+            // and send the metrics from MetricProcessor
+            // to the MetricExporter.
+            this.metricProcessor.FinishCollectionCycle(out var metricToExport);
+            return metricToExport;
+        }
+
+        internal async Task ExportAsync(IEnumerable<Metric> metricToExport, CancellationToken cancellationToken)
+        {
+            var exportResult = await this.metricExporter.ExportAsync(metricToExport, cancellationToken);
+            if (exportResult != MetricExporter.ExportResult.Success)
+            {
+                OpenTelemetrySdkEventSource.Log.MetricExporterErrorResult((int)exportResult);
+
+                // we do not support retries for now and leave it up to exporter
+                // as only exporter implementation knows how to retry: which items failed
+                // and what is the reasonable policy for that exporter.
+            }
+        }
+
         private async Task Worker(CancellationToken cancellationToken)
         {
-            IEnumerable<Metric> metricToExport;
-
             await Task.Delay(this.pushInterval, cancellationToken).ConfigureAwait(false);
             while (!cancellationToken.IsCancellationRequested)
             {
                 var sw = Stopwatch.StartNew();
                 try
                 {
-                    foreach (var meter in this.meters.Values)
-                    {
-                        meter.Collect();
-                    }
-
-                    OpenTelemetrySdkEventSource.Log.CollectionCompleted(sw.ElapsedMilliseconds);
-
-                    // Collection is over at this point. All metrics are given
-                    // to the MetricProcesor(Batcher).
-                    // Let MetricProcessor know that this cycle is ending,
-                    // and send the metrics from MetricProcessor
-                    // to the MetricExporter.
-                    this.metricProcessor.FinishCollectionCycle(out metricToExport);
-
-                    var exportResult = await this.metricExporter.ExportAsync(metricToExport, cancellationToken);
-                    if (exportResult != MetricExporter.ExportResult.Success)
-                    {
-                        OpenTelemetrySdkEventSource.Log.MetricExporterErrorResult((int)exportResult);
-
-                        // we do not support retries for now and leave it up to exporter
-                        // as only exporter implementation knows how to retry: which items failed
-                        // and what is the reasonable policy for that exporter.
-                    }
+                    var metricToExport = this.Collect(sw);
+                    await this.ExportAsync(metricToExport, cancellationToken);
                 }
                 catch (Exception ex)
                 {

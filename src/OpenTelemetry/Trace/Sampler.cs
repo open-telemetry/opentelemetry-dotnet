@@ -33,16 +33,21 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="parentContext">Parent span context. Typically taken from the wire.</param>
         /// <param name="traceId">Trace ID of a span to be created.</param>
-        /// <param name="spanId">Span ID of a span to be created.</param>
         /// <param name="name"> Name of a span to be created. Note, that the name of the span is settable.
-        /// So this name can be changed later and Sampler implementation should assume that.
-        /// Typical example of a name change is when <see cref="TelemetrySpan"/> representing incoming http request
-        /// has a name of url path and then being updated with route name when routing complete.
+        ///     So this name can be changed later and Sampler implementation should assume that.
+        ///     Typical example of a name change is when <see cref="TelemetrySpan"/> representing incoming http request
+        ///     has a name of url path and then being updated with route name when routing complete.
         /// </param>
         /// <param name="spanKind">The type of the Span.</param>
         /// <param name="attributes">Initial set of Attributes for the Span being constructed.</param>
         /// <param name="links">Links associated with the span.</param>
         /// <returns>Sampling decision on whether Span needs to be sampled or not.</returns>
-        public abstract SamplingResult ShouldSample(in SpanContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, SpanKind spanKind, IEnumerable<KeyValuePair<string, object>> attributes, IEnumerable<Link> links);
+        public abstract SamplingResult ShouldSample(
+            in SpanContext parentContext,
+            in ActivityTraceId traceId,
+            string name,
+            SpanKind spanKind,
+            IEnumerable<KeyValuePair<string, object>> attributes,
+            IEnumerable<Link> links);
     }
 }
