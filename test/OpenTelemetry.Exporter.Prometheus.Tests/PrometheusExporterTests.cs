@@ -36,7 +36,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         private const int metricPushIntervalMsec = 100;
         private const int waitDuration = metricPushIntervalMsec + 100;
 
-
         public PrometheusExporterTests(ITestOutputHelper output)
         {
             this.output = output;
@@ -48,7 +47,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var promOptions = new PrometheusExporterOptions() { Url = "http://localhost:9184/metrics/" };
             var promExporter = new PrometheusExporter(promOptions);
             var simpleProcessor = new UngroupedBatcher();
-            
+
             var metricsHttpServer = new PrometheusExporterMetricsHttpServer(promExporter);
             try
             {
@@ -56,15 +55,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 CollectMetrics(simpleProcessor, promExporter);
             }
             finally
-            {                
+            {
                 await Task.Delay(waitDuration);
 
                 var client = new HttpClient();
                 var response = await client.GetAsync("http://localhost:9184/metrics/");
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 var responseText = response.Content.ReadAsStringAsync().Result;
-                this.output.WriteLine($"Respone from metrics API is \n {responseText}");
-                ValidateResponse(responseText);
+                this.output.WriteLine($"Response from metrics API is \n {responseText}");
+                this.ValidateResponse(responseText);
                 metricsHttpServer.Stop();
             }
         }
@@ -72,7 +71,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         [Fact]
         public async Task E2ETestMiddleware()
         {
-            var promOptions = new PrometheusExporterOptions() { Url = "/metrics" };
+            var promOptions = new PrometheusExporterOptions { Url = "/metrics" };
             var promExporter = new PrometheusExporter(promOptions);
             var simpleProcessor = new UngroupedBatcher();
 
@@ -96,16 +95,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             }
             finally
             {
-
                 var response = await client.GetAsync("/foo");
                 Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
                 await Task.Delay(waitDuration);
                 response = await client.GetAsync("/metrics");
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                var responseText = response.Content.ReadAsStringAsync().Result;
-                this.output.WriteLine($"Respone from metrics API is \n {responseText}");
-                ValidateResponse(responseText);
+                var responseText = await response.Content.ReadAsStringAsync();
+                this.output.WriteLine($"Response from metrics API is \n {responseText}");
+                this.ValidateResponse(responseText);
             }
         }
 
@@ -121,14 +119,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var testCounter = meter.CreateInt64Counter("testCounter");
             var testMeasure = meter.CreateInt64Measure("testMeasure");
 
-            var labels1 = new List<KeyValuePair<string, string>>();
-            labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
-            labels1.Add(new KeyValuePair<string, string>("dim2", "value1"));
+            var labels1 = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("dim1", "value1"), new KeyValuePair<string, string>("dim2", "value1")
+            };
 
-            var labels2 = new List<KeyValuePair<string, string>>();
-            labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
-            labels2.Add(new KeyValuePair<string, string>("dim2", "value2"));
-
+            var labels2 = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("dim1", "value2"), new KeyValuePair<string, string>("dim2", "value2")
+            };
 
             var defaultContext = default(SpanContext);
 
