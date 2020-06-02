@@ -22,7 +22,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
@@ -36,7 +35,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
         private readonly bool hostingSupportsW3C = false;
         private readonly AspNetCoreInstrumentationOptions options;
-        private readonly ActivitySampler sampler = new AlwaysOnActivitySampler();
 
         public HttpInListener(string name, Tracer tracer, AspNetCoreInstrumentationOptions options)
             : base(name, tracer)
@@ -68,44 +66,28 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             var request = context.Request;
 
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
-            var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            if (activity != null)
+            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
             {
-                activity.DisplayName = path;
-            }
+                // This requires to ignore the current activity and create a new one
+                // using the context extracted from w3ctraceprent header or
+                // using whatever the TextFormat offers.
+                // TODO: actually implement code doing the above.
 
-            var samplingDecision = this.sampler.ShouldSample(activity.Context, activity.TraceId, default, path, activity.Kind, activity.Tags, activity.Links);
-            activity.IsAllDataRequested = samplingDecision.IsSampled;
-
-            TelemetrySpan span;
-            if (this.hostingSupportsW3C && this.options.TextFormat is TraceContextFormat)
-            {
-                this.Tracer.StartActiveSpanFromActivity(path, Activity.Current, SpanKind.Server, out span);
-            }
-            else
-            {
+                /*
                 var ctx = this.options.TextFormat.Extract<HttpRequest>(
                     request,
                     (r, name) => r.Headers[name]);
 
                 this.Tracer.StartActiveSpan(path, ctx, SpanKind.Server, out span);
-            }
-
-            if (span.IsRecording)
-            {
-                // Note, route is missing at this stage. It will be available later
-                span.PutHttpHostAttribute(request.Host.Host, request.Host.Port ?? 80);
-                span.PutHttpMethodAttribute(request.Method);
-                span.PutHttpPathAttribute(path);
-
-                var userAgent = request.Headers["User-Agent"].FirstOrDefault();
-                span.PutHttpUserAgentAttribute(userAgent);
-                span.PutHttpRawUrlAttribute(GetUri(request));
+                */
             }
 
             if (activity.IsAllDataRequested)
             {
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
+                var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
+                activity.DisplayName = path;
+
                 if (request.Host.Port == 80 || request.Host.Port == 443)
                 {
                     activity.AddTag("http.host", request.Host.Host);

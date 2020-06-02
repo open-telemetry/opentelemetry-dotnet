@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace.Export
 {
@@ -27,6 +28,7 @@ namespace OpenTelemetry.Trace.Export
     public class SimpleActivityProcessor : ActivityProcessor, IDisposable
     {
         private readonly ActivityExporter exporter;
+        private readonly ActivitySampler sampler = new AlwaysOnActivitySampler();
         private bool disposed = false;
 
         /// <summary>
@@ -41,6 +43,16 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc />
         public override void OnStart(Activity activity)
         {
+            // Perform sampling decision if source is empty.
+            // This occurs for activities created outside of ActivitySource
+            // i.e new Activity() directly.
+            // Note: This also can occur if one creates an ActivitySource of the name string.empty.
+            // In that case, the sampling logic would be run twice!
+            if (activity.Source.Name.Equals(string.Empty))
+            {
+                var samplingDecision = this.sampler.ShouldSample(activity.Context, activity.TraceId, default, activity.DisplayName, activity.Kind, activity.Tags, activity.Links);
+                activity.IsAllDataRequested = samplingDecision.IsSampled;
+            }
         }
 
         /// <inheritdoc />
