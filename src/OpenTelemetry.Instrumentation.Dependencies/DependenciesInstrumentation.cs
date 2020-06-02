@@ -44,7 +44,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
             var httpClientListener = new HttpClientInstrumentation(tracerFactory.GetTracer(nameof(HttpClientInstrumentation), "semver:" + assemblyVersion), httpOptions ?? new HttpClientInstrumentationOptions());
             var azureClientsListener = new AzureClientsInstrumentation(tracerFactory.GetTracer(nameof(AzureClientsInstrumentation), "semver:" + assemblyVersion));
             var azurePipelineListener = new AzurePipelineInstrumentation(tracerFactory.GetTracer(nameof(AzurePipelineInstrumentation), "semver:" + assemblyVersion));
-            var sqlClientListener = new SqlClientInstrumentation(tracerFactory.GetTracer(nameof(AzurePipelineInstrumentation), "semver:" + assemblyVersion), sqlOptions ?? new SqlClientInstrumentationOptions());
+            var sqlClientListener = new SqlClientInstrumentation(tracerFactory.GetTracer(nameof(SqlClientInstrumentation), "semver:" + assemblyVersion), sqlOptions ?? new SqlClientInstrumentationOptions());
 
             this.instrumentations.Add(httpClientListener);
             this.instrumentations.Add(azureClientsListener);
