@@ -38,7 +38,7 @@ namespace API
             });
 
             OpenTelemetrySdk.EnableOpenTelemetry(
-                (builder) => builder.AddActivitySource(string.Empty)
+                (builder) => builder.AddRequestInstrumentation()
                 .UseConsoleActivityExporter(opt => opt.DisplayAsJson = opt.DisplayAsJson));
 
             services.AddOpenTelemetry((sp, builder) =>
@@ -50,7 +50,6 @@ namespace API
                         options.ServiceName = "test-zipkin";
                         options.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
                     })
-                    .AddRequestInstrumentation()
                     .AddDependencyInstrumentation();
             });
         }
