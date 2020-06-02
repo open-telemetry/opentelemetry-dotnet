@@ -33,10 +33,11 @@ namespace OpenTelemetry.Trace.Configuration
         /// Enables OpenTelemetry.
         /// </summary>
         /// <param name="configureOpenTelemetryBuilder">Function that configures OpenTelemetryBuilder.</param>
+        /// <returns><see cref="IDisposable"/> to be disposed on application shutdown.</returns>
         /// <remarks>
         /// Basic implementation only. Most logic from TracerBuilder will be ported here.
         /// </remarks>
-        public static void EnableOpenTelemetry(Action<OpenTelemetryBuilder> configureOpenTelemetryBuilder)
+        public static IDisposable EnableOpenTelemetry(Action<OpenTelemetryBuilder> configureOpenTelemetryBuilder)
         {
             var openTelemetryBuilder = new OpenTelemetryBuilder();
             configureOpenTelemetryBuilder(openTelemetryBuilder);
@@ -66,7 +67,7 @@ namespace OpenTelemetry.Trace.Configuration
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                 // or not
-                ShouldListenTo = (activitySource) => openTelemetryBuilder.ActivitySourceNames.Contains(activitySource.Name.ToUpperInvariant()),
+                ShouldListenTo = (activitySource) => openTelemetryBuilder.ActivitySourceNames?.Contains(activitySource.Name.ToUpperInvariant()) ?? false,
 
                 // The following parameter is not used now.
                 GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
@@ -86,7 +87,7 @@ namespace OpenTelemetry.Trace.Configuration
                     var shouldSample = sampler.ShouldSample(
                         options.Parent,
                         options.Parent.TraceId,
-                        default(ActivitySpanId), // Passing default SpanId here. The actual SpanId is not known before actual Activity creation
+                        spanId: default, // Passing default SpanId here. The actual SpanId is not known before actual Activity creation
                         options.Name,
                         options.Kind,
                         options.Tags,
@@ -105,6 +106,8 @@ namespace OpenTelemetry.Trace.Configuration
             };
 
             ActivitySource.AddActivityListener(listener);
+
+            return listener;
         }
     }
 }

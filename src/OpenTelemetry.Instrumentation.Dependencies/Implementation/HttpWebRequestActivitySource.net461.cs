@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpWebRequestDiagnosticSource.net461.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpWebRequestActivitySource.net461.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,9 @@ using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Text;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
@@ -29,23 +31,22 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     /// Hooks into the <see cref="HttpWebRequest"/> class reflectively and writes diagnostic events as requests are processed.
     /// </summary>
     /// <remarks>
-    /// Created from the System.Diagnostics.DiagnosticSource.HttpHandlerDiagnosticListener class which has some bugs and feature gaps.
+    /// Inspired from the System.Diagnostics.DiagnosticSource.HttpHandlerDiagnosticListener class which has some bugs and feature gaps.
     /// See https://github.com/dotnet/runtime/pull/33732 for details.
     /// </remarks>
-    internal sealed class HttpWebRequestDiagnosticSource : DiagnosticListener
+    internal sealed class HttpWebRequestActivitySource
     {
-        internal const string DiagnosticListenerName = "HttpWebRequestDiagnosticListener";
-        internal const string ActivityName = DiagnosticListenerName + ".HttpRequestOut";
-        internal const string RequestStartName = ActivityName + ".Start";
-        internal const string RequestStopName = ActivityName + ".Stop";
-        internal const string RequestExceptionName = ActivityName + ".Exception";
+        internal const string ActivitySourceName = "HttpWebRequest";
+        internal const string ActivityName = ActivitySourceName + ".HttpRequestOut";
 
-        internal static readonly HttpWebRequestDiagnosticSource Instance = new HttpWebRequestDiagnosticSource();
+        internal static readonly HttpWebRequestActivitySource Instance = new HttpWebRequestActivitySource();
 
-        private const string InitializationFailed = DiagnosticListenerName + ".InitializationFailed";
         private const string CorrelationContextHeaderName = "Correlation-Context";
         private const string TraceParentHeaderName = "traceparent";
         private const string TraceStateHeaderName = "tracestate";
+
+        private static readonly Version Version = typeof(HttpWebRequestActivitySource).Assembly.GetName().Version;
+        private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 
         // Fields for reflection
         private static FieldInfo connectionGroupListField;
@@ -75,35 +76,115 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private static Func<HttpWebResponse, bool> isWebSocketResponseAccessor;
         private static Func<HttpWebResponse, string> connectionGroupNameAccessor;
 
-        // Fields for controlling initialization of the HttpWebRequestDiagnosticSource singleton
-        private bool initialized = false;
-
-        private HttpWebRequestDiagnosticSource()
-            : base(DiagnosticListenerName)
+        internal HttpWebRequestActivitySource()
         {
+            try
+            {
+                PrepareReflectionObjects();
+                PerformInjection();
+            }
+            catch (Exception ex)
+            {
+                // If anything went wrong, just no-op. Write an event so at least we can find out.
+                InstrumentationEventSource.Log.ExceptionInitializingInstrumentation(typeof(HttpWebRequestActivitySource).FullName, ex);
+            }
         }
 
-        public override IDisposable Subscribe(IObserver<KeyValuePair<string, object>> observer, Predicate<string> isEnabled)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void AddRequestTagsAndInstrumentRequest(HttpWebRequest request, Activity activity)
         {
-            IDisposable result = base.Subscribe(observer, isEnabled);
-            this.Initialize();
-            return result;
+            activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
+
+            InstrumentRequest(request, activity);
+
+            activity.SetCustomProperty("HttpWebRequest.Request", request);
+
+            if (activity.IsAllDataRequested)
+            {
+                activity.AddTag(SpanAttributeConstants.ComponentKey, "http");
+                activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
+                activity.AddTag(SpanAttributeConstants.HttpHostKey, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
+                activity.AddTag(SpanAttributeConstants.HttpUrlKey, request.RequestUri.OriginalString);
+                activity.AddTag(SpanAttributeConstants.HttpFlavorKey, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+            }
         }
 
-        public override IDisposable Subscribe(IObserver<KeyValuePair<string, object>> observer, Func<string, object, object, bool> isEnabled)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void AddResponseTags(HttpWebResponse response, Activity activity)
         {
-            IDisposable result = base.Subscribe(observer, isEnabled);
-            this.Initialize();
-            return result;
+            activity.SetCustomProperty("HttpWebRequest.Response", response);
+
+            if (activity.IsAllDataRequested)
+            {
+                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
+
+                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
+
+                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.StatusDescription);
+            }
         }
 
-        public override IDisposable Subscribe(IObserver<KeyValuePair<string, object>> observer)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void AddExceptionTags(Exception exception, Activity activity)
         {
-            IDisposable result = base.Subscribe(observer);
-            this.Initialize();
-            return result;
+            activity.SetCustomProperty("HttpWebRequest.Exception", exception);
+
+            if (!activity.IsAllDataRequested)
+            {
+                return;
+            }
+
+            Status status;
+            if (exception is WebException wexc)
+            {
+                if (wexc.Response is HttpWebResponse response)
+                {
+                    activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
+
+                    status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode).WithDescription(response.StatusDescription);
+                }
+                else
+                {
+                    switch (wexc.Status)
+                    {
+                        case WebExceptionStatus.Timeout:
+                            status = Status.DeadlineExceeded;
+                            break;
+                        case WebExceptionStatus.NameResolutionFailure:
+                            status = Status.InvalidArgument.WithDescription(exception.Message);
+                            break;
+                        case WebExceptionStatus.SendFailure:
+                        case WebExceptionStatus.ConnectFailure:
+                        case WebExceptionStatus.SecureChannelFailure:
+                        case WebExceptionStatus.TrustFailure:
+                            status = Status.FailedPrecondition.WithDescription(exception.Message);
+                            break;
+                        case WebExceptionStatus.ServerProtocolViolation:
+                            status = Status.Unimplemented.WithDescription(exception.Message);
+                            break;
+                        case WebExceptionStatus.RequestCanceled:
+                            status = Status.Cancelled;
+                            break;
+                        case WebExceptionStatus.MessageLengthLimitExceeded:
+                            status = Status.ResourceExhausted.WithDescription(exception.Message);
+                            break;
+                        default:
+                            status = Status.Unknown.WithDescription(exception.Message);
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                status = Status.Unknown.WithDescription(exception.Message);
+            }
+
+            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InstrumentRequest(HttpWebRequest request, Activity activity)
         {
             // do not inject header if it was injected already
@@ -139,12 +220,53 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsRequestInstrumented(HttpWebRequest request)
+            => request.Headers.Get(TraceParentHeaderName) != null;
+
+        private static void ProcessRequest(HttpWebRequest request)
+        {
+            if (!WebRequestActivitySource.HasListeners() || IsRequestInstrumented(request))
+            {
+                // No subscribers to the ActivitySource or this request was instrumented by previous
+                // ProcessRequest, such is the case with redirect responses where the same request is sent again.
+                return;
+            }
+
+            var activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+
+            if (activity == null)
+            {
+                // There is a listener but it decided not to sample the current request.
+                return;
+            }
+
+            IAsyncResult asyncContext = writeAResultAccessor(request);
+            if (asyncContext != null)
+            {
+                // Flow here is for [Begin]GetRequestStream[Async].
+
+                AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
+                asyncCallbackModifier(asyncContext, callback.AsyncCallback);
+            }
+            else
+            {
+                // Flow here is for [Begin]GetResponse[Async] without a prior call to [Begin]GetRequestStream[Async].
+
+                asyncContext = readAResultAccessor(request);
+                AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
+                asyncCallbackModifier(asyncContext, callback.AsyncCallback);
+            }
+
+            AddRequestTagsAndInstrumentRequest(request, activity);
+        }
+
         private static void HookOrProcessResult(HttpWebRequest request)
         {
             IAsyncResult writeAsyncContext = writeAResultAccessor(request);
             if (writeAsyncContext == null || !(asyncCallbackAccessor(writeAsyncContext)?.Target is AsyncCallbackWrapper writeAsyncContextCallback))
             {
-                // If we already hooked into the read result during RaiseRequestEvent or we hooked up after the fact already we don't need to do anything here.
+                // If we already hooked into the read result during ProcessRequest or we hooked up after the fact already we don't need to do anything here.
                 return;
             }
 
@@ -163,7 +285,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             if (endCalledAccessor.Invoke(readAsyncContext) || readAsyncContext.CompletedSynchronously)
             {
                 // We need to process the result directly because the read callback has already fired. Force a copy because response has likely already been disposed.
-                ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Request, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true);
+                ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true);
                 return;
             }
 
@@ -172,16 +294,20 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             asyncCallbackModifier(readAsyncContext, callback.AsyncCallback);
         }
 
-        private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, HttpWebRequest request, Activity activity, object result, bool forceResponseCopy)
+        private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy)
         {
             // We could be executing on a different thread now so set the activity.
-            Activity.Current = activity;
+            Debug.Assert(Activity.Current == null || Activity.Current == activity, "There was an unexpected active Activity on the result thread.");
+            if (Activity.Current == null)
+            {
+                Activity.Current = activity;
+            }
 
             try
             {
                 if (result is Exception ex)
                 {
-                    Instance.RaiseExceptionEvent(request, ex);
+                    AddExceptionTags(ex, activity);
                 }
                 else
                 {
@@ -202,11 +328,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                 isWebSocketResponseAccessor(response), connectionGroupNameAccessor(response),
                             });
 
-                        Instance.RaiseResponseEvent(request, responseCopy);
+                        AddResponseTags(responseCopy, activity);
                     }
                     else
                     {
-                        Instance.RaiseResponseEvent(request, response);
+                        AddResponseTags(response, activity);
                     }
                 }
             }
@@ -455,97 +581,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             return (Func<object[], T>)setterMethod.CreateDelegate(typeof(Func<object[], T>));
         }
-
-        /// <summary>
-        /// Initializes all the reflection objects it will ever need. Reflection is costly, but it's better to take
-        /// this one time performance hit than to get it multiple times later, or do it lazily and have to worry about
-        /// threading issues. If Initialize has been called before, it will not doing anything.
-        /// </summary>
-        private void Initialize()
-        {
-            lock (this)
-            {
-                if (!this.initialized)
-                {
-                    try
-                    {
-                        // This flag makes sure we only do this once. Even if we failed to initialize in an
-                        // earlier time, we should not retry because this initialization is not cheap and
-                        // the likelihood it will succeed the second time is very small.
-                        this.initialized = true;
-
-                        PrepareReflectionObjects();
-                        PerformInjection();
-                    }
-                    catch (Exception ex)
-                    {
-                        // If anything went wrong, just no-op. Write an event so at least we can find out.
-                        this.Write(InitializationFailed, new { Exception = ex });
-                    }
-                }
-            }
-        }
-
-        private void RaiseRequestEvent(HttpWebRequest request)
-        {
-            if (this.IsRequestInstrumented(request))
-            {
-                // This request was instrumented by previous RaiseRequestEvent, such is the case with redirect responses where the same request is sent again.
-                return;
-            }
-
-            if (this.IsEnabled(ActivityName, request))
-            {
-                // We don't call StartActivity here because it will fire into user code before the headers are added.
-
-                var activity = new Activity(ActivityName);
-                activity.Start();
-
-                IAsyncResult asyncContext = readAResultAccessor(request);
-                if (asyncContext != null)
-                {
-                    // Flow here is for [Begin]GetResponse[Async] without a prior call to [Begin]GetRequestStream[Async].
-
-                    AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
-                    asyncCallbackModifier(asyncContext, callback.AsyncCallback);
-                }
-                else
-                {
-                    // Flow here is for [Begin]GetRequestStream[Async].
-
-                    asyncContext = writeAResultAccessor(request);
-                    AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
-                    asyncCallbackModifier(asyncContext, callback.AsyncCallback);
-                }
-
-                InstrumentRequest(request, activity);
-
-                // Only send start event to users who subscribed for it, but start activity anyway
-                if (this.IsEnabled(RequestStartName))
-                {
-                    this.Write(activity.OperationName + ".Start", new { Request = request });
-                }
-            }
-        }
-
-        private void RaiseResponseEvent(HttpWebRequest request, HttpWebResponse response)
-        {
-            if (this.IsEnabled(RequestStopName))
-            {
-                this.Write(RequestStopName, new { Request = request, Response = response });
-            }
-        }
-
-        private void RaiseExceptionEvent(HttpWebRequest request, Exception exception)
-        {
-            if (this.IsEnabled(RequestExceptionName))
-            {
-                this.Write(RequestExceptionName, new { Request = request, Exception = exception });
-            }
-        }
-
-        private bool IsRequestInstrumented(HttpWebRequest request)
-            => request.Headers.Get(TraceParentHeaderName) != null;
 
         private class HashtableWrapper : Hashtable, IEnumerable
         {
@@ -957,7 +992,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
                 if (value is HttpWebRequest request)
                 {
-                    Instance.RaiseRequestEvent(request);
+                    ProcessRequest(request);
                 }
 
                 return index;
@@ -1011,7 +1046,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 object result = resultAccessor(asyncResult);
                 if (result is Exception || result is HttpWebResponse)
                 {
-                    ProcessResult(asyncResult, this.OriginalCallback, this.Request, this.Activity, result, false);
+                    ProcessResult(asyncResult, this.OriginalCallback, this.Activity, result, false);
                 }
 
                 this.OriginalCallback?.Invoke(asyncResult);
