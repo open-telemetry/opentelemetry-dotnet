@@ -26,9 +26,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     internal static class ZipkinConversionExtensions
     {
-        private const string StatusCode = "ot.status_code";
-        private const string StatusDescription = "ot.status_description";
-
         private static readonly Dictionary<string, int> RemoteEndpointServiceNameKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
             [SpanAttributeConstants.PeerServiceKey] = 0, // RemoteEndpoint.ServiceName primary.
@@ -41,7 +38,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> LocalEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
-        private static readonly ConcurrentDictionary<StatusCanonicalCode, string> CanonicalCodeCache = new ConcurrentDictionary<StatusCanonicalCode, string>();
 
         private static readonly DictionaryEnumerator<string, object, AttributeEnumerationState>.ForEachDelegate ProcessAttributesRef = ProcessAttributes;
         private static readonly DictionaryEnumerator<string, object, AttributeEnumerationState>.ForEachDelegate ProcessLibraryResourcesRef = ProcessLibraryResources;
@@ -96,17 +92,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             if (status.IsValid)
             {
-                if (!CanonicalCodeCache.TryGetValue(status.CanonicalCode, out string canonicalCode))
-                {
-                    canonicalCode = status.CanonicalCode.ToString();
-                    CanonicalCodeCache.TryAdd(status.CanonicalCode, canonicalCode);
-                }
-
-                PooledList<KeyValuePair<string, string>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, string>(StatusCode, canonicalCode));
+                PooledList<KeyValuePair<string, string>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, string>(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode)));
 
                 if (status.Description != null)
                 {
-                    PooledList<KeyValuePair<string, string>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, string>(StatusDescription, status.Description));
+                    PooledList<KeyValuePair<string, string>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, string>(SpanAttributeConstants.StatusDescriptionKey, status.Description));
                 }
             }
 

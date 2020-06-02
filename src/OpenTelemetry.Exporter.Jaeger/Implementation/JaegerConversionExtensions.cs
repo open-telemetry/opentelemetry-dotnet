@@ -25,9 +25,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal static class JaegerConversionExtensions
     {
-        private const string StatusCode = "ot.status_code";
-        private const string StatusDescription = "ot.status_description";
-
         private const int DaysPerYear = 365;
 
         // Number of days in 4 years
@@ -55,8 +52,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             ["http.host"] = 3, // peer.service for Http.
             ["db.instance"] = 4, // peer.service for Redis.
         };
-
-        private static readonly Dictionary<StatusCanonicalCode, string> CanonicalCodeDictionary = new Dictionary<StatusCanonicalCode, string>();
 
         private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessAttributeRef = ProcessAttribute;
         private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessLibraryAttributeRef = ProcessLibraryAttribute;
@@ -127,17 +122,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             if (status.IsValid)
             {
-                if (!CanonicalCodeDictionary.TryGetValue(status.CanonicalCode, out string statusCode))
-                {
-                    statusCode = status.CanonicalCode.ToString();
-                    CanonicalCodeDictionary.Add(status.CanonicalCode, statusCode);
-                }
-
-                PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(StatusCode, JaegerTagType.STRING, vStr: statusCode));
+                PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(SpanAttributeConstants.StatusCodeKey, JaegerTagType.STRING, vStr: SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode)));
 
                 if (status.Description != null)
                 {
-                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(StatusDescription, JaegerTagType.STRING, vStr: status.Description));
+                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(SpanAttributeConstants.StatusDescriptionKey, JaegerTagType.STRING, vStr: status.Description));
                 }
             }
 
