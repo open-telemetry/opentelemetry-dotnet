@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
@@ -27,7 +29,6 @@ namespace OpenTelemetry.Trace.Export
     {
         private readonly SpanExporter exporter;
         private bool disposed = false;
-        private long spanCount = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleSpanProcessor"/> class.
@@ -38,15 +39,9 @@ namespace OpenTelemetry.Trace.Export
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
-        public long GetSpanCount()
-        {
-            return this.spanCount;
-        }
-
         /// <inheritdoc />
         public override void OnStart(SpanData span)
         {
-            Interlocked.Increment(ref this.spanCount);
         }
 
         /// <inheritdoc />
