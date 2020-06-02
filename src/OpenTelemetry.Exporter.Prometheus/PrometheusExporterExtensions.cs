@@ -140,7 +140,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             foreach (var label in labels)
             {
                 /* For Summary we emit one row for Sum, Count, Min, Max.
-                Min,Max exportes as quantile 0 and 1.
+                Min,Max exports as quantile 0 and 1.
                 In future, when OT implements more aggregation algorithms,
                 this section will need to be revisited.
                 Sample output:
@@ -149,27 +149,24 @@ namespace OpenTelemetry.Exporter.Prometheus
                 MyMeasure{dim1="value2",quantile="0"} 150 1587013352982
                 MyMeasure{dim1="value2",quantile="1"} 150 1587013352982
                 */
-                var metricValueBuilder = builder.AddValue();
-                metricValueBuilder.WithName(metricName + PrometheusSummarySumPostFix);
-                metricValueBuilder = metricValueBuilder.WithValue(sum);
-                metricValueBuilder.WithLabel(label.Key, label.Value);
-
-                metricValueBuilder = builder.AddValue();
-                metricValueBuilder.WithName(metricName + PrometheusSummaryCountPostFix);
-                metricValueBuilder = metricValueBuilder.WithValue(count);
-                metricValueBuilder.WithLabel(label.Key, label.Value);
-
-                metricValueBuilder = builder.AddValue();
-                metricValueBuilder.WithName(metricName);
-                metricValueBuilder = metricValueBuilder.WithValue(min);
-                metricValueBuilder.WithLabel(label.Key, label.Value);
-                metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMin);
-
-                metricValueBuilder = builder.AddValue();
-                metricValueBuilder.WithName(metricName);
-                metricValueBuilder = metricValueBuilder.WithValue(max);
-                metricValueBuilder.WithLabel(label.Key, label.Value);
-                metricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMax);
+                builder.AddValue()
+                    .WithName(metricName + PrometheusSummarySumPostFix)
+                    .WithLabel(label.Key, label.Value)
+                    .WithValue(sum);
+                builder.AddValue()
+                    .WithName(metricName + PrometheusSummaryCountPostFix)
+                    .WithLabel(label.Key, label.Value)
+                    .WithValue(count);
+                builder.AddValue()
+                    .WithName(metricName)
+                    .WithLabel(label.Key, label.Value)
+                    .WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMin)
+                    .WithValue(min);
+                builder.AddValue()
+                    .WithName(metricName)
+                    .WithLabel(label.Key, label.Value)
+                    .WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMax)
+                    .WithValue(max);
             }
 
             builder.Write(writer);
