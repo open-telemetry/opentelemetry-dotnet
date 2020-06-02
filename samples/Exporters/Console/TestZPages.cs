@@ -17,6 +17,7 @@
 using System;
 using System.Threading;
 using OpenTelemetry.Exporter.ZPages;
+using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
@@ -29,28 +30,49 @@ namespace Samples
         {
             var zpagesOptions = new ZPagesExporterOptions() { Url = "http://localhost:7284/rpcz/" };
             var zpagesExporter = new ZPagesExporter(zpagesOptions);
-            var spanProcessor = new SimpleSpanProcessor(zpagesExporter);
+            var spanProcessor = new ZPagesSpanProcessor(zpagesExporter);
+            ZPagesSpans.RetentionTime = 3600000;
             var httpServer = new ZPagesExporterStatsHttpServer(zpagesExporter, spanProcessor);
 
             // Start the server
             httpServer.Start();
 
             // Configure exporter
-            using var tracerFactory = TracerFactory.Create(builder => builder
+            using (var tracerFactory = TracerFactory.Create(builder => builder
                 .AddProcessorPipeline(b => b
                     .SetExporter(zpagesExporter)
-                    .SetExportingProcessor(e => spanProcessor)));
-            var tracer = tracerFactory.GetTracer("zpages-test");
-
-            while (true)
+                    .SetExportingProcessor(e => spanProcessor))))
             {
-                // Create a scoped span. It will end automatically when using statement ends
-                using (tracer.WithSpan(tracer.StartSpan("Main")))
-                {
-                    Console.WriteLine("Starting Span");
-                }
+                var tracer = tracerFactory.GetTracer("zpages-test");
 
-                Thread.Sleep(500);
+                while (true)
+                {
+                    // Create a scoped span.
+                    TelemetrySpan telemetrySpan = tracer.StartSpan("Main");
+                    telemetrySpan.Status = Status.Unavailable;
+
+                    using (tracer.WithSpan(telemetrySpan))
+                    {
+                        Console.WriteLine("Starting Span");
+                    }
+
+                    Thread.Sleep(3000);
+
+                    telemetrySpan.End();
+
+                    // Create a scoped span.
+                    TelemetrySpan telemetrySpan2 = tracer.StartSpan("TestSpan");
+                    telemetrySpan2.Status = Status.Ok;
+
+                    using (tracer.WithSpan(telemetrySpan2))
+                    {
+                        Console.WriteLine("Starting Span2");
+                    }
+
+                    Thread.Sleep(5000);
+
+                    telemetrySpan2.End();
+                }
             }
         }
     }
