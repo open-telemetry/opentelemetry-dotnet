@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpWebRequestDiagnosticSourceTests.net461.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpWebRequestActivitySourceTests.net461.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,28 +22,29 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Instrumentation.Dependencies.Implementation;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 {
-    public class HttpWebRequestDiagnosticSourceTests : IDisposable
+    public class HttpWebRequestActivitySourceTests : IDisposable
     {
-        static HttpWebRequestDiagnosticSourceTests()
+        static HttpWebRequestActivitySourceTests()
         {
-            GC.KeepAlive(HttpWebRequestDiagnosticSource.Instance);
+            GC.KeepAlive(HttpWebRequestActivitySource.Instance);
         }
 
         private readonly IDisposable testServer;
         private readonly string testServerHost;
         private readonly int testServerPort;
+        private readonly string hostNameAndPort;
 
-        public HttpWebRequestDiagnosticSourceTests()
+        public HttpWebRequestActivitySourceTests()
         {
             Assert.Null(Activity.Current);
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
@@ -53,6 +54,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 ctx => ProcessServerRequest(ctx),
                 out this.testServerHost,
                 out this.testServerPort);
+
+            this.hostNameAndPort = $"{this.testServerHost}:{this.testServerPort}";
 
             void ProcessServerRequest(HttpListenerContext context)
             {
@@ -110,17 +113,20 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         public void TestHttpDiagnosticListenerIsRegistered()
         {
             bool listenerFound = false;
-            using (DiagnosticListener.AllListeners.Subscribe(new CallbackObserver<DiagnosticListener>(diagnosticListener =>
+            using ActivityListener activityListener = new ActivityListener
             {
-                if (diagnosticListener.Name == HttpWebRequestDiagnosticSource.DiagnosticListenerName)
+                ShouldListenTo = activitySource =>
                 {
-                    listenerFound = true;
-                }
-            })))
-            {
-
-                Assert.True(listenerFound, "The Http Diagnostic Listener didn't get added to the AllListeners list.");
-            }
+                    if (activitySource.Name == HttpWebRequestActivitySource.ActivitySourceName)
+                    {
+                        listenerFound = true;
+                        return true;
+                    }
+                    return false;
+                },
+            };
+            ActivitySource.AddActivityListener(activityListener);
+            Assert.True(listenerFound, "The Http Diagnostic Listener didn't get added to the AllListeners list.");
         }
 
         /// <summary>
@@ -128,49 +134,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         /// the subscribe overload with just the observer argument.
         /// </summary>
         [Fact]
-        public async Task TestReflectInitializationViaSubscription1()
+        public async Task TestReflectInitializationViaSubscription()
         {
-            using var eventRecords = new EventObserverAndRecorder();
-
-            // Send a random Http request to generate some events
-            using (var client = new HttpClient())
-            {
-                (await client.GetAsync(this.BuildRequestUrl())).Dispose();
-            }
-
-            // Just make sure some events are written, to confirm we successfully subscribed to it.
-            // We should have exactly one Start and one Stop event
-            Assert.Equal(2, eventRecords.Records.Count);
-        }
-
-        /// <summary>
-        /// A simple test to make sure the Http Diagnostic Source is initialized properly after we subscribed to it, using
-        /// the subscribe overload with just the observer argument and the more complicating enable filter function.
-        /// </summary>
-        [Fact]
-        public async Task TestReflectInitializationViaSubscription2()
-        {
-            using var eventRecords = new EventObserverAndRecorder(eventName => true);
-
-            // Send a random Http request to generate some events
-            using (var client = new HttpClient())
-            {
-                (await client.GetAsync(this.BuildRequestUrl())).Dispose();
-            }
-
-            // Just make sure some events are written, to confirm we successfully subscribed to it.
-            // We should have exactly one Start and one Stop event
-            Assert.Equal(2, eventRecords.Records.Count);
-        }
-
-        /// <summary>
-        /// A simple test to make sure the Http Diagnostic Source is initialized properly after we subscribed to it, using
-        /// the subscribe overload with the observer argument and the simple predicate argument.
-        /// </summary>
-        [Fact]
-        public async Task TestReflectInitializationViaSubscription3()
-        {
-            using var eventRecords = new EventObserverAndRecorder((eventName, arg1, arg2) => true);
+            using var eventRecords = new ActivitySourceRecorder();
 
             // Send a random Http request to generate some events
             using (var client = new HttpClient())
@@ -192,39 +158,87 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [InlineData("POST", "skipRequestContent=1")]
         public async Task TestBasicReceiveAndResponseEvents(string method, string queryString = null)
         {
-            using (var eventRecords = new EventObserverAndRecorder(e =>
+            var url = this.BuildRequestUrl(queryString: queryString);
+
+            using var eventRecords = new ActivitySourceRecorder();
+
+            // Send a random Http request to generate some events
+            using (var client = new HttpClient())
             {
-                // Verify header is available when start event is fired.
-                HttpWebRequest startRequest = ReadPublicProperty<HttpWebRequest>(e.Value, "Request");
-                Assert.NotNull(startRequest);
-                VerifyHeaders(startRequest);
-            }))
-            {
-                // Send a random Http request to generate some events
-                using (var client = new HttpClient())
-                {
-                    (method == "GET"
-                        ? await client.GetAsync(this.BuildRequestUrl(queryString: queryString))
-                        : await client.PostAsync(this.BuildRequestUrl(queryString: queryString), new StringContent("hello world"))).Dispose();
-                }
-
-                // We should have exactly one Start and one Stop event
-                Assert.Equal(2, eventRecords.Records.Count);
-                Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Start")));
-                Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Stop")));
-
-                // Check to make sure: The first record must be a request, the next record must be a response.
-                HttpWebRequest startRequest = AssertFirstEventWasStart(eventRecords);
-
-                VerifyHeaders(startRequest);
-
-                Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
-                Assert.Equal(HttpWebRequestDiagnosticSource.RequestStopName, stopEvent.Key);
-                HttpWebRequest stopRequest = ReadPublicProperty<HttpWebRequest>(stopEvent.Value, "Request");
-                Assert.Equal(startRequest, stopRequest);
-                HttpWebResponse response = ReadPublicProperty<HttpWebResponse>(stopEvent.Value, "Response");
-                Assert.NotNull(response);
+                (method == "GET"
+                    ? await client.GetAsync(url)
+                    : await client.PostAsync(url, new StringContent("hello world"))).Dispose();
             }
+
+            // We should have exactly one Start and one Stop event
+            Assert.Equal(2, eventRecords.Records.Count);
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+
+            // Check to make sure: The first record must be a request, the next record must be a response.
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
+
+            Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
+            Assert.Equal("Stop", stopEvent.Key);
+            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
+            Assert.NotNull(response);
+
+            VerifyActivityStopTags("200", "OK", activity);
+        }
+
+        [Theory]
+        [InlineData("GET")]
+        [InlineData("POST")]
+        public async Task TestBasicReceiveAndResponseEventsWithoutSampling(string method)
+        {
+            using var eventRecords = new ActivitySourceRecorder(activityDataRequest: ActivityDataRequest.None);
+
+            // Send a random Http request to generate some events
+            using (var client = new HttpClient())
+            {
+                (method == "GET"
+                    ? await client.GetAsync(this.BuildRequestUrl())
+                    : await client.PostAsync(this.BuildRequestUrl(), new StringContent("hello world"))).Dispose();
+            }
+
+            // There should be no events because we turned off sampling.
+            Assert.Empty(eventRecords.Records);
+        }
+
+        [Theory]
+        [InlineData("GET")]
+        [InlineData("POST")]
+        public async Task TestBasicReceiveAndResponseEventsWitPassThroughSampling(string method)
+        {
+            using var eventRecords = new ActivitySourceRecorder(activityDataRequest: ActivityDataRequest.PropagationData);
+
+            // Send a random Http request to generate some events
+            using (var client = new HttpClient())
+            {
+                (method == "GET"
+                    ? await client.GetAsync(this.BuildRequestUrl())
+                    : await client.PostAsync(this.BuildRequestUrl(), new StringContent("hello world"))).Dispose();
+            }
+
+            // We should have exactly one Start and one Stop event
+            Assert.Equal(2, eventRecords.Records.Count);
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+
+            // Check to make sure: The first record must be a request, the next record must be a response.
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+
+            VerifyHeaders(startRequest);
+
+            Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
+            Assert.Equal("Stop", stopEvent.Key);
+            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
+            Assert.NotNull(response);
+
+            Assert.Empty(activity.Tags);
         }
 
         [Theory]
@@ -238,94 +252,38 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [InlineData("POST", 3)]
         public async Task TestBasicReceiveAndResponseWebRequestEvents(string method, int mode)
         {
-            using (var eventRecords = new EventObserverAndRecorder(e =>
+            string url = this.BuildRequestUrl();
+
+            using var eventRecords = new ActivitySourceRecorder();
+
             {
-                // Verify header is available when start event is fired.
-                HttpWebRequest startRequest = ReadPublicProperty<HttpWebRequest>(e.Value, "Request");
-                Assert.NotNull(startRequest);
-                VerifyHeaders(startRequest);
-            }))
-            {
+                // Send a random Http request to generate some events
+                var webRequest = (HttpWebRequest)WebRequest.Create(url);
+
+                if (method == "POST")
                 {
-                    // Send a random Http request to generate some events
-                    var webRequest = (HttpWebRequest)WebRequest.Create(this.BuildRequestUrl());
+                    webRequest.Method = method;
 
-                    if (method == "POST")
-                    {
-                        webRequest.Method = method;
-
-                        Stream stream = null;
-                        switch (mode)
-                        {
-                            case 0:
-                                stream = webRequest.GetRequestStream();
-                                break;
-                            case 1:
-                                stream = await webRequest.GetRequestStreamAsync();
-                                break;
-                            case 2:
-                                {
-                                    object state = new object();
-                                    using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
-                                    IAsyncResult asyncResult = webRequest.BeginGetRequestStream(ar =>
-                                    {
-                                        Assert.Equal(state, ar.AsyncState);
-                                        handle.Set();
-                                    },
-                                    state);
-                                    stream = webRequest.EndGetRequestStream(asyncResult);
-                                    if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
-                                        throw new InvalidOperationException();
-                                    handle.Dispose();
-                                }
-                                break;
-                            case 3:
-                                {
-                                    using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
-                                    object state = new object();
-                                    webRequest.BeginGetRequestStream(ar =>
-                                    {
-                                        stream = webRequest.EndGetRequestStream(ar);
-                                        Assert.Equal(state, ar.AsyncState);
-                                        handle.Set();
-                                    },
-                                    state);
-                                    if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
-                                        throw new InvalidOperationException();
-                                    handle.Dispose();
-                                }
-                                break;
-                            default:
-                                throw new NotSupportedException();
-                        }
-
-                        Assert.NotNull(stream);
-
-                        using StreamWriter writer = new StreamWriter(stream);
-
-                        writer.WriteLine("hello world");
-                    }
-
-                    WebResponse webResponse = null;
+                    Stream stream = null;
                     switch (mode)
                     {
                         case 0:
-                            webResponse = webRequest.GetResponse();
+                            stream = webRequest.GetRequestStream();
                             break;
                         case 1:
-                            webResponse = await webRequest.GetResponseAsync();
+                            stream = await webRequest.GetRequestStreamAsync();
                             break;
                         case 2:
                             {
                                 object state = new object();
                                 using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
-                                IAsyncResult asyncResult = webRequest.BeginGetResponse(ar =>
+                                IAsyncResult asyncResult = webRequest.BeginGetRequestStream(ar =>
                                 {
                                     Assert.Equal(state, ar.AsyncState);
                                     handle.Set();
                                 },
                                 state);
-                                webResponse = webRequest.EndGetResponse(asyncResult);
+                                stream = webRequest.EndGetRequestStream(asyncResult);
                                 if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
                                     throw new InvalidOperationException();
                                 handle.Dispose();
@@ -335,9 +293,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                             {
                                 using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
                                 object state = new object();
-                                webRequest.BeginGetResponse(ar =>
+                                webRequest.BeginGetRequestStream(ar =>
                                 {
-                                    webResponse = webRequest.EndGetResponse(ar);
+                                    stream = webRequest.EndGetRequestStream(ar);
                                     Assert.Equal(state, ar.AsyncState);
                                     handle.Set();
                                 },
@@ -351,30 +309,82 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                             throw new NotSupportedException();
                     }
 
-                    Assert.NotNull(webResponse);
+                    Assert.NotNull(stream);
 
-                    using StreamReader reader = new StreamReader(webResponse.GetResponseStream());
+                    using StreamWriter writer = new StreamWriter(stream);
 
-                    reader.ReadToEnd(); // Make sure response is not disposed.
+                    writer.WriteLine("hello world");
                 }
 
-                // We should have exactly one Start and one Stop event
-                Assert.Equal(2, eventRecords.Records.Count);
-                Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Start")));
-                Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Stop")));
+                WebResponse webResponse = null;
+                switch (mode)
+                {
+                    case 0:
+                        webResponse = webRequest.GetResponse();
+                        break;
+                    case 1:
+                        webResponse = await webRequest.GetResponseAsync();
+                        break;
+                    case 2:
+                        {
+                            object state = new object();
+                            using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
+                            IAsyncResult asyncResult = webRequest.BeginGetResponse(ar =>
+                            {
+                                Assert.Equal(state, ar.AsyncState);
+                                handle.Set();
+                            },
+                            state);
+                            webResponse = webRequest.EndGetResponse(asyncResult);
+                            if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
+                                throw new InvalidOperationException();
+                            handle.Dispose();
+                        }
+                        break;
+                    case 3:
+                        {
+                            using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
+                            object state = new object();
+                            webRequest.BeginGetResponse(ar =>
+                            {
+                                webResponse = webRequest.EndGetResponse(ar);
+                                Assert.Equal(state, ar.AsyncState);
+                                handle.Set();
+                            },
+                            state);
+                            if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
+                                throw new InvalidOperationException();
+                            handle.Dispose();
+                        }
+                        break;
+                    default:
+                        throw new NotSupportedException();
+                }
 
-                // Check to make sure: The first record must be a request, the next record must be a response.
-                HttpWebRequest startRequest = AssertFirstEventWasStart(eventRecords);
+                Assert.NotNull(webResponse);
 
-                VerifyHeaders(startRequest);
+                using StreamReader reader = new StreamReader(webResponse.GetResponseStream());
 
-                Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
-                Assert.Equal(HttpWebRequestDiagnosticSource.RequestStopName, stopEvent.Key);
-                HttpWebRequest stopRequest = ReadPublicProperty<HttpWebRequest>(stopEvent.Value, "Request");
-                Assert.Equal(startRequest, stopRequest);
-                HttpWebResponse response = ReadPublicProperty<HttpWebResponse>(stopEvent.Value, "Response");
-                Assert.NotNull(response);
+                reader.ReadToEnd(); // Make sure response is not disposed.
             }
+
+            // We should have exactly one Start and one Stop event
+            Assert.Equal(2, eventRecords.Records.Count);
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+
+            // Check to make sure: The first record must be a request, the next record must be a response.
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
+
+            Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
+            Assert.Equal("Stop", stopEvent.Key);
+            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
+            Assert.NotNull(response);
+
+            VerifyActivityStopTags("200", "OK", activity);
         }
 
         [Fact]
@@ -382,7 +392,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             try
             {
-                using var eventRecords = new EventObserverAndRecorder();
+                using var eventRecords = new ActivitySourceRecorder();
 
                 var parent = new Activity("w3c activity");
                 parent.SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom());
@@ -401,7 +411,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 Assert.Equal(2, eventRecords.Records.Count());
 
                 // Check to make sure: The first record must be a request, the next record must be a response.
-                HttpWebRequest startRequest = AssertFirstEventWasStart(eventRecords);
+                (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
 
                 var traceparent = startRequest.Headers["traceparent"];
                 var tracestate = startRequest.Headers["tracestate"];
@@ -425,7 +435,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             try
             {
-                using var eventRecords = new EventObserverAndRecorder();
+                using var eventRecords = new ActivitySourceRecorder();
 
                 // Send a random Http request to generate some events
                 using (var client = new HttpClient())
@@ -463,32 +473,37 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [InlineData("POST")]
         public async Task TestResponseWithoutContentEvents(string method)
         {
-            using var eventRecords = new EventObserverAndRecorder();
+            string url = this.BuildRequestUrl(queryString: "responseCode=204");
+
+            using var eventRecords = new ActivitySourceRecorder();
 
             // Send a random Http request to generate some events
             using (var client = new HttpClient())
             {
                 using HttpResponseMessage response = method == "GET"
-                    ? await client.GetAsync(this.BuildRequestUrl(queryString: "responseCode=204"))
-                    : await client.PostAsync(this.BuildRequestUrl(queryString: "responseCode=204"), new StringContent("hello world"));
+                    ? await client.GetAsync(url)
+                    : await client.PostAsync(url, new StringContent("hello world"));
             }
 
             // We should have exactly one Start and one Stop event
             Assert.Equal(2, eventRecords.Records.Count);
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Start")));
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Stop")));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: The first record must be a request, the next record must be a response.
-            HttpWebRequest startRequest = AssertFirstEventWasStart(eventRecords);
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
 
             VerifyHeaders(startRequest);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
-            Assert.Equal(HttpWebRequestDiagnosticSource.RequestStopName, stopEvent.Key);
-            HttpWebRequest stopRequest = ReadPublicProperty<HttpWebRequest>(stopEvent.Value, "Request");
+            Assert.Equal("Stop", stopEvent.Key);
+            HttpWebRequest stopRequest = (HttpWebRequest)stopEvent.Value.GetCustomProperty("HttpWebRequest.Request");
             Assert.Equal(startRequest, stopRequest);
-            HttpWebResponse stopResponse = ReadPublicProperty<HttpWebResponse>(stopEvent.Value, "Response");
+            HttpWebResponse stopResponse = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
             Assert.NotNull(stopResponse);
+
+            VerifyActivityStopTags("204", "No Content", activity);
         }
 
         /// <summary>
@@ -499,7 +514,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [InlineData("POST")]
         public async Task TestRedirectedRequest(string method)
         {
-            using var eventRecords = new EventObserverAndRecorder();
+            using var eventRecords = new ActivitySourceRecorder();
 
             using (var client = new HttpClient())
             {
@@ -510,8 +525,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             // We should have exactly one Start and one Stop event
             Assert.Equal(2, eventRecords.Records.Count());
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Start")));
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Stop")));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
         }
 
         /// <summary>
@@ -522,13 +537,17 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [InlineData("POST")]
         public async Task TestRequestWithException(string method)
         {
-            using var eventRecords = new EventObserverAndRecorder();
+            string url = method == "GET"
+                ? $"http://{Guid.NewGuid()}.com"
+                : $"http://{Guid.NewGuid()}.com";
+
+            using var eventRecords = new ActivitySourceRecorder();
 
             var ex = await Assert.ThrowsAsync<HttpRequestException>(() =>
             {
                 return method == "GET"
-                    ? new HttpClient().GetAsync($"http://{Guid.NewGuid()}.com")
-                    : new HttpClient().PostAsync($"http://{Guid.NewGuid()}.com", new StringContent("hello world"));
+                    ? new HttpClient().GetAsync(url)
+                    : new HttpClient().PostAsync(url, new StringContent("hello world"));
             });
 
             // check that request failed because of the wrong domain name and not because of reflection
@@ -536,20 +555,25 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.NotNull(webException);
             Assert.True(webException.Status == WebExceptionStatus.NameResolutionFailure);
 
-            // We should have one Start event, no Stop event, and one Exception event.
+            // We should have one Start event and one Stop event with an exception.
             Assert.Equal(2, eventRecords.Records.Count());
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Start")));
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Exception")));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: The first record must be a request, the next record must be an exception.
-            HttpWebRequest startRequest = AssertFirstEventWasStart(eventRecords);
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(null, method, url, activity);
 
-            Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, object> exceptionEvent));
-            Assert.Equal(HttpWebRequestDiagnosticSource.RequestExceptionName, exceptionEvent.Key);
-            HttpWebRequest exceptionRequest = ReadPublicProperty<HttpWebRequest>(exceptionEvent.Value, "Request");
+            Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
+            Assert.Equal("Stop", exceptionEvent.Key);
+            HttpWebRequest exceptionRequest = (HttpWebRequest)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Request");
             Assert.Equal(startRequest, exceptionRequest);
-            Exception exceptionException = ReadPublicProperty<Exception>(exceptionEvent.Value, "Exception");
+            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
             Assert.Equal(webException, exceptionException);
+
+            Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
+            Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
         }
 
         /// <summary>
@@ -560,24 +584,37 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [InlineData("POST")]
         public async Task TestCanceledRequest(string method)
         {
+            string url = this.BuildRequestUrl();
+
             CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            using var eventRecords = new EventObserverAndRecorder(_ => { cts.Cancel(); });
+            using var eventRecords = new ActivitySourceRecorder(_ => { cts.Cancel(); });
 
             using (var client = new HttpClient())
             {
                 var ex = await Assert.ThrowsAnyAsync<Exception>(() =>
                 {
                     return method == "GET"
-                        ? client.GetAsync(this.BuildRequestUrl(), cts.Token)
-                        : client.PostAsync(this.BuildRequestUrl(), new StringContent("hello world"), cts.Token);
+                        ? client.GetAsync(url, cts.Token)
+                        : client.PostAsync(url, new StringContent("hello world"), cts.Token);
                 });
                 Assert.True(ex is TaskCanceledException || ex is WebException);
             }
 
-            // We should have one Start event, no Stop event, and one Exception event.
+            // We should have one Start event and one Stop event with an exception.
             Assert.Equal(2, eventRecords.Records.Count());
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Start")));
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Exception")));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
+
+            Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
+            Assert.Equal("Stop", exceptionEvent.Key);
+            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
+
+            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
+            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
         }
 
         /// <summary>
@@ -588,7 +625,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [InlineData("POST")]
         public async Task TestSecureTransportFailureRequest(string method)
         {
-            using var eventRecords = new EventObserverAndRecorder();
+            string url = "https://expired.badssl.com/";
+
+            using var eventRecords = new ActivitySourceRecorder();
 
             using (var client = new HttpClient())
             {
@@ -596,16 +635,27 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 {
                     // https://expired.badssl.com/ has an expired certificae.
                     return method == "GET"
-                        ? client.GetAsync("https://expired.badssl.com/")
-                        : client.PostAsync("https://expired.badssl.com/", new StringContent("hello world"));
+                        ? client.GetAsync(url)
+                        : client.PostAsync(url, new StringContent("hello world"));
                 });
                 Assert.True(ex is HttpRequestException);
             }
 
-            // We should have one Start event, no Stop event, and one Exception event.
+            // We should have one Start event and one Stop event with an exception.
             Assert.Equal(2, eventRecords.Records.Count());
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Start")));
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Exception")));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(null, method, url, activity);
+
+            Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
+            Assert.Equal("Stop", exceptionEvent.Key);
+            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
+
+            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
+            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
         }
 
         /// <summary>
@@ -620,24 +670,37 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             // It should retry. What we want to test for is 1 start, 1 exception event even
             // though multiple are actually sent.
 
-            using var eventRecords = new EventObserverAndRecorder();
+            string url = this.BuildRequestUrl(useHttps: true);
+
+            using var eventRecords = new ActivitySourceRecorder();
 
             using (var client = new HttpClient())
             {
                 var ex = await Assert.ThrowsAnyAsync<Exception>(() =>
                 {
                     return method == "GET"
-                        ? client.GetAsync(this.BuildRequestUrl(useHttps: true))
-                        : client.PostAsync(this.BuildRequestUrl(useHttps: true), new StringContent("hello world"));
+                        ? client.GetAsync(url)
+                        : client.PostAsync(url, new StringContent("hello world"));
 
                 });
                 Assert.True(ex is HttpRequestException);
             }
 
-            // We should have one Start event, no Stop event, and one Exception event.
+            // We should have one Start event and one Stop event with an exception.
             Assert.Equal(2, eventRecords.Records.Count());
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Start")));
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Exception")));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
+
+            Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
+            Assert.Equal("Stop", exceptionEvent.Key);
+            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
+
+            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
+            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
         }
 
         [Fact]
@@ -648,7 +711,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 .AddBaggage("bad/key", "value")
                 .AddBaggage("goodkey", "bad/value")
                 .Start();
-            using (var eventRecords = new EventObserverAndRecorder())
+            using (var eventRecords = new ActivitySourceRecorder())
             {
                 using (var client = new HttpClient())
                 {
@@ -656,10 +719,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 }
 
                 Assert.Equal(2, eventRecords.Records.Count());
-                Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Start")));
-                Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key.EndsWith("Stop")));
+                Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+                Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
-                WebRequest thisRequest = ReadPublicProperty<WebRequest>(eventRecords.Records.First().Value, "Request");
+                WebRequest thisRequest = (WebRequest)eventRecords.Records.First().Value.GetCustomProperty("HttpWebRequest.Request");
                 string[] correlationContext = thisRequest.Headers["Correlation-Context"].Split(',');
 
                 Assert.Equal(3, correlationContext.Length);
@@ -671,86 +734,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         }
 
         /// <summary>
-        /// Tests IsEnabled order and parameters.
-        /// </summary>
-        [Fact]
-        public async Task TestIsEnabled()
-        {
-            int eventNumber = 0;
-
-            bool IsEnabled(string evnt, object arg1, object arg2)
-            {
-                if (eventNumber == 0)
-                {
-                    Assert.True(evnt == HttpWebRequestDiagnosticSource.ActivityName);
-                    Assert.True(arg1 is WebRequest);
-                }
-                else if (eventNumber == 1)
-                {
-                    Assert.True(evnt == HttpWebRequestDiagnosticSource.RequestStartName);
-                }
-                else if (eventNumber == 2)
-                {
-                    Assert.True(evnt == HttpWebRequestDiagnosticSource.RequestStopName);
-                }
-
-                eventNumber++;
-                return true;
-            }
-
-            using (new EventObserverAndRecorder(IsEnabled))
-            {
-                using (var client = new HttpClient())
-                {
-                    (await client.GetAsync(this.BuildRequestUrl())).Dispose();
-                }
-                Assert.Equal(3, eventNumber);
-            }
-        }
-
-        /// <summary>
-        /// Tests that nothing happens if IsEnabled returns false.
-        /// </summary>
-        [Fact]
-        public async Task TestIsEnabledAllOff()
-        {
-            using var eventRecords = new EventObserverAndRecorder((evnt, arg1, arg2) => false);
-
-            using (var client = new HttpClient())
-            {
-                (await client.GetAsync(this.BuildRequestUrl())).Dispose();
-            }
-
-            Assert.Empty(eventRecords.Records);
-        }
-
-        /// <summary>
-        /// Tests that if IsEnabled for request is false, request is not instrumented.
-        /// </summary>
-        [Fact]
-        public async Task TestIsEnabledRequestOff()
-        {
-            static bool IsEnabled(string evnt, object arg1, object arg2)
-            {
-                if (evnt == HttpWebRequestDiagnosticSource.ActivityName)
-                {
-                    return (arg1 as WebRequest).RequestUri.Query.Contains("passFilter");
-                }
-                return true;
-            }
-
-            using var eventRecords = new EventObserverAndRecorder(IsEnabled);
-
-            using var client = new HttpClient();
-
-            (await client.GetAsync(this.BuildRequestUrl())).Dispose();
-            Assert.Empty(eventRecords.Records);
-
-            (await client.GetAsync(this.BuildRequestUrl(queryString: "passFilter=1"))).Dispose();
-            Assert.Equal(2, eventRecords.Records.Count);
-        }
-
-        /// <summary>
         /// Test to make sure every event record has the right dynamic properties.
         /// </summary>
         [Fact]
@@ -758,7 +741,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             ServicePointManager.DefaultConnectionLimit = int.MaxValue;
             var parentActivity = new Activity("parent").Start();
-            using var eventRecords = new EventObserverAndRecorder();
+            using var eventRecords = new ActivitySourceRecorder();
 
             Dictionary<Uri, Tuple<WebRequest, WebResponse>> requestData = new Dictionary<Uri, Tuple<WebRequest, WebResponse>>();
             for (int i = 0; i < 10; i++)
@@ -793,23 +776,23 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             // exactly 1 Start event per request and exaclty 1 Stop event per response (if request succeeded)
             var successfulTasks = tasks.Where(t => t.Value.Status == TaskStatus.RanToCompletion);
 
-            Assert.Equal(tasks.Count, eventRecords.Records.Count(rec => rec.Key.EndsWith("Start")));
-            Assert.Equal(successfulTasks.Count(), eventRecords.Records.Count(rec => rec.Key.EndsWith("Stop")));
+            Assert.Equal(tasks.Count, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(successfulTasks.Count(), eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: We have a WebRequest and a WebResponse for each successful request
             foreach (var pair in eventRecords.Records)
             {
-                object eventFields = pair.Value;
+                Activity activity = pair.Value;
 
                 Assert.True(
-                    pair.Key == HttpWebRequestDiagnosticSource.RequestStartName ||
-                    pair.Key == HttpWebRequestDiagnosticSource.RequestStopName,
+                    pair.Key == "Start" ||
+                    pair.Key == "Stop",
                     "An unexpected event of name " + pair.Key + "was received");
 
-                WebRequest request = ReadPublicProperty<WebRequest>(eventFields, "Request");
+                WebRequest request = (WebRequest)activity.GetCustomProperty("HttpWebRequest.Request");
                 Assert.Equal("HttpWebRequest", request.GetType().Name);
 
-                if (pair.Key == HttpWebRequestDiagnosticSource.RequestStartName)
+                if (pair.Key == "Start")
                 {
                     // Make sure this is an URL that we recognize. If not, just skip
                     if (!requestData.TryGetValue(request.RequestUri, out var tuple))
@@ -828,7 +811,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 else
                 {
                     // This must be the response.
-                    WebResponse response = ReadPublicProperty<WebResponse>(eventFields, "Response");
+                    WebResponse response = (WebResponse)activity.GetCustomProperty("HttpWebRequest.Response");
                     Assert.Equal("HttpWebResponse", response.GetType().Name);
 
                     // By the time we see the response, the request object may already have been redirected with a different
@@ -877,20 +860,13 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             }
         }
 
-        private static T ReadPublicProperty<T>(object obj, string propertyName)
+        private static (Activity, HttpWebRequest) AssertFirstEventWasStart(ActivitySourceRecorder eventRecords)
         {
-            Type type = obj.GetType();
-            PropertyInfo property = type.GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
-            return (T)property.GetValue(obj);
-        }
-
-        private static HttpWebRequest AssertFirstEventWasStart(EventObserverAndRecorder eventRecords)
-        {
-            Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, object> startEvent));
-            Assert.Equal(HttpWebRequestDiagnosticSource.RequestStartName, startEvent.Key);
-            HttpWebRequest startRequest = ReadPublicProperty<HttpWebRequest>(startEvent.Value, "Request");
+            Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> startEvent));
+            Assert.Equal("Start", startEvent.Key);
+            HttpWebRequest startRequest = (HttpWebRequest)startEvent.Value.GetCustomProperty("HttpWebRequest.Request");
             Assert.NotNull(startRequest);
-            return startRequest;
+            return (startEvent.Value, startRequest);
         }
 
         private static void VerifyHeaders(HttpWebRequest startRequest)
@@ -901,84 +877,65 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Null(startRequest.Headers["tracestate"]);
         }
 
-        /// <summary>
-        /// CallbackObserver is an instrumentation class that creates an observer (which you can pass
-        /// to IObservable.Subscribe), and calls the given callback every time the 'next'
-        /// operation on the IObserver happens.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        private class CallbackObserver<T> : IObserver<T>
+        private static void VerifyActivityStartTags(string hostNameAndPort, string method, string url, Activity activity)
         {
-            public CallbackObserver(Action<T> callback) { this._callback = callback; }
-            public void OnCompleted() { }
-            public void OnError(Exception error) { }
-            public void OnNext(T value) { this._callback(value); }
+            Assert.NotNull(activity.Tags);
+            Assert.Equal("http", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value);
+            Assert.Equal(method, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpMethodKey).Value);
+            if (hostNameAndPort != null)
+                Assert.Equal(hostNameAndPort, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value);
+            Assert.Equal(url, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value);
+            Assert.Equal("1.1", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpFlavorKey).Value);
+        }
 
-            private readonly Action<T> _callback;
+        private static void VerifyActivityStopTags(string statusCode, string statusText, Activity activity)
+        {
+            Assert.Equal(statusCode, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpStatusCodeKey).Value);
+            Assert.Equal(statusText, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
         }
 
         /// <summary>
-        /// EventObserverAndRecorder is an observer that watches all Http diagnostic listener events flowing
-        /// through, and record all of them.
+        /// <see cref="ActivitySourceRecorder"/> is a helper class for recording <see cref="HttpWebRequestActivitySource.ActivitySourceName"/> events.
         /// </summary>
-        private class EventObserverAndRecorder : IObserver<KeyValuePair<string, object>>, IDisposable
+        private class ActivitySourceRecorder : IDisposable
         {
-            private readonly Action<KeyValuePair<string, object>> onEvent;
+            private readonly Action<KeyValuePair<string, Activity>> onEvent;
 
-            public EventObserverAndRecorder(Action<KeyValuePair<string, object>> onEvent = null)
+            public ActivitySourceRecorder(Action<KeyValuePair<string, Activity>> onEvent = null, ActivityDataRequest activityDataRequest = ActivityDataRequest.AllDataAndRecorded)
             {
-                this.listSubscription = DiagnosticListener.AllListeners.Subscribe(new CallbackObserver<DiagnosticListener>(diagnosticListener =>
+                this.activityListener = new ActivityListener
                 {
-                    if (diagnosticListener.Name == HttpWebRequestDiagnosticSource.DiagnosticListenerName)
-                    {
-                        this.httpSubscription = diagnosticListener.Subscribe(this);
-                    }
-                }));
+                    ShouldListenTo = (activitySource) => activitySource.Name == HttpWebRequestActivitySource.ActivitySourceName,
+                    ActivityStarted = ActivityStarted,
+                    ActivityStopped = ActivityStopped,
+                    GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => activityDataRequest,
+                };
+
+                ActivitySource.AddActivityListener(this.activityListener);
 
                 this.onEvent = onEvent;
             }
 
-            public EventObserverAndRecorder(Predicate<string> isEnabled)
-            {
-                this.listSubscription = DiagnosticListener.AllListeners.Subscribe(new CallbackObserver<DiagnosticListener>(diagnosticListener =>
-                {
-                    if (diagnosticListener.Name == HttpWebRequestDiagnosticSource.DiagnosticListenerName)
-                    {
-                        this.httpSubscription = diagnosticListener.Subscribe(this, isEnabled);
-                    }
-                }));
-            }
-
-            public EventObserverAndRecorder(Func<string, object, object, bool> isEnabled)
-            {
-                this.listSubscription = DiagnosticListener.AllListeners.Subscribe(new CallbackObserver<DiagnosticListener>(diagnosticListener =>
-                {
-                    if (diagnosticListener.Name == HttpWebRequestDiagnosticSource.DiagnosticListenerName)
-                    {
-                        this.httpSubscription = diagnosticListener.Subscribe(this, isEnabled);
-                    }
-                }));
-            }
-
             public void Dispose()
             {
-                this.listSubscription.Dispose();
-                this.httpSubscription.Dispose();
+                this.activityListener.Dispose();
             }
 
-            public ConcurrentQueue<KeyValuePair<string, object>> Records { get; } = new ConcurrentQueue<KeyValuePair<string, object>>();
+            public ConcurrentQueue<KeyValuePair<string, Activity>> Records { get; } = new ConcurrentQueue<KeyValuePair<string, Activity>>();
 
-            public void OnCompleted() { }
-            public void OnError(Exception error) { }
+            public void ActivityStarted(Activity activity) => this.Record("Start", activity);
 
-            public void OnNext(KeyValuePair<string, object> record)
+            public void ActivityStopped(Activity activity) => this.Record("Stop", activity);
+
+            private void Record(string eventName, Activity activity)
             {
+                var record = new KeyValuePair<string, Activity>(eventName, activity);
+
                 this.Records.Enqueue(record);
                 this.onEvent?.Invoke(record);
             }
 
-            private readonly IDisposable listSubscription;
-            private IDisposable httpSubscription;
+            private readonly ActivityListener activityListener;
         }
     }
 }
