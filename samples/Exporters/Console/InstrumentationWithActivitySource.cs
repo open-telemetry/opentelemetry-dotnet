@@ -77,9 +77,11 @@ namespace Samples
                             }
 
                             string requestContent;
+                            using (var childSpan = source.StartActivity("ReadStream", ActivityKind.Consumer))
                             using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
                             {
                                 requestContent = reader.ReadToEnd();
+                                childSpan.AddEvent(new ActivityEvent("StreamReader.ReadToEnd"));
                             }
 
                             activity?.AddTag("request.content", requestContent);

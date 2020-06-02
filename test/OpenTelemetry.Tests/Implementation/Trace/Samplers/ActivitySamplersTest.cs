@@ -43,14 +43,13 @@ namespace OpenTelemetry.Trace.Samplers.Test
 
             Assert.True(
                     new AlwaysOnActivitySampler()
-                        .ShouldSample(
+                        .ShouldSample(new ActivitySamplingParameters(
                             parentContext,
                             traceId,
-                            spanId,
                             "Another name",
                             ActivityKindServer,
                             null,
-                            new List<ActivityLink>() { link }).IsSampled);
+                            new List<ActivityLink> { link })).IsSampled);
         }
 
         [Fact]
@@ -71,14 +70,13 @@ namespace OpenTelemetry.Trace.Samplers.Test
 
             Assert.False(
                     new AlwaysOffActivitySampler()
-                        .ShouldSample(
+                        .ShouldSample(new ActivitySamplingParameters(
                             parentContext,
                             traceId,
-                            spanId,
                             "Another name",
                             ActivityKindServer,
                             null,
-                            new List<ActivityLink>() { link }).IsSampled);
+                            new List<ActivityLink> { link })).IsSampled);
         }
 
         [Fact]
