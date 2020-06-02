@@ -16,6 +16,7 @@
 #if NET461
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -46,74 +47,67 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 out var host,
                 out var port);
 
-            var spanProcessor = new Mock<SpanProcessor>();
-            var tracer = TracerFactory.Create(b => b
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
+            var activityProcessor = new Mock<ActivityProcessor>();
+            using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            {
+                b.SetProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddHttpWebRequestDependencyInstrumentation();
+            });
+
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
-            using (new HttpWebRequestInstrumentation(tracer, new HttpClientInstrumentationOptions() { SetHttpFlavor = tc.SetHttpFlavor }))
+            try
             {
-                try
+                var request = (HttpWebRequest)WebRequest.Create(tc.Url);
+
+                request.Method = tc.Method;
+
+                if (tc.Headers != null)
                 {
-                    var request = (HttpWebRequest)WebRequest.Create(tc.Url);
-
-                    request.Method = tc.Method;
-
-                    if (tc.Headers != null)
+                    foreach (var header in tc.Headers)
                     {
-                        foreach (var header in tc.Headers)
-                        {
-                            request.Headers.Add(header.Key, header.Value);
-                        }
+                        request.Headers.Add(header.Key, header.Value);
                     }
-
-                    request.ContentLength = 0;
-
-                    using var response = (HttpWebResponse)request.GetResponse();
-
-                    new StreamReader(response.GetResponseStream()).ReadToEnd();
                 }
-                catch (Exception)
-                {
-                    //test case can intentionally send request that will result in exception
-                }
+
+                request.ContentLength = 0;
+
+                using var response = (HttpWebResponse)request.GetResponse();
+
+                new StreamReader(response.GetResponseStream()).ReadToEnd();
+            }
+            catch (Exception)
+            {
+                //test case can intentionally send request that will result in exception
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            Assert.Equal(tc.SpanName, span.Name);
-            Assert.Equal(tc.SpanKind, span.Kind.ToString());
+            Assert.Equal(tc.SpanName, activity.DisplayName);
+            Assert.Equal(tc.SpanKind, activity.Kind.ToString());
 
-            var d = new Dictionary<StatusCanonicalCode, string>()
+            var d = new Dictionary<string, string>()
             {
-                { StatusCanonicalCode.Ok, "OK"},
-                { StatusCanonicalCode.Cancelled, "CANCELLED"},
-                { StatusCanonicalCode.Unknown, "UNKNOWN"},
-                { StatusCanonicalCode.InvalidArgument, "INVALID_ARGUMENT"},
-                { StatusCanonicalCode.DeadlineExceeded, "DEADLINE_EXCEEDED"},
-                { StatusCanonicalCode.NotFound, "NOT_FOUND"},
-                { StatusCanonicalCode.AlreadyExists, "ALREADY_EXISTS"},
-                { StatusCanonicalCode.PermissionDenied, "PERMISSION_DENIED"},
-                { StatusCanonicalCode.ResourceExhausted, "RESOURCE_EXHAUSTED"},
-                { StatusCanonicalCode.FailedPrecondition, "FAILED_PRECONDITION"},
-                { StatusCanonicalCode.Aborted, "ABORTED"},
-                { StatusCanonicalCode.OutOfRange, "OUT_OF_RANGE"},
-                { StatusCanonicalCode.Unimplemented, "UNIMPLEMENTED"},
-                { StatusCanonicalCode.Internal, "INTERNAL"},
-                { StatusCanonicalCode.Unavailable, "UNAVAILABLE"},
-                { StatusCanonicalCode.DataLoss, "DATA_LOSS"},
-                { StatusCanonicalCode.Unauthenticated, "UNAUTHENTICATED"},
+                { StatusCanonicalCode.Ok.ToString(), "OK"},
+                { StatusCanonicalCode.Cancelled.ToString(), "CANCELLED"},
+                { StatusCanonicalCode.Unknown.ToString(), "UNKNOWN"},
+                { StatusCanonicalCode.InvalidArgument.ToString(), "INVALID_ARGUMENT"},
+                { StatusCanonicalCode.DeadlineExceeded.ToString(), "DEADLINE_EXCEEDED"},
+                { StatusCanonicalCode.NotFound.ToString(), "NOT_FOUND"},
+                { StatusCanonicalCode.AlreadyExists.ToString(), "ALREADY_EXISTS"},
+                { StatusCanonicalCode.PermissionDenied.ToString(), "PERMISSION_DENIED"},
+                { StatusCanonicalCode.ResourceExhausted.ToString(), "RESOURCE_EXHAUSTED"},
+                { StatusCanonicalCode.FailedPrecondition.ToString(), "FAILED_PRECONDITION"},
+                { StatusCanonicalCode.Aborted.ToString(), "ABORTED"},
+                { StatusCanonicalCode.OutOfRange.ToString(), "OUT_OF_RANGE"},
+                { StatusCanonicalCode.Unimplemented.ToString(), "UNIMPLEMENTED"},
+                { StatusCanonicalCode.Internal.ToString(), "INTERNAL"},
+                { StatusCanonicalCode.Unavailable.ToString(), "UNAVAILABLE"},
+                { StatusCanonicalCode.DataLoss.ToString(), "DATA_LOSS"},
+                { StatusCanonicalCode.Unauthenticated.ToString(), "UNAUTHENTICATED"},
             };
 
-            Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
-            if (tc.SpanStatusHasDescription.HasValue)
-                Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(span.Status.Description));
-
-            var normalizedAttributes = span.Attributes.ToDictionary(
-                x => x.Key,
-                x => x.Value.ToString());
             tc.SpanAttributes = tc.SpanAttributes.ToDictionary(
                 x => x.Key,
                 x =>
@@ -123,7 +117,35 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                     return HttpTestData.NormalizeValues(x.Value, host, port);
                 });
 
-            Assert.Equal(tc.SpanAttributes, normalizedAttributes);
+            foreach (KeyValuePair<string, string> tag in activity.Tags)
+            {
+                if (!tc.SpanAttributes.TryGetValue(tag.Key, out string value))
+                {
+                    if (tag.Key == "http.flavor")
+                    {
+                        // http.flavor is optional in .NET Core instrumentation but there is no way to pass that option to the new ActivitySource model so it always shows up here.
+                        if (tc.SetHttpFlavor)
+                        {
+                            Assert.Equal(value, tag.Value);
+                        }
+                        continue;
+                    }
+                    if (tag.Key == SpanAttributeConstants.StatusCodeKey)
+                    {
+                        Assert.Equal(tc.SpanStatus, d[tag.Value]);
+                        continue;
+                    }
+                    if (tag.Key == SpanAttributeConstants.StatusDescriptionKey)
+                    {
+                        if (tc.SpanStatusHasDescription.HasValue)
+                            Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(tag.Value));
+                        continue;
+                    }
+
+                    Assert.True(false, $"Tag {tag.Key} was not found in test data.");
+                }
+                Assert.Equal(value, tag.Value);
+            }
         }
 
         [Fact]

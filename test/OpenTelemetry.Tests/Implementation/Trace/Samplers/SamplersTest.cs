@@ -26,7 +26,6 @@ namespace OpenTelemetry.Trace.Samplers.Test
         private const int NUM_SAMPLE_TRIES = 1000;
         private static readonly SpanKind SpanKindServer = SpanKind.Server;
         private readonly ActivityTraceId traceId;
-        private readonly ActivitySpanId spanId;
         private readonly SpanContext sampledSpanContext;
         private readonly SpanContext notSampledSpanContext;
         private readonly Link sampledLink;
@@ -34,7 +33,6 @@ namespace OpenTelemetry.Trace.Samplers.Test
         public SamplersTest()
         {
             traceId = ActivityTraceId.CreateRandom();
-            spanId = ActivitySpanId.CreateRandom();
             var parentSpanId = ActivitySpanId.CreateRandom();
             sampledSpanContext = new SpanContext(traceId, parentSpanId, ActivityTraceFlags.Recorded);
             notSampledSpanContext = new SpanContext(traceId, parentSpanId, ActivityTraceFlags.None);
@@ -50,7 +48,6 @@ namespace OpenTelemetry.Trace.Samplers.Test
                         .ShouldSample(
                             sampledSpanContext,
                             traceId,
-                            spanId,
                             "Another name",
                             SpanKindServer,
                             null,
@@ -62,7 +59,6 @@ namespace OpenTelemetry.Trace.Samplers.Test
                         .ShouldSample(
                             notSampledSpanContext,
                             traceId,
-                            spanId,
                             "Yet another name",
                             SpanKindServer,
                             null,
@@ -85,7 +81,6 @@ namespace OpenTelemetry.Trace.Samplers.Test
                         .ShouldSample(
                             sampledSpanContext,
                             traceId,
-                            spanId,
                             "bar",
                             SpanKindServer,
                             null,
@@ -96,7 +91,6 @@ namespace OpenTelemetry.Trace.Samplers.Test
                         .ShouldSample(
                             notSampledSpanContext,
                             traceId,
-                            spanId,
                             "quux",
                             SpanKindServer,
                             null,
@@ -212,7 +206,6 @@ namespace OpenTelemetry.Trace.Samplers.Test
                     defaultProbability.ShouldSample(
                         default,
                         notSampledtraceId,
-                        ActivitySpanId.CreateRandom(),
                         SpanName,
                         SpanKindServer,
                         null,
@@ -244,7 +237,6 @@ namespace OpenTelemetry.Trace.Samplers.Test
                     defaultProbability.ShouldSample(
                         default,
                         sampledtraceId,
-                        ActivitySpanId.CreateRandom(),
                         SpanName,
                         SpanKindServer,
                         null,
@@ -268,7 +260,6 @@ namespace OpenTelemetry.Trace.Samplers.Test
                 if (sampler.ShouldSample(
                     parent,
                     ActivityTraceId.CreateRandom(),
-                    ActivitySpanId.CreateRandom(),
                     SpanName,
                     SpanKindServer,
                     null,

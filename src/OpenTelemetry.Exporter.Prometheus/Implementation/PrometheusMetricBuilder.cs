@@ -23,16 +23,16 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
 {
     internal class PrometheusMetricBuilder
     {
-        public static readonly string ContentType = "text/plain; version = 0.0.4";
+        public const string ContentType = "text/plain; version = 0.0.4";
 
-        private static readonly char[] FirstCharacterNameCharset = new char[]
+        private static readonly char[] FirstCharacterNameCharset =
         {
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
             '_', ':',
         };
 
-        private static readonly char[] NameCharset = new char[]
+        private static readonly char[] NameCharset =
         {
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -40,14 +40,14 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             '_', ':',
         };
 
-        private static readonly char[] FirstCharacterLabelCharset = new char[]
+        private static readonly char[] FirstCharacterLabelCharset =
         {
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
             '_',
         };
 
-        private static readonly char[] LabelCharset = new char[]
+        private static readonly char[] LabelCharset =
         {
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -138,6 +138,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             // ] value [ timestamp ]
             // In the sample syntax:
 
+            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+
             foreach (var m in this.values)
             {
                 // metric_name and label_name carry the usual Prometheus expression language restrictions.
@@ -150,27 +152,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 if (m.Labels.Count > 0)
                 {
                     writer.Write(@"{");
-                    var isFirst = true;
-
-                    foreach (var l in m.Labels)
-                    {
-                        if (isFirst)
-                        {
-                            isFirst = false;
-                        }
-                        else
-                        {
-                            writer.Write(",");
-                        }
-
-                        var safeKey = GetSafeLabelName(l.Item1);
-                        var safeValue = GetSafeLabelValue(l.Item2);
-                        writer.Write(safeKey);
-                        writer.Write("=\"");
-                        writer.Write(safeValue);
-                        writer.Write("\"");
-                    }
-
+                    writer.Write(string.Join(",", m.Labels.Select(x => GetLabelAndValue(x.Item1, x.Item2))));
                     writer.Write(@"}");
                 }
 
@@ -183,16 +165,23 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
 
                 // The timestamp is an int64 (milliseconds since epoch, i.e. 1970-01-01 00:00:00 UTC, excluding
                 // leap seconds), represented as required by Go's ParseInt() function.
-                writer.Write(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+                writer.Write(now);
 
                 // Prometheus' text-based format is line oriented. Lines are separated
                 // by a line feed character (\n). The last line must end with a line
                 // feed character. Empty lines are ignored.
                 writer.Write("\n");
             }
+
+            static string GetLabelAndValue(string label, string value)
+            {
+                var safeKey = GetSafeLabelName(label);
+                var safeValue = GetSafeLabelValue(value);
+                return $"{safeKey}=\"{safeValue}\"";
+            }
         }
 
-        private static string GetSafeMetricName(string name)
+        private static string GetSafeName(string name, char[] firstCharNameCharset, char[] charNameCharset)
         {
             // https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
             //
@@ -205,102 +194,25 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             // Label values may contain any Unicode characters.
 
             var sb = new StringBuilder();
+            var firstChar = name[0];
 
-            if (!string.IsNullOrEmpty(name))
-            {
-                var firstChar = name[0];
-                if (FirstCharacterNameCharset.Contains(firstChar))
-                {
-                    sb.Append(firstChar);
-                }
-                else
-                {
-                    firstChar = firstChar.ToString().ToLowerInvariant()[0];
-
-                    if (FirstCharacterNameCharset.Contains(firstChar))
-                    {
-                        sb.Append(firstChar);
-                    }
-                    else
-                    {
-                        // fallback character
-                        sb.Append('_');
-                    }
-                }
-            }
+            sb.Append(firstCharNameCharset.Contains(firstChar)
+                ? firstChar
+                : GetSafeChar(char.ToLowerInvariant(firstChar), firstCharNameCharset));
 
             for (var i = 1; i < name.Length; ++i)
             {
-                var c = name[i];
-
-                if (NameCharset.Contains(c))
-                {
-                    sb.Append(c);
-                }
-                else
-                {
-                    // fallback character
-                    sb.Append('_');
-                }
+                sb.Append(GetSafeChar(name[i], charNameCharset));
             }
 
             return sb.ToString();
+
+            static char GetSafeChar(char c, char[] charset) => charset.Contains(c) ? c : '_';
         }
 
-        private static string GetSafeLabelName(string name)
-        {
-            // https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
-            //
-            // Metric names and labels
-            // Every time series is uniquely identified by its metric name and a set of key-value pairs, also known as labels.
-            // The metric name specifies the general feature of a system that is measured (e.g. http_requests_total - the total number of HTTP requests received). It may contain ASCII letters and digits, as well as underscores and colons. It must match the regex [a-zA-Z_:][a-zA-Z0-9_:]*.
-            // Note: The colons are reserved for user defined recording rules. They should not be used by exporters or direct instrumentation.
-            // Labels enable Prometheus's dimensional data model: any given combination of labels for the same metric name identifies a particular dimensional instantiation of that metric (for example: all HTTP requests that used the method POST to the /api/tracks handler). The query language allows filtering and aggregation based on these dimensions. Changing any label value, including adding or removing a label, will create a new time series.
-            // Label names may contain ASCII letters, numbers, as well as underscores. They must match the regex [a-zA-Z_][a-zA-Z0-9_]*. Label names beginning with __ are reserved for internal use.
-            // Label values may contain any Unicode characters.
+        private static string GetSafeMetricName(string name) => GetSafeName(name, FirstCharacterNameCharset, NameCharset);
 
-            var sb = new StringBuilder();
-
-            if (!string.IsNullOrEmpty(name))
-            {
-                var firstChar = name[0];
-                if (FirstCharacterLabelCharset.Contains(firstChar))
-                {
-                    sb.Append(firstChar);
-                }
-                else
-                {
-                    firstChar = firstChar.ToString().ToLowerInvariant()[0];
-
-                    if (FirstCharacterLabelCharset.Contains(firstChar))
-                    {
-                        sb.Append(firstChar);
-                    }
-                    else
-                    {
-                        // fallback character
-                        sb.Append('_');
-                    }
-                }
-            }
-
-            for (var i = 1; i < name.Length; ++i)
-            {
-                var c = name[i];
-
-                if (LabelCharset.Contains(c))
-                {
-                    sb.Append(c);
-                }
-                else
-                {
-                    // fallback character
-                    sb.Append('_');
-                }
-            }
-
-            return sb.ToString();
-        }
+        private static string GetSafeLabelName(string name) => GetSafeName(name, FirstCharacterLabelCharset, LabelCharset);
 
         private static string GetSafeLabelValue(string value)
         {

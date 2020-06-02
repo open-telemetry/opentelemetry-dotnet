@@ -16,7 +16,6 @@
 
 #if NETSTANDARD2_0
 
-using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
@@ -39,8 +38,8 @@ namespace OpenTelemetry.Exporter.Prometheus
             var options = app.ApplicationServices.GetService(typeof(PrometheusExporterOptions)) as PrometheusExporterOptions;
             var path = new PathString(options?.Url ?? DefaultPath);
             return app.Map(
-                new PathString(options.Url),
-                (app) => app.UseMiddleware<PrometheusExporterMiddleware>());
+                new PathString(path),
+                builder => builder.UseMiddleware<PrometheusExporterMiddleware>());
         }
     }
 }

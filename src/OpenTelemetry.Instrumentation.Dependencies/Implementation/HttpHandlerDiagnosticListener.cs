@@ -73,24 +73,24 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 return;
             }
 
-            this.Tracer.StartActiveSpanFromActivity(Constants.HttpSpanPrefix + request.Method, activity, SpanKind.Client, out var span);
+            this.Tracer.StartActiveSpanFromActivity(HttpTagHelper.GetOperationNameForHttpMethod(request.Method), activity, SpanKind.Client, out var span);
 
             if (span.IsRecording)
             {
                 span.PutComponentAttribute("http");
-                span.PutHttpMethodAttribute(request.Method.ToString());
-                span.PutHttpHostAttribute(request.RequestUri.Host, request.RequestUri.Port);
+                span.PutHttpMethodAttribute(HttpTagHelper.GetNameForHttpMethod(request.Method));
+                span.PutHttpHostAttribute(HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 span.PutHttpRawUrlAttribute(request.RequestUri.OriginalString);
 
                 if (this.options.SetHttpFlavor)
                 {
-                    span.PutHttpFlavorAttribute(request.Version.ToString());
+                    span.PutHttpFlavorAttribute(HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
                 }
             }
 
             if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormat))
             {
-                this.options.TextFormat.Inject<HttpRequestMessage>(span.Context, request, (r, k, v) => r.Headers.Add(k, v));
+                this.options.TextFormat.Inject(span.Context, request, (r, k, v) => r.Headers.Add(k, v));
             }
         }
 

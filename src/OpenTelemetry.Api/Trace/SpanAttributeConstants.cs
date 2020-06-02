@@ -25,8 +25,14 @@ namespace OpenTelemetry.Trace
         public const string ComponentKey = "component";
         public const string PeerServiceKey = "peer.service";
 
+        public const string StatusCodeKey = "ot.status_code";
+        public const string StatusDescriptionKey = "ot.status_description";
+
         public const string HttpMethodKey = "http.method";
+        public const string HttpSchemeKey = "http.scheme";
+        public const string HttpTargetKey = "http.target";
         public const string HttpStatusCodeKey = "http.status_code";
+        public const string HttpStatusTextKey = "http.status_text";
         public const string HttpUserAgentKey = "http.user_agent";
         public const string HttpPathKey = "http.path";
         public const string HttpHostKey = "http.host";
