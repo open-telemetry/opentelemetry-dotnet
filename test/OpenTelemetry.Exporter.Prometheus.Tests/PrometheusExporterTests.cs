@@ -121,12 +121,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var labels1 = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("dim1", "value1"), new KeyValuePair<string, string>("dim2", "value1")
+                new KeyValuePair<string, string>("dim1", "value1"), new KeyValuePair<string, string>("dim2", "value1"),
             };
 
             var labels2 = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("dim1", "value2"), new KeyValuePair<string, string>("dim2", "value2")
+                new KeyValuePair<string, string>("dim1", "value2"), new KeyValuePair<string, string>("dim2", "value2"),
             };
 
             var defaultContext = default(SpanContext);
