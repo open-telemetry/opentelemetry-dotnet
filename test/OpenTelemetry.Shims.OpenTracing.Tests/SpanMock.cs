@@ -15,7 +15,6 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests

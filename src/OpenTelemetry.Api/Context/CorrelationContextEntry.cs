@@ -96,7 +96,7 @@ namespace OpenTelemetry.Context
         /// <inheritdoc/>
         public override bool Equals(object o)
         {
-            return o is CorrelationContextEntry that && (this.Key == that.Key && this.Value == that.Value);
+            return o is CorrelationContextEntry that && this.Key == that.Key && this.Value == that.Value;
         }
 
         /// <inheritdoc/>

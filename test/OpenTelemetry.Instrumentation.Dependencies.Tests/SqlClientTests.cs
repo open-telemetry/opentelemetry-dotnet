@@ -111,25 +111,29 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(StatusCanonicalCode.Ok, span.Status.CanonicalCode);
             Assert.Null(span.Status.Description);
 
-            Assert.Equal("sql", span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.ComponentKey).Value as string);
-            Assert.Equal("sql", span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.DatabaseTypeKey).Value as string);
-            Assert.Equal("master", span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.DatabaseInstanceKey).Value as string);
+            Assert.Equal(
+                "sql",
+                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value as string);
+            Assert.Equal(
+                "sql",
+                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseTypeKey).Value as string);
+            Assert.Equal(
+                "master",
+                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseInstanceKey).Value as string);
 
             switch (commandType)
             {
                 case CommandType.StoredProcedure:
                     if (captureStoredProcedureCommandName)
                     {
-                        Assert.Equal(commandText, span.Attributes.FirstOrDefault(i =>
-                            i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+                        Assert.Equal(
+                            commandText,
+                            span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
                     }
                     else
                     {
-                        Assert.Null(span.Attributes.FirstOrDefault(i =>
-                            i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+                        Assert.Null(
+                            span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
                     }
 
                     break;
@@ -137,8 +141,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 case CommandType.Text:
                     if (captureTextCommandContent)
                     {
-                        Assert.Equal(commandText, span.Attributes.FirstOrDefault(i =>
-                            i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+                        Assert.Equal(
+                            commandText,
+                            span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
                     }
                     else
                     {
@@ -149,8 +154,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                     break;
             }
 
-            Assert.Equal("(localdb)\\MSSQLLocalDB", span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.PeerServiceKey).Value as string);
+            Assert.Equal(
+                "(localdb)\\MSSQLLocalDB",
+                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.PeerServiceKey).Value as string);
 
             activity.Stop();
         }
@@ -209,16 +215,21 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(StatusCanonicalCode.Unknown, span.Status.CanonicalCode);
             Assert.Equal("Boom!", span.Status.Description);
 
-            Assert.Equal("sql", span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.ComponentKey).Value as string);
-            Assert.Equal("sql", span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.DatabaseTypeKey).Value as string);
-            Assert.Equal("master", span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.DatabaseInstanceKey).Value as string);
-            Assert.Equal("SP_GetOrders", span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
-            Assert.Equal("(localdb)\\MSSQLLocalDB", span.Attributes.FirstOrDefault(i =>
-                i.Key == SpanAttributeConstants.PeerServiceKey).Value as string);
+            Assert.Equal(
+                "sql",
+                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value as string);
+            Assert.Equal(
+                "sql",
+                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseTypeKey).Value as string);
+            Assert.Equal(
+                "master",
+                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseInstanceKey).Value as string);
+            Assert.Equal(
+                "SP_GetOrders",
+                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+            Assert.Equal(
+                "(localdb)\\MSSQLLocalDB",
+                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.PeerServiceKey).Value as string);
 
             activity.Stop();
         }

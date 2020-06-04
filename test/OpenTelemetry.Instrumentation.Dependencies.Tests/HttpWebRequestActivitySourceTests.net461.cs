@@ -15,8 +15,8 @@
 // </copyright>
 #if NET461
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -24,25 +24,24 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Xunit;
-
-using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Instrumentation.Dependencies.Implementation;
+using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
+using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 {
     public class HttpWebRequestActivitySourceTests : IDisposable
     {
-        static HttpWebRequestActivitySourceTests()
-        {
-            GC.KeepAlive(HttpWebRequestActivitySource.Instance);
-        }
-
         private readonly IDisposable testServer;
         private readonly string testServerHost;
         private readonly int testServerPort;
         private readonly string hostNameAndPort;
+
+        static HttpWebRequestActivitySourceTests()
+        {
+            GC.KeepAlive(HttpWebRequestActivitySource.Instance);
+        }
 
         public HttpWebRequestActivitySourceTests()
         {
@@ -88,6 +87,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 {
                     context.Response.StatusCode = 200;
                 }
+
                 if (context.Response.StatusCode != 204)
                 {
                     using StreamWriter writeStream = new StreamWriter(context.Response.OutputStream);
@@ -122,6 +122,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                         listenerFound = true;
                         return true;
                     }
+
                     return false;
                 },
             };
@@ -256,117 +257,135 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using var eventRecords = new ActivitySourceRecorder();
 
+            // Send a random Http request to generate some events
+            var webRequest = (HttpWebRequest)WebRequest.Create(url);
+
+            if (method == "POST")
             {
-                // Send a random Http request to generate some events
-                var webRequest = (HttpWebRequest)WebRequest.Create(url);
+                webRequest.Method = method;
 
-                if (method == "POST")
+                Stream stream = null;
+                switch (mode)
                 {
-                    webRequest.Method = method;
-
-                    Stream stream = null;
-                    switch (mode)
-                    {
-                        case 0:
-                            stream = webRequest.GetRequestStream();
-                            break;
-                        case 1:
-                            stream = await webRequest.GetRequestStreamAsync();
-                            break;
-                        case 2:
-                            {
-                                object state = new object();
-                                using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
-                                IAsyncResult asyncResult = webRequest.BeginGetRequestStream(ar =>
+                    case 0:
+                        stream = webRequest.GetRequestStream();
+                        break;
+                    case 1:
+                        stream = await webRequest.GetRequestStreamAsync();
+                        break;
+                    case 2:
+                        {
+                            object state = new object();
+                            using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
+                            IAsyncResult asyncResult = webRequest.BeginGetRequestStream(
+                                ar =>
                                 {
                                     Assert.Equal(state, ar.AsyncState);
                                     handle.Set();
                                 },
                                 state);
-                                stream = webRequest.EndGetRequestStream(asyncResult);
-                                if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
-                                    throw new InvalidOperationException();
-                                handle.Dispose();
-                            }
-                            break;
-                        case 3:
+                            stream = webRequest.EndGetRequestStream(asyncResult);
+                            if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
                             {
-                                using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
-                                object state = new object();
-                                webRequest.BeginGetRequestStream(ar =>
+                                throw new InvalidOperationException();
+                            }
+
+                            handle.Dispose();
+                        }
+
+                        break;
+                    case 3:
+                        {
+                            using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
+                            object state = new object();
+                            webRequest.BeginGetRequestStream(
+                                ar =>
                                 {
                                     stream = webRequest.EndGetRequestStream(ar);
                                     Assert.Equal(state, ar.AsyncState);
                                     handle.Set();
                                 },
                                 state);
-                                if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
-                                    throw new InvalidOperationException();
-                                handle.Dispose();
+                            if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
+                            {
+                                throw new InvalidOperationException();
                             }
-                            break;
-                        default:
-                            throw new NotSupportedException();
-                    }
 
-                    Assert.NotNull(stream);
+                            handle.Dispose();
+                        }
 
-                    using StreamWriter writer = new StreamWriter(stream);
-
-                    writer.WriteLine("hello world");
+                        break;
+                    default:
+                        throw new NotSupportedException();
                 }
 
-                WebResponse webResponse = null;
-                switch (mode)
-                {
-                    case 0:
-                        webResponse = webRequest.GetResponse();
-                        break;
-                    case 1:
-                        webResponse = await webRequest.GetResponseAsync();
-                        break;
-                    case 2:
-                        {
-                            object state = new object();
-                            using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
-                            IAsyncResult asyncResult = webRequest.BeginGetResponse(ar =>
+                Assert.NotNull(stream);
+
+                using StreamWriter writer = new StreamWriter(stream);
+
+                writer.WriteLine("hello world");
+            }
+
+            WebResponse webResponse = null;
+            switch (mode)
+            {
+                case 0:
+                    webResponse = webRequest.GetResponse();
+                    break;
+                case 1:
+                    webResponse = await webRequest.GetResponseAsync();
+                    break;
+                case 2:
+                    {
+                        object state = new object();
+                        using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
+                        IAsyncResult asyncResult = webRequest.BeginGetResponse(
+                            ar =>
                             {
                                 Assert.Equal(state, ar.AsyncState);
                                 handle.Set();
                             },
                             state);
-                            webResponse = webRequest.EndGetResponse(asyncResult);
-                            if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
-                                throw new InvalidOperationException();
-                            handle.Dispose();
-                        }
-                        break;
-                    case 3:
+                        webResponse = webRequest.EndGetResponse(asyncResult);
+                        if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
                         {
-                            using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
-                            object state = new object();
-                            webRequest.BeginGetResponse(ar =>
+                            throw new InvalidOperationException();
+                        }
+
+                        handle.Dispose();
+                    }
+
+                    break;
+                case 3:
+                    {
+                        using EventWaitHandle handle = new EventWaitHandle(false, EventResetMode.ManualReset);
+                        object state = new object();
+                        webRequest.BeginGetResponse(
+                            ar =>
                             {
                                 webResponse = webRequest.EndGetResponse(ar);
                                 Assert.Equal(state, ar.AsyncState);
                                 handle.Set();
                             },
                             state);
-                            if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
-                                throw new InvalidOperationException();
-                            handle.Dispose();
+                        if (!handle.WaitOne(TimeSpan.FromSeconds(30)))
+                        {
+                            throw new InvalidOperationException();
                         }
-                        break;
-                    default:
-                        throw new NotSupportedException();
-                }
 
-                Assert.NotNull(webResponse);
+                        handle.Dispose();
+                    }
 
-                using StreamReader reader = new StreamReader(webResponse.GetResponseStream());
-
-                reader.ReadToEnd(); // Make sure response is not disposed.
+                    break;
+                default:
+                    throw new NotSupportedException();
             }
+
+            Assert.NotNull(webResponse);
+
+            using StreamReader reader = new StreamReader(webResponse.GetResponseStream());
+
+            reader.ReadToEnd(); // Make sure response is not disposed.
 
             // We should have exactly one Start and one Stop event
             Assert.Equal(2, eventRecords.Records.Count);
@@ -681,7 +700,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                     return method == "GET"
                         ? client.GetAsync(url)
                         : client.PostAsync(url, new StringContent("hello world"));
-
                 });
                 Assert.True(ex is HttpRequestException);
             }
@@ -730,6 +748,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 Assert.Contains("bad%2Fkey=value", correlationContext);
                 Assert.Contains("goodkey=bad%2Fvalue", correlationContext);
             }
+
             parentActivity.Stop();
         }
 
@@ -847,19 +866,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             }
         }
 
-        private string BuildRequestUrl(bool useHttps = false, string path = "echo", string queryString = null)
-        {
-            return $"{(useHttps ? "https" : "http")}://{this.testServerHost}:{this.testServerPort}/{path}{(string.IsNullOrWhiteSpace(queryString) ? string.Empty : $"?{queryString}")}";
-        }
-
-        private void CleanUpActivity()
-        {
-            while (Activity.Current != null)
-            {
-                Activity.Current.Stop();
-            }
-        }
-
         private static (Activity, HttpWebRequest) AssertFirstEventWasStart(ActivitySourceRecorder eventRecords)
         {
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> startEvent));
@@ -883,7 +889,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal("http", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value);
             Assert.Equal(method, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpMethodKey).Value);
             if (hostNameAndPort != null)
+            {
                 Assert.Equal(hostNameAndPort, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value);
+            }
+
             Assert.Equal(url, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value);
             Assert.Equal("1.1", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpFlavorKey).Value);
         }
@@ -894,20 +903,34 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(statusText, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
         }
 
+        private string BuildRequestUrl(bool useHttps = false, string path = "echo", string queryString = null)
+        {
+            return $"{(useHttps ? "https" : "http")}://{this.testServerHost}:{this.testServerPort}/{path}{(string.IsNullOrWhiteSpace(queryString) ? string.Empty : $"?{queryString}")}";
+        }
+
+        private void CleanUpActivity()
+        {
+            while (Activity.Current != null)
+            {
+                Activity.Current.Stop();
+            }
+        }
+
         /// <summary>
         /// <see cref="ActivitySourceRecorder"/> is a helper class for recording <see cref="HttpWebRequestActivitySource.ActivitySourceName"/> events.
         /// </summary>
         private class ActivitySourceRecorder : IDisposable
         {
             private readonly Action<KeyValuePair<string, Activity>> onEvent;
+            private readonly ActivityListener activityListener;
 
             public ActivitySourceRecorder(Action<KeyValuePair<string, Activity>> onEvent = null, ActivityDataRequest activityDataRequest = ActivityDataRequest.AllDataAndRecorded)
             {
                 this.activityListener = new ActivityListener
                 {
                     ShouldListenTo = (activitySource) => activitySource.Name == HttpWebRequestActivitySource.ActivitySourceName,
-                    ActivityStarted = ActivityStarted,
-                    ActivityStopped = ActivityStopped,
+                    ActivityStarted = this.ActivityStarted,
+                    ActivityStopped = this.ActivityStopped,
                     GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => activityDataRequest,
                 };
 
@@ -916,12 +939,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 this.onEvent = onEvent;
             }
 
+            public ConcurrentQueue<KeyValuePair<string, Activity>> Records { get; } = new ConcurrentQueue<KeyValuePair<string, Activity>>();
+
             public void Dispose()
             {
                 this.activityListener.Dispose();
             }
-
-            public ConcurrentQueue<KeyValuePair<string, Activity>> Records { get; } = new ConcurrentQueue<KeyValuePair<string, Activity>>();
 
             public void ActivityStarted(Activity activity) => this.Record("Start", activity);
 
@@ -934,8 +957,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 this.Records.Enqueue(record);
                 this.onEvent?.Invoke(record);
             }
-
-            private readonly ActivityListener activityListener;
         }
     }
 }

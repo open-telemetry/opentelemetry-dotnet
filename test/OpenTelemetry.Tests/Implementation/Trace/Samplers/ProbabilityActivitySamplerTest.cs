@@ -14,8 +14,8 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Diagnostics;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Samplers.Test
@@ -32,11 +32,11 @@ namespace OpenTelemetry.Trace.Samplers.Test
 
         public ProbabilityActivitySamplerTest()
         {
-            traceId = ActivityTraceId.CreateRandom();
+            this.traceId = ActivityTraceId.CreateRandom();
             var parentSpanId = ActivitySpanId.CreateRandom();
-            sampledActivityContext = new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.Recorded);
-            notSampledActivityContext = new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.None);
-            sampledLink = new ActivityLink(this.sampledActivityContext);
+            this.sampledActivityContext = new ActivityContext(this.traceId, parentSpanId, ActivityTraceFlags.Recorded);
+            this.notSampledActivityContext = new ActivityContext(this.traceId, parentSpanId, ActivityTraceFlags.None);
+            this.sampledLink = new ActivityLink(this.sampledActivityContext);
         }
 
         [Fact]
@@ -96,25 +96,26 @@ namespace OpenTelemetry.Trace.Samplers.Test
         {
             var neverSample = new ProbabilityActivitySampler(0.0);
             AssertSamplerSamplesWithProbability(
-                neverSample, this.notSampledActivityContext, new List<ActivityLink>() { sampledLink }, 1.0);
+                neverSample, this.notSampledActivityContext, new List<ActivityLink>() { this.sampledLink }, 1.0);
             var alwaysSample = new ProbabilityActivitySampler(1.0);
             AssertSamplerSamplesWithProbability(
-                alwaysSample, this.notSampledActivityContext, new List<ActivityLink>() { sampledLink }, 1.0);
+                alwaysSample, this.notSampledActivityContext, new List<ActivityLink>() { this.sampledLink }, 1.0);
             var fiftyPercentSample = new ProbabilityActivitySampler(0.5);
             AssertSamplerSamplesWithProbability(
-                fiftyPercentSample, this.notSampledActivityContext, new List<ActivityLink>() { sampledLink }, 1.0);
+                fiftyPercentSample, this.notSampledActivityContext, new List<ActivityLink>() { this.sampledLink }, 1.0);
             var twentyPercentSample = new ProbabilityActivitySampler(0.2);
             AssertSamplerSamplesWithProbability(
-                twentyPercentSample, this.notSampledActivityContext, new List<ActivityLink>() { sampledLink }, 1.0);
+                twentyPercentSample, this.notSampledActivityContext, new List<ActivityLink>() { this.sampledLink }, 1.0);
             var twoThirdsSample = new ProbabilityActivitySampler(2.0 / 3.0);
             AssertSamplerSamplesWithProbability(
-                twoThirdsSample, this.notSampledActivityContext, new List<ActivityLink>() { sampledLink }, 1.0);
+                twoThirdsSample, this.notSampledActivityContext, new List<ActivityLink>() { this.sampledLink }, 1.0);
         }
 
         [Fact]
         public void ProbabilitySampler_SampleBasedOnTraceId()
         {
             ActivitySampler defaultProbability = new ProbabilityActivitySampler(0.0001);
+
             // This traceId will not be sampled by the ProbabilityActivitySampler because the first 8 bytes as long
             // is not less than probability * Long.MAX_VALUE;
             var notSampledtraceId =
@@ -146,6 +147,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                         ActivityKindServer,
                         null,
                         null)).IsSampled);
+
             // This traceId will be sampled by the ProbabilityActivitySampler because the first 8 bytes as long
             // is less than probability * Long.MAX_VALUE;
             var sampledtraceId =
@@ -204,7 +206,9 @@ namespace OpenTelemetry.Trace.Samplers.Test
                     count++;
                 }
             }
+
             var proportionSampled = (double)count / NumSampleTries;
+
             // Allow for a large amount of slop (+/- 10%) in number of sampled traces, to avoid flakiness.
             Assert.True(proportionSampled < probability + 0.1 && proportionSampled > probability - 0.1);
         }

@@ -1,4 +1,4 @@
-﻿// <copyright file="StackExchangeRedisCallsInstrumentationTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HostingIntegrationTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,16 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using Xunit;
+
 namespace OpenTelemetry.Extensions.Hosting
 {
-    using System;
-    using System.Threading.Tasks;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Hosting;
-    using OpenTelemetry.Trace;
-    using OpenTelemetry.Trace.Configuration;
-    using Xunit;
-
     public class HostingIntegrationTests
     {
         [Fact]
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Extensions.Hosting
 
             public void Dispose()
             {
-                Disposed = true;
+                this.Disposed = true;
             }
         }
     }

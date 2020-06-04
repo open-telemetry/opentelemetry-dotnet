@@ -22,11 +22,11 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Dependencies.Implementation;
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
-using OpenTelemetry.Instrumentation.Dependencies.Implementation;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Tests

@@ -1,4 +1,4 @@
-﻿// <copyright file="CurrentSpanTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="CurrentSpanTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Test
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
 
-            tracer = TracerFactory.Create(b => { }).GetTracer(null);
+            this.tracer = TracerFactory.Create(b => { }).GetTracer(null);
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace.Test
         public void WithSpan_CloseDetaches(bool endSpan, bool recordEvents)
         {
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
-            var span = (SpanSdk)tracer.StartSpan("foo", spanContext);
+            var span = (SpanSdk)this.tracer.StartSpan("foo", spanContext);
 
             Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             using (this.tracer.WithSpan(span, endSpan))
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void WithSpan_NoFlag_DoesNotEndSpan()
         {
-            var span = (SpanSdk)tracer.StartSpan("foo");
+            var span = (SpanSdk)this.tracer.StartSpan("foo");
 
             Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             using (this.tracer.WithSpan(span))
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void WithSpan_AttachAndDetach()
         {
-            var span = (SpanSdk)tracer.StartSpan("foo");
+            var span = (SpanSdk)this.tracer.StartSpan("foo");
 
             Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             using (this.tracer.WithSpan(span))
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Trace.Test
         public void WithSpan_EndDoesNotDetach(bool endSpan, bool recordEvents)
         {
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
-            var span = (SpanSdk)tracer.StartSpan("foo", spanContext);
+            var span = (SpanSdk)this.tracer.StartSpan("foo", spanContext);
 
             Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             using (this.tracer.WithSpan(span, endSpan))
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Trace.Test
             activity.Start();
 
             TelemetrySpan span;
-            using (var scope = tracer.StartActiveSpanFromActivity("foo", activity, out span))
+            using (var scope = this.tracer.StartActiveSpanFromActivity("foo", activity, out span))
             {
                 Assert.IsType<SpanSdk>(scope);
                 Assert.Same(scope, span);
@@ -194,7 +194,7 @@ namespace OpenTelemetry.Trace.Test
         public void StartActiveSpan_OwningActivity()
         {
             SpanSdk span = null;
-            using (var scope = tracer.StartActiveSpan("foo", out var ispan))
+            using (var scope = this.tracer.StartActiveSpan("foo", out var ispan))
             {
                 Assert.IsType<SpanSdk>(scope);
                 span = (SpanSdk)scope;
@@ -213,7 +213,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_WithSpan()
         {
-            using (var scope = tracer.StartActiveSpan("foo", out var span))
+            using (var scope = this.tracer.StartActiveSpan("foo", out var span))
             {
                 Assert.Same(scope, this.tracer.WithSpan(span));
             }
@@ -229,10 +229,10 @@ namespace OpenTelemetry.Trace.Test
         {
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
 
-            var parentSpan = tracer.StartSpan("parent", spanContext);
+            var parentSpan = this.tracer.StartSpan("parent", spanContext);
             var parentScope = this.tracer.WithSpan(parentSpan);
 
-            var childSpan = (SpanSdk)tracer.StartSpan("child", parentSpan);
+            var childSpan = (SpanSdk)this.tracer.StartSpan("child", parentSpan);
             var childActivity = childSpan.Activity;
             Assert.Same(parentSpan, this.tracer.CurrentSpan);
 
@@ -242,7 +242,6 @@ namespace OpenTelemetry.Trace.Test
 
             Assert.Same(childSpan, this.tracer.CurrentSpan);
             Assert.Equal(childActivity, Activity.Current);
-
 
             // span not ended
             Assert.Equal(default, ((SpanSdk)parentSpan).EndTimestamp);
@@ -257,11 +256,11 @@ namespace OpenTelemetry.Trace.Test
         {
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
 
-            var parentSpan = (SpanSdk)tracer.StartSpan("parent", spanContext);
+            var parentSpan = (SpanSdk)this.tracer.StartSpan("parent", spanContext);
             var parentActivity = parentSpan.Activity;
             var parentScope = this.tracer.WithSpan(parentSpan);
 
-            var childSpan = (SpanSdk)tracer.StartSpan("child");
+            var childSpan = (SpanSdk)this.tracer.StartSpan("child");
             Assert.Same(parentSpan, this.tracer.CurrentSpan);
             using (this.tracer.WithSpan(childSpan, endSpan))
             {
@@ -283,7 +282,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void WithSpan_SameActivityCreateScopeTwice()
         {
-            var span = (SpanSdk)tracer.StartRootSpan("foo");
+            var span = (SpanSdk)this.tracer.StartRootSpan("foo");
 
             using (var scope1 = this.tracer.WithSpan(span))
             {
@@ -304,7 +303,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void WithSpan_NullActivity()
         {
-            var span = (SpanSdk)tracer.StartRootSpan("foo");
+            var span = (SpanSdk)this.tracer.StartRootSpan("foo");
 
             span.Activity.Stop();
 
@@ -338,7 +337,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), recordEvents ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None);
 
-            var span = (SpanSdk)tracer.StartSpan("foo", spanContext);
+            var span = (SpanSdk)this.tracer.StartSpan("foo", spanContext);
             Assert.False(this.tracer.CurrentSpan.Context.IsValid);
             using (this.tracer.WithSpan(span))
             {

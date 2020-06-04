@@ -1,4 +1,4 @@
-﻿// <copyright file="DurationTest.netcore31.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpClientTests.netcore31.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,6 @@
 // limitations under the License.
 // </copyright>
 #if NETCOREAPP3_1
-using Moq;
-using Newtonsoft.Json;
-using OpenTelemetry.Internal.Test;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,6 +21,12 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
+using Moq;
+using Newtonsoft.Json;
+using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Tests
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 }
                 catch (Exception)
                 {
-                    //test case can intentionally send request that will result in exception
+                    // test case can intentionally send request that will result in exception
                 }
             }
 
@@ -92,28 +92,30 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             var d = new Dictionary<StatusCanonicalCode, string>()
             {
-                { StatusCanonicalCode.Ok, "OK"},
-                { StatusCanonicalCode.Cancelled, "CANCELLED"},
-                { StatusCanonicalCode.Unknown, "UNKNOWN"},
-                { StatusCanonicalCode.InvalidArgument, "INVALID_ARGUMENT"},
-                { StatusCanonicalCode.DeadlineExceeded, "DEADLINE_EXCEEDED"},
-                { StatusCanonicalCode.NotFound, "NOT_FOUND"},
-                { StatusCanonicalCode.AlreadyExists, "ALREADY_EXISTS"},
-                { StatusCanonicalCode.PermissionDenied, "PERMISSION_DENIED"},
-                { StatusCanonicalCode.ResourceExhausted, "RESOURCE_EXHAUSTED"},
-                { StatusCanonicalCode.FailedPrecondition, "FAILED_PRECONDITION"},
-                { StatusCanonicalCode.Aborted, "ABORTED"},
-                { StatusCanonicalCode.OutOfRange, "OUT_OF_RANGE"},
-                { StatusCanonicalCode.Unimplemented, "UNIMPLEMENTED"},
-                { StatusCanonicalCode.Internal, "INTERNAL"},
-                { StatusCanonicalCode.Unavailable, "UNAVAILABLE"},
-                { StatusCanonicalCode.DataLoss, "DATA_LOSS"},
-                { StatusCanonicalCode.Unauthenticated, "UNAUTHENTICATED"},
+                { StatusCanonicalCode.Ok, "OK" },
+                { StatusCanonicalCode.Cancelled, "CANCELLED" },
+                { StatusCanonicalCode.Unknown, "UNKNOWN" },
+                { StatusCanonicalCode.InvalidArgument, "INVALID_ARGUMENT" },
+                { StatusCanonicalCode.DeadlineExceeded, "DEADLINE_EXCEEDED" },
+                { StatusCanonicalCode.NotFound, "NOT_FOUND" },
+                { StatusCanonicalCode.AlreadyExists, "ALREADY_EXISTS" },
+                { StatusCanonicalCode.PermissionDenied, "PERMISSION_DENIED" },
+                { StatusCanonicalCode.ResourceExhausted, "RESOURCE_EXHAUSTED" },
+                { StatusCanonicalCode.FailedPrecondition, "FAILED_PRECONDITION" },
+                { StatusCanonicalCode.Aborted, "ABORTED" },
+                { StatusCanonicalCode.OutOfRange, "OUT_OF_RANGE" },
+                { StatusCanonicalCode.Unimplemented, "UNIMPLEMENTED" },
+                { StatusCanonicalCode.Internal, "INTERNAL" },
+                { StatusCanonicalCode.Unavailable, "UNAVAILABLE" },
+                { StatusCanonicalCode.DataLoss, "DATA_LOSS" },
+                { StatusCanonicalCode.Unauthenticated, "UNAUTHENTICATED" },
             };
 
             Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
             if (tc.SpanStatusHasDescription.HasValue)
+            {
                 Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(span.Status.Description));
+            }
 
             var normalizedAttributes = span.Attributes.ToDictionary(x => x.Key, x => x.Value.ToString());
             tc.SpanAttributes = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
@@ -146,7 +148,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 ]
 ")));
 
-            var t = (Task)this.GetType().InvokeMember(nameof(HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
+            var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
             await t;
         }
     }

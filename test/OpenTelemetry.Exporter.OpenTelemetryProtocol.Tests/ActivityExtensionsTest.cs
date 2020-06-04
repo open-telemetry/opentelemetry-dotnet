@@ -1,4 +1,4 @@
-﻿// <copyright file="SpanDataExtensionsTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ActivityExtensionsTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-
 using Google.Protobuf.Collections;
-
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-
+using Xunit;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
-
-using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
@@ -50,8 +46,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void ToOtlpResourceSpansTest()
         {
-            var evenTags = new []{ new KeyValuePair<string, string>("k0", "v0") };
-            var oddTags = new []{ new KeyValuePair<string, string>("k1", "v1") };
+            var evenTags = new[] { new KeyValuePair<string, string>("k0", "v0") };
+            var oddTags = new[] { new KeyValuePair<string, string>("k1", "v1") };
             var sources = new[]
             {
                 new ActivitySource("even", "2.4.6"),
@@ -82,7 +78,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             foreach (var instrumentationLibrarySpans in otlpResourceSpans.First().InstrumentationLibrarySpans)
             {
-                Assert.Equal(numOfSpans/2, instrumentationLibrarySpans.Spans.Count);
+                Assert.Equal(numOfSpans / 2, instrumentationLibrarySpans.Spans.Count);
                 Assert.NotNull(instrumentationLibrarySpans.InstrumentationLibrary);
 
                 var expectedSpanNames = new List<string>();
@@ -155,7 +151,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var expectedStartTimeUnixNano = 100 * expectedUnixTimeTicks;
             Assert.Equal(expectedStartTimeUnixNano, otlpSpan.StartTimeUnixNano);
-            var expectedEndTimeUnixNano = expectedStartTimeUnixNano + duration.TotalMilliseconds * 1_000_000;
+            var expectedEndTimeUnixNano = expectedStartTimeUnixNano + (duration.TotalMilliseconds * 1_000_000);
             Assert.Equal(expectedEndTimeUnixNano, otlpSpan.EndTimeUnixNano);
 
             var childLinks = new List<ActivityLink> { new ActivityLink(rootActivity.Context, attributes) };
@@ -226,7 +222,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             switch (originalValue)
             {
                 case string s:
-                    Assert.Equal(akv.StringValue,  s);
+                    Assert.Equal(akv.StringValue, s);
                     break;
                 case bool b:
                     Assert.Equal(akv.BoolValue, b);

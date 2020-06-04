@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,6 +22,7 @@ using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Api.Utils;
 using OpenTelemetry.Tests;
+using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Samplers;
 using Xunit;
@@ -45,13 +45,13 @@ namespace OpenTelemetry.Trace.Test
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
 
-            spanProcessor = spanProcessorMock.Object;
-            tracerFactory = TracerFactory.Create(b => b.AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor)));
-            attributes.Add("MyStringAttributeKey", "MyStringAttributeValue");
-            attributes.Add("MyLongAttributeKey", 123L);
-            attributes.Add("MyBooleanAttributeKey", false);
-            attributes.Add("MyDoubleAttributeKey", 0.1d);
-            expectedAttributes = new List<KeyValuePair<string, object>>(attributes)
+            this.spanProcessor = this.spanProcessorMock.Object;
+            this.tracerFactory = TracerFactory.Create(b => b.AddProcessorPipeline(p => p.AddProcessor(_ => this.spanProcessor)));
+            this.attributes.Add("MyStringAttributeKey", "MyStringAttributeValue");
+            this.attributes.Add("MyLongAttributeKey", 123L);
+            this.attributes.Add("MyBooleanAttributeKey", false);
+            this.attributes.Add("MyDoubleAttributeKey", 0.1d);
+            this.expectedAttributes = new List<KeyValuePair<string, object>>(this.attributes)
             {
                 new KeyValuePair<string, object>("MySingleStringAttributeKey", "MySingleStringAttributeValue"),
             };
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentSpan()
         {
-            var tracer = (TracerSdk)tracerFactory.GetTracer("foo", "semver:1.0.0");
+            var tracer = (TracerSdk)this.tracerFactory.GetTracer("foo", "semver:1.0.0");
 
             var traceState = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("k1", "v1") };
             var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, false, traceState);
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentSpan_IgnoresCurrentParent()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             using (tracer.StartActiveSpan("outer", out _))
             {
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentSpan_Kind()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var parentSpan = tracer.StartRootSpan(SpanName);
 
@@ -120,7 +120,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentSpan_Kind_Timestamp()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var parentSpan = tracer.StartRootSpan(SpanName);
 
@@ -136,7 +136,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentSpan_Kind_Links_Func()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var parentSpan = tracer.StartRootSpan(SpanName);
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentSpan_Kind_Links_Enumerable()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var parentSpan = tracer.StartRootSpan(SpanName);
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartRootSpan_IgnoresCurrentParent()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             tracer.WithSpan(tracer.StartRootSpan("outer"));
             {
@@ -189,7 +189,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartRootSpan_IgnoresCurrentActivity()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var outerActivity = new Activity("outer").SetIdFormat(ActivityIdFormat.W3C).Start();
 
@@ -207,7 +207,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartRootSpan()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
@@ -228,7 +228,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartRootSpanFrom_Kind()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var startTimestamp = PreciseTimestamp.GetUtcNow();
             var span = (SpanSdk)tracer.StartRootSpan(SpanName, SpanKind.Consumer);
@@ -242,7 +242,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartRootSpanFrom_Kind_Timestamp()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName, SpanKind.Client, new SpanCreationOptions { StartTimestamp = startTimestamp });
@@ -256,7 +256,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartRootSpanFrom_Kind_Timestamp_Links()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
@@ -277,7 +277,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentContext()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var traceState = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("k1", "v1") };
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, false, traceState);
@@ -301,7 +301,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_InvalidContext()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var parentContext = default(SpanContext);
 
             var span = (SpanSdk)tracer.StartSpan(SpanName, parentContext);
@@ -319,11 +319,13 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentContext_IgnoresCurrentParent()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             tracer.WithSpan(tracer.StartRootSpan("outer"));
             {
-                var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                var parentContext = new SpanContext(
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.Recorded);
 
                 var span = (SpanSdk)tracer.StartSpan(SpanName, parentContext);
@@ -339,7 +341,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentContext_Kind_Timestamp()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
@@ -355,7 +357,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentContext_Kind_Links_Func()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
@@ -373,7 +375,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ParentContext_Kind_Links_Enumerable()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var firstLinkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
@@ -393,7 +395,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_Recorded_FromActivity()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -419,7 +421,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_Recorded_FromActivity_IgnoresCurrentParent()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             tracer.WithSpan(tracer.StartRootSpan("outer"));
             {
                 var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).SetParentId(" ").Start();
@@ -437,7 +439,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_NotRecorded_FromActivity()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
             activity.ActivityTraceFlags = ActivityTraceFlags.None;
@@ -465,7 +467,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_Recorded_FromActivity_Kind()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -482,7 +484,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_Recorded_FromActivity_Kind_Links_Enumerable()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -504,7 +506,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_Recorded_FromActivity_Null()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var startTime = DateTimeOffset.UtcNow;
             var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, null);
@@ -522,7 +524,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_Recorded_FromActivity_Null_Kind()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var startTime = DateTimeOffset.UtcNow;
             var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, null, SpanKind.Producer);
@@ -537,13 +539,12 @@ namespace OpenTelemetry.Trace.Test
             Assert.Null(span.Links);
         }
 
-
         [Fact]
         public void StartSpan_Recorded_FromActivity_Null_Kind_Links()
         {
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var startTime = DateTimeOffset.UtcNow;
             var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, null, SpanKind.Consumer, new[] { new Link(linkContext) });
@@ -563,7 +564,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_Recorded_FromActivity_HierarchicalFormat()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.Hierarchical).Start();
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -586,7 +587,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpan_Recorded_FromActivity_NotStarted()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C);
             activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
@@ -609,7 +610,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ImplicitParentSpan()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var traceState = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("k1", "v1") };
             var grandParentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, false, traceState);
             using (tracer.WithSpan(tracer.StartSpan(SpanName, grandParentContext)))
@@ -636,7 +637,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ImplicitParentActivity()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var parentActivity = new Activity("foo").SetIdFormat(ActivityIdFormat.W3C).Start();
             parentActivity.TraceStateString = "k1=v1,k2=v2";
@@ -665,7 +666,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ImplicitParentSpan_Kind()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             using (tracer.WithSpan(tracer.StartRootSpan(SpanName)))
             {
@@ -682,7 +683,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ImplicitParentSpan_Kind_Timestamp()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             using (tracer.WithSpan(tracer.StartRootSpan(SpanName)))
             {
@@ -699,11 +700,13 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ImplicitParentSpan_Kind_Timestamp_Links_Func()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             using (tracer.WithSpan(tracer.StartRootSpan(SpanName)))
             {
-                var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                var linkContext = new SpanContext(
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.Recorded);
 
                 var startTimestamp = DateTimeOffset.UtcNow.AddSeconds(-10);
@@ -720,11 +723,13 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartSpanFrom_Recorded_ImplicitParentSpan_Kind_Timestamp_Links_Enumerable()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             using (tracer.WithSpan(tracer.StartRootSpan(SpanName)))
             {
-                var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                var linkContext = new SpanContext(
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.Recorded);
 
                 var startTimestamp = DateTimeOffset.UtcNow.AddSeconds(-10);
@@ -762,7 +767,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void EndSpan_NotAddingAttributesOrEvents()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var span = (SpanSdk)tracer.StartRootSpan(SpanName, SpanKind.Client);
 
@@ -771,7 +776,7 @@ namespace OpenTelemetry.Trace.Test
 
             // Check that adding trace events after Span#End() does not throw any exception and are not
             // recorded.
-            foreach (var attribute in attributes)
+            foreach (var attribute in this.attributes)
             {
                 span.SetAttribute(attribute.Key, attribute.Value);
             }
@@ -781,7 +786,7 @@ namespace OpenTelemetry.Trace.Test
                 "MySingleStringAttributeValue");
 
             span.AddEvent(new Event(EventDescription));
-            span.AddEvent(new Event(EventDescription, attributes));
+            span.AddEvent(new Event(EventDescription, this.attributes));
 
             Assert.NotEqual(default, span.StartTimestamp);
             Assert.Null(span.Attributes);
@@ -794,15 +799,17 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public async Task StartSpan_PropertiesAccessible()
         {
-            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+            var contextLink = new SpanContext(
+                ActivityTraceId.CreateRandom(),
+                ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None);
             var link = new Link(contextLink);
 
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var startTime = DateTimeOffset.UtcNow.AddSeconds(-1);
             var spanPassedToSpanProcessorHasSpanContext = false;
 
-            spanProcessorMock
+            this.spanProcessorMock
                 .Setup(s => s.OnStart(It.IsAny<SpanData>()))
                 .Callback<SpanData>(s =>
                 {
@@ -814,7 +821,7 @@ namespace OpenTelemetry.Trace.Test
             span.SetAttribute(
                 "MySingleStringAttributeKey",
                 "MySingleStringAttributeValue");
-            foreach (var attribute in attributes)
+            foreach (var attribute in this.attributes)
             {
                 span.SetAttribute(attribute.Key, attribute.Value);
             }
@@ -824,7 +831,7 @@ namespace OpenTelemetry.Trace.Test
             await Task.Delay(TimeSpan.FromMilliseconds(100));
 
             var secondEventTime = PreciseTimestamp.GetUtcNow();
-            span.AddEvent(new Event(EventDescription, attributes));
+            span.AddEvent(new Event(EventDescription, this.attributes));
 
             Assert.Equal(span.Activity.TraceId, span.Context.TraceId);
             Assert.Equal(span.Activity.SpanId, span.Context.SpanId);
@@ -835,7 +842,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(SpanName, span.Name);
             Assert.Equal(span.Activity.ParentSpanId, span.ParentSpanId);
 
-            span.Attributes.AssertAreSame(expectedAttributes);
+            span.Attributes.AssertAreSame(this.expectedAttributes);
 
             Assert.Equal(2, span.Events.Count());
             AssertApproxSameTimestamp(span.Events.ToList()[1].Timestamp, secondEventTime);
@@ -846,7 +853,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Empty(event0.Attributes);
 
             Assert.Equal(EventDescription, span.Events.ToList()[1].Name);
-            Assert.Equal(attributes, span.Events.ToList()[1].Attributes);
+            Assert.Equal(this.attributes, span.Events.ToList()[1].Attributes);
 
             Assert.Single(span.Links);
             Assert.Equal(link, span.Links.First());
@@ -856,11 +863,11 @@ namespace OpenTelemetry.Trace.Test
             Assert.False(span.GetStatus().IsValid);
             Assert.Equal(default, span.EndTimestamp);
 
-            var startEndMock = Mock.Get(spanProcessor);
+            var startEndMock = Mock.Get(this.spanProcessor);
 
             var spanData = new SpanData(span);
             Assert.True(spanData.Status.IsValid);
-            spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
+            this.spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
             Assert.True(spanPassedToSpanProcessorHasSpanContext);
             startEndMock.Verify(s => s.OnEnd(spanData), Times.Never);
         }
@@ -868,17 +875,19 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public async Task EndSpan_Properties()
         {
-            var contextLink = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+            var contextLink = new SpanContext(
+                ActivityTraceId.CreateRandom(),
+                ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None);
 
             var link = new Link(contextLink);
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var startTime = DateTimeOffset.UtcNow.AddSeconds(-1);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName, SpanKind.Client, new SpanCreationOptions { StartTimestamp = startTime, LinksFactory = () => new[] { link } });
             span.SetAttribute(
                 "MySingleStringAttributeKey",
                 "MySingleStringAttributeValue");
-            foreach (var attribute in attributes)
+            foreach (var attribute in this.attributes)
             {
                 span.SetAttribute(attribute.Key, attribute.Value);
             }
@@ -889,7 +898,7 @@ namespace OpenTelemetry.Trace.Test
 
             await Task.Delay(TimeSpan.FromMilliseconds(100));
             var secondEventTime = PreciseTimestamp.GetUtcNow();
-            span.AddEvent(new Event(EventDescription, attributes));
+            span.AddEvent(new Event(EventDescription, this.attributes));
 
             span.Status = Status.Cancelled;
 
@@ -904,7 +913,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(SpanName, span.Name);
             Assert.Equal(span.Activity.ParentSpanId, span.ParentSpanId);
 
-            span.Attributes.AssertAreSame(expectedAttributes);
+            span.Attributes.AssertAreSame(this.expectedAttributes);
             Assert.Equal(2, span.Events.Count());
 
             var event0 = span.Events.ToList()[0];
@@ -921,14 +930,14 @@ namespace OpenTelemetry.Trace.Test
             AssertApproxSameTimestamp(spanEndTime, span.EndTimestamp);
 
             var spanData = new SpanData(span);
-            spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
-            spanProcessorMock.Verify(s => s.OnEnd(spanData), Times.Once);
+            this.spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
+            this.spanProcessorMock.Verify(s => s.OnEnd(spanData), Times.Once);
         }
 
         [Fact]
         public void SetStatus()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             Assert.Equal(default, span.GetStatus());
@@ -938,18 +947,18 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(Status.Cancelled, span.GetStatus());
 
             var spanData = new SpanData(span);
-            spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
-            spanProcessorMock.Verify(s => s.OnEnd(spanData), Times.Once);
+            this.spanProcessorMock.Verify(s => s.OnStart(spanData), Times.Once);
+            this.spanProcessorMock.Verify(s => s.OnEnd(spanData), Times.Once);
         }
 
         [Fact]
         public void BadArguments_SetInvalidStatus()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             // does not throw
-            span.Status = new Status();
+            span.Status = default(Status);
 
             Assert.Equal(default, span.GetStatus());
         }
@@ -957,7 +966,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void BadArguments_UpdateName_Null()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             // does not throw
@@ -969,7 +978,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void BadArguments_SetAttribute_NullKey()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             // does not throw
@@ -985,7 +994,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SetAttribute_ValidTypes()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             span.SetAttribute("string", "foo");
@@ -1032,7 +1041,7 @@ namespace OpenTelemetry.Trace.Test
         [InlineData(new[] { 1.1f, 2.2f, 3.3f })]
         public void SetAttribute_Array(object array)
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             span.SetAttribute("intArray", array);
@@ -1046,7 +1055,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SetAttribute_Array_String()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             var array = new[] { "1", "2", "3" };
@@ -1056,13 +1065,12 @@ namespace OpenTelemetry.Trace.Test
 
             var attribute = span.Attributes.Single(kvp => kvp.Key == "array");
             Assert.Equal(array, attribute.Value);
-
         }
 
         [Fact]
         public void SetAttribute_Array_Decimal()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             var array = new[] { 1.1M, 2.2M, 3.3M };
@@ -1077,7 +1085,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SetAttribute_Array_IEnumerable()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             IEnumerable<int> array = new List<int> { 1, 2, 3 };
@@ -1092,7 +1100,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SetAttribute_Array_Cant_Mix_Types()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             var array = new object[] { 1, "2", false };
@@ -1108,7 +1116,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SetAttribute_Array_Sets_Empty_String_For_Emtpy_Array()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             var array = new object[0];
@@ -1124,7 +1132,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void BadArguments_SetAttribute_NullOrEmptyValue()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             // does not throw
@@ -1139,7 +1147,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void BadArguments_SetAttribute_BadTypeValue()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             // does not throw
@@ -1154,7 +1162,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void BadArguments_NullEvent()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);
 
             span.AddEvent((string)null);
@@ -1186,7 +1194,7 @@ namespace OpenTelemetry.Trace.Test
                 parentActivity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
             }
 
-            var tracer = tracerFactory
+            var tracer = this.tracerFactory
                 .GetTracer(null);
             var span = (SpanSdk)tracer.StartSpan(SpanName);
             span.End();
@@ -1207,7 +1215,7 @@ namespace OpenTelemetry.Trace.Test
                 activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }
 
-            var tracer = tracerFactory
+            var tracer = this.tracerFactory
                 .GetTracer(null);
             var span = (SpanSdk)tracer.StartSpanFromActivity(SpanName, activity);
             span.End();
@@ -1227,7 +1235,8 @@ namespace OpenTelemetry.Trace.Test
             {
                 activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }
-            var tracer = tracerFactory.GetTracer(null);
+
+            var tracer = this.tracerFactory.GetTracer(null);
 
             SpanSdk span;
             if (ownsActivity)
@@ -1248,7 +1257,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_ParentSpan()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var parentSpan = (SpanSdk)tracer.StartSpan(SpanName);
             using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, out var ispan))
@@ -1268,7 +1277,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_ParentSpan_Kind()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var parentSpan = (SpanSdk)tracer.StartSpan(SpanName);
             using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer, out var ispan))
@@ -1289,11 +1298,15 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_ParentSpan_Kind_Timestamp()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var parentSpan = (SpanSdk)tracer.StartSpan(SpanName);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer, new SpanCreationOptions { StartTimestamp = startTimestamp },
+            using (var scope = tracer.StartActiveSpan(
+                SpanName,
+                parentSpan,
+                SpanKind.Producer,
+                new SpanCreationOptions { StartTimestamp = startTimestamp },
                 out var ispan))
             {
                 Assert.NotNull(scope);
@@ -1313,13 +1326,17 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_ParentSpan_Kind_Timestamp_Links()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var parentSpan = (SpanSdk)tracer.StartSpan(SpanName);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentSpan, SpanKind.Producer,
-                new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan))
+            using (var scope = tracer.StartActiveSpan(
+                SpanName,
+                parentSpan,
+                SpanKind.Producer,
+                new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, },
+                out var ispan))
             {
                 Assert.NotNull(scope);
 
@@ -1339,7 +1356,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_ParentContext()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             using (var scope = tracer.StartActiveSpan(SpanName, parentContext, out var ispan))
@@ -1359,7 +1376,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_ParentContext_Kind()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             using (var scope = tracer.StartActiveSpan(SpanName, parentContext, SpanKind.Producer, out var ispan))
@@ -1379,16 +1396,19 @@ namespace OpenTelemetry.Trace.Test
             Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
-
         [Fact]
         public void StartActiveSpan_ParentContext_Kind_Timestamp()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentContext, SpanKind.Producer,
-                new SpanCreationOptions { StartTimestamp = startTimestamp }, out var ispan))
+            using (var scope = tracer.StartActiveSpan(
+                SpanName,
+                parentContext,
+                SpanKind.Producer,
+                new SpanCreationOptions { StartTimestamp = startTimestamp },
+                out var ispan))
             {
                 Assert.NotNull(scope);
 
@@ -1407,13 +1427,17 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_ParentContext_Kind_Timestamp_Links()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            using (var scope = tracer.StartActiveSpan(SpanName, parentContext, SpanKind.Producer,
-                new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan))
+            using (var scope = tracer.StartActiveSpan(
+                SpanName,
+                parentContext,
+                SpanKind.Producer,
+                new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, },
+                out var ispan))
             {
                 Assert.NotNull(scope);
 
@@ -1433,7 +1457,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_ImplicitParentSpan()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentSpan))
             {
@@ -1454,7 +1478,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_ImplicitParentSpan_Kind()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentSpan))
             {
@@ -1474,17 +1498,19 @@ namespace OpenTelemetry.Trace.Test
             Assert.False(tracer.CurrentSpan.Context.IsValid);
         }
 
-
         [Fact]
         public void StartActiveSpan_ImplicitParentSpan_Kind_Timestamp()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             using (var parentScope = tracer.StartActiveSpan(SpanName, out var parentspan))
             {
-                using var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer,
-                    new SpanCreationOptions { StartTimestamp = startTimestamp }, out var childSpan);
+                using var scope = tracer.StartActiveSpan(
+                    SpanName,
+                    SpanKind.Producer,
+                    new SpanCreationOptions { StartTimestamp = startTimestamp },
+                    out var childSpan);
                 Assert.NotNull(scope);
 
                 var span = (SpanSdk)tracer.CurrentSpan;
@@ -1503,14 +1529,17 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_ImplicitParentSpan_Kind_Timestamp_Links()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var startTimestamp = DateTimeOffset.Now.AddSeconds(-1);
             using (var parentScope = tracer.StartActiveSpan(SpanName, out _))
             {
-                using var scope = tracer.StartActiveSpan(SpanName, SpanKind.Producer,
-                    new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, }, out var ispan);
+                using var scope = tracer.StartActiveSpan(
+                    SpanName,
+                    SpanKind.Producer,
+                    new SpanCreationOptions { StartTimestamp = startTimestamp, Links = new[] { new Link(linkContext) }, },
+                    out var ispan);
                 Assert.NotNull(scope);
 
                 var span = (SpanSdk)tracer.CurrentSpan;
@@ -1530,7 +1559,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_FromActivity()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
             using (var scope = tracer.StartActiveSpanFromActivity(SpanName, activity, out var ispan))
@@ -1553,7 +1582,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_FromActivity_Kind()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
             using (var scope = tracer.StartActiveSpanFromActivity(SpanName, activity, SpanKind.Consumer, out var ispan))
@@ -1575,7 +1604,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void StartActiveSpan_FromActivity_Kind_Links()
         {
-            var tracer = tracerFactory.GetTracer(null);
+            var tracer = this.tracerFactory.GetTracer(null);
 
             var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var activity = new Activity(SpanName).SetIdFormat(ActivityIdFormat.W3C).Start();
@@ -1601,7 +1630,7 @@ namespace OpenTelemetry.Trace.Test
             var samplerMock = new Mock<Sampler>();
             var tracer = TracerFactory.Create(b => b
                     .SetSampler(samplerMock.Object)
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor)))
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => this.spanProcessor)))
                 .GetTracer(null);
 
             samplerMock.Setup(s => s.ShouldSample(
@@ -1615,7 +1644,8 @@ namespace OpenTelemetry.Trace.Test
             var span = (SpanSdk)tracer.StartSpan("test", SpanKind.Client, new SpanCreationOptions { Attributes = this.attributes, });
             span.Attributes.AssertAreSame(this.attributes);
 
-            samplerMock.Verify(o => o.ShouldSample(
+            samplerMock.Verify(
+                o => o.ShouldSample(
                 in It.Ref<SpanContext>.IsAny,
                 in It.Ref<ActivityTraceId>.IsAny,
                 It.IsAny<string>(),
@@ -1630,7 +1660,7 @@ namespace OpenTelemetry.Trace.Test
             var samplerMock = new Mock<Sampler>();
             var tracer = TracerFactory.Create(b => b
                     .SetSampler(samplerMock.Object)
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor)))
+                    .AddProcessorPipeline(p => p.AddProcessor(_ => this.spanProcessor)))
                 .GetTracer(null);
 
             samplerMock.Setup(s => s.ShouldSample(
@@ -1644,7 +1674,8 @@ namespace OpenTelemetry.Trace.Test
             var span = (SpanSdk)tracer.StartSpan("test", SpanKind.Client, new SpanCreationOptions { Attributes = this.attributes, });
             Assert.Null(span.Attributes);
 
-            samplerMock.Verify(o => o.ShouldSample(
+            samplerMock.Verify(
+                o => o.ShouldSample(
                 in It.Ref<SpanContext>.IsAny,
                 in It.Ref<ActivityTraceId>.IsAny,
                 It.IsAny<string>(),
@@ -1653,15 +1684,15 @@ namespace OpenTelemetry.Trace.Test
                 It.IsAny<IEnumerable<Link>>()), Times.Once);
         }
 
+        public void Dispose()
+        {
+            Activity.Current = null;
+        }
+
         private static void AssertApproxSameTimestamp(DateTimeOffset one, DateTimeOffset two)
         {
             var timeShift = Math.Abs((one - two).TotalMilliseconds);
             Assert.InRange(timeShift, 0, 40);
-        }
-
-        public void Dispose()
-        {
-            Activity.Current = null;
         }
     }
 }

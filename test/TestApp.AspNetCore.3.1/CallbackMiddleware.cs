@@ -13,36 +13,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace TestApp.AspNetCore._3._1
 {
     public class CallbackMiddleware
     {
+        private readonly CallbackMiddlewareImpl impl;
+        private readonly RequestDelegate next;
+
+        public CallbackMiddleware(RequestDelegate next, CallbackMiddlewareImpl impl)
+        {
+            this.next = next;
+            this.impl = impl;
+        }
+
+        public async Task InvokeAsync(HttpContext context)
+        {
+            if (this.impl == null || await this.impl.ProcessAsync(context))
+            {
+                await this.next(context);
+            }
+        }
+
         public class CallbackMiddlewareImpl
         {
             public virtual async Task<bool> ProcessAsync(HttpContext context)
             {
                 return await Task.FromResult(true);
-            }
-        }
-
-        private readonly CallbackMiddlewareImpl _impl;
-
-        private readonly RequestDelegate _next;
-
-        public CallbackMiddleware(RequestDelegate next, CallbackMiddlewareImpl impl)
-        {
-            _next = next;
-            _impl = impl;
-        }
-
-        public async Task InvokeAsync(HttpContext context)
-        {
-            if (_impl == null || await _impl.ProcessAsync(context))
-            {
-                await _next(context);
             }
         }
     }

@@ -1,4 +1,4 @@
-// <copyright file="ActivityListenerSdkTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ActivityListenerSdkTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,9 +32,9 @@ namespace OpenTelemetry.Tests.Implementation.Trace
         [Fact]
         public void BuildSamplingParametersHandlesCurrentActivity()
         {
-            using var activitySource = new ActivitySource(nameof(BuildSamplingParametersHandlesCurrentActivity));
+            using var activitySource = new ActivitySource(nameof(this.BuildSamplingParametersHandlesCurrentActivity));
 
-            var latestSamplingParameters = new ActivitySamplingParameters();
+            var latestSamplingParameters = default(ActivitySamplingParameters);
 
             using var listener = new ActivityListener
             {

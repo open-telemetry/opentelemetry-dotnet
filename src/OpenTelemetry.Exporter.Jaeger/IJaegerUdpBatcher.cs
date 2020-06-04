@@ -17,7 +17,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
-using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {

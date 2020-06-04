@@ -20,7 +20,6 @@ using OpenTelemetry.Exporter.ZPages;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
 
 namespace Samples
 {

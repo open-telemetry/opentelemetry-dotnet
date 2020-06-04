@@ -14,18 +14,18 @@
 // limitations under the License.
 // </copyright>
 #if NETCOREAPP3_1
-using OpenTelemetry.Trace.Configuration;
-using Moq;
-using OpenTelemetry.Internal.Test;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Tests
@@ -250,8 +250,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
                 try
                 {
-                    await c.PostAsync("https://dc.services.visualstudio.com/", new StringContent(""), cts.Token);
-                    await c.PostAsync("https://localhost:9411/api/v2/spans", new StringContent(""), cts.Token);
+                    await c.PostAsync("https://dc.services.visualstudio.com/", new StringContent(string.Empty), cts.Token);
+                    await c.PostAsync("https://localhost:9411/api/v2/spans", new StringContent(string.Empty), cts.Token);
                 }
                 catch
                 {
