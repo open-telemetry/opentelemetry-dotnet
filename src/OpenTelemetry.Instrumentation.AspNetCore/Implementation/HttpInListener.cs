@@ -22,12 +22,18 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
         private static readonly string UnknownHostName = "UNKNOWN-HOST";
+
+        // hard-coded Sampler here, just to prototype.
+        // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
+        // or we'll move the Sampler to come from OpenTelemetryBuilder, and not hardcoded.
+        private readonly ActivitySampler sampler = new AlwaysOnActivitySampler();
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher stopContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher beforeActionActionDescriptorFetcher = new PropertyFetcher("actionDescriptor");
@@ -60,11 +66,24 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            // TODO: the line below once .NET ships new Activity
-            // Or do reflection now.
-            // activity.ActivityKind = ActivityKind.Server
+            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
+            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
 
             var request = context.Request;
+            var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
+            activity.DisplayName = path;
+
+            var samplingParameters = new ActivitySamplingParameters(
+                activity.Context,
+                activity.TraceId,
+                activity.DisplayName,
+                activity.Kind,
+                activity.Tags,
+                activity.Links);
+
+            // TODO: Find a way to avoid Instrumentation being tied to Sampler
+            var samplingDecision = this.sampler.ShouldSample(samplingParameters);
+            activity.IsAllDataRequested = samplingDecision.IsSampled;
 
             if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
             {
@@ -85,24 +104,22 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             if (activity.IsAllDataRequested)
             {
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
-                var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-                activity.DisplayName = path;
 
                 if (request.Host.Port == 80 || request.Host.Port == 443)
                 {
-                    activity.AddTag("http.host", request.Host.Host);
+                    activity.AddTag(SpanAttributeConstants.HttpHostKey, request.Host.Host);
                 }
                 else
                 {
-                    activity.AddTag("http.host", request.Host.Host + ":" + request.Host.Port);
+                    activity.AddTag(SpanAttributeConstants.HttpHostKey, request.Host.Host + ":" + request.Host.Port);
                 }
 
-                activity.AddTag("http.method", request.Method);
-                activity.AddTag("http.path", path);
+                activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
+                activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
-                activity.AddTag("http.user_agent", userAgent);
-                activity.AddTag("http.url", GetUri(request));
+                activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, userAgent);
+                activity.AddTag(SpanAttributeConstants.HttpUrlKey, GetUri(request));
             }
         }
 

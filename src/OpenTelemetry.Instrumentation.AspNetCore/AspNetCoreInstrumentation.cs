@@ -19,7 +19,7 @@ using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 namespace OpenTelemetry.Instrumentation.AspNetCore
 {
     /// <summary>
-    /// Requests instrumentation.
+    /// Asp.Net Core Requests instrumentation.
     /// </summary>
     public class AspNetCoreInstrumentation : IDisposable
     {
