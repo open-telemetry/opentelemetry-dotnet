@@ -38,6 +38,7 @@ namespace OpenTelemetry.Trace.Configuration
             }
 
             builder.AddHttpClientDependencyInstrumentation(null);
+            builder.AddSqlClientDependencyInstrumentation(null);
 #if NET461
             builder.AddHttpWebRequestDependencyInstrumentation();
 #endif
@@ -49,10 +50,12 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
         /// <param name="configureHttpClientInstrumentationOptions">HttpClient configuration options.</param>
+        /// <param name="configureSqlClientInstrumentationOptions">SqlClient configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
         public static OpenTelemetryBuilder AddDependencyInstrumentation(
             this OpenTelemetryBuilder builder,
-            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null)
+            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null,
+            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null)
         {
             if (builder == null)
             {
@@ -60,6 +63,7 @@ namespace OpenTelemetry.Trace.Configuration
             }
 
             builder.AddHttpClientDependencyInstrumentation(configureHttpClientInstrumentationOptions);
+            builder.AddSqlClientDependencyInstrumentation(configureSqlClientInstrumentationOptions);
 #if NET461
             builder.AddHttpWebRequestDependencyInstrumentation();
 #endif
@@ -87,6 +91,30 @@ namespace OpenTelemetry.Trace.Configuration
 
             // TODO: decide who is responsible for dispose upon shutdown.
             new HttpClientInstrumentation(httpClientOptions);
+            return builder;
+        }
+
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection for SqlClient.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <param name="configureSqlClientInstrumentationOptions">SqlClient configuration options.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddSqlClientDependencyInstrumentation(
+            this OpenTelemetryBuilder builder,
+            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            builder.AddActivitySource(string.Empty);
+            var sqlOptions = new SqlClientInstrumentationOptions();
+            configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
+
+            // TODO: decide who is responsible for dispose upon shutdown.
+            new SqlClientInstrumentation(sqlOptions);
             return builder;
         }
 

@@ -15,7 +15,6 @@
 // </copyright>
 using System;
 using OpenTelemetry.Instrumentation.Dependencies.Implementation;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Dependencies
 {
@@ -31,21 +30,19 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlClientInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
-        public SqlClientInstrumentation(Tracer tracer)
-            : this(tracer, new SqlClientInstrumentationOptions())
+        public SqlClientInstrumentation()
+            : this(new SqlClientInstrumentationOptions())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlClientInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="options">Configuration options for sql instrumentation.</param>
-        public SqlClientInstrumentation(Tracer tracer, SqlClientInstrumentationOptions options)
+        public SqlClientInstrumentation(SqlClientInstrumentationOptions options)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-               name => new SqlClientDiagnosticListener(name, tracer, options),
+               name => new SqlClientDiagnosticListener(name, options),
                listener => listener.Name == SqlClientDiagnosticListenerName,
                null);
             this.diagnosticSourceSubscriber.Subscribe();
