@@ -38,7 +38,7 @@ namespace API
             });
 
             OpenTelemetrySdk.EnableOpenTelemetry(
-                (builder) => builder.AddRequestInstrumentation()
+                (builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
                 .UseConsoleActivityExporter(opt => opt.DisplayAsJson = opt.DisplayAsJson));
 
             services.AddOpenTelemetry((sp, builder) =>

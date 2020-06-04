@@ -18,7 +18,6 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace.Export
 {

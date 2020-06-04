@@ -39,7 +39,6 @@ namespace OpenTelemetry.Trace.Configuration
             return builder
                 .AddInstrumentation((t) => new AzureClientsInstrumentation(t))
                 .AddInstrumentation((t) => new AzurePipelineInstrumentation(t))
-                .AddInstrumentation((t) => new HttpClientInstrumentation(t))
                 .AddInstrumentation((t) => new SqlClientInstrumentation(t));
         }
 
@@ -69,7 +68,6 @@ namespace OpenTelemetry.Trace.Configuration
             return builder
                 .AddInstrumentation((t) => new AzureClientsInstrumentation(t))
                 .AddInstrumentation((t) => new AzurePipelineInstrumentation(t))
-                .AddInstrumentation((t) => new HttpClientInstrumentation(t, httpOptions))
                 .AddInstrumentation((t) => new SqlClientInstrumentation(t, sqlOptions));
         }
     }

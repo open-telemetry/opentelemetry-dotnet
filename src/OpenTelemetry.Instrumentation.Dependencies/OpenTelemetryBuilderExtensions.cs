@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using OpenTelemetry.Instrumentation.Dependencies;
 using OpenTelemetry.Instrumentation.Dependencies.Implementation;
 
 namespace OpenTelemetry.Trace.Configuration
@@ -36,9 +37,56 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(builder));
             }
 
+            builder.AddHttpClientDependencyInstrumentation(null);
 #if NET461
             builder.AddHttpWebRequestDependencyInstrumentation();
 #endif
+            return builder;
+        }
+
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection for all supported activity sources.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <param name="configureHttpClientInstrumentationOptions">HttpClient configuration options.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddDependencyInstrumentation(
+            this OpenTelemetryBuilder builder,
+            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            builder.AddHttpClientDependencyInstrumentation(configureHttpClientInstrumentationOptions);
+#if NET461
+            builder.AddHttpWebRequestDependencyInstrumentation();
+#endif
+            return builder;
+        }
+
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection for HttpClient.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <param name="configureHttpClientInstrumentationOptions">HttpClient configuration options.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddHttpClientDependencyInstrumentation(
+            this OpenTelemetryBuilder builder,
+            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            builder.AddActivitySource(string.Empty);
+            var httpClientOptions = new HttpClientInstrumentationOptions();
+            configureHttpClientInstrumentationOptions?.Invoke(httpClientOptions);
+
+            // TODO: decide who is responsible for dispose upon shutdown.
+            new HttpClientInstrumentation(httpClientOptions);
             return builder;
         }
 
