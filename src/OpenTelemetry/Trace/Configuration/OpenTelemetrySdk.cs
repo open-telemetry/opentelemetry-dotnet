@@ -33,10 +33,11 @@ namespace OpenTelemetry.Trace.Configuration
         /// Enables OpenTelemetry.
         /// </summary>
         /// <param name="configureOpenTelemetryBuilder">Function that configures OpenTelemetryBuilder.</param>
+        /// <returns><see cref="IDisposable"/> to be disposed on application shutdown.</returns>
         /// <remarks>
         /// Basic implementation only. Most logic from TracerBuilder will be ported here.
         /// </remarks>
-        public static void EnableOpenTelemetry(Action<OpenTelemetryBuilder> configureOpenTelemetryBuilder)
+        public static IDisposable EnableOpenTelemetry(Action<OpenTelemetryBuilder> configureOpenTelemetryBuilder)
         {
             var openTelemetryBuilder = new OpenTelemetryBuilder();
             configureOpenTelemetryBuilder(openTelemetryBuilder);
@@ -66,7 +67,7 @@ namespace OpenTelemetry.Trace.Configuration
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                 // or not
-                ShouldListenTo = (activitySource) => openTelemetryBuilder.ActivitySourceNames.Contains(activitySource.Name.ToUpperInvariant()),
+                ShouldListenTo = (activitySource) => openTelemetryBuilder.ActivitySourceNames?.Contains(activitySource.Name.ToUpperInvariant()) ?? false,
 
                 // The following parameter is not used now.
                 GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
@@ -83,14 +84,8 @@ namespace OpenTelemetry.Trace.Configuration
                 // This prevents Activity from being created at all.
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
                 {
-                    var shouldSample = sampler.ShouldSample(
-                        options.Parent,
-                        options.Parent.TraceId,
-                        default(ActivitySpanId), // Passing default SpanId here. The actual SpanId is not known before actual Activity creation
-                        options.Name,
-                        options.Kind,
-                        options.Tags,
-                        options.Links);
+                    BuildSamplingParameters(options, out var samplingParameters);
+                    var shouldSample = sampler.ShouldSample(samplingParameters);
                     if (shouldSample.IsSampled)
                     {
                         return ActivityDataRequest.AllDataAndRecorded;
@@ -105,6 +100,38 @@ namespace OpenTelemetry.Trace.Configuration
             };
 
             ActivitySource.AddActivityListener(listener);
+
+            return listener;
+        }
+
+        internal static void BuildSamplingParameters(
+            in ActivityCreationOptions<ActivityContext> options, out ActivitySamplingParameters samplingParameters)
+        {
+            ActivityContext parentContext = options.Parent;
+            if (parentContext == default)
+            {
+                // Check if there is already a parent for the current activity.
+                var parentActivity = Activity.Current;
+                if (parentActivity != null)
+                {
+                    parentContext = parentActivity.Context;
+                }
+            }
+
+            // This is not going to be the final traceId of the Activity (if one is created), however, it is
+            // needed in order for the sampling to work. This differs from other OTel SDKs in which it is
+            // the Sampler always receives the actual traceId of a root span/activity.
+            ActivityTraceId traceId = parentContext.TraceId != default
+                ? parentContext.TraceId
+                : ActivityTraceId.CreateRandom();
+
+            samplingParameters = new ActivitySamplingParameters(
+                parentContext,
+                traceId,
+                options.Name,
+                options.Kind,
+                options.Tags,
+                options.Links);
         }
     }
 }

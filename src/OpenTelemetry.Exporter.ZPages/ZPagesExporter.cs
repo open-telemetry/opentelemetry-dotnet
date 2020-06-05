@@ -13,10 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
+using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Trace.Export;
+using Timer = System.Timers.Timer;
 
 namespace OpenTelemetry.Exporter.ZPages
 {
@@ -26,6 +32,8 @@ namespace OpenTelemetry.Exporter.ZPages
     public class ZPagesExporter : SpanExporter
     {
         internal readonly ZPagesExporterOptions Options;
+        private Timer minuteTimer;
+        private Timer hourTimer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZPagesExporter"/> class.
@@ -34,11 +42,22 @@ namespace OpenTelemetry.Exporter.ZPages
         public ZPagesExporter(ZPagesExporterOptions options)
         {
             this.Options = options;
+
+            // Create a timer with one minute interval
+            this.minuteTimer = new Timer(60000);
+            this.minuteTimer.Elapsed += new ElapsedEventHandler(ZPagesSpans.PurgeCurrentMinuteData);
+            this.minuteTimer.Enabled = true;
+
+            // Create a timer with one hour interval
+            this.hourTimer = new Timer(3600000);
+            this.hourTimer.Elapsed += new ElapsedEventHandler(ZPagesSpans.PurgeCurrentHourData);
+            this.hourTimer.Enabled = true;
         }
 
         /// <inheritdoc />
         public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
         {
+            var spanDatas = batch as SpanData[] ?? batch.ToArray();
             return Task.FromResult(ExportResult.Success);
         }
 

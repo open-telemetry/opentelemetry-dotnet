@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerConversionExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerActivityExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,32 +17,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    internal static class JaegerConversionExtensions
+    internal static class JaegerActivityExtensions
     {
-        private const int DaysPerYear = 365;
-
-        // Number of days in 4 years
-        private const int DaysPer4Years = (DaysPerYear * 4) + 1;       // 1461
-
-        // Number of days in 100 years
-        private const int DaysPer100Years = (DaysPer4Years * 25) - 1;  // 36524
-
-        // Number of days in 400 years
-        private const int DaysPer400Years = (DaysPer100Years * 4) + 1; // 146097
-
-        // Number of days from 1/1/0001 to 12/31/1969
-        private const int DaysTo1970 = (DaysPer400Years * 4) + (DaysPer100Years * 3) + (DaysPer4Years * 17) + DaysPerYear; // 719,162
-
-        private const long UnixEpochTicks = DaysTo1970 * TimeSpan.TicksPerDay;
-        private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
-        private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
-
         private static readonly Dictionary<string, int> PeerServiceKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
             [SpanAttributeConstants.PeerServiceKey] = 0, // peer.service primary.
@@ -53,26 +33,25 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             ["db.instance"] = 4, // peer.service for Redis.
         };
 
-        private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessAttributeRef = ProcessAttribute;
-        private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessLibraryAttributeRef = ProcessLibraryAttribute;
-        private static readonly ListEnumerator<Link, PooledListState<JaegerSpanRef>>.ForEachDelegate ProcessLinkRef = ProcessLink;
-        private static readonly ListEnumerator<Event, PooledListState<JaegerLog>>.ForEachDelegate ProcessEventRef = ProcessEvent;
+        private static readonly DictionaryEnumerator<string, string, TagState>.ForEachDelegate ProcessActivityTagRef = ProcessActivityTag;
+        private static readonly ListEnumerator<ActivityLink, PooledListState<JaegerSpanRef>>.ForEachDelegate ProcessActivityLinkRef = ProcessActivityLink;
+        private static readonly ListEnumerator<ActivityEvent, PooledListState<JaegerLog>>.ForEachDelegate ProcessActivityEventRef = ProcessActivityEvent;
         private static readonly DictionaryEnumerator<string, object, PooledListState<JaegerTag>>.ForEachDelegate ProcessTagRef = ProcessTag;
 
-        public static JaegerSpan ToJaegerSpan(this SpanData span)
+        public static JaegerSpan ToJaegerSpan(this Activity activity)
         {
             var jaegerTags = new TagState
             {
                 Tags = PooledList<JaegerTag>.Create(),
             };
 
-            DictionaryEnumerator<string, object, TagState>.AllocationFreeForEach(
-                span.Attributes,
+            DictionaryEnumerator<string, string, TagState>.AllocationFreeForEach(
+                activity.Tags,
                 ref jaegerTags,
-                ProcessAttributeRef);
+                ProcessActivityTagRef);
 
             string peerServiceName = null;
-            if ((span.Kind == SpanKind.Client || span.Kind == SpanKind.Producer) && jaegerTags.PeerService != null)
+            if ((activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer) && jaegerTags.PeerService != null)
             {
                 // Send peer.service for remote calls.
                 peerServiceName = jaegerTags.PeerService;
@@ -86,23 +65,23 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             // The Span.Kind must translate into a tag.
             // See https://opentracing.io/specification/conventions/
-            if (span.Kind.HasValue)
+            if (activity.Kind != ActivityKind.Internal)
             {
                 string spanKind = null;
 
-                if (span.Kind.Value == SpanKind.Server)
+                if (activity.Kind == ActivityKind.Server)
                 {
                     spanKind = "server";
                 }
-                else if (span.Kind.Value == SpanKind.Client)
+                else if (activity.Kind == ActivityKind.Client)
                 {
                     spanKind = "client";
                 }
-                else if (span.Kind.Value == SpanKind.Consumer)
+                else if (activity.Kind == ActivityKind.Consumer)
                 {
                     spanKind = "consumer";
                 }
-                else if (span.Kind.Value == SpanKind.Producer)
+                else if (activity.Kind == ActivityKind.Producer)
                 {
                     spanKind = "producer";
                 }
@@ -113,20 +92,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 }
             }
 
-            DictionaryEnumerator<string, object, TagState>.AllocationFreeForEach(
-                span.LibraryResource?.Attributes ?? Array.Empty<KeyValuePair<string, object>>(),
-                ref jaegerTags,
-                ProcessLibraryAttributeRef);
-
-            var status = span.Status;
-
-            if (status.IsValid)
+            var activitySource = activity.Source;
+            if (!string.IsNullOrEmpty(activitySource.Name))
             {
-                PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(SpanAttributeConstants.StatusCodeKey, JaegerTagType.STRING, vStr: SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode)));
-
-                if (status.Description != null)
+                PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("library.name", JaegerTagType.STRING, vStr: activitySource.Name));
+                if (!string.IsNullOrEmpty(activitySource.Version))
                 {
-                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(SpanAttributeConstants.StatusDescriptionKey, JaegerTagType.STRING, vStr: status.Description));
+                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("library.version", JaegerTagType.STRING, vStr: activitySource.Name));
                 }
             }
 
@@ -134,11 +106,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             var spanId = Int128.Empty;
             var parentSpanId = Int128.Empty;
 
-            if (span.Context.IsValid)
+            if (activity.IdFormat == ActivityIdFormat.W3C)
             {
-                traceId = new Int128(span.Context.TraceId);
-                spanId = new Int128(span.Context.SpanId);
-                parentSpanId = new Int128(span.ParentSpanId);
+                // TODO: The check above should be enforced by the usage of the exporter. Perhaps enforce at higher-level.
+                traceId = new Int128(activity.TraceId);
+                spanId = new Int128(activity.SpanId);
+                parentSpanId = new Int128(activity.ParentSpanId);
             }
 
             return new JaegerSpan(
@@ -147,16 +120,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 traceIdHigh: traceId.High,
                 spanId: spanId.Low,
                 parentSpanId: parentSpanId.Low,
-                operationName: span.Name,
-                flags: (span.Context.TraceFlags & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
-                startTime: ToEpochMicroseconds(span.StartTimestamp),
-                duration: ToEpochMicroseconds(span.EndTimestamp) - ToEpochMicroseconds(span.StartTimestamp),
-                references: span.Links.ToJaegerSpanRefs(),
+                operationName: activity.DisplayName,
+                flags: (activity.Context.TraceFlags & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
+                startTime: ToEpochMicroseconds(activity.StartTimeUtc),
+                duration: (long)activity.Duration.TotalMilliseconds * 1000,
+                references: activity.Links.ToJaegerSpanRefs(),
                 tags: jaegerTags.Tags,
-                logs: span.Events.ToJaegerLogs());
+                logs: activity.Events.ToJaegerLogs());
         }
 
-        public static PooledList<JaegerSpanRef> ToJaegerSpanRefs(this IEnumerable<Link> links)
+        public static PooledList<JaegerSpanRef> ToJaegerSpanRefs(this IEnumerable<ActivityLink> links)
         {
             PooledListState<JaegerSpanRef> references = default;
 
@@ -165,15 +138,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 return references.List;
             }
 
-            ListEnumerator<Link, PooledListState<JaegerSpanRef>>.AllocationFreeForEach(
+            ListEnumerator<ActivityLink, PooledListState<JaegerSpanRef>>.AllocationFreeForEach(
                 links,
                 ref references,
-                ProcessLinkRef);
+                ProcessActivityLinkRef);
 
             return references.List;
         }
 
-        public static PooledList<JaegerLog> ToJaegerLogs(this IEnumerable<Event> events)
+        public static PooledList<JaegerLog> ToJaegerLogs(this IEnumerable<ActivityEvent> events)
         {
             PooledListState<JaegerLog> logs = default;
 
@@ -182,36 +155,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 return logs.List;
             }
 
-            ListEnumerator<Event, PooledListState<JaegerLog>>.AllocationFreeForEach(
+            ListEnumerator<ActivityEvent, PooledListState<JaegerLog>>.AllocationFreeForEach(
                 events,
                 ref logs,
-                ProcessEventRef);
+                ProcessActivityEventRef);
 
             return logs.List;
         }
 
-        public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
-        {
-            switch (attribute.Value)
-            {
-                case string s:
-                    return new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: s);
-                case int i:
-                    return new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(i));
-                case long l:
-                    return new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: l);
-                case float f:
-                    return new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: Convert.ToDouble(f));
-                case double d:
-                    return new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: d);
-                case bool b:
-                    return new JaegerTag(attribute.Key, JaegerTagType.BOOL, vBool: b);
-            }
-
-            return new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: attribute.Value.ToString());
-        }
-
-        public static JaegerLog ToJaegerLog(this Event timedEvent)
+        public static JaegerLog ToJaegerLog(this ActivityEvent timedEvent)
         {
             var tags = new PooledListState<JaegerTag>
             {
@@ -229,10 +181,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             // https://github.com/open-telemetry/opentelemetry-specification/pull/397/files
             PooledList<JaegerTag>.Add(ref tags.List, new JaegerTag("message", JaegerTagType.STRING, vStr: timedEvent.Name));
 
+            // TODO: Use the same function as JaegerConversionExtensions or check that the perf here is acceptable.
             return new JaegerLog(timedEvent.Timestamp.ToEpochMicroseconds(), tags.List);
         }
 
-        public static JaegerSpanRef ToJaegerSpanRef(this in Link link)
+        public static JaegerSpanRef ToJaegerSpanRef(this in ActivityLink link)
         {
             var traceId = new Int128(link.Context.TraceId);
             var spanId = new Int128(link.Context.SpanId);
@@ -240,47 +193,36 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return new JaegerSpanRef(JaegerSpanRefType.CHILD_OF, traceId.Low, traceId.High, spanId.Low);
         }
 
-        public static long ToEpochMicroseconds(this DateTimeOffset timestamp)
+        public static long ToEpochMicroseconds(this DateTime utcDateTime)
         {
+            const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
+            const long UnixEpochTicks = 621355968000000000; // = DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks
+            const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond;
+
             // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
             // the last digit being off by one for dates that result in negative Unix times
-            long microseconds = timestamp.UtcDateTime.Ticks / TicksPerMicrosecond;
+            long microseconds = utcDateTime.Ticks / TicksPerMicrosecond;
             return microseconds - UnixEpochMicroseconds;
         }
 
-        private static bool ProcessAttribute(ref TagState state, KeyValuePair<string, object> label)
+        private static bool ProcessActivityTag(ref TagState state, KeyValuePair<string, string> activityTag)
         {
-            var tag = label.ToJaegerTag();
+            var jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.STRING, activityTag.Value);
 
-            if (tag.VStr != null
-                && PeerServiceKeyResolutionDictionary.TryGetValue(label.Key, out int priority)
+            if (jaegerTag.VStr != null
+                && PeerServiceKeyResolutionDictionary.TryGetValue(activityTag.Key, out int priority)
                 && (state.PeerService == null || priority < state.PeerServicePriority))
             {
-                state.PeerService = tag.VStr;
+                state.PeerService = jaegerTag.VStr;
                 state.PeerServicePriority = priority;
             }
 
-            PooledList<JaegerTag>.Add(ref state.Tags, tag);
+            PooledList<JaegerTag>.Add(ref state.Tags, jaegerTag);
 
             return true;
         }
 
-        private static bool ProcessLibraryAttribute(ref TagState state, KeyValuePair<string, object> label)
-        {
-            switch (label.Key)
-            {
-                case Resource.LibraryNameKey:
-                    PooledList<JaegerTag>.Add(ref state.Tags, label.ToJaegerTag());
-                    break;
-                case Resource.LibraryVersionKey:
-                    PooledList<JaegerTag>.Add(ref state.Tags, label.ToJaegerTag());
-                    break;
-            }
-
-            return true;
-        }
-
-        private static bool ProcessLink(ref PooledListState<JaegerSpanRef> state, Link link)
+        private static bool ProcessActivityLink(ref PooledListState<JaegerSpanRef> state, ActivityLink link)
         {
             if (!state.Created)
             {
@@ -293,13 +235,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return true;
         }
 
-        private static bool ProcessEvent(ref PooledListState<JaegerLog> state, Event e)
+        private static bool ProcessActivityEvent(ref PooledListState<JaegerLog> state, ActivityEvent e)
         {
-            if (e == null)
-            {
-                return true;
-            }
-
             if (!state.Created)
             {
                 state.List = PooledList<JaegerLog>.Create();

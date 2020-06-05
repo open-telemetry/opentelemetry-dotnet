@@ -14,10 +14,8 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Net;
 using System.Net.Http;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Instrumentation.Dependencies.Implementation;
 
 namespace OpenTelemetry.Instrumentation.Dependencies
 {
@@ -101,18 +99,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies
                     return true;
                 }
             }
-#if NET461
-            else if (activityName == HttpWebRequestDiagnosticSource.ActivityName)
-            {
-                if (arg1 is HttpWebRequest request &&
-                    request.RequestUri != null &&
-                    request.Method == "POST")
-                {
-                    requestUri = request.RequestUri;
-                    return true;
-                }
-            }
-#endif
 
             requestUri = null;
             return false;

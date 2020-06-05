@@ -64,7 +64,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     new CancellationTokenSource() :
                     CancellationTokenSource.CreateLinkedTokenSource(token);
 
-                this.workerThread = Task.Factory.StartNew((Action)this.WorkerThread, TaskCreationOptions.LongRunning);
+                this.workerThread = Task.Factory.StartNew(this.WorkerThread, TaskCreationOptions.LongRunning);
             }
         }
 

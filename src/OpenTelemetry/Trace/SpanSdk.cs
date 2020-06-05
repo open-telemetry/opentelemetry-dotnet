@@ -164,7 +164,6 @@ namespace OpenTelemetry.Trace
                 spanCreationOptions?.Attributes,
                 links, // we'll enumerate again, but double enumeration over small collection is cheaper than allocation
                 this.Activity.TraceId,
-                this.Activity.SpanId,
                 this.sampler);
 
             this.Activity.ActivityTraceFlags =
@@ -677,10 +676,9 @@ namespace OpenTelemetry.Trace
             IEnumerable<KeyValuePair<string, object>> attributes,
             IEnumerable<Link> parentLinks,
             ActivityTraceId traceId,
-            ActivitySpanId spanId,
             Sampler sampler)
         {
-            return sampler.ShouldSample(parent, traceId, spanId, name, spanKind, attributes, parentLinks).IsSampled;
+            return sampler.ShouldSample(parent, traceId, name, spanKind, attributes, parentLinks).IsSampled;
         }
 
         private static ActivityAndTracestate FromCurrentParentActivity(string spanName, Activity current)

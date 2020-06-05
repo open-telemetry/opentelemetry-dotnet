@@ -13,8 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace OpenTelemetry.Trace.Samplers
 {
@@ -27,7 +25,7 @@ namespace OpenTelemetry.Trace.Samplers
         public override string Description { get; } = nameof(AlwaysOffActivitySampler);
 
         /// <inheritdoc />
-        public override SamplingResult ShouldSample(in ActivityContext parentContext, in ActivityTraceId traceId, in ActivitySpanId spanId, string name, ActivityKind activityKind, IEnumerable<KeyValuePair<string, string>> tags, IEnumerable<ActivityLink> links)
+        public override SamplingResult ShouldSample(in ActivitySamplingParameters samplingParameters)
         {
             return new SamplingResult(false);
         }

@@ -113,6 +113,23 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Helper method that populates span properties from host and port
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
+        /// </summary>
+        /// <param name="span">Span to fill out.</param>
+        /// <param name="hostAndPort">Host and port value.</param>
+        /// <returns>Span with populated host properties.</returns>
+        public static TelemetrySpan PutHttpHostAttribute(this TelemetrySpan span, string hostAndPort)
+        {
+            if (!string.IsNullOrEmpty(hostAndPort))
+            {
+                span.SetAttribute(SpanAttributeConstants.HttpHostKey, hostAndPort);
+            }
+
+            return span;
+        }
+
+        /// <summary>
         /// Helper method that populates span properties from route
         /// to https://github.com/open-telemetry/opentelemetry-specification/blob/2316771e7e0ca3bfe9b2286d13e3a41ded6b8858/specification/data-http.md.
         /// </summary>
@@ -171,46 +188,7 @@ namespace OpenTelemetry.Trace
         {
             span.PutHttpStatusCodeAttribute(statusCode);
 
-            var newStatus = Status.Unknown;
-
-            if (statusCode >= 200 && statusCode <= 399)
-            {
-                newStatus = Status.Ok;
-            }
-            else if (statusCode == 400)
-            {
-                newStatus = Status.InvalidArgument;
-            }
-            else if (statusCode == 401)
-            {
-                newStatus = Status.Unauthenticated;
-            }
-            else if (statusCode == 403)
-            {
-                newStatus = Status.PermissionDenied;
-            }
-            else if (statusCode == 404)
-            {
-                newStatus = Status.NotFound;
-            }
-            else if (statusCode == 429)
-            {
-                newStatus = Status.ResourceExhausted;
-            }
-            else if (statusCode == 501)
-            {
-                newStatus = Status.Unimplemented;
-            }
-            else if (statusCode == 503)
-            {
-                newStatus = Status.Unavailable;
-            }
-            else if (statusCode == 504)
-            {
-                newStatus = Status.DeadlineExceeded;
-            }
-
-            span.Status = newStatus.WithDescription(reasonPhrase);
+            span.Status = SpanHelper.ResolveSpanStatusForHttpStatusCode(statusCode).WithDescription(reasonPhrase);
 
             return span;
         }

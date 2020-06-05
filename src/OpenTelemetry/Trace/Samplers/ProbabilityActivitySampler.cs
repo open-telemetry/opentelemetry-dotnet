@@ -1,4 +1,4 @@
-﻿// <copyright file="ProbabilitySampler.cs" company="OpenTelemetry Authors">
+// <copyright file="ProbabilityActivitySampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,29 +14,27 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 
 namespace OpenTelemetry.Trace.Samplers
 {
     /// <summary>
-    /// Sampler implementation which will sample in, if parent span or any linked span is sampled in.
-    /// Otherwise, samples in a percentage of the spans.
-    /// The probability of sampling a span is equal to that of the specified probability.
+    /// Sampler implementation which will take a sample if parent Activity or any linked Activity is sampled.
+    /// Otherwise, samples traces according to the specified probability.
     /// </summary>
-    public sealed class ProbabilitySampler : Sampler
+    public sealed class ProbabilityActivitySampler : ActivitySampler
     {
         private readonly long idUpperBound;
         private readonly double probability;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ProbabilitySampler"/> class.
+        /// Initializes a new instance of the <see cref="ProbabilityActivitySampler"/> class.
         /// </summary>
         /// <param name="probability">The desired probability of sampling. This must be between 0.0 and 1.0.
-        /// Higher the value, higher is the probability of a given span to be sampled in.
+        /// Higher the value, higher is the probability of a given Activity to be sampled in.
         /// </param>
-        public ProbabilitySampler(double probability)
+        public ProbabilityActivitySampler(double probability)
         {
             if (probability < 0.0 || probability > 1.0)
             {
@@ -45,9 +43,8 @@ namespace OpenTelemetry.Trace.Samplers
 
             this.probability = probability;
 
-            // The expected description is like ProbabilitySampler{0.000100}
-            // https://docs.microsoft.com/dotnet/standard/base-types/composite-formatting#escaping-braces
-            this.Description = "ProbabilitySampler{" + this.probability.ToString("F6", CultureInfo.InvariantCulture) + "}";
+            // The expected description is like ProbabilityActivitySampler{0.000100}
+            this.Description = "ProbabilityActivitySampler{" + this.probability.ToString("F6", CultureInfo.InvariantCulture) + "}";
 
             // Special case the limits, to avoid any possible issues with lack of precision across
             // double/long boundaries. For probability == 0.0, we use Long.MIN_VALUE as this guarantees
@@ -71,25 +68,19 @@ namespace OpenTelemetry.Trace.Samplers
         public override string Description { get; }
 
         /// <inheritdoc />
-        public override SamplingResult ShouldSample(
-            in SpanContext parentContext,
-            in ActivityTraceId traceId,
-            string name,
-            SpanKind spanKind,
-            IEnumerable<KeyValuePair<string, object>> attributes,
-            IEnumerable<Link> links)
+        public override SamplingResult ShouldSample(in ActivitySamplingParameters samplingParameters)
         {
             // If the parent is sampled keep the sampling decision.
-            if (parentContext.IsValid &&
-                (parentContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
+            var parentContext = samplingParameters.ParentContext;
+            if ((parentContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
             {
                 return new SamplingResult(true);
             }
 
-            if (links != null)
+            if (samplingParameters.Links != null)
             {
                 // If any parent link is sampled keep the sampling decision.
-                foreach (var parentLink in links)
+                foreach (var parentLink in samplingParameters.Links)
                 {
                     if ((parentLink.Context.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                     {
@@ -98,15 +89,15 @@ namespace OpenTelemetry.Trace.Samplers
                 }
             }
 
-            // Always sample if we are within probability range. This is true even for child spans (that
+            // Always sample if we are within probability range. This is true even for child activities (that
             // may have had a different sampling decision made) to allow for different sampling policies,
             // and dynamic increases to sampling probabilities for debugging purposes.
             // Note use of '<' for comparison. This ensures that we never sample for probability == 0.0,
             // while allowing for a (very) small chance of *not* sampling if the id == Long.MAX_VALUE.
-            // This is considered a reasonable tradeoff for the simplicity/performance requirements (this
-            // code is executed in-line for every Span creation).
+            // This is considered a reasonable trade-off for the simplicity/performance requirements (this
+            // code is executed in-line for every Activity creation).
             Span<byte> traceIdBytes = stackalloc byte[16];
-            traceId.CopyTo(traceIdBytes);
+            samplingParameters.TraceId.CopyTo(traceIdBytes);
             return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.idUpperBound ? new SamplingResult(true) : new SamplingResult(false);
         }
 
