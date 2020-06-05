@@ -95,20 +95,5 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 span?.End();
             }
         }
-
-        public override void OnException(Activity activity, object payload)
-        {
-            const string EventNameSuffix = ".OnException";
-            var span = this.Tracer.CurrentSpan;
-
-            if (span == null || !span.Context.IsValid)
-            {
-                InstrumentationEventSource.Log.NullOrBlankSpan(nameof(GrpcClientDiagnosticListener) + EventNameSuffix);
-                return;
-            }
-
-            // set span.Status
-            // validate whether we need to end span here
-        }
     }
 }
