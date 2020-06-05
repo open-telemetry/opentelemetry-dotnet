@@ -154,7 +154,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         public override void OnException(Activity activity, object payload)
         {
             const string EventNameSuffix = ".OnException";
-            var span = this.Tracer.CurrentSpan;
 
             if (activity.IsAllDataRequested)
             {
@@ -180,7 +179,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
                     if (exc.InnerException != null)
                     {
-                        span.Status = Status.Unknown.WithDescription(exc.Message);
                         Status status = Status.Unknown;
                         activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
                         activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, exc.Message);

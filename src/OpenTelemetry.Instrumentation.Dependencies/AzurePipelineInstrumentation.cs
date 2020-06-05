@@ -14,12 +14,15 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Dependencies
 {
     /// <summary>
-    /// Dependencies instrumentation.
+    /// AzurePipeline instrumentation.
+    /// TODO: Azure specific listeners would be moved out of this repo.
+    /// I believe this was initially put here for quick validation.
+    /// There were no unit tests covering this feature, so
+    /// cannot validate after Span is replaced with Activity.
     /// </summary>
     public class AzurePipelineInstrumentation : IDisposable
     {
@@ -28,10 +31,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <summary>
         /// Initializes a new instance of the <see cref="AzurePipelineInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
-        public AzurePipelineInstrumentation(Tracer tracer)
+        public AzurePipelineInstrumentation()
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new AzureSdkDiagnosticListener("Azure.Pipeline", tracer), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new AzureSdkDiagnosticListener("Azure.Pipeline"), null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

@@ -39,6 +39,7 @@ namespace OpenTelemetry.Trace.Configuration
 
             builder.AddHttpClientDependencyInstrumentation(null);
             builder.AddSqlClientDependencyInstrumentation(null);
+            builder.AddAzureClientsDependencyInstrumentation();
 #if NET461
             builder.AddHttpWebRequestDependencyInstrumentation();
 #endif
@@ -64,6 +65,7 @@ namespace OpenTelemetry.Trace.Configuration
 
             builder.AddHttpClientDependencyInstrumentation(configureHttpClientInstrumentationOptions);
             builder.AddSqlClientDependencyInstrumentation(configureSqlClientInstrumentationOptions);
+            builder.AddAzureClientsDependencyInstrumentation();
 #if NET461
             builder.AddHttpWebRequestDependencyInstrumentation();
 #endif
@@ -85,6 +87,8 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(builder));
             }
 
+            // HttpClient is not instrumented with ActivitySource, hence
+            // it'll have a default ActivitySource with name string.Empty.
             builder.AddActivitySource(string.Empty);
             var httpClientOptions = new HttpClientInstrumentationOptions();
             configureHttpClientInstrumentationOptions?.Invoke(httpClientOptions);
@@ -109,12 +113,34 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(builder));
             }
 
+            // HttpClient is not instrumented with ActivitySource, hence
+            // it'll have a default ActivitySource with name string.Empty.
             builder.AddActivitySource(string.Empty);
             var sqlOptions = new SqlClientInstrumentationOptions();
             configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
 
             // TODO: decide who is responsible for dispose upon shutdown.
             new SqlClientInstrumentation(sqlOptions);
+            return builder;
+        }
+
+        /// <summary>
+        /// Enables instrumentation for Azure clients.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddAzureClientsDependencyInstrumentation(
+            this OpenTelemetryBuilder builder)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            builder.AddActivitySource(AzureSdkDiagnosticListener.ActivitySourceName);
+
+            // TODO: decide who is responsible for dispose upon shutdown.
+            new AzureClientsInstrumentation();
             return builder;
         }
 

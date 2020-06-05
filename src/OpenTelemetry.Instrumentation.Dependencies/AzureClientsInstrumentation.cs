@@ -14,12 +14,15 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Dependencies
 {
     /// <summary>
-    /// Dependencies instrumentation.
+    /// AzureClients instrumentation.
+    /// TODO: Azure specific listeners would be moved out of this repo.
+    /// I believe this was initially put here for quick validation.
+    /// There were no unit tests covering this feature, so
+    /// cannot validate after Span is replaced with Activity.
     /// </summary>
     public class AzureClientsInstrumentation : IDisposable
     {
@@ -28,11 +31,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureClientsInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
-        public AzureClientsInstrumentation(Tracer tracer)
+        public AzureClientsInstrumentation()
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-                name => new AzureSdkDiagnosticListener(name, tracer),
+                name => new AzureSdkDiagnosticListener(name),
                 listener => listener.Name.StartsWith("Azure."),
                 null);
             this.diagnosticSourceSubscriber.Subscribe();
