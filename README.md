@@ -46,6 +46,7 @@ Approvers ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telem
 - [Bruno Garcia](https://github.com/bruno-garcia), Sentry
 - [Christoph Neumueller](https://github.com/discostu105), Dynatrace
 - [Liudmila Molkova](https://github.com/lmolkova), Microsoft
+- [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group
 - [Paulo Janotti](https://github.com/pjanotti), Splunk
 
 Triagers:
