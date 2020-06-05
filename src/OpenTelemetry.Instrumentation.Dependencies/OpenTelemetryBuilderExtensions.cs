@@ -37,8 +37,8 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            builder.AddHttpClientDependencyInstrumentation(null);
-            builder.AddSqlClientDependencyInstrumentation(null);
+            builder.AddHttpClientDependencyInstrumentation();
+            builder.AddSqlClientDependencyInstrumentation();
             builder.AddAzureClientsDependencyInstrumentation();
 #if NET461
             builder.AddHttpWebRequestDependencyInstrumentation();
@@ -76,6 +76,17 @@ namespace OpenTelemetry.Trace.Configuration
         /// Enables the outgoing requests automatic data collection for HttpClient.
         /// </summary>
         /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddHttpClientDependencyInstrumentation(
+            this OpenTelemetryBuilder builder)
+        {
+            return builder.AddHttpClientDependencyInstrumentation(null);
+        }
+
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection for HttpClient.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
         /// <param name="configureHttpClientInstrumentationOptions">HttpClient configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
         public static OpenTelemetryBuilder AddHttpClientDependencyInstrumentation(
@@ -96,6 +107,17 @@ namespace OpenTelemetry.Trace.Configuration
             // TODO: decide who is responsible for dispose upon shutdown.
             new HttpClientInstrumentation(httpClientOptions);
             return builder;
+        }
+
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection for SqlClient.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddSqlClientDependencyInstrumentation(
+            this OpenTelemetryBuilder builder)
+        {
+            return builder.AddSqlClientDependencyInstrumentation(null);
         }
 
         /// <summary>

@@ -32,7 +32,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         // hard-coded Sampler here, just to prototype.
         // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
-        // or we'll move the Sampler to come from OpenTelemetryBuilder, and not hardcoded.
+        // or we'll expose an API from OT SDK.
         private readonly ActivitySampler sampler = new AlwaysOnActivitySampler();
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher stopContextFetcher = new PropertyFetcher("HttpContext");
@@ -66,12 +66,30 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
-
             var request = context.Request;
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
             activity.DisplayName = path;
+
+            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
+            {
+                // This requires to ignore the current activity and create a new one
+                // using the context extracted from w3ctraceparent header or
+                // using the format TextFormat supports.
+                // TODO: implement this
+                /*
+                var ctx = this.options.TextFormat.Extract<HttpRequest>(
+                    request,
+                    (r, name) => r.Headers[name]);
+
+                Activity newOne = new Activity(path);
+                newOne.SetParentId(ctx.Id);
+                newOne.TraceState = ctx.TraceStateString;
+                activity = newOne;
+                */
+            }
+
+            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
+            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
 
             var samplingParameters = new ActivitySamplingParameters(
                 activity.Context,
@@ -84,22 +102,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // TODO: Find a way to avoid Instrumentation being tied to Sampler
             var samplingDecision = this.sampler.ShouldSample(samplingParameters);
             activity.IsAllDataRequested = samplingDecision.IsSampled;
-
-            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
-            {
-                // This requires to ignore the current activity and create a new one
-                // using the context extracted from w3ctraceprent header or
-                // using the format TextFormat supports.
-                // TODO: actually implement code doing the above.
-
-                /*
-                var ctx = this.options.TextFormat.Extract<HttpRequest>(
-                    request,
-                    (r, name) => r.Headers[name]);
-
-                this.Tracer.StartActiveSpan(path, ctx, SpanKind.Server, out span);
-                */
-            }
 
             if (activity.IsAllDataRequested)
             {
