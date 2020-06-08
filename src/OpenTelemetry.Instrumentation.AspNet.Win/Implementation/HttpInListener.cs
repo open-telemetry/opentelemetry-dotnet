@@ -53,6 +53,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
+                // TODO: These filters won't prevent the activity from being tracked
+                // as they are fired anyway.
                 InstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 return;
             }
