@@ -180,7 +180,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
 
                 var expectedUri = new Uri(url);
-                var actualUrl = (string)span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value;
+                var actualUrl = span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value;
 
                 Assert.Equal(expectedUri.ToString(), actualUrl);
 

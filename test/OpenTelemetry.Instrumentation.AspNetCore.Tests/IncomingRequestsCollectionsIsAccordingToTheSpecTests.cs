@@ -26,6 +26,8 @@ using Microsoft.AspNetCore.TestHost;
 using System;
 using Microsoft.AspNetCore.Http;
 using TestApp.AspNetCore._3._1;
+using System.Diagnostics;
+using System.Linq;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
@@ -54,7 +56,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
-            var spanProcessor = new Mock<SpanProcessor>();
+            var spanProcessor = new Mock<ActivityProcessor>();
 
             // Arrange
             using (var client = this.factory
@@ -62,10 +64,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl());
+
+                        OpenTelemetrySdk.EnableOpenTelemetry(
+                        (builder) => builder.AddRequestInstrumentation()
+                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object))));
+
+                        /*
                         services.AddSingleton<TracerFactory>(_ =>
                             TracerFactory.Create(b => b
                                 .AddProcessorPipeline(p => p.AddProcessor(e => spanProcessor.Object))
                                 .AddRequestInstrumentation()));
+                        */
                     }))
                 .CreateClient())
             {
@@ -88,18 +97,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     }
 
                     // We need to let End callback execute as it is executed AFTER response was returned.
-                    // In unit tests environment there may be a lot of parallel unit tests executed, so 
+                    // In unit tests environment there may be a lot of parallel unit tests executed, so
                     // giving some breezing room for the End callback to complete
                     await Task.Delay(TimeSpan.FromSeconds(1));
                 }
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
+            var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
-            Assert.Equal(SpanKind.Server, span.Kind);
-            Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));
-            Assert.Equal(503L, span.Attributes.GetValue("http.status_code"));
+            Assert.Equal(ActivityKind.Server, span.Kind);
+            Assert.Equal("/api/values", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal("503", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpStatusCodeKey).Value);
         }
     }
 }
