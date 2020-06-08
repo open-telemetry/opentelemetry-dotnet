@@ -17,7 +17,6 @@ using System;
 using System.Diagnostics;
 using System.Net.Http;
 using OpenTelemetry.Exporter.Console;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
 namespace Samples

@@ -39,19 +39,13 @@ namespace API
 
             OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
-                .UseConsoleActivityExporter(opt => opt.DisplayAsJson = opt.DisplayAsJson));
-
-            services.AddOpenTelemetry((sp, builder) =>
-            {
-                builder
-                    //.SetSampler(Samplers.AlwaysSample)
-                    .UseZipkin(options =>
-                    {
-                        options.ServiceName = "test-zipkin";
-                        options.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
-                    })
-                    .AddDependencyInstrumentation();
-            });
+                .UseJaegerActivityExporter(o =>
+                {
+                    o.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
+                    o.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
+                    o.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
+                })
+                );
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
