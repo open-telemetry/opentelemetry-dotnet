@@ -48,15 +48,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 out var host,
                 out var port);
 
-            var spanProcessor = new Mock<SpanProcessor>();
-            var tracer = TracerFactory.Create(b => b
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
+            var spanProcessor = new Mock<ActivityProcessor>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
             using (serverLifeTime)
 
-            using (new HttpClientInstrumentation(tracer, new HttpClientInstrumentationOptions() { SetHttpFlavor = tc.SetHttpFlavor }))
+            using (OpenTelemetrySdk.EnableOpenTelemetry(
+                    (builder) => builder.AddHttpClientDependencyInstrumentation((opt)=> opt.SetHttpFlavor = tc.SetHttpFlavor)
+                    .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
             {
                 try
                 {
