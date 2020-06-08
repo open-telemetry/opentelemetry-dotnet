@@ -102,6 +102,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // TODO: Find a way to avoid Instrumentation being tied to Sampler
             var samplingDecision = this.sampler.ShouldSample(samplingParameters);
             activity.IsAllDataRequested = samplingDecision.IsSampled;
+            if (samplingDecision.IsSampled)
+            {
+                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            }
 
             if (activity.IsAllDataRequested)
             {
