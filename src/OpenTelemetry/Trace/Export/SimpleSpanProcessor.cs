@@ -68,7 +68,11 @@ namespace OpenTelemetry.Trace.Export
                 return this.exporter.ShutdownAsync(cancellationToken);
             }
 
+#if NET452
+            return Task.FromResult(0);
+#else
             return Task.CompletedTask;
+#endif
         }
 
         public void Dispose()
