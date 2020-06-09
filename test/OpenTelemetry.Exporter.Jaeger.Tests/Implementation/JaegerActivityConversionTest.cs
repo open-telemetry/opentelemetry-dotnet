@@ -457,8 +457,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 kind,
                 parentContext: new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
                 tags: setAttributes ?
-                    // TODO: reverse here for now so it matches order in tests.
-                    attributes.Reverse().Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()))
+                    attributes.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()))
                     : null,
                 links: addLinks ?
                     new[] { new ActivityLink(new ActivityContext(
@@ -470,8 +469,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             if (addEvents)
             {
-                // TODO: reverse here for now so it matches order in tests.
-                events.Reverse();
                 foreach (var evnt in events)
                 {
                     activity.AddEvent(evnt);

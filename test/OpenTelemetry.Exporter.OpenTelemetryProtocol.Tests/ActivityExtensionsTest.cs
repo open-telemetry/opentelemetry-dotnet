@@ -1,4 +1,4 @@
-// <copyright file="SpanDataExtensionsTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanDataExtensionsTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -130,8 +130,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 tags.Add(new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()));
             }
 
-            tags.Reverse(); // Activity.AddTag put tags on the front of backing collection.
-
             var startTime = new DateTime(2020, 02, 20, 20, 20, 20, DateTimeKind.Utc);
             var expectedUnixTimeTicks = (ulong)(startTime.Ticks - DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks);
             var duration = TimeSpan.FromMilliseconds(1555);
@@ -184,7 +182,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(parentId, otlpSpan.ParentSpanId);
             Assert.Empty(otlpSpan.Attributes);
 
-            childEvents.Reverse();
             Assert.Equal(childEvents.Count, otlpSpan.Events.Count);
             for (var i = 0; i < childEvents.Count; i++)
             {
