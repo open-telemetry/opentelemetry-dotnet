@@ -15,6 +15,11 @@
 // </copyright>
 
 using System;
+#if NET452
+using System.Collections;
+using System.Reflection;
+using System.Runtime.Remoting.Messaging;
+#endif
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,7 +30,23 @@ namespace OpenTelemetry.Context
     /// </summary>
     public sealed class AsyncLocalDistributedContextCarrier : DistributedContextCarrier
     {
+#if NET452
+        // A special workaround to suppress context propagation cross AppDomains.
+        //
+        // By default the value added to System.Runtime.Remoting.Messaging.CallContext
+        // will be marshalled/unmarshalled across AppDomain boundary. This will cause
+        // serious issue if the destination AppDomain doesn't have the corresponding type
+        // to unmarshal data (which is DistributedContext in this case).
+        // The worst case is AppDomain crash with ReflectionLoadTypeException.
+        //
+        // The workaround is to use a well known type that exists in all AppDomains, and
+        // put the actual payload (DistributedContext instance) as a non-public field so
+        // the field is ignored during marshalling.
+        private const string ContextSlotName = "OpenTelemetry.DistributedContext";
+        private static readonly FieldInfo WrapperField = typeof(BitArray).GetField("_syncRoot", BindingFlags.Instance | BindingFlags.NonPublic);
+#else
         private static AsyncLocal<DistributedContext> carrier = new AsyncLocal<DistributedContext>();
+#endif
 
         private AsyncLocalDistributedContextCarrier()
         {
@@ -40,7 +61,26 @@ namespace OpenTelemetry.Context
         /// <summary>
         /// Gets the current <see cref="DistributedContext"/>.
         /// </summary>
-        public override DistributedContext Current => carrier.Value;
+        public override DistributedContext Current
+        {
+            get
+            {
+#if NET452
+                var wrapper = CallContext.LogicalGetData(ContextSlotName) as BitArray;
+
+                if (wrapper == null)
+                {
+                    var context = default(DistributedContext);
+                    this.OverwriteCurrent(context);
+                    return context;
+                }
+
+                return (DistributedContext)WrapperField.GetValue(wrapper);
+#else
+                return carrier.Value;
+#endif
+            }
+        }
 
         /// <summary>
         /// Sets the current <see cref="DistributedContext"/>.
@@ -49,6 +89,15 @@ namespace OpenTelemetry.Context
         /// <returns>Scope object. On disposal - original context will be restored.</returns>
         public override IDisposable SetCurrent(in DistributedContext context) => new DistributedContextState(in context);
 
-        internal void OverwriteCurrent(in DistributedContext context) => carrier.Value = context;
+        internal void OverwriteCurrent(in DistributedContext context)
+        {
+#if NET452
+            var wrapper = new BitArray(0);
+            WrapperField.SetValue(wrapper, context);
+            CallContext.LogicalSetData(ContextSlotName, wrapper);
+#else
+            carrier.Value = context;
+#endif
+        }
     }
 }
