@@ -32,7 +32,7 @@ namespace OpenTelemetry.Instrumentation
         [NonEvent]
         public void ExceptionInCustomSampler(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
                 this.ExceptionInCustomSampler(ToInvariantString(ex));
             }
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Instrumentation
         [NonEvent]
         public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
         {
-            if (!this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            if (!this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
             {
                 return;
             }
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Instrumentation
         [NonEvent]
         public void ExceptionInitializingInstrumentation(string instrumentationType, Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
             {
                 this.ExceptionInitializingInstrumentation(instrumentationType, ToInvariantString(ex));
             }
