@@ -34,7 +34,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void SpanProcessorException(string evnt, Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
                 this.SpanProcessorException(evnt, ToInvariantString(ex));
             }
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void ContextExtractException(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
                 this.FailedToExtractContext(ToInvariantString(ex));
             }
