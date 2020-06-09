@@ -30,7 +30,6 @@
     <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
     <ProjectReference Include="..\TestApp.AspNetCore.3.1\TestApp.AspNetCore.3.1.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="3.0.0" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="5.0.0-preview.4.20251.6" />
   </ItemGroup>
 
   <ItemGroup>
