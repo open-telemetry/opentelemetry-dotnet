@@ -61,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+                var openTelemetry = OpenTelemetrySdk.Default.EnableOpenTelemetry(
                 (builder) => builder.AddRequestInstrumentation()
                 .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object))));
 
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
-                        OpenTelemetrySdk.EnableOpenTelemetry(
+                        OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddRequestInstrumentation()
                         .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object))));
 
@@ -165,7 +165,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
-                        OpenTelemetrySdk.EnableOpenTelemetry(
+                        OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddRequestInstrumentation()
                         .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object))));
 
@@ -202,7 +202,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+                var openTelemetry = OpenTelemetrySdk.Default.EnableOpenTelemetry(
                 (builder) => builder.AddRequestInstrumentation()
                 .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object))));
 

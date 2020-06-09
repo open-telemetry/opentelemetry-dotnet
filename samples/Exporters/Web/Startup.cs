@@ -37,7 +37,7 @@ namespace API
                 }
             });
 
-            OpenTelemetrySdk.EnableOpenTelemetry(
+            OpenTelemetrySdk.Default.EnableOpenTelemetry(
                 (builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
                 .UseJaegerActivityExporter(o =>
                 {

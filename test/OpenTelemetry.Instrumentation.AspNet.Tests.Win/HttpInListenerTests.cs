@@ -120,7 +120,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             try
             {
                 var activityProcessor = new Mock<ActivityProcessor>();
-                openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+                openTelemetry = OpenTelemetrySdk.Default.EnableOpenTelemetry(
                 (builder) => builder.AddRequestInstrumentation()
                 .SetProcessorPipeline((p=> p.AddProcessor(_ => activityProcessor.Object))));
 

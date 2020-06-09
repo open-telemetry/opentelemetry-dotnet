@@ -42,7 +42,7 @@ namespace TestApp.AspNetCore._3._1
             services.AddSingleton(
                 new CallbackMiddleware.CallbackMiddlewareImpl());
 
-            OpenTelemetrySdk.EnableOpenTelemetry(
+            OpenTelemetrySdk.Default.EnableOpenTelemetry(
                 (builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation());
         }
 

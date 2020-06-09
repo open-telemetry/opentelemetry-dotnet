@@ -15,7 +15,7 @@ namespace OpenTelemetry.Exporter.AspNet
 
         protected void Application_Start()
         {
-            this.openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+            this.openTelemetry = OpenTelemetrySdk.Default.EnableOpenTelemetry(
                 (builder) => builder.AddDependencyInstrumentation()
                 .AddRequestInstrumentation()
                 .UseJaegerActivityExporter(c =>
