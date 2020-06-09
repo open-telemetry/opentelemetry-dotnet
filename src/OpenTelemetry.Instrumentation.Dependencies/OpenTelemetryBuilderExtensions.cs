@@ -104,8 +104,7 @@ namespace OpenTelemetry.Trace.Configuration
             var httpClientOptions = new HttpClientInstrumentationOptions();
             configureHttpClientInstrumentationOptions?.Invoke(httpClientOptions);
 
-            // TODO: decide who is responsible for dispose upon shutdown.
-            new HttpClientInstrumentation(httpClientOptions);
+            builder.AddInstrumentation(() => new HttpClientInstrumentation(httpClientOptions));
             return builder;
         }
 
@@ -141,8 +140,8 @@ namespace OpenTelemetry.Trace.Configuration
             var sqlOptions = new SqlClientInstrumentationOptions();
             configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
 
-            // TODO: decide who is responsible for dispose upon shutdown.
-            new SqlClientInstrumentation(sqlOptions);
+            builder.AddInstrumentation(() => new SqlClientInstrumentation(sqlOptions));
+
             return builder;
         }
 
@@ -160,9 +159,7 @@ namespace OpenTelemetry.Trace.Configuration
             }
 
             builder.AddActivitySource(AzureSdkDiagnosticListener.ActivitySourceName);
-
-            // TODO: decide who is responsible for dispose upon shutdown.
-            new AzureClientsInstrumentation();
+            builder.AddInstrumentation(() => new AzureClientsInstrumentation());
             return builder;
         }
 
