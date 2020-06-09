@@ -45,8 +45,7 @@ namespace OpenTelemetry.Trace.Configuration
             var aspnetOptions = new AspNetInstrumentationOptions();
             configureAspNetInstrumentationOptions?.Invoke(aspnetOptions);
 
-            // TODO: decide who is responsible for dispose upon shutdown.
-            new AspNetInstrumentation(aspnetOptions);
+            builder.AddInstrumentation(() => new AspNetInstrumentation(aspnetOptions));
 
             return builder;
         }
