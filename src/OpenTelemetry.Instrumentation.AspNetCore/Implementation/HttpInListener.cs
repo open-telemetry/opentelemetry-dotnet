@@ -70,22 +70,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
             activity.DisplayName = path;
 
-            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
+            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormatActivity))
             {
                 // This requires to ignore the current activity and create a new one
                 // using the context extracted from w3ctraceparent header or
                 // using the format TextFormat supports.
-                // TODO: implement this
-                /*
+
                 var ctx = this.options.TextFormat.Extract<HttpRequest>(
                     request,
                     (r, name) => r.Headers[name]);
 
                 Activity newOne = new Activity(path);
-                newOne.SetParentId(ctx.Id);
-                newOne.TraceState = ctx.TraceStateString;
+                newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
+                newOne.TraceStateString = ctx.TraceState;
+                newOne.Start();
                 activity = newOne;
-                */
             }
 
             // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.

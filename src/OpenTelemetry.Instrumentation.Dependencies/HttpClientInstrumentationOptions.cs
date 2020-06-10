@@ -51,7 +51,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <summary>
         /// Gets or sets <see cref="ITextFormat"/> for context propagation.
         /// </summary>
-        public ITextFormat TextFormat { get; set; } = new TraceContextFormat();
+        public ITextFormatActivity TextFormat { get; set; } = new TraceContextFormatActivity();
 
         /// <summary>
         /// Gets a hook to exclude calls based on domain or other per-request criterion.

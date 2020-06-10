@@ -69,6 +69,23 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var path = requestValues.Path;
             activity.DisplayName = path;
 
+            if (!(this.options.TextFormat is TraceContextFormatActivity))
+            {
+                // This requires to ignore the current activity and create a new one
+                // using the context extracted from w3ctraceparent header or
+                // using the format TextFormat supports.
+
+                var ctx = this.options.TextFormat.Extract<HttpRequest>(
+                    request,
+                    (r, name) => requestValues.Headers.GetValues(name));
+
+                Activity newOne = new Activity(path);
+                newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
+                newOne.TraceStateString = ctx.TraceState;
+                newOne.Start();
+                activity = newOne;
+            }
+
             var samplingParameters = new ActivitySamplingParameters(
                 activity.Context,
                 activity.TraceId,
@@ -83,20 +100,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             if (samplingDecision.IsSampled)
             {
                 activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            }
-
-            if (!(this.options.TextFormat is TraceContextFormat))
-            {
-                // This requires to ignore the current activity and create a new one
-                // using the context extracted using the format TextFormat supports.
-                // TODO: actually implement code doing the above.
-                /*
-                var ctx = this.options.TextFormat.Extract<HttpRequest>(
-                    request,
-                    (r, name) => requestValues.Headers.GetValues(name));
-
-                this.Tracer.StartActiveSpan(path, ctx, SpanKind.Server, out span);
-                */
             }
 
             if (activity.IsAllDataRequested)
