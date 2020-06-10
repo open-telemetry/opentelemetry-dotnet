@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Collections.Generic;
 using OpenTelemetry.Trace;
 
 namespace LoggingTracer

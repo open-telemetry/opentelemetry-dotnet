@@ -15,26 +15,25 @@
 // </copyright>
 
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace OpenTelemetry.Context.Test
 {
     public class CorrelationContextBuilderTest
     {
-        private const string KEY_1 = "key 1";
-        private const string KEY_2 = "key 2";
+        private const string Key1 = "key 1";
+        private const string Key2 = "key 2";
 
-        private const string VALUE_1 = "value 1";
-        private const string VALUE_2 = "value 2";
+        private const string Value1 = "value 1";
+        private const string Value2 = "value 2";
 
         private static readonly List<CorrelationContextEntry> List1 = new List<CorrelationContextEntry>(1)
-            {new CorrelationContextEntry(KEY_1, VALUE_1)};
+            { new CorrelationContextEntry(Key1, Value1) };
 
         private static readonly List<CorrelationContextEntry> List2 = new List<CorrelationContextEntry>(2)
         {
-            new CorrelationContextEntry(KEY_1, VALUE_1),
-            new CorrelationContextEntry(KEY_2, VALUE_2),
+            new CorrelationContextEntry(Key1, Value1),
+            new CorrelationContextEntry(Key2, Value2),
         };
 
         public CorrelationContextBuilderTest()
@@ -51,7 +50,7 @@ namespace OpenTelemetry.Context.Test
             dc = CorrelationContextBuilder.CreateContext(CorrelationContext.Empty.Entries);
             Assert.Equal(CorrelationContext.Empty, dc);
 
-            dc = CorrelationContextBuilder.CreateContext(KEY_1, VALUE_1);
+            dc = CorrelationContextBuilder.CreateContext(Key1, Value1);
             Assert.Equal(CorrelationContextBuilder.CreateContext(List1), dc);
 
             Assert.Equal(dc, new CorrelationContextBuilder(dc).Build());
@@ -64,41 +63,35 @@ namespace OpenTelemetry.Context.Test
 
             Assert.Equal(
                 CorrelationContextBuilder.CreateContext(List1), new CorrelationContextBuilder(inheritCurrentContext: false)
-                    .Add(KEY_1, VALUE_1)
-                    .Build()
-            );
+                    .Add(Key1, Value1)
+                    .Build());
 
             Assert.Equal(
                 CorrelationContextBuilder.CreateContext(List1), new CorrelationContextBuilder(inheritCurrentContext: false)
-                    .Add(new CorrelationContextEntry(KEY_1, VALUE_1))
-                    .Build()
-            );
+                    .Add(new CorrelationContextEntry(Key1, Value1))
+                    .Build());
 
             Assert.Equal(
                 CorrelationContextBuilder.CreateContext(List2), new CorrelationContextBuilder(inheritCurrentContext: false)
-                    .Add(KEY_1, VALUE_1)
-                    .Add(KEY_2, VALUE_2)
-                    .Build()
-            );
+                    .Add(Key1, Value1)
+                    .Add(Key2, Value2)
+                    .Build());
 
             Assert.Equal(
                 CorrelationContextBuilder.CreateContext(List2), new CorrelationContextBuilder(inheritCurrentContext: false)
-                    .Add(new CorrelationContextEntry(KEY_1, VALUE_1))
-                    .Add(new CorrelationContextEntry(KEY_2, VALUE_2))
-                    .Build()
-            );
+                    .Add(new CorrelationContextEntry(Key1, Value1))
+                    .Add(new CorrelationContextEntry(Key2, Value2))
+                    .Build());
 
             Assert.Equal(
                 CorrelationContextBuilder.CreateContext(List1), new CorrelationContextBuilder(inheritCurrentContext: false)
                     .Add(List1)
-                    .Build()
-            );
+                    .Build());
 
             Assert.Equal(
                 CorrelationContextBuilder.CreateContext(List2), new CorrelationContextBuilder(inheritCurrentContext: false)
                     .Add(List2)
-                    .Build()
-            );
+                    .Build());
         }
 
         [Fact]
@@ -107,17 +100,15 @@ namespace OpenTelemetry.Context.Test
             Assert.Equal(
                 CorrelationContextBuilder.CreateContext(List1), new CorrelationContextBuilder(inheritCurrentContext: false)
                     .Add(List2)
-                    .Remove(KEY_2)
-                    .Build()
-            );
+                    .Remove(Key2)
+                    .Build());
 
             Assert.Equal(
                 CorrelationContext.Empty, new CorrelationContextBuilder(inheritCurrentContext: false)
                     .Add(List2)
-                    .Remove(KEY_2)
-                    .Remove(KEY_1)
-                    .Build()
-            );
+                    .Remove(Key2)
+                    .Remove(Key1)
+                    .Build());
         }
 
         [Fact]

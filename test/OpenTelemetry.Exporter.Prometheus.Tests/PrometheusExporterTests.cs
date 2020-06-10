@@ -32,9 +32,10 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public class PrometheusExporterTests
     {
+        private const int MetricPushIntervalMsec = 100;
+        private const int WaitDuration = MetricPushIntervalMsec + 100;
+
         private readonly ITestOutputHelper output;
-        private const int metricPushIntervalMsec = 100;
-        private const int waitDuration = metricPushIntervalMsec + 100;
 
         public PrometheusExporterTests(ITestOutputHelper output)
         {
@@ -56,7 +57,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             }
             finally
             {
-                await Task.Delay(waitDuration);
+                await Task.Delay(WaitDuration);
 
                 var client = new HttpClient();
                 var response = await client.GetAsync("http://localhost:9184/metrics/");
@@ -83,7 +84,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .ConfigureServices(services =>
                 {
                     services.AddSingleton(promOptions);
-                    services.AddSingleton(promExporter); //Temporary till we figure out metrics configuration
+                    services.AddSingleton(promExporter); // Temporary till we figure out metrics configuration
                 });
 
             var server = new TestServer(builder);
@@ -98,7 +99,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 var response = await client.GetAsync("/foo");
                 Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
-                await Task.Delay(waitDuration);
+                await Task.Delay(WaitDuration);
                 response = await client.GetAsync("/metrics");
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 var responseText = await response.Content.ReadAsStringAsync();
@@ -113,7 +114,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             {
                 mb.SetMetricProcessor(simpleProcessor);
                 mb.SetMetricExporter(exporter);
-                mb.SetMetricPushInterval(TimeSpan.FromMilliseconds(metricPushIntervalMsec));
+                mb.SetMetricPushInterval(TimeSpan.FromMilliseconds(MetricPushIntervalMsec));
             }).GetMeter("library1");
 
             var testCounter = meter.CreateInt64Counter("testCounter");
@@ -154,12 +155,16 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             // Validate measure.
             Assert.Contains("# TYPE testMeasure summary", responseText);
+
             // sum is 6150 = 10 * (10+100+5+500)
             Assert.Contains("testMeasure_sum{dim1=\"value1\"} 6150", responseText);
+
             // count is 10 * 4
             Assert.Contains("testMeasure_count{dim1=\"value1\"} 40", responseText);
+
             // Min is 5
             Assert.Contains("testMeasure{dim1=\"value1\",quantile=\"0\"} 5", responseText);
+
             // Max is 500
             Assert.Contains("testMeasure{dim1=\"value1\",quantile=\"1\"} 500", responseText);
 

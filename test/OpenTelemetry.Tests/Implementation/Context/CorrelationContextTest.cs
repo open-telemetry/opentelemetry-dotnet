@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
 using System.Collections.Generic;
 using Xunit;
 
@@ -51,7 +50,7 @@ namespace OpenTelemetry.Context.Test
         [Fact]
         public void AddExtraKey()
         {
-            var list = new List<CorrelationContextEntry>(1) { new CorrelationContextEntry(K1, V1)};
+            var list = new List<CorrelationContextEntry>(1) { new CorrelationContextEntry(K1, V1) };
             var dc = CorrelationContextBuilder.CreateContext(list);
             Assert.Equal(list, dc.Entries);
 
@@ -104,7 +103,7 @@ namespace OpenTelemetry.Context.Test
             Assert.True(i.MoveNext());
             var tag2 = i.Current;
             Assert.False(i.MoveNext());
-            Assert.Equal(new List<CorrelationContextEntry> { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2)}, new List<CorrelationContextEntry> { tag1, tag2 });
+            Assert.Equal(new List<CorrelationContextEntry> { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) }, new List<CorrelationContextEntry> { tag1, tag2 });
         }
 
         [Fact]

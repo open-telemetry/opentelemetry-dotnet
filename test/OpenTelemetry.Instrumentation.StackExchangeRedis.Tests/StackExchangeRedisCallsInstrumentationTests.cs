@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using StackExchange.Redis.Profiling;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.StackExchangeRedis

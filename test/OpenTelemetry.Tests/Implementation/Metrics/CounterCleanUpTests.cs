@@ -14,13 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using OpenTelemetry.Metrics.Configuration;
+using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
 using Xunit;
-using OpenTelemetry.Metrics.Export;
-using System.Threading;
-using System;
 using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Test
@@ -59,17 +59,20 @@ namespace OpenTelemetry.Metrics.Test
             // ls2 is bound by user.
             testCounter.Add(context, 100, ls1);
             testCounter.Add(context, 10, ls1);
-            // initial status for temp bound instruments are UpdatePending.            
+
+            // initial status for temp bound instruments are UpdatePending.
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls1].Status);
 
             var boundCounterLabel2 = testCounter.Bind(ls2);
             boundCounterLabel2.Add(context, 200);
+
             // initial/forever status for user bound instruments are Bound.
             Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
 
             testCounter.Add(context, 200, ls3);
             testCounter.Add(context, 10, ls3);
-            // initial status for temp bound instruments are UpdatePending.            
+
+            // initial status for temp bound instruments are UpdatePending.
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls3].Status);
 
             // This collect should mark ls1, ls3 as NoPendingUpdate, leave ls2 untouched.
@@ -128,17 +131,20 @@ namespace OpenTelemetry.Metrics.Test
             // ls2 is bound by user.
             testCounter.Add(context, 100.0, ls1);
             testCounter.Add(context, 10.0, ls1);
-            // initial status for temp bound instruments are UpdatePending.            
+
+            // initial status for temp bound instruments are UpdatePending.
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls1].Status);
 
             var boundCounterLabel2 = testCounter.Bind(ls2);
             boundCounterLabel2.Add(context, 200.0);
+
             // initial/forever status for user bound instruments are Bound.
             Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
 
             testCounter.Add(context, 200.0, ls3);
             testCounter.Add(context, 10.0, ls3);
-            // initial status for temp bound instruments are UpdatePending.            
+
+            // initial status for temp bound instruments are UpdatePending.
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls3].Status);
 
             // This collect should mark ls1, ls3 as NoPendingUpdate, leave ls2 untouched.
@@ -202,12 +208,12 @@ namespace OpenTelemetry.Metrics.Test
             // candidate for removal after above step.
             var mre = new ManualResetEvent(false);
             var argsForMeterCollect = new ArgsToThread();
-            argsForMeterCollect.mreToBlockStartOfThread = mre;
-            argsForMeterCollect.callback = () => meter.Collect();
+            argsForMeterCollect.MreToBlockStartOfThread = mre;
+            argsForMeterCollect.Callback = () => meter.Collect();
 
             var argsForCounterAdd = new ArgsToThread();
-            argsForCounterAdd.mreToBlockStartOfThread = mre;
-            argsForCounterAdd.callback = () => testCounter.Add(context, 100, ls1);
+            argsForCounterAdd.MreToBlockStartOfThread = mre;
+            argsForCounterAdd.Callback = () => testCounter.Add(context, 100, ls1);
 
             var collectThread = new Thread(ThreadMethod);
             var updateThread = new Thread(ThreadMethod);
@@ -231,9 +237,9 @@ namespace OpenTelemetry.Metrics.Test
             meter.Collect();
 
             long sum = 0;
-            foreach (var exportedData in testProcessor.metrics)
+            foreach (var exportedData in testProcessor.Metrics)
             {
-                exportedData.Data.ForEach((data => sum += (data as Int64SumData).Sum));
+                exportedData.Data.ForEach(data => sum += (data as Int64SumData).Sum);
             }
 
             // 210 = 110 from initial update, 100 from the multi-thread test case.
@@ -258,7 +264,7 @@ namespace OpenTelemetry.Metrics.Test
             testCounter.Add(context, 10.0, ls1);
 
             // This collect should mark ls1 NoPendingUpdate
-            meter.Collect();            
+            meter.Collect();
 
             // Validate collect() has marked records correctly.
             Assert.Equal(RecordStatus.NoPendingUpdate, testCounter.GetAllBoundInstruments()[ls1].Status);
@@ -271,12 +277,12 @@ namespace OpenTelemetry.Metrics.Test
             // candidate for removal after above step.
             var mre = new ManualResetEvent(false);
             var argsForMeterCollect = new ArgsToThread();
-            argsForMeterCollect.mreToBlockStartOfThread = mre;
-            argsForMeterCollect.callback = () => meter.Collect();
+            argsForMeterCollect.MreToBlockStartOfThread = mre;
+            argsForMeterCollect.Callback = () => meter.Collect();
 
             var argsForCounterAdd = new ArgsToThread();
-            argsForCounterAdd.mreToBlockStartOfThread = mre;
-            argsForCounterAdd.callback = () => testCounter.Add(context, 100.0, ls1);
+            argsForCounterAdd.MreToBlockStartOfThread = mre;
+            argsForCounterAdd.Callback = () => testCounter.Add(context, 100.0, ls1);
 
             var collectThread = new Thread(ThreadMethod);
             var updateThread = new Thread(ThreadMethod);
@@ -300,10 +306,10 @@ namespace OpenTelemetry.Metrics.Test
             meter.Collect();
 
             double sum = 0;
-            
-            foreach (var exportedData in testProcessor.metrics)
+
+            foreach (var exportedData in testProcessor.Metrics)
             {
-                exportedData.Data.ForEach((data => sum += (data as DoubleSumData).Sum));
+                exportedData.Data.ForEach(data => sum += (data as DoubleSumData).Sum);
             }
 
             // 210 = 110 from initial update, 100 from the multi-thread test case.
@@ -313,18 +319,18 @@ namespace OpenTelemetry.Metrics.Test
         private static void ThreadMethod(object obj)
         {
             var args = obj as ArgsToThread;
-            var mre = args.mreToBlockStartOfThread;
-            var callBack = args.callback;
+            var mre = args.MreToBlockStartOfThread;
+            var callBack = args.Callback;
 
             // Wait until signalled to call Collect.
             mre.WaitOne();
             callBack();
         }
-    }
 
-    class ArgsToThread
-    {
-        public ManualResetEvent mreToBlockStartOfThread;
-        public Action callback;
+        private class ArgsToThread
+        {
+            public ManualResetEvent MreToBlockStartOfThread;
+            public Action Callback;
+        }
     }
 }

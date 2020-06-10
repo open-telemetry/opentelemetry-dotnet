@@ -16,11 +16,10 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Utils;
-using System.Linq;
-using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Tests.Impl.Trace
@@ -38,6 +37,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         {
             var noopScope = new ProxyTracer().WithSpan(BlankSpan.Instance);
             Assert.NotNull(noopScope);
+
             // does not throw
             noopScope.Dispose();
         }
@@ -231,7 +231,9 @@ namespace OpenTelemetry.Tests.Impl.Trace
             using (proxyTracer.WithSpan(parentSpan))
             {
                 var startTimestamp = PreciseTimestamp.GetUtcNow();
-                var linkContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
+                var linkContext = new SpanContext(
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
                     ActivityTraceFlags.Recorded);
                 var span = (SpanSdk)proxyTracer.StartSpan("child", SpanKind.Consumer, new SpanCreationOptions
                 {
@@ -255,4 +257,3 @@ namespace OpenTelemetry.Tests.Impl.Trace
         }
     }
 }
-

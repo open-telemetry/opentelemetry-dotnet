@@ -78,13 +78,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             // Assert
             Assert.Equal(2, batches.Count());
 
-            var PrimaryBatch = batches.Where(b => b.Process.ServiceName == "TestService");
-            Assert.Single(PrimaryBatch);
-            Assert.Equal(2, PrimaryBatch.First().SpanMessages.Count());
+            var primaryBatch = batches.Where(b => b.Process.ServiceName == "TestService");
+            Assert.Single(primaryBatch);
+            Assert.Equal(2, primaryBatch.First().SpanMessages.Count());
 
-            var MySQLBatch = batches.Where(b => b.Process.ServiceName == "MySQL");
-            Assert.Single(MySQLBatch);
-            Assert.Single(MySQLBatch.First().SpanMessages);
+            var mySQLBatch = batches.Where(b => b.Process.ServiceName == "MySQL");
+            Assert.Single(mySQLBatch);
+            Assert.Single(mySQLBatch.First().SpanMessages);
         }
 
         [Fact]
@@ -150,12 +150,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
             var attributes = new Dictionary<string, object>
             {
-                { "stringKey", "value"},
-                { "longKey", 1L},
+                { "stringKey", "value" },
+                { "longKey", 1L },
                 { "longKey2", 1 },
-                { "doubleKey", 1D},
-                { "doubleKey2", 1F},
-                { "boolKey", true},
+                { "doubleKey", 1D },
+                { "doubleKey2", 1F },
+                { "boolKey", true },
             };
             var events = new List<Event>
             {
@@ -165,16 +165,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }
-                ),
+                    }),
                 new Event(
                     "Event2",
                     eventTimestamp,
                     new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }
-                ),
+                    }),
             };
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());

@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics.Test
     internal class TestMetricExporter : MetricExporter
     {
         public List<Metric> Metrics = new List<Metric>();
-        private readonly Action onExport;        
+        private readonly Action onExport;
 
         public TestMetricExporter(Action onExport)
         {

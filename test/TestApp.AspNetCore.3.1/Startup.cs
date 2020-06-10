@@ -29,7 +29,7 @@ namespace TestApp.AspNetCore._3._1
     {
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            this.Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }

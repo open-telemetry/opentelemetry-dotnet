@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Linq;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context

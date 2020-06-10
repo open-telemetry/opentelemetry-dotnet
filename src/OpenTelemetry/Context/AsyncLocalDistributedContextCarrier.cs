@@ -21,7 +21,6 @@ using System.Reflection;
 using System.Runtime.Remoting.Messaging;
 #endif
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Context
 {

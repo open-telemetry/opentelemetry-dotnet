@@ -15,19 +15,13 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Test
 {
     internal class TestMeter : MeterSdk
     {
-        Action collectAction;
+        private readonly Action collectAction;
 
         internal TestMeter(string meterName, MetricProcessor metricProcessor, Action collectAction)
             : base(meterName, metricProcessor)

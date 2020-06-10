@@ -14,24 +14,24 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace.Configuration;
-using Xunit;
-using Microsoft.AspNetCore.Mvc.Testing;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
-using Moq;
-using Microsoft.AspNetCore.TestHost;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Diagnostics;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Samplers;
 using TestApp.AspNetCore._3._1;
+using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
@@ -74,7 +74,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices(ConfigureTestServices))
                 .CreateClient())
             {
-
                 // Act
                 var response = await client.GetAsync("/api/values");
 
@@ -178,7 +177,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(expectedSpanId, span.ParentSpanId);
         }
 
-
         [Fact]
         public async Task FilterOutRequest()
         {
@@ -198,6 +196,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices(ConfigureTestServices)))
             {
                 using var client = testFactory.CreateClient();
+
                 // Act
                 var response1 = await client.GetAsync("/api/values");
                 var response2 = await client.GetAsync("/api/values/2");
@@ -222,7 +221,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // We need to let End callback execute as it is executed AFTER response was returned.
             // In unit tests environment there may be a lot of parallel unit tests executed, so
             // giving some breezing room for the End callback to complete
-            Assert.True(SpinWait.SpinUntil(() =>
+            Assert.True(SpinWait.SpinUntil(
+                () =>
                 {
                     Thread.Sleep(10);
                     return spanProcessor.Invocations.Count >= 2;

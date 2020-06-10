@@ -59,9 +59,9 @@ namespace Samples
             // All meters from this factory will be configured with the common processor.
             var meterFactory = MeterFactory.Create(mb =>
                 {
-                mb.SetMetricProcessor(processor);
-                mb.SetMetricExporter(promExporter);
-                mb.SetMetricPushInterval(TimeSpan.FromSeconds(pushIntervalInSecs));
+                    mb.SetMetricProcessor(processor);
+                    mb.SetMetricExporter(promExporter);
+                    mb.SetMetricPushInterval(TimeSpan.FromSeconds(pushIntervalInSecs));
                 });
 
             // Obtain a Meter. Libraries would pass their name as argument.

@@ -32,7 +32,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
         public void TraceFactory_Default()
         {
             Assert.NotNull(TracerFactoryBase.Default);
-            var defaultTracer = TracerFactoryBase.Default.GetTracer("");
+            var defaultTracer = TracerFactoryBase.Default.GetTracer(string.Empty);
             Assert.NotNull(defaultTracer);
             Assert.Same(defaultTracer, TracerFactoryBase.Default.GetTracer("named tracerSdk"));
 
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             var factory = TracerFactory.Create(b => { });
             TracerFactoryBase.SetDefault(factory);
 
-            var defaultTracer = TracerFactoryBase.Default.GetTracer("");
+            var defaultTracer = TracerFactoryBase.Default.GetTracer(string.Empty);
             Assert.NotNull(defaultTracer);
             Assert.IsType<TracerSdk>(defaultTracer);
 
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
         [Fact]
         public void TraceFactory_UpdateDefault_CachedTracer()
         {
-            var defaultTracer = TracerFactoryBase.Default.GetTracer("");
+            var defaultTracer = TracerFactoryBase.Default.GetTracer(string.Empty);
             var noopSpan = defaultTracer.StartSpan("foo");
             Assert.IsType<BlankSpan>(noopSpan);
 
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             var span = defaultTracer.StartSpan("foo");
             Assert.IsType<SpanSdk>(span);
 
-            var newDefaultTracer = TracerFactoryBase.Default.GetTracer("");
+            var newDefaultTracer = TracerFactoryBase.Default.GetTracer(string.Empty);
             Assert.NotSame(defaultTracer, newDefaultTracer);
             Assert.IsType<TracerSdk>(newDefaultTracer);
         }

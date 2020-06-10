@@ -27,7 +27,8 @@ namespace OpenTelemetry.Tests
             return attributes.FirstOrDefault(kvp => kvp.Key == key).Value;
         }
 
-        public static void AssertAreSame(this IEnumerable<KeyValuePair<string, object>> attributes,
+        public static void AssertAreSame(
+            this IEnumerable<KeyValuePair<string, object>> attributes,
             IEnumerable<KeyValuePair<string, object>> expectedAttributes)
         {
             var expectedKeyValuePairs = expectedAttributes as KeyValuePair<string, object>[] ?? expectedAttributes.ToArray();
