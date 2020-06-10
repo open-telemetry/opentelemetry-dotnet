@@ -1,4 +1,4 @@
-// <copyright file="SpanDataExtensionsTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanDataExtensionsTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,20 +17,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
 using Google.Protobuf.Collections;
 using Moq;
-
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
-
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
+using Xunit;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
-
-using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
@@ -41,8 +37,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             var spanProcessor = new Mock<SpanProcessor>();
 
-            var evenResource = new Resource(new []{ new KeyValuePair<string, object>("k0", "v0") });
-            var oddResource = new Resource(new []{ new KeyValuePair<string, object>("k1", "v1") });
+            var evenResource = new Resource(new[] { new KeyValuePair<string, object>("k0", "v0") });
+            var oddResource = new Resource(new[] { new KeyValuePair<string, object>("k1", "v1") });
             var tracers = new[]
             {
                 TracerFactory.Create(b => b.SetResource(evenResource)
@@ -74,7 +70,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var spanDataList = new List<SpanData>();
             var invocations = spanProcessor.Invocations;
-            for (var i = 0; i < invocations.Count; i += 2) // Just want one of the OnStart/OnEnd pair.
+            for (var i = 0; i < invocations.Count; i += 2 /* Just want one of the OnStart/OnEnd pair. */)
             {
                 spanDataList.Add((SpanData)invocations[i].Arguments[0]);
             }
@@ -90,7 +86,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             foreach (var resourceSpans in otlpResourceSpans)
             {
                 Assert.Single(resourceSpans.InstrumentationLibrarySpans);
-                Assert.Equal(numOfSpans/2, resourceSpans.InstrumentationLibrarySpans[0].Spans.Count);
+                Assert.Equal(numOfSpans / 2, resourceSpans.InstrumentationLibrarySpans[0].Spans.Count);
                 Assert.NotNull(resourceSpans.Resource);
 
                 var expectedSpanNames = new List<string>();
@@ -130,7 +126,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 "root",
                 default,
                 SpanKind.Producer,
-                new Status(),
+                default(Status),
                 startTimestamp,
                 duration,
                 attributes);
@@ -153,11 +149,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var expectedStartTimeUnixNano = 100 * expectedUnixTimeTicks;
             Assert.Equal(expectedStartTimeUnixNano, otlpSpan.StartTimeUnixNano);
-            var expectedEndTimeUnixNano = expectedStartTimeUnixNano + duration.TotalMilliseconds * 1_000_000;
+            var expectedEndTimeUnixNano = expectedStartTimeUnixNano + (duration.TotalMilliseconds * 1_000_000);
             Assert.Equal(expectedEndTimeUnixNano, otlpSpan.EndTimeUnixNano);
 
-            var childEvents = new [] { new Event("e0"), new Event("e1", attributes) };
-            var childLinks = new [] { new Link(rootSpan.Context, attributes) };
+            var childEvents = new[] { new Event("e0"), new Event("e1", attributes) };
+            var childLinks = new[] { new Link(rootSpan.Context, attributes) };
             var childSpan = CreateSpanData(
                 "child",
                 rootSpan.Context,
@@ -186,6 +182,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Assert.Equal(childEvents[i].Name, otlpSpan.Events[i].Name);
                 AssertOtlpAttributes(childEvents[i].Attributes, otlpSpan.Events[i].Attributes);
             }
+
             Assert.Equal(childLinks.Length, otlpSpan.Links.Count);
             for (var i = 0; i < childLinks.Length; i++)
             {
@@ -210,7 +207,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             switch (originalValue)
             {
                 case string s:
-                    Assert.Equal(akv.StringValue,  s);
+                    Assert.Equal(akv.StringValue, s);
                     break;
                 case bool b:
                     Assert.Equal(akv.BoolValue, b);

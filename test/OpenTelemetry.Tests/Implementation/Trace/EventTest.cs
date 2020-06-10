@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void FromDescriptionAndAttributes_NullAttributes()
         {
-            var evnt = new Event("", DateTime.UtcNow, null);
+            var evnt = new Event(string.Empty, DateTime.UtcNow, null);
             Assert.Empty(evnt.Attributes);
         }
 

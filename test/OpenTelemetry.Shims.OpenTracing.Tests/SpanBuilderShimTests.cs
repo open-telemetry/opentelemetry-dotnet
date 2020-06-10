@@ -14,13 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Trace;
 using Moq;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
@@ -49,8 +48,11 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             shim.Start();
 
-            tracerMock.Verify(o => o.StartRootSpan("foo", 0,
-                It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
+            tracerMock.Verify(
+                o => o.StartRootSpan(
+                    "foo",
+                    0,
+                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
         }
 
         [Fact]
@@ -63,8 +65,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.WithStartTimestamp(startTimestamp);
 
             shim.Start();
-            tracerMock.Verify(o => o.StartSpan("foo", It.IsAny<TelemetrySpan>(), 0,
-                It.Is<SpanCreationOptions>(so => so.StartTimestamp == startTimestamp && !so.Links.Any())), Times.Once);
+            tracerMock.Verify(
+                o => o.StartSpan(
+                    "foo",
+                    It.IsAny<TelemetrySpan>(),
+                    0,
+                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == startTimestamp && !so.Links.Any())), Times.Once);
         }
 
         [Fact]
@@ -79,8 +85,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             shim.Start();
 
-            tracerMock.Verify(o => o.StartSpan("foo", It.IsAny<TelemetrySpan>(), 0,
-                It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
+            tracerMock.Verify(
+                o => o.StartSpan(
+                    "foo",
+                    It.IsAny<TelemetrySpan>(),
+                    0,
+                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
         }
 
         [Fact]
@@ -96,8 +106,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             shim.Start();
 
-            tracerMock.Verify(o => o.StartSpan("foo", span.Span, 0,
-                It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
+            tracerMock.Verify(
+                o => o.StartSpan(
+                    "foo",
+                    span.Span,
+                    0,
+                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
         }
 
         [Fact]
@@ -121,8 +135,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
                 tracerMock = GetDefaultTracerMock();
                 shim = new SpanBuilderShim(tracerMock.Object, "foo", new List<string> { "bar" });
                 shim.Start();
-                tracerMock.Verify(o => o.StartSpan("foo", It.IsAny<TelemetrySpan>(), 0,
-                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
+                tracerMock.Verify(
+                    o => o.StartSpan(
+                        "foo",
+                        It.IsAny<TelemetrySpan>(),
+                        0,
+                        It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
             }
             finally
             {
@@ -145,8 +163,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             shim.Start();
 
-            tracerMock.Verify(o => o.StartSpan("foo", span1.Span, 0,
-                It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && so.Links.Single().Context.Equals(span2.Span.Context))), Times.Once);
+            tracerMock.Verify(
+                o => o.StartSpan(
+                    "foo",
+                    span1.Span,
+                    0,
+                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && so.Links.Single().Context.Equals(span2.Span.Context))), Times.Once);
         }
 
         [Fact]
@@ -162,8 +184,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.Start();
 
             // should be no parent.
-            tracerMock.Verify(o => o.StartSpan("foo", It.IsAny<TelemetrySpan>(), 0,
-                It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
+            tracerMock.Verify(
+                o => o.StartSpan(
+                    "foo",
+                    It.IsAny<TelemetrySpan>(),
+                    0,
+                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
         }
 
         [Fact]
@@ -179,8 +205,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             shim.Start();
 
-            tracerMock.Verify(o => o.StartSpan("foo", spanContext.SpanContext, 0,
-                It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
+            tracerMock.Verify(
+                o => o.StartSpan(
+                    "foo",
+                    spanContext.SpanContext,
+                    0,
+                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
         }
 
         [Fact]
@@ -198,8 +228,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             shim.Start();
 
-            tracerMock.Verify(o => o.StartSpan("foo", spanContext1.SpanContext, 0,
-                It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && so.Links.Single().Context.Equals(spanContext2.SpanContext))), Times.Once);
+            tracerMock.Verify(
+                o => o.StartSpan(
+                    "foo",
+                    spanContext1.SpanContext,
+                    0,
+                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && so.Links.Single().Context.Equals(spanContext2.SpanContext))), Times.Once);
         }
 
         [Fact]

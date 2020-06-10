@@ -14,18 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace.Configuration;
-using Xunit;
-using Microsoft.AspNetCore.Mvc.Testing;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
-using Moq;
-using Microsoft.AspNetCore.TestHost;
 using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 using TestApp.AspNetCore._3._1;
+using Xunit;
 using System.Diagnostics;
 using System.Linq;
 
@@ -39,18 +39,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public IncomingRequestsCollectionsIsAccordingToTheSpecTests(WebApplicationFactory<Startup> factory)
         {
             this.factory = factory;
-
-        }
-
-        public class TestCallbackMiddlewareImpl : CallbackMiddleware.CallbackMiddlewareImpl
-        {
-
-            public override async Task<bool> ProcessAsync(HttpContext context)
-            {
-                context.Response.StatusCode = 503;
-                await context.Response.WriteAsync("empty");
-                return false;
-            }
         }
 
         [Fact]
@@ -78,7 +66,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     }))
                 .CreateClient())
             {
-
                 try
                 {
                     // Act
@@ -109,6 +96,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(ActivityKind.Server, span.Kind);
             Assert.Equal("/api/values", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
             Assert.Equal("503", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpStatusCodeKey).Value);
+        }
+
+        public class TestCallbackMiddlewareImpl : CallbackMiddleware.CallbackMiddlewareImpl
+        {
+            public override async Task<bool> ProcessAsync(HttpContext context)
+            {
+                context.Response.StatusCode = 503;
+                await context.Response.WriteAsync("empty");
+                return false;
+            }
         }
     }
 }

@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace.Configuration;
@@ -40,7 +39,7 @@ namespace OpenTelemetry.Trace.Test
         public void CreateFactory_DefaultBuilder()
         {
             var tracerFactory = TracerFactory.Create(b => { });
-            var tracer = tracerFactory.GetTracer("");
+            var tracer = tracerFactory.GetTracer(string.Empty);
             Assert.NotNull(tracer);
             Assert.IsType<TracerSdk>(tracer);
 
@@ -120,7 +119,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(processor.IsDisposed);
         }
 
-
         [Fact]
         public void CreateFactory_BuilderWithMultiplePipelines()
         {
@@ -165,7 +163,7 @@ namespace OpenTelemetry.Trace.Test
         public void GetTracer_NoName_NoVersion()
         {
             var tracerFactory = TracerFactory.Create(b => { });
-            var tracer = (TracerSdk)tracerFactory.GetTracer("");
+            var tracer = (TracerSdk)tracerFactory.GetTracer(string.Empty);
             Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "name");
             Assert.DoesNotContain(tracer.LibraryResource.Attributes, kvp => kvp.Key == "version");
         }
@@ -228,7 +226,7 @@ namespace OpenTelemetry.Trace.Test
             var tracer3 = tracerFactory.GetTracer("foo", "semver:2.3.4");
             var tracer4 = tracerFactory.GetTracer("bar", "semver:1.2.3");
             var tracer5 = tracerFactory.GetTracer("foo", "semver:1.2.3");
-            var tracer6 = tracerFactory.GetTracer("");
+            var tracer6 = tracerFactory.GetTracer(string.Empty);
             var tracer7 = tracerFactory.GetTracer(null);
             var tracer8 = tracerFactory.GetTracer(null, "semver:1.2.3");
 
@@ -246,8 +244,6 @@ namespace OpenTelemetry.Trace.Test
             private readonly SpanExporter exporter;
             private readonly Action<SpanData> onEnd;
 
-            public bool IsDisposed { get; private set; }
-
             public TestProcessor(Action<SpanData> onEnd)
             {
                 this.exporter = null;
@@ -260,9 +256,11 @@ namespace OpenTelemetry.Trace.Test
                 this.onEnd = null;
             }
 
+            public bool IsDisposed { get; private set; }
+
             public void Dispose()
             {
-                IsDisposed = true;
+                this.IsDisposed = true;
             }
 
             public override void OnStart(SpanData span)
@@ -272,7 +270,7 @@ namespace OpenTelemetry.Trace.Test
             public override void OnEnd(SpanData span)
             {
                 this.onEnd?.Invoke(span);
-                exporter?.ExportAsync(new[] { span }, default);
+                this.exporter?.ExportAsync(new[] { span }, default);
             }
 
             public override Task ShutdownAsync(CancellationToken cancellationToken)
@@ -284,12 +282,13 @@ namespace OpenTelemetry.Trace.Test
         private class TestInstrumentation : IDisposable
         {
             private readonly Tracer tracer;
-            public bool IsDisposed { get; private set; }
 
             public TestInstrumentation(Tracer tracer)
             {
                 this.tracer = tracer;
             }
+
+            public bool IsDisposed { get; private set; }
 
             public SpanSdk Collect()
             {
@@ -300,7 +299,7 @@ namespace OpenTelemetry.Trace.Test
 
             public void Dispose()
             {
-                IsDisposed = true;
+                this.IsDisposed = true;
             }
         }
     }

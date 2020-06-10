@@ -1,4 +1,4 @@
-﻿// <copyright file="ProcessTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerTraceExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using System.Collections.Generic;
-using System.Linq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using Xunit;

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -199,7 +198,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal(span.EndTimestamp.ToEpochMicroseconds()
+            Assert.Equal(
+                span.EndTimestamp.ToEpochMicroseconds()
                          - span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.Duration);
 
             var tags = jaegerSpan.Tags.ToArray();
@@ -251,7 +251,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal(span.EndTimestamp.ToEpochMicroseconds()
+            Assert.Equal(
+                span.EndTimestamp.ToEpochMicroseconds()
                          - span.StartTimestamp.ToEpochMicroseconds(), jaegerSpan.Duration);
 
             var tags = jaegerSpan.Tags.ToArray();
@@ -423,12 +424,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var attributes = new Dictionary<string, object>
             {
-                { "stringKey", "value"},
-                { "longKey", 1L},
+                { "stringKey", "value" },
+                { "longKey", 1L },
                 { "longKey2", 1 },
-                { "doubleKey", 1D},
-                { "doubleKey2", 1F},
-                { "boolKey", true},
+                { "doubleKey", 1D },
+                { "doubleKey2", 1F },
+                { "boolKey", true },
             };
             if (additionalAttributes != null)
             {
@@ -446,19 +447,26 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }
-                ),
+                    }),
                 new Event(
                     "Event2",
                     eventTimestamp,
                     new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }
-                ),
+                    }),
             };
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
+            var links = addLinks
+                ? new[]
+                {
+                    new Link(new SpanContext(
+                        traceId,
+                        linkedSpanId,
+                        ActivityTraceFlags.Recorded)),
+                }
+                : null;
 
             return new SpanData(
                 "Name",
@@ -468,10 +476,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 startTimestamp,
                 setAttributes ? attributes : null,
                 addEvents ? events : null,
-                addLinks ? new[] { new Link(new SpanContext(
-                        traceId,
-                        linkedSpanId,
-                        ActivityTraceFlags.Recorded)), } : null,
+                links,
                 resource,
                 Status.Ok,
                 endTimestamp);

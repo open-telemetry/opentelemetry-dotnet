@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using OpenTelemetry.Metrics.Export;
 

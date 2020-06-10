@@ -14,11 +14,10 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Testing.Export
@@ -27,12 +26,13 @@ namespace OpenTelemetry.Testing.Export
     {
         private readonly ConcurrentQueue<SpanData> spanDataList = new ConcurrentQueue<SpanData>();
         private readonly Action<IEnumerable<SpanData>> onExport;
+
         public TestExporter(Action<IEnumerable<SpanData>> onExport)
         {
             this.onExport = onExport;
         }
 
-        public SpanData[] ExportedSpans => spanDataList.ToArray();
+        public SpanData[] ExportedSpans => this.spanDataList.ToArray();
 
         public bool WasShutDown { get; private set; } = false;
 

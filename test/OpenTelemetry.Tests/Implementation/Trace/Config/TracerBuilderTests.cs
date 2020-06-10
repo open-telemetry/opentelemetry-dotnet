@@ -16,7 +16,6 @@
 
 using System;
 using System.Linq;
-using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace;
@@ -102,6 +101,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
         private class TestInstrumentation
         {
             private readonly Tracer tracer;
+
             public TestInstrumentation(Tracer tracer)
             {
                 this.tracer = tracer;

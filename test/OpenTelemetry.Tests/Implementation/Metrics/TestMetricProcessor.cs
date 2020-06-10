@@ -21,17 +21,17 @@ namespace OpenTelemetry.Metrics.Test
 {
     internal class TestMetricProcessor : MetricProcessor
     {
-        public List<Metric> metrics = new List<Metric>();
+        public List<Metric> Metrics = new List<Metric>();
 
         public override void FinishCollectionCycle(out IEnumerable<Metric> metrics)
         {
-            metrics = this.metrics;            
-            this.metrics = new List<Metric>();            
+            metrics = this.Metrics;
+            this.Metrics = new List<Metric>();
         }
 
         public override void Process(Metric metric)
         {
-            this.metrics.Add(metric);
+            this.Metrics.Add(metric);
         }
     }
 }

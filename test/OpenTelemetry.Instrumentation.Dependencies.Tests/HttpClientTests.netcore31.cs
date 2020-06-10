@@ -1,4 +1,4 @@
-﻿// <copyright file="DurationTest.netcore31.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpClientTests.netcore31.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,6 @@
 // limitations under the License.
 // </copyright>
 #if NETCOREAPP3_1
-using Moq;
-using Newtonsoft.Json;
-using OpenTelemetry.Internal.Test;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -29,6 +23,12 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
+using Moq;
+using Newtonsoft.Json;
+using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Tests
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 }
                 catch (Exception)
                 {
-                    //test case can intentionally send request that will result in exception
+                    // test case can intentionally send request that will result in exception
                 }
             }
 
@@ -127,6 +127,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             var normalizedAttributes = span.Tags.Where(kv => !kv.Key.StartsWith("ot")).ToImmutableSortedDictionary(x => x.Key, x => x.Value.ToString());
             var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
+            }
 
             Assert.Equal(normalizedAttributesTestCase.Count, normalizedAttributes.Count);
 
@@ -162,7 +163,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 ]
 ")));
 
-            var t = (Task)this.GetType().InvokeMember(nameof(HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
+            var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
             await t;
         }
     }
