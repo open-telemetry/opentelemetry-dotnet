@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -26,8 +28,6 @@ using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using TestApp.AspNetCore._3._1;
 using Xunit;
-using System.Diagnostics;
-using System.Linq;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                         OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddRequestInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object))));
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
 
                         /*
                         services.AddSingleton<TracerFactory>(_ =>

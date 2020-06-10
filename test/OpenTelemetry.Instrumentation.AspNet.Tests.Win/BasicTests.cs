@@ -28,6 +28,5 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             OpenTelemetryBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddRequestInstrumentation());
         }
-
     }
 }

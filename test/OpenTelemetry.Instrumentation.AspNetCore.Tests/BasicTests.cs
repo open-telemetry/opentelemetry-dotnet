@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,7 +63,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             {
                 var openTelemetry = OpenTelemetrySdk.Default.EnableOpenTelemetry(
                 (builder) => builder.AddRequestInstrumentation()
-                .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object))));
+                .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
 
                 /*
                 services.AddSingleton<TracerFactory>(_ =>
@@ -110,7 +111,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     {
                         OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddRequestInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object))));
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
 
                         /*
                         services.AddSingleton<TracerFactory>(_ =>
@@ -165,7 +166,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     {
                         OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddRequestInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object))));
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
 
                         /*
                         services.AddSingleton<TracerFactory>(_ =>
@@ -192,7 +193,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(expectedSpanId, span.ParentSpanId);
         }
 
-
         [Fact(Skip = "TODO: Reenable once filtering is fixed")]
         public async Task FilterOutRequest()
         {
@@ -202,7 +202,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             {
                 var openTelemetry = OpenTelemetrySdk.Default.EnableOpenTelemetry(
                 (builder) => builder.AddRequestInstrumentation()
-                .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object))));
+                .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
 
                 /*services.AddSingleton<TracerFactory>(_ =>
                     TracerFactory.Create(b => b

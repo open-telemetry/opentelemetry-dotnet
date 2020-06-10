@@ -74,7 +74,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                    (builder) => builder.AddHttpClientDependencyInstrumentation((opt) => opt.TextFormat = textFormat.Object)
-                   .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                   .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -198,7 +198,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -234,7 +234,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));

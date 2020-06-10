@@ -52,6 +52,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [InlineData("https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}")]
         [InlineData("http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}")]
         [InlineData("https://localhost:1843/subroute/10", 4, "subroute/{customerId}")]
+
         // TODO: Reenable this tests once filtering mechanism is designed.
         // [InlineData("http://localhost/api/value", 0, null, "/api/value")] // Request will be filtered
         // [InlineData("http://localhost/api/value", 0, null, "{ThrowException}")] // Filter user code will throw an exception
@@ -122,7 +123,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 var activityProcessor = new Mock<ActivityProcessor>();
                 openTelemetry = OpenTelemetrySdk.Default.EnableOpenTelemetry(
                 (builder) => builder.AddRequestInstrumentation()
-                .SetProcessorPipeline((p=> p.AddProcessor(_ => activityProcessor.Object))));
+                .SetProcessorPipeline(p => p.AddProcessor(_ => activityProcessor.Object)));
 
                 using (new AspNetInstrumentation(
                     new AspNetInstrumentationOptions
