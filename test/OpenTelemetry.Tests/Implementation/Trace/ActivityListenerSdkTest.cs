@@ -36,13 +36,15 @@ namespace OpenTelemetry.Tests.Implementation.Trace
 
             var latestSamplingParameters = default(ActivitySamplingParameters);
 
+            ActivityDataRequest getRequestedDataReturnValue = ActivityDataRequest.AllDataAndRecorded;
+
             using var listener = new ActivityListener
             {
                 ShouldListenTo = _ => true,
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
                 {
                     OpenTelemetrySdk.BuildSamplingParameters(options, out latestSamplingParameters);
-                    return ActivityDataRequest.AllDataAndRecorded;
+                    return getRequestedDataReturnValue;
                 },
             };
 
@@ -80,6 +82,21 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 Assert.Equal(customContext.TraceId, fromCustomContext.TraceId);
                 Assert.Equal(customContext.SpanId, fromCustomContext.ParentSpanId);
                 Assert.NotEqual(customContext.SpanId, fromCustomContext.SpanId);
+            }
+
+            // Preserve traceId in case span is propagated but not recorded (sampled per OpenTelemetry parlance) and
+            // no data is requested for children spans.
+            getRequestedDataReturnValue = ActivityDataRequest.PropagationData;
+            using (var root = activitySource.StartActivity("root"))
+            {
+                Assert.Equal(default(ActivitySpanId), root.ParentSpanId);
+
+                getRequestedDataReturnValue = ActivityDataRequest.None;
+                using (var child = activitySource.StartActivity("child"))
+                {
+                    Assert.Null(child);
+                    Assert.Equal(root.TraceId, latestSamplingParameters.TraceId);
+                }
             }
         }
     }

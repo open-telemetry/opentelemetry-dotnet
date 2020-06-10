@@ -84,18 +84,18 @@ namespace OpenTelemetry.Trace.Configuration
                 // This prevents Activity from being created at all.
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
                 {
-                    BuildSamplingParameters(options, out var samplingParameters);
+                    var isRootSpan = BuildSamplingParameters(options, out var samplingParameters);
                     var shouldSample = sampler.ShouldSample(samplingParameters);
                     if (shouldSample.IsSampled)
                     {
                         return ActivityDataRequest.AllDataAndRecorded;
                     }
-                    else
-                    {
-                        return ActivityDataRequest.None;
-                    }
 
-                    // TODO: Improve this to properly use ActivityDataRequest.AllData, PropagationData as well.
+                    // If it is the root span select PropagationData so the trace ID is preserved
+                    // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
+                    return isRootSpan
+                        ? ActivityDataRequest.PropagationData
+                        : ActivityDataRequest.None;
                 },
             };
 
@@ -104,34 +104,27 @@ namespace OpenTelemetry.Trace.Configuration
             return listener;
         }
 
-        internal static void BuildSamplingParameters(
+        internal static bool BuildSamplingParameters(
             in ActivityCreationOptions<ActivityContext> options, out ActivitySamplingParameters samplingParameters)
         {
-            ActivityContext parentContext = options.Parent;
-            if (parentContext == default)
-            {
-                // Check if there is already a parent for the current activity.
-                var parentActivity = Activity.Current;
-                if (parentActivity != null)
-                {
-                    parentContext = parentActivity.Context;
-                }
-            }
+            var isRootSpan = options.Parent.TraceId == default;
 
             // This is not going to be the final traceId of the Activity (if one is created), however, it is
             // needed in order for the sampling to work. This differs from other OTel SDKs in which it is
             // the Sampler always receives the actual traceId of a root span/activity.
-            ActivityTraceId traceId = parentContext.TraceId != default
-                ? parentContext.TraceId
+            ActivityTraceId traceId = !isRootSpan
+                ? options.Parent.TraceId
                 : ActivityTraceId.CreateRandom();
 
             samplingParameters = new ActivitySamplingParameters(
-                parentContext,
+                options.Parent,
                 traceId,
                 options.Name,
                 options.Kind,
                 options.Tags,
                 options.Links);
+
+            return isRootSpan;
         }
     }
 }
