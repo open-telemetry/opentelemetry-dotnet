@@ -451,19 +451,25 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var activitySource = new ActivitySource(nameof(CreateTestActivity));
 
+            var tags = setAttributes ?
+                    attributes.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()))
+                    : null;
+            var links = addLinks ?
+                    new[]
+                    {
+                        new ActivityLink(new ActivityContext(
+                            traceId,
+                            linkedSpanId,
+                            ActivityTraceFlags.Recorded)),
+                    }
+                    : null;
+
             var activity = activitySource.StartActivity(
                 "Name",
                 kind,
                 parentContext: new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
-                tags: setAttributes ?
-                    attributes.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()))
-                    : null,
-                links: addLinks ?
-                    new[] { new ActivityLink(new ActivityContext(
-                        traceId,
-                        linkedSpanId,
-                        ActivityTraceFlags.Recorded)), }
-                    : null,
+                tags,
+                links,
                 startTime: startTimestamp);
 
             if (addEvents)
