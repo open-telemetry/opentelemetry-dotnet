@@ -72,31 +72,8 @@ namespace OpenTelemetry.Trace.Configuration
                 // The following parameter is not used now.
                 GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
 
-                // This delegate informs ActivitySource about sampling decision.
-                // Following simple behavior is enabled now:
-                // If Sampler returns IsSampled as true, returns ActivityDataRequest.AllDataAndRecorded
-                // This creates Activity and sets its IsAllDataRequested to true.
-                // Library authors can check activity.IsAllDataRequested and avoid
-                // doing any additional telemetry population.
-                // Activity.IsAllDataRequested is the equivalent of Span.IsRecording
-                //
-                // If Sampler returns IsSampled as false, returns ActivityDataRequest.None
-                // This prevents Activity from being created at all.
-                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
-                {
-                    var isRootSpan = BuildSamplingParameters(options, out var samplingParameters);
-                    var shouldSample = sampler.ShouldSample(samplingParameters);
-                    if (shouldSample.IsSampled)
-                    {
-                        return ActivityDataRequest.AllDataAndRecorded;
-                    }
-
-                    // If it is the root span select PropagationData so the trace ID is preserved
-                    // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
-                    return isRootSpan
-                        ? ActivityDataRequest.PropagationData
-                        : ActivityDataRequest.None;
-                },
+                // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler),
             };
 
             ActivitySource.AddActivityListener(listener);
@@ -104,8 +81,9 @@ namespace OpenTelemetry.Trace.Configuration
             return listener;
         }
 
-        internal static bool BuildSamplingParameters(
-            in ActivityCreationOptions<ActivityContext> options, out ActivitySamplingParameters samplingParameters)
+        internal static ActivityDataRequest ComputeActivityDataRequest(
+            in ActivityCreationOptions<ActivityContext> options,
+            ActivitySampler sampler)
         {
             var isRootSpan = options.Parent.TraceId == default;
 
@@ -116,7 +94,7 @@ namespace OpenTelemetry.Trace.Configuration
                 ? options.Parent.TraceId
                 : ActivityTraceId.CreateRandom();
 
-            samplingParameters = new ActivitySamplingParameters(
+            var samplingParameters = new ActivitySamplingParameters(
                 options.Parent,
                 traceId,
                 options.Name,
@@ -124,7 +102,17 @@ namespace OpenTelemetry.Trace.Configuration
                 options.Tags,
                 options.Links);
 
-            return isRootSpan;
+            var shouldSample = sampler.ShouldSample(samplingParameters);
+            if (shouldSample.IsSampled)
+            {
+                return ActivityDataRequest.AllDataAndRecorded;
+            }
+
+            // If it is the root span select PropagationData so the trace ID is preserved
+            // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
+            return isRootSpan
+                ? ActivityDataRequest.PropagationData
+                : ActivityDataRequest.None;
         }
     }
 }
