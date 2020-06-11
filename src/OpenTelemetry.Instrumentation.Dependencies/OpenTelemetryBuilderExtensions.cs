@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using OpenTelemetry.Instrumentation.Dependencies;
 using OpenTelemetry.Instrumentation.Dependencies.Implementation;
 
 namespace OpenTelemetry.Trace.Configuration
@@ -36,9 +37,129 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(builder));
             }
 
+            builder.AddHttpClientDependencyInstrumentation();
+            builder.AddSqlClientDependencyInstrumentation();
+            builder.AddAzureClientsDependencyInstrumentation();
 #if NET461
             builder.AddHttpWebRequestDependencyInstrumentation();
 #endif
+            return builder;
+        }
+
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection for all supported activity sources.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <param name="configureHttpClientInstrumentationOptions">HttpClient configuration options.</param>
+        /// <param name="configureSqlClientInstrumentationOptions">SqlClient configuration options.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddDependencyInstrumentation(
+            this OpenTelemetryBuilder builder,
+            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null,
+            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            builder.AddHttpClientDependencyInstrumentation(configureHttpClientInstrumentationOptions);
+            builder.AddSqlClientDependencyInstrumentation(configureSqlClientInstrumentationOptions);
+            builder.AddAzureClientsDependencyInstrumentation();
+#if NET461
+            builder.AddHttpWebRequestDependencyInstrumentation();
+#endif
+            return builder;
+        }
+
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection for HttpClient.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddHttpClientDependencyInstrumentation(
+            this OpenTelemetryBuilder builder)
+        {
+            return builder.AddHttpClientDependencyInstrumentation(null);
+        }
+
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection for HttpClient.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <param name="configureHttpClientInstrumentationOptions">HttpClient configuration options.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddHttpClientDependencyInstrumentation(
+            this OpenTelemetryBuilder builder,
+            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            // HttpClient is not instrumented with ActivitySource, hence
+            // it'll have a default ActivitySource with name string.Empty.
+            builder.AddActivitySource(string.Empty);
+            var httpClientOptions = new HttpClientInstrumentationOptions();
+            configureHttpClientInstrumentationOptions?.Invoke(httpClientOptions);
+
+            builder.AddInstrumentation(() => new HttpClientInstrumentation(httpClientOptions));
+            return builder;
+        }
+
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection for SqlClient.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddSqlClientDependencyInstrumentation(
+            this OpenTelemetryBuilder builder)
+        {
+            return builder.AddSqlClientDependencyInstrumentation(null);
+        }
+
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection for SqlClient.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <param name="configureSqlClientInstrumentationOptions">SqlClient configuration options.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddSqlClientDependencyInstrumentation(
+            this OpenTelemetryBuilder builder,
+            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            // HttpClient is not instrumented with ActivitySource, hence
+            // it'll have a default ActivitySource with name string.Empty.
+            builder.AddActivitySource(string.Empty);
+            var sqlOptions = new SqlClientInstrumentationOptions();
+            configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
+
+            builder.AddInstrumentation(() => new SqlClientInstrumentation(sqlOptions));
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Enables instrumentation for Azure clients.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddAzureClientsDependencyInstrumentation(
+            this OpenTelemetryBuilder builder)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            builder.AddActivitySource(AzureSdkDiagnosticListener.ActivitySourceName);
+            builder.AddInstrumentation(() => new AzureClientsInstrumentation());
             return builder;
         }
 

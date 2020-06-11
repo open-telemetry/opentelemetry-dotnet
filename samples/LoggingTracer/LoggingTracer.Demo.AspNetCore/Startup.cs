@@ -21,8 +21,8 @@ namespace LoggingTracer.Demo.AspNetCore
                 var tracerFactory = new LoggingTracerFactory();
                 var tracer = tracerFactory.GetTracer("ServerApp", "semver:1.0.0");
 
-                var dependenciesInstrumentation = new DependenciesInstrumentation(tracerFactory);
-                var aspNetCoreInstrumentation = new AspNetCoreInstrumentation(tracer);
+                var dependenciesInstrumentation = new HttpClientInstrumentation();
+                var aspNetCoreInstrumentation = new AspNetCoreInstrumentation();
 
                 return tracerFactory;
             });

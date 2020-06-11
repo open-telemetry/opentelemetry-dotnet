@@ -20,7 +20,7 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Instrumentation.AspNet
 {
     /// <summary>
-    /// Requests instrumentation.
+    /// Asp.Net Requests instrumentation.
     /// </summary>
     public class AspNetInstrumentation : IDisposable
     {
@@ -31,21 +31,19 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// <summary>
         /// Initializes a new instance of the <see cref="AspNetInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
-        public AspNetInstrumentation(Tracer tracer)
-            : this(tracer, new AspNetInstrumentationOptions())
+        public AspNetInstrumentation()
+            : this(new AspNetInstrumentationOptions())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AspNetInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
         /// <param name="options">Configuration options for ASP.NET instrumentation.</param>
-        public AspNetInstrumentation(Tracer tracer, AspNetInstrumentationOptions options)
+        public AspNetInstrumentation(AspNetInstrumentationOptions options)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-                name => new HttpInListener(name, tracer, options),
+                name => new HttpInListener(name, options),
                 listener => listener.Name == AspNetDiagnosticListenerName,
                 null);
             this.diagnosticSourceSubscriber.Subscribe();

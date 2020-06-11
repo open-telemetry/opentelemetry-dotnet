@@ -37,7 +37,7 @@ namespace Samples
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use the Jaeger exporter.
-            OpenTelemetrySdk.EnableOpenTelemetry(
+            OpenTelemetrySdk.Default.EnableOpenTelemetry(
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")
                     .AddActivitySource("Samples.SampleClient")

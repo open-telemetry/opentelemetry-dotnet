@@ -24,11 +24,16 @@ namespace OpenTelemetry.Instrumentation.Dependencies
 {
     internal class AzureSdkDiagnosticListener : ListenerHandler
     {
+        internal const string ActivitySourceName = "AzureSDK";
+        internal const string ActivityName = ActivitySourceName + ".HttpRequestOut";
+        private static readonly Version Version = typeof(AzureSdkDiagnosticListener).Assembly.GetName().Version;
+        private static readonly ActivitySource AzureSDKActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+
         // all fetchers must not be reused between DiagnosticSources.
         private readonly PropertyFetcher linksPropertyFetcher = new PropertyFetcher("Links");
 
-        public AzureSdkDiagnosticListener(string sourceName, Tracer tracer)
-            : base(sourceName, tracer)
+        public AzureSdkDiagnosticListener(string sourceName)
+            : base(sourceName, null)
         {
         }
 
@@ -40,91 +45,65 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         {
         }
 
-        public override void OnStartActivity(Activity current, object valueValue)
+        public override void OnStartActivity(Activity activity, object valueValue)
         {
             string operationName = null;
-            var spanKind = SpanKind.Internal;
+            var activityKind = ActivityKind.Internal;
 
-            foreach (var keyValuePair in current.Tags)
+            foreach (var keyValuePair in activity.Tags)
             {
                 if (keyValuePair.Key == "http.url")
                 {
                     operationName = keyValuePair.Value;
-                    spanKind = SpanKind.Client;
+                    activityKind = ActivityKind.Client;
                     break;
                 }
 
                 if (keyValuePair.Key == "kind")
                 {
-                    if (Enum.TryParse(keyValuePair.Value, true, out SpanKind parsedSpanKind))
+                    if (Enum.TryParse(keyValuePair.Value, true, out ActivityKind parsedActivityKind))
                     {
-                        spanKind = parsedSpanKind;
+                        activityKind = parsedActivityKind;
                     }
                 }
             }
 
             if (operationName == null)
             {
-                operationName = this.GetOperationName(current);
+                operationName = this.GetOperationName(activity);
             }
 
-            List<Link> parentLinks = null;
+            List<ActivityLink> links = null;
             if (this.linksPropertyFetcher.Fetch(valueValue) is IEnumerable<Activity> activityLinks)
             {
                 if (activityLinks.Any())
                 {
-                    parentLinks = new List<Link>();
+                    links = new List<ActivityLink>();
                     foreach (var link in activityLinks)
                     {
                         if (link != null)
                         {
-                            parentLinks.Add(new Link(new SpanContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
+                            links.Add(new ActivityLink(new ActivityContext(link.TraceId, link.ParentSpanId, link.ActivityTraceFlags)));
                         }
                     }
                 }
             }
 
-            this.Tracer.StartSpanFromActivity(operationName, current, spanKind, parentLinks);
+            // Ignore the activity and create a new one using ActivitySource.
+            // The new one will have Sampling decision made using extracted Links as well.
+            AzureSDKActivitySource.StartActivity(operationName, activityKind, activity.Id, activity.Tags, links);
         }
 
         public override void OnStopActivity(Activity current, object valueValue)
         {
-            var span = this.Tracer.CurrentSpan;
-            try
-            {
-                if (span == null || !span.Context.IsValid)
-                {
-                    InstrumentationEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnStopActivity");
-                    return;
-                }
-
-                if (span.IsRecording)
-                {
-                    foreach (var keyValuePair in current.Tags)
-                    {
-                        span.SetAttribute(keyValuePair.Key, keyValuePair.Value);
-                    }
-                }
-            }
-            finally
-            {
-                span?.End();
-            }
+            // nothing to be done.
         }
 
-        public override void OnException(Activity current, object valueValue)
+        public override void OnException(Activity activity, object valueValue)
         {
-            var span = this.Tracer.CurrentSpan;
-
-            if (span == null || !span.Context.IsValid)
-            {
-                InstrumentationEventSource.Log.NullOrBlankSpan(this.SourceName + ".OnException");
-                return;
-            }
-
-            span.Status = Status.Unknown.WithDescription(valueValue?.ToString());
-
-            // Note: Span.End() is not called here on purpose, OnStopActivity is called after OnException for this listener.
+            Status status = Status.Unknown;
+            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, valueValue?.ToString());
         }
 
         private string GetOperationName(Activity activity)

@@ -20,17 +20,22 @@ using System.Web;
 using System.Web.Routing;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
+        // hard-coded Sampler here, just to prototype.
+        // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
+        // or we'll move the Sampler to come from OpenTelemetryBuilder, and not hardcoded.
+        private readonly ActivitySampler sampler = new AlwaysOnActivitySampler();
         private readonly PropertyFetcher routeFetcher = new PropertyFetcher("Route");
         private readonly PropertyFetcher routeTemplateFetcher = new PropertyFetcher("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
 
-        public HttpInListener(string name, Tracer tracer, AspNetInstrumentationOptions options)
-            : base(name, tracer)
+        public HttpInListener(string name, AspNetInstrumentationOptions options)
+            : base(name, null)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
         }
@@ -48,53 +53,75 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
+                // TODO: These filters won't prevent the activity from being tracked
+                // as they are fired anyway.
                 InstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 return;
             }
+
+            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
+            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
 
             var request = context.Request;
             var requestValues = request.Unvalidated;
 
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
             var path = requestValues.Path;
+            activity.DisplayName = path;
 
-            TelemetrySpan span;
-            if (this.options.TextFormat is TraceContextFormat)
+            var samplingParameters = new ActivitySamplingParameters(
+                activity.Context,
+                activity.TraceId,
+                activity.DisplayName,
+                activity.Kind,
+                activity.Tags,
+                activity.Links);
+
+            // TODO: Find a way to avoid Instrumentation being tied to Sampler
+            var samplingDecision = this.sampler.ShouldSample(samplingParameters);
+            activity.IsAllDataRequested = samplingDecision.IsSampled;
+            if (samplingDecision.IsSampled)
             {
-                this.Tracer.StartActiveSpanFromActivity(path, Activity.Current, SpanKind.Server, out span);
+                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }
-            else
+
+            if (!(this.options.TextFormat is TraceContextFormat))
             {
+                // This requires to ignore the current activity and create a new one
+                // using the context extracted using the format TextFormat supports.
+                // TODO: actually implement code doing the above.
+                /*
                 var ctx = this.options.TextFormat.Extract<HttpRequest>(
                     request,
                     (r, name) => requestValues.Headers.GetValues(name));
 
                 this.Tracer.StartActiveSpan(path, ctx, SpanKind.Server, out span);
+                */
             }
 
-            if (span.IsRecording)
+            if (activity.IsAllDataRequested)
             {
-                span.PutHttpHostAttribute(request.Url.Host, request.Url.Port);
-                span.PutHttpMethodAttribute(request.HttpMethod);
-                span.PutHttpPathAttribute(path);
+                if (request.Url.Port == 80 || request.Url.Port == 443)
+                {
+                    activity.AddTag(SpanAttributeConstants.HttpHostKey, request.Url.Host);
+                }
+                else
+                {
+                    activity.AddTag(SpanAttributeConstants.HttpHostKey, request.Url.Host + ":" + request.Url.Port);
+                }
 
-                span.PutHttpUserAgentAttribute(request.UserAgent);
-                span.PutHttpRawUrlAttribute(request.Url.ToString());
+                activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.HttpMethod);
+                activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
+                activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, request.UserAgent);
+                activity.AddTag(SpanAttributeConstants.HttpUrlKey, request.Url.ToString());
             }
         }
 
         public override void OnStopActivity(Activity activity, object payload)
         {
             const string EventNameSuffix = ".OnStopActivity";
-            var span = this.Tracer.CurrentSpan;
 
-            if (span == null || !span.Context.IsValid)
-            {
-                InstrumentationEventSource.Log.NullOrBlankSpan(nameof(HttpInListener) + EventNameSuffix);
-                return;
-            }
-
-            if (span.IsRecording)
+            if (activity.IsAllDataRequested)
             {
                 var context = HttpContext.Current;
                 if (context == null)
@@ -104,8 +131,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
 
                 var response = context.Response;
-
-                span.PutHttpStatusCode(response.StatusCode, response.StatusDescription);
+                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
+                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
+                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.StatusDescription);
 
                 var routeData = context.Request.RequestContext.RouteData;
 
@@ -131,14 +160,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 if (!string.IsNullOrEmpty(template))
                 {
-                    // Override the span name that was previously set to the path part of URL.
-                    span.UpdateName(template);
-
-                    span.PutHttpRouteAttribute(template);
+                    // Override the name that was previously set to the path part of URL.
+                    activity.DisplayName = template;
+                    activity.AddTag(SpanAttributeConstants.HttpRouteKey, template);
                 }
             }
-
-            span.End();
         }
     }
 }

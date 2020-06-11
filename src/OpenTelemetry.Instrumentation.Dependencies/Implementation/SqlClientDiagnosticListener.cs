@@ -17,6 +17,7 @@ using System;
 using System.Data;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
@@ -42,8 +43,13 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private readonly PropertyFetcher exceptionFetcher = new PropertyFetcher("Exception");
         private readonly SqlClientInstrumentationOptions options;
 
-        public SqlClientDiagnosticListener(string sourceName, Tracer tracer, SqlClientInstrumentationOptions options)
-            : base(sourceName, tracer)
+        // hard-coded Sampler here, just to prototype.
+        // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
+        // or we'll move the Sampler to come from OpenTelemetryBuilder, and not hardcoded.
+        private readonly ActivitySampler sampler = new AlwaysOnActivitySampler();
+
+        public SqlClientDiagnosticListener(string sourceName, SqlClientInstrumentationOptions options)
+            : base(sourceName, null)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
         }
@@ -70,29 +76,46 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                         var connection = this.connectionFetcher.Fetch(command);
                         var database = this.databaseFetcher.Fetch(connection);
 
-                        this.Tracer.StartActiveSpan((string)database, SpanKind.Client, out var span);
+                        // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
+                        activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Client);
+                        activity.DisplayName = (string)database;
 
-                        if (span.IsRecording)
+                        var samplingParameters = new ActivitySamplingParameters(
+                        activity.Context,
+                        activity.TraceId,
+                        activity.DisplayName,
+                        activity.Kind,
+                        activity.Tags,
+                        activity.Links);
+
+                        // TODO: Find a way to avoid Instrumentation being tied to Sampler
+                        var samplingDecision = this.sampler.ShouldSample(samplingParameters);
+                        activity.IsAllDataRequested = samplingDecision.IsSampled;
+                        if (samplingDecision.IsSampled)
+                        {
+                            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                        }
+
+                        if (activity.IsAllDataRequested)
                         {
                             var dataSource = this.dataSourceFetcher.Fetch(connection);
                             var commandText = this.commandTextFetcher.Fetch(command);
 
-                            span.PutComponentAttribute("sql");
-
-                            span.PutDatabaseTypeAttribute("sql");
-                            span.PutPeerServiceAttribute((string)dataSource);
-                            span.PutDatabaseInstanceAttribute((string)database);
+                            activity.AddTag(SpanAttributeConstants.ComponentKey, "sql");
+                            activity.AddTag(SpanAttributeConstants.DatabaseTypeKey, "sql");
+                            activity.AddTag(SpanAttributeConstants.PeerServiceKey, (string)dataSource);
+                            activity.AddTag(SpanAttributeConstants.DatabaseInstanceKey, (string)database);
 
                             if (this.commandTypeFetcher.Fetch(command) is CommandType commandType)
                             {
-                                span.SetAttribute(DatabaseStatementTypeSpanAttributeKey, commandType.ToString());
+                                activity.AddTag(DatabaseStatementTypeSpanAttributeKey, commandType.ToString());
 
                                 switch (commandType)
                                 {
                                     case CommandType.StoredProcedure:
                                         if (this.options.CaptureStoredProcedureCommandName)
                                         {
-                                            span.PutDatabaseStatementAttribute((string)commandText);
+                                            activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, (string)commandText);
                                         }
 
                                         break;
@@ -100,7 +123,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                     case CommandType.Text:
                                         if (this.options.CaptureTextCommandContent)
                                         {
-                                            span.PutDatabaseStatementAttribute((string)commandText);
+                                            activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, (string)commandText);
                                         }
 
                                         break;
@@ -113,49 +136,24 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 case SqlDataAfterExecuteCommand:
                 case SqlMicrosoftAfterExecuteCommand:
                     {
-                        var span = this.Tracer.CurrentSpan;
-                        try
-                        {
-                            if (span == null || !span.Context.IsValid)
-                            {
-                                InstrumentationEventSource.Log.NullOrBlankSpan($"{nameof(SqlClientDiagnosticListener)}-{name}");
-                                return;
-                            }
-                        }
-                        finally
-                        {
-                            span?.End();
-                        }
                     }
 
                     break;
                 case SqlDataWriteCommandError:
                 case SqlMicrosoftWriteCommandError:
                     {
-                        var span = this.Tracer.CurrentSpan;
-                        try
+                        if (activity.IsAllDataRequested)
                         {
-                            if (span == null || !span.Context.IsValid)
+                            if (this.exceptionFetcher.Fetch(payload) is Exception exception)
                             {
-                                InstrumentationEventSource.Log.NullOrBlankSpan($"{nameof(SqlClientDiagnosticListener)}-{name}");
-                                return;
+                                Status status = Status.Unknown;
+                                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, exception.Message);
                             }
-
-                            if (span.IsRecording)
+                            else
                             {
-                                if (this.exceptionFetcher.Fetch(payload) is Exception exception)
-                                {
-                                    span.Status = Status.Unknown.WithDescription(exception.Message);
-                                }
-                                else
-                                {
-                                    InstrumentationEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
-                                }
+                                InstrumentationEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
                             }
-                        }
-                        finally
-                        {
-                            span?.End();
                         }
                     }
 

@@ -14,8 +14,9 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Diagnostics;
 using System.Net.Http;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Exporter.Console;
 using OpenTelemetry.Trace.Configuration;
 
 namespace Samples
@@ -26,12 +27,13 @@ namespace Samples
         {
             Console.WriteLine("Hello World!");
 
-            using var tracerFactory = TracerFactory.Create(builder => builder
-                .UseZipkin(o => o.ServiceName = "http-client-test")
-                .AddDependencyInstrumentation());
-            var tracer = tracerFactory.GetTracer("http-client-test");
+            OpenTelemetrySdk.Default.EnableOpenTelemetry(
+                (builder) => builder.AddHttpClientDependencyInstrumentation()
+                .AddActivitySource("http-client-test")
+                .UseConsoleActivityExporter(opt => opt.DisplayAsJson = false));
 
-            using (tracer.StartActiveSpan("incoming request", out _))
+            var source = new ActivitySource("http-client-test");
+            using (var parent = source.StartActivity("incoming request", ActivityKind.Server))
             {
                 using var client = new HttpClient();
                 client.GetStringAsync("http://bing.com").GetAwaiter().GetResult();

@@ -63,7 +63,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         public async Task HttpDependenciesInstrumentationInjectsHeadersAsync()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            using var shutdownSignal = OpenTelemetrySdk.Default.EnableOpenTelemetry(b =>
             {
                 b.SetProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestDependencyInstrumentation();
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         public async Task HttpDependenciesInstrumentationBacksOffIfAlreadyInstrumented()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            using var shutdownSignal = OpenTelemetrySdk.Default.EnableOpenTelemetry(b =>
             {
                 b.SetProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestDependencyInstrumentation();

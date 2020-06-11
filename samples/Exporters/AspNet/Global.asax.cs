@@ -15,22 +15,9 @@ namespace OpenTelemetry.Exporter.AspNet
 
         protected void Application_Start()
         {
-            this.tracerFactory = TracerFactory.Create(builder =>
-            {
-                builder
-                     .UseJaeger(c =>
-                     {
-                         c.AgentHost = "localhost";
-                         c.AgentPort = 6831;
-                     })
-                    .AddRequestInstrumentation()
-                    .AddDependencyInstrumentation();
-            });
-
-            TracerFactoryBase.SetDefault(this.tracerFactory);
-
-            this.openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+            this.openTelemetry = OpenTelemetrySdk.Default.EnableOpenTelemetry(
                 (builder) => builder.AddDependencyInstrumentation()
+                .AddRequestInstrumentation()
                 .UseJaegerActivityExporter(c =>
                 {
                     c.AgentHost = "localhost";

@@ -15,18 +15,27 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace.Configuration
 {
-    public class OpenTelemetrySdk
+    public class OpenTelemetrySdk : IDisposable
     {
+        public static OpenTelemetrySdk Default = new OpenTelemetrySdk();
+        private readonly List<object> instrumentations = new List<object>();
+        private ActivityListener listener;
+
         static OpenTelemetrySdk()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
+        }
+
+        private OpenTelemetrySdk()
+        {
         }
 
         /// <summary>
@@ -37,7 +46,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// <remarks>
         /// Basic implementation only. Most logic from TracerBuilder will be ported here.
         /// </remarks>
-        public static IDisposable EnableOpenTelemetry(Action<OpenTelemetryBuilder> configureOpenTelemetryBuilder)
+        public OpenTelemetrySdk EnableOpenTelemetry(Action<OpenTelemetryBuilder> configureOpenTelemetryBuilder)
         {
             var openTelemetryBuilder = new OpenTelemetryBuilder();
             configureOpenTelemetryBuilder(openTelemetryBuilder);
@@ -55,9 +64,17 @@ namespace OpenTelemetry.Trace.Configuration
                 activityProcessor = openTelemetryBuilder.ProcessingPipeline.Build();
             }
 
+            if (openTelemetryBuilder.InstrumentationFactories != null)
+            {
+                foreach (var instrumentation in openTelemetryBuilder.InstrumentationFactories)
+                {
+                    this.instrumentations.Add(instrumentation.Factory());
+                }
+            }
+
             // This is what subscribes to Activities.
             // Think of this as the replacement for DiagnosticListener.AllListeners.Subscribe(onNext => diagnosticListener.Subscribe(..));
-            ActivityListener listener = new ActivityListener
+            this.listener = new ActivityListener
             {
                 // Callback when Activity is started.
                 ActivityStarted = activityProcessor.OnStart,
@@ -99,9 +116,23 @@ namespace OpenTelemetry.Trace.Configuration
                 },
             };
 
-            ActivitySource.AddActivityListener(listener);
+            ActivitySource.AddActivityListener(this.listener);
+            return this;
+        }
 
-            return listener;
+        public void Dispose()
+        {
+            this.listener.Dispose();
+
+            foreach (var item in this.instrumentations)
+            {
+                if (item is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+
+            this.instrumentations.Clear();
         }
 
         internal static void BuildSamplingParameters(
