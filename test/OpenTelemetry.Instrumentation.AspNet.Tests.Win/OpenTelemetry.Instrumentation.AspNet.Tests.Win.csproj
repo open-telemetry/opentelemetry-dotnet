@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry ASP.NET instrumentation</Description>
-    <TargetFrameworks>net46</TargetFrameworks>
+    <TargetFrameworks>net452;net46</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
