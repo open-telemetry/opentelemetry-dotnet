@@ -22,12 +22,18 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
         private static readonly string UnknownHostName = "UNKNOWN-HOST";
+
+        // hard-coded Sampler here, just to prototype.
+        // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
+        // or we'll expose an API from OT SDK.
+        private readonly ActivitySampler sampler = new AlwaysOnActivitySampler();
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher stopContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher beforeActionActionDescriptorFetcher = new PropertyFetcher("actionDescriptor");
@@ -36,8 +42,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly bool hostingSupportsW3C = false;
         private readonly AspNetCoreInstrumentationOptions options;
 
-        public HttpInListener(string name, Tracer tracer, AspNetCoreInstrumentationOptions options)
-            : base(name, tracer)
+        public HttpInListener(string name, AspNetCoreInstrumentationOptions options)
+            : base(name, null)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
             this.options = options ?? throw new ArgumentNullException(nameof(options));
@@ -61,49 +67,73 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             var request = context.Request;
-
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
+            activity.DisplayName = path;
 
-            TelemetrySpan span;
-            if (this.hostingSupportsW3C && this.options.TextFormat is TraceContextFormat)
+            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
             {
-                this.Tracer.StartActiveSpanFromActivity(path, Activity.Current, SpanKind.Server, out span);
-            }
-            else
-            {
+                // This requires to ignore the current activity and create a new one
+                // using the context extracted from w3ctraceparent header or
+                // using the format TextFormat supports.
+                // TODO: implement this
+                /*
                 var ctx = this.options.TextFormat.Extract<HttpRequest>(
                     request,
                     (r, name) => r.Headers[name]);
 
-                this.Tracer.StartActiveSpan(path, ctx, SpanKind.Server, out span);
+                Activity newOne = new Activity(path);
+                newOne.SetParentId(ctx.Id);
+                newOne.TraceState = ctx.TraceStateString;
+                activity = newOne;
+                */
             }
 
-            if (span.IsRecording)
+            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
+            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
+
+            var samplingParameters = new ActivitySamplingParameters(
+                activity.Context,
+                activity.TraceId,
+                activity.DisplayName,
+                activity.Kind,
+                activity.Tags,
+                activity.Links);
+
+            // TODO: Find a way to avoid Instrumentation being tied to Sampler
+            var samplingDecision = this.sampler.ShouldSample(samplingParameters);
+            activity.IsAllDataRequested = samplingDecision.IsSampled;
+            if (samplingDecision.IsSampled)
             {
-                // Note, route is missing at this stage. It will be available later
-                span.PutHttpHostAttribute(request.Host.Host, request.Host.Port ?? 80);
-                span.PutHttpMethodAttribute(request.Method);
-                span.PutHttpPathAttribute(path);
+                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            }
+
+            if (activity.IsAllDataRequested)
+            {
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
+
+                if (request.Host.Port == 80 || request.Host.Port == 443)
+                {
+                    activity.AddTag(SpanAttributeConstants.HttpHostKey, request.Host.Host);
+                }
+                else
+                {
+                    activity.AddTag(SpanAttributeConstants.HttpHostKey, request.Host.Host + ":" + request.Host.Port);
+                }
+
+                activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
+                activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
-                span.PutHttpUserAgentAttribute(userAgent);
-                span.PutHttpRawUrlAttribute(GetUri(request));
+                activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, userAgent);
+                activity.AddTag(SpanAttributeConstants.HttpUrlKey, GetUri(request));
             }
         }
 
         public override void OnStopActivity(Activity activity, object payload)
         {
             const string EventNameSuffix = ".OnStopActivity";
-            var span = this.Tracer.CurrentSpan;
 
-            if (span == null || !span.Context.IsValid)
-            {
-                InstrumentationEventSource.Log.NullOrBlankSpan(nameof(HttpInListener) + EventNameSuffix);
-                return;
-            }
-
-            if (span.IsRecording)
+            if (activity.IsAllDataRequested)
             {
                 if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
                 {
@@ -112,26 +142,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 var response = context.Response;
+                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
 
-                span.PutHttpStatusCode(response.StatusCode, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
+                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
+                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
             }
-
-            span.End();
         }
 
         public override void OnCustom(string name, Activity activity, object payload)
         {
             if (name == "Microsoft.AspNetCore.Mvc.BeforeAction")
             {
-                var span = this.Tracer.CurrentSpan;
-
-                if (span == null)
-                {
-                    InstrumentationEventSource.Log.NullOrBlankSpan(name);
-                    return;
-                }
-
-                if (span.IsRecording)
+                if (activity.IsAllDataRequested)
                 {
                     // See https://github.com/aspnet/Mvc/blob/2414db256f32a047770326d14d8b0e2afd49ba49/src/Microsoft.AspNetCore.Mvc.Core/MvcCoreDiagnosticSourceExtensions.cs#L36-L44
                     // Reflection accessing: ActionDescriptor.AttributeRouteInfo.Template
@@ -145,9 +168,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     if (!string.IsNullOrEmpty(template))
                     {
                         // override the span name that was previously set to the path part of URL.
-                        span.UpdateName(template);
-
-                        span.PutHttpRouteAttribute(template);
+                        activity.DisplayName = template;
+                        activity.AddTag(SpanAttributeConstants.HttpRouteKey, template);
                     }
 
                     // TODO: Should we get values from RouteData?

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -14,9 +16,12 @@ namespace API.Controllers
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
 
+        private static HttpClient httpClient = new HttpClient();
+
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
         {
+            var res = httpClient.GetStringAsync("http://google.com").Result;
             var rng = new Random();
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {

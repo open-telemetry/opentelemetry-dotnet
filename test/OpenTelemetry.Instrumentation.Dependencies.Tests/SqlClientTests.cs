@@ -58,20 +58,16 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             bool captureTextCommandContent)
         {
             var activity = new Activity("Current").AddBaggage("Stuff", "123");
-            activity.Start();
 
-            var spanProcessor = new Mock<SpanProcessor>();
-            var tracer = TracerFactory.Create(b => b
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
-
-            using (new SqlClientInstrumentation(
-                tracer,
-                new SqlClientInstrumentationOptions
-                {
-                    CaptureStoredProcedureCommandName = captureStoredProcedureCommandName,
-                    CaptureTextCommandContent = captureTextCommandContent,
-                }))
+            var spanProcessor = new Mock<ActivityProcessor>();
+            using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
+                    (builder) => builder.AddSqlClientDependencyInstrumentation(
+                        (opt) =>
+                        {
+                            opt.CaptureTextCommandContent = captureTextCommandContent;
+                            opt.CaptureStoredProcedureCommandName = captureStoredProcedureCommandName;
+                            })
+                    .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var operationId = Guid.NewGuid();
                 var sqlConnection = new SqlConnection(TestConnectionString);
@@ -85,6 +81,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                     Command = sqlCommand,
                     Timestamp = (long?)1000000L,
                 };
+
+                activity.Start();
 
                 this.fakeSqlClientDiagnosticSource.Write(
                     beforeCommand,
@@ -100,40 +98,34 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 this.fakeSqlClientDiagnosticSource.Write(
                     afterCommand,
                     afterExecuteEventData);
+                activity.Stop();
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
 
-            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
+            var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
-            Assert.Equal("master", span.Name);
-            Assert.Equal(SpanKind.Client, span.Kind);
-            Assert.Equal(StatusCanonicalCode.Ok, span.Status.CanonicalCode);
-            Assert.Null(span.Status.Description);
+            Assert.Equal("master", span.DisplayName);
+            Assert.Equal(ActivityKind.Client, span.Kind);
 
-            Assert.Equal(
-                "sql",
-                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value as string);
-            Assert.Equal(
-                "sql",
-                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseTypeKey).Value as string);
-            Assert.Equal(
-                "master",
-                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseInstanceKey).Value as string);
+            // TODO: Should Ok status be assigned when no error occurs automatically?
+            // Assert.Equal("Ok", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
+
+            Assert.Equal("sql", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value);
+            Assert.Equal("sql", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseTypeKey).Value);
+            Assert.Equal("master", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseInstanceKey).Value);
 
             switch (commandType)
             {
                 case CommandType.StoredProcedure:
                     if (captureStoredProcedureCommandName)
                     {
-                        Assert.Equal(
-                            commandText,
-                            span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+                        Assert.Equal(commandText, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
                     }
                     else
                     {
-                        Assert.Null(
-                            span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+                        Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
                     }
 
                     break;
@@ -141,24 +133,17 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 case CommandType.Text:
                     if (captureTextCommandContent)
                     {
-                        Assert.Equal(
-                            commandText,
-                            span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+                        Assert.Equal(commandText, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
                     }
                     else
                     {
-                        Assert.Null(span.Attributes.FirstOrDefault(i =>
-                            i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
+                        Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
                     }
 
                     break;
             }
 
-            Assert.Equal(
-                "(localdb)\\MSSQLLocalDB",
-                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.PeerServiceKey).Value as string);
-
-            activity.Stop();
+            Assert.Equal("(localdb)\\MSSQLLocalDB", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.PeerServiceKey).Value);
         }
 
         [Theory]
@@ -167,14 +152,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         public void SqlClientErrorsAreCollectedSuccessfully(string beforeCommand, string errorCommand)
         {
             var activity = new Activity("Current").AddBaggage("Stuff", "123");
-            activity.Start();
+            var spanProcessor = new Mock<ActivityProcessor>();
 
-            var spanProcessor = new Mock<SpanProcessor>();
-            var tracer = TracerFactory.Create(b => b
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
-
-            using (new SqlClientInstrumentation(tracer))
+            using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
+                (builder) => builder.AddSqlClientDependencyInstrumentation()
+                .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var operationId = Guid.NewGuid();
                 var sqlConnection = new SqlConnection(TestConnectionString);
@@ -189,6 +171,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                     Timestamp = (long?)1000000L,
                 };
 
+                activity.Start();
                 this.fakeSqlClientDiagnosticSource.Write(
                     beforeCommand,
                     beforeExecuteEventData);
@@ -204,34 +187,24 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 this.fakeSqlClientDiagnosticSource.Write(
                     errorCommand,
                     commandErrorEventData);
+
+                activity.Stop();
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
 
-            var span = (SpanData)spanProcessor.Invocations[0].Arguments[0];
+            var span = (Activity)spanProcessor.Invocations[0].Arguments[0];
 
-            Assert.Equal("master", span.Name);
-            Assert.Equal(SpanKind.Client, span.Kind);
-            Assert.Equal(StatusCanonicalCode.Unknown, span.Status.CanonicalCode);
-            Assert.Equal("Boom!", span.Status.Description);
+            Assert.Equal("master", span.DisplayName);
+            Assert.Equal(ActivityKind.Client, span.Kind);
 
-            Assert.Equal(
-                "sql",
-                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value as string);
-            Assert.Equal(
-                "sql",
-                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseTypeKey).Value as string);
-            Assert.Equal(
-                "master",
-                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseInstanceKey).Value as string);
-            Assert.Equal(
-                "SP_GetOrders",
-                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value as string);
-            Assert.Equal(
-                "(localdb)\\MSSQLLocalDB",
-                span.Attributes.FirstOrDefault(i => i.Key == SpanAttributeConstants.PeerServiceKey).Value as string);
-
-            activity.Stop();
+            Assert.Equal("Unknown", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            Assert.Equal("Boom!", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
+            Assert.Equal("sql", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value);
+            Assert.Equal("sql", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseTypeKey).Value);
+            Assert.Equal("master", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseInstanceKey).Value);
+            Assert.Equal("SP_GetOrders", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
+            Assert.Equal("(localdb)\\MSSQLLocalDB", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.PeerServiceKey).Value);
         }
 
         private class FakeSqlClientDiagnosticSource : IDisposable
