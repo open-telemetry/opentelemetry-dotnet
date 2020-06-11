@@ -34,16 +34,13 @@ namespace OpenTelemetry.Tests.Implementation.Trace
         {
             using var activitySource = new ActivitySource(nameof(this.BuildSamplingParametersHandlesCurrentActivity));
 
-            var latestSamplingParameters = default(ActivitySamplingParameters);
+            var testSampler = new TestSampler { DesiredSamplingResult = new SamplingResult(true) };
 
             using var listener = new ActivityListener
             {
                 ShouldListenTo = _ => true,
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
-                {
-                    OpenTelemetrySdk.BuildSamplingParameters(options, out latestSamplingParameters);
-                    return ActivityDataRequest.AllDataAndRecorded;
-                },
+                    OpenTelemetrySdk.ComputeActivityDataRequest(options, testSampler),
             };
 
             ActivitySource.AddActivityListener(listener);
@@ -54,17 +51,17 @@ namespace OpenTelemetry.Tests.Implementation.Trace
 
                 // This enforces the current behavior that the traceId passed to the sampler for the
                 // root span/activity is not the traceId actually used.
-                Assert.NotEqual(root.TraceId, latestSamplingParameters.TraceId);
+                Assert.NotEqual(root.TraceId, testSampler.LatestSamplingParameters.TraceId);
             }
 
             using (var parent = activitySource.StartActivity("parent", ActivityKind.Client))
             {
                 // This enforces the current behavior that the traceId passed to the sampler for the
                 // root span/activity is not the traceId actually used.
-                Assert.NotEqual(parent.TraceId, latestSamplingParameters.TraceId);
+                Assert.NotEqual(parent.TraceId, testSampler.LatestSamplingParameters.TraceId);
                 using (var child = activitySource.StartActivity("child"))
                 {
-                    Assert.Equal(parent.TraceId, latestSamplingParameters.TraceId);
+                    Assert.Equal(parent.TraceId, testSampler.LatestSamplingParameters.TraceId);
                     Assert.Equal(parent.TraceId, child.TraceId);
                     Assert.Equal(parent.SpanId, child.ParentSpanId);
                 }
@@ -80,6 +77,36 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 Assert.Equal(customContext.TraceId, fromCustomContext.TraceId);
                 Assert.Equal(customContext.SpanId, fromCustomContext.ParentSpanId);
                 Assert.NotEqual(customContext.SpanId, fromCustomContext.SpanId);
+            }
+
+            // Preserve traceId in case span is propagated but not recorded (sampled per OpenTelemetry parlance) and
+            // no data is requested for children spans.
+            testSampler.DesiredSamplingResult = new SamplingResult(false);
+            using (var root = activitySource.StartActivity("root"))
+            {
+                Assert.Equal(default(ActivitySpanId), root.ParentSpanId);
+
+                using (var child = activitySource.StartActivity("child"))
+                {
+                    Assert.Null(child);
+                    Assert.Equal(root.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                    Assert.Same(Activity.Current, root);
+                }
+            }
+        }
+
+        private class TestSampler : ActivitySampler
+        {
+            public SamplingResult DesiredSamplingResult { get; set; }
+
+            public ActivitySamplingParameters LatestSamplingParameters { get; private set; }
+
+            public override string Description { get; } = nameof(TestSampler);
+
+            public override SamplingResult ShouldSample(in ActivitySamplingParameters samplingParameters)
+            {
+                this.LatestSamplingParameters = samplingParameters;
+                return this.DesiredSamplingResult;
             }
         }
     }
