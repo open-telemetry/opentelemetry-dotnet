@@ -118,7 +118,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, request.UserAgent);
                 activity.AddTag(SpanAttributeConstants.HttpUrlKey, request.Url.ToString());
             }
-    }
+        }
 
         public override void OnStopActivity(Activity activity, object payload)
         {
