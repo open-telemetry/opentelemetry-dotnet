@@ -29,6 +29,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInListener : ListenerHandler
     {
         private static readonly string UnknownHostName = "UNKNOWN-HOST";
+        private static readonly string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
 
         // hard-coded Sampler here, just to prototype.
         // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
@@ -67,9 +68,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             var request = context.Request;
-            var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            activity.DisplayName = path;
-
             if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormatActivity))
             {
                 // This requires to ignore the current activity and create a new one
@@ -80,12 +78,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     request,
                     (r, name) => r.Headers[name]);
 
-                Activity newOne = new Activity(path);
+                Activity newOne = new Activity(ActivityNameByHttpInListener);
                 newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
                 newOne.TraceStateString = ctx.TraceState;
                 newOne.Start();
                 activity = newOne;
             }
+
+            var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
+            activity.DisplayName = path;
 
             // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
             activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
@@ -146,6 +147,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
                 activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
                 activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
+            }
+
+            if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+            {
+                // If instrumentation started a new Activity, it must
+                // be stopped here.
+                activity.Stop();
             }
         }
 

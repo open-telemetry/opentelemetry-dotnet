@@ -26,6 +26,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
+        private static readonly string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
+
         // hard-coded Sampler here, just to prototype.
         // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
         // or we'll move the Sampler to come from OpenTelemetryBuilder, and not hardcoded.
@@ -59,17 +61,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 return;
             }
 
-            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
-
             var request = context.Request;
             var requestValues = request.Unvalidated;
 
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
-            var path = requestValues.Path;
-            activity.DisplayName = path;
-
-            if (!(this.options.TextFormat is TraceContextFormat))
+            if (!(this.options.TextFormat is TraceContextFormatActivity))
             {
                 // This requires to ignore the current activity and create a new one
                 // using the context extracted using the format TextFormat supports.
@@ -77,12 +72,19 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     request,
                     (r, name) => requestValues.Headers.GetValues(name));
 
-                Activity newOne = new Activity(path);
+                Activity newOne = new Activity(ActivityNameByHttpInListener);
                 newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
                 newOne.TraceStateString = ctx.TraceState;
                 newOne.Start();
                 activity = newOne;
             }
+
+            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
+            var path = requestValues.Path;
+            activity.DisplayName = path;
+
+            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
+            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
 
             var samplingParameters = new ActivitySamplingParameters(
                         activity.Context,
@@ -164,6 +166,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     activity.DisplayName = template;
                     activity.AddTag(SpanAttributeConstants.HttpRouteKey, template);
                 }
+            }
+
+            if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+            {
+                // If instrumentation started a new Activity, it must
+                // be stopped here.
+                activity.Stop();
             }
         }
     }
