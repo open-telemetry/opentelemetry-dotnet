@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NET452 || NET461
+#if NETFRAMEWORK
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -177,17 +177,17 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: The first record must be a request, the next record must be a response.
-            var wrapper = AssertFirstEventWasStart(eventRecords);
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
 
-            VerifyHeaders(wrapper.HttpWebRequest);
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, wrapper.Activity);
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
             HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
             Assert.NotNull(response);
 
-            VerifyActivityStopTags("200", "OK", wrapper.Activity);
+            VerifyActivityStopTags("200", "OK", activity);
         }
 
         [Theory]
@@ -230,16 +230,16 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: The first record must be a request, the next record must be a response.
-            var wrapper = AssertFirstEventWasStart(eventRecords);
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
 
-            VerifyHeaders(wrapper.HttpWebRequest);
+            VerifyHeaders(startRequest);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
             HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
             Assert.NotNull(response);
 
-            Assert.Empty(wrapper.Activity.Tags);
+            Assert.Empty(activity.Tags);
         }
 
         [Theory]
@@ -393,17 +393,17 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: The first record must be a request, the next record must be a response.
-            var wrapper = AssertFirstEventWasStart(eventRecords);
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
 
-            VerifyHeaders(wrapper.HttpWebRequest);
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, wrapper.Activity);
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
             HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
             Assert.NotNull(response);
 
-            VerifyActivityStopTags("200", "OK", wrapper.Activity);
+            VerifyActivityStopTags("200", "OK", activity);
         }
 
         [Fact]
@@ -430,11 +430,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 Assert.Equal(2, eventRecords.Records.Count());
 
                 // Check to make sure: The first record must be a request, the next record must be a response.
-                var wrapper = AssertFirstEventWasStart(eventRecords);
+                (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
 
-                var traceparent = wrapper.HttpWebRequest.Headers["traceparent"];
-                var tracestate = wrapper.HttpWebRequest.Headers["tracestate"];
-                var correlationContext = wrapper.HttpWebRequest.Headers["Correlation-Context"];
+                var traceparent = startRequest.Headers["traceparent"];
+                var tracestate = startRequest.Headers["tracestate"];
+                var correlationContext = startRequest.Headers["Correlation-Context"];
                 Assert.NotNull(traceparent);
                 Assert.Equal("some=state", tracestate);
                 Assert.Equal("k=v", correlationContext);
@@ -510,19 +510,19 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: The first record must be a request, the next record must be a response.
-            var wrapper = AssertFirstEventWasStart(eventRecords);
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
 
-            VerifyHeaders(wrapper.HttpWebRequest);
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, wrapper.Activity);
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
             HttpWebRequest stopRequest = (HttpWebRequest)stopEvent.Value.GetCustomProperty("HttpWebRequest.Request");
-            Assert.Equal(wrapper.HttpWebRequest, stopRequest);
+            Assert.Equal(startRequest, stopRequest);
             HttpWebResponse stopResponse = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
             Assert.NotNull(stopResponse);
 
-            VerifyActivityStopTags("204", "No Content", wrapper.Activity);
+            VerifyActivityStopTags("204", "No Content", activity);
         }
 
         /// <summary>
@@ -580,19 +580,19 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: The first record must be a request, the next record must be an exception.
-            var wrapper = AssertFirstEventWasStart(eventRecords);
-            VerifyHeaders(wrapper.HttpWebRequest);
-            VerifyActivityStartTags(null, method, url, wrapper.Activity);
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(null, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
             HttpWebRequest exceptionRequest = (HttpWebRequest)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Request");
-            Assert.Equal(wrapper.HttpWebRequest, exceptionRequest);
+            Assert.Equal(startRequest, exceptionRequest);
             Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
             Assert.Equal(webException, exceptionException);
 
-            Assert.Contains(wrapper.Activity.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
-            Assert.Contains(wrapper.Activity.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
+            Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
+            Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
         }
 
         /// <summary>
@@ -624,9 +624,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
-            var wrapper = AssertFirstEventWasStart(eventRecords);
-            VerifyHeaders(wrapper.HttpWebRequest);
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, wrapper.Activity);
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
@@ -665,9 +665,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
-            var wrapper = AssertFirstEventWasStart(eventRecords);
-            VerifyHeaders(wrapper.HttpWebRequest);
-            VerifyActivityStartTags(null, method, url, wrapper.Activity);
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(null, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
@@ -709,9 +709,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
-            var wrapper = AssertFirstEventWasStart(eventRecords);
-            VerifyHeaders(wrapper.HttpWebRequest);
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, wrapper.Activity);
+            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+            VerifyHeaders(startRequest);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
@@ -866,13 +866,13 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             }
         }
 
-        private static ActivityHttpWebRequestWrapper AssertFirstEventWasStart(ActivitySourceRecorder eventRecords)
+        private static (Activity, HttpWebRequest) AssertFirstEventWasStart(ActivitySourceRecorder eventRecords)
         {
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> startEvent));
             Assert.Equal("Start", startEvent.Key);
             HttpWebRequest startRequest = (HttpWebRequest)startEvent.Value.GetCustomProperty("HttpWebRequest.Request");
             Assert.NotNull(startRequest);
-            return new ActivityHttpWebRequestWrapper(startEvent.Value, startRequest);
+            return (startEvent.Value, startRequest);
         }
 
         private static void VerifyHeaders(HttpWebRequest startRequest)
@@ -957,19 +957,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 this.Records.Enqueue(record);
                 this.onEvent?.Invoke(record);
             }
-        }
-
-        private class ActivityHttpWebRequestWrapper
-        {
-            public ActivityHttpWebRequestWrapper(Activity activity, HttpWebRequest httpWebRequest)
-            {
-                this.Activity = activity;
-                this.HttpWebRequest = httpWebRequest;
-            }
-
-            public Activity Activity { get; set; }
-
-            public HttpWebRequest HttpWebRequest { get; set; }
         }
     }
 }
