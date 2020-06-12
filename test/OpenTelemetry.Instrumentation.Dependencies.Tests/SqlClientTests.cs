@@ -60,7 +60,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             var activity = new Activity("Current").AddBaggage("Stuff", "123");
 
             var spanProcessor = new Mock<ActivityProcessor>();
-            using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
+            using (OpenTelemetrySdk.EnableOpenTelemetry(
                     (builder) => builder.AddSqlClientDependencyInstrumentation(
                         (opt) =>
                         {
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             var activity = new Activity("Current").AddBaggage("Stuff", "123");
             var spanProcessor = new Mock<ActivityProcessor>();
 
-            using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
+            using (OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddSqlClientDependencyInstrumentation()
                 .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {

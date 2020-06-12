@@ -27,7 +27,7 @@ namespace Samples
         {
             Console.WriteLine("Hello World!");
 
-            OpenTelemetrySdk.Default.EnableOpenTelemetry(
+            using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddHttpClientDependencyInstrumentation()
                 .AddActivitySource("http-client-test")
                 .UseConsoleActivityExporter(opt => opt.DisplayAsJson = false));
