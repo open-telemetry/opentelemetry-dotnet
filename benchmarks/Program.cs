@@ -21,6 +21,9 @@ namespace Benchmarks
     {
         public static void Main(string[] args)
         {
+            // examples to run from command line:
+            // navigate to opentelemetry-dotnet\src\benchmarks directory and run the following
+            // dotnet run --framework netcoreapp3.1 --configuration Release --filter *OpenTelemetrySdkBenchmarksActivity*
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
         }
     }
