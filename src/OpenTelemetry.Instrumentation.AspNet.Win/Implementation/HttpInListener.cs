@@ -87,12 +87,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
 
             var samplingParameters = new ActivitySamplingParameters(
-                        activity.Context,
-                        activity.TraceId,
-                        activity.DisplayName,
-                        activity.Kind,
-                        activity.Tags,
-                        activity.Links);
+                activity.Context,
+                activity.TraceId,
+                activity.DisplayName,
+                activity.Kind,
+                activity.Tags,
+                activity.Links);
 
             // TODO: Find a way to avoid Instrumentation being tied to Sampler
             var samplingDecision = this.sampler.ShouldSample(samplingParameters);
