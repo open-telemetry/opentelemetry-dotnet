@@ -3,14 +3,12 @@ using System.Web;
 using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Routing;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
 namespace OpenTelemetry.Exporter.AspNet
 {
     public class WebApiApplication : HttpApplication
     {
-        private TracerFactory tracerFactory;
         private IDisposable openTelemetry;
 
         protected void Application_Start()
@@ -32,7 +30,6 @@ namespace OpenTelemetry.Exporter.AspNet
 
         protected void Application_End()
         {
-            this.tracerFactory?.Dispose();
             this.openTelemetry?.Dispose();
         }
     }

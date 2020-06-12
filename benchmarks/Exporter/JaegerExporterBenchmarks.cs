@@ -82,8 +82,10 @@ namespace Benchmarks.Exporter
         {
             using var jaegerUdpBatcher = new JaegerUdpBatcher(
                 new JaegerExporterOptions(),
-                new BlackHoleTransport());
-            jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Process("TestService");
+                new BlackHoleTransport())
+            {
+                Process = new OpenTelemetry.Exporter.Jaeger.Process("TestService")
+            };
 
             for (int i = 0; i < this.NumberOfBatches; i++)
             {
