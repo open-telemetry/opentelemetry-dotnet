@@ -31,7 +31,7 @@ namespace OpenTelemetry.Metrics.Config.Test
         public void MeterFactory_Default()
         {
             Assert.NotNull(MeterFactoryBase.Default);
-            var defaultMeter = MeterFactoryBase.Default.GetMeter("");
+            var defaultMeter = MeterFactoryBase.Default.GetMeter(string.Empty);
             Assert.NotNull(defaultMeter);
             Assert.Same(defaultMeter, MeterFactoryBase.Default.GetMeter("named meter"));
 
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Metrics.Config.Test
             var factory = MeterFactory.Create(b => { });
             MeterFactoryBase.SetDefault(factory);
 
-            var defaultMeter = MeterFactoryBase.Default.GetMeter("");
+            var defaultMeter = MeterFactoryBase.Default.GetMeter(string.Empty);
             Assert.NotNull(defaultMeter);
             Assert.IsType<MeterSdk>(defaultMeter);
 
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Metrics.Config.Test
         [Fact]
         public void MeterFactory_UpdateDefault_CachedTracer()
         {
-            var defaultMeter = MeterFactoryBase.Default.GetMeter("");
+            var defaultMeter = MeterFactoryBase.Default.GetMeter(string.Empty);
             var noOpCounter = defaultMeter.CreateDoubleCounter("ctr");
             Assert.IsType<NoOpCounterMetric<double>>(noOpCounter);
 
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Metrics.Config.Test
             var counter = defaultMeter.CreateDoubleCounter("ctr");
             Assert.IsType<DoubleCounterMetricSdk>(counter);
 
-            var newdefaultMeter = MeterFactoryBase.Default.GetMeter("");
+            var newdefaultMeter = MeterFactoryBase.Default.GetMeter(string.Empty);
             Assert.NotSame(defaultMeter, newdefaultMeter);
             Assert.IsType<MeterSdk>(newdefaultMeter);
         }

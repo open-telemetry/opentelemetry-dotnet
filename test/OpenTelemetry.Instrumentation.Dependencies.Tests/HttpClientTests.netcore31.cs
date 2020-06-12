@@ -1,4 +1,4 @@
-﻿// <copyright file="DurationTest.netcore31.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpClientTests.netcore31.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,6 @@
 // limitations under the License.
 // </copyright>
 #if NETCOREAPP3_1
-using Moq;
-using Newtonsoft.Json;
-using OpenTelemetry.Internal.Test;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -29,6 +23,12 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
+using Moq;
+using Newtonsoft.Json;
+using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Tests
@@ -56,8 +56,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             using (serverLifeTime)
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
-                    (builder) => builder.AddHttpClientDependencyInstrumentation((opt)=> opt.SetHttpFlavor = tc.SetHttpFlavor)
-                    .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                    (builder) => builder.AddHttpClientDependencyInstrumentation((opt) => opt.SetHttpFlavor = tc.SetHttpFlavor)
+                    .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 try
                 {
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 }
                 catch (Exception)
                 {
-                    //test case can intentionally send request that will result in exception
+                    // test case can intentionally send request that will result in exception
                 }
             }
 
@@ -93,31 +93,29 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             var d = new Dictionary<string, string>()
             {
-                { "Ok", "OK"},
-                { "Cancelled", "CANCELLED"},
-                { "Unknown", "UNKNOWN"},
-                { "InvalidArgument", "INVALID_ARGUMENT"},
-                { "DeadlineExceeded", "DEADLINE_EXCEEDED"},
-                { "NotFound", "NOT_FOUND"},
-                { "AlreadyExists", "ALREADY_EXISTS"},
-                { "PermissionDenied", "PERMISSION_DENIED"},
-                { "ResourceExhausted", "RESOURCE_EXHAUSTED"},
-                { "FailedPrecondition", "FAILED_PRECONDITION"},
-                { "Aborted", "ABORTED"},
-                { "OutOfRange", "OUT_OF_RANGE"},
-                { "Unimplemented", "UNIMPLEMENTED"},
-                { "Internal", "INTERNAL"},
-                { "Unavailable", "UNAVAILABLE"},
-                { "DataLoss", "DATA_LOSS"},
-                { "Unauthenticated", "UNAUTHENTICATED"},
+                { "Ok", "OK" },
+                { "Cancelled", "CANCELLED" },
+                { "Unknown", "UNKNOWN" },
+                { "InvalidArgument", "INVALID_ARGUMENT" },
+                { "DeadlineExceeded", "DEADLINE_EXCEEDED" },
+                { "NotFound", "NOT_FOUND" },
+                { "AlreadyExists", "ALREADY_EXISTS" },
+                { "PermissionDenied", "PERMISSION_DENIED" },
+                { "ResourceExhausted", "RESOURCE_EXHAUSTED" },
+                { "FailedPrecondition", "FAILED_PRECONDITION" },
+                { "Aborted", "ABORTED" },
+                { "OutOfRange", "OUT_OF_RANGE" },
+                { "Unimplemented", "UNIMPLEMENTED" },
+                { "Internal", "INTERNAL" },
+                { "Unavailable", "UNAVAILABLE" },
+                { "DataLoss", "DATA_LOSS" },
+                { "Unauthenticated", "UNAUTHENTICATED" },
             };
 
             // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
             Assert.Equal(
                     tc.SpanStatus,
-                    d[span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value]
-                    );
-
+                    d[span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value]);
 
             if (tc.SpanStatusHasDescription.HasValue)
             {
@@ -132,7 +130,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             foreach (var kv in normalizedAttributesTestCase)
             {
-                //TODO: Fix this test. This is mostly broken because Status is stored in tags.
+                // TODO: Fix this test. This is mostly broken because Status is stored in tags.
                 // Assert.Contains(span.Tags, i => i.Key == kv.Key && i.Value.Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
             }
         }
@@ -162,7 +160,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 ]
 ")));
 
-            var t = (Task)this.GetType().InvokeMember(nameof(HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
+            var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
             await t;
         }
     }

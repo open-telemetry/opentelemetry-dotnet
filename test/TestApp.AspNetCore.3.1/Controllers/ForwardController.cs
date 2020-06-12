@@ -43,8 +43,10 @@ namespace TestApp.AspNetCore._3._1.Controllers
                 {
                     var request = new HttpRequestMessage(HttpMethod.Post, argument.Url)
                     {
-                        Content = new StringContent(JsonConvert.SerializeObject(argument.Arguments),
-                            Encoding.UTF8, "application/json"),
+                        Content = new StringContent(
+                            JsonConvert.SerializeObject(argument.Arguments),
+                            Encoding.UTF8,
+                            "application/json"),
                     };
                     await this.httpClient.SendAsync(request);
                 }
@@ -56,15 +58,14 @@ namespace TestApp.AspNetCore._3._1.Controllers
 
             return result;
         }
-    }
 
-    public class Data
-    {
-        [JsonProperty("url")]
-        public string Url { get; set; }
+        public class Data
+        {
+            [JsonProperty("url")]
+            public string Url { get; set; }
 
-        [JsonProperty("arguments")]
-        public Data[] Arguments { get; set; }
+            [JsonProperty("arguments")]
+            public Data[] Arguments { get; set; }
+        }
     }
 }
-

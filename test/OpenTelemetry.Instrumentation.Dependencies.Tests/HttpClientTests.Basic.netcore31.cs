@@ -14,18 +14,18 @@
 // limitations under the License.
 // </copyright>
 #if NETCOREAPP3_1
-using OpenTelemetry.Trace.Configuration;
-using Moq;
-using OpenTelemetry.Internal.Test;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Tests
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                    (builder) => builder.AddHttpClientDependencyInstrumentation((opt) => opt.TextFormat = textFormat.Object)
-                   .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                   .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -198,7 +198,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -232,16 +232,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
-            using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
-                        (builder) => builder.AddHttpClientDependencyInstrumentation()
-                        .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+            using (new HttpClientInstrumentation(tracer, options))
             {
                 using var c = new HttpClient();
                 using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
                 try
                 {
-                    await c.PostAsync("https://dc.services.visualstudio.com/", new StringContent(""), cts.Token);
-                    await c.PostAsync("https://localhost:9411/api/v2/spans", new StringContent(""), cts.Token);
+                    await c.PostAsync("https://dc.services.visualstudio.com/", new StringContent(string.Empty), cts.Token);
+                    await c.PostAsync("https://localhost:9411/api/v2/spans", new StringContent(string.Empty), cts.Token);
                 }
                 catch
                 {

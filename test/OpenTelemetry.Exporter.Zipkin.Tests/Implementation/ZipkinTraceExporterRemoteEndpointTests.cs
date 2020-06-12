@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinSpanConverterTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZipkinTraceExporterRemoteEndpointTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,12 +91,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
 
             var attributes = new Dictionary<string, object>
             {
-                { "stringKey", "value"},
-                { "longKey", 1L},
+                { "stringKey", "value" },
+                { "longKey", 1L },
                 { "longKey2", 1 },
-                { "doubleKey", 1D},
-                { "doubleKey2", 1F},
-                { "boolKey", true},
+                { "doubleKey", 1D },
+                { "doubleKey2", 1F },
+                { "boolKey", true },
             };
             if (additionalAttributes != null)
             {
@@ -114,20 +114,26 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
                     new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }
-                ),
+                    }),
                 new Event(
                     "Event2",
                     eventTimestamp,
                     new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }
-                ),
+                    }),
             };
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
-
+            var links = addLinks
+                ? new[]
+                {
+                    new Link(new SpanContext(
+                        traceId,
+                        linkedSpanId,
+                        ActivityTraceFlags.Recorded)),
+                }
+                : null;
             return new SpanData(
                 "Name",
                 new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded),
@@ -136,10 +142,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
                 startTimestamp,
                 setAttributes ? attributes : null,
                 addEvents ? events : null,
-                addLinks ? new[] { new Link(new SpanContext(
-                        traceId,
-                        linkedSpanId,
-                        ActivityTraceFlags.Recorded)), } : null,
+                links,
                 null,
                 Status.Ok,
                 endTimestamp);

@@ -21,9 +21,9 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Exporter.Zipkin.Tests.Implementation;
+using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace.Export;
 using Xunit;
 
@@ -89,9 +89,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             StringBuilder ipInformation = new StringBuilder();
             if (!string.IsNullOrEmpty(exporter.LocalEndpoint.Ipv4))
+            {
                 ipInformation.Append($@",""ipv4"":""{exporter.LocalEndpoint.Ipv4}""");
+            }
+
             if (!string.IsNullOrEmpty(exporter.LocalEndpoint.Ipv6))
+            {
                 ipInformation.Append($@",""ipv6"":""{exporter.LocalEndpoint.Ipv6}""");
+            }
 
             Assert.Equal(
                 $@"[{{""traceId"":""e8ea7e9ac72de94e91fabc613f9686b2"",""name"":""Name"",""parentId"":""{ZipkinConversionExtensions.EncodeSpanId(span.ParentSpanId)}"",""id"":""{ZipkinConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""Open Telemetry Exporter""{ipInformation}}},""annotations"":[{{""timestamp"":{timestamp},""value"":""Event1""}},{{""timestamp"":{timestamp},""value"":""Event2""}}],""tags"":{{""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""boolKey"":""True"",""ot.status_code"":""Ok""}}}}]",

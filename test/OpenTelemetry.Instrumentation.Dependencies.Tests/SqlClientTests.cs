@@ -62,11 +62,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             var spanProcessor = new Mock<ActivityProcessor>();
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                     (builder) => builder.AddSqlClientDependencyInstrumentation(
-                        (opt)=> {
+                        (opt) =>
+                        {
                             opt.CaptureTextCommandContent = captureTextCommandContent;
                             opt.CaptureStoredProcedureCommandName = captureStoredProcedureCommandName;
                             })
-                    .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                    .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var operationId = Guid.NewGuid();
                 var sqlConnection = new SqlConnection(TestConnectionString);
@@ -110,8 +111,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             // TODO: Should Ok status be assigned when no error occurs automatically?
             // Assert.Equal("Ok", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
             Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
-
-
 
             Assert.Equal("sql", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value);
             Assert.Equal("sql", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseTypeKey).Value);
@@ -157,7 +156,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.Default.EnableOpenTelemetry(
                 (builder) => builder.AddSqlClientDependencyInstrumentation()
-                .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var operationId = Guid.NewGuid();
                 var sqlConnection = new SqlConnection(TestConnectionString);

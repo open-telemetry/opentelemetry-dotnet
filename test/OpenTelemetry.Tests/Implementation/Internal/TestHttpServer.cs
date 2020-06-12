@@ -24,6 +24,31 @@ namespace OpenTelemetry.Internal.Test
     {
         private static readonly Random GlobalRandom = new Random();
 
+        public static IDisposable RunServer(Action<HttpListenerContext> action, out string host, out int port)
+        {
+            host = "localhost";
+            port = 0;
+            RunningServer server = null;
+
+            var retryCount = 5;
+            while (retryCount > 0)
+            {
+                try
+                {
+                    port = GlobalRandom.Next(2000, 5000);
+                    server = new RunningServer(action, host, port);
+                    server.Start();
+                    break;
+                }
+                catch (HttpListenerException)
+                {
+                    retryCount--;
+                }
+            }
+
+            return server;
+        }
+
         private class RunningServer : IDisposable
         {
             private readonly Task httpListenerTask;
@@ -51,11 +76,14 @@ namespace OpenTelemetry.Internal.Test
                         }
                         catch (Exception ex)
                         {
-                            if (ex is ObjectDisposedException // Listener was closed before we got into GetContextAsync.
-                                || (ex is HttpListenerException httpEx && httpEx.ErrorCode == 995)) // Listener was closed while we were in GetContextAsync.
+                            if (ex is ObjectDisposedException
+                                || (ex is HttpListenerException httpEx && httpEx.ErrorCode == 995))
                             {
+                                // Listener was closed before we got into GetContextAsync or
+                                // Listener was closed while we were in GetContextAsync.
                                 break;
                             }
+
                             throw;
                         }
                     }
@@ -79,31 +107,6 @@ namespace OpenTelemetry.Internal.Test
                     // swallow this exception just in case
                 }
             }
-        }
-
-        public static IDisposable RunServer(Action<HttpListenerContext> action, out string host, out int port)
-        {
-            host = "localhost";
-            port = 0;
-            RunningServer server = null;
-
-            var retryCount = 5;
-            while (retryCount > 0)
-            {
-                try
-                {
-                    port = GlobalRandom.Next(2000, 5000);
-                    server = new RunningServer(action, host, port);
-                    server.Start();
-                    break;
-                }
-                catch (HttpListenerException)
-                {
-                    retryCount--;
-                }
-            }
-
-            return server;
         }
     }
 }

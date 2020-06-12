@@ -174,9 +174,6 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // TODO BaggageItems are not implemented yet.
         }
 
-        public interface UnsupportedCarrierType
-        { }
-
         /// <summary>
         /// Simple ITextMap implementation used for the inject/extract tests.
         /// </summary>

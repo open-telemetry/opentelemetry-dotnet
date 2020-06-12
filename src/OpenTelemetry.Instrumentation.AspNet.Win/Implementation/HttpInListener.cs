@@ -69,12 +69,28 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var path = requestValues.Path;
             activity.DisplayName = path;
 
-            if (!(this.options.TextFormat is TraceContextFormatActivity))
+            var samplingParameters = new ActivitySamplingParameters(
+                activity.Context,
+                activity.TraceId,
+                activity.DisplayName,
+                activity.Kind,
+                activity.Tags,
+                activity.Links);
+
+            // TODO: Find a way to avoid Instrumentation being tied to Sampler
+            var samplingDecision = this.sampler.ShouldSample(samplingParameters);
+            activity.IsAllDataRequested = samplingDecision.IsSampled;
+            if (samplingDecision.IsSampled)
+            {
+                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+            }
+
+            if (!(this.options.TextFormat is TraceContextFormat))
             {
                 // This requires to ignore the current activity and create a new one
-                // using the context extracted from w3ctraceparent header or
-                // using the format TextFormat supports.
-
+                // using the context extracted using the format TextFormat supports.
+                // TODO: actually implement code doing the above.
+                /*
                 var ctx = this.options.TextFormat.Extract<HttpRequest>(
                     request,
                     (r, name) => requestValues.Headers.GetValues(name));

@@ -1,4 +1,4 @@
-﻿// <copyright file="AttributesExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AssemblyInfo.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 
-namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
-{
-    internal static class AttributesExtensions
-    {
-        public static object GetValue(this IEnumerable<KeyValuePair<string, object>> attributes, string key)
-        {
-            return attributes.FirstOrDefault(kvp => kvp.Key == key).Value;
-        }
-    }
-}
+[assembly: SuppressMessage(
+    "StyleCop.CSharp.NamingRules",
+    "SA1300",
+    Justification = "Reviewed.",
+    Scope = "namespaceanddescendants",
+    Target = "TestApp.AspNetCore._3._1")]

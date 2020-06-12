@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using Xunit;
-using OpenTelemetry.Resources;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using OpenTelemetry.Resources;
+using Xunit;
 
 namespace OpenTelemetry.Impl.Resources
 {
@@ -150,8 +150,8 @@ namespace OpenTelemetry.Impl.Resources
         {
             var attributes = new Dictionary<string, object>
             {
-                { "dynamic", new {} },
-                { "array", new int [1]},
+                { "dynamic", new { } },
+                { "array", new int[1] },
                 { "complex", this },
                 { "float", 0.1f },
             };
@@ -337,19 +337,13 @@ namespace OpenTelemetry.Impl.Resources
             }
         }
 
-        private Dictionary<string, object> CreateAttributes(int attributeCount, int startIndex = 0)
-        {
-            var attributes = new Dictionary<string, object>();
-            AddAttributes(attributes, attributeCount, startIndex);
-            return attributes;
-        }
-
         private static void ValidateAttributes(IEnumerable<KeyValuePair<string, object>> attributes, int startIndex = 0)
         {
             var keyValuePairs = attributes as KeyValuePair<string, object>[] ?? attributes.ToArray();
             for (var i = startIndex; i < keyValuePairs.Length; ++i)
             {
-                Assert.Contains(new KeyValuePair<string, object>(
+                Assert.Contains(
+                    new KeyValuePair<string, object>(
                     $"{KeyName}{i}", $"{ValueName}{i}"), keyValuePairs);
             }
         }
@@ -367,6 +361,13 @@ namespace OpenTelemetry.Impl.Resources
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, length)
               .Select(s => s[Random.Next(s.Length)]).ToArray());
+        }
+
+        private Dictionary<string, object> CreateAttributes(int attributeCount, int startIndex = 0)
+        {
+            var attributes = new Dictionary<string, object>();
+            AddAttributes(attributes, attributeCount, startIndex);
+            return attributes;
         }
     }
 }

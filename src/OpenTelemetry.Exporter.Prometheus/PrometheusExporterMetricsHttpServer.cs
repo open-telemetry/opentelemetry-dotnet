@@ -20,7 +20,6 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Prometheus.Implementation;
-using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Exporter.Prometheus
 {

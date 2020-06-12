@@ -15,9 +15,6 @@
 // </copyright>
 using System.Collections.Generic;
 using System.Linq;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Metrics.Configuration;
-using OpenTelemetry.Metrics.Export;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Test
@@ -63,6 +60,7 @@ namespace OpenTelemetry.Metrics.Test
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
             labels1.Add(new KeyValuePair<string, string>("dim2", "value2"));
             labels1.Add(new KeyValuePair<string, string>("dim3", "value3"));
+
             // Construct labelset some labels.
             var labelSet1 = new LabelSetSdk(labels1);
 
@@ -70,6 +68,7 @@ namespace OpenTelemetry.Metrics.Test
             labels1.Add(new KeyValuePair<string, string>("dim3", "value3"));
             labels1.Add(new KeyValuePair<string, string>("dim2", "value2"));
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
+
             // Construct another labelset with same labels but in different order.
             var labelSet2 = new LabelSetSdk(labels1);
 
@@ -82,7 +81,6 @@ namespace OpenTelemetry.Metrics.Test
             Assert.True(hashSet.Count == 1);
             Assert.Equal(labelSet1.GetHashCode(), labelSet2.GetHashCode());
             Assert.Equal(labelSet1, labelSet2);
-
         }
     }
 }

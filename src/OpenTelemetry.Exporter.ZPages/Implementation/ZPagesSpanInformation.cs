@@ -15,9 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.ZPages.Implementation

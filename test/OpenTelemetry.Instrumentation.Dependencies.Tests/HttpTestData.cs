@@ -13,15 +13,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using Newtonsoft.Json;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 {
     public static class HttpTestData
     {
+        public static IEnumerable<object[]> ReadTestCases()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var serializer = new JsonSerializer();
+            var input = serializer.Deserialize<HttpOutTestCase[]>(new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream("OpenTelemetry.Instrumentation.Dependencies.Tests.http-out-test-cases.json"))));
+
+            return GetArgumentsFromTestCaseObject(input);
+        }
+
+        public static IEnumerable<object[]> GetArgumentsFromTestCaseObject(IEnumerable<HttpOutTestCase> input)
+        {
+            var result = new List<object[]>();
+
+            foreach (var testCase in input)
+            {
+                result.Add(new object[]
+                {
+                    testCase,
+                });
+            }
+
+            return result;
+        }
+
+        public static string NormalizeValues(string value, string host, int port)
+        {
+            return value.Replace("{host}", host).Replace("{port}", port.ToString());
+        }
+
         public class HttpOutTestCase
         {
             public string Name { get; set; }
@@ -45,34 +74,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             public Dictionary<string, string> SpanAttributes { get; set; }
 
             public bool SetHttpFlavor { get; set; }
-        }
-
-        public static IEnumerable<object[]> ReadTestCases()
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var serializer = new JsonSerializer();
-            var input = serializer.Deserialize<HttpOutTestCase[]>(new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream("OpenTelemetry.Instrumentation.Dependencies.Tests.http-out-test-cases.json"))));
-
-            return GetArgumentsFromTestCaseObject(input);
-        }
-
-        public static IEnumerable<object[]> GetArgumentsFromTestCaseObject(IEnumerable<HttpOutTestCase> input)
-        {
-            var result = new List<object[]>();
-
-            foreach (var testCase in input)
-            {
-                result.Add(new object[] {
-                    testCase,
-                });
-            }
-
-            return result;
-        }
-
-        public static string NormalizeValues(string value, string host, int port)
-        {
-            return value.Replace("{host}", host).Replace("{port}", port.ToString());
         }
     }
 }

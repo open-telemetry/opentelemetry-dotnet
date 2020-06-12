@@ -41,7 +41,8 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             bool start2Called = false;
             bool end1Called = false;
             bool end2Called = false;
-            var processor1 = new TestProcessor(ss =>
+            var processor1 = new TestProcessor(
+                ss =>
             {
                 start1Called = true;
                 Assert.False(start2Called);
@@ -54,7 +55,8 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
                 Assert.True(start2Called);
                 Assert.False(end2Called);
             });
-            var processor2 = new TestProcessor(ss =>
+            var processor2 = new TestProcessor(
+                ss =>
             {
                 start2Called = true;
                 Assert.True(start1Called);
@@ -66,7 +68,6 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
                 Assert.True(start1Called);
                 Assert.True(start2Called);
                 Assert.True(end1Called);
-
             });
 
             var broadcastProcessor = new BroadcastProcessor(new[] { processor1, processor2 });
@@ -91,7 +92,8 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             bool start2Called = false;
             bool end1Called = false;
             bool end2Called = false;
-            var processor1 = new TestProcessor(ss =>
+            var processor1 = new TestProcessor(
+                ss =>
             {
                 start1Called = true;
                 Assert.False(start2Called);
@@ -108,7 +110,8 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
                 throw new Exception("End exception");
             });
 
-            var processor2 = new TestProcessor(ss =>
+            var processor2 = new TestProcessor(
+                ss =>
             {
                 start2Called = true;
                 Assert.True(start1Called);
@@ -120,7 +123,6 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
                 Assert.True(start1Called);
                 Assert.True(start2Called);
                 Assert.True(end1Called);
-
             });
 
             var broadcastProcessor = new BroadcastProcessor(new[] { processor1, processor2 });
@@ -159,14 +161,16 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
         {
             private readonly Action<SpanData> onStart;
             private readonly Action<SpanData> onEnd;
-            public bool ShutdownCalled { get; private set; } = false;
-            public bool DisposedCalled { get; private set; } = false;
 
             public TestProcessor(Action<SpanData> onStart, Action<SpanData> onEnd)
             {
                 this.onStart = onStart;
                 this.onEnd = onEnd;
             }
+
+            public bool ShutdownCalled { get; private set; } = false;
+
+            public bool DisposedCalled { get; private set; } = false;
 
             public override void OnStart(SpanData span)
             {

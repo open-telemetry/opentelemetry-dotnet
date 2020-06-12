@@ -27,36 +27,36 @@ namespace OpenTelemetry.Trace.Test
 
         public LinkTest()
         {
-            spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+            this.spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
 
-            attributesMap.Add("MyAttributeKey0", "MyStringAttribute");
-            attributesMap.Add("MyAttributeKey1", 10L);
-            attributesMap.Add("MyAttributeKey2", true);
-            attributesMap.Add("MyAttributeKey3", 0.005);
+            this.attributesMap.Add("MyAttributeKey0", "MyStringAttribute");
+            this.attributesMap.Add("MyAttributeKey1", 10L);
+            this.attributesMap.Add("MyAttributeKey2", true);
+            this.attributesMap.Add("MyAttributeKey3", 0.005);
         }
 
         [Fact]
         public void FromSpanContext()
         {
-            var link = new Link(spanContext);
-            Assert.Equal(spanContext.TraceId, link.Context.TraceId);
-            Assert.Equal(spanContext.SpanId, link.Context.SpanId);
+            var link = new Link(this.spanContext);
+            Assert.Equal(this.spanContext.TraceId, link.Context.TraceId);
+            Assert.Equal(this.spanContext.SpanId, link.Context.SpanId);
         }
 
         [Fact]
         public void FromSpanContext_WithAttributes()
         {
-            var link = new Link(spanContext, attributesMap);
-            Assert.Equal(spanContext.TraceId, link.Context.TraceId);
-            Assert.Equal(spanContext.SpanId, link.Context.SpanId);
-            Assert.Equal(attributesMap, link.Attributes);
+            var link = new Link(this.spanContext, this.attributesMap);
+            Assert.Equal(this.spanContext.TraceId, link.Context.TraceId);
+            Assert.Equal(this.spanContext.SpanId, link.Context.SpanId);
+            Assert.Equal(this.attributesMap, link.Attributes);
         }
 
         [Fact]
         public void Equality()
         {
-            var link1 = new Link(spanContext);
-            var link2 = new Link(spanContext);
+            var link1 = new Link(this.spanContext);
+            var link2 = new Link(this.spanContext);
 
             Assert.Equal(link1, link2);
             Assert.True(link1 == link2);
@@ -65,8 +65,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void Equality_WithAttributes()
         {
-            var link1 = new Link(spanContext, attributesMap);
-            var link2 = new Link(spanContext, attributesMap);
+            var link1 = new Link(this.spanContext, this.attributesMap);
+            var link2 = new Link(this.spanContext, this.attributesMap);
 
             Assert.Equal(link1, link2);
             Assert.True(link1 == link2);
@@ -85,8 +85,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void NotEquality_WithAttributes()
         {
-            var link1 = new Link(spanContext, new Dictionary<string, object>());
-            var link2 = new Link(spanContext, this.attributesMap);
+            var link1 = new Link(this.spanContext, new Dictionary<string, object>());
+            var link2 = new Link(this.spanContext, this.attributesMap);
 
             Assert.NotEqual(link1, link2);
             Assert.True(link1 != link2);

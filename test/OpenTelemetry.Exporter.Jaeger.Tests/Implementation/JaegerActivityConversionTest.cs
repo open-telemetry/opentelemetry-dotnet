@@ -414,12 +414,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var attributes = new Dictionary<string, object>
             {
-                { "stringKey", "value"},
-                { "longKey", 1L},
+                { "stringKey", "value" },
+                { "longKey", 1L },
                 { "longKey2", 1 },
-                { "doubleKey", 1D},
-                { "doubleKey2", 1F},
-                { "boolKey", true},
+                { "doubleKey", 1D },
+                { "doubleKey2", 1F },
+                { "boolKey", true },
             };
             if (additionalAttributes != null)
             {
@@ -437,34 +437,39 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                     new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }
-                ),
+                    }),
                 new ActivityEvent(
                     "Event2",
                     eventTimestamp,
                     new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }
-                ),
+                    }),
             };
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
             var activitySource = new ActivitySource(nameof(CreateTestActivity));
+
+            var tags = setAttributes ?
+                    attributes.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()))
+                    : null;
+            var links = addLinks ?
+                    new[]
+                    {
+                        new ActivityLink(new ActivityContext(
+                            traceId,
+                            linkedSpanId,
+                            ActivityTraceFlags.Recorded)),
+                    }
+                    : null;
+
             var activity = activitySource.StartActivity(
                 "Name",
                 kind,
                 parentContext: new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
-                tags: setAttributes ?
-                    attributes.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()))
-                    : null,
-                links: addLinks ?
-                    new[] { new ActivityLink(new ActivityContext(
-                        traceId,
-                        linkedSpanId,
-                        ActivityTraceFlags.Recorded)), }
-                    : null,
+                tags,
+                links,
                 startTime: startTimestamp);
 
             if (addEvents)

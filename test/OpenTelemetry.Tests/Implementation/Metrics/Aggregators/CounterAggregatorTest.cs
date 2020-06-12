@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
 using System.Threading;
 using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Metrics.Export;
@@ -23,14 +22,6 @@ namespace OpenTelemetry.Metrics.Test
 {
     public class CounterAggregatorTest
     {
-        private class UpdateThreadArguments<T> where T : struct
-        {
-            public ManualResetEvent mreToBlockUpdateThread;
-            public ManualResetEvent mreToEnsureAllThreadsStart;
-            public int threadsStartedCount;
-            public Aggregator<T> counterSumAggregator;
-        }
-
         [Fact]
         public void CounterAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdatesLong()
         {
@@ -48,10 +39,10 @@ namespace OpenTelemetry.Metrics.Test
             var argToThread =
                 new UpdateThreadArguments<long>
                 {
-                    counterSumAggregator = aggregator,
-                    threadsStartedCount = 0,
-                    mreToBlockUpdateThread = mre,
-                    mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart,
+                    CounterSumAggregator = aggregator,
+                    ThreadsStartedCount = 0,
+                    MreToBlockUpdateThread = mre,
+                    MreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart,
                 };
 
             Thread[] t = new Thread[10];
@@ -98,10 +89,10 @@ namespace OpenTelemetry.Metrics.Test
             var argToThread =
                 new UpdateThreadArguments<double>
                 {
-                    counterSumAggregator = aggregator,
-                    threadsStartedCount = 0,
-                    mreToBlockUpdateThread = mre,
-                    mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart,
+                    CounterSumAggregator = aggregator,
+                    ThreadsStartedCount = 0,
+                    MreToBlockUpdateThread = mre,
+                    MreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart,
                 };
 
             Thread[] t = new Thread[10];
@@ -131,15 +122,14 @@ namespace OpenTelemetry.Metrics.Test
             Assert.Equal(105000000, sum.Sum);
         }
 
-
         private static void LongMetricUpdateThread(object obj)
         {
             var arguments = obj as UpdateThreadArguments<long>;
-            var mre = arguments.mreToBlockUpdateThread;
-            var mreToEnsureAllThreadsStart = arguments.mreToEnsureAllThreadsStart;
-            var agg = arguments.counterSumAggregator;
+            var mre = arguments.MreToBlockUpdateThread;
+            var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
+            var agg = arguments.CounterSumAggregator;
 
-            if (Interlocked.Increment(ref arguments.threadsStartedCount) == 10)
+            if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == 10)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
@@ -156,11 +146,11 @@ namespace OpenTelemetry.Metrics.Test
         private static void DoubleMetricUpdateThread(object obj)
         {
             var arguments = obj as UpdateThreadArguments<double>;
-            var mre = arguments.mreToBlockUpdateThread;
-            var mreToEnsureAllThreadsStart = arguments.mreToEnsureAllThreadsStart;
-            var agg = arguments.counterSumAggregator;
+            var mre = arguments.MreToBlockUpdateThread;
+            var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
+            var agg = arguments.CounterSumAggregator;
 
-            if (Interlocked.Increment(ref arguments.threadsStartedCount) == 10)
+            if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == 10)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
@@ -172,6 +162,15 @@ namespace OpenTelemetry.Metrics.Test
             {
                 agg.Update(10.5);
             }
+        }
+
+        private class UpdateThreadArguments<T>
+            where T : struct
+        {
+            public ManualResetEvent MreToBlockUpdateThread;
+            public ManualResetEvent MreToEnsureAllThreadsStart;
+            public int ThreadsStartedCount;
+            public Aggregator<T> CounterSumAggregator;
         }
     }
 }

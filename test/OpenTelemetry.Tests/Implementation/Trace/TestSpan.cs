@@ -1,4 +1,4 @@
-﻿// <copyright file="NoopSpan.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestSpan.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,11 @@ namespace OpenTelemetry.Trace.Test
     public class TestSpan : TelemetrySpan
     {
         private Status status;
+
         public override SpanContext Context { get; }
+
         public override bool IsRecording { get; }
+
         public override Status Status { set => this.status = value; }
 
         public override void UpdateName(string name)
