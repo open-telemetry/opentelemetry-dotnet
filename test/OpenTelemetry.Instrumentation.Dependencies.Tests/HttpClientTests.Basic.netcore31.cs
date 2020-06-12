@@ -100,8 +100,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [Fact(Skip = "TODO: Reenable once custom format support is added")]
         public async Task HttpDependenciesInstrumentationInjectsHeadersAsync_CustomFormat()
         {
-            var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<SpanContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+            var textFormat = new Mock<ITextFormatActivity>();
+            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<ActivityContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                 .Callback<SpanContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                 {
                     action(message, "custom_traceparent", $"00/{context.TraceId}/{context.SpanId}/01");
@@ -232,7 +232,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
-            using (new HttpClientInstrumentation(tracer, options))
+            using (new HttpClientInstrumentation())
             {
                 using var c = new HttpClient();
                 using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));

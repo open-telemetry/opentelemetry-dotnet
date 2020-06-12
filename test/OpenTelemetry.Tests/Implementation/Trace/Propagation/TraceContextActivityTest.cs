@@ -44,8 +44,8 @@ namespace OpenTelemetry.Impl.Trace.Propagation
         {
             var headers = new Dictionary<string, string>
             {
-                {TraceParent, $"00-{TraceId}-{SpanId}-01"},
-                {TraceState, $"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{TraceId}-00f067aa0ba902b7-01"},
+                { TraceParent, $"00-{TraceId}-{SpanId}-01" },
+                { TraceState, $"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{TraceId}-00f067aa0ba902b7-01" },
             };
 
             var f = new TraceContextFormatActivity();
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
         {
             var headers = new Dictionary<string, string>
             {
-                {TraceParent, $"00-{TraceId}-{SpanId}-00"},
+                { TraceParent, $"00-{TraceId}-{SpanId}-00" },
             };
 
             var f = new TraceContextFormatActivity();
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
         {
             var headers = new Dictionary<string, string>
             {
-                {TraceParent, $"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-01"},
+                { TraceParent, $"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-01" },
             };
 
             var f = new TraceContextFormatActivity();
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
         {
             var headers = new Dictionary<string, string>
             {
-                {TraceParent, $"00-{TraceId}-{SpanId}-01"},
+                { TraceParent, $"00-{TraceId}-{SpanId}-01" },
             };
 
             var f = new TraceContextFormatActivity();
@@ -133,8 +133,8 @@ namespace OpenTelemetry.Impl.Trace.Propagation
         {
             var headers = new Dictionary<string, string>
             {
-                {TraceParent, $"00-{TraceId}-{SpanId}-01"},
-                {TraceState, "k1=v1,k2=v2,k3=v3" },
+                { TraceParent, $"00-{TraceId}-{SpanId}-01" },
+                { TraceState, "k1=v1,k2=v2,k3=v3" },
             };
 
             var f = new TraceContextFormatActivity();
