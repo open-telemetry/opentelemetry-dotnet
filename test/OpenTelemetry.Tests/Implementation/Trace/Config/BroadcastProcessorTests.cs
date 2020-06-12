@@ -185,7 +185,11 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             public override Task ShutdownAsync(CancellationToken cancellationToken)
             {
                 this.ShutdownCalled = true;
+#if NET452
+                return Task.FromResult(0);
+#else
                 return Task.CompletedTask;
+#endif
             }
 
             public void Dispose()
