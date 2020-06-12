@@ -41,9 +41,6 @@ namespace TestApp.AspNetCore._3._1
             services.AddSingleton<HttpClient>();
             services.AddSingleton(
                 new CallbackMiddleware.CallbackMiddlewareImpl());
-
-            OpenTelemetrySdk.Default.EnableOpenTelemetry(
-                (builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

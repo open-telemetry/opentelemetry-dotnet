@@ -27,7 +27,7 @@ namespace Samples
         {
             // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
             // and use Console exporter
-            OpenTelemetrySdk.Default.EnableOpenTelemetry(
+            using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
                 .UseConsoleActivityExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
 

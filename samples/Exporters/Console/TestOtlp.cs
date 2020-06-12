@@ -62,7 +62,7 @@ namespace Samples
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use OTLP exporter.
-            OpenTelemetrySdk.Default.EnableOpenTelemetry(
+            using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")
                     .AddActivitySource("Samples.SampleClient")

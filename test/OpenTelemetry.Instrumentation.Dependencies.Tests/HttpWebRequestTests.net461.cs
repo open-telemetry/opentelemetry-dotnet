@@ -48,7 +48,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 out var port);
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = OpenTelemetrySdk.Default.EnableOpenTelemetry(b =>
+            using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
             {
                 b.SetProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestDependencyInstrumentation();
