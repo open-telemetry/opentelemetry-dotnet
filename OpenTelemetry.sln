@@ -81,6 +81,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Shims.OpenTracing.Tests", "test\OpenTelemetry.Shims.OpenTracing.Tests\OpenTelemetry.Shims.OpenTracing.Tests.csproj", "{49A7853F-5B6F-4B65-A781-7D29A1C92164}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{0169B149-FB8B-46F4-9EF7-8A0E69F8FAAF}"
+	ProjectSection(SolutionItems) = preProject
+		benchmarks\readme.md = benchmarks\readme.md
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "benchmarks\Benchmarks.csproj", "{CEB7F146-81DC-41DB-8015-140EC6A64E6C}"
 EndProject
