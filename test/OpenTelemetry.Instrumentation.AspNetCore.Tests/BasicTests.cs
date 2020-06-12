@@ -61,17 +61,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                var openTelemetry = OpenTelemetrySdk.Default.EnableOpenTelemetry(
+                var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddRequestInstrumentation()
                 .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
-
-                /*
-                services.AddSingleton<TracerFactory>(_ =>
-                    TracerFactory.Create(b => b
-                        .SetSampler(new AlwaysOnSampler())
-                        .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))
-                        .AddRequestInstrumentation()));
-                */
             }
 
             // Arrange
@@ -109,7 +101,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
-                        OpenTelemetrySdk.Default.EnableOpenTelemetry(
+                        OpenTelemetrySdk.EnableOpenTelemetry(
                         (builder) => builder.AddRequestInstrumentation()
                         .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
 
@@ -164,7 +156,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
-                        OpenTelemetrySdk.Default.EnableOpenTelemetry(
+                        OpenTelemetrySdk.EnableOpenTelemetry(
                         (builder) => builder.AddRequestInstrumentation()
                         .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
 
@@ -200,7 +192,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                var openTelemetry = OpenTelemetrySdk.Default.EnableOpenTelemetry(
+                var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddRequestInstrumentation()
                 .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
 

@@ -10,12 +10,11 @@ namespace OpenTelemetry.Exporter.AspNet
 {
     public class WebApiApplication : HttpApplication
     {
-        private TracerFactory tracerFactory;
         private IDisposable openTelemetry;
 
         protected void Application_Start()
         {
-            this.openTelemetry = OpenTelemetrySdk.Default.EnableOpenTelemetry(
+            this.openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddDependencyInstrumentation()
                 .AddRequestInstrumentation()
                 .UseJaegerActivityExporter(c =>
@@ -32,7 +31,6 @@ namespace OpenTelemetry.Exporter.AspNet
 
         protected void Application_End()
         {
-            this.tracerFactory?.Dispose();
             this.openTelemetry?.Dispose();
         }
     }

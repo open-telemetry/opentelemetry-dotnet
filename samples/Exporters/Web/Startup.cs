@@ -7,7 +7,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using OpenTelemetry.Exporter.Console;
 using OpenTelemetry.Trace.Configuration;
 
 namespace API
@@ -37,15 +36,13 @@ namespace API
                 }
             });
 
-            OpenTelemetrySdk.Default.EnableOpenTelemetry(
-                (builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
+            services.AddOpenTelemetrySdk((builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
                 .UseJaegerActivityExporter(o =>
                 {
                     o.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
                     o.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
                     o.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
-                })
-                );
+                }));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
