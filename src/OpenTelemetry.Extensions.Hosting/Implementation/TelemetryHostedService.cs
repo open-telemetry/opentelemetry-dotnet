@@ -36,7 +36,7 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
         {
             // Ensure the factory was created when the app starts.
             // This will create and start any configured instrumentations.
-            this.serviceProvider.GetService<OpenTelemetrySdk>();
+            this.serviceProvider.GetRequiredService<OpenTelemetrySdk>();
 
             return Task.CompletedTask;
         }
