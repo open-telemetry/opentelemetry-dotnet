@@ -45,7 +45,7 @@ namespace Benchmarks.Tracing
             activity?.AddTag("tag2", "value2");
 
             // use custom property instead of tags
-            //activity?.AddTag("customPropTag1", "somecustomValue");
+            // activity?.AddTag("customPropTag1", "somecustomValue");
             activity?.SetCustomProperty("customPropTag1", "somecustomValue");
             activity?.Stop();
             return activity;
