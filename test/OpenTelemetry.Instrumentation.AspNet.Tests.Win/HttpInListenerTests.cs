@@ -59,12 +59,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         // [InlineData("http://localhost/api/value", 0, null, "/api/value")] // Request will be filtered
         // [InlineData("http://localhost/api/value", 0, null, "{ThrowException}")] // Filter user code will throw an exception
         [InlineData("http://localhost/api/value/2", 0, null, "CustomContext", "/api/value")] // Request will not be filtered
+        [InlineData("http://localhost/api/value/2", 0, null, "CustomContext", "/api/value", true)] // Request will not be filtered
         public void AspNetRequestsAreCollectedSuccessfully(
             string url,
             int routeType,
             string routeTemplate,
             string carrierFormat,
-            string filter = null)
+            string filter = null,
+            bool restoreCurrentActivity = false)
         {
             var s = carrierFormat;
             IDisposable openTelemetry = null;
@@ -132,7 +134,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 expectedSpanId,
                 ActivityTraceFlags.Recorded));
 
-            var activity = new Activity("Current").AddBaggage("Stuff", "123");
+            var activity = new Activity("Microsoft.AspNet.HttpReqIn.Start").AddBaggage("Stuff", "123");
             activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
             var activityProcessor = new Mock<ActivityProcessor>();
             using (openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
@@ -165,6 +167,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 this.fakeAspNetDiagnosticSource.Write(
                     "Start",
                     null);
+
+                if (restoreCurrentActivity)
+                {
+                    Activity.Current = activity;
+                }
 
                 this.fakeAspNetDiagnosticSource.Write(
                     "Stop",

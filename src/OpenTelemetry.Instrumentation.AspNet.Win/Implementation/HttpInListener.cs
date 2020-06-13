@@ -76,6 +76,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
                 newOne.TraceStateString = ctx.TraceState;
                 newOne.Start();
+                newOne.SetCustomProperty("ActivityByAspNet", activity);
+                activity.SetCustomProperty("ActivityByHttpInListener", newOne);
                 activity = newOne;
             }
 
@@ -124,7 +126,20 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         {
             const string EventNameSuffix = ".OnStopActivity";
 
-            if (activity.IsAllDataRequested)
+            Activity activityToEnrich = activity;
+
+            if (!(this.options.TextFormat is TraceContextFormatActivity))
+            {
+                if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start"))
+                {
+                    // This block is hit if Asp.Net did restore Current to its own activity,
+                    // then we need to retrieve the one created by HttpInListener
+                    // and populate tags to it.
+                    activityToEnrich = (Activity)activity.GetCustomProperty("ActivityByHttpInListener");
+                }
+            }
+
+            if (activityToEnrich.IsAllDataRequested)
             {
                 var context = HttpContext.Current;
                 if (context == null)
@@ -134,10 +149,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
 
                 var response = context.Response;
-                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
+                activityToEnrich.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
-                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.StatusDescription);
+                activityToEnrich.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                activityToEnrich.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.StatusDescription);
 
                 var routeData = context.Request.RequestContext.RouteData;
 
@@ -163,16 +178,31 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 if (!string.IsNullOrEmpty(template))
                 {
                     // Override the name that was previously set to the path part of URL.
-                    activity.DisplayName = template;
-                    activity.AddTag(SpanAttributeConstants.HttpRouteKey, template);
+                    activityToEnrich.DisplayName = template;
+                    activityToEnrich.AddTag(SpanAttributeConstants.HttpRouteKey, template);
                 }
             }
 
-            if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+            if (!(this.options.TextFormat is TraceContextFormatActivity))
             {
-                // If instrumentation started a new Activity, it must
-                // be stopped here.
-                activity.Stop();
+                if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+                {
+                    // If instrumentation started a new Activity, it must
+                    // be stopped here.
+                    activity.Stop();
+
+                    // Restore the original activity as Current.
+                    var activityByAspNet = (Activity)activity.GetCustomProperty("ActivityByAspNet");
+                    Activity.Current = activityByAspNet;
+                }
+                else if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start"))
+                {
+                    // This block is hit if Asp.Net did restore Current to its own activity,
+                    // then we need to retrieve the one created by HttpInListener
+                    // and stop it.
+                    var activityByHttpInListener = (Activity)activity.GetCustomProperty("ActivityByHttpInListener");
+                    activityByHttpInListener.Stop();
+                }
             }
         }
     }
