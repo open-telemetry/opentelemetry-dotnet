@@ -51,7 +51,11 @@ namespace OpenTelemetry.Testing.Export
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             this.WasShutDown = true;
+#if NET452
+            return Task.FromResult(0);
+#else
             return Task.CompletedTask;
+#endif
         }
     }
 }
