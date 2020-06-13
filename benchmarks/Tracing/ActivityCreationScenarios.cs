@@ -28,6 +28,20 @@ namespace Benchmarks.Tracing
             return activity;
         }
 
+        public static Activity CreateActivityFromParentContext(ActivitySource source, ActivityContext parentCtx)
+        {
+            var activity = source.StartActivity("name", ActivityKind.Internal, parentCtx);
+            activity?.Stop();
+            return activity;
+        }
+
+        public static Activity CreateActivityFromParentId(ActivitySource source, string parentId)
+        {
+            var activity = source.StartActivity("name", ActivityKind.Internal, parentId);
+            activity?.Stop();
+            return activity;
+        }
+
         public static Activity CreateActivityWithAttributes(ActivitySource source)
         {
             var activity = source.StartActivity("name");
