@@ -17,7 +17,7 @@ namespace OpenTelemetry.Exporter.AspNet
         {
             this.openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddDependencyInstrumentation()
-                .AddRequestInstrumentation((opt) => opt.TextFormat = new TraceContextFormatActivityCijo())
+                .AddRequestInstrumentation()
                 .UseJaegerActivityExporter(c =>
                 {
                     c.AgentHost = "localhost";
