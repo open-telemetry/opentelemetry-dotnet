@@ -78,9 +78,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     request,
                     (r, name) => r.Headers[name]);
 
+                // Create a new activity with its parent set from the extracted context.
+                // This makes the new activity as a "sibling" of the activity created by
+                // Asp.Net Core.
                 Activity newOne = new Activity(ActivityNameByHttpInListener);
                 newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
                 newOne.TraceStateString = ctx.TraceState;
+
+                // Starting the new activity make it the Activity.Current one.
                 newOne.Start();
                 activity = newOne;
             }
@@ -154,6 +159,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // If instrumentation started a new Activity, it must
                 // be stopped here.
                 activity.Stop();
+
+                // After the activity.Stop() code, Activity.Current becomes null.
+                // If Asp.Net Core uses Activity.Current?.Stop() - it'll not stop the activity
+                // it created.
+                // Currently Asp.Net core does not use Activity.Current, instead it stores a
+                // reference to its activity, and calls .Stop on it.
+
+                // TODO: Should we still restore Activity.Current here?
+                // If yes, then we need to store the asp.net core activity inside
+                // the one created by the instrumentation.
+                // And retrieve it here, and set it to Current.
             }
         }
 

@@ -33,6 +33,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 {
     public class HttpInListenerTests : IDisposable
     {
+        private static readonly string ActivityNameAspNet = "Microsoft.AspNet.HttpReqIn.Start";
         private readonly FakeAspNetDiagnosticSource fakeAspNetDiagnosticSource;
 
         public HttpInListenerTests()
@@ -134,7 +135,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 expectedSpanId,
                 ActivityTraceFlags.Recorded));
 
-            var activity = new Activity("Microsoft.AspNet.HttpReqIn.Start").AddBaggage("Stuff", "123");
+            var activity = new Activity(ActivityNameAspNet).AddBaggage("Stuff", "123");
             activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
             var activityProcessor = new Mock<ActivityProcessor>();
             using (openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
@@ -176,6 +177,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 this.fakeAspNetDiagnosticSource.Write(
                     "Stop",
                     null);
+
+                // The above line fires DS event which is listened by Instrumentation.
+                // Validate that Current activity is still the one created by Asp.Net
+                Assert.Equal(ActivityNameAspNet, Activity.Current.OperationName);
                 activity.Stop();
             }
 
@@ -184,6 +189,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 Assert.Equal(0, activityProcessor.Invocations.Count); // Nothing was called because request was filtered.
                 return;
             }
+
+            // Validate that Activity.Current is always the one created by Asp.Net
+            var currentActivity = Activity.Current;
 
             Activity span;
             if (!carrierFormat.Equals("TraceContext"))

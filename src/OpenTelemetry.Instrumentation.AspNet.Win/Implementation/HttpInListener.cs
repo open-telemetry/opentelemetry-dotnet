@@ -72,10 +72,19 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     request,
                     (r, name) => requestValues.Headers.GetValues(name));
 
+                // Create a new activity with its parent set from the extracted context.
+                // This makes the new activity as a "sibling" of the activity created by
+                // Asp.Net.
                 Activity newOne = new Activity(ActivityNameByHttpInListener);
                 newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
                 newOne.TraceStateString = ctx.TraceState;
+
+                // Starting the new activity make it the Activity.Current one.
                 newOne.Start();
+
+                // Both new activity and old one store the other activity
+                // inside them. This is required in the Stop step to
+                // correctly stop and restore Activity.Current.
                 newOne.SetCustomProperty("ActivityByAspNet", activity);
                 activity.SetCustomProperty("ActivityByHttpInListener", newOne);
                 activity = newOne;
@@ -130,6 +139,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (!(this.options.TextFormat is TraceContextFormatActivity))
             {
+                // If using custom context propagator, then the activity here
+                // could be either the one from Asp.Net, or the one
+                // this instrumentation created in Start.
+                // This is because Asp.Net, under certain circumstances, restores Activity.Current
+                // to its own activity.
                 if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start"))
                 {
                     // This block is hit if Asp.Net did restore Current to its own activity,
@@ -202,6 +216,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     // and stop it.
                     var activityByHttpInListener = (Activity)activity.GetCustomProperty("ActivityByHttpInListener");
                     activityByHttpInListener.Stop();
+
+                    // Restore current back to the one created by Asp.Net
+                    Activity.Current = activity;
                 }
             }
         }
