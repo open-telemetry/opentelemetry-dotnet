@@ -29,8 +29,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// <summary>
         /// Initializes a new instance of the <see cref="AspNetCoreInstrumentation"/> class.
         /// </summary>
-        /// <param name="activitySource">ActivitySource fake instance.</param>
-        public AspNetCoreInstrumentation(ActivitySourceFake activitySource)
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
+        public AspNetCoreInstrumentation(ActivitySourceAdapter activitySource)
             : this(activitySource, new AspNetCoreInstrumentationOptions())
         {
         }
@@ -38,9 +38,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// <summary>
         /// Initializes a new instance of the <see cref="AspNetCoreInstrumentation"/> class.
         /// </summary>
-        /// <param name="activitySource">ActivitySource fake instance.</param>
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
         /// <param name="options">Configuration options for ASP.NET Core instrumentation.</param>
-        public AspNetCoreInstrumentation(ActivitySourceFake activitySource, AspNetCoreInstrumentationOptions options)
+        public AspNetCoreInstrumentation(ActivitySourceAdapter activitySource, AspNetCoreInstrumentationOptions options)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInListener("Microsoft.AspNetCore", options, activitySource), null);
             this.diagnosticSourceSubscriber.Subscribe();

@@ -31,19 +31,21 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// <summary>
         /// Initializes a new instance of the <see cref="AspNetInstrumentation"/> class.
         /// </summary>
-        public AspNetInstrumentation()
-            : this(new AspNetInstrumentationOptions())
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
+        public AspNetInstrumentation(ActivitySourceAdapter activitySource)
+            : this(activitySource, new AspNetInstrumentationOptions())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AspNetInstrumentation"/> class.
         /// </summary>
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
         /// <param name="options">Configuration options for ASP.NET instrumentation.</param>
-        public AspNetInstrumentation(AspNetInstrumentationOptions options)
+        public AspNetInstrumentation(ActivitySourceAdapter activitySource, AspNetInstrumentationOptions options)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-                name => new HttpInListener(name, options),
+                name => new HttpInListener(name, options, activitySource),
                 listener => listener.Name == AspNetDiagnosticListenerName,
                 null);
             this.diagnosticSourceSubscriber.Subscribe();

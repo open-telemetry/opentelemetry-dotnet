@@ -22,7 +22,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
@@ -30,11 +29,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     {
         private static readonly string UnknownHostName = "UNKNOWN-HOST";
         private static readonly string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
-
-        // hard-coded Sampler here, just to prototype.
-        // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
-        // or we'll expose an API from OT SDK.
-        private readonly ActivitySampler sampler = new AlwaysOnActivitySampler();
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher stopContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher beforeActionActionDescriptorFetcher = new PropertyFetcher("actionDescriptor");
@@ -42,9 +36,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
         private readonly bool hostingSupportsW3C = false;
         private readonly AspNetCoreInstrumentationOptions options;
-        private readonly ActivitySourceFake activitySource;
+        private readonly ActivitySourceAdapter activitySource;
 
-        public HttpInListener(string name, AspNetCoreInstrumentationOptions options, ActivitySourceFake activitySource)
+        public HttpInListener(string name, AspNetCoreInstrumentationOptions options, ActivitySourceAdapter activitySource)
             : base(name, null)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
@@ -99,7 +93,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
             activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
 
-            this.activitySource.RunGetRequestedData(activity);
+            this.activitySource.Start(activity);
 
             if (activity.IsAllDataRequested)
             {
@@ -121,8 +115,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, userAgent);
                 activity.AddTag(SpanAttributeConstants.HttpUrlKey, GetUri(request));
             }
-
-            this.activitySource.Start(activity);
         }
 
         public override void OnStopActivity(Activity activity, object payload)
@@ -143,8 +135,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
                 activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
                 activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
-
-                this.activitySource.Stop(activity);
             }
 
             if (activity.OperationName.Equals(ActivityNameByHttpInListener))
@@ -164,6 +154,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // the one created by the instrumentation.
                 // And retrieve it here, and set it to Current.
             }
+
+            this.activitySource.Stop(activity);
         }
 
         public override void OnCustom(string name, Activity activity, object payload)

@@ -54,9 +54,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         public ITextFormatActivity TextFormat { get; set; } = new TraceContextFormatActivity();
 
         /// <summary>
-        /// Gets a hook to exclude calls based on domain or other per-request criterion.
+        /// Gets or sets a hook to exclude calls based on domain or other per-request criterion.
         /// </summary>
-        internal Func<string, object, object, bool> EventFilter { get; }
+        internal Func<string, object, object, bool> EventFilter { get; set; }
 
         private static bool DefaultFilter(string activityName, object arg1, object unused)
         {

@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace.Configuration
             var aspnetOptions = new AspNetInstrumentationOptions();
             configureAspNetInstrumentationOptions?.Invoke(aspnetOptions);
 
-            builder.AddInstrumentation(() => new AspNetInstrumentation(aspnetOptions));
+            builder.AddInstrumentation((activitySource) => new AspNetInstrumentation(activitySource, aspnetOptions));
 
             return builder;
         }
