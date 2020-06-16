@@ -39,9 +39,6 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            // Asp.Net is not instrumented with ActivitySource, hence
-            // it'll have a default ActivitySource with name string.Empty.
-            builder.AddActivitySource(string.Empty);
             var aspnetOptions = new AspNetInstrumentationOptions();
             configureAspNetInstrumentationOptions?.Invoke(aspnetOptions);
 
