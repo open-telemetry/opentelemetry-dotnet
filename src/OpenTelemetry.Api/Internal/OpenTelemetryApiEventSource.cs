@@ -39,6 +39,15 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
+        public void ActivityContextExtractException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.FailedToExtractActivityContext(ToInvariantString(ex));
+            }
+        }
+
+        [NonEvent]
         public void TracestateExtractException(Exception ex)
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
@@ -105,6 +114,18 @@ namespace OpenTelemetry.Internal
         public void InvalidArgument(string methodName, string argumentName, string issue)
         {
             this.WriteEvent(7, methodName, argumentName, issue);
+        }
+
+        [Event(8, Message = "Failed to extract activity context: '{0}'", Level = EventLevel.Warning)]
+        public void FailedToExtractActivityContext(string exception)
+        {
+            this.WriteEvent(8, exception);
+        }
+
+        [Event(9, Message = "Failed to inject activity context: '{0}'", Level = EventLevel.Warning)]
+        public void FailedToInjectActivityContext(string error)
+        {
+            this.WriteEvent(9, error);
         }
 
         /// <summary>
