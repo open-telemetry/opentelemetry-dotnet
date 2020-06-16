@@ -87,6 +87,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity = newOne;
             }
 
+            // TODO: move setting displayname to inside IsAllDataRequested?
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
             activity.DisplayName = path;
 
