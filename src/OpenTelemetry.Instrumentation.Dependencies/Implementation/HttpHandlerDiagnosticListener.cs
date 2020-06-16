@@ -23,7 +23,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
@@ -31,11 +30,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     {
         private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        // hard-coded Sampler here, just to prototype.
-        // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
-        // or we'll move the Sampler to come from OpenTelemetryBuilder, and not hardcoded.
-        private readonly ActivitySampler sampler = new AlwaysOnActivitySampler();
-
+        private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
         private readonly PropertyFetcher stopResponseFetcher = new PropertyFetcher("Response");
         private readonly PropertyFetcher stopExceptionFetcher = new PropertyFetcher("Exception");
@@ -43,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private readonly bool httpClientSupportsW3C = false;
         private readonly HttpClientInstrumentationOptions options;
 
-        public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options)
+        public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options, ActivitySourceAdapter activitySource)
             : base("HttpHandlerDiagnosticListener", null)
         {
             var framework = Assembly
@@ -62,6 +57,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             }
 
             this.options = options;
+            this.activitySource = activitySource;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -76,6 +72,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             if (request.Headers.Contains("traceparent"))
             {
                 // this request is already instrumented, we should back off
+                activity.IsAllDataRequested = false;
                 return;
             }
 
@@ -83,21 +80,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Client);
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            var samplingParameters = new ActivitySamplingParameters(
-                activity.Context,
-                activity.TraceId,
-                activity.DisplayName,
-                activity.Kind,
-                activity.Tags,
-                activity.Links);
-
-            // TODO: Find a way to avoid Instrumentation being tied to Sampler
-            var samplingDecision = this.sampler.ShouldSample(samplingParameters);
-            activity.IsAllDataRequested = samplingDecision.IsSampled;
-            if (samplingDecision.IsSampled)
-            {
-                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            }
+            this.activitySource.Start(activity);
 
             if (activity.IsAllDataRequested)
             {
@@ -152,6 +135,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                     activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.ReasonPhrase);
                 }
             }
+
+            this.activitySource.Stop(activity);
         }
 
         public override void OnException(Activity activity, object payload)
