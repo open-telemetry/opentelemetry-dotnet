@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace.Configuration
             builder.AddHttpClientDependencyInstrumentation();
             builder.AddSqlClientDependencyInstrumentation();
             builder.AddAzureClientsDependencyInstrumentation();
-#if NET461
+#if NETFRAMEWORK
             builder.AddHttpWebRequestDependencyInstrumentation();
 #endif
             return builder;
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Trace.Configuration
             builder.AddHttpClientDependencyInstrumentation(configureHttpClientInstrumentationOptions);
             builder.AddSqlClientDependencyInstrumentation(configureSqlClientInstrumentationOptions);
             builder.AddAzureClientsDependencyInstrumentation();
-#if NET461
+#if NETFRAMEWORK
             builder.AddHttpWebRequestDependencyInstrumentation();
 #endif
             return builder;
@@ -163,7 +163,7 @@ namespace OpenTelemetry.Trace.Configuration
             return builder;
         }
 
-#if NET461
+#if NETFRAMEWORK
         /// <summary>
         /// Enables the outgoing requests automatic data collection for .NET Framework HttpWebRequest activity source.
         /// </summary>

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NET461
+#if NETFRAMEWORK
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
