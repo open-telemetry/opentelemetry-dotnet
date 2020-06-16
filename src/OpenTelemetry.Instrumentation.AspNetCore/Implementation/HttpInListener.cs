@@ -29,6 +29,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInListener : ListenerHandler
     {
         private static readonly string UnknownHostName = "UNKNOWN-HOST";
+        private static readonly string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
 
         // hard-coded Sampler here, just to prototype.
         // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
@@ -67,26 +68,30 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             var request = context.Request;
-            var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            activity.DisplayName = path;
-
-            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
+            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormatActivity))
             {
                 // This requires to ignore the current activity and create a new one
                 // using the context extracted from w3ctraceparent header or
                 // using the format TextFormat supports.
-                // TODO: implement this
-                /*
+
                 var ctx = this.options.TextFormat.Extract<HttpRequest>(
                     request,
                     (r, name) => r.Headers[name]);
 
-                Activity newOne = new Activity(path);
-                newOne.SetParentId(ctx.Id);
-                newOne.TraceState = ctx.TraceStateString;
+                // Create a new activity with its parent set from the extracted context.
+                // This makes the new activity as a "sibling" of the activity created by
+                // Asp.Net Core.
+                Activity newOne = new Activity(ActivityNameByHttpInListener);
+                newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
+                newOne.TraceStateString = ctx.TraceState;
+
+                // Starting the new activity make it the Activity.Current one.
+                newOne.Start();
                 activity = newOne;
-                */
             }
+
+            var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
+            activity.DisplayName = path;
 
             // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
             activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
@@ -147,6 +152,24 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
                 activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
                 activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
+            }
+
+            if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+            {
+                // If instrumentation started a new Activity, it must
+                // be stopped here.
+                activity.Stop();
+
+                // After the activity.Stop() code, Activity.Current becomes null.
+                // If Asp.Net Core uses Activity.Current?.Stop() - it'll not stop the activity
+                // it created.
+                // Currently Asp.Net core does not use Activity.Current, instead it stores a
+                // reference to its activity, and calls .Stop on it.
+
+                // TODO: Should we still restore Activity.Current here?
+                // If yes, then we need to store the asp.net core activity inside
+                // the one created by the instrumentation.
+                // And retrieve it here, and set it to Current.
             }
         }
 
