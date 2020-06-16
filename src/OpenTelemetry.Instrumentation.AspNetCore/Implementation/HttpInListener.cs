@@ -41,12 +41,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
         private readonly bool hostingSupportsW3C = false;
         private readonly AspNetCoreInstrumentationOptions options;
+        private readonly ActivitySourceFake activitySource;
 
-        public HttpInListener(string name, AspNetCoreInstrumentationOptions options)
+        public HttpInListener(string name, AspNetCoreInstrumentationOptions options, ActivitySourceFake activitySource)
             : base(name, null)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
             this.options = options ?? throw new ArgumentNullException(nameof(options));
+            this.activitySource = activitySource;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -63,6 +65,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
                 InstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                activity.IsAllDataRequested = false;
                 return;
             }
 
@@ -91,21 +94,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
             activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
 
-            var samplingParameters = new ActivitySamplingParameters(
-                activity.Context,
-                activity.TraceId,
-                activity.DisplayName,
-                activity.Kind,
-                activity.Tags,
-                activity.Links);
-
-            // TODO: Find a way to avoid Instrumentation being tied to Sampler
-            var samplingDecision = this.sampler.ShouldSample(samplingParameters);
-            activity.IsAllDataRequested = samplingDecision.IsSampled;
-            if (samplingDecision.IsSampled)
-            {
-                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            }
+            this.activitySource.RunGetRequestedData(activity);
 
             if (activity.IsAllDataRequested)
             {
@@ -127,6 +116,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, userAgent);
                 activity.AddTag(SpanAttributeConstants.HttpUrlKey, GetUri(request));
             }
+
+            this.activitySource.Start(activity);
         }
 
         public override void OnStopActivity(Activity activity, object payload)
@@ -147,6 +138,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
                 activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
                 activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
+
+                this.activitySource.Stop(activity);
             }
         }
 

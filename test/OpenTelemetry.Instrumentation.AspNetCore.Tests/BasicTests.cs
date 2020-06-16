@@ -170,15 +170,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(expectedSpanId, span.ParentSpanId);
         }
 
-        [Fact(Skip = "TODO: Reenable once filtering is fixed")]
+        [Fact]
         public async Task FilterOutRequest()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry((builder) => builder.AddRequestInstrumentation()
-                .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
+                this.openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(
+                    (builder) =>
+                    builder.AddRequestInstrumentation((opt) => opt.RequestFilter = (ctx) => ctx.Request.Path != "/api/values/2")
+                    .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
             }
 
             // Arrange
@@ -201,10 +203,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             // we should only create one span and never call processor with another
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
+            var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
-            Assert.Equal(SpanKind.Server, span.Kind);
-            Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));
+            Assert.Equal(ActivityKind.Server, span.Kind);
+
+            // Assert.Equal("/api/values", span.Tags.GetValue("http.path"));
         }
 
         public void Dispose()

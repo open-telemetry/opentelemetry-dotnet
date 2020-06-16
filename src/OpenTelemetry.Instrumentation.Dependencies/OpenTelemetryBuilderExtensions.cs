@@ -104,7 +104,7 @@ namespace OpenTelemetry.Trace.Configuration
             var httpClientOptions = new HttpClientInstrumentationOptions();
             configureHttpClientInstrumentationOptions?.Invoke(httpClientOptions);
 
-            builder.AddInstrumentation(() => new HttpClientInstrumentation(httpClientOptions));
+            builder.AddInstrumentation((activitySource) => new HttpClientInstrumentation(httpClientOptions));
             return builder;
         }
 
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Trace.Configuration
             var sqlOptions = new SqlClientInstrumentationOptions();
             configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
 
-            builder.AddInstrumentation(() => new SqlClientInstrumentation(sqlOptions));
+            builder.AddInstrumentation((activitySource) => new SqlClientInstrumentation(sqlOptions));
 
             return builder;
         }
@@ -159,7 +159,7 @@ namespace OpenTelemetry.Trace.Configuration
             }
 
             builder.AddActivitySource(AzureSdkDiagnosticListener.ActivitySourceName);
-            builder.AddInstrumentation(() => new AzureClientsInstrumentation());
+            builder.AddInstrumentation((activitySource) => new AzureClientsInstrumentation());
             return builder;
         }
 
