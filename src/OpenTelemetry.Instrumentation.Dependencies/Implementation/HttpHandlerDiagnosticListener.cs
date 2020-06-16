@@ -112,10 +112,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 }
             }
 
-            if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormat))
+            if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormatActivity))
             {
-                // TODO: implement this
-                // this.options.TextFormat.Inject(span.Context, request, (r, k, v) => r.Headers.Add(k, v));
+                this.options.TextFormat.Inject(activity.Context, request, (r, k, v) => r.Headers.Add(k, v));
             }
         }
 
