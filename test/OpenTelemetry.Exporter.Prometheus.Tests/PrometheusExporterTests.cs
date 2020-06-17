@@ -19,9 +19,11 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+#if !NETFRAMEWORK
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+#endif
 using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
