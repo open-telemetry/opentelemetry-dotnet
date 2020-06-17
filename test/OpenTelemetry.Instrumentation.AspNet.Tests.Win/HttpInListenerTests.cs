@@ -194,24 +194,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var currentActivity = Activity.Current;
 
             Activity span;
-            if (!carrierFormat.Equals("TraceContext"))
-            {
-                // begin and end was called twice each
-                // 0 activity started by Asp.net Core
-                // 1 activity started by InstrumentationAdapter
-                // 2 activity stopped by InstrumentationAdapter
-                // 3 activity stopped by Asp.net Core
-                Assert.Equal(4, activityProcessor.Invocations.Count);
-
-                // Validate 1 or 2.
-                // 0,3 are Activity created by Asp.Net Core
-                span = (Activity)activityProcessor.Invocations[1].Arguments[0];
-            }
-            else
-            {
-                Assert.Equal(2, activityProcessor.Invocations.Count);
-                span = (Activity)activityProcessor.Invocations[1].Arguments[0];
-            }
+            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
+            span = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.DisplayName);
             Assert.Equal(ActivityKind.Server, span.Kind);

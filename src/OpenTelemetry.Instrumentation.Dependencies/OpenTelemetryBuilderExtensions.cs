@@ -98,13 +98,10 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            // HttpClient is not instrumented with ActivitySource, hence
-            // it'll have a default ActivitySource with name string.Empty.
-            builder.AddActivitySource(string.Empty);
             var httpClientOptions = new HttpClientInstrumentationOptions();
             configureHttpClientInstrumentationOptions?.Invoke(httpClientOptions);
 
-            builder.AddInstrumentation(() => new HttpClientInstrumentation(httpClientOptions));
+            builder.AddInstrumentation((activitySource) => new HttpClientInstrumentation(activitySource, httpClientOptions));
             return builder;
         }
 
@@ -134,13 +131,10 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            // HttpClient is not instrumented with ActivitySource, hence
-            // it'll have a default ActivitySource with name string.Empty.
-            builder.AddActivitySource(string.Empty);
             var sqlOptions = new SqlClientInstrumentationOptions();
             configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
 
-            builder.AddInstrumentation(() => new SqlClientInstrumentation(sqlOptions));
+            builder.AddInstrumentation((activitySource) => new SqlClientInstrumentation(activitySource, sqlOptions));
 
             return builder;
         }
@@ -159,7 +153,7 @@ namespace OpenTelemetry.Trace.Configuration
             }
 
             builder.AddActivitySource(AzureSdkDiagnosticListener.ActivitySourceName);
-            builder.AddInstrumentation(() => new AzureClientsInstrumentation());
+            builder.AddInstrumentation((activitySource) => new AzureClientsInstrumentation());
             return builder;
         }
 

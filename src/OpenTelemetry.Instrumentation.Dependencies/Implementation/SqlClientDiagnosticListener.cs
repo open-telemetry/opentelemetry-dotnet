@@ -42,16 +42,13 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private readonly PropertyFetcher commandTextFetcher = new PropertyFetcher("CommandText");
         private readonly PropertyFetcher exceptionFetcher = new PropertyFetcher("Exception");
         private readonly SqlClientInstrumentationOptions options;
+        private readonly ActivitySourceAdapter activitySource;
 
-        // hard-coded Sampler here, just to prototype.
-        // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
-        // or we'll move the Sampler to come from OpenTelemetryBuilder, and not hardcoded.
-        private readonly ActivitySampler sampler = new AlwaysOnActivitySampler();
-
-        public SqlClientDiagnosticListener(string sourceName, SqlClientInstrumentationOptions options)
+        public SqlClientDiagnosticListener(string sourceName, SqlClientInstrumentationOptions options, ActivitySourceAdapter activitySource)
             : base(sourceName, null)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
+            this.activitySource = activitySource;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -80,21 +77,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                         activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Client);
                         activity.DisplayName = (string)database;
 
-                        var samplingParameters = new ActivitySamplingParameters(
-                        activity.Context,
-                        activity.TraceId,
-                        activity.DisplayName,
-                        activity.Kind,
-                        activity.Tags,
-                        activity.Links);
-
-                        // TODO: Find a way to avoid Instrumentation being tied to Sampler
-                        var samplingDecision = this.sampler.ShouldSample(samplingParameters);
-                        activity.IsAllDataRequested = samplingDecision.IsSampled;
-                        if (samplingDecision.IsSampled)
-                        {
-                            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-                        }
+                        this.activitySource.Start(activity);
 
                         if (activity.IsAllDataRequested)
                         {
@@ -136,6 +119,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 case SqlDataAfterExecuteCommand:
                 case SqlMicrosoftAfterExecuteCommand:
                     {
+                        this.activitySource.Stop(activity);
                     }
 
                     break;
@@ -155,6 +139,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                 InstrumentationEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
                             }
                         }
+
+                        this.activitySource.Stop(activity);
                     }
 
                     break;
