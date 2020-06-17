@@ -61,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry((builder) => builder.AddRequestInstrumentation()
-                .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
+                .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
             }
 
             // Arrange
@@ -100,7 +100,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices(services =>
                     {
                         this.openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry((builder) => builder.AddRequestInstrumentation()
-                .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
+                .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
                     })))
             {
                 using var client = testFactory.CreateClient();
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     {
                         this.openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(
                             (builder) => builder.AddRequestInstrumentation((opt) => opt.TextFormat = textFormat.Object)
-                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
+                        .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
                     })))
             {
                 using var client = testFactory.CreateClient();
@@ -181,7 +181,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 this.openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(
                     (builder) =>
                     builder.AddRequestInstrumentation((opt) => opt.RequestFilter = (ctx) => ctx.Request.Path != "/api/values/2")
-                    .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
+                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
             }
 
             // Arrange

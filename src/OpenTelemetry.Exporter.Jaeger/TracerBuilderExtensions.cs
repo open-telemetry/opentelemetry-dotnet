@@ -101,7 +101,7 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            return builder.SetProcessorPipeline(pipeline =>
+            return builder.AddProcessorPipeline(pipeline =>
             {
                 var exporterOptions = new JaegerExporterOptions();
                 configure(exporterOptions);

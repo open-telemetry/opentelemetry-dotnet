@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.Console
             var exporterOptions = new ConsoleActivityExporterOptions();
             configure(exporterOptions);
             var consoleExporter = new ConsoleActivityExporter(exporterOptions);
-            return builder.SetProcessorPipeline(pipeline => pipeline.SetExporter(consoleExporter));
+            return builder.AddProcessorPipeline(pipeline => pipeline.SetExporter(consoleExporter));
         }
     }
 }
