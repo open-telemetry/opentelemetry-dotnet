@@ -35,7 +35,7 @@ namespace OpenTelemetry.Extensions.Hosting
             {
                 services.AddOpenTelemetrySdk(builder =>
                 {
-                    builder.AddInstrumentation(() =>
+                    builder.AddInstrumentation((activitySource) =>
                     {
                         callbackRun = true;
                         return testInstrumentation;
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Extensions.Hosting
             services.AddSingleton(testInstrumentation);
             services.AddOpenTelemetrySdk((provider, builder) =>
             {
-                builder.AddInstrumentation<TestInstrumentation>(() => provider.GetRequiredService<TestInstrumentation>());
+                builder.AddInstrumentation<TestInstrumentation>((activitySource) => provider.GetRequiredService<TestInstrumentation>());
             });
 
             var serviceProvider = services.BuildServiceProvider();

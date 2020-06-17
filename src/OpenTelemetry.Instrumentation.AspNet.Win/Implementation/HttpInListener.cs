@@ -20,24 +20,22 @@ using System.Web;
 using System.Web.Routing;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
-        // hard-coded Sampler here, just to prototype.
-        // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
-        // or we'll move the Sampler to come from OpenTelemetryBuilder, and not hardcoded.
-        private readonly ActivitySampler sampler = new AlwaysOnActivitySampler();
+        private static readonly string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private readonly PropertyFetcher routeFetcher = new PropertyFetcher("Route");
         private readonly PropertyFetcher routeTemplateFetcher = new PropertyFetcher("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
+        private readonly ActivitySourceAdapter activitySource;
 
-        public HttpInListener(string name, AspNetInstrumentationOptions options)
+        public HttpInListener(string name, AspNetInstrumentationOptions options, ActivitySourceAdapter activitySource)
             : base(name, null)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
+            this.activitySource = activitySource;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -53,51 +51,48 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
-                // TODO: These filters won't prevent the activity from being tracked
-                // as they are fired anyway.
                 InstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                activity.IsAllDataRequested = false;
                 return;
             }
 
-            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
-
             var request = context.Request;
             var requestValues = request.Unvalidated;
+
+            if (!(this.options.TextFormat is TraceContextFormatActivity))
+            {
+                // This requires to ignore the current activity and create a new one
+                // using the context extracted using the format TextFormat supports.
+                var ctx = this.options.TextFormat.Extract<HttpRequest>(
+                    request,
+                    (r, name) => requestValues.Headers.GetValues(name));
+
+                // Create a new activity with its parent set from the extracted context.
+                // This makes the new activity as a "sibling" of the activity created by
+                // Asp.Net.
+                Activity newOne = new Activity(ActivityNameByHttpInListener);
+                newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
+                newOne.TraceStateString = ctx.TraceState;
+
+                // Starting the new activity make it the Activity.Current one.
+                newOne.Start();
+
+                // Both new activity and old one store the other activity
+                // inside them. This is required in the Stop step to
+                // correctly stop and restore Activity.Current.
+                newOne.SetCustomProperty("ActivityByAspNet", activity);
+                activity.SetCustomProperty("ActivityByHttpInListener", newOne);
+                activity = newOne;
+            }
 
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
             var path = requestValues.Path;
             activity.DisplayName = path;
 
-            var samplingParameters = new ActivitySamplingParameters(
-                activity.Context,
-                activity.TraceId,
-                activity.DisplayName,
-                activity.Kind,
-                activity.Tags,
-                activity.Links);
+            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
+            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
 
-            // TODO: Find a way to avoid Instrumentation being tied to Sampler
-            var samplingDecision = this.sampler.ShouldSample(samplingParameters);
-            activity.IsAllDataRequested = samplingDecision.IsSampled;
-            if (samplingDecision.IsSampled)
-            {
-                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            }
-
-            if (!(this.options.TextFormat is TraceContextFormat))
-            {
-                // This requires to ignore the current activity and create a new one
-                // using the context extracted using the format TextFormat supports.
-                // TODO: actually implement code doing the above.
-                /*
-                var ctx = this.options.TextFormat.Extract<HttpRequest>(
-                    request,
-                    (r, name) => requestValues.Headers.GetValues(name));
-
-                this.Tracer.StartActiveSpan(path, ctx, SpanKind.Server, out span);
-                */
-            }
+            this.activitySource.Start(activity);
 
             if (activity.IsAllDataRequested)
             {
@@ -121,7 +116,25 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         {
             const string EventNameSuffix = ".OnStopActivity";
 
-            if (activity.IsAllDataRequested)
+            Activity activityToEnrich = activity;
+
+            if (!(this.options.TextFormat is TraceContextFormatActivity))
+            {
+                // If using custom context propagator, then the activity here
+                // could be either the one from Asp.Net, or the one
+                // this instrumentation created in Start.
+                // This is because Asp.Net, under certain circumstances, restores Activity.Current
+                // to its own activity.
+                if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start"))
+                {
+                    // This block is hit if Asp.Net did restore Current to its own activity,
+                    // then we need to retrieve the one created by HttpInListener
+                    // and populate tags to it.
+                    activityToEnrich = (Activity)activity.GetCustomProperty("ActivityByHttpInListener");
+                }
+            }
+
+            if (activityToEnrich.IsAllDataRequested)
             {
                 var context = HttpContext.Current;
                 if (context == null)
@@ -131,10 +144,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
 
                 var response = context.Response;
-                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
+                activityToEnrich.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
-                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.StatusDescription);
+                activityToEnrich.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                activityToEnrich.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.StatusDescription);
 
                 var routeData = context.Request.RequestContext.RouteData;
 
@@ -154,17 +167,43 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 else if (routeData.Route is Route route)
                 {
                     // MVC + WebAPI traditional routing & MVC attribute routing flow here.
-
                     template = route.Url;
                 }
 
                 if (!string.IsNullOrEmpty(template))
                 {
                     // Override the name that was previously set to the path part of URL.
-                    activity.DisplayName = template;
-                    activity.AddTag(SpanAttributeConstants.HttpRouteKey, template);
+                    activityToEnrich.DisplayName = template;
+                    activityToEnrich.AddTag(SpanAttributeConstants.HttpRouteKey, template);
                 }
             }
+
+            if (!(this.options.TextFormat is TraceContextFormatActivity))
+            {
+                if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+                {
+                    // If instrumentation started a new Activity, it must
+                    // be stopped here.
+                    activity.Stop();
+
+                    // Restore the original activity as Current.
+                    var activityByAspNet = (Activity)activity.GetCustomProperty("ActivityByAspNet");
+                    Activity.Current = activityByAspNet;
+                }
+                else if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start"))
+                {
+                    // This block is hit if Asp.Net did restore Current to its own activity,
+                    // then we need to retrieve the one created by HttpInListener
+                    // and stop it.
+                    var activityByHttpInListener = (Activity)activity.GetCustomProperty("ActivityByHttpInListener");
+                    activityByHttpInListener.Stop();
+
+                    // Restore current back to the one created by Asp.Net
+                    Activity.Current = activity;
+                }
+            }
+
+            this.activitySource.Stop(activityToEnrich);
         }
     }
 }

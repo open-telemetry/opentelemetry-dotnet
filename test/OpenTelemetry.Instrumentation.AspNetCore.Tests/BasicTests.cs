@@ -30,7 +30,6 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
-using OpenTelemetry.Trace.Samplers;
 using TestApp.AspNetCore._3._1;
 using Xunit;
 
@@ -128,7 +127,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(expectedSpanId, span.ParentSpanId);
         }
 
-        [Fact(Skip = "TODO: Reenable once custom format support is added")]
+        [Fact]
         public async Task CustomTextFormat()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
@@ -136,33 +135,35 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
-            var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new SpanContext(
+            var textFormat = new Mock<ITextFormatActivity>();
+            textFormat.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new ActivityContext(
                 expectedTraceId,
                 expectedSpanId,
-                ActivityTraceFlags.Recorded,
-                true));
+                ActivityTraceFlags.Recorded));
 
             // Arrange
             using (var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
-                        this.openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry((builder) => builder.AddRequestInstrumentation()
-                .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
+                        this.openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(
+                            (builder) => builder.AddRequestInstrumentation((opt) => opt.TextFormat = textFormat.Object)
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
                     })))
             {
                 using var client = testFactory.CreateClient();
                 var response = await client.GetAsync("/api/values/2");
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(spanProcessor, 2);
+                WaitForProcessorInvocations(spanProcessor, 4);
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            // begin and end was called once each.
+            Assert.Equal(2, spanProcessor.Invocations.Count);
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, span.Kind);
+            Assert.True(span.Duration != TimeSpan.Zero);
             Assert.Equal("api/Values/{id}", span.DisplayName);
             Assert.Equal("/api/values/2", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
 
@@ -170,15 +171,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(expectedSpanId, span.ParentSpanId);
         }
 
-        [Fact(Skip = "TODO: Reenable once filtering is fixed")]
+        [Fact]
         public async Task FilterOutRequest()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry((builder) => builder.AddRequestInstrumentation()
-                .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
+                this.openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(
+                    (builder) =>
+                    builder.AddRequestInstrumentation((opt) => opt.RequestFilter = (ctx) => ctx.Request.Path != "/api/values/2")
+                    .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
             }
 
             // Arrange
@@ -201,10 +204,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             // we should only create one span and never call processor with another
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
+            var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
-            Assert.Equal(SpanKind.Server, span.Kind);
-            Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));
+            Assert.Equal(ActivityKind.Server, span.Kind);
+
+            // Assert.Equal("/api/values", span.Tags.GetValue("http.path"));
         }
 
         public void Dispose()

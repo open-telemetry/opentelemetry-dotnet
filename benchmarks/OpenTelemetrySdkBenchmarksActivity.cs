@@ -25,6 +25,8 @@ namespace Benchmarks
     public class OpenTelemetrySdkBenchmarksActivity
     {
         private readonly ActivitySource BenchMarkSource = new ActivitySource("BenchMark");
+        private readonly ActivityContext ParentCtx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+        private readonly string ParentId = $"00-{ActivityTraceId.CreateRandom()}.{ActivitySpanId.CreateRandom()}.00";
 
         public OpenTelemetrySdkBenchmarksActivity()
         {
@@ -40,6 +42,17 @@ namespace Benchmarks
             return ActivityCreationScenarios.CreateActivity(this.BenchMarkSource);
         }
 
+        [Benchmark]
+        public Activity CreateActivity_WithParentContext_NoOpProcessor()
+        {
+            return ActivityCreationScenarios.CreateActivityFromParentContext(this.BenchMarkSource, ParentCtx);
+        }
+
+        [Benchmark]
+        public Activity CreateActivity_WithParentId_NoOpProcessor()
+        {
+            return ActivityCreationScenarios.CreateActivityFromParentId(this.BenchMarkSource, ParentId);
+        }
 
         [Benchmark]
         public Activity CreateActivity_WithAttributes_NoOpProcessor()

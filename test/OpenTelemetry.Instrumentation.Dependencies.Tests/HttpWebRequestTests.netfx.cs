@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpWebRequestTests.net461.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpWebRequestTests.netfx.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NET461
+#if NETFRAMEWORK
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

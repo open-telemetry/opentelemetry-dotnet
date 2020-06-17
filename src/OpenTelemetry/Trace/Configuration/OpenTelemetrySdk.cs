@@ -64,11 +64,13 @@ namespace OpenTelemetry.Trace.Configuration
                 activityProcessor = openTelemetryBuilder.ProcessingPipeline.Build();
             }
 
+            var activitySource = new ActivitySourceAdapter(sampler, activityProcessor);
+
             if (openTelemetryBuilder.InstrumentationFactories != null)
             {
                 foreach (var instrumentation in openTelemetryBuilder.InstrumentationFactories)
                 {
-                    openTelemetrySDK.instrumentations.Add(instrumentation.Factory());
+                    openTelemetrySDK.instrumentations.Add(instrumentation.Factory(activitySource));
                 }
             }
 

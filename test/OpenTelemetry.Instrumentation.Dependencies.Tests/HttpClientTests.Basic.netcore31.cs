@@ -97,12 +97,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
         }
 
-        [Fact(Skip = "TODO: Reenable once custom format support is added")]
+        [Fact]
         public async Task HttpDependenciesInstrumentationInjectsHeadersAsync_CustomFormat()
         {
-            var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<SpanContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<SpanContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+            var textFormat = new Mock<ITextFormatActivity>();
+            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<ActivityContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                .Callback<ActivityContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                 {
                     action(message, "custom_traceparent", $"00/{context.TraceId}/{context.SpanId}/01");
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);
@@ -183,7 +183,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.IsType<Activity>(spanProcessor.Invocations[1].Arguments[0]);
         }
 
-        [Fact(Skip = "TODO: Reenable once filtering is fixed")]
+        [Fact]
         public async Task HttpDependenciesInstrumentationBacksOffIfAlreadyInstrumented()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
@@ -207,27 +207,27 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(0, spanProcessor.Invocations.Count);
         }
 
-        [Fact(Skip = "TODO: Reenable once filtering is fixed")]
-        public void HttpDependenciesInstrumentationFiltersOutRequests()
+        [Fact]
+        public async void HttpDependenciesInstrumentationFiltersOutRequests()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
-            /*
             using (OpenTelemetrySdk.EnableOpenTelemetry(
-                   (builder) => builder.AddHttpClientDependencyInstrumentation((opt) => opt.EventFilter = (activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
+                   (builder) =>
+                   builder.AddHttpClientDependencyInstrumentation(
+                       (opt) => opt.EventFilter = (activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
                                                                                         arg1 is HttpRequestMessage request &&
                                                                                         request.RequestUri.OriginalString.Contains(this.url)))
-                   .SetProcessorPipeline((p => p.AddProcessor(n => spanProcessor.Object)))))
+                   .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
             }
-            */
 
             Assert.Equal(0, spanProcessor.Invocations.Count);
         }
 
-        [Fact(Skip = "TODO: Reenable once filtering is fixed")]
+        [Fact]
         public async Task HttpDependenciesInstrumentationFiltersOutRequestsToExporterEndpoints()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
