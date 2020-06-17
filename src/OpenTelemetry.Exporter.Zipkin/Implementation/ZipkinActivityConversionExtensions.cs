@@ -174,20 +174,26 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             string key = attribute.Key;
             string strVal = attribute.Value?.ToString();
 
-            if (strVal != null
-                && RemoteEndpointServiceNameKeyResolutionDictionary.TryGetValue(key, out int priority)
-                && (state.RemoteEndpointServiceName == null || priority < state.RemoteEndpointServiceNamePriority))
+            if (strVal != null)
             {
-                state.RemoteEndpointServiceName = strVal;
-                state.RemoteEndpointServiceNamePriority = priority;
-            }
-            else if (key == Resource.ServiceNameKey && strVal != null)
-            {
-                state.ServiceName = strVal;
-            }
-            else if (key == Resource.ServiceNamespaceKey && strVal != null)
-            {
-                state.ServiceNamespace = strVal;
+                if (RemoteEndpointServiceNameKeyResolutionDictionary.TryGetValue(key, out int priority)
+                    && (state.RemoteEndpointServiceName == null || priority < state.RemoteEndpointServiceNamePriority))
+                {
+                    state.RemoteEndpointServiceName = strVal;
+                    state.RemoteEndpointServiceNamePriority = priority;
+                }
+                else if (key == Resource.ServiceNameKey)
+                {
+                    state.ServiceName = strVal;
+                }
+                else if (key == Resource.ServiceNamespaceKey)
+                {
+                    state.ServiceNamespace = strVal;
+                }
+                else
+                {
+                    PooledList<KeyValuePair<string, string>>.Add(ref state.Tags, new KeyValuePair<string, string>(key, strVal));
+                }
             }
             else
             {

@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
@@ -24,25 +25,73 @@ namespace Samples
 {
     internal class TestZipkin
     {
-        internal static object Run(string zipkinUri)
+        internal static object Run(string zipkinUri, bool useActivitySource)
         {
-            // Configure exporter to export traces to Zipkin
-            using (var tracerFactory = TracerFactory.Create(builder => builder
-                .UseZipkin(o =>
-                {
-                    o.ServiceName = "test-zipkin";
-                    o.Endpoint = new Uri(zipkinUri);
-                })))
+            if (useActivitySource)
             {
-                var tracer = tracerFactory.GetTracer("zipkin-test");
+                // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
+                // and use the Jaeger exporter.
+                using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+                    builder => builder
+                        // .AddActivitySource("MyCompany.MyProduct.MyWebServer")
+                         .AddActivitySource("Samples.SampleServer")
+                         .AddActivitySource("Samples.SampleClient")
+                        .UseZipkinActivityExporter(o =>
+                        {
+                            o.ServiceName = "test-zipkin";
+                            o.Endpoint = new Uri(zipkinUri);
+                        }));
 
-                // Create a scoped span. It will end automatically when using statement ends
-                using (tracer.WithSpan(tracer.StartSpan("Main")))
+                // The above lines are required only in Applications
+                // which decide to use OT.
+
+                using (var sample = new InstrumentationWithActivitySource())
                 {
-                    Console.WriteLine("About to do a busy work");
-                    for (var i = 0; i < 10; i++)
+                    sample.Start();
+
+                    Console.WriteLine("Sample is running on the background, press ENTER to stop");
+                    Console.ReadLine();
+                }
+
+                /*                
+                var source = new ActivitySource("MyCompany.MyProduct.MyWebServer");
+                using (var parent = source.StartActivity("HttpIn", ActivityKind.Server))
+                {
+                    parent?.AddTag("http.method", "GET");
+                    parent?.AddTag("http.url", "https://localhost/wiki/Rabbit");
+                    using (var child = source.StartActivity("HttpOut", ActivityKind.Client))
                     {
-                        DoWork(i, tracer);
+                        child?.AddTag("http.method", "GET");
+                        child?.AddTag("http.url", "https://www.wikipedia.org/wiki/Rabbit");
+                        // TODO: change status code to int after .NET added support for int
+                        child?.AddTag("http.status_code", "200");
+                    } 
+
+                    // TODO: change status code to int after .NET added support for int
+                    parent?.AddTag("http.status_code", "200");
+                    parent?.AddTag("http.host", "localhost");
+                }*/
+            }
+            else
+            {
+                // Configure exporter to export traces to Zipkin
+                using (var tracerFactory = TracerFactory.Create(builder => builder
+                    .UseZipkin(o =>
+                    {
+                        o.ServiceName = "test-zipkin";
+                        o.Endpoint = new Uri(zipkinUri);
+                    })))
+                {
+                    var tracer = tracerFactory.GetTracer("zipkin-test");
+
+                    // Create a scoped span. It will end automatically when using statement ends
+                    using (tracer.WithSpan(tracer.StartSpan("Main")))
+                    {
+                        Console.WriteLine("About to do a busy work");
+                        for (var i = 0; i < 10; i++)
+                        {
+                            DoWork(i, tracer);
+                        }
                     }
                 }
             }

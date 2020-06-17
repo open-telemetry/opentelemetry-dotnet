@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-
 using System;
 
 namespace OpenTelemetry.Exporter.Zipkin
 {
     /// <summary>
-    /// Zipkin exporter options.
+    /// Zipkin trace exporter options.
     /// </summary>
     public sealed class ZipkinTraceExporterOptions
     {

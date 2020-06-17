@@ -51,8 +51,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
                 Assert.Equal(tagsArray[counter++].Value, tags.Value);
             }
 
-            var events = zipkinSpan.Annotations.Value;
-
             foreach (var annotation in zipkinSpan.Annotations)
             {
                 // Timestamp is same in both events
