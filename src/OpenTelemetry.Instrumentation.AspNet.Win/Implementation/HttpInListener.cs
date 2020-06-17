@@ -20,26 +20,22 @@ using System.Web;
 using System.Web.Routing;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
         private static readonly string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
-
-        // hard-coded Sampler here, just to prototype.
-        // Either .NET will provide an new API to avoid Instrumentation being aware of sampling.
-        // or we'll move the Sampler to come from OpenTelemetryBuilder, and not hardcoded.
-        private readonly ActivitySampler sampler = new AlwaysOnActivitySampler();
         private readonly PropertyFetcher routeFetcher = new PropertyFetcher("Route");
         private readonly PropertyFetcher routeTemplateFetcher = new PropertyFetcher("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
+        private readonly ActivitySourceAdapter activitySource;
 
-        public HttpInListener(string name, AspNetInstrumentationOptions options)
+        public HttpInListener(string name, AspNetInstrumentationOptions options, ActivitySourceAdapter activitySource)
             : base(name, null)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
+            this.activitySource = activitySource;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -55,9 +51,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
-                // TODO: These filters won't prevent the activity from being tracked
-                // as they are fired anyway.
                 InstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                activity.IsAllDataRequested = false;
                 return;
             }
 
@@ -97,21 +92,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
             activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
 
-            var samplingParameters = new ActivitySamplingParameters(
-                activity.Context,
-                activity.TraceId,
-                activity.DisplayName,
-                activity.Kind,
-                activity.Tags,
-                activity.Links);
-
-            // TODO: Find a way to avoid Instrumentation being tied to Sampler
-            var samplingDecision = this.sampler.ShouldSample(samplingParameters);
-            activity.IsAllDataRequested = samplingDecision.IsSampled;
-            if (samplingDecision.IsSampled)
-            {
-                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-            }
+            this.activitySource.Start(activity);
 
             if (activity.IsAllDataRequested)
             {
@@ -221,6 +202,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     Activity.Current = activity;
                 }
             }
+
+            this.activitySource.Stop(activityToEnrich);
         }
     }
 }

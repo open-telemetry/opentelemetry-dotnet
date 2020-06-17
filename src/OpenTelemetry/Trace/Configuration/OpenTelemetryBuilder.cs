@@ -89,7 +89,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
         /// <returns>Returns <see cref="OpenTelemetryBuilder"/> for chaining.</returns>
         public OpenTelemetryBuilder AddInstrumentation<TInstrumentation>(
-            Func<TInstrumentation> instrumentationFactory)
+            Func<ActivitySourceAdapter, TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {
             if (instrumentationFactory == null)
@@ -115,9 +115,9 @@ namespace OpenTelemetry.Trace.Configuration
         {
             public readonly string Name;
             public readonly string Version;
-            public readonly Func<object> Factory;
+            public readonly Func<ActivitySourceAdapter, object> Factory;
 
-            internal InstrumentationFactory(string name, string version, Func<object> factory)
+            internal InstrumentationFactory(string name, string version, Func<ActivitySourceAdapter, object> factory)
             {
                 this.Name = name;
                 this.Version = version;

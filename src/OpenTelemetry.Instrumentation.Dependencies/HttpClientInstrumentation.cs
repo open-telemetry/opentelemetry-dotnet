@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using OpenTelemetry.Instrumentation.Dependencies.Implementation;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Dependencies
 {
@@ -28,18 +29,20 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
         /// </summary>
-        public HttpClientInstrumentation()
-            : this(new HttpClientInstrumentationOptions())
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
+        public HttpClientInstrumentation(ActivitySourceAdapter activitySource)
+            : this(activitySource, new HttpClientInstrumentationOptions())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
         /// </summary>
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
         /// <param name="options">Configuration options for dependencies instrumentation.</param>
-        public HttpClientInstrumentation(HttpClientInstrumentationOptions options)
+        public HttpClientInstrumentation(ActivitySourceAdapter activitySource, HttpClientInstrumentationOptions options)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), options.EventFilter);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options, activitySource), options.EventFilter);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
