@@ -73,7 +73,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             Guid requestId = Guid.NewGuid();
 
             ZipkinTraceExporter exporter = new ZipkinTraceExporter(
-                new ZipkinExporterOptions
+                new ZipkinTraceExporterOptions
                 {
                     Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
                 });

@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// </summary>
     public class ZipkinActivityExporter : ActivityExporter
     {
-        private readonly ZipkinExporterOptions options;
+        private readonly ZipkinTraceExporterOptions options;
         private readonly HttpClient httpClient;
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// </summary>
         /// <param name="options">Configuration options.</param>
         /// <param name="client">Http client to use to upload telemetry.</param>
-        public ZipkinActivityExporter(ZipkinExporterOptions options, HttpClient client = null)
+        public ZipkinActivityExporter(ZipkinTraceExporterOptions options, HttpClient client = null)
         {
             this.options = options;
             this.LocalEndpoint = this.GetLocalZipkinEndpoint();
