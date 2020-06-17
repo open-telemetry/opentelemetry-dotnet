@@ -29,10 +29,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <summary>
         /// Initializes a new instance of the <see cref="GrpcClientInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traces with.</param>
-        public GrpcClientInstrumentation(Tracer tracer)
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
+        public GrpcClientInstrumentation(ActivitySourceAdapter activitySource)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new GrpcClientDiagnosticListener(tracer), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new GrpcClientDiagnosticListener(activitySource), null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

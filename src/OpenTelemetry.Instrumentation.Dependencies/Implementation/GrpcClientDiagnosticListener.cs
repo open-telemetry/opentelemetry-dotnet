@@ -26,11 +26,13 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     {
         private static readonly Regex GrpcMethodRegex = new Regex(@"(?<package>\w+).(?<service>\w+)/(?<method>\w+)", RegexOptions.Compiled);
 
+        private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
 
-        public GrpcClientDiagnosticListener(Tracer tracer)
-            : base("Grpc.Net.Client", tracer)
+        public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource)
+            : base("Grpc.Net.Client", null)
         {
+            this.activitySource = activitySource;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -45,55 +47,48 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             var grpcMethodTag = activity.Tags.FirstOrDefault(tag => tag.Key == "grpc.method");
             var grpcMethod = grpcMethodTag.Value?.Trim('/');
 
-            this.Tracer.StartActiveSpanFromActivity(grpcMethod, activity, SpanKind.Client, out var span);
+            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
+            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Client);
+            activity.DisplayName = grpcMethod;
 
-            if (span.IsRecording)
+            this.activitySource.Start(activity);
+
+            if (activity.IsAllDataRequested)
             {
                 var rpcService = GrpcMethodRegex.Match(grpcMethod).Groups["service"].Value;
 
-                span.SetAttribute("rpc.service", rpcService);
+                activity.AddTag("rpc.service", rpcService);
 
                 var uriHostNameType = Uri.CheckHostName(request.RequestUri.Host);
                 if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
                 {
-                    span.SetAttribute("net.peer.ip", request.RequestUri.Host);
+                    activity.AddTag("net.peer.ip", request.RequestUri.Host);
                 }
                 else
                 {
-                    span.SetAttribute("net.peer.name", request.RequestUri.Host);
+                    activity.AddTag("net.peer.name", request.RequestUri.Host);
                 }
 
-                span.SetAttribute("net.peer.port", request.RequestUri.Port);
+                activity.AddTag("net.peer.port", request.RequestUri.Port.ToString());
             }
         }
 
         public override void OnStopActivity(Activity activity, object payload)
         {
-            const string EventNameSuffix = ".OnStopActivity";
-            var span = this.Tracer.CurrentSpan;
-            try
+            if (activity.IsAllDataRequested)
             {
-                if (span == null || !span.Context.IsValid)
+                var status = Status.Unknown;
+
+                var grpcStatusCodeTag = activity.Tags.FirstOrDefault(tag => tag.Key == "grpc.status_code").Value;
+                if (int.TryParse(grpcStatusCodeTag, out var statusCode))
                 {
-                    InstrumentationEventSource.Log.NullOrBlankSpan(nameof(GrpcClientDiagnosticListener) + EventNameSuffix);
-                    return;
+                    status = SpanHelper.ResolveSpanStatusForGrpcStatusCode(statusCode);
                 }
 
-                if (span.IsRecording)
-                {
-                    span.Status = Status.Unknown;
+                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+            }
 
-                    var grpcStatusCodeTag = activity.Tags.FirstOrDefault(tag => tag.Key == "grpc.status_code").Value;
-                    if (int.TryParse(grpcStatusCodeTag, out var statusCode))
-                    {
-                        span.PutRpcStatusCode(statusCode);
-                    }
-                }
-            }
-            finally
-            {
-                span?.End();
-            }
+            this.activitySource.Stop(activity);
         }
     }
 }
