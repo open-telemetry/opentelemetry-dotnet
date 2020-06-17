@@ -14,8 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 {

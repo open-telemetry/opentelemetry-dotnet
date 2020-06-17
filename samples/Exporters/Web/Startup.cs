@@ -36,18 +36,13 @@ namespace API
                 }
             });
 
-            services.AddOpenTelemetry((sp, builder) =>
-            {
-                builder
-                    //.SetSampler(Samplers.AlwaysSample)
-                    .UseZipkin(options =>
-                    {
-                        options.ServiceName = "test-zipkin";
-                        options.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
-                    })
-                    .AddRequestInstrumentation()
-                    .AddDependencyInstrumentation();
-            });
+            services.AddOpenTelemetrySdk((builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
+                .UseJaegerActivityExporter(o =>
+                {
+                    o.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
+                    o.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
+                    o.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
+                }));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

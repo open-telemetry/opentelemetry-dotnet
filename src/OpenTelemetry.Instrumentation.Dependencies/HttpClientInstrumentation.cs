@@ -29,20 +29,20 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
-        public HttpClientInstrumentation(Tracer tracer)
-            : this(tracer, new HttpClientInstrumentationOptions())
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
+        public HttpClientInstrumentation(ActivitySourceAdapter activitySource)
+            : this(activitySource, new HttpClientInstrumentationOptions())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
         /// <param name="options">Configuration options for dependencies instrumentation.</param>
-        public HttpClientInstrumentation(Tracer tracer, HttpClientInstrumentationOptions options)
+        public HttpClientInstrumentation(ActivitySourceAdapter activitySource, HttpClientInstrumentationOptions options)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(tracer, options), options.EventFilter);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options, activitySource), options.EventFilter);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

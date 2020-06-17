@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using Xunit;
 
@@ -34,6 +33,7 @@ namespace OpenTelemetry.Trace.Test
             multipleAttributes.Add("MyBooleanAttributeKey", true);
             multipleAttributes.Add("MyLongAttributeKey", 123);
             multipleAttributes.Add("MyDoubleAttributeKey", 0.005);
+
             // Tests only that all the methods are not crashing/throwing errors.
             BlankSpan.Instance.SetAttribute(
                 "MyStringAttributeKey2", "MyStringAttributeValue2");
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void BadArguments_DoesNotThrow()
         {
-            BlankSpan.Instance.Status = new Status();
+            BlankSpan.Instance.Status = default(Status);
             BlankSpan.Instance.UpdateName(null);
             BlankSpan.Instance.SetAttribute(null, string.Empty);
             BlankSpan.Instance.SetAttribute(string.Empty, null);

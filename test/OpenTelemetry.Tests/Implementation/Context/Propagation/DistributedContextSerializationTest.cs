@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -47,25 +45,25 @@ namespace OpenTelemetry.Context.Propagation.Test
         public DistributedContextSerializationTest()
         {
             DistributedContext.Carrier = AsyncLocalDistributedContextCarrier.Instance;
-            serializer = new DistributedContextBinarySerializer();
+            this.serializer = new DistributedContextBinarySerializer();
         }
 
         [Fact]
         public void TestSerializeDefault()
         {
-            TestSerialize();
+            this.TestSerialize();
         }
 
         [Fact]
         public void TestSerializeWithOneTag()
         {
-            TestSerialize(T1);
+            this.TestSerialize(T1);
         }
 
         [Fact]
         public void TestSerializeWithMultipleTags()
         {
-            TestSerialize(T1, T2, T3, T4);
+            this.TestSerialize(T1, T2, T3, T4);
         }
 
         [Fact]
@@ -73,7 +71,7 @@ namespace OpenTelemetry.Context.Propagation.Test
         {
             var list = new List<CorrelationContextEntry>();
 
-            for (var i = 0; i < SerializationUtils.TagContextSerializedSizeLimit / 8 - 1; i++)
+            for (var i = 0; i < (SerializationUtils.TagContextSerializedSizeLimit / 8) - 1; i++)
             {
                 // Each tag will be with format {key : "0123", value : "0123"}, so the length of it is 8.
                 var str = i.ToString("0000");
@@ -85,37 +83,7 @@ namespace OpenTelemetry.Context.Propagation.Test
             list.Add(new CorrelationContextEntry("last", "last1"));
 
             var dc = DistributedContextBuilder.CreateContext(list);
-            Assert.Empty(serializer.ToByteArray(dc));
-        }
-
-        private void TestSerialize(params CorrelationContextEntry[] tags)
-        {
-            var list = new List<CorrelationContextEntry>(tags);
-
-            var actual = serializer.ToByteArray(DistributedContextBuilder.CreateContext(list));
-            var tagsList = tags.ToList();
-            var tagPermutation = Permutate(tagsList, tagsList.Count);
-            ISet<string> possibleOutPuts = new HashSet<string>();
-
-            foreach (var distributedContextEntries in tagPermutation)
-            {
-                var l = (List<CorrelationContextEntry>)distributedContextEntries;
-                var expected = new MemoryStream();
-                expected.WriteByte(SerializationUtils.VersionId);
-
-                foreach (var tag in l)
-                {
-                    expected.WriteByte(SerializationUtils.TagFieldId);
-                    EncodeString(tag.Key, expected);
-                    EncodeString(tag.Value, expected);
-                }
-
-                var bytes = expected.ToArray();
-                possibleOutPuts.Add(Encoding.UTF8.GetString(bytes));
-            }
-
-            var exp = Encoding.UTF8.GetString(actual);
-            Assert.Contains(exp, possibleOutPuts);
+            Assert.Empty(this.serializer.ToByteArray(dc));
         }
 
         private static void EncodeString(string input, MemoryStream byteArrayOutPutStream)
@@ -150,6 +118,36 @@ namespace OpenTelemetry.Context.Propagation.Test
                     RotateRight(sequence, count);
                 }
             }
+        }
+
+        private void TestSerialize(params CorrelationContextEntry[] tags)
+        {
+            var list = new List<CorrelationContextEntry>(tags);
+
+            var actual = this.serializer.ToByteArray(DistributedContextBuilder.CreateContext(list));
+            var tagsList = tags.ToList();
+            var tagPermutation = Permutate(tagsList, tagsList.Count);
+            ISet<string> possibleOutPuts = new HashSet<string>();
+
+            foreach (var distributedContextEntries in tagPermutation)
+            {
+                var l = (List<CorrelationContextEntry>)distributedContextEntries;
+                var expected = new MemoryStream();
+                expected.WriteByte(SerializationUtils.VersionId);
+
+                foreach (var tag in l)
+                {
+                    expected.WriteByte(SerializationUtils.TagFieldId);
+                    EncodeString(tag.Key, expected);
+                    EncodeString(tag.Value, expected);
+                }
+
+                var bytes = expected.ToArray();
+                possibleOutPuts.Add(Encoding.UTF8.GetString(bytes));
+            }
+
+            var exp = Encoding.UTF8.GetString(actual);
+            Assert.Contains(exp, possibleOutPuts);
         }
     }
 }

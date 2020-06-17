@@ -1,4 +1,4 @@
-// <copyright file="TestOtlp.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestOtlp.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,7 +62,7 @@ namespace Samples
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use OTLP exporter.
-            OpenTelemetrySdk.EnableOpenTelemetry(
+            using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")
                     .AddActivitySource("Samples.SampleClient")

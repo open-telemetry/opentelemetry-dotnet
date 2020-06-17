@@ -30,6 +30,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     {
         private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+        private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
         private readonly PropertyFetcher stopResponseFetcher = new PropertyFetcher("Response");
         private readonly PropertyFetcher stopExceptionFetcher = new PropertyFetcher("Exception");
@@ -37,8 +38,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private readonly bool httpClientSupportsW3C = false;
         private readonly HttpClientInstrumentationOptions options;
 
-        public HttpHandlerDiagnosticListener(Tracer tracer, HttpClientInstrumentationOptions options)
-            : base("HttpHandlerDiagnosticListener", tracer)
+        public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options, ActivitySourceAdapter activitySource)
+            : base("HttpHandlerDiagnosticListener", null)
         {
             var framework = Assembly
                 .GetEntryAssembly()?
@@ -56,6 +57,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             }
 
             this.options = options;
+            this.activitySource = activitySource;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -70,87 +72,78 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             if (request.Headers.Contains("traceparent"))
             {
                 // this request is already instrumented, we should back off
+                activity.IsAllDataRequested = false;
                 return;
             }
 
-            this.Tracer.StartActiveSpanFromActivity(HttpTagHelper.GetOperationNameForHttpMethod(request.Method), activity, SpanKind.Client, out var span);
+            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
+            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Client);
+            activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            if (span.IsRecording)
+            this.activitySource.Start(activity);
+
+            if (activity.IsAllDataRequested)
             {
-                span.PutComponentAttribute("http");
-                span.PutHttpMethodAttribute(HttpTagHelper.GetNameForHttpMethod(request.Method));
-                span.PutHttpHostAttribute(HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
-                span.PutHttpRawUrlAttribute(request.RequestUri.OriginalString);
+                activity.AddTag(SpanAttributeConstants.ComponentKey, "http");
+                activity.AddTag(SpanAttributeConstants.HttpMethodKey, HttpTagHelper.GetNameForHttpMethod(request.Method));
+                activity.AddTag(SpanAttributeConstants.HttpHostKey, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
+                activity.AddTag(SpanAttributeConstants.HttpUrlKey, request.RequestUri.OriginalString);
 
                 if (this.options.SetHttpFlavor)
                 {
-                    span.PutHttpFlavorAttribute(HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
+                    activity.AddTag(SpanAttributeConstants.HttpFlavorKey, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
                 }
             }
 
-            if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormat))
+            if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormatActivity))
             {
-                this.options.TextFormat.Inject(span.Context, request, (r, k, v) => r.Headers.Add(k, v));
+                this.options.TextFormat.Inject(activity.Context, request, (r, k, v) => r.Headers.Add(k, v));
             }
         }
 
         public override void OnStopActivity(Activity activity, object payload)
         {
-            const string EventNameSuffix = ".OnStopActivity";
-            var span = this.Tracer.CurrentSpan;
-            try
+            if (activity.IsAllDataRequested)
             {
-                if (span == null || !span.Context.IsValid)
-                {
-                    InstrumentationEventSource.Log.NullOrBlankSpan(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
-                    return;
-                }
+                var requestTaskStatus = this.stopRequestStatusFetcher.Fetch(payload) as TaskStatus?;
 
-                if (span.IsRecording)
+                if (requestTaskStatus.HasValue)
                 {
-                    var requestTaskStatus = this.stopRequestStatusFetcher.Fetch(payload) as TaskStatus?;
-
-                    if (requestTaskStatus.HasValue)
+                    if (requestTaskStatus != TaskStatus.RanToCompletion)
                     {
-                        if (requestTaskStatus != TaskStatus.RanToCompletion)
+                        if (requestTaskStatus == TaskStatus.Canceled)
                         {
-                            if (requestTaskStatus == TaskStatus.Canceled)
-                            {
-                                span.Status = Status.Cancelled;
-                            }
-                            else if (requestTaskStatus != TaskStatus.Faulted)
-                            {
-                                // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
-                                span.Status = Status.Unknown;
-                            }
+                            Status status = Status.Cancelled;
+                            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                        }
+                        else if (requestTaskStatus != TaskStatus.Faulted)
+                        {
+                            // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
+                            Status status = Status.Unknown;
+                            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
                         }
                     }
+                }
 
-                    if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
-                    {
-                        // response could be null for DNS issues, timeouts, etc...
-                        span.PutHttpStatusCode((int)response.StatusCode, response.ReasonPhrase);
-                    }
+                if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
+                {
+                    // response could be null for DNS issues, timeouts, etc...
+                    activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
+
+                    Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
+                    activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.ReasonPhrase);
                 }
             }
-            finally
-            {
-                span?.End();
-            }
+
+            this.activitySource.Stop(activity);
         }
 
         public override void OnException(Activity activity, object payload)
         {
             const string EventNameSuffix = ".OnException";
-            var span = this.Tracer.CurrentSpan;
 
-            if (span == null || !span.Context.IsValid)
-            {
-                InstrumentationEventSource.Log.NullOrBlankSpan(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
-                return;
-            }
-
-            if (span.IsRecording)
+            if (activity.IsAllDataRequested)
             {
                 if (!(this.stopExceptionFetcher.Fetch(payload) is Exception exc))
                 {
@@ -165,19 +158,21 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                         switch (exception.SocketErrorCode)
                         {
                             case SocketError.HostNotFound:
-                                span.Status = Status.InvalidArgument.WithDescription(exc.Message);
+                                Status status = Status.InvalidArgument;
+                                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, exc.Message);
                                 return;
                         }
                     }
 
                     if (exc.InnerException != null)
                     {
-                        span.Status = Status.Unknown.WithDescription(exc.Message);
+                        Status status = Status.Unknown;
+                        activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                        activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, exc.Message);
                     }
                 }
             }
-
-            // Note: Span.End() is not called here on purpose, OnStopActivity is called after OnException for this listener.
         }
     }
 }

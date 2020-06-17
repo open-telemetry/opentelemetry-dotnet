@@ -20,7 +20,7 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Instrumentation.AspNetCore
 {
     /// <summary>
-    /// Requests instrumentation.
+    /// Asp.Net Core Requests instrumentation.
     /// </summary>
     public class AspNetCoreInstrumentation : IDisposable
     {
@@ -29,20 +29,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// <summary>
         /// Initializes a new instance of the <see cref="AspNetCoreInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
-        public AspNetCoreInstrumentation(Tracer tracer)
-            : this(tracer, new AspNetCoreInstrumentationOptions())
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
+        public AspNetCoreInstrumentation(ActivitySourceAdapter activitySource)
+            : this(activitySource, new AspNetCoreInstrumentationOptions())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AspNetCoreInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
         /// <param name="options">Configuration options for ASP.NET Core instrumentation.</param>
-        public AspNetCoreInstrumentation(Tracer tracer, AspNetCoreInstrumentationOptions options)
+        public AspNetCoreInstrumentation(ActivitySourceAdapter activitySource, AspNetCoreInstrumentationOptions options)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInListener("Microsoft.AspNetCore", tracer, options), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInListener("Microsoft.AspNetCore", options, activitySource), null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

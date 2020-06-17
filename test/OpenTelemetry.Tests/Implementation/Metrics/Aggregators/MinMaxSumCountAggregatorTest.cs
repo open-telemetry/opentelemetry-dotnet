@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
 using System.Threading;
 using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Metrics.Export;
@@ -23,14 +22,6 @@ namespace OpenTelemetry.Metrics.Test
 {
     public class MinMaxSumCountAggregatorTest
     {
-        private class UpdateThreadArguments<T> where T : struct
-        {
-            public ManualResetEvent mreToBlockUpdateThread;
-            public ManualResetEvent mreToEnsureAllThreadsStart;
-            public int threadsStartedCount;
-            public Aggregator<T> minMaxSumCountAggregator;
-        }
-
         [Fact]
         public void MeasureAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdatesLong()
         {
@@ -47,10 +38,10 @@ namespace OpenTelemetry.Metrics.Test
             var mreToEnsureAllThreadsStart = new ManualResetEvent(false);
 
             var argToThread = new UpdateThreadArguments<long>();
-            argToThread.minMaxSumCountAggregator = aggregator;
-            argToThread.threadsStartedCount = 0;
-            argToThread.mreToBlockUpdateThread = mre;
-            argToThread.mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
+            argToThread.MinMaxSumCountAggregator = aggregator;
+            argToThread.ThreadsStartedCount = 0;
+            argToThread.MreToBlockUpdateThread = mre;
+            argToThread.MreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
 
             Thread[] t = new Thread[10];
             for (int i = 0; i < 10; i++)
@@ -102,10 +93,10 @@ namespace OpenTelemetry.Metrics.Test
             var mreToEnsureAllThreadsStart = new ManualResetEvent(false);
 
             var argToThread = new UpdateThreadArguments<double>();
-            argToThread.minMaxSumCountAggregator = aggregator;
-            argToThread.threadsStartedCount = 0;
-            argToThread.mreToBlockUpdateThread = mre;
-            argToThread.mreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
+            argToThread.MinMaxSumCountAggregator = aggregator;
+            argToThread.ThreadsStartedCount = 0;
+            argToThread.MreToBlockUpdateThread = mre;
+            argToThread.MreToEnsureAllThreadsStart = mreToEnsureAllThreadsStart;
 
             Thread[] t = new Thread[10];
             for (int i = 0; i < 10; i++)
@@ -141,15 +132,14 @@ namespace OpenTelemetry.Metrics.Test
             Assert.Equal(100, summary.Max);
         }
 
-
         private static void LongMetricUpdateThread(object obj)
         {
             var arguments = obj as UpdateThreadArguments<long>;
-            var mre = arguments.mreToBlockUpdateThread;
-            var mreToEnsureAllThreadsStart = arguments.mreToEnsureAllThreadsStart;
-            var agg = arguments.minMaxSumCountAggregator;
+            var mre = arguments.MreToBlockUpdateThread;
+            var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
+            var agg = arguments.MinMaxSumCountAggregator;
 
-            if (Interlocked.Increment(ref arguments.threadsStartedCount) == 10)
+            if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == 10)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
@@ -168,11 +158,11 @@ namespace OpenTelemetry.Metrics.Test
         private static void DoubleMetricUpdateThread(object obj)
         {
             var arguments = obj as UpdateThreadArguments<double>;
-            var mre = arguments.mreToBlockUpdateThread;
-            var mreToEnsureAllThreadsStart = arguments.mreToEnsureAllThreadsStart;
-            var agg = arguments.minMaxSumCountAggregator;
+            var mre = arguments.MreToBlockUpdateThread;
+            var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
+            var agg = arguments.MinMaxSumCountAggregator;
 
-            if (Interlocked.Increment(ref arguments.threadsStartedCount) == 10)
+            if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == 10)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
@@ -186,6 +176,15 @@ namespace OpenTelemetry.Metrics.Test
                 agg.Update(50.0);
                 agg.Update(100.0);
             }
+        }
+
+        private class UpdateThreadArguments<T>
+            where T : struct
+        {
+            public ManualResetEvent MreToBlockUpdateThread;
+            public ManualResetEvent MreToEnsureAllThreadsStart;
+            public int ThreadsStartedCount;
+            public Aggregator<T> MinMaxSumCountAggregator;
         }
     }
 }

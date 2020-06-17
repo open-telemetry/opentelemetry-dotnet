@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using Xunit;
-using OpenTelemetry.Metrics.Export;
-using System.Diagnostics;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry.Metrics.Export;
+using Xunit;
 using static OpenTelemetry.Metrics.Configuration.MeterFactory;
 
 namespace OpenTelemetry.Metrics.Test
@@ -44,20 +44,21 @@ namespace OpenTelemetry.Metrics.Test
             int meter2CollectCount = 0;
             var meters = new Dictionary<MeterRegistryKey, MeterSdk>();
             var testMeter1 = new TestMeter("meter1", testProcessor, () => meter1CollectCount++);
-            meters.Add(new MeterRegistryKey("meter1", ""), testMeter1);
+            meters.Add(new MeterRegistryKey("meter1", string.Empty), testMeter1);
             var testMeter2 = new TestMeter("meter2", testProcessor, () => meter2CollectCount++);
-            meters.Add(new MeterRegistryKey("meter2", ""), testMeter2);
+            meters.Add(new MeterRegistryKey("meter2", string.Empty), testMeter2);
 
             var pushInterval = TimeSpan.FromMilliseconds(controllerPushIntervalInMsec);
-            var pushController = new PushMetricController(meters,
+            var pushController = new PushMetricController(
+                meters,
                 testProcessor,
                 testExporter,
                 pushInterval,
                 new CancellationTokenSource());
 
             // Validate that collect is called on Meter1, Meter2.
-            ValidateMeterCollect(ref meter1CollectCount, collectionCountExpectedMin, "meter1", TimeSpan.FromMilliseconds(maxWaitInMsec));
-            ValidateMeterCollect(ref meter2CollectCount, collectionCountExpectedMin, "meter2", TimeSpan.FromMilliseconds(maxWaitInMsec));
+            this.ValidateMeterCollect(ref meter1CollectCount, collectionCountExpectedMin, "meter1", TimeSpan.FromMilliseconds(maxWaitInMsec));
+            this.ValidateMeterCollect(ref meter2CollectCount, collectionCountExpectedMin, "meter2", TimeSpan.FromMilliseconds(maxWaitInMsec));
 
             // Export must be called same no: of times as Collect.
             Assert.True(exportCalledCount >= collectionCountExpectedMin);
@@ -72,9 +73,10 @@ namespace OpenTelemetry.Metrics.Test
                 Thread.Sleep(10);
             }
 
-            Assert.True(meterCollectCount >= expectedMeterCollectCount
+            Assert.True(
+                meterCollectCount >= expectedMeterCollectCount
                 && meterCollectCount <= expectedMeterCollectCount,
-                $"Actual Collect Count for meter: {meterName} is {meterCollectCount} vs Expected count of {expectedMeterCollectCount}");                
+                $"Actual Collect Count for meter: {meterName} is {meterCollectCount} vs Expected count of {expectedMeterCollectCount}");
         }
     }
 }

@@ -35,8 +35,12 @@ namespace OpenTelemetry.Tests.Impl.Trace
             var tracer = TracerFactory.Create(b => b.SetResource(resource)).GetTracer(null);
 
             var tracestate = new KeyValuePair<string, string>[0];
-            var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
-                ActivityTraceFlags.Recorded, true, tracestate);
+            var parentContext = new SpanContext(
+                ActivityTraceId.CreateRandom(),
+                ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.Recorded,
+                true,
+                tracestate);
 
             var attributes = new Dictionary<string, object> { ["key"] = "value", };
             var link = new Link(parentContext);
@@ -44,7 +48,10 @@ namespace OpenTelemetry.Tests.Impl.Trace
 
             var startTime = DateTimeOffset.UtcNow.AddSeconds(-2);
             var endTime = DateTimeOffset.UtcNow.AddSeconds(-1);
-            var span = tracer.StartSpan("name", parentContext, SpanKind.Producer,
+            var span = tracer.StartSpan(
+                "name",
+                parentContext,
+                SpanKind.Producer,
                 new SpanCreationOptions { Attributes = attributes, Links = new[] { link }, StartTimestamp = startTime, });
 
             span.AddEvent(evnt);
@@ -131,8 +138,12 @@ namespace OpenTelemetry.Tests.Impl.Trace
 
             var tracestate = new KeyValuePair<string, string>[0];
             var parentSpanId = ActivitySpanId.CreateRandom();
-            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
-                ActivityTraceFlags.Recorded, true, tracestate);
+            var context = new SpanContext(
+                ActivityTraceId.CreateRandom(),
+                ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.Recorded,
+                true,
+                tracestate);
 
             var attributes = new Dictionary<string, object> { ["key"] = "value", };
             var links = new[] { new Link(context) };
@@ -201,10 +212,18 @@ namespace OpenTelemetry.Tests.Impl.Trace
             var tracestate = new KeyValuePair<string, string>[0];
             var parentSpanId = ActivitySpanId.CreateRandom();
 
-            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
-                ActivityTraceFlags.Recorded, true, tracestate);
-            var otherContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(),
-                ActivityTraceFlags.Recorded, true, tracestate);
+            var context = new SpanContext(
+                ActivityTraceId.CreateRandom(),
+                ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.Recorded,
+                true,
+                tracestate);
+            var otherContext = new SpanContext(
+                ActivityTraceId.CreateRandom(),
+                ActivitySpanId.CreateRandom(),
+                ActivityTraceFlags.Recorded,
+                true,
+                tracestate);
 
             var attributes = new Dictionary<string, object> { ["key"] = "value", };
             var otherAttributes = new Dictionary<string, object> { ["key1"] = "value1", };

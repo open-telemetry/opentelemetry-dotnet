@@ -56,7 +56,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(status1 == status2);
         }
 
-
         [Fact]
         public void Not_Equality()
         {
@@ -77,7 +76,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(status1 != status2);
         }
 
-
         [Fact]
         public void Not_Equality_WithDescription2()
         {
@@ -87,6 +85,5 @@ namespace OpenTelemetry.Trace.Test
             Assert.NotEqual(status1, status2);
             Assert.True(status1 != status2);
         }
-
     }
 }

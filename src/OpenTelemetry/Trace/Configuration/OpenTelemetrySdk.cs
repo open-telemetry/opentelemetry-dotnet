@@ -15,33 +15,42 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace.Configuration
 {
-    public class OpenTelemetrySdk
+    public class OpenTelemetrySdk : IDisposable
     {
+        private readonly List<object> instrumentations = new List<object>();
+        private ActivityListener listener;
+
         static OpenTelemetrySdk()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
         }
 
+        private OpenTelemetrySdk()
+        {
+        }
+
         /// <summary>
         /// Enables OpenTelemetry.
         /// </summary>
         /// <param name="configureOpenTelemetryBuilder">Function that configures OpenTelemetryBuilder.</param>
-        /// <returns><see cref="IDisposable"/> to be disposed on application shutdown.</returns>
+        /// <returns><see cref="OpenTelemetrySdk"/> instance which can be disposed on application shutdown.</returns>
         /// <remarks>
         /// Basic implementation only. Most logic from TracerBuilder will be ported here.
         /// </remarks>
-        public static IDisposable EnableOpenTelemetry(Action<OpenTelemetryBuilder> configureOpenTelemetryBuilder)
+        public static OpenTelemetrySdk EnableOpenTelemetry(Action<OpenTelemetryBuilder> configureOpenTelemetryBuilder)
         {
             var openTelemetryBuilder = new OpenTelemetryBuilder();
             configureOpenTelemetryBuilder(openTelemetryBuilder);
 
+            var openTelemetrySDK = new OpenTelemetrySdk();
             ActivitySampler sampler = openTelemetryBuilder.Sampler ?? new AlwaysOnActivitySampler();
 
             ActivityProcessor activityProcessor;
@@ -55,9 +64,19 @@ namespace OpenTelemetry.Trace.Configuration
                 activityProcessor = openTelemetryBuilder.ProcessingPipeline.Build();
             }
 
+            var activitySource = new ActivitySourceAdapter(sampler, activityProcessor);
+
+            if (openTelemetryBuilder.InstrumentationFactories != null)
+            {
+                foreach (var instrumentation in openTelemetryBuilder.InstrumentationFactories)
+                {
+                    openTelemetrySDK.instrumentations.Add(instrumentation.Factory(activitySource));
+                }
+            }
+
             // This is what subscribes to Activities.
             // Think of this as the replacement for DiagnosticListener.AllListeners.Subscribe(onNext => diagnosticListener.Subscribe(..));
-            ActivityListener listener = new ActivityListener
+            openTelemetrySDK.listener = new ActivityListener
             {
                 // Callback when Activity is started.
                 ActivityStarted = activityProcessor.OnStart,
@@ -72,66 +91,61 @@ namespace OpenTelemetry.Trace.Configuration
                 // The following parameter is not used now.
                 GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
 
-                // This delegate informs ActivitySource about sampling decision.
-                // Following simple behavior is enabled now:
-                // If Sampler returns IsSampled as true, returns ActivityDataRequest.AllDataAndRecorded
-                // This creates Activity and sets its IsAllDataRequested to true.
-                // Library authors can check activity.IsAllDataRequested and avoid
-                // doing any additional telemetry population.
-                // Activity.IsAllDataRequested is the equivalent of Span.IsRecording
-                //
-                // If Sampler returns IsSampled as false, returns ActivityDataRequest.None
-                // This prevents Activity from being created at all.
-                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
-                {
-                    BuildSamplingParameters(options, out var samplingParameters);
-                    var shouldSample = sampler.ShouldSample(samplingParameters);
-                    if (shouldSample.IsSampled)
-                    {
-                        return ActivityDataRequest.AllDataAndRecorded;
-                    }
-                    else
-                    {
-                        return ActivityDataRequest.None;
-                    }
-
-                    // TODO: Improve this to properly use ActivityDataRequest.AllData, PropagationData as well.
-                },
+                // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler),
             };
 
-            ActivitySource.AddActivityListener(listener);
-
-            return listener;
+            ActivitySource.AddActivityListener(openTelemetrySDK.listener);
+            return openTelemetrySDK;
         }
 
-        internal static void BuildSamplingParameters(
-            in ActivityCreationOptions<ActivityContext> options, out ActivitySamplingParameters samplingParameters)
+        public void Dispose()
         {
-            ActivityContext parentContext = options.Parent;
-            if (parentContext == default)
+            this.listener.Dispose();
+
+            foreach (var item in this.instrumentations)
             {
-                // Check if there is already a parent for the current activity.
-                var parentActivity = Activity.Current;
-                if (parentActivity != null)
+                if (item is IDisposable disposable)
                 {
-                    parentContext = parentActivity.Context;
+                    disposable.Dispose();
                 }
             }
+
+            this.instrumentations.Clear();
+        }
+
+        internal static ActivityDataRequest ComputeActivityDataRequest(
+            in ActivityCreationOptions<ActivityContext> options,
+            ActivitySampler sampler)
+        {
+            var isRootSpan = options.Parent.TraceId == default;
 
             // This is not going to be the final traceId of the Activity (if one is created), however, it is
             // needed in order for the sampling to work. This differs from other OTel SDKs in which it is
             // the Sampler always receives the actual traceId of a root span/activity.
-            ActivityTraceId traceId = parentContext.TraceId != default
-                ? parentContext.TraceId
+            ActivityTraceId traceId = !isRootSpan
+                ? options.Parent.TraceId
                 : ActivityTraceId.CreateRandom();
 
-            samplingParameters = new ActivitySamplingParameters(
-                parentContext,
+            var samplingParameters = new ActivitySamplingParameters(
+                options.Parent,
                 traceId,
                 options.Name,
                 options.Kind,
                 options.Tags,
                 options.Links);
+
+            var shouldSample = sampler.ShouldSample(samplingParameters);
+            if (shouldSample.IsSampled)
+            {
+                return ActivityDataRequest.AllDataAndRecorded;
+            }
+
+            // If it is the root span select PropagationData so the trace ID is preserved
+            // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
+            return isRootSpan
+                ? ActivityDataRequest.PropagationData
+                : ActivityDataRequest.None;
         }
     }
 }

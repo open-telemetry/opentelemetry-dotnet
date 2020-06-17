@@ -35,31 +35,14 @@ namespace OpenTelemetry.Trace.Export.Test
 
         public SimpleSpanProcessorTest()
         {
-            spanExporter = new TestExporter(null);
-            tracer = TracerFactory.Create(b => b
+            this.spanExporter = new TestExporter(null);
+            this.tracer = TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p
-                        .SetExporter(spanExporter)
+                        .SetExporter(this.spanExporter)
                         .SetExportingProcessor(e => new SimpleSpanProcessor(e)))
                 .SetSampler(new AlwaysParentSampler()))
                 .GetTracer(null);
         }
-
-        private SpanSdk CreateSampledEndedSpan(string spanName)
-        {
-            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (SpanSdk)tracer.StartSpan(spanName, context);
-            span.End();
-            return span;
-        }
-
-        private SpanSdk CreateNotSampledEndedSpan(string spanName)
-        {
-            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-            var span = (SpanSdk)tracer.StartSpan(spanName, context);
-            span.End();
-            return span;
-        }
-
 
         [Fact]
         public void ThrowsOnNullExporter()
@@ -70,15 +53,15 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ThrowsInExporter()
         {
-            spanExporter = new TestExporter(_ => throw new ArgumentException("123"));
-            tracer = TracerFactory.Create(b => b
+            this.spanExporter = new TestExporter(_ => throw new ArgumentException("123"));
+            this.tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p
-                        .SetExporter(spanExporter)
+                        .SetExporter(this.spanExporter)
                         .SetExportingProcessor(e => new SimpleSpanProcessor(e))))
                 .GetTracer(null);
 
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (SpanSdk)tracer.StartSpan("foo", context);
+            var span = (SpanSdk)this.tracer.StartSpan("foo", context);
 
             // does not throw
             span.End();
@@ -87,15 +70,15 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ProcessorDoesNotBlockOnExporter()
         {
-            spanExporter = new TestExporter(async _ => await Task.Delay(500));
-            tracer = TracerFactory.Create(b => b
+            this.spanExporter = new TestExporter(async _ => await Task.Delay(500));
+            this.tracer = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p
-                        .SetExporter(spanExporter)
+                        .SetExporter(this.spanExporter)
                         .SetExportingProcessor(e => new SimpleSpanProcessor(e))))
                 .GetTracer(null);
 
             var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            var span = (SpanSdk)tracer.StartSpan("foo", context);
+            var span = (SpanSdk)this.tracer.StartSpan("foo", context);
 
             // does not block
             var sw = Stopwatch.StartNew();
@@ -104,11 +87,10 @@ namespace OpenTelemetry.Trace.Export.Test
 
             Assert.InRange(sw.Elapsed, TimeSpan.Zero, TimeSpan.FromMilliseconds(100));
 
-            var exported = WaitForSpans(spanExporter, 1, TimeSpan.FromMilliseconds(600));
+            var exported = this.WaitForSpans(this.spanExporter, 1, TimeSpan.FromMilliseconds(600));
 
             Assert.Single(exported);
         }
-
 
         [Fact]
         public async Task ShutdownTwice()
@@ -124,10 +106,10 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ExportDifferentSampledSpans()
         {
-            var span1 = CreateSampledEndedSpan(SpanName1);
-            var span2 = CreateSampledEndedSpan(SpanName2);
+            var span1 = this.CreateSampledEndedSpan(SpanName1);
+            var span2 = this.CreateSampledEndedSpan(SpanName2);
 
-            var exported = WaitForSpans(spanExporter, 2, TimeSpan.FromMilliseconds(100));
+            var exported = this.WaitForSpans(this.spanExporter, 2, TimeSpan.FromMilliseconds(100));
             Assert.Equal(2, exported.Length);
             Assert.Contains(new SpanData(span1), exported);
             Assert.Contains(new SpanData(span2), exported);
@@ -136,14 +118,15 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ExportNotSampledSpans()
         {
-            var span1 = CreateNotSampledEndedSpan(SpanName1);
-            var span2 = CreateSampledEndedSpan(SpanName2);
+            var span1 = this.CreateNotSampledEndedSpan(SpanName1);
+            var span2 = this.CreateSampledEndedSpan(SpanName2);
+
             // Spans are recorded and exported in the same order as they are ended, we test that a non
             // sampled span is not exported by creating and ending a sampled span after a non sampled span
             // and checking that the first exported span is the sampled span (the non sampled did not get
             // exported).
 
-            var exported = WaitForSpans(spanExporter, 1, TimeSpan.FromMilliseconds(100));
+            var exported = this.WaitForSpans(this.spanExporter, 1, TimeSpan.FromMilliseconds(100));
 
             // Need to check this because otherwise the variable span1 is unused, other option is to not
             // have a span1 variable.
@@ -153,14 +136,31 @@ namespace OpenTelemetry.Trace.Export.Test
 
         public void Dispose()
         {
-            spanExporter.ShutdownAsync(CancellationToken.None);
+            this.spanExporter.ShutdownAsync(CancellationToken.None);
             Activity.Current = null;
+        }
+
+        private SpanSdk CreateSampledEndedSpan(string spanName)
+        {
+            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var span = (SpanSdk)this.tracer.StartSpan(spanName, context);
+            span.End();
+            return span;
+        }
+
+        private SpanSdk CreateNotSampledEndedSpan(string spanName)
+        {
+            var context = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+            var span = (SpanSdk)this.tracer.StartSpan(spanName, context);
+            span.End();
+            return span;
         }
 
         private SpanData[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
         {
             Assert.True(
-                SpinWait.SpinUntil(() =>
+                SpinWait.SpinUntil(
+                    () =>
                     {
                         Thread.Sleep(0);
                         return exporter.ExportedSpans.Length >= spanCount;

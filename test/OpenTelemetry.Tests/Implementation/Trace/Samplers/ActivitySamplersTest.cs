@@ -28,9 +28,9 @@ namespace OpenTelemetry.Trace.Samplers.Test
 
         public ActivitySamplersTest()
         {
-            traceId = ActivityTraceId.CreateRandom();
-            spanId = ActivitySpanId.CreateRandom();
-            parentSpanId = ActivitySpanId.CreateRandom();
+            this.traceId = ActivityTraceId.CreateRandom();
+            this.spanId = ActivitySpanId.CreateRandom();
+            this.parentSpanId = ActivitySpanId.CreateRandom();
         }
 
         [Theory]
@@ -38,14 +38,14 @@ namespace OpenTelemetry.Trace.Samplers.Test
         [InlineData(ActivityTraceFlags.None)]
         public void AlwaysOnSampler_AlwaysReturnTrue(ActivityTraceFlags flags)
         {
-            var parentContext = new ActivityContext(traceId, parentSpanId, flags);
+            var parentContext = new ActivityContext(this.traceId, this.parentSpanId, flags);
             var link = new ActivityLink(parentContext);
 
             Assert.True(
                     new AlwaysOnActivitySampler()
                         .ShouldSample(new ActivitySamplingParameters(
                             parentContext,
-                            traceId,
+                            this.traceId,
                             "Another name",
                             ActivityKindServer,
                             null,
@@ -65,14 +65,14 @@ namespace OpenTelemetry.Trace.Samplers.Test
         [InlineData(ActivityTraceFlags.None)]
         public void AlwaysOffSampler_AlwaysReturnFalse(ActivityTraceFlags flags)
         {
-            var parentContext = new ActivityContext(traceId, parentSpanId, flags);
+            var parentContext = new ActivityContext(this.traceId, this.parentSpanId, flags);
             var link = new ActivityLink(parentContext);
 
             Assert.False(
                     new AlwaysOffActivitySampler()
                         .ShouldSample(new ActivitySamplingParameters(
                             parentContext,
-                            traceId,
+                            this.traceId,
                             "Another name",
                             ActivityKindServer,
                             null,

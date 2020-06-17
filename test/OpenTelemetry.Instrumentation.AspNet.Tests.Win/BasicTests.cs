@@ -25,9 +25,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [Fact]
         public void AddRequestInstrumentation_BadArgs()
         {
-            TracerBuilder builder = null;
+            OpenTelemetryBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddRequestInstrumentation());
-            Assert.Throws<ArgumentNullException>(() => TracerFactory.Create(b => b.AddRequestInstrumentation(null)));
         }
     }
 }

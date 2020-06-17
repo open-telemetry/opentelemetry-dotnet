@@ -14,18 +14,20 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace.Configuration;
-using Xunit;
-using Microsoft.AspNetCore.Mvc.Testing;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
-using Moq;
-using Microsoft.AspNetCore.TestHost;
 using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 using TestApp.AspNetCore._3._1;
+using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
@@ -37,24 +39,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public IncomingRequestsCollectionsIsAccordingToTheSpecTests(WebApplicationFactory<Startup> factory)
         {
             this.factory = factory;
-
-        }
-
-        public class TestCallbackMiddlewareImpl : CallbackMiddleware.CallbackMiddlewareImpl
-        {
-
-            public override async Task<bool> ProcessAsync(HttpContext context)
-            {
-                context.Response.StatusCode = 503;
-                await context.Response.WriteAsync("empty");
-                return false;
-            }
         }
 
         [Fact]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
-            var spanProcessor = new Mock<SpanProcessor>();
+            var spanProcessor = new Mock<ActivityProcessor>();
 
             // Arrange
             using (var client = this.factory
@@ -62,14 +52,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl());
-                        services.AddSingleton<TracerFactory>(_ =>
-                            TracerFactory.Create(b => b
-                                .AddProcessorPipeline(p => p.AddProcessor(e => spanProcessor.Object))
-                                .AddRequestInstrumentation()));
+                        services.AddOpenTelemetrySdk((builder) => builder.AddRequestInstrumentation()
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
                     }))
                 .CreateClient())
             {
-
                 try
                 {
                     // Act
@@ -88,18 +75,28 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     }
 
                     // We need to let End callback execute as it is executed AFTER response was returned.
-                    // In unit tests environment there may be a lot of parallel unit tests executed, so 
+                    // In unit tests environment there may be a lot of parallel unit tests executed, so
                     // giving some breezing room for the End callback to complete
                     await Task.Delay(TimeSpan.FromSeconds(1));
                 }
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
+            var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
-            Assert.Equal(SpanKind.Server, span.Kind);
-            Assert.Equal("/api/values", span.Attributes.GetValue("http.path"));
-            Assert.Equal(503L, span.Attributes.GetValue("http.status_code"));
+            Assert.Equal(ActivityKind.Server, span.Kind);
+            Assert.Equal("/api/values", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal("503", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpStatusCodeKey).Value);
+        }
+
+        public class TestCallbackMiddlewareImpl : CallbackMiddleware.CallbackMiddlewareImpl
+        {
+            public override async Task<bool> ProcessAsync(HttpContext context)
+            {
+                context.Response.StatusCode = 503;
+                await context.Response.WriteAsync("empty");
+                return false;
+            }
         }
     }
 }

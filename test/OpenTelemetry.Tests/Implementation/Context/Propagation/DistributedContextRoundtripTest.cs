@@ -14,8 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using Xunit;
 using System.Collections.Generic;
+using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Test
 {
@@ -25,7 +25,6 @@ namespace OpenTelemetry.Context.Propagation.Test
         private const string K2 = "k2";
         private const string K3 = "k3";
 
-        private const string V_EMPTY = "";
         private const string V1 = "v1";
         private const string V2 = "v2";
         private const string V3 = "v3";
@@ -50,11 +49,10 @@ namespace OpenTelemetry.Context.Propagation.Test
                     new CorrelationContextEntry(K1, V1),
                     new CorrelationContextEntry(K2, V2),
                     new CorrelationContextEntry(K3, V3),
-                }
-            );
+                });
 
             this.TestRoundtripSerialization(expected);
-            this.TestRoundtripSerialization(DistributedContextBuilder.CreateContext(K1, V_EMPTY));
+            this.TestRoundtripSerialization(DistributedContextBuilder.CreateContext(K1, string.Empty));
         }
 
         [Fact]

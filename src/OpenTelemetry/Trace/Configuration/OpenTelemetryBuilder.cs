@@ -15,7 +15,6 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
-using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace.Configuration
 {
@@ -31,6 +30,8 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         internal ActivityProcessorPipelineBuilder ProcessingPipeline { get; private set; }
+
+        internal List<InstrumentationFactory> InstrumentationFactories { get; private set; }
 
         internal ActivitySampler Sampler { get; private set; }
 
@@ -79,6 +80,49 @@ namespace OpenTelemetry.Trace.Configuration
 
             this.ActivitySourceNames.Add(activitySourceName.ToUpperInvariant());
             return this;
+        }
+
+        /// <summary>
+        /// Adds auto-instrumentations for spans.
+        /// </summary>
+        /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
+        /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
+        /// <returns>Returns <see cref="OpenTelemetryBuilder"/> for chaining.</returns>
+        public OpenTelemetryBuilder AddInstrumentation<TInstrumentation>(
+            Func<ActivitySourceAdapter, TInstrumentation> instrumentationFactory)
+            where TInstrumentation : class
+        {
+            if (instrumentationFactory == null)
+            {
+                throw new ArgumentNullException(nameof(instrumentationFactory));
+            }
+
+            if (this.InstrumentationFactories == null)
+            {
+                this.InstrumentationFactories = new List<InstrumentationFactory>();
+            }
+
+            this.InstrumentationFactories.Add(
+                new InstrumentationFactory(
+                    typeof(TInstrumentation).Name,
+                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
+                    instrumentationFactory));
+
+            return this;
+        }
+
+        internal readonly struct InstrumentationFactory
+        {
+            public readonly string Name;
+            public readonly string Version;
+            public readonly Func<ActivitySourceAdapter, object> Factory;
+
+            internal InstrumentationFactory(string name, string version, Func<ActivitySourceAdapter, object> factory)
+            {
+                this.Name = name;
+                this.Version = version;
+                this.Factory = factory;
+            }
         }
     }
 }

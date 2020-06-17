@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using OpenTelemetry.Metrics.Configuration;
+using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
 using Xunit;
-using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Test
 {
@@ -53,8 +53,8 @@ namespace OpenTelemetry.Metrics.Test
 
             meter.Collect();
 
-            Assert.Single(testProcessor.metrics);
-            var metric = testProcessor.metrics[0];
+            Assert.Single(testProcessor.Metrics);
+            var metric = testProcessor.Metrics[0];
 
             Assert.Equal("testCounter", metric.MetricName);
             Assert.Equal("library1", metric.MetricNamespace);
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Metrics.Test
             metricLong = metricSeries as Int64SumData;
             Assert.Equal(210, metricLong.Sum);
         }
-        
+
         [Fact]
         public void MeasureSendsAggregateToRegisteredProcessor()
         {
@@ -96,8 +96,8 @@ namespace OpenTelemetry.Metrics.Test
 
             meter.Collect();
 
-            Assert.Single(testProcessor.metrics);
-            var metric = testProcessor.metrics[0];
+            Assert.Single(testProcessor.Metrics);
+            var metric = testProcessor.Metrics[0];
             Assert.Equal("testMeasure", metric.MetricName);
             Assert.Equal("library1", metric.MetricNamespace);
 
@@ -124,12 +124,12 @@ namespace OpenTelemetry.Metrics.Test
         {
             var testProcessor = new TestMetricProcessor();
             var meter = MeterFactory.Create(mb => mb.SetMetricProcessor(testProcessor)).GetMeter("library1") as MeterSdk;
-            var testObserver = meter.CreateInt64Observer("testObserver", TestCallbackLong);
+            var testObserver = meter.CreateInt64Observer("testObserver", this.TestCallbackLong);
 
             meter.Collect();
 
-            Assert.Single(testProcessor.metrics);
-            var metric = testProcessor.metrics[0];
+            Assert.Single(testProcessor.Metrics);
+            var metric = testProcessor.Metrics[0];
             Assert.Equal("testObserver", metric.MetricName);
             Assert.Equal("library1", metric.MetricNamespace);
 
@@ -150,12 +150,12 @@ namespace OpenTelemetry.Metrics.Test
         {
             var testProcessor = new TestMetricProcessor();
             var meter = MeterFactory.Create(mb => mb.SetMetricProcessor(testProcessor)).GetMeter("library1") as MeterSdk;
-            var testObserver = meter.CreateDoubleObserver("testObserver", TestCallbackDouble);
+            var testObserver = meter.CreateDoubleObserver("testObserver", this.TestCallbackDouble);
 
             meter.Collect();
 
-            Assert.Single(testProcessor.metrics);
-            var metric = testProcessor.metrics[0];
+            Assert.Single(testProcessor.Metrics);
+            var metric = testProcessor.Metrics[0];
             Assert.Equal("testObserver", metric.MetricName);
             Assert.Equal("library1", metric.MetricNamespace);
 

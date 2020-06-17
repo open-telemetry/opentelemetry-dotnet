@@ -1,4 +1,4 @@
-﻿// <copyright file="TraceParamsTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TraceConfigTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,9 +43,8 @@ namespace OpenTelemetry.Trace.Config.Test
             Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfiguration(1, 0, 1));
         }
 
-
         [Fact]
-        public void updateTraceParams_NonPositiveMaxNumberOfLinks()
+        public void UpdateTraceParams_NonPositiveMaxNumberOfLinks()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => new TracerConfiguration(1, 1, 0));
         }

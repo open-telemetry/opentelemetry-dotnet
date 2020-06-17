@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpWebRequestTests.net461.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpWebRequestTests.netfx.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NET461
+#if NETFRAMEWORK
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             }
             catch (Exception)
             {
-                //test case can intentionally send request that will result in exception
+                // test case can intentionally send request that will result in exception
             }
 
             Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
@@ -89,23 +89,23 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             var d = new Dictionary<string, string>()
             {
-                { StatusCanonicalCode.Ok.ToString(), "OK"},
-                { StatusCanonicalCode.Cancelled.ToString(), "CANCELLED"},
-                { StatusCanonicalCode.Unknown.ToString(), "UNKNOWN"},
-                { StatusCanonicalCode.InvalidArgument.ToString(), "INVALID_ARGUMENT"},
-                { StatusCanonicalCode.DeadlineExceeded.ToString(), "DEADLINE_EXCEEDED"},
-                { StatusCanonicalCode.NotFound.ToString(), "NOT_FOUND"},
-                { StatusCanonicalCode.AlreadyExists.ToString(), "ALREADY_EXISTS"},
-                { StatusCanonicalCode.PermissionDenied.ToString(), "PERMISSION_DENIED"},
-                { StatusCanonicalCode.ResourceExhausted.ToString(), "RESOURCE_EXHAUSTED"},
-                { StatusCanonicalCode.FailedPrecondition.ToString(), "FAILED_PRECONDITION"},
-                { StatusCanonicalCode.Aborted.ToString(), "ABORTED"},
-                { StatusCanonicalCode.OutOfRange.ToString(), "OUT_OF_RANGE"},
-                { StatusCanonicalCode.Unimplemented.ToString(), "UNIMPLEMENTED"},
-                { StatusCanonicalCode.Internal.ToString(), "INTERNAL"},
-                { StatusCanonicalCode.Unavailable.ToString(), "UNAVAILABLE"},
-                { StatusCanonicalCode.DataLoss.ToString(), "DATA_LOSS"},
-                { StatusCanonicalCode.Unauthenticated.ToString(), "UNAUTHENTICATED"},
+                { StatusCanonicalCode.Ok.ToString(), "OK" },
+                { StatusCanonicalCode.Cancelled.ToString(), "CANCELLED" },
+                { StatusCanonicalCode.Unknown.ToString(), "UNKNOWN" },
+                { StatusCanonicalCode.InvalidArgument.ToString(), "INVALID_ARGUMENT" },
+                { StatusCanonicalCode.DeadlineExceeded.ToString(), "DEADLINE_EXCEEDED" },
+                { StatusCanonicalCode.NotFound.ToString(), "NOT_FOUND" },
+                { StatusCanonicalCode.AlreadyExists.ToString(), "ALREADY_EXISTS" },
+                { StatusCanonicalCode.PermissionDenied.ToString(), "PERMISSION_DENIED" },
+                { StatusCanonicalCode.ResourceExhausted.ToString(), "RESOURCE_EXHAUSTED" },
+                { StatusCanonicalCode.FailedPrecondition.ToString(), "FAILED_PRECONDITION" },
+                { StatusCanonicalCode.Aborted.ToString(), "ABORTED" },
+                { StatusCanonicalCode.OutOfRange.ToString(), "OUT_OF_RANGE" },
+                { StatusCanonicalCode.Unimplemented.ToString(), "UNIMPLEMENTED" },
+                { StatusCanonicalCode.Internal.ToString(), "INTERNAL" },
+                { StatusCanonicalCode.Unavailable.ToString(), "UNAVAILABLE" },
+                { StatusCanonicalCode.DataLoss.ToString(), "DATA_LOSS" },
+                { StatusCanonicalCode.Unauthenticated.ToString(), "UNAUTHENTICATED" },
             };
 
             tc.SpanAttributes = tc.SpanAttributes.ToDictionary(
@@ -113,7 +113,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 x =>
                 {
                     if (x.Key == "http.flavor" && x.Value == "2.0")
+                    {
                         return "1.1";
+                    }
+
                     return HttpTestData.NormalizeValues(x.Value, host, port);
                 });
 
@@ -128,22 +131,29 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                         {
                             Assert.Equal(value, tag.Value);
                         }
+
                         continue;
                     }
+
                     if (tag.Key == SpanAttributeConstants.StatusCodeKey)
                     {
                         Assert.Equal(tc.SpanStatus, d[tag.Value]);
                         continue;
                     }
+
                     if (tag.Key == SpanAttributeConstants.StatusDescriptionKey)
                     {
                         if (tc.SpanStatusHasDescription.HasValue)
+                        {
                             Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(tag.Value));
+                        }
+
                         continue;
                     }
 
                     Assert.True(false, $"Tag {tag.Key} was not found in test data.");
                 }
+
                 Assert.Equal(value, tag.Value);
             }
         }

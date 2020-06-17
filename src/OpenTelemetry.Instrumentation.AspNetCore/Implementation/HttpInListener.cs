@@ -28,6 +28,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInListener : ListenerHandler
     {
         private static readonly string UnknownHostName = "UNKNOWN-HOST";
+        private static readonly string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher stopContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher beforeActionActionDescriptorFetcher = new PropertyFetcher("actionDescriptor");
@@ -35,12 +36,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
         private readonly bool hostingSupportsW3C = false;
         private readonly AspNetCoreInstrumentationOptions options;
+        private readonly ActivitySourceAdapter activitySource;
 
-        public HttpInListener(string name, Tracer tracer, AspNetCoreInstrumentationOptions options)
-            : base(name, tracer)
+        public HttpInListener(string name, AspNetCoreInstrumentationOptions options, ActivitySourceAdapter activitySource)
+            : base(name, null)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
             this.options = options ?? throw new ArgumentNullException(nameof(options));
+            this.activitySource = activitySource;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -57,53 +60,69 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
                 InstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                activity.IsAllDataRequested = false;
                 return;
             }
 
             var request = context.Request;
-
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
-            var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-
-            TelemetrySpan span;
-            if (this.hostingSupportsW3C && this.options.TextFormat is TraceContextFormat)
+            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormatActivity))
             {
-                this.Tracer.StartActiveSpanFromActivity(path, Activity.Current, SpanKind.Server, out span);
-            }
-            else
-            {
+                // This requires to ignore the current activity and create a new one
+                // using the context extracted from w3ctraceparent header or
+                // using the format TextFormat supports.
+
                 var ctx = this.options.TextFormat.Extract<HttpRequest>(
                     request,
                     (r, name) => r.Headers[name]);
 
-                this.Tracer.StartActiveSpan(path, ctx, SpanKind.Server, out span);
+                // Create a new activity with its parent set from the extracted context.
+                // This makes the new activity as a "sibling" of the activity created by
+                // Asp.Net Core.
+                Activity newOne = new Activity(ActivityNameByHttpInListener);
+                newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
+                newOne.TraceStateString = ctx.TraceState;
+
+                // Starting the new activity make it the Activity.Current one.
+                newOne.Start();
+                activity = newOne;
             }
 
-            if (span.IsRecording)
+            // TODO: move setting displayname to inside IsAllDataRequested?
+            var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
+            activity.DisplayName = path;
+
+            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
+            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
+
+            this.activitySource.Start(activity);
+
+            if (activity.IsAllDataRequested)
             {
-                // Note, route is missing at this stage. It will be available later
-                span.PutHttpHostAttribute(request.Host.Host, request.Host.Port ?? 80);
-                span.PutHttpMethodAttribute(request.Method);
-                span.PutHttpPathAttribute(path);
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
+
+                if (request.Host.Port == 80 || request.Host.Port == 443)
+                {
+                    activity.AddTag(SpanAttributeConstants.HttpHostKey, request.Host.Host);
+                }
+                else
+                {
+                    activity.AddTag(SpanAttributeConstants.HttpHostKey, request.Host.Host + ":" + request.Host.Port);
+                }
+
+                activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
+                activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
-                span.PutHttpUserAgentAttribute(userAgent);
-                span.PutHttpRawUrlAttribute(GetUri(request));
+                activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, userAgent);
+                activity.AddTag(SpanAttributeConstants.HttpUrlKey, GetUri(request));
             }
         }
 
         public override void OnStopActivity(Activity activity, object payload)
         {
             const string EventNameSuffix = ".OnStopActivity";
-            var span = this.Tracer.CurrentSpan;
 
-            if (span == null || !span.Context.IsValid)
-            {
-                InstrumentationEventSource.Log.NullOrBlankSpan(nameof(HttpInListener) + EventNameSuffix);
-                return;
-            }
-
-            if (span.IsRecording)
+            if (activity.IsAllDataRequested)
             {
                 if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
                 {
@@ -112,26 +131,39 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 var response = context.Response;
+                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
 
-                span.PutHttpStatusCode(response.StatusCode, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
+                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
+                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
             }
 
-            span.End();
+            if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+            {
+                // If instrumentation started a new Activity, it must
+                // be stopped here.
+                activity.Stop();
+
+                // After the activity.Stop() code, Activity.Current becomes null.
+                // If Asp.Net Core uses Activity.Current?.Stop() - it'll not stop the activity
+                // it created.
+                // Currently Asp.Net core does not use Activity.Current, instead it stores a
+                // reference to its activity, and calls .Stop on it.
+
+                // TODO: Should we still restore Activity.Current here?
+                // If yes, then we need to store the asp.net core activity inside
+                // the one created by the instrumentation.
+                // And retrieve it here, and set it to Current.
+            }
+
+            this.activitySource.Stop(activity);
         }
 
         public override void OnCustom(string name, Activity activity, object payload)
         {
             if (name == "Microsoft.AspNetCore.Mvc.BeforeAction")
             {
-                var span = this.Tracer.CurrentSpan;
-
-                if (span == null)
-                {
-                    InstrumentationEventSource.Log.NullOrBlankSpan(name);
-                    return;
-                }
-
-                if (span.IsRecording)
+                if (activity.IsAllDataRequested)
                 {
                     // See https://github.com/aspnet/Mvc/blob/2414db256f32a047770326d14d8b0e2afd49ba49/src/Microsoft.AspNetCore.Mvc.Core/MvcCoreDiagnosticSourceExtensions.cs#L36-L44
                     // Reflection accessing: ActionDescriptor.AttributeRouteInfo.Template
@@ -145,9 +177,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     if (!string.IsNullOrEmpty(template))
                     {
                         // override the span name that was previously set to the path part of URL.
-                        span.UpdateName(template);
-
-                        span.PutHttpRouteAttribute(template);
+                        activity.DisplayName = template;
+                        activity.AddTag(SpanAttributeConstants.HttpRouteKey, template);
                     }
 
                     // TODO: Should we get values from RouteData?

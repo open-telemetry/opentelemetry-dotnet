@@ -31,21 +31,21 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlClientInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
-        public SqlClientInstrumentation(Tracer tracer)
-            : this(tracer, new SqlClientInstrumentationOptions())
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
+        public SqlClientInstrumentation(ActivitySourceAdapter activitySource)
+            : this(activitySource, new SqlClientInstrumentationOptions())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlClientInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
         /// <param name="options">Configuration options for sql instrumentation.</param>
-        public SqlClientInstrumentation(Tracer tracer, SqlClientInstrumentationOptions options)
+        public SqlClientInstrumentation(ActivitySourceAdapter activitySource, SqlClientInstrumentationOptions options)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-               name => new SqlClientDiagnosticListener(name, tracer, options),
+               name => new SqlClientDiagnosticListener(name, options, activitySource),
                listener => listener.Name == SqlClientDiagnosticListenerName,
                null);
             this.diagnosticSourceSubscriber.Subscribe();

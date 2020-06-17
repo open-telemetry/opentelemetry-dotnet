@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void DefaultTraceConfig()
+        public void DefaultTracerConfig()
         {
             var options = new TracerConfiguration();
             Assert.Equal(32, options.MaxNumberOfAttributes);

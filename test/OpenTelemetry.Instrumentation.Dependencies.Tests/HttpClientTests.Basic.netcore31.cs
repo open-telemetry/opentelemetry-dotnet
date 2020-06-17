@@ -14,18 +14,18 @@
 // limitations under the License.
 // </copyright>
 #if NETCOREAPP3_1
-using OpenTelemetry.Trace.Configuration;
-using Moq;
-using OpenTelemetry.Internal.Test;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Tests
@@ -52,18 +52,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [Fact]
         public void AddDependencyInstrumentation_BadArgs()
         {
-            TracerBuilder builder = null;
+            OpenTelemetryBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddDependencyInstrumentation());
-            Assert.Throws<ArgumentNullException>(() => builder.AddDependencyInstrumentation(null, null));
         }
 
         [Fact]
         public async Task HttpDependenciesInstrumentationInjectsHeadersAsync()
         {
-            var spanProcessor = new Mock<SpanProcessor>();
-            var tracer = TracerFactory.Create(b => b.AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
-
+            var spanProcessor = new Mock<ActivityProcessor>();
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
@@ -76,14 +72,16 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using (new HttpClientInstrumentation(tracer, new HttpClientInstrumentationOptions()))
+            using (OpenTelemetrySdk.EnableOpenTelemetry(
+                        (builder) => builder.AddHttpClientDependencyInstrumentation()
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
+            var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(parent.TraceId, span.Context.TraceId);
             Assert.Equal(parent.SpanId, span.ParentSpanId);
@@ -102,18 +100,15 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesInstrumentationInjectsHeadersAsync_CustomFormat()
         {
-            var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<SpanContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<SpanContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+            var textFormat = new Mock<ITextFormatActivity>();
+            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<ActivityContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                .Callback<ActivityContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                 {
                     action(message, "custom_traceparent", $"00/{context.TraceId}/{context.SpanId}/01");
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);
                 });
 
-            var spanProcessor = new Mock<SpanProcessor>();
-            var tracer = TracerFactory.Create(b => b
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
+            var spanProcessor = new Mock<ActivityProcessor>();
 
             var request = new HttpRequestMessage
             {
@@ -127,14 +122,16 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using (new HttpClientInstrumentation(tracer, new HttpClientInstrumentationOptions { TextFormat = textFormat.Object }))
+            using (OpenTelemetrySdk.EnableOpenTelemetry(
+                   (builder) => builder.AddHttpClientDependencyInstrumentation((opt) => opt.TextFormat = textFormat.Object)
+                   .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = (SpanData)spanProcessor.Invocations[1].Arguments[0];
+            var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(parent.TraceId, span.Context.TraceId);
             Assert.Equal(parent.SpanId, span.ParentSpanId);
@@ -153,11 +150,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesInstrumentation_AddViaFactory_HttpInstrumentation_CollectsSpans()
         {
-            var spanProcessor = new Mock<SpanProcessor>();
+            var spanProcessor = new Mock<ActivityProcessor>();
 
-            using (TracerFactory.Create(b => b
-                .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
-                .AddInstrumentation(t => new HttpClientInstrumentation(t))))
+            using (OpenTelemetrySdk.EnableOpenTelemetry(
+                        (builder) => builder.AddHttpClientDependencyInstrumentation()
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -165,17 +162,17 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnStart"));
             Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnEnd"));
-            Assert.IsType<SpanData>(spanProcessor.Invocations[1].Arguments[0]);
+            Assert.IsType<Activity>(spanProcessor.Invocations[1].Arguments[0]);
         }
 
         [Fact]
         public async Task HttpDependenciesInstrumentation_AddViaFactory_DependencyInstrumentation_CollectsSpans()
         {
-            var spanProcessor = new Mock<SpanProcessor>();
+            var spanProcessor = new Mock<ActivityProcessor>();
 
-            using (TracerFactory.Create(b => b
-                .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object))
-                .AddDependencyInstrumentation()))
+            using (OpenTelemetrySdk.EnableOpenTelemetry(
+                        (builder) => builder.AddHttpClientDependencyInstrumentation()
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -183,16 +180,13 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnStart"));
             Assert.Single(spanProcessor.Invocations.Where(i => i.Method.Name == "OnEnd"));
-            Assert.IsType<SpanData>(spanProcessor.Invocations[1].Arguments[0]);
+            Assert.IsType<Activity>(spanProcessor.Invocations[1].Arguments[0]);
         }
 
         [Fact]
         public async Task HttpDependenciesInstrumentationBacksOffIfAlreadyInstrumented()
         {
-            var spanProcessor = new Mock<SpanProcessor>();
-            var tracer = TracerFactory.Create(b => b
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
+            var spanProcessor = new Mock<ActivityProcessor>();
 
             var request = new HttpRequestMessage
             {
@@ -202,7 +196,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (new HttpClientInstrumentation(tracer, new HttpClientInstrumentationOptions()))
+            using (OpenTelemetrySdk.EnableOpenTelemetry(
+                        (builder) => builder.AddHttpClientDependencyInstrumentation()
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -212,19 +208,17 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesInstrumentationFiltersOutRequests()
+        public async void HttpDependenciesInstrumentationFiltersOutRequests()
         {
-            var spanProcessor = new Mock<SpanProcessor>();
+            var spanProcessor = new Mock<ActivityProcessor>();
 
-            var tracer = TracerFactory.Create(b => b
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
-
-            var options = new HttpClientInstrumentationOptions((activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
+            using (OpenTelemetrySdk.EnableOpenTelemetry(
+                   (builder) =>
+                   builder.AddHttpClientDependencyInstrumentation(
+                       (opt) => opt.EventFilter = (activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
                                                                                         arg1 is HttpRequestMessage request &&
-                                                                                        request.RequestUri.OriginalString.Contains(this.url)));
-
-            using (new HttpClientInstrumentation(tracer, options))
+                                                                                        request.RequestUri.OriginalString.Contains(this.url)))
+                   .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -236,22 +230,18 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [Fact]
         public async Task HttpDependenciesInstrumentationFiltersOutRequestsToExporterEndpoints()
         {
-            var spanProcessor = new Mock<SpanProcessor>();
+            var spanProcessor = new Mock<ActivityProcessor>();
 
-            var tracer = TracerFactory.Create(b => b
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
-
-            var options = new HttpClientInstrumentationOptions();
-
-            using (new HttpClientInstrumentation(tracer, options))
+            using (OpenTelemetrySdk.EnableOpenTelemetry(
+                        (builder) => builder.AddHttpClientDependencyInstrumentation()
+                        .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
                 using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
                 try
                 {
-                    await c.PostAsync("https://dc.services.visualstudio.com/", new StringContent(""), cts.Token);
-                    await c.PostAsync("https://localhost:9411/api/v2/spans", new StringContent(""), cts.Token);
+                    await c.PostAsync("https://dc.services.visualstudio.com/", new StringContent(string.Empty), cts.Token);
+                    await c.PostAsync("https://localhost:9411/api/v2/spans", new StringContent(string.Empty), cts.Token);
                 }
                 catch
                 {
