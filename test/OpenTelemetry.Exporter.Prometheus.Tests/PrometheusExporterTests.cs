@@ -69,6 +69,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             }
         }
 
+#if !NETFRAMEWORK
         [Fact]
         public async Task E2ETestMiddleware()
         {
@@ -107,6 +108,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 this.ValidateResponse(responseText);
             }
         }
+#endif
 
         private static void CollectMetrics(UngroupedBatcher simpleProcessor, MetricExporter exporter)
         {
