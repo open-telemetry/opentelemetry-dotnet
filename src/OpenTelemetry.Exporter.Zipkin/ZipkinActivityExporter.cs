@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinTraceExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZipkinActivityExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -32,17 +33,17 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// <summary>
     /// Zipkin exporter.
     /// </summary>
-    public class ZipkinTraceExporter : SpanExporter
+    public class ZipkinActivityExporter : ActivityExporter
     {
         private readonly ZipkinExporterOptions options;
         private readonly HttpClient httpClient;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ZipkinTraceExporter"/> class.
+        /// Initializes a new instance of the <see cref="ZipkinActivityExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options.</param>
         /// <param name="client">Http client to use to upload telemetry.</param>
-        public ZipkinTraceExporter(ZipkinExporterOptions options, HttpClient client = null)
+        public ZipkinActivityExporter(ZipkinExporterOptions options, HttpClient client = null)
         {
             this.options = options;
             this.LocalEndpoint = this.GetLocalZipkinEndpoint();
@@ -52,11 +53,11 @@ namespace OpenTelemetry.Exporter.Zipkin
         internal ZipkinEndpoint LocalEndpoint { get; }
 
         /// <inheritdoc/>
-        public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
+        public override async Task<ExportResult> ExportAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
         {
             try
             {
-                await this.SendSpansAsync(batch).ConfigureAwait(false);
+                await this.SendBatchActivityAsync(batchActivity).ConfigureAwait(false);
                 return ExportResult.Success;
             }
             catch (Exception)
@@ -72,13 +73,13 @@ namespace OpenTelemetry.Exporter.Zipkin
             return Task.CompletedTask;
         }
 
-        private Task SendSpansAsync(IEnumerable<SpanData> spans)
+        private Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity)
         {
             var requestUri = this.options.Endpoint;
 
             var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
             {
-                Content = new JsonContent(this, spans),
+                Content = new JsonContent(this, batchActivity),
             };
 
             // avoid cancelling here: this is no return point: if we reached this point
@@ -168,44 +169,44 @@ namespace OpenTelemetry.Exporter.Zipkin
                 CharSet = "utf-8",
             };
 
-            private static Utf8JsonWriter writer;
+            private readonly ZipkinActivityExporter exporter;
+            private readonly IEnumerable<Activity> batchActivity;
 
-            private readonly ZipkinTraceExporter exporter;
-            private readonly IEnumerable<SpanData> spans;
+            private Utf8JsonWriter writer;
 
-            public JsonContent(ZipkinTraceExporter exporter, IEnumerable<SpanData> spans)
+            public JsonContent(ZipkinActivityExporter exporter, IEnumerable<Activity> batchActivity)
             {
                 this.exporter = exporter;
-                this.spans = spans;
+                this.batchActivity = batchActivity;
 
                 this.Headers.ContentType = JsonHeader;
             }
 
             protected override Task SerializeToStreamAsync(Stream stream, TransportContext context)
             {
-                if (writer == null)
+                if (this.writer == null)
                 {
-                    writer = new Utf8JsonWriter(stream);
+                    this.writer = new Utf8JsonWriter(stream);
                 }
                 else
                 {
-                    writer.Reset(stream);
+                    this.writer.Reset(stream);
                 }
 
-                writer.WriteStartArray();
+                this.writer.WriteStartArray();
 
-                foreach (var span in this.spans)
+                foreach (var activity in this.batchActivity)
                 {
-                    var zipkinSpan = span.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
+                    var zipkinSpan = activity.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
 
-                    zipkinSpan.Write(writer);
+                    zipkinSpan.Write(this.writer);
 
                     zipkinSpan.Return();
                 }
 
-                writer.WriteEndArray();
+                this.writer.WriteEndArray();
 
-                return writer.FlushAsync();
+                return this.writer.FlushAsync();
             }
 
             protected override bool TryComputeLength(out long length)
