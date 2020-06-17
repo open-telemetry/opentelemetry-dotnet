@@ -17,7 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace.Export.Internal;
 using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace.Configuration
@@ -54,14 +56,29 @@ namespace OpenTelemetry.Trace.Configuration
             ActivitySampler sampler = openTelemetryBuilder.Sampler ?? new AlwaysOnActivitySampler();
 
             ActivityProcessor activityProcessor;
-            if (openTelemetryBuilder.ProcessingPipeline == null)
+            if (openTelemetryBuilder.ProcessingPipelines == null || !openTelemetryBuilder.ProcessingPipelines.Any())
             {
                 // if there are no pipelines are configured, use noop processor
                 activityProcessor = new NoopActivityProcessor();
             }
+            else if (openTelemetryBuilder.ProcessingPipelines.Count == 1)
+            {
+                // if there is only one pipeline - use it's outer processor as a
+                // single processor on the tracerSdk.
+                var processorFactory = openTelemetryBuilder.ProcessingPipelines[0];
+                activityProcessor = processorFactory.Build();
+            }
             else
             {
-                activityProcessor = openTelemetryBuilder.ProcessingPipeline.Build();
+                // if there are more pipelines, use processor that will broadcast to all pipelines
+                var processors = new ActivityProcessor[openTelemetryBuilder.ProcessingPipelines.Count];
+
+                for (int i = 0; i < openTelemetryBuilder.ProcessingPipelines.Count; i++)
+                {
+                    processors[i] = openTelemetryBuilder.ProcessingPipelines[i].Build();
+                }
+
+                activityProcessor = new BroadcastActivityProcessor(processors);
             }
 
             var activitySource = new ActivitySourceAdapter(sampler, activityProcessor);
