@@ -60,6 +60,16 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             DictionaryEnumerator<string, string, AttributeEnumerationState>.AllocationFreeForEach(activity.Tags, ref attributeEnumerationState, ProcessTagsRef);
 
+            var activitySource = activity.Source;
+            if (!string.IsNullOrEmpty(activitySource.Name))
+            {
+                PooledList<KeyValuePair<string, string>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, string>("library.name", activitySource.Name));
+                if (!string.IsNullOrEmpty(activitySource.Version))
+                {
+                    PooledList<KeyValuePair<string, string>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, string>("library.version", activitySource.Version));
+                }
+            }
+
             var localEndpoint = defaultLocalEndpoint;
 
             var serviceName = attributeEnumerationState.ServiceName;
@@ -164,25 +174,25 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             string key = attribute.Key;
             string strVal = attribute.Value?.ToString();
 
-            if (strVal != null)
+            if (strVal != null
+                && RemoteEndpointServiceNameKeyResolutionDictionary.TryGetValue(key, out int priority)
+                && (state.RemoteEndpointServiceName == null || priority < state.RemoteEndpointServiceNamePriority))
             {
-                if (RemoteEndpointServiceNameKeyResolutionDictionary.TryGetValue(key, out int priority)
-                    && (state.RemoteEndpointServiceName == null || priority < state.RemoteEndpointServiceNamePriority))
-                {
-                    state.RemoteEndpointServiceName = strVal;
-                    state.RemoteEndpointServiceNamePriority = priority;
-                }
-                else if (key == Resource.ServiceNameKey)
-                {
-                    state.ServiceName = strVal;
-                }
-                else if (key == Resource.ServiceNamespaceKey)
-                {
-                    state.ServiceNamespace = strVal;
-                }
+                state.RemoteEndpointServiceName = strVal;
+                state.RemoteEndpointServiceNamePriority = priority;
             }
-
-            PooledList<KeyValuePair<string, string>>.Add(ref state.Tags, new KeyValuePair<string, string>(key, strVal));
+            else if (key == Resource.ServiceNameKey && strVal != null)
+            {
+                state.ServiceName = strVal;
+            }
+            else if (key == Resource.ServiceNamespaceKey && strVal != null)
+            {
+                state.ServiceNamespace = strVal;
+            }
+            else
+            {
+                PooledList<KeyValuePair<string, string>>.Add(ref state.Tags, new KeyValuePair<string, string>(key, strVal));
+            }
 
             return true;
         }

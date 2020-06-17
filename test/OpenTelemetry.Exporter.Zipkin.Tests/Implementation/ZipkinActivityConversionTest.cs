@@ -43,12 +43,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             Assert.Equal((long)(activity.Duration.TotalMilliseconds * 1000), zipkinSpan.Duration);
 
             int counter = 0;
-            var activityTag = activity.Tags.ToArray();
+            var tagsArray = zipkinSpan.Tags.Value.ToArray();
 
-            foreach (var tags in zipkinSpan.Tags.Value)
+            foreach (var tags in activity.Tags)
             {
-                Assert.Equal(activityTag[counter].Key, tags.Key);
-                Assert.Equal(activityTag[counter++].Value, tags.Value);
+                Assert.Equal(tagsArray[counter].Key, tags.Key);
+                Assert.Equal(tagsArray[counter++].Value, tags.Value);
             }
 
             var events = zipkinSpan.Annotations.Value;
@@ -75,12 +75,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             Assert.Equal(activity.SpanId.ToHexString(), zipkinSpan.Id);
 
             int counter = 0;
-            var activityTag = activity.Tags.ToArray();
+            var tagsArray = zipkinSpan.Tags.Value.ToArray();
 
-            foreach (var tags in zipkinSpan.Tags.Value)
+            foreach (var tags in activity.Tags)
             {
-                Assert.Equal(activityTag[counter].Key, tags.Key);
-                Assert.Equal(activityTag[counter++].Value, tags.Value);
+                Assert.Equal(tagsArray[counter].Key, tags.Key);
+                Assert.Equal(tagsArray[counter++].Value, tags.Value);
             }
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), zipkinSpan.Timestamp);
