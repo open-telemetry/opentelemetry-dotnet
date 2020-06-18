@@ -26,6 +26,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     internal static class ZipkinActivityConversionExtensions
     {
+        private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
+
         private static readonly Dictionary<string, int> RemoteEndpointServiceNameKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
             [SpanAttributeConstants.PeerServiceKey] = 0, // RemoteEndpoint.ServiceName primary.
@@ -35,6 +37,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             ["http.host"] = 3, // RemoteEndpoint.ServiceName for Http.
             ["db.instance"] = 4, // RemoteEndpoint.ServiceName for Redis.
         };
+
+        private static readonly string InvalidSpanId = default(ActivitySpanId).ToHexString();
 
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> LocalEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
@@ -47,10 +51,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             var context = activity.Context;
             var startTimestamp = activity.StartTimeUtc.ToEpochMicroseconds();
 
-            string parentId = null;
-            if (activity.ParentSpanId != default)
+            string parentId = EncodeSpanId(activity.ParentSpanId);
+            if (string.Equals(parentId, InvalidSpanId, StringComparison.Ordinal))
             {
-                parentId = EncodeSpanId(activity.ParentSpanId);
+                parentId = null;
             }
 
             var attributeEnumerationState = new AttributeEnumerationState
@@ -105,7 +109,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 ToActivityKind(activity),
                 activity.OperationName,
                 activity.StartTimeUtc.ToEpochMicroseconds(),
-                duration: (long)activity.Duration.TotalMilliseconds * 1000, // duration in Microseconds
+                duration: (long)activity.Duration.ToEpochMicroseconds(),
                 localEndpoint,
                 remoteEndpoint,
                 annotations,
@@ -119,15 +123,19 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return spanId.ToHexString();
         }
 
-        internal static long ToEpochMicroseconds(this DateTimeOffset timestamp)
+        internal static long ToEpochMicroseconds(this DateTimeOffset dateTimeOffset)
         {
-            return timestamp.ToUnixTimeMilliseconds() * 1000;
+            return dateTimeOffset.Ticks / TicksPerMicrosecond;
+        }
+
+        internal static long ToEpochMicroseconds(this TimeSpan timeSpan)
+        {
+            return timeSpan.Ticks / TicksPerMicrosecond;
         }
 
         internal static long ToEpochMicroseconds(this DateTime utcDateTime)
         {
-            const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
-            const long UnixEpochTicks = 621355968000000000; // = DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks
+            const long UnixEpochTicks = 621355968000000000L; // = DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks
             const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond;
 
             // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
@@ -158,9 +166,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                     return "PRODUCER";
                 case ActivityKind.Consumer:
                     return "CONSUMER";
-                default:
+                case ActivityKind.Client:
                     return "CLIENT";
             }
+
+            return null;
         }
 
         private static bool ProcessActivityEvents(ref PooledList<ZipkinAnnotation> annotations, ActivityEvent @event)
