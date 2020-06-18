@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Configuration
         {
         }
 
-        internal ActivityProcessorPipelineBuilder ProcessingPipeline { get; private set; }
+        internal List<ActivityProcessorPipelineBuilder> ProcessingPipelines { get; private set; }
 
         internal List<InstrumentationFactory> InstrumentationFactories { get; private set; }
 
@@ -42,16 +42,21 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <param name="configure">Function that configures pipeline.</param>
         /// <returns>Returns <see cref="OpenTelemetryBuilder"/> for chaining.</returns>
-        public OpenTelemetryBuilder SetProcessorPipeline(Action<ActivityProcessorPipelineBuilder> configure)
+        public OpenTelemetryBuilder AddProcessorPipeline(Action<ActivityProcessorPipelineBuilder> configure)
         {
             if (configure == null)
             {
                 throw new ArgumentNullException(nameof(configure));
             }
 
+            if (this.ProcessingPipelines == null)
+            {
+                this.ProcessingPipelines = new List<ActivityProcessorPipelineBuilder>();
+            }
+
             var pipelineBuilder = new ActivityProcessorPipelineBuilder();
             configure(pipelineBuilder);
-            this.ProcessingPipeline = pipelineBuilder;
+            this.ProcessingPipelines.Add(pipelineBuilder);
             return this;
         }
 
