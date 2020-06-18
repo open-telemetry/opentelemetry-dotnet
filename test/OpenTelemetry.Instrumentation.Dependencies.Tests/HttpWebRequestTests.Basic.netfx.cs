@@ -65,7 +65,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             var activityProcessor = new Mock<ActivityProcessor>();
             using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
             {
-                b.SetProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestDependencyInstrumentation();
             });
 
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             var activityProcessor = new Mock<ActivityProcessor>();
             using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
             {
-                b.SetProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestDependencyInstrumentation();
             });
 
@@ -153,7 +153,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             var activityProcessor = new Mock<ActivityProcessor>();
             using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
             {
-                b.SetProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestDependencyInstrumentation();
             });
 

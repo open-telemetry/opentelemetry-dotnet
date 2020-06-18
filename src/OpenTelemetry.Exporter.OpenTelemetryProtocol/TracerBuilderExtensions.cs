@@ -1,4 +1,4 @@
-// <copyright file="TracerBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            return builder.SetProcessorPipeline(pipeline =>
+            return builder.AddProcessorPipeline(pipeline =>
             {
                 var exporterOptions = new ExporterOptions();
                 configure(exporterOptions);
