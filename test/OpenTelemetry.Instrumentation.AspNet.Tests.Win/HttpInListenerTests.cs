@@ -162,7 +162,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                         options.TextFormat = textFormat.Object;
                     }
                 })
-            .SetProcessorPipeline(p => p.AddProcessor(_ => activityProcessor.Object))))
+            .AddProcessorPipeline(p => p.AddProcessor(_ => activityProcessor.Object))))
             {
                 activity.Start();
                 this.fakeAspNetDiagnosticSource.Write(
