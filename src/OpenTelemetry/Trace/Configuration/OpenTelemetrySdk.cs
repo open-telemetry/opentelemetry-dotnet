@@ -27,6 +27,7 @@ namespace OpenTelemetry.Trace.Configuration
     public class OpenTelemetrySdk : IDisposable
     {
         private readonly List<object> instrumentations = new List<object>();
+        private ActivityProcessor activityProcessor;
         private ActivityListener listener;
 
         static OpenTelemetrySdk()
@@ -113,6 +114,7 @@ namespace OpenTelemetry.Trace.Configuration
             };
 
             ActivitySource.AddActivityListener(openTelemetrySDK.listener);
+            openTelemetrySDK.activityProcessor = activityProcessor;
             return openTelemetrySDK;
         }
 
@@ -129,6 +131,11 @@ namespace OpenTelemetry.Trace.Configuration
             }
 
             this.instrumentations.Clear();
+
+            if (this.activityProcessor is IDisposable disposableProcessor)
+            {
+                disposableProcessor.Dispose();
+            }
         }
 
         internal static ActivityDataRequest ComputeActivityDataRequest(
