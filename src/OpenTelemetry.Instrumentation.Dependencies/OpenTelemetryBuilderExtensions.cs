@@ -39,7 +39,6 @@ namespace OpenTelemetry.Trace.Configuration
 
             builder.AddHttpClientDependencyInstrumentation();
             builder.AddSqlClientDependencyInstrumentation();
-            builder.AddAzureClientsDependencyInstrumentation();
 #if NETFRAMEWORK
             builder.AddHttpWebRequestDependencyInstrumentation();
 #endif
@@ -65,7 +64,6 @@ namespace OpenTelemetry.Trace.Configuration
 
             builder.AddHttpClientDependencyInstrumentation(configureHttpClientInstrumentationOptions);
             builder.AddSqlClientDependencyInstrumentation(configureSqlClientInstrumentationOptions);
-            builder.AddAzureClientsDependencyInstrumentation();
 #if NETFRAMEWORK
             builder.AddHttpWebRequestDependencyInstrumentation();
 #endif
@@ -136,24 +134,6 @@ namespace OpenTelemetry.Trace.Configuration
 
             builder.AddInstrumentation((activitySource) => new SqlClientInstrumentation(activitySource, sqlOptions));
 
-            return builder;
-        }
-
-        /// <summary>
-        /// Enables instrumentation for Azure clients.
-        /// </summary>
-        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder AddAzureClientsDependencyInstrumentation(
-            this OpenTelemetryBuilder builder)
-        {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            builder.AddActivitySource(AzureSdkDiagnosticListener.ActivitySourceName);
-            builder.AddInstrumentation((activitySource) => new AzureClientsInstrumentation());
             return builder;
         }
 
