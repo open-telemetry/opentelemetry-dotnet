@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.Console;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
 
 namespace Samples
@@ -29,6 +30,7 @@ namespace Samples
             // and use Console exporter
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
+                .SetResource(Resources.CreateServiceResource("MyServiceName"))
                 .UseConsoleActivityExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
 
             // The above line is required only in Applications
