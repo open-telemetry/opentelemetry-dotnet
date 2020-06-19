@@ -23,6 +23,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
 {
     public class ZipkinActivityConversionTest
     {
+        private const string ZipkinSpanName = "Name";
         private static readonly ZipkinEndpoint DefaultZipkinEndpoint = new ZipkinEndpoint("TestService");
 
         [Fact]
@@ -34,7 +35,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             // Act & Assert
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
-            Assert.Equal("Name", zipkinSpan.Name);
+            Assert.Equal(ZipkinSpanName, zipkinSpan.Name);
 
             Assert.Equal(activity.TraceId.ToHexString(), zipkinSpan.TraceId);
             Assert.Equal(activity.SpanId.ToHexString(), zipkinSpan.Id);
@@ -67,7 +68,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             // Act & Assert
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
-            Assert.Equal("Name", zipkinSpan.Name);
+            Assert.Equal(ZipkinSpanName, zipkinSpan.Name);
             Assert.Empty(zipkinSpan.Annotations.Value);
             Assert.Equal(activity.TraceId.ToHexString(), zipkinSpan.TraceId);
             Assert.Equal(activity.SpanId.ToHexString(), zipkinSpan.Id);

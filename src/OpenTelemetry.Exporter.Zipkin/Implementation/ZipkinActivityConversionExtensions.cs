@@ -182,7 +182,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         private static bool ProcessTags(ref AttributeEnumerationState state, KeyValuePair<string, string> attribute)
         {
             string key = attribute.Key;
-            string strVal = attribute.Value?.ToString();
+            string strVal = attribute.Value;
 
             if (strVal != null)
             {
