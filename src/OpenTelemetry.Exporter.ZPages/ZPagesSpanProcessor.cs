@@ -18,6 +18,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.ZPages.Implementation;
+#if NET452
+using OpenTelemetry.Internal;
+#endif
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.ZPages
