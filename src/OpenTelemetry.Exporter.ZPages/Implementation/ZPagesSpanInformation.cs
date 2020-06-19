@@ -15,6 +15,9 @@
 // </copyright>
 
 using System;
+#if NET452
+using OpenTelemetry.Internal;
+#endif
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.ZPages.Implementation

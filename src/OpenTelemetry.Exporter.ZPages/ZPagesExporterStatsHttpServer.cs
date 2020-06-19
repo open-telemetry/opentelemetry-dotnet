@@ -21,6 +21,9 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.ZPages.Implementation;
+#if NET452
+using OpenTelemetry.Internal;
+#endif
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.ZPages
@@ -164,9 +167,17 @@ namespace OpenTelemetry.Exporter.ZPages
 
                                 long totalAverageLatency = ZPagesSpans.TotalSpanLatency[spanName] / ZPagesSpans.TotalEndedSpanCount[spanName];
 
+                                DateTimeOffset dateTimeOffset;
+
+#if NET452
+                                dateTimeOffset = DateTimeOffsetExtensions.FromUnixTimeMilliseconds(hourSpanInformation.LastUpdated);
+#else
+                                dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(hourSpanInformation.LastUpdated);
+#endif
+
                                 writer.WriteLine("<tr><td>" + hourSpanInformation.Name + "</td><td>" + ZPagesSpans.TotalSpanCount[spanName] + "</td><td>" + countInLastMinute + "</td><td>" + countInLastHour + "</td>" +
                                                  "<td>" + totalAverageLatency + "</td><td>" + averageLatencyInLastMinute + "</td><td>" + averageLatencyInLastHour + "</td>" +
-                                                 "<td>" + ZPagesSpans.TotalSpanErrorCount[spanName] + "</td><td>" + errorCountInLastMinute + "</td><td>" + errorCountInLastHour + "</td><td>" + DateTimeOffset.FromUnixTimeMilliseconds(hourSpanInformation.LastUpdated) + " GMT" + "</td></tr>");
+                                                 "<td>" + ZPagesSpans.TotalSpanErrorCount[spanName] + "</td><td>" + errorCountInLastMinute + "</td><td>" + errorCountInLastHour + "</td><td>" + dateTimeOffset + " GMT" + "</td></tr>");
                             }
 
                             writer.WriteLine("</tbody></table>");
