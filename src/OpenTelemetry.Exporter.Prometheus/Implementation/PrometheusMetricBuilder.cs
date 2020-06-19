@@ -18,6 +18,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+#if NET452
+using OpenTelemetry.Internal;
+#endif
 
 namespace OpenTelemetry.Exporter.Prometheus.Implementation
 {
