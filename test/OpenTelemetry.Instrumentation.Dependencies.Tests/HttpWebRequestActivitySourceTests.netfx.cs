@@ -40,7 +40,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
         static HttpWebRequestActivitySourceTests()
         {
-            GC.KeepAlive(HttpWebRequestActivitySource.Instance);
+            // Need to touch something in HttpWebRequestActivitySource to do the static injection.
+            GC.KeepAlive(HttpWebRequestActivitySource.Options);
         }
 
         public HttpWebRequestActivitySourceTests()
@@ -894,7 +895,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             }
 
             Assert.Equal(url, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value);
-            Assert.Equal("1.1", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpFlavorKey).Value);
         }
 
         private static void VerifyActivityStopTags(string statusCode, string statusText, Activity activity)

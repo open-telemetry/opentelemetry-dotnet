@@ -51,7 +51,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddHttpWebRequestDependencyInstrumentation();
+                b.AddHttpWebRequestDependencyInstrumentation(options => options.SetHttpFlavor = tc.SetHttpFlavor);
             });
 
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
@@ -124,17 +124,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             {
                 if (!tc.SpanAttributes.TryGetValue(tag.Key, out string value))
                 {
-                    if (tag.Key == "http.flavor")
-                    {
-                        // http.flavor is optional in .NET Core instrumentation but there is no way to pass that option to the new ActivitySource model so it always shows up here.
-                        if (tc.SetHttpFlavor)
-                        {
-                            Assert.Equal(value, tag.Value);
-                        }
-
-                        continue;
-                    }
-
                     if (tag.Key == SpanAttributeConstants.StatusCodeKey)
                     {
                         Assert.Equal(tc.SpanStatus, d[tag.Value]);
