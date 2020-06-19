@@ -33,6 +33,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 {
     public class ZipkinActivityExporterTests : IDisposable
     {
+        private const string TraceId = "e8ea7e9ac72de94e91fabc613f9686b2";
         private static readonly ConcurrentDictionary<Guid, string> Responses = new ConcurrentDictionary<Guid, string>();
 
         private readonly IDisposable testServer;
@@ -82,8 +83,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             this.testServer.Dispose();
         }
 
-        [Fact]
-        public async Task ZipkinActivityExporterIntegrationTest()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task ZipkinActivityExporterIntegrationTest(bool useShortTraceIds)
         {
             var batchActivity = new List<Activity> { CreateTestActivity() };
 
@@ -93,7 +96,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 new ZipkinTraceExporterOptions
                 {
                     Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
-                    UseShortTraceIds = true,
+                    UseShortTraceIds = useShortTraceIds,
                 });
 
             await exporter.ExportAsync(batchActivity, CancellationToken.None).ConfigureAwait(false);
@@ -117,8 +120,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 ipInformation.Append($@",""ipv6"":""{exporter.LocalEndpoint.Ipv6}""");
             }
 
+            var traceId = useShortTraceIds ? TraceId.Substring(TraceId.Length - 16, 16) : TraceId;
+
             Assert.Equal(
-                $@"[{{""traceId"":""91fabc613f9686b2"",""name"":""Name"",""parentId"":""{ZipkinConversionExtensions.EncodeSpanId(activity.ParentSpanId)}"",""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""Open Telemetry Exporter""{ipInformation}}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""boolKey"":""True"",""library.name"":""CreateTestActivity""}}}}]",
+                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",""parentId"":""{ZipkinConversionExtensions.EncodeSpanId(activity.ParentSpanId)}"",""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""Open Telemetry Exporter""{ipInformation}}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""boolKey"":""True"",""library.name"":""CreateTestActivity""}}}}]",
                 Responses[requestId]);
         }
 
