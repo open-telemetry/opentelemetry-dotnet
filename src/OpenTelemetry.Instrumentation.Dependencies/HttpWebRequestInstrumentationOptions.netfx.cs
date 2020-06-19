@@ -16,9 +16,7 @@
 #if NETFRAMEWORK
 using System;
 using System.Net;
-using System.Net.Http;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Instrumentation.Dependencies.Implementation;
 
 namespace OpenTelemetry.Instrumentation.Dependencies
 {
