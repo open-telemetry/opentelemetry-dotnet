@@ -49,5 +49,14 @@ namespace OpenTelemetry.Context.Propagation
         /// <param name="getter">Function that will return string value of a key with the specified name.</param>
         /// <returns>Activity context from it's text representation.</returns>
         ActivityContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter);
+
+        /// <summary>
+        /// Tests if an activity context has been injected into a carrier.
+        /// </summary>
+        /// <typeparam name="T">Type of object to extract context from. Typically HttpRequest or similar.</typeparam>
+        /// <param name="carrier">Object to extract context from. Instance of this object will be passed to the getter.</param>
+        /// <param name="getter">Function that will return string value of a key with the specified name.</param>
+        /// <returns><see langword="true" /> if the carrier has been injected with an activity context.</returns>
+        bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter);
     }
 }

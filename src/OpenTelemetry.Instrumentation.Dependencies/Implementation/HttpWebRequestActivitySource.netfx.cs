@@ -42,8 +42,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         internal static HttpWebRequestInstrumentationOptions Options = new HttpWebRequestInstrumentationOptions();
 
         private const string CorrelationContextHeaderName = "Correlation-Context";
-        private const string TraceParentHeaderName = "traceparent";
-        private const string TraceStateHeaderName = "tracestate";
 
         private static readonly Version Version = typeof(HttpWebRequestActivitySource).Assembly.GetName().Version;
         private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
@@ -215,7 +213,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRequestInstrumented(HttpWebRequest request)
-            => request.Headers.Get(TraceParentHeaderName) != null;
+            => Options.TextFormat.IsInjected(request, (r, h) => r.Headers.GetValues(h));
 
         private static void ProcessRequest(HttpWebRequest request)
         {
