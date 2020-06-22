@@ -112,7 +112,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             writer.WriteString("id", this.Id);
 
-            writer.WriteString("kind", this.Kind);
+            if (this.Kind != null)
+            {
+                writer.WriteString("kind", this.Kind);
+            }
 
             if (this.Timestamp.HasValue)
             {
