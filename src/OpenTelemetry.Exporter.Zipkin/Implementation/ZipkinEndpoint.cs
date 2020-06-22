@@ -13,7 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+#if NET452
+using Newtonsoft.Json;
+#else
 using System.Text.Json;
+#endif
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
@@ -58,6 +62,38 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 this.Port);
         }
 
+#if NET452
+        public void Write(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (this.ServiceName != null)
+            {
+                writer.WritePropertyName("serviceName");
+                writer.WriteValue(this.ServiceName);
+            }
+
+            if (this.Ipv4 != null)
+            {
+                writer.WritePropertyName("ipv4");
+                writer.WriteValue(this.Ipv4);
+            }
+
+            if (this.Ipv6 != null)
+            {
+                writer.WritePropertyName("ipv6");
+                writer.WriteValue(this.Ipv6);
+            }
+
+            if (this.Port.HasValue)
+            {
+                writer.WritePropertyName("port");
+                writer.WriteValue(this.Port.Value);
+            }
+
+            writer.WriteEndObject();
+        }
+#else
         public void Write(Utf8JsonWriter writer)
         {
             writer.WriteStartObject();
@@ -84,5 +120,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             writer.WriteEndObject();
         }
+#endif
     }
 }

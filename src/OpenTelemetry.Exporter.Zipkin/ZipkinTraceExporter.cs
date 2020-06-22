@@ -20,7 +20,11 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
+#if NET452
+using Newtonsoft.Json;
+#else
 using System.Text.Json;
+#endif
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
@@ -68,7 +72,11 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// <inheritdoc/>
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
+#if NET452
+            return Task.FromResult(0);
+#else
             return Task.CompletedTask;
+#endif
         }
 
         private Task SendSpansAsync(IEnumerable<SpanData> spans)
@@ -167,10 +175,14 @@ namespace OpenTelemetry.Exporter.Zipkin
                 CharSet = "utf-8",
             };
 
-            private static Utf8JsonWriter writer;
-
             private readonly ZipkinTraceExporter exporter;
             private readonly IEnumerable<SpanData> spans;
+
+#if NET452
+            private JsonWriter writer;
+#else
+            private Utf8JsonWriter writer;
+#endif
 
             public JsonContent(ZipkinTraceExporter exporter, IEnumerable<SpanData> spans)
             {
@@ -182,29 +194,34 @@ namespace OpenTelemetry.Exporter.Zipkin
 
             protected override Task SerializeToStreamAsync(Stream stream, TransportContext context)
             {
-                if (writer == null)
+#if NET452
+                StreamWriter streamWriter = new StreamWriter(stream);
+                this.writer = new JsonTextWriter(streamWriter);
+#else
+                if (this.writer == null)
                 {
-                    writer = new Utf8JsonWriter(stream);
+                    this.writer = new Utf8JsonWriter(stream);
                 }
                 else
                 {
-                    writer.Reset(stream);
+                    this.writer.Reset(stream);
                 }
+#endif
 
-                writer.WriteStartArray();
+                this.writer.WriteStartArray();
 
                 foreach (var span in this.spans)
                 {
                     var zipkinSpan = span.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
 
-                    zipkinSpan.Write(writer);
+                    zipkinSpan.Write(this.writer);
 
                     zipkinSpan.Return();
                 }
 
-                writer.WriteEndArray();
+                this.writer.WriteEndArray();
 
-                return writer.FlushAsync();
+                return this.writer.FlushAsync();
             }
 
             protected override bool TryComputeLength(out long length)
