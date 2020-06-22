@@ -20,6 +20,9 @@ using System.Diagnostics;
 using System.Linq;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+#if NET452
+using OpenTelemetry.Internal;
+#endif
 using Xunit;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
@@ -127,7 +130,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
 
             var startTime = new DateTime(2020, 02, 20, 20, 20, 20, DateTimeKind.Utc);
-            var expectedUnixTimeTicks = (ulong)(startTime.Ticks - DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks);
+
+            DateTimeOffset dateTimeOffset;
+#if NET452
+            dateTimeOffset = DateTimeOffsetExtensions.FromUnixTimeMilliseconds(0);
+#else
+            dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(0);
+#endif
+
+            var expectedUnixTimeTicks = (ulong)(startTime.Ticks - dateTimeOffset.Ticks);
             var duration = TimeSpan.FromMilliseconds(1555);
 
             rootActivity.SetStartTime(startTime);

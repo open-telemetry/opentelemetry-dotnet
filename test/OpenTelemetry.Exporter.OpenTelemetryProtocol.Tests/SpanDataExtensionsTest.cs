@@ -20,6 +20,9 @@ using System.Linq;
 using Google.Protobuf.Collections;
 using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+#if NET452
+using OpenTelemetry.Internal;
+#endif
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
