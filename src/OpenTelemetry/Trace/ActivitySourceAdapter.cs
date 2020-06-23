@@ -62,8 +62,27 @@ namespace OpenTelemetry.Trace
 
         private void RunGetRequestedData(Activity activity)
         {
+            ActivityContext parentContext;
+            if (string.IsNullOrEmpty(activity.ParentId))
+            {
+                parentContext = default(ActivityContext);
+            }
+            else
+            {
+                if (activity.Parent != null)
+                {
+                    parentContext = activity.Parent.Context;
+                }
+                else
+                {
+                    parentContext = new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString);
+
+                    // TODO: once IsRemote is exposed on ActivityContext set parentContext's IsRemote=true
+                }
+            }
+
             var samplingParameters = new ActivitySamplingParameters(
-                activity.Context,
+                parentContext,
                 activity.TraceId,
                 activity.DisplayName,
                 activity.Kind,
