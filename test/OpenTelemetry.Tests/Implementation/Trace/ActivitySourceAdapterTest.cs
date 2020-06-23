@@ -57,14 +57,10 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 (a) =>
                 {
                     startCalled = true;
-                    if (isSampled)
-                    {
-                        Assert.Equal(ActivityTraceFlags.Recorded, a.ActivityTraceFlags);
-                    }
-                    else
-                    {
-                        Assert.Equal(ActivityTraceFlags.None, a.ActivityTraceFlags);
-                    }
+
+                    // If start is called, that means activity is sampled,
+                    // and TraceFlag is set to Recorded.
+                    Assert.Equal(ActivityTraceFlags.Recorded, a.ActivityTraceFlags);
                 };
 
             this.testProcessor.EndAction =
