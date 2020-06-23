@@ -27,6 +27,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
     internal static class ZipkinActivityConversionExtensions
     {
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
+        private const long UnixEpochTicks = 621355968000000000L; // = DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks
+        private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond;
 
         private static readonly Dictionary<string, int> RemoteEndpointServiceNameKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
@@ -125,7 +127,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         internal static long ToEpochMicroseconds(this DateTimeOffset dateTimeOffset)
         {
-            return dateTimeOffset.Ticks / TicksPerMicrosecond;
+            // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
+            // the last digit being off by one for dates that result in negative Unix times
+            long microseconds = dateTimeOffset.Ticks / TicksPerMicrosecond;
+            return microseconds - UnixEpochMicroseconds;
         }
 
         internal static long ToEpochMicroseconds(this TimeSpan timeSpan)
@@ -135,9 +140,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         internal static long ToEpochMicroseconds(this DateTime utcDateTime)
         {
-            const long UnixEpochTicks = 621355968000000000L; // = DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks
-            const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond;
-
             // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
             // the last digit being off by one for dates that result in negative Unix times
             long microseconds = utcDateTime.Ticks / TicksPerMicrosecond;
