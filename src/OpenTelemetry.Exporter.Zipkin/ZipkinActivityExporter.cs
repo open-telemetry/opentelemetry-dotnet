@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinTraceExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZipkinActivityExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,8 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -35,17 +37,17 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// <summary>
     /// Zipkin exporter.
     /// </summary>
-    public class ZipkinTraceExporter : SpanExporter
+    public class ZipkinActivityExporter : ActivityExporter
     {
         private readonly ZipkinTraceExporterOptions options;
         private readonly HttpClient httpClient;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ZipkinTraceExporter"/> class.
+        /// Initializes a new instance of the <see cref="ZipkinActivityExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options.</param>
         /// <param name="client">Http client to use to upload telemetry.</param>
-        public ZipkinTraceExporter(ZipkinTraceExporterOptions options, HttpClient client = null)
+        public ZipkinActivityExporter(ZipkinTraceExporterOptions options, HttpClient client = null)
         {
             this.options = options;
             this.LocalEndpoint = this.GetLocalZipkinEndpoint();
@@ -55,11 +57,11 @@ namespace OpenTelemetry.Exporter.Zipkin
         internal ZipkinEndpoint LocalEndpoint { get; }
 
         /// <inheritdoc/>
-        public override async Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
+        public override async Task<ExportResult> ExportAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
         {
             try
             {
-                await this.SendSpansAsync(batch).ConfigureAwait(false);
+                await this.SendBatchActivityAsync(batchActivity).ConfigureAwait(false);
                 return ExportResult.Success;
             }
             catch (Exception)
@@ -79,13 +81,13 @@ namespace OpenTelemetry.Exporter.Zipkin
 #endif
         }
 
-        private Task SendSpansAsync(IEnumerable<SpanData> spans)
+        private Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity)
         {
             var requestUri = this.options.Endpoint;
 
             var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
             {
-                Content = new JsonContent(this, spans),
+                Content = new JsonContent(this, batchActivity),
             };
 
             // avoid cancelling here: this is no return point: if we reached this point
@@ -175,8 +177,8 @@ namespace OpenTelemetry.Exporter.Zipkin
                 CharSet = "utf-8",
             };
 
-            private readonly ZipkinTraceExporter exporter;
-            private readonly IEnumerable<SpanData> spans;
+            private readonly ZipkinActivityExporter exporter;
+            private readonly IEnumerable<Activity> batchActivity;
 
 #if NET452
             private JsonWriter writer;
@@ -184,10 +186,10 @@ namespace OpenTelemetry.Exporter.Zipkin
             private Utf8JsonWriter writer;
 #endif
 
-            public JsonContent(ZipkinTraceExporter exporter, IEnumerable<SpanData> spans)
+            public JsonContent(ZipkinActivityExporter exporter, IEnumerable<Activity> batchActivity)
             {
                 this.exporter = exporter;
-                this.spans = spans;
+                this.batchActivity = batchActivity;
 
                 this.Headers.ContentType = JsonHeader;
             }
@@ -210,9 +212,9 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 this.writer.WriteStartArray();
 
-                foreach (var span in this.spans)
+                foreach (var activity in this.batchActivity)
                 {
-                    var zipkinSpan = span.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
+                    var zipkinSpan = activity.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
 
                     zipkinSpan.Write(this.writer);
 
