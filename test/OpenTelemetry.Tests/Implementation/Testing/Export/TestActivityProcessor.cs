@@ -27,10 +27,14 @@ namespace OpenTelemetry.Tests.Implementation.Testing.Export
         public Action<Activity> StartAction;
         public Action<Activity> EndAction;
 
+        public TestActivityProcessor()
+        {
+        }
+
         public TestActivityProcessor(Action<Activity> onStart, Action<Activity> onEnd)
         {
-            this.OnStart = onStart;
-            this.OnEnd = onEnd;
+            this.StartAction = onStart;
+            this.EndAction = onEnd;
         }
 
         public bool ShutdownCalled { get; private set; } = false;
@@ -39,12 +43,12 @@ namespace OpenTelemetry.Tests.Implementation.Testing.Export
 
         public override void OnStart(Activity span)
         {
-            this.OnStart?.Invoke(span);
+            this.StartAction?.Invoke(span);
         }
 
         public override void OnEnd(Activity span)
         {
-            this.OnEnd?.Invoke(span);
+            this.EndAction?.Invoke(span);
         }
 
         public override Task ShutdownAsync(CancellationToken cancellationToken)

@@ -22,10 +22,11 @@ using Xunit;
 
 namespace OpenTelemetry.Tests.Implementation.Trace
 {
-    public class ActivitySourceAdapterTest
+    public class ActivitySourceAdapterTest : IDisposable
     {
         private TestSampler testSampler;
         private TestActivityProcessor testProcessor;
+        private ActivitySourceAdapter activitySourceAdapter;
 
         static ActivitySourceAdapterTest()
         {
@@ -36,43 +37,172 @@ namespace OpenTelemetry.Tests.Implementation.Trace
         public ActivitySourceAdapterTest()
         {
             this.testSampler = new TestSampler();
+            this.testProcessor = new TestActivityProcessor();
+            this.activitySourceAdapter = new ActivitySourceAdapter(this.testSampler, this.testProcessor);
         }
 
         [Theory]
-        [InlineData("")]
-        [InlineData("00-e4d9d231de64d6408047ad4757e95422-05d365cd170e544d-00")]
-        public void ActivitySourceAdapterSamplesCorrectly(string activityParentId)
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ActivitySourceAdapterCallsStartStopActivityProcessor(bool isSampled)
+        {
+            this.testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(isSampled);
+            };
+
+            bool startCalled = false;
+            bool endCalled = false;
+            this.testProcessor.StartAction =
+                (a) =>
+                {
+                    startCalled = true;
+                };
+
+            this.testProcessor.EndAction =
+                (a) =>
+                {
+                    endCalled = true;
+                };
+
+            var activity = new Activity("test");
+            activity.Start();
+            this.activitySourceAdapter.Start(activity);
+            activity.Stop();
+            this.activitySourceAdapter.Stop(activity);
+
+            Assert.Equal(isSampled, startCalled);
+            Assert.Equal(isSampled, endCalled);
+        }
+
+        [Fact]
+        public void ActivitySourceAdapterPopulatesSamplingParamsCorrectlyForRootActivity()
         {
             this.testSampler.SamplingAction = (samplingParameters) =>
             {
                 Assert.Equal(default, samplingParameters.ParentContext);
                 return new SamplingResult(true);
-            }
+            };
 
             bool startCalled = false;
             bool endCalled = false;
-            TestActivityProcessor testProcessor = new TestActivityProcessor(
-                ss =>
+            this.testProcessor.StartAction =
+                (a) =>
                 {
                     startCalled = true;
                     Assert.True(startCalled);
-                }, se =>
+                };
+
+            this.testProcessor.EndAction =
+                (a) =>
                 {
                     endCalled = true;
-                    Assert.False(endCalled);
-                });
+                    Assert.True(endCalled);
+                };
 
-            ActivitySourceAdapter activitySourceAdapter = new ActivitySourceAdapter(testSampler, testProcessor);
+            // Start activity without setting parent. i.e it'll have null parent
+            // and becomes root activity
             var activity = new Activity("test");
-            if (!string.IsNullOrEmpty(activityParentId))
-            {
-                activity.SetParentId(activityParentId);
-            }
-
             activity.Start();
-            activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity);
             activity.Stop();
-            activitySourceAdapter.Stop(activity);
+            this.activitySourceAdapter.Stop(activity);
+        }
+
+        [Theory]
+        [InlineData(ActivityTraceFlags.None)]
+        [InlineData(ActivityTraceFlags.Recorded)]
+        public void ActivitySourceAdapterPopulatesSamplingParamsCorrectlyForActivityWithRemoteParent(ActivityTraceFlags traceFlags)
+        {
+            var parentTraceId = ActivityTraceId.CreateRandom();
+            var parentSpanId = ActivitySpanId.CreateRandom();
+            var parentTraceFlag = (traceFlags == ActivityTraceFlags.Recorded) ? "01" : "00";
+            string remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
+
+            this.testSampler.SamplingAction = (samplingParameters) =>
+            {
+                Assert.Equal(parentTraceId, samplingParameters.ParentContext.TraceId);
+                Assert.Equal(parentSpanId, samplingParameters.ParentContext.SpanId);
+                Assert.Equal(traceFlags, samplingParameters.ParentContext.TraceFlags);
+                return new SamplingResult(true);
+            };
+
+            bool startCalled = false;
+            bool endCalled = false;
+            this.testProcessor.StartAction =
+                (a) =>
+                {
+                    startCalled = true;
+                    Assert.True(startCalled);
+                };
+
+            this.testProcessor.EndAction =
+                (a) =>
+                {
+                    endCalled = true;
+                    Assert.True(endCalled);
+                };
+
+            // Create an activity with remote parent id.
+            // The sampling parameters are expected to be that of the
+            // parent context i.e the remote parent.
+            var activity = new Activity("test").SetParentId(remoteParentId);
+            activity.Start();
+            this.activitySourceAdapter.Start(activity);
+            activity.Stop();
+            this.activitySourceAdapter.Stop(activity);
+        }
+
+        [Theory]
+        [InlineData(ActivityTraceFlags.None)]
+        [InlineData(ActivityTraceFlags.Recorded)]
+        public void ActivitySourceAdapterPopulatesSamplingParamsCorrectlyForActivityWithInProcParent(ActivityTraceFlags traceFlags)
+        {
+            // Create some parent activity.
+            var activityLocalParent = new Activity("testParent");
+            activityLocalParent.ActivityTraceFlags = traceFlags;
+            activityLocalParent.Start();
+
+            this.testSampler.SamplingAction = (samplingParameters) =>
+            {
+                Assert.Equal(activityLocalParent.TraceId, samplingParameters.ParentContext.TraceId);
+                Assert.Equal(activityLocalParent.SpanId, samplingParameters.ParentContext.SpanId);
+                Assert.Equal(activityLocalParent.ActivityTraceFlags, samplingParameters.ParentContext.TraceFlags);
+                return new SamplingResult(true);
+            };
+
+            bool startCalled = false;
+            bool endCalled = false;
+            this.testProcessor.StartAction =
+                (a) =>
+                {
+                    startCalled = true;
+                    Assert.True(startCalled);
+                };
+
+            this.testProcessor.EndAction =
+                (a) =>
+                {
+                    endCalled = true;
+                    Assert.True(endCalled);
+                };
+
+            // This activity will have a inproc parent.
+            // activity.Parent will be equal to the activity created at the beginning of this test.
+            // Sampling parameters are expected to be that of the parentContext.
+            // i.e of the parent Activity
+            var activity = new Activity("test");
+            activity.Start();
+            this.activitySourceAdapter.Start(activity);
+            activity.Stop();
+            this.activitySourceAdapter.Stop(activity);
+
+            activityLocalParent.Stop();
+        }
+
+        public void Dispose()
+        {
+            Activity.Current = null;
         }
 
         private class TestSampler : ActivitySampler
