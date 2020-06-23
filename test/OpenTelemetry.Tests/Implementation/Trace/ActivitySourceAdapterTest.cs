@@ -57,6 +57,14 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 (a) =>
                 {
                     startCalled = true;
+                    if (isSampled)
+                    {
+                        Assert.Equal(ActivityTraceFlags.Recorded, a.ActivityTraceFlags);
+                    }
+                    else
+                    {
+                        Assert.Equal(ActivityTraceFlags.None, a.ActivityTraceFlags);
+                    }
                 };
 
             this.testProcessor.EndAction =
@@ -84,22 +92,6 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 return new SamplingResult(true);
             };
 
-            bool startCalled = false;
-            bool endCalled = false;
-            this.testProcessor.StartAction =
-                (a) =>
-                {
-                    startCalled = true;
-                    Assert.True(startCalled);
-                };
-
-            this.testProcessor.EndAction =
-                (a) =>
-                {
-                    endCalled = true;
-                    Assert.True(endCalled);
-                };
-
             // Start activity without setting parent. i.e it'll have null parent
             // and becomes root activity
             var activity = new Activity("test");
@@ -118,35 +110,22 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             var parentSpanId = ActivitySpanId.CreateRandom();
             var parentTraceFlag = (traceFlags == ActivityTraceFlags.Recorded) ? "01" : "00";
             string remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
+            string tracestate = "a=b;c=d";
 
             this.testSampler.SamplingAction = (samplingParameters) =>
             {
                 Assert.Equal(parentTraceId, samplingParameters.ParentContext.TraceId);
                 Assert.Equal(parentSpanId, samplingParameters.ParentContext.SpanId);
                 Assert.Equal(traceFlags, samplingParameters.ParentContext.TraceFlags);
+                Assert.Equal(tracestate, samplingParameters.ParentContext.TraceState);
                 return new SamplingResult(true);
             };
-
-            bool startCalled = false;
-            bool endCalled = false;
-            this.testProcessor.StartAction =
-                (a) =>
-                {
-                    startCalled = true;
-                    Assert.True(startCalled);
-                };
-
-            this.testProcessor.EndAction =
-                (a) =>
-                {
-                    endCalled = true;
-                    Assert.True(endCalled);
-                };
 
             // Create an activity with remote parent id.
             // The sampling parameters are expected to be that of the
             // parent context i.e the remote parent.
             var activity = new Activity("test").SetParentId(remoteParentId);
+            activity.TraceStateString = tracestate;
             activity.Start();
             this.activitySourceAdapter.Start(activity);
             activity.Stop();
@@ -159,8 +138,10 @@ namespace OpenTelemetry.Tests.Implementation.Trace
         public void ActivitySourceAdapterPopulatesSamplingParamsCorrectlyForActivityWithInProcParent(ActivityTraceFlags traceFlags)
         {
             // Create some parent activity.
+            string tracestate = "a=b;c=d";
             var activityLocalParent = new Activity("testParent");
             activityLocalParent.ActivityTraceFlags = traceFlags;
+            activityLocalParent.TraceStateString = tracestate;
             activityLocalParent.Start();
 
             this.testSampler.SamplingAction = (samplingParameters) =>
@@ -168,24 +149,9 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 Assert.Equal(activityLocalParent.TraceId, samplingParameters.ParentContext.TraceId);
                 Assert.Equal(activityLocalParent.SpanId, samplingParameters.ParentContext.SpanId);
                 Assert.Equal(activityLocalParent.ActivityTraceFlags, samplingParameters.ParentContext.TraceFlags);
+                Assert.Equal(tracestate, samplingParameters.ParentContext.TraceState);
                 return new SamplingResult(true);
             };
-
-            bool startCalled = false;
-            bool endCalled = false;
-            this.testProcessor.StartAction =
-                (a) =>
-                {
-                    startCalled = true;
-                    Assert.True(startCalled);
-                };
-
-            this.testProcessor.EndAction =
-                (a) =>
-                {
-                    endCalled = true;
-                    Assert.True(endCalled);
-                };
 
             // This activity will have a inproc parent.
             // activity.Parent will be equal to the activity created at the beginning of this test.
