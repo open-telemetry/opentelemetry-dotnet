@@ -24,25 +24,50 @@ namespace Samples
 {
     internal class TestZipkin
     {
-        internal static object Run(string zipkinUri)
+        internal static object Run(string zipkinUri, bool useActivitySource)
         {
-            // Configure exporter to export traces to Zipkin
-            using (var tracerFactory = TracerFactory.Create(builder => builder
+            if (useActivitySource)
+            {
+                // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
+                // and use the Zipkin exporter.
+                using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+                    builder => builder
+                        .AddActivitySource("Samples.SampleServer")
+                        .AddActivitySource("Samples.SampleClient")
+                        .UseZipkinActivityExporter(o =>
+                        {
+                            o.ServiceName = "test-zipkin";
+                            o.Endpoint = new Uri(zipkinUri);
+                        }));
+
+                using (var sample = new InstrumentationWithActivitySource())
+                {
+                    sample.Start();
+
+                    Console.WriteLine("Sample is running on the background, press ENTER to stop");
+                    Console.ReadLine();
+                }
+            }
+            else
+            {
+                // Configure exporter to export traces to Zipkin
+                using (var tracerFactory = TracerFactory.Create(builder => builder
                 .UseZipkin(o =>
                 {
                     o.ServiceName = "test-zipkin";
                     o.Endpoint = new Uri(zipkinUri);
                 })))
-            {
-                var tracer = tracerFactory.GetTracer("zipkin-test");
-
-                // Create a scoped span. It will end automatically when using statement ends
-                using (tracer.WithSpan(tracer.StartSpan("Main")))
                 {
-                    Console.WriteLine("About to do a busy work");
-                    for (var i = 0; i < 10; i++)
+                    var tracer = tracerFactory.GetTracer("zipkin-test");
+
+                    // Create a scoped span. It will end automatically when using statement ends
+                    using (tracer.WithSpan(tracer.StartSpan("Main")))
                     {
-                        DoWork(i, tracer);
+                        Console.WriteLine("About to do a busy work");
+                        for (var i = 0; i < 10; i++)
+                        {
+                            DoWork(i, tracer);
+                        }
                     }
                 }
             }

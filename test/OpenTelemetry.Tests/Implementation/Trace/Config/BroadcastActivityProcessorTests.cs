@@ -16,10 +16,7 @@
 
 using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Tests.Implementation.Testing.Export;
 using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Export.Internal;
 using Xunit;
@@ -42,7 +39,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             bool start2Called = false;
             bool end1Called = false;
             bool end2Called = false;
-            var processor1 = new TestProcessor(
+            var processor1 = new TestActivityProcessor(
                 ss =>
             {
                 start1Called = true;
@@ -56,7 +53,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
                 Assert.True(start2Called);
                 Assert.False(end2Called);
             });
-            var processor2 = new TestProcessor(
+            var processor2 = new TestActivityProcessor(
                 ss =>
             {
                 start2Called = true;
@@ -90,7 +87,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             bool start2Called = false;
             bool end1Called = false;
             bool end2Called = false;
-            var processor1 = new TestProcessor(
+            var processor1 = new TestActivityProcessor(
                 ss =>
             {
                 start1Called = true;
@@ -108,7 +105,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
                 throw new Exception("End exception");
             });
 
-            var processor2 = new TestProcessor(
+            var processor2 = new TestActivityProcessor(
                 ss =>
             {
                 start2Called = true;
@@ -138,8 +135,8 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
         [Fact]
         public void BroadcastProcessor_ShutsDownAll()
         {
-            var processor1 = new TestProcessor(null, null);
-            var processor2 = new TestProcessor(null, null);
+            var processor1 = new TestActivityProcessor(null, null);
+            var processor2 = new TestActivityProcessor(null, null);
 
             var broadcastProcessor = new BroadcastActivityProcessor(new[] { processor1, processor2 });
 
@@ -150,47 +147,6 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             broadcastProcessor.Dispose();
             Assert.True(processor1.DisposedCalled);
             Assert.True(processor2.DisposedCalled);
-        }
-
-        private class TestProcessor : ActivityProcessor, IDisposable
-        {
-            private readonly Action<Activity> onStart;
-            private readonly Action<Activity> onEnd;
-
-            public TestProcessor(Action<Activity> onStart, Action<Activity> onEnd)
-            {
-                this.onStart = onStart;
-                this.onEnd = onEnd;
-            }
-
-            public bool ShutdownCalled { get; private set; } = false;
-
-            public bool DisposedCalled { get; private set; } = false;
-
-            public override void OnStart(Activity span)
-            {
-                this.onStart?.Invoke(span);
-            }
-
-            public override void OnEnd(Activity span)
-            {
-                this.onEnd?.Invoke(span);
-            }
-
-            public override Task ShutdownAsync(CancellationToken cancellationToken)
-            {
-                this.ShutdownCalled = true;
-#if NET452
-                return Task.FromResult(0);
-#else
-                return Task.CompletedTask;
-#endif
-            }
-
-            public void Dispose()
-            {
-                this.DisposedCalled = true;
-            }
         }
     }
 }
