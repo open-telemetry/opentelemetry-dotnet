@@ -112,21 +112,20 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             using var rootActivity = activitySource.StartActivity("root", ActivityKind.Producer);
 
-            var attributes = new Dictionary<string, object>
+            var attributes = new List<KeyValuePair<string, object>>
             {
-                ["bool"] = true,
-                ["long"] = 1L,
-                ["string"] = "text",
-                ["double"] = 3.14,
-                ["unknown_attrib_type"] =
-                    new byte[] { 1 }, // TODO: update if arrays of standard attribute types are supported
+                new KeyValuePair<string, object>("bool", true),
+                new KeyValuePair<string, object>("long", 1L),
+                new KeyValuePair<string, object>("string", "text"),
+                new KeyValuePair<string, object>("double", 3.14),
+
+                // TODO: update if arrays of standard attribute types are supported
+                new KeyValuePair<string, object>("unknown_attrib_type", new byte[] { 1 }),
             };
 
-            var tags = new List<KeyValuePair<string, string>>(attributes.Count);
             foreach (var kvp in attributes)
             {
                 rootActivity.AddTag(kvp.Key, kvp.Value.ToString());
-                tags.Add(new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()));
             }
 
             var startTime = new DateTime(2020, 02, 20, 20, 20, 20, DateTimeKind.Utc);
@@ -158,7 +157,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Null(otlpSpan.Status);
             Assert.Empty(otlpSpan.Events);
             Assert.Empty(otlpSpan.Links);
-            AssertActivityTagsIntoOtlpAttributes(tags, otlpSpan.Attributes);
+            AssertActivityTagsIntoOtlpAttributes(attributes, otlpSpan.Attributes);
 
             var expectedStartTimeUnixNano = 100 * expectedUnixTimeTicks;
             Assert.Equal(expectedStartTimeUnixNano, otlpSpan.StartTimeUnixNano);
@@ -205,7 +204,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         private static void AssertActivityTagsIntoOtlpAttributes(
-            List<KeyValuePair<string, string>> expectedTags,
+            List<KeyValuePair<string, object>> expectedTags,
             RepeatedField<OtlpCommon.AttributeKeyValue> otlpAttributes)
         {
             Assert.Equal(expectedTags.Count, otlpAttributes.Count);
@@ -233,19 +232,24 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             switch (originalValue)
             {
                 case string s:
-                    Assert.Equal(akv.StringValue, s);
+                    Assert.Equal(s, akv.StringValue);
+                    Assert.Equal(OtlpCommon.AttributeKeyValue.Types.ValueType.String, akv.Type);
                     break;
                 case bool b:
-                    Assert.Equal(akv.BoolValue, b);
+                    Assert.Equal(b, akv.BoolValue);
+                    Assert.Equal(OtlpCommon.AttributeKeyValue.Types.ValueType.Bool, akv.Type);
                     break;
                 case long l:
-                    Assert.Equal(akv.IntValue, l);
+                    Assert.Equal(l, akv.IntValue);
+                    Assert.Equal(OtlpCommon.AttributeKeyValue.Types.ValueType.Int, akv.Type);
                     break;
                 case double d:
-                    Assert.Equal(akv.DoubleValue, d);
+                    Assert.Equal(d, akv.DoubleValue);
+                    Assert.Equal(OtlpCommon.AttributeKeyValue.Types.ValueType.Double, akv.Type);
                     break;
                 default:
-                    Assert.Equal(akv.StringValue, originalValue?.ToString());
+                    Assert.Equal(originalValue.ToString(), akv.StringValue);
+                    Assert.Equal(OtlpCommon.AttributeKeyValue.Types.ValueType.String, akv.Type);
                     break;
             }
         }
