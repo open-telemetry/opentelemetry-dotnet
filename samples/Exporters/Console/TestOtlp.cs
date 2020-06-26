@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -36,9 +37,18 @@ namespace Samples
 
         private static object RunWithSdk(string endpoint)
         {
+            var headers = new Metadata
+            {
+                { "test", "test-header" },
+            };
+
             using var tracerFactory = TracerFactory.Create(builder => builder
                 .SetResource(Resources.CreateServiceResource("otlp-test"))
-                .UseOpenTelemetryProtocolExporter(config => config.Endpoint = endpoint));
+                .UseOpenTelemetryProtocolExporter(config =>
+                {
+                    config.Endpoint = endpoint;
+                    config.Headers = headers;
+                }));
             var tracer = tracerFactory.GetTracer("otlp.test.tracer");
 
             using (tracer.StartActiveSpan("parent", out var parent))
