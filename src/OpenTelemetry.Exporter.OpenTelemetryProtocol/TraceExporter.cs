@@ -35,6 +35,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     {
         private readonly Channel channel;
         private readonly OtlpCollector.TraceService.TraceServiceClient traceClient;
+        private readonly Metadata headers;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TraceExporter"/> class.
@@ -42,6 +43,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// <param name="options">Configuration options for the exporter.</param>
         internal TraceExporter(ExporterOptions options)
         {
+            this.headers = options.Headers;
             this.channel = new Channel(options.Endpoint, options.Credentials);
             this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
         }
@@ -55,7 +57,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 
             try
             {
-                await this.traceClient.ExportAsync(spanExportRequest, cancellationToken: cancellationToken);
+                await this.traceClient.ExportAsync(spanExportRequest, headers: this.headers, cancellationToken: cancellationToken);
             }
             catch (RpcException ex)
             {
