@@ -14,11 +14,6 @@ jobs:
   pool:
     vmImage: 'windows-latest'
   steps:
-  - task: UseDotNet@2
-    displayName: force use of desired dotnet version
-    inputs:
-      version: $(DotNetVersion)
-
   # "restore" is run automatically by "build"
   - task: VSBuild@1
     displayName: build solution using VS (Release)
@@ -43,11 +38,6 @@ jobs:
   pool:
     vmImage: 'ubuntu-latest'
   steps:
-  - task: UseDotNet@2
-    displayName: force use of desired dotnet version
-    inputs:
-      version: $(DotNetVersion)
-
   # "restore" is run automatically by "build"
   - task: DotNetCoreCLI@2
     displayName: build solution using CLI (Release)
