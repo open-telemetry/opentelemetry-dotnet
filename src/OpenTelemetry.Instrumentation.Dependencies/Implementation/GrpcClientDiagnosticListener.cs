@@ -65,11 +65,20 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 activity.AddTag("rpc.system", "grpc");
 
                 var match = GrpcMethodRegex.Match(grpcMethod);
-                var rpcService = match.Groups["service"].Value;
-                var rpcMethod = match.Groups["method"].Value;
+                if (match.Success)
+                {
+                    var rpcService = match.Groups["service"].Value;
+                    if (!string.IsNullOrEmpty(rpcService))
+                    {
+                        activity.AddTag("rpc.service", rpcService);
+                    }
 
-                activity.AddTag("rpc.service", rpcService);
-                activity.AddTag("rpc.method", rpcMethod);
+                    var rpcMethod = match.Groups["method"].Value;
+                    if (!string.IsNullOrEmpty(rpcMethod))
+                    {
+                        activity.AddTag("rpc.method", rpcMethod);
+                    }
+                }
 
                 var uriHostNameType = Uri.CheckHostName(request.RequestUri.Host);
                 if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
