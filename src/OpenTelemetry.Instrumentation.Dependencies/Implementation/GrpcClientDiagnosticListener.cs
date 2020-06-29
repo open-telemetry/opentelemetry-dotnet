@@ -62,6 +62,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if (activity.IsAllDataRequested)
             {
+                activity.AddTag("rpc.system", "grpc");
                 var rpcService = GrpcMethodRegex.Match(grpcMethod).Groups["service"].Value;
 
                 activity.AddTag("rpc.service", rpcService);
