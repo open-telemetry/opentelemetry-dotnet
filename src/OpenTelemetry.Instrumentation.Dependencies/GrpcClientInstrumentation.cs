@@ -32,6 +32,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <param name="activitySource">ActivitySource adapter instance.</param>
         public GrpcClientInstrumentation(ActivitySourceAdapter activitySource)
         {
+            if (activitySource == null)
+            {
+                throw new ArgumentNullException(nameof(activitySource));
+            }
+
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new GrpcClientDiagnosticListener(activitySource), null);
             this.diagnosticSourceSubscriber.Subscribe();
         }

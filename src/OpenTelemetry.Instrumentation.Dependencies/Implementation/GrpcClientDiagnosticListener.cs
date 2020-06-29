@@ -32,6 +32,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource)
             : base("Grpc.Net.Client", null)
         {
+            if (activitySource == null)
+            {
+                throw new ArgumentNullException(nameof(activitySource));
+            }
+
             this.activitySource = activitySource;
         }
 
