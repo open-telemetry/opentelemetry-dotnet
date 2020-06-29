@@ -102,6 +102,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentati
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests", "test\OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests\OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj", "{7C4026CA-6434-4762-8B77-D657EAEE1325}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.GrpcClient.Tests", "test\OpenTelemetry.Instrumentation.GrpcClient.Tests\OpenTelemetry.Instrumentation.GrpcClient.Tests.csproj", "{305E9DFD-E73B-4A28-8769-795C25551020}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -228,6 +230,10 @@ Global
 		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Release|Any CPU.Build.0 = Release|Any CPU
+		{305E9DFD-E73B-4A28-8769-795C25551020}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{305E9DFD-E73B-4A28-8769-795C25551020}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{305E9DFD-E73B-4A28-8769-795C25551020}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{305E9DFD-E73B-4A28-8769-795C25551020}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
