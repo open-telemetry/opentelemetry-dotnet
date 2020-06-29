@@ -19,9 +19,8 @@
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
 
     <PackageReference Include="Google.Protobuf" Version="3.12.3" />
-    <PackageReference Include="Grpc.Core" Version="2.30.0" />
-    <PackageReference Include="Grpc.Net.Client" Version="2.30.0-pre1" />
-    <PackageReference Include="Grpc.Tools" Version="2.30.0" PrivateAssets="All" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.25.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.25.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
