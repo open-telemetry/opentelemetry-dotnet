@@ -36,7 +36,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Internal.Tests
         {
             var handler = TestHttpMessageHandler.Create(sendAsync);
             var httpClient = new HttpClient(handler);
-            httpClient.BaseAddress = baseAddress ?? new Uri("https://[::1]");
+            httpClient.BaseAddress = baseAddress ?? new Uri("https://localhost");
 
             return httpClient;
         }
