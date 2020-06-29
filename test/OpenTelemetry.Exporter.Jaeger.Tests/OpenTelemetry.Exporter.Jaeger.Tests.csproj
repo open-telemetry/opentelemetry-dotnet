@@ -2,7 +2,8 @@
   <PropertyGroup>
     <Description>Unit test project for Jaeger Exporter for OpenTelemetry</Description>
     <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
-    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
+    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net46</TargetFrameworks>
+
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
