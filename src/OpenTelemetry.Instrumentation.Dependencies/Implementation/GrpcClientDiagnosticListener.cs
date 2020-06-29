@@ -25,6 +25,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
+        // The Grpc.Net.Client library adds its own tags to the activity.
+        // These tags are used to source the tags added by the OpenTelemetry instrumentation.
+        private const string GrpcMethodTagName = "grpc.method";
+        private const string GrpcStatusCodeTagName = "grpc.status_code";
+
         private static readonly Regex GrpcMethodRegex = new Regex(@"(?<service>\w+)/(?<method>\w+)", RegexOptions.Compiled);
         private static readonly PropertyInfo ActivityKindPropertyInfo = typeof(Activity).GetProperty("Kind");
 
@@ -51,7 +56,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 return;
             }
 
-            var grpcMethodTag = activity.Tags.FirstOrDefault(tag => tag.Key == "grpc.method");
+            var grpcMethodTag = activity.Tags.FirstOrDefault(tag => tag.Key == GrpcMethodTagName);
             var grpcMethod = grpcMethodTag.Value?.Trim('/');
 
             // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
@@ -100,7 +105,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             {
                 var status = Status.Unknown;
 
-                var grpcStatusCodeTag = activity.Tags.FirstOrDefault(tag => tag.Key == "grpc.status_code").Value;
+                var grpcStatusCodeTag = activity.Tags.FirstOrDefault(tag => tag.Key == GrpcStatusCodeTagName).Value;
                 if (int.TryParse(grpcStatusCodeTag, out var statusCode))
                 {
                     status = SpanHelper.ResolveSpanStatusForGrpcStatusCode(statusCode);
