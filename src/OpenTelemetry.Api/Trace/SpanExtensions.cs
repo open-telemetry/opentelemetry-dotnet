@@ -207,27 +207,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Helper method that populates span properties from RPC status code according
-        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#status.
-        /// </summary>
-        /// <param name="span">Span to fill out.</param>
-        /// <param name="statusCode">RPC status code.</param>
-        /// <returns>Span with populated properties.</returns>
-        public static TelemetrySpan PutRpcStatusCode(this TelemetrySpan span, int statusCode)
-        {
-            if (typeof(StatusCanonicalCode).IsEnumDefined(statusCode))
-            {
-                span.Status = new Status((StatusCanonicalCode)statusCode);
-            }
-            else
-            {
-                span.Status = Status.Unknown;
-            }
-
-            return span;
-        }
-
-        /// <summary>
         /// Helper method that populates database type
         /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-database.md.
         /// </summary>
