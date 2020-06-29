@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
-        private static readonly Regex GrpcMethodRegex = new Regex(@"((?<package>\w+)\.)?(?<service>\w+)/(?<method>\w+)", RegexOptions.Compiled);
+        private static readonly Regex GrpcMethodRegex = new Regex(@"(?<service>\w+)/(?<method>\w+)", RegexOptions.Compiled);
 
         private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
