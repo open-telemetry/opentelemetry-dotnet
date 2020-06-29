@@ -17,6 +17,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Trace;
 
@@ -28,6 +29,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
+        private readonly PropertyInfo activityKindPropertyInfo = typeof(Activity).GetProperty("Kind");
 
         public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource)
             : base("Grpc.Net.Client", null)
@@ -53,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             var grpcMethod = grpcMethodTag.Value?.Trim('/');
 
             // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Client);
+            this.activityKindPropertyInfo.SetValue(activity, ActivityKind.Client);
             activity.DisplayName = grpcMethod;
 
             this.activitySource.Start(activity);
