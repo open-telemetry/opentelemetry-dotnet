@@ -50,7 +50,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             using (OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder
                     .AddGrpcClientDependencyInstrumentation()
-                    .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var httpClient = ClientTestHelpers.CreateTestClient(
                     async httpRequestMessage =>

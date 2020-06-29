@@ -71,7 +71,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                             opt.CaptureTextCommandContent = captureTextCommandContent;
                             opt.CaptureStoredProcedureCommandName = captureStoredProcedureCommandName;
                             })
-                    .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var operationId = Guid.NewGuid();
                 var sqlConnection = new SqlConnection(TestConnectionString);
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddSqlClientDependencyInstrumentation()
-                .SetProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+                .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var operationId = Guid.NewGuid();
                 var sqlConnection = new SqlConnection(TestConnectionString);
