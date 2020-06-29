@@ -26,10 +26,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
         private static readonly Regex GrpcMethodRegex = new Regex(@"(?<service>\w+)/(?<method>\w+)", RegexOptions.Compiled);
+        private static readonly PropertyInfo ActivityKindPropertyInfo = typeof(Activity).GetProperty("Kind");
 
         private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
-        private readonly PropertyInfo activityKindPropertyInfo = typeof(Activity).GetProperty("Kind");
 
         public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource)
             : base("Grpc.Net.Client", null)
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             var grpcMethod = grpcMethodTag.Value?.Trim('/');
 
             // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            this.activityKindPropertyInfo.SetValue(activity, ActivityKind.Client);
+            ActivityKindPropertyInfo.SetValue(activity, ActivityKind.Client);
             activity.DisplayName = grpcMethod;
 
             this.activitySource.Start(activity);
