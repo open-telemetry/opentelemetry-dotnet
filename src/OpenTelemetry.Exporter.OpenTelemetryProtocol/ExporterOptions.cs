@@ -1,4 +1,4 @@
-// <copyright file="ExporterOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ExporterOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,5 +34,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// The default is "insecure". See detais at https://grpc.io/docs/guides/auth/#credential-types.
         /// </summary>
         public ChannelCredentials Credentials { get; set; } = ChannelCredentials.Insecure;
+
+        /// <summary>
+        /// Gets or sets optional headers for the connection.
+        /// </summary>
+        public Metadata Headers { get; set; } = new Metadata();
     }
 }

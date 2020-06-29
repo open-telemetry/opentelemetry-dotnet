@@ -1,4 +1,4 @@
-// <copyright file="ActivityExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ActivityExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                 var otlpResources = new OtlpResource.Resource();
                 otlpResources.Attributes.AddRange(
-                    resource.Key.Attributes.Select(ToOtlpAttribute));
+                    resource.Key.Attributes.Select(ToOtlpAttribute).Where(a => a != null));
 
                 var otlpResourceSpans = new OtlpTrace.ResourceSpans
                 {
@@ -114,12 +114,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (var kvp in activity.Tags)
             {
-                // TODO: attempt to convert to supported types?
-                // TODO: enforce no duplicate keys?
-                // TODO: drop if Value is null?
-                // TODO: reverse?
-                var attrib = new OtlpCommon.AttributeKeyValue { Key = kvp.Key, StringValue = kvp.Value };
-                otlpSpan.Attributes.Add(attrib);
+                var attribute = ToOtlpAttribute(kvp);
+                if (attribute != null)
+                {
+                    otlpSpan.Attributes.Add(attribute);
+                }
             }
 
             otlpSpan.Events.AddRange(activity.Events.Select(ToOtlpEvent));
@@ -184,7 +183,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
             };
 
-            otlpLink.Attributes.AddRange(activityLink.Attributes.Select(ToOtlpAttribute));
+            otlpLink.Attributes.AddRange(activityLink.Attributes.Select(ToOtlpAttribute).Where(a => a != null));
 
             return otlpLink;
         }
@@ -197,30 +196,86 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 TimeUnixNano = (ulong)activityEvent.Timestamp.ToUnixTimeNanoseconds(),
             };
 
-            otlpEvent.Attributes.AddRange(activityEvent.Attributes.Select(ToOtlpAttribute));
+            otlpEvent.Attributes.AddRange(activityEvent.Attributes.Select(ToOtlpAttribute).Where(a => a != null));
 
             return otlpEvent;
         }
 
+        private static OtlpCommon.AttributeKeyValue ToOtlpAttribute(KeyValuePair<string, string> kvp)
+        {
+            // TODO: enforce no duplicate keys?
+            // TODO: reverse?
+            // To maintain full fidelity to downstream receivers convert to the proper attribute types
+
+            if (kvp.Value == null)
+            {
+                return null;
+            }
+
+            var attrib = new OtlpCommon.AttributeKeyValue { Key = kvp.Key };
+
+            if (long.TryParse(kvp.Value, out var longValue))
+            {
+                attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Int;
+                attrib.IntValue = longValue;
+            }
+            else if (double.TryParse(kvp.Value, out var doubleValue))
+            {
+                attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Double;
+                attrib.DoubleValue = doubleValue;
+            }
+            else if (bool.TryParse(kvp.Value, out var boolValue))
+            {
+                attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Bool;
+                attrib.BoolValue = boolValue;
+            }
+            else
+            {
+                attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.String;
+                attrib.StringValue = kvp.Value;
+            }
+
+            return attrib;
+        }
+
         private static OtlpCommon.AttributeKeyValue ToOtlpAttribute(KeyValuePair<string, object> kvp)
         {
+            if (kvp.Value == null)
+            {
+                return null;
+            }
+
+            var attrib = new OtlpCommon.AttributeKeyValue { Key = kvp.Key };
+
             switch (kvp.Value)
             {
                 case string s:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, StringValue = s };
+                    attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.String;
+                    attrib.StringValue = s;
+                    break;
                 case bool b:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, BoolValue = b };
+                    attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Bool;
+                    attrib.BoolValue = b;
+                    break;
+                case int i:
+                    attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Int;
+                    attrib.IntValue = i;
+                    break;
                 case long l:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, IntValue = l };
+                    attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Int;
+                    attrib.IntValue = l;
+                    break;
                 case double d:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, DoubleValue = d };
+                    attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Double;
+                    attrib.DoubleValue = d;
+                    break;
                 default:
-                    return new OtlpCommon.AttributeKeyValue
-                    {
-                        Key = kvp.Key,
-                        StringValue = kvp.Value?.ToString(),
-                    };
+                    attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.String;
+                    attrib.StringValue = kvp.Value.ToString();
+                    break;
             }
+
+            return attrib;
         }
     }
 }
