@@ -226,12 +226,11 @@ namespace OpenTelemetry.Trace.Export.Test
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, 128);
 
             var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
-                .AddActivitySource("test.source")
+                .AddActivitySource(ActivitySourceName)
                 .SetSampler(new AlwaysOnActivitySampler())
                 .AddProcessorPipeline(pp => pp.AddProcessor(ap => activityProcessor)));
 
-            var source = new ActivitySource("test.source");
-            var activity = source.StartActivity("foo");
+            var activity = Source.StartActivity("foo");
 
             // does not block
             var sw = Stopwatch.StartNew();
