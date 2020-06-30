@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace.Test
 
         public TracerTest()
         {
-            this.spanProcessor = new SimpleSpanProcessor(new TestExporter(null));
+            this.spanProcessor = new SimpleSpanProcessor(new TestSpanExporter(null));
             this.tracerConfiguration = new TracerConfiguration();
             this.tracerFactory = TracerFactory.Create(b => b
                     .AddProcessorPipeline(p => p.AddProcessor(_ => this.spanProcessor)));
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void BadConstructorArgumentsThrow()
         {
-            var noopProc = new SimpleSpanProcessor(new TestExporter(null));
+            var noopProc = new SimpleSpanProcessor(new TestSpanExporter(null));
             Assert.Throws<ArgumentNullException>(() => new TracerSdk(null, new AlwaysOnSampler(), new TracerConfiguration(), Resource.Empty));
             Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysOnSampler(), null, Resource.Empty));
             Assert.Throws<ArgumentNullException>(() => new TracerSdk(noopProc, new AlwaysOnSampler(), new TracerConfiguration(), null));

@@ -167,10 +167,10 @@ namespace OpenTelemetry.Trace.Export.Test
                     () =>
                     {
                         Thread.Sleep(0);
-                        return exporter.ExportedSpans.Length >= spanCount;
+                        return exporter.ExportedActivities.Length >= spanCount;
                     }, timeout + TimeSpan.FromMilliseconds(20)));
 
-            return exporter.ExportedSpans;
+            return exporter.ExportedActivities;
         }
     }
 }
