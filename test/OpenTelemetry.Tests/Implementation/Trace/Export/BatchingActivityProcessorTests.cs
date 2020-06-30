@@ -191,7 +191,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Contains(activity6, exported);
         }
 
-        [Fact]
+        [Fact(Skip = "Reenable once AlwaysParentActivitySampler is added")]
         public void ExportNotSampledActivities()
         {
             int exportCalledCount = 0;
@@ -201,8 +201,9 @@ namespace OpenTelemetry.Trace.Export.Test
                                     .SetSampler(new AlwaysOffActivitySampler())
                                     .AddActivitySource(ActivitySourceName)
                                     .AddProcessorPipeline(pp => pp.AddProcessor(ap => activityProcessor)));
-            var activity1 = this.CreateActivity(ActivityName1);
-            var activity2 = this.CreateActivity(ActivityName2);
+
+            var activity1 = this.CreateSampledEndedActivity(ActivityName1);
+            var activity2 = this.CreateNotSampledEndedActivity(ActivityName2);
 
             // Activities are recorded and exported in the same order as they are created, we test that a non
             // sampled activity is not exported by creating and ending a sampled activity after a non sampled activity
@@ -348,6 +349,24 @@ namespace OpenTelemetry.Trace.Export.Test
         private Activity CreateActivity(string activityName)
         {
             var activity = Source.StartActivity(activityName);
+            activity?.Stop();
+            return activity;
+        }
+
+        private Activity CreateSampledEndedActivity(string activityName)
+        {
+            var context = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+
+            var activity = Source.StartActivity(activityName, ActivityKind.Internal, context);
+            activity.Stop();
+            return activity;
+        }
+
+        private Activity CreateNotSampledEndedActivity(string activityName)
+        {
+            var context = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+
+            var activity = Source.StartActivity(activityName, ActivityKind.Server, context);
             activity?.Stop();
             return activity;
         }
