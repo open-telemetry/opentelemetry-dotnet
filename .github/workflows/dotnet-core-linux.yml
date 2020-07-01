@@ -1,0 +1,30 @@
+name: .NET Linux
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        version: [netcoreapp3.1]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Test ${{ matrix.version }}
+      run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll
