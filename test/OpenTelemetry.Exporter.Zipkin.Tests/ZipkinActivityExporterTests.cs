@@ -27,6 +27,8 @@ using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests
@@ -127,6 +129,30 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 Responses[requestId]);
         }
 
+        [Fact]
+        public void UseZipkinActivityExporterWithCustomActivityProcessor()
+        {
+            const string ActivitySourceName = "zipkin.test";
+            Guid requestId = Guid.NewGuid();
+
+            var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+                            .AddActivitySource(ActivitySourceName)
+                            .UseZipkinActivityExporter(
+                                o =>
+                            {
+                                o.ServiceName = "test-zipkin";
+                                o.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
+                            }, p => p.AddProcessor((next) => new TestProcessor(next))));
+
+            var source = new ActivitySource(ActivitySourceName);
+            var activity = source.StartActivity("Test Zipkin Activity");
+            activity?.Stop();
+
+            Assert.Equal("zipkinCustomTag", activity?.Tags.FirstOrDefault().Key);
+            Thread.Sleep(300); // Wait for exporter to complete ExecuteAsync.
+            Assert.NotNull(Responses[requestId]);
+        }
+
         internal static Activity CreateTestActivity(
            bool setAttributes = true,
            Dictionary<string, object> additionalAttributes = null,
@@ -214,6 +240,32 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             activity.Stop();
 
             return activity;
+        }
+
+        internal class TestProcessor : ActivityProcessor
+        {
+            private ActivityProcessor next;
+
+            public TestProcessor(ActivityProcessor next)
+            {
+                this.next = next;
+            }
+
+            public override void OnEnd(Activity activity)
+            {
+                this.next.OnEnd(activity);
+            }
+
+            public override void OnStart(Activity activity)
+            {
+                activity.AddTag("zipkinCustomTag", "Custom Tag Value for zipkin");
+                this.next.OnStart(activity);
+            }
+
+            public override Task ShutdownAsync(CancellationToken cancellationToken)
+            {
+                return this.next.ShutdownAsync(cancellationToken);
+            }
         }
     }
 }

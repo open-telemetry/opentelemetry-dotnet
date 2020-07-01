@@ -15,19 +15,22 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Exporter.Zipkin;
 
-namespace OpenTelemetry.Exporter.Console
+namespace OpenTelemetry.Trace.Configuration
 {
+    /// <summary>
+    /// Extension methods to simplify registering of Zipkin exporter.
+    /// </summary>
     public static class OpenTelemetryBuilderExtensions
     {
         /// <summary>
-        /// Adds new processing pipeline and registers a ConsoleActivity exporter to it.
+        /// Registers a Zipkin exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
         /// </summary>
-        /// <param name="builder">Open Telemetry builder to use.</param>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseConsoleActivityExporter(this OpenTelemetryBuilder builder, Action<ConsoleActivityExporterOptions> configure)
+        public static OpenTelemetryBuilder UseZipkinActivityExporter(this OpenTelemetryBuilder builder, Action<ZipkinTraceExporterOptions> configure)
         {
             if (builder == null)
             {
@@ -39,20 +42,24 @@ namespace OpenTelemetry.Exporter.Console
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            var exporterOptions = new ConsoleActivityExporterOptions();
-            configure(exporterOptions);
-            var consoleExporter = new ConsoleActivityExporter(exporterOptions);
-            return builder.AddProcessorPipeline(pipeline => pipeline.SetExporter(consoleExporter));
+            return builder.AddProcessorPipeline(pipeline =>
+            {
+                var options = new ZipkinTraceExporterOptions();
+                configure(options);
+
+                var activityExporter = new ZipkinActivityExporter(options);
+                pipeline.SetExporter(activityExporter);
+            });
         }
 
         /// <summary>
-        /// Registers a ConsoleActivity exporter to a processing pipeline.
+        /// Registers a Zipkin exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
         /// </summary>
         /// <param name="builder"><see cref="OpenTelemetryBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseConsoleActivityExporter(this OpenTelemetryBuilder builder, Action<ConsoleActivityExporterOptions> configure, Action<ActivityProcessorPipelineBuilder> processorConfigure)
+        public static OpenTelemetryBuilder UseZipkinActivityExporter(this OpenTelemetryBuilder builder, Action<ZipkinTraceExporterOptions> configure, Action<ActivityProcessorPipelineBuilder> processorConfigure)
         {
             if (builder == null)
             {
@@ -71,10 +78,10 @@ namespace OpenTelemetry.Exporter.Console
 
             return builder.AddProcessorPipeline(pipeline =>
             {
-                var options = new ConsoleActivityExporterOptions();
+                var options = new ZipkinTraceExporterOptions();
                 configure(options);
 
-                var activityExporter = new ConsoleActivityExporter(options);
+                var activityExporter = new ZipkinActivityExporter(options);
                 pipeline.SetExporter(activityExporter);
                 processorConfigure(pipeline);
             });

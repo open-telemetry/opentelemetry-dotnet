@@ -32,10 +32,8 @@ namespace Samples
             // and use a single pipeline with a custom MyProcessor, and Console exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
-                .AddProcessorPipeline(
-                    (p) =>
-                    p.AddProcessor((next) => new MyProcessor(next))
-                    .UseConsoleActivityExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)));
+                    .UseConsoleActivityExporter(opt => opt.DisplayAsJson = options.DisplayAsJson,
+                                                (p) => p.AddProcessor((next) => new MyProcessor(next))));
 
             // The above line is required only in Applications
             // which decide to use OT.
