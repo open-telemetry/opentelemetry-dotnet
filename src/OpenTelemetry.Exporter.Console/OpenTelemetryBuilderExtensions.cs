@@ -71,11 +71,11 @@ namespace OpenTelemetry.Exporter.Console
 
             return builder.AddProcessorPipeline(pipeline =>
             {
-                var options = new ConsoleActivityExporterOptions();
-                configure(options);
+                var exporterOptions = new ConsoleActivityExporterOptions();
+                configure(exporterOptions);
 
-                var activityExporter = new ConsoleActivityExporter(options);
-                pipeline.SetExporter(activityExporter);
+                var consoleExporter = new ConsoleActivityExporter(exporterOptions);
+                pipeline.SetExporter(consoleExporter);
                 processorConfigure(pipeline);
             });
         }

@@ -149,7 +149,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             activity?.Stop();
 
             Assert.Equal("zipkinCustomTag", activity?.Tags.FirstOrDefault().Key);
-            Thread.Sleep(300); // Wait for exporter to complete ExecuteAsync.
+            Thread.Sleep(1000); // Wait for exporter to complete ExecuteAsync.
             Assert.NotNull(Responses[requestId]);
         }
 
@@ -251,15 +251,15 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 this.next = next;
             }
 
-            public override void OnEnd(Activity activity)
-            {
-                this.next.OnEnd(activity);
-            }
-
             public override void OnStart(Activity activity)
             {
                 activity.AddTag("zipkinCustomTag", "Custom Tag Value for zipkin");
                 this.next.OnStart(activity);
+            }
+
+            public override void OnEnd(Activity activity)
+            {
+                this.next.OnEnd(activity);
             }
 
             public override Task ShutdownAsync(CancellationToken cancellationToken)
