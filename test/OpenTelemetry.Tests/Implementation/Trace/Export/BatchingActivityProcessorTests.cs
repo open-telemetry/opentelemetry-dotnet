@@ -41,9 +41,9 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ThrowsOnInvalidArguments()
         {
             Assert.Throws<ArgumentNullException>(() => new BatchingActivityProcessor(null));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingActivityProcessor(new TestActivityExporter(null), 0, TimeSpan.FromSeconds(5), 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingActivityProcessor(new TestActivityExporter(null), 2048, TimeSpan.FromSeconds(5), 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingActivityProcessor(new TestActivityExporter(null), 512, TimeSpan.FromSeconds(5), 513));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingActivityProcessor(new TestActivityExporter(null), 0, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5), 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingActivityProcessor(new TestActivityExporter(null), 2048, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5), 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingActivityProcessor(new TestActivityExporter(null), 512, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5), 513));
         }
 
         [Fact]
@@ -57,10 +57,10 @@ namespace OpenTelemetry.Trace.Export.Test
         }
 
         [Fact]
-        public async Task ShutdownWithHugeScheduleDelay()
+        public async Task ShutdownWithHugeScheduledDelay()
         {
             using var activityProcessor =
-                new BatchingActivityProcessor(new TestActivityExporter(null), 128, TimeSpan.FromMinutes(1), 32);
+                new BatchingActivityProcessor(new TestActivityExporter(null), 128, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(100), 32);
             var sw = Stopwatch.StartNew();
             using (var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100)))
             {
@@ -73,10 +73,26 @@ namespace OpenTelemetry.Trace.Export.Test
         }
 
         [Fact]
+        public void CancelWithExporterTimeoutMilliSeconds()
+        {
+            var activityExporter = new TestActivityExporter(null);
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(0), TimeSpan.FromMilliseconds(0), 1);
+            var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+                            .AddActivitySource(ActivitySourceName)
+                            .SetSampler(new AlwaysOnActivitySampler())
+                            .AddProcessorPipeline(pp => pp.AddProcessor(ap => activityProcessor)));
+
+            var activity1 = this.CreateActivity(ActivityName1);
+
+            var exported = this.WaitForActivities(activityExporter, 0, DefaultTimeout);
+            Assert.Empty(exported);
+        }
+
+        [Fact]
         public void ExportDifferentSampledActivities()
         {
             var activityExporter = new TestActivityExporter(null);
-            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, 128);
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 128);
             var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                             .AddActivitySource(ActivitySourceName)
                             .SetSampler(new AlwaysOnActivitySampler())
@@ -104,7 +120,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 exportEndTimes.Add(Stopwatch.GetTimestamp());
             });
 
-            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(30), 2);
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(30), DefaultTimeout, 2);
             var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                 .AddActivitySource(ActivitySourceName)
                 .SetSampler(new AlwaysOnActivitySampler())
@@ -132,7 +148,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             int exportCalledCount = 0;
             var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
-            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 1, TimeSpan.FromMilliseconds(100), 1);
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 1, TimeSpan.FromMilliseconds(100), DefaultTimeout, 1);
             var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                 .AddActivitySource(ActivitySourceName)
                 .SetSampler(new AlwaysOnActivitySampler())
@@ -162,7 +178,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 Interlocked.Increment(ref exportCalledCount);
             });
 
-            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, 3);
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 3);
             var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                 .AddActivitySource(ActivitySourceName)
                 .SetSampler(new AlwaysOnActivitySampler())
@@ -196,7 +212,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             int exportCalledCount = 0;
             var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
-            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, 1);
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 1);
             var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                                     .SetSampler(new AlwaysOffActivitySampler())
                                     .AddActivitySource(ActivitySourceName)
@@ -223,7 +239,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var resetEvent = new ManualResetEvent(false);
             var activityExporter = new TestActivityExporter(_ => resetEvent.WaitOne(TimeSpan.FromSeconds(10)));
-            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, 128);
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 128);
 
             var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                 .AddActivitySource(ActivitySourceName)
@@ -253,7 +269,7 @@ namespace OpenTelemetry.Trace.Export.Test
             int exportCalledCount = 0;
             var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
             using var activityProcessor =
-                new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(100), batchSize);
+                new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(100), DefaultTimeout, batchSize);
             var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                                         .AddActivitySource(ActivitySourceName)
                                         .SetSampler(new AlwaysOnActivitySampler())
@@ -291,7 +307,7 @@ namespace OpenTelemetry.Trace.Export.Test
             });
 
             using var activityProcessor =
-                new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(100), batchSize);
+                new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(100), DefaultTimeout, batchSize);
             var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                                     .AddActivitySource(ActivitySourceName)
                                     .SetSampler(new AlwaysOnActivitySampler())
@@ -321,7 +337,7 @@ namespace OpenTelemetry.Trace.Export.Test
             int exportCalledCount = 0;
             var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
             var activities = new List<Activity>();
-            using (var batchingActivityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(100), batchSize))
+            using (var batchingActivityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(100), DefaultTimeout, batchSize))
             {
                 var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                                             .AddActivitySource(ActivitySourceName)

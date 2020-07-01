@@ -1,4 +1,4 @@
-// <copyright file="BatchingActivityProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="BatchingActivityProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,11 +31,13 @@ namespace OpenTelemetry.Trace.Export
     {
         private const int DefaultMaxQueueSize = 2048;
         private const int DefaultMaxExportBatchSize = 512;
-        private static readonly TimeSpan DefaultScheduleDelay = TimeSpan.FromMilliseconds(5000);
+        private static readonly TimeSpan DefaultScheduledDelayMillis = TimeSpan.FromMilliseconds(5000);
+        private static readonly TimeSpan DefaultExporterTimeoutMillis = TimeSpan.FromMilliseconds(30000);
         private readonly ConcurrentQueue<Activity> exportQueue;
         private readonly int maxQueueSize;
         private readonly int maxExportBatchSize;
-        private readonly TimeSpan scheduleDelay;
+        private readonly TimeSpan scheduledDelayMillis;
+        private readonly TimeSpan exporterTimeoutMillis;
         private readonly ActivityExporter exporter;
         private readonly List<Activity> batch = new List<Activity>();
         private CancellationTokenSource cts;
@@ -49,7 +51,10 @@ namespace OpenTelemetry.Trace.Export
         /// <description>maxQueueSize = 2048,</description>
         /// </item>
         /// <item>
-        /// <description>scheduleDelay = 5 sec,</description>
+        /// <description>scheduledDelayMillis = 5 sec,</description>
+        /// </item>
+        /// <item>
+        /// <description>exporterTimeoutMillis = 30 sec,</description>
         /// </item>
         /// <item>
         /// <description>maxExportBatchSize = 512</description>
@@ -58,7 +63,7 @@ namespace OpenTelemetry.Trace.Export
         /// </summary>
         /// <param name="exporter">Exporter instance.</param>
         public BatchingActivityProcessor(ActivityExporter exporter)
-            : this(exporter, DefaultMaxQueueSize, DefaultScheduleDelay, DefaultMaxExportBatchSize)
+            : this(exporter, DefaultMaxQueueSize, DefaultScheduledDelayMillis, DefaultExporterTimeoutMillis, DefaultMaxExportBatchSize)
         {
         }
 
@@ -67,9 +72,10 @@ namespace OpenTelemetry.Trace.Export
         /// </summary>
         /// <param name="exporter">Exporter instance.</param>
         /// <param name="maxQueueSize">Maximum queue size. After the size is reached activities are dropped by processor.</param>
-        /// <param name="scheduleDelay">The delay between two consecutive exports.</param>
+        /// <param name="scheduledDelayMillis">The delay between two consecutive exports.</param>
+        /// <param name="exporterTimeoutMillis">Maximum allowed time to export data.</param>
         /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize.</param>
-        public BatchingActivityProcessor(ActivityExporter exporter, int maxQueueSize, TimeSpan scheduleDelay, int maxExportBatchSize)
+        public BatchingActivityProcessor(ActivityExporter exporter, int maxQueueSize, TimeSpan scheduledDelayMillis, TimeSpan exporterTimeoutMillis, int maxExportBatchSize)
         {
             if (maxQueueSize <= 0)
             {
@@ -83,7 +89,8 @@ namespace OpenTelemetry.Trace.Export
 
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
             this.maxQueueSize = maxQueueSize;
-            this.scheduleDelay = scheduleDelay;
+            this.scheduledDelayMillis = scheduledDelayMillis;
+            this.exporterTimeoutMillis = exporterTimeoutMillis;
             this.maxExportBatchSize = maxExportBatchSize;
 
             this.cts = new CancellationTokenSource();
@@ -229,14 +236,17 @@ namespace OpenTelemetry.Trace.Export
             while (!cancellationToken.IsCancellationRequested)
             {
                 var sw = Stopwatch.StartNew();
-                await this.ExportBatchAsync(cancellationToken).ConfigureAwait(false);
+                using (var exportCancellationTokenSource = new CancellationTokenSource(this.exporterTimeoutMillis))
+                {
+                    await this.ExportBatchAsync(exportCancellationTokenSource.Token).ConfigureAwait(false);
+                }
 
                 if (cancellationToken.IsCancellationRequested)
                 {
                     return;
                 }
 
-                var remainingWait = this.scheduleDelay - sw.Elapsed;
+                var remainingWait = this.scheduledDelayMillis - sw.Elapsed;
                 if (remainingWait > TimeSpan.Zero)
                 {
                     await Task.Delay(remainingWait, cancellationToken).ConfigureAwait(false);
