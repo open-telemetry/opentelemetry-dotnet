@@ -16,9 +16,12 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Console;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 
 namespace Samples
 {
@@ -27,11 +30,14 @@ namespace Samples
         internal static object Run(ConsoleActivityOptions options)
         {
             // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
-            // and use Console exporter
+            // and use a single pipeline with a custom MyProcessor, and Console exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
                 .SetResource(Resources.CreateServiceResource("MyServiceName"))
-                .UseConsoleActivityExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
+                .AddProcessorPipeline(
+                    (p) =>
+                    p.AddProcessor((next) => new MyProcessor(next))
+                    .UseConsoleActivityExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)));
 
             // The above line is required only in Applications
             // which decide to use OT.
@@ -92,6 +98,43 @@ namespace Samples
             }
 
             return null;
+        }
+
+        internal class MyProcessor : ActivityProcessor
+        {
+            private ActivityProcessor next;
+
+            public MyProcessor(ActivityProcessor next)
+            {
+                this.next = next;
+            }
+
+            public override void OnEnd(Activity activity)
+            {
+                this.next.OnEnd(activity);
+            }
+
+            public override void OnStart(Activity activity)
+            {
+                if (activity.IsAllDataRequested)
+                {
+                    if (activity.Kind == ActivityKind.Server)
+                    {
+                        activity.AddTag("customServerTag", "Custom Tag Value for server");
+                    }
+                    else if (activity.Kind == ActivityKind.Client)
+                    {
+                        activity.AddTag("customClientTag", "Custom Tag Value for Client");
+                    }
+                }
+
+                this.next.OnStart(activity);
+            }
+
+            public override Task ShutdownAsync(CancellationToken cancellationToken)
+            {
+                return this.next.ShutdownAsync(cancellationToken);
+            }
         }
     }
 }

@@ -201,18 +201,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             switch (kvp.Value)
             {
                 case string s:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, StringValue = s };
+                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, Type = OtlpCommon.AttributeKeyValue.Types.ValueType.String, StringValue = s };
                 case bool b:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, BoolValue = b };
+                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Bool, BoolValue = b };
+                case int i:
+                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Int, IntValue = i };
                 case long l:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, IntValue = l };
+                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Int, IntValue = l };
                 case double d:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, DoubleValue = d };
+                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Double, DoubleValue = d };
                 default:
                     return new OtlpCommon.AttributeKeyValue
                     {
                         Key = kvp.Key,
-                        StringValue = kvp.Value?.ToString(),
+                        Type = OtlpCommon.AttributeKeyValue.Types.ValueType.String,
+                        StringValue = kvp.Value == null ? string.Empty : kvp.Value.ToString(),
                     };
             }
         }
