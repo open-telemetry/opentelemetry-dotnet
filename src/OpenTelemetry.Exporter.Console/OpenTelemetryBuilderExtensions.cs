@@ -22,7 +22,7 @@ namespace OpenTelemetry.Exporter.Console
     public static class OpenTelemetryBuilderExtensions
     {
         /// <summary>
-        /// Registers a ConsoleActivity exporter.
+        /// Adds new processing pipeline and registers a ConsoleActivity exporter to it.
         /// </summary>
         /// <param name="builder">Open Telemetry builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
@@ -43,6 +43,30 @@ namespace OpenTelemetry.Exporter.Console
             configure(exporterOptions);
             var consoleExporter = new ConsoleActivityExporter(exporterOptions);
             return builder.AddProcessorPipeline(pipeline => pipeline.SetExporter(consoleExporter));
+        }
+
+        /// <summary>
+        /// Registers a ConsoleActivity exporter to a processing pipeline.
+        /// </summary>
+        /// <param name="builder">ActivityProcessorPipelineBuilder to use.</param>
+        /// <param name="configure">Exporter configuration options.</param>
+        /// <returns>The instance of <see cref="ActivityProcessorPipelineBuilder"/> to chain the calls.</returns>
+        public static ActivityProcessorPipelineBuilder UseConsoleActivityExporter(this ActivityProcessorPipelineBuilder builder, Action<ConsoleActivityExporterOptions> configure)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            var exporterOptions = new ConsoleActivityExporterOptions();
+            configure(exporterOptions);
+            var consoleExporter = new ConsoleActivityExporter(exporterOptions);
+            return builder.SetExporter(consoleExporter);
         }
     }
 }
