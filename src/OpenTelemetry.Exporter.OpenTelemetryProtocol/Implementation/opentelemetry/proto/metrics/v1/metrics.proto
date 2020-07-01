@@ -118,49 +118,36 @@ message MetricDescriptor {
   // described by http://unitsofmeasure.org/ucum.html.
   string unit = 3;
 
-  // Type of the metric. It describes how the data is reported.
-  //
-  // A gauge is an instantaneous measurement of a value.
-  //
-  // A counter/cumulative measurement is a value accumulated over a time
-  // interval. In a time series, cumulative measurements should have the same
-  // start time, increasing values, until an event resets the cumulative value
-  // to zero and sets a new start time for the subsequent points.
+  // Type is the type of values a metric has.
   enum Type {
-    // Do not use this default value.
-    UNSPECIFIED = 0;
+    // INVALID_TYPE is the default Type, it MUST not be used.
+    INVALID_TYPE = 0;
 
-    // Integer gauge. The value can go both up and down over time.
-    // Corresponding values are stored in Int64DataPoint.
-    GAUGE_INT64 = 1;
+    // INT64 values are signed 64-bit integers.
+    //
+    // A Metric of this Type MUST store its values as Int64DataPoint.
+    INT64 = 1;
 
-    // Floating point gauge. The value can go both up and down over time.
-    // Corresponding values are stored in DoubleDataPoint.
-    GAUGE_DOUBLE = 2;
+    // MONOTONIC_INT64 values are monotonically increasing signed 64-bit
+    // integers.
+    //
+    // A Metric of this Type MUST store its values as Int64DataPoint.
+    MONOTONIC_INT64 = 2;
 
-    // Histogram gauge measurement.
-    // Used in scenarios like a snapshot of time that current items in a queue
-    // have spent there.
-    // Corresponding values are stored in HistogramDataPoint. The count and sum of the
-    // histogram can go both up and down over time. Recorded values are always >= 0.
-    GAUGE_HISTOGRAM = 3;
+    // DOUBLE values are double-precision floating-point numbers.
+    //
+    // A Metric of this Type MUST store its values as DoubleDataPoint.
+    DOUBLE = 3;
 
-    // Integer counter measurement. The value cannot decrease; if value is reset then
-    // start_time_unix_nano should also be reset.
-    // Corresponding values are stored in Int64DataPoint.
-    COUNTER_INT64 = 4;
+    // MONOTONIC_DOUBLE values are monotonically increasing double-precision
+    // floating-point numbers.
+    //
+    // A Metric of this Type MUST store its values as DoubleDataPoint.
+    MONOTONIC_DOUBLE = 4;
 
-    // Floating point counter measurement. The value cannot decrease, if
-    // resets then the start_time_unix_nano should also be reset.
-    // Recorded values are always >= 0.
-    // Corresponding values are stored in DoubleDataPoint.
-    COUNTER_DOUBLE = 5;
-
-    // Histogram cumulative measurement.
-    // Corresponding values are stored in HistogramDataPoint. The count and sum of the
-    // histogram cannot decrease; if values are reset then start_time_unix_nano
-    // should also be reset to the new start timestamp.
-    CUMULATIVE_HISTOGRAM = 6;
+    // Histogram measurement.
+    // Corresponding values are stored in HistogramDataPoint.
+    HISTOGRAM = 5;
 
     // Summary value. Some frameworks implemented Histograms as a summary of observations
     // (usually things like request durations and response sizes). While it
@@ -168,13 +155,88 @@ message MetricDescriptor {
     // values, it calculates configurable percentiles over a sliding time
     // window.
     // Corresponding values are stored in SummaryDataPoint.
-    SUMMARY = 7;
+    SUMMARY = 6;
   }
+
+  // type is the type of values this metric has.
   Type type = 4;
 
-  // The set of labels associated with the metric descriptor. Labels in this list apply to
-  // all data points.
-  repeated opentelemetry.proto.common.v1.StringKeyValue labels = 5;
+  // Temporality is the temporal quality values of a metric have. It
+  // describes how those values relate to the time interval over which they
+  // are reported.
+  enum Temporality {
+    // INVALID_TEMPORALITY is the default Temporality, it MUST not be
+    // used.
+    INVALID_TEMPORALITY = 0;
+
+    // INSTANTANEOUS is a metric whose values are measured at a particular
+    // instant. The values are not aggregated over any time interval and are
+    // unique per timestamp. As such, these metrics are not expected to have
+    // an associated start time.
+    INSTANTANEOUS = 1;
+
+    // DELTA is a metric whose values are the aggregation of measurements
+    // made over a time interval. Successive metrics contain aggregation of
+    // values from continuous and non-overlapping intervals.
+    //
+    // The values for a DELTA metric are based only on the time interval
+    // associated with one measurement cycle. There is no dependency on
+    // previous measurements like is the case for CUMULATIVE metrics.
+    //
+    // For example, consider a system measuring the number of requests that
+    // it receives and reports the sum of these requests every second as a
+    // DELTA metric:
+    //
+    //   1. The system starts receiving at time=t_0.
+    //   2. A request is received, the system measures 1 request.
+    //   3. A request is received, the system measures 1 request.
+    //   4. A request is received, the system measures 1 request.
+    //   5. The 1 second collection cycle ends. A metric is exported for the
+    //      number of requests received over the interval of time t_0 to
+    //      t_0+1 with a value of 3.
+    //   6. A request is received, the system measures 1 request.
+    //   7. A request is received, the system measures 1 request.
+    //   8. The 1 second collection cycle ends. A metric is exported for the
+    //      number of requests received over the interval of time t_0+1 to
+    //      t_0+2 with a value of 2.
+    DELTA = 2;
+
+    // CUMULATIVE is a metric whose values are the aggregation of
+    // successively made measurements from a fixed start time until the last
+    // reported measurement. This means that current values of a CUMULATIVE
+    // metric depend on all previous measurements since the start time.
+    // Because of this, the sender is required to retain this state in some
+    // form. If this state is lost or invalidated, the CUMULATIVE metric
+    // values MUST be reset and a new fixed start time following the last
+    // reported measurement time sent MUST be used.
+    //
+    // For example, consider a system measuring the number of requests that
+    // it receives and reports the sum of these requests every second as a
+    // CUMULATIVE metric:
+    //
+    //   1. The system starts receiving at time=t_0.
+    //   2. A request is received, the system measures 1 request.
+    //   3. A request is received, the system measures 1 request.
+    //   4. A request is received, the system measures 1 request.
+    //   5. The 1 second collection cycle ends. A metric is exported for the
+    //      number of requests received over the interval of time t_0 to
+    //      t_0+1 with a value of 3.
+    //   6. A request is received, the system measures 1 request.
+    //   7. A request is received, the system measures 1 request.
+    //   8. The 1 second collection cycle ends. A metric is exported for the
+    //      number of requests received over the interval of time t_0 to
+    //      t_0+2 with a value of 5.
+    //   9. The system experiences a fault and loses state.
+    //   10. The system recovers and resumes receiving at time=t_1.
+    //   11. A request is received, the system measures 1 request.
+    //   12. The 1 second collection cycle ends. A metric is exported for the
+    //      number of requests received over the interval of time t_1 to
+    //      t_0+1 with a value of 1.
+    CUMULATIVE = 3;
+  }
+
+  // temporality is the Temporality of values this metric has.
+  Temporality temporality = 5;
 }
 
 // Int64DataPoint is a single data point in a timeseries that describes the time-varying
