@@ -1,4 +1,5 @@
 # OpenTelemetry .NET
+
 [![Gitter chat](https://img.shields.io/gitter/room/opentelemetry/opentelemetry-dotnet)](https://gitter.im/open-telemetry/opentelemetry-dotnet)
 [![Build Status](https://dev.azure.com/opentelemetry/pipelines/_apis/build/status/open-telemetry.opentelemetry-dotnet-myget-update?branchName=master)](https://dev.azure.com/opentelemetry/pipelines/_build/latest?definitionId=2&branchName=master)
 
@@ -7,7 +8,7 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 ## Installation
 
 This repository includes multiple installable packages. The `OpenTelemetry.Api`
-package includes abstract classes and no-op implementations for the [OpenTelemetry API 
+package includes abstract classes and no-op implementations for the [OpenTelemetry API
 specification](https://github.com/open-telemetry/opentelemetry-specification).
 
 The `OpenTelemetry` package is the reference implementation of the API.
@@ -20,6 +21,7 @@ depend on `OpenTelemetry` or another package that implements the API.
 generally be used in production environments.
 
 The API and SDK packages are available on the following NuGet feeds:
+
 * [MyGet V2](https://www.myget.org/F/opentelemetry/api/v2)
 * [MyGet V3](https://www.myget.org/F/opentelemetry/api/v3/index.json)
 
@@ -43,23 +45,24 @@ Meeting notes are available as a public [Google doc](https://docs.google.com/doc
 
 Approvers ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
-- [Bruno Garcia](https://github.com/bruno-garcia), Sentry
-- [Christoph Neumueller](https://github.com/discostu105), Dynatrace
-- [Liudmila Molkova](https://github.com/lmolkova), Microsoft
-- [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group
-- [Paulo Janotti](https://github.com/pjanotti), Splunk
+* [Bruno Garcia](https://github.com/bruno-garcia), Sentry
+* [Christoph Neumueller](https://github.com/discostu105), Dynatrace
+* [Eddy Nakamura](https://github.com/eddynaka), Microsoft
+* [Liudmila Molkova](https://github.com/lmolkova), Microsoft
+* [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group
+* [Paulo Janotti](https://github.com/pjanotti), Splunk
 
 Triagers:
 
-- [Reiley Yang](https://github.com/reyang), Microsoft
+* [Reiley Yang](https://github.com/reyang), Microsoft
 
 *Find more about the approver role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).*
 
 Maintainers ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
-- [Cijo Thomas](https://github.com/cijothomas), Microsoft
-- [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
-- [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
+* [Cijo Thomas](https://github.com/cijothomas), Microsoft
+* [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
+* [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
 
 *Find more about the maintainer role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
 
