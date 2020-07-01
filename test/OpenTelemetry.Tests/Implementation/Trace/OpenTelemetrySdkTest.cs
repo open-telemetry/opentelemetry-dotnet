@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using Xunit;
 
@@ -35,7 +36,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
 
             using (var root = activitySource.StartActivity("root"))
             {
-                Assert.Equal(expectedResource, root.GetCustomProperty("Resource"));
+                Assert.Equal(expectedResource, root.GetResource());
             }
         }
 
@@ -50,7 +51,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
 
             using (var root = activitySource.StartActivity("root"))
             {
-                Assert.Equal(expectedResource, root.GetCustomProperty("Resource"));
+                Assert.Equal(expectedResource, root.GetResource());
             }
         }
     }

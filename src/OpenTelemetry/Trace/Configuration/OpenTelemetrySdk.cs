@@ -105,7 +105,7 @@ namespace OpenTelemetry.Trace.Configuration
                 {
                     if (activity.IsAllDataRequested)
                     {
-                        activity.SetCustomProperty("Resource", openTelemetrySDK.resource);
+                        activity.SetResource(openTelemetrySDK.resource);
                     }
 
                     activityProcessor.OnStart(activity);

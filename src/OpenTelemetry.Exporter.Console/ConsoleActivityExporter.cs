@@ -22,6 +22,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Console
@@ -97,7 +98,7 @@ namespace OpenTelemetry.Exporter.Console
                         }
                     }
 
-                    var resource = activity.GetCustomProperty("Resource") as Resource;
+                    var resource = activity.GetResource();
                     if (resource != Resource.Empty)
                     {
                         System.Console.WriteLine("Resource associated with Activity");
