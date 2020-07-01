@@ -1,0 +1,41 @@
+name: .NET
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # fetching all
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+        
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: dotnet build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: dotnet test
+      run: dotnet test -p:CollectCoverage=false --configuration Release --no-restore --logger:"console;verbosity=detailed"
+
+    - name: dotnet pack      
+      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore
+      
+    - name: Publish Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.os }}-packages
+        path: '**/bin/**/*.*nupkg'
