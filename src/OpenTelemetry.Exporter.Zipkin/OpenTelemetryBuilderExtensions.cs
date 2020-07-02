@@ -30,22 +30,17 @@ namespace OpenTelemetry.Trace.Configuration
         /// <param name="builder"><see cref="OpenTelemetryBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseZipkinActivityExporter(this OpenTelemetryBuilder builder, Action<ZipkinTraceExporterOptions> configure)
+        public static OpenTelemetryBuilder UseZipkinActivityExporter(this OpenTelemetryBuilder builder, Action<ZipkinTraceExporterOptions> configure = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
             return builder.AddProcessorPipeline(pipeline =>
             {
                 var options = new ZipkinTraceExporterOptions();
-                configure(options);
+                configure?.Invoke(options);
 
                 var activityExporter = new ZipkinActivityExporter(options);
                 pipeline.SetExporter(activityExporter);
@@ -66,11 +61,6 @@ namespace OpenTelemetry.Trace.Configuration
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
             if (processorConfigure == null)
             {
                 throw new ArgumentNullException(nameof(processorConfigure));
@@ -79,7 +69,7 @@ namespace OpenTelemetry.Trace.Configuration
             return builder.AddProcessorPipeline(pipeline =>
             {
                 var options = new ZipkinTraceExporterOptions();
-                configure(options);
+                configure?.Invoke(options);
 
                 var activityExporter = new ZipkinActivityExporter(options);
                 pipeline.SetExporter(activityExporter);
