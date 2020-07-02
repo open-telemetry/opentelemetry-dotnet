@@ -143,7 +143,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 (a) =>
                 {
                     startCalled = true;
-                    a.AddTag("zipkinCustomTag", "Custom Tag Value for zipkin");
                 };
 
             testActivityProcessor.EndAction =
@@ -167,7 +166,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             Assert.True(startCalled);
             Assert.True(endCalled);
-            Assert.Equal("zipkinCustomTag", activity?.Tags.FirstOrDefault().Key);
         }
 
         internal static Activity CreateTestActivity(
