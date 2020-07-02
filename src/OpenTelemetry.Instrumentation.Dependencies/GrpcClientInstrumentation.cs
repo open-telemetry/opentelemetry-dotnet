@@ -22,7 +22,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
     /// <summary>
     /// GrpcClient instrumentation.
     /// </summary>
-    public class GrpcClientInstrumentation : IDisposable
+    internal class GrpcClientInstrumentation : IDisposable
     {
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
