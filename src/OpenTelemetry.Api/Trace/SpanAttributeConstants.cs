@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
         public const string DatabaseSystemKey = "db.system";
         public const string DatabaseNameKey = "db.name";
         public const string DatabaseStatementKey = "db.statement";
-        public const string DatabaseStatementTypeKey = "db.statementType";
+        public const string DatabaseStatementTypeKey = "db.statement_type";
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
