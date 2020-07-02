@@ -40,6 +40,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
 
             this.fixture = fixture;
+            this.fixture.StartHost();
         }
 
         [Theory]
@@ -64,10 +65,8 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
                 var channel = GrpcChannel.ForAddress(uri);
                 var client = new Greeter.GreeterClient(channel);
                 var rs = client.SayHello(new HelloRequest());
+                this.fixture.StopHost();
             }
-
-            // Sometimes spanProcessor.Invocations.Count == 1 without this delay. Still investigating...
-            System.Threading.Thread.Sleep(10);
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
@@ -116,6 +115,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
                 var channel = GrpcChannel.ForAddress(uri);
                 var client = new Greeter.GreeterClient(channel);
                 var rs = client.SayHello(new HelloRequest());
+                this.fixture.StopHost();
             }
 
             Assert.Equal(4, spanProcessor.Invocations.Count); // begin and end was called for Grpc call and underlying Http call

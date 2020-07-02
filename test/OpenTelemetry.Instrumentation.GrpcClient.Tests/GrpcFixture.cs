@@ -27,12 +27,17 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
     {
         private static readonly Random GlobalRandom = new Random();
 
-        private readonly IHost host;
+        private IHost host;
 
-        public GrpcFixture()
+        public int Port { get; private set; }
+
+        public void Dispose()
         {
-            this.Port = 0;
+            this.host.Dispose();
+        }
 
+        internal void StartHost()
+        {
             var retryCount = 5;
             while (retryCount > 0)
             {
@@ -51,9 +56,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             }
         }
 
-        public int Port { get; }
-
-        public void Dispose()
+        internal void StopHost()
         {
             this.host.StopAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
             this.host.Dispose();
