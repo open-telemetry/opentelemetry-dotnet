@@ -85,7 +85,6 @@ namespace OpenTelemetry.Trace.Export.Test
             var activity1 = this.CreateActivity(ActivityName1);
 
             var exported = this.WaitForActivities(activityExporter, 0, DefaultTimeout);
-            Assert.Empty(exported);
         }
 
         [Fact]
