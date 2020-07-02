@@ -207,34 +207,34 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Helper method that populates database type
-        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-database.md.
+        /// Helper method that populates database system
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
-        /// <param name="type">Database type.</param>
+        /// <param name="system">Database system.</param>
         /// <returns>Span with populated properties.</returns>
-        public static TelemetrySpan PutDatabaseTypeAttribute(this TelemetrySpan span, string type)
+        public static TelemetrySpan PutDatabaseSystemAttribute(this TelemetrySpan span, string system)
         {
-            span.SetAttribute(SpanAttributeConstants.DatabaseTypeKey, type);
+            span.SetAttribute(SpanAttributeConstants.DatabaseSystemKey, system);
             return span;
         }
 
         /// <summary>
-        /// Helper method that populates database instance
-        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-database.md.
+        /// Helper method that populates database name
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
-        /// <param name="instance">Database instance.</param>
+        /// <param name="name">Database name.</param>
         /// <returns>Span with populated properties.</returns>
-        public static TelemetrySpan PutDatabaseInstanceAttribute(this TelemetrySpan span, string instance)
+        public static TelemetrySpan PutDatabaseNameAttribute(this TelemetrySpan span, string name)
         {
-            span.SetAttribute(SpanAttributeConstants.DatabaseInstanceKey, instance);
+            span.SetAttribute(SpanAttributeConstants.DatabaseNameKey, name);
             return span;
         }
 
         /// <summary>
         /// Helper method that populates database statement
-        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-database.md.
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md.
         /// </summary>
         /// <param name="span">Span to fill out.</param>
         /// <param name="statement">Database statement.</param>

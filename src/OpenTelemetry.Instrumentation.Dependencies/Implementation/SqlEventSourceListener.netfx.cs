@@ -15,10 +15,9 @@
 // </copyright>
 #if NETFRAMEWORK
 using System;
-using System.Data.SqlClient;
+using System.Data;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
-using System.Reflection;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
@@ -30,100 +29,165 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     /// </summary>
     internal class SqlEventSourceListener : EventListener
     {
-        internal const string ActivitySourceName = "SqlClient";
+        internal const string ActivitySourceName = "System.Data.SqlClient";
         internal const string ActivityName = ActivitySourceName + ".Execute";
+
+        private const string AdoNetEventSourceName = "Microsoft-AdoNet-SystemData";
+        private const int BeginExecuteEventId = 1;
+        private const int EndExecuteEventId = 2;
 
         private static readonly Version Version = typeof(SqlEventSourceListener).Assembly.GetName().Version;
         private static readonly ActivitySource SqlClientActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
-        private static readonly EventSource SqlEventSource = (EventSource)typeof(SqlConnection).Assembly.GetType("System.Data.SqlEventSource")?.GetField("Log", BindingFlags.Static | BindingFlags.NonPublic)?.GetValue(null);
 
         private readonly SqlClientInstrumentationOptions options;
+        private EventSource eventSource;
 
         public SqlEventSourceListener(SqlClientInstrumentationOptions options = null)
         {
             this.options = options ?? new SqlClientInstrumentationOptions();
-
-            if (SqlEventSource != null)
-            {
-                this.EnableEvents(SqlEventSource, EventLevel.Informational);
-            }
         }
 
         public override void Dispose()
         {
-            if (SqlEventSource != null)
+            if (this.eventSource != null)
             {
-                this.DisableEvents(SqlEventSource);
+                this.DisableEvents(this.eventSource);
             }
 
             base.Dispose();
         }
 
+        protected override void OnEventSourceCreated(EventSource eventSource)
+        {
+            if (eventSource?.Name == AdoNetEventSourceName)
+            {
+                this.eventSource = eventSource;
+                this.EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)1);
+            }
+
+            base.OnEventSourceCreated(eventSource);
+        }
+
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            if (eventData.EventId == 1)
+            if (eventData?.Payload == null)
             {
-                // BeginExecuteEventId
+                InstrumentationEventSource.Log.NullPayload(nameof(SqlEventSourceListener) + nameof(this.OnEventWritten));
+                return;
+            }
 
-                var activity = SqlClientActivitySource.StartActivity(ActivityName, ActivityKind.Client);
-                if (activity == null)
+            try
+            {
+                if (eventData.EventId == BeginExecuteEventId)
                 {
-                    return;
+                    this.OnBeginExecute(eventData);
                 }
-
-                activity.DisplayName = (string)eventData.Payload[2];
-
-                if (activity.IsAllDataRequested)
+                else if (eventData.EventId == EndExecuteEventId)
                 {
-                    activity.AddTag(SpanAttributeConstants.ComponentKey, "sql");
+                    this.OnEndExecute(eventData);
+                }
+            }
+            catch (Exception exc)
+            {
+                InstrumentationEventSource.Log.UnknownErrorProcessingEvent(nameof(SqlEventSourceListener), nameof(this.OnEventWritten), exc);
+            }
+        }
 
-                    activity.AddTag(SpanAttributeConstants.DatabaseTypeKey, "sql");
-                    activity.AddTag(SpanAttributeConstants.PeerServiceKey, (string)eventData.Payload[1]);
-                    activity.AddTag(SpanAttributeConstants.DatabaseInstanceKey, (string)eventData.Payload[2]);
+        private void OnBeginExecute(EventWrittenEventArgs eventData)
+        {
+            /*
+               Expected payload:
+                [0] -> ObjectId
+                [1] -> DataSource
+                [2] -> Database
+                [3] -> CommandText ([3] = CommandType == CommandType.StoredProcedure ? CommandText : string.Empty)
+             */
 
-                    if (string.IsNullOrEmpty((string)eventData.Payload[3]))
+            if (eventData.Payload.Count < 4)
+            {
+                return;
+            }
+
+            var activity = SqlClientActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+            if (activity == null)
+            {
+                return;
+            }
+
+            string databaseName = (string)eventData.Payload[2];
+
+            activity.DisplayName = databaseName;
+
+            if (activity.IsAllDataRequested)
+            {
+                activity.AddTag(SpanAttributeConstants.ComponentKey, "sql");
+
+                activity.AddTag(SpanAttributeConstants.DatabaseSystemKey, SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName);
+                activity.AddTag(SpanAttributeConstants.PeerServiceKey, (string)eventData.Payload[1]);
+                activity.AddTag(SpanAttributeConstants.DatabaseNameKey, databaseName);
+
+                string commandText = (string)eventData.Payload[3];
+                if (string.IsNullOrEmpty(commandText))
+                {
+                    activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.Text));
+                }
+                else
+                {
+                    activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
+                    if (this.options.CaptureStoredProcedureCommandName)
                     {
-                        activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, "Text");
-                    }
-                    else
-                    {
-                        activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, "StoredProcedure");
-                        if (this.options.CaptureStoredProcedureCommandName)
-                        {
-                            activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, (string)eventData.Payload[3]);
-                        }
+                        activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, commandText);
                     }
                 }
             }
-            else if (eventData.EventId == 2)
+        }
+
+        private void OnEndExecute(EventWrittenEventArgs eventData)
+        {
+            /*
+               Expected payload:
+                [0] -> ObjectId
+                [1] -> CompositeState bitmask (0b001 -> successFlag, 0b010 -> isSqlExceptionFlag , 0b100 -> synchronousFlag)
+                [2] -> SqlExceptionNumber
+             */
+
+            if (eventData.Payload.Count < 3)
             {
-                // EndExecuteEventId
+                return;
+            }
 
-                var activity = Activity.Current;
-                if (activity == null || activity.Source != SqlClientActivitySource)
-                {
-                    return;
-                }
+            var activity = Activity.Current;
+            if (activity?.Source != SqlClientActivitySource)
+            {
+                return;
+            }
 
-                try
+            try
+            {
+                if (activity.IsAllDataRequested)
                 {
-                    if (activity.IsAllDataRequested)
+                    int compositeState = (int)eventData.Payload[1];
+                    if ((compositeState & 0b001) == 0b001)
                     {
-                        if (((int)eventData.Payload[1] & 0x01) == 0x00)
+                        activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok));
+                    }
+                    else
+                    {
+                        activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Unknown));
+                        if ((compositeState & 0b010) == 0b010)
                         {
-                            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Unknown));
                             activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, $"SqlExceptionNumber {eventData.Payload[2]} thrown.");
                         }
                         else
                         {
-                            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok));
+                            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, $"Unknown Sql failure.");
                         }
                     }
                 }
-                finally
-                {
-                    activity.Stop();
-                }
+            }
+            finally
+            {
+                activity.Stop();
             }
         }
     }

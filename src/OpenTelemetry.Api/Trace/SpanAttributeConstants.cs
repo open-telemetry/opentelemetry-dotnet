@@ -40,9 +40,10 @@ namespace OpenTelemetry.Trace
         public const string HttpRouteKey = "http.route";
         public const string HttpFlavorKey = "http.flavor";
 
-        public const string DatabaseTypeKey = "db.type";
-        public const string DatabaseInstanceKey = "db.instance";
+        public const string DatabaseSystemKey = "db.system";
+        public const string DatabaseNameKey = "db.name";
         public const string DatabaseStatementKey = "db.statement";
+        public const string DatabaseStatementTypeKey = "db.statementType";
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
