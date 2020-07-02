@@ -15,20 +15,23 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Exporter.Jaeger;
 
-namespace OpenTelemetry.Exporter.Console
+namespace OpenTelemetry.Trace.Configuration
 {
+    /// <summary>
+    /// Extension methods to simplify registering a Jaeger exporter.
+    /// </summary>
     public static class OpenTelemetryBuilderExtensions
     {
         /// <summary>
-        /// Registers a ConsoleActivity exporter to a processing pipeline.
+        /// Registers a Jaeger exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
         /// </summary>
         /// <param name="builder"><see cref="OpenTelemetryBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseConsoleActivityExporter(this OpenTelemetryBuilder builder, Action<ConsoleActivityExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        public static OpenTelemetryBuilder UseJaegerActivityExporter(this OpenTelemetryBuilder builder, Action<JaegerExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
         {
             if (builder == null)
             {
@@ -37,11 +40,11 @@ namespace OpenTelemetry.Exporter.Console
 
             return builder.AddProcessorPipeline(pipeline =>
             {
-                var exporterOptions = new ConsoleActivityExporterOptions();
+                var exporterOptions = new JaegerExporterOptions();
                 configure?.Invoke(exporterOptions);
 
-                var consoleExporter = new ConsoleActivityExporter(exporterOptions);
-                pipeline.SetExporter(consoleExporter);
+                var activityExporter = new JaegerActivityExporter(exporterOptions);
+                pipeline.SetExporter(activityExporter);
                 processorConfigure?.Invoke(pipeline);
             });
         }
