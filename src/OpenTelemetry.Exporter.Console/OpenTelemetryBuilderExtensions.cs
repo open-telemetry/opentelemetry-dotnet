@@ -48,10 +48,11 @@ namespace OpenTelemetry.Exporter.Console
         /// <summary>
         /// Registers a ConsoleActivity exporter to a processing pipeline.
         /// </summary>
-        /// <param name="builder">ActivityProcessorPipelineBuilder to use.</param>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
-        /// <returns>The instance of <see cref="ActivityProcessorPipelineBuilder"/> to chain the calls.</returns>
-        public static ActivityProcessorPipelineBuilder UseConsoleActivityExporter(this ActivityProcessorPipelineBuilder builder, Action<ConsoleActivityExporterOptions> configure)
+        /// <param name="processorConfigure">Activity processor configuration.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder UseConsoleActivityExporter(this OpenTelemetryBuilder builder, Action<ConsoleActivityExporterOptions> configure, Action<ActivityProcessorPipelineBuilder> processorConfigure)
         {
             if (builder == null)
             {
@@ -63,10 +64,20 @@ namespace OpenTelemetry.Exporter.Console
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            var exporterOptions = new ConsoleActivityExporterOptions();
-            configure(exporterOptions);
-            var consoleExporter = new ConsoleActivityExporter(exporterOptions);
-            return builder.SetExporter(consoleExporter);
+            if (processorConfigure == null)
+            {
+                throw new ArgumentNullException(nameof(processorConfigure));
+            }
+
+            return builder.AddProcessorPipeline(pipeline =>
+            {
+                var exporterOptions = new ConsoleActivityExporterOptions();
+                configure(exporterOptions);
+
+                var consoleExporter = new ConsoleActivityExporter(exporterOptions);
+                pipeline.SetExporter(consoleExporter);
+                processorConfigure(pipeline);
+            });
         }
     }
 }

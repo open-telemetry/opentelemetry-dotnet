@@ -21,6 +21,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Console
@@ -93,6 +95,16 @@ namespace OpenTelemetry.Exporter.Console
                         foreach (var baggage in activity.Baggage)
                         {
                             System.Console.WriteLine($"\t {baggage.Key} : {baggage.Value}");
+                        }
+                    }
+
+                    var resource = activity.GetResource();
+                    if (resource != Resource.Empty)
+                    {
+                        System.Console.WriteLine("Resource associated with Activity");
+                        foreach (var resourceAttribute in resource.Attributes)
+                        {
+                            System.Console.WriteLine($"\t {resourceAttribute.Key} : {resourceAttribute.Value}");
                         }
                     }
 

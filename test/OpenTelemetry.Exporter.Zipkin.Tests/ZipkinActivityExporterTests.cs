@@ -27,6 +27,8 @@ using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests
@@ -125,6 +127,45 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             Assert.Equal(
                 $@"[{{""traceId"":""{traceId}"",""name"":""Name"",""parentId"":""{ZipkinConversionExtensions.EncodeSpanId(activity.ParentSpanId)}"",""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""Open Telemetry Exporter""{ipInformation}}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""boolKey"":""True"",""library.name"":""CreateTestActivity""}}}}]",
                 Responses[requestId]);
+        }
+
+        [Fact]
+        public void UseZipkinActivityExporterWithCustomActivityProcessor()
+        {
+            const string ActivitySourceName = "zipkin.test";
+            Guid requestId = Guid.NewGuid();
+            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+
+            bool startCalled = false;
+            bool endCalled = false;
+
+            testActivityProcessor.StartAction =
+                (a) =>
+                {
+                    startCalled = true;
+                };
+
+            testActivityProcessor.EndAction =
+                (a) =>
+                {
+                    endCalled = true;
+                };
+
+            var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+                            .AddActivitySource(ActivitySourceName)
+                            .UseZipkinActivityExporter(
+                                o =>
+                            {
+                                o.ServiceName = "test-zipkin";
+                                o.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
+                            }, p => p.AddProcessor((next) => testActivityProcessor)));
+
+            var source = new ActivitySource(ActivitySourceName);
+            var activity = source.StartActivity("Test Zipkin Activity");
+            activity?.Stop();
+
+            Assert.True(startCalled);
+            Assert.True(endCalled);
         }
 
         internal static Activity CreateTestActivity(
