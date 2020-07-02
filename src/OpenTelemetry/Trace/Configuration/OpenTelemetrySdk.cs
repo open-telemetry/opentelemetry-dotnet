@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Export.Internal;
 using OpenTelemetry.Trace.Samplers;
@@ -27,6 +28,7 @@ namespace OpenTelemetry.Trace.Configuration
     public class OpenTelemetrySdk : IDisposable
     {
         private readonly List<object> instrumentations = new List<object>();
+        private Resource resource;
         private ActivityProcessor activityProcessor;
         private ActivityListener listener;
 
@@ -92,12 +94,22 @@ namespace OpenTelemetry.Trace.Configuration
                 }
             }
 
+            openTelemetrySDK.resource = openTelemetryBuilder.Resource;
+
             // This is what subscribes to Activities.
             // Think of this as the replacement for DiagnosticListener.AllListeners.Subscribe(onNext => diagnosticListener.Subscribe(..));
             openTelemetrySDK.listener = new ActivityListener
             {
                 // Callback when Activity is started.
-                ActivityStarted = activityProcessor.OnStart,
+                ActivityStarted = (activity) =>
+                {
+                    if (activity.IsAllDataRequested)
+                    {
+                        activity.SetResource(openTelemetrySDK.resource);
+                    }
+
+                    activityProcessor.OnStart(activity);
+                },
 
                 // Callback when Activity is started.
                 ActivityStopped = activityProcessor.OnEnd,

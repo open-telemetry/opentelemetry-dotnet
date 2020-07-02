@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace.Configuration
 {
@@ -34,6 +35,8 @@ namespace OpenTelemetry.Trace.Configuration
         internal List<InstrumentationFactory> InstrumentationFactories { get; private set; }
 
         internal ActivitySampler Sampler { get; private set; }
+
+        internal Resource Resource { get; private set; } = Resource.Empty;
 
         internal HashSet<string> ActivitySourceNames { get; private set; }
 
@@ -68,6 +71,17 @@ namespace OpenTelemetry.Trace.Configuration
         public OpenTelemetryBuilder SetSampler(ActivitySampler sampler)
         {
             this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="Resource"/> describing the app associated with all traces. Overwrites currently set resource.
+        /// </summary>
+        /// <param name="resource">Resource to be associate with all traces.</param>
+        /// <returns>Returns <see cref="OpenTelemetryBuilder"/> for chaining.</returns>
+        public OpenTelemetryBuilder SetResource(Resource resource)
+        {
+            this.Resource = resource ?? Resource.Empty;
             return this;
         }
 
