@@ -27,6 +27,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         internal const string SqlClientDiagnosticListenerName = "SqlClientDiagnosticListener";
 
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
+#if NETFRAMEWORK
+        private readonly SqlEventSourceListener sqlEventSourceListener;
+#endif
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlClientInstrumentation"/> class.
@@ -49,12 +52,19 @@ namespace OpenTelemetry.Instrumentation.Dependencies
                listener => listener.Name == SqlClientDiagnosticListenerName,
                null);
             this.diagnosticSourceSubscriber.Subscribe();
+
+#if NETFRAMEWORK
+            this.sqlEventSourceListener = new SqlEventSourceListener(options);
+#endif
         }
 
         /// <inheritdoc/>
         public void Dispose()
         {
             this.diagnosticSourceSubscriber?.Dispose();
+#if NETFRAMEWORK
+            this.sqlEventSourceListener?.Dispose();
+#endif
         }
     }
 }

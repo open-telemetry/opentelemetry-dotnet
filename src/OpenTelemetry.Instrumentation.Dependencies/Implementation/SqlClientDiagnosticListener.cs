@@ -17,7 +17,6 @@ using System;
 using System.Data;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
@@ -91,11 +90,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
                             if (this.commandTypeFetcher.Fetch(command) is CommandType commandType)
                             {
-                                activity.AddTag(DatabaseStatementTypeSpanAttributeKey, commandType.ToString());
-
                                 switch (commandType)
                                 {
                                     case CommandType.StoredProcedure:
+                                        activity.AddTag(DatabaseStatementTypeSpanAttributeKey, "StoredProcedure");
                                         if (this.options.CaptureStoredProcedureCommandName)
                                         {
                                             activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, (string)commandText);
@@ -104,11 +102,16 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                         break;
 
                                     case CommandType.Text:
+                                        activity.AddTag(DatabaseStatementTypeSpanAttributeKey, "Text");
                                         if (this.options.CaptureTextCommandContent)
                                         {
                                             activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, (string)commandText);
                                         }
 
+                                        break;
+
+                                    case CommandType.TableDirect:
+                                        activity.AddTag(DatabaseStatementTypeSpanAttributeKey, "TableDirect");
                                         break;
                                 }
                             }
