@@ -16,13 +16,10 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
 using Greet;
-using Grpc.Core;
 using Grpc.Net.Client;
 using Moq;
-using OpenTelemetry.Instrumentation.GrpcClient.Internal.Tests;
+using OpenTelemetry.Instrumentation.GrpcClient.Tests.Services;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
@@ -30,15 +27,26 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
 {
-    public class GrpcClientTests
+    public class GrpcClientTests : IClassFixture<GrpcFixture<GreeterService>>
     {
-        [Theory]
-        [InlineData("https://localhost")]
-        [InlineData("https://127.0.0.1")]
-        [InlineData("https://[::1]")]
-        public async Task GrpcClientCallsAreCollectedSuccessfully(string baseAddress)
+        private GrpcFixture<GreeterService> fixture;
+
+        public GrpcClientTests(GrpcFixture<GreeterService> fixture)
         {
-            var uri = new Uri(baseAddress);
+            // Allows gRPC client to call insecure gRPC services
+            // https://docs.microsoft.com/en-us/aspnet/core/grpc/troubleshoot?view=aspnetcore-3.1#call-insecure-grpc-services-with-net-core-client
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+            this.fixture = fixture;
+        }
+
+        [Theory]
+        [InlineData("http://localhost")]
+        [InlineData("http://127.0.0.1")]
+        [InlineData("http://[::1]")]
+        public void GrpcClientCallsAreCollectedSuccessfully(string baseAddress)
+        {
+            var uri = new Uri($"{baseAddress}:{this.fixture.Port}");
             var uriHostNameType = Uri.CheckHostName(uri.Host);
 
             var spanProcessor = new Mock<ActivityProcessor>();
@@ -52,29 +60,13 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
                     .AddGrpcClientDependencyInstrumentation()
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
-                var httpClient = ClientTestHelpers.CreateTestClient(
-                    async httpRequestMessage =>
-                    {
-                        HelloReply reply = new HelloReply
-                        {
-                            Message = "Hello world",
-                        };
-
-                        var streamContent = await ClientTestHelpers.CreateResponseContent(reply).TimeoutAfter(TimeSpan.FromSeconds(5));
-
-                        return ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent);
-                    },
-                    uri);
-
-                var channelOptions = new GrpcChannelOptions
-                {
-                    HttpClient = httpClient,
-                };
-
-                var channel = GrpcChannel.ForAddress(httpClient.BaseAddress, channelOptions);
-                var invoker = channel.CreateCallInvoker();
-                var rs = await invoker.AsyncUnaryCall<HelloRequest, HelloReply>(ClientTestHelpers.ServiceMethod, string.Empty, default(CallOptions), new HelloRequest());
+                var channel = GrpcChannel.ForAddress(uri);
+                var client = new Greeter.GreeterClient(channel);
+                var rs = client.SayHello(new HelloRequest());
             }
+
+            // Sometimes spanProcessor.Invocations.Count == 1 without this delay. Still investigating...
+            System.Threading.Thread.Sleep(10);
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
@@ -84,11 +76,11 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             Assert.NotEqual(parent.SpanId, span.Context.SpanId);
             Assert.NotEqual(default, span.Context.SpanId);
 
-            Assert.Equal($"{ClientTestHelpers.ServiceMethod.ServiceName}/{ClientTestHelpers.ServiceMethod.Name}", span.DisplayName);
+            Assert.Equal($"greet.Greeter/SayHello", span.DisplayName);
             Assert.Equal("Client", span.Kind.ToString());
             Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == "rpc.system").Value);
-            Assert.Equal(ClientTestHelpers.ServiceMethod.ServiceName, span.Tags.FirstOrDefault(i => i.Key == "rpc.service").Value);
-            Assert.Equal(ClientTestHelpers.ServiceMethod.Name, span.Tags.FirstOrDefault(i => i.Key == "rpc.method").Value);
+            Assert.Equal("Greeter", span.Tags.FirstOrDefault(i => i.Key == "rpc.service").Value);
+            Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == "rpc.method").Value);
 
             if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
             {
@@ -101,7 +93,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
                 Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == "net.peer.name").Value);
             }
 
-            Assert.Equal("443", span.Tags.FirstOrDefault(i => i.Key == "net.peer.port").Value);
+            Assert.Equal(uri.Port.ToString(), span.Tags.FirstOrDefault(i => i.Key == "net.peer.port").Value);
             Assert.Equal("Ok", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
         }
     }
