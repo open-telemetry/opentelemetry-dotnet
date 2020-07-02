@@ -124,6 +124,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
 
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan.DisplayName);
             Assert.Equal($"HTTP POST", httpSpan.DisplayName);
+            Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
         }
     }
 }
