@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Console;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 
@@ -32,6 +33,7 @@ namespace Samples
             // and use a single pipeline with a custom MyProcessor, and Console exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
+                .SetResource(Resources.CreateServiceResource("MyServiceName"))
                 .AddProcessorPipeline(
                     (p) =>
                     p.AddProcessor((next) => new MyProcessor(next))
