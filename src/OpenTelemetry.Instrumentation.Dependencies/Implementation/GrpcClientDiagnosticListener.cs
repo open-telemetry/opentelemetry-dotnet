@@ -30,7 +30,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private const string GrpcMethodTagName = "grpc.method";
         private const string GrpcStatusCodeTagName = "grpc.status_code";
 
-        private static readonly Regex GrpcMethodRegex = new Regex(@"(?<service>\w+)/(?<method>\w+)", RegexOptions.Compiled);
+        private static readonly Regex GrpcMethodRegex = new Regex(@"(?<service>\w+\.?\w*)/(?<method>\w+)", RegexOptions.Compiled);
         private static readonly PropertyInfo ActivityKindPropertyInfo = typeof(Activity).GetProperty("Kind");
 
         private readonly ActivitySourceAdapter activitySource;

@@ -79,7 +79,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             Assert.Equal($"greet.Greeter/SayHello", span.DisplayName);
             Assert.Equal("Client", span.Kind.ToString());
             Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == "rpc.system").Value);
-            Assert.Equal("Greeter", span.Tags.FirstOrDefault(i => i.Key == "rpc.service").Value);
+            Assert.Equal("greet.Greeter", span.Tags.FirstOrDefault(i => i.Key == "rpc.service").Value);
             Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == "rpc.method").Value);
 
             if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
