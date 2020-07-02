@@ -37,6 +37,8 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             // https://docs.microsoft.com/en-us/aspnet/core/grpc/troubleshoot?view=aspnetcore-3.1#call-insecure-grpc-services-with-net-core-client
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+
             this.fixture = fixture;
         }
 
@@ -52,7 +54,6 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             var spanProcessor = new Mock<ActivityProcessor>();
 
             var parent = new Activity("parent")
-                .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
 
             using (OpenTelemetrySdk.EnableOpenTelemetry(
@@ -105,7 +106,6 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             var spanProcessor = new Mock<ActivityProcessor>();
 
             var parent = new Activity("parent")
-                .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
 
             using (OpenTelemetrySdk.EnableOpenTelemetry(
