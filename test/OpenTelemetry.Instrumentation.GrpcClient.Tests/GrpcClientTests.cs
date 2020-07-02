@@ -96,5 +96,34 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             Assert.Equal(uri.Port.ToString(), span.Tags.FirstOrDefault(i => i.Key == "net.peer.port").Value);
             Assert.Equal("Ok", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
         }
+
+        [Fact]
+        public void GrpcAndHttpClientInstrumentationIsInvoked()
+        {
+            var uri = new Uri($"http://localhost:{this.fixture.Port}");
+
+            var spanProcessor = new Mock<ActivityProcessor>();
+
+            var parent = new Activity("parent")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+
+            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            (builder) => builder
+                .AddDependencyInstrumentation() // AddDependencyInstrumentation applies both gRPC client and HttpClient instrumentation
+                .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+            {
+                var channel = GrpcChannel.ForAddress(uri);
+                var client = new Greeter.GreeterClient(channel);
+                var rs = client.SayHello(new HelloRequest());
+            }
+
+            Assert.Equal(4, spanProcessor.Invocations.Count); // begin and end was called for Grpc call and underlying Http call
+            var httpSpan = (Activity)spanProcessor.Invocations[2].Arguments[0];
+            var grpcSpan = (Activity)spanProcessor.Invocations[3].Arguments[0];
+
+            Assert.Equal($"greet.Greeter/SayHello", grpcSpan.DisplayName);
+            Assert.Equal($"HTTP POST", httpSpan.DisplayName);
+        }
     }
 }
