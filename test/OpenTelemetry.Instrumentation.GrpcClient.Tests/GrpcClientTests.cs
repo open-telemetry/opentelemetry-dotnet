@@ -66,9 +66,6 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
                 var rs = client.SayHello(new HelloRequest());
             }
 
-            // Sometimes spanProcessor.Invocations.Count == 1 without this delay. Still investigating...
-            System.Threading.Thread.Sleep(10);
-
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
