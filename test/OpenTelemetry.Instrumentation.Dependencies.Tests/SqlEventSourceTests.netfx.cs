@@ -18,6 +18,7 @@ using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
@@ -32,7 +33,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
     public class SqlEventSourceTests
     {
         /*
-            To run these tests, set the ot.SqlConnectionString machine-level environment variable to a valid Sql Server connection string.
+            To run the integration tests, set the ot.SqlConnectionString machine-level environment variable to a valid Sql Server connection string.
 
             To use Docker...
              1) Run: docker run -d --name sql2019 -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Pass@word" -p 5433:1433 mcr.microsoft.com/mssql/server:2019-latest
@@ -95,6 +96,114 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
+            VerifyActivityData(commandType, commandText, captureText, isFailure, dataSource, activity);
+        }
+
+        [Theory]
+        [InlineData(CommandType.Text, "select 1/1", false)]
+        [InlineData(CommandType.Text, "select 1/0", false, true)]
+        [InlineData(CommandType.StoredProcedure, "sp_who", false)]
+        [InlineData(CommandType.StoredProcedure, "sp_who", true)]
+        public void EventSourceFakeTests(CommandType commandType, string commandText, bool captureText, bool isFailure = false, int sqlExceptionNumber = 0)
+        {
+            using FakeBehavingSqlEventSource fakeSqlEventSource = new FakeBehavingSqlEventSource();
+
+            var activityProcessor = new Mock<ActivityProcessor>();
+            using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            {
+                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddSqlClientDependencyInstrumentation(options =>
+                {
+                    options.CaptureStoredProcedureCommandName = captureText;
+                });
+            });
+
+            int objectId = Guid.NewGuid().GetHashCode();
+
+            using (var activityListener = new ActivityListener
+            {
+                ShouldListenTo = (activitySource) => activitySource.Name == SqlEventSourceListener.ActivitySourceName,
+            })
+            {
+                ActivitySource.AddActivityListener(activityListener);
+
+                fakeSqlEventSource.WriteBeginExecuteEvent(objectId, "127.0.0.1", "master", commandType == CommandType.StoredProcedure ? commandText : string.Empty);
+
+                // success is stored in the first bit in compositeState 0b001
+                int successFlag = !isFailure ? 1 : 0;
+
+                // isSqlException is stored in the second bit in compositeState 0b010
+                int isSqlExceptionFlag = sqlExceptionNumber > 0 ? 2 : 0;
+
+                // synchronous state is stored in the third bit in compositeState 0b100
+                int synchronousFlag = false ? 4 : 0;
+
+                int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
+
+                fakeSqlEventSource.WriteEndExecuteEvent(objectId, compositeState, sqlExceptionNumber);
+            }
+
+            Assert.Equal(2, activityProcessor.Invocations.Count);
+
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+
+            VerifyActivityData(commandType, commandText, captureText, isFailure, "127.0.0.1", activity);
+        }
+
+        [Fact]
+        public void EventSourceFakeUnknownEventWithNullPayloadTest()
+        {
+            using FakeMisbehavingSqlEventSource fakeSqlEventSource = new FakeMisbehavingSqlEventSource();
+
+            var activityProcessor = new Mock<ActivityProcessor>();
+            using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            {
+                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddSqlClientDependencyInstrumentation();
+            });
+
+            using (var activityListener = new ActivityListener
+            {
+                ShouldListenTo = (activitySource) => activitySource.Name == SqlEventSourceListener.ActivitySourceName,
+            })
+            {
+                ActivitySource.AddActivityListener(activityListener);
+
+                fakeSqlEventSource.WriteUnknownEventWithNullPayload();
+            }
+
+            Assert.Equal(0, activityProcessor.Invocations.Count);
+        }
+
+        [Fact]
+        public void EventSourceFakeInvalidPayloadTest()
+        {
+            using FakeMisbehavingSqlEventSource fakeSqlEventSource = new FakeMisbehavingSqlEventSource();
+
+            var activityProcessor = new Mock<ActivityProcessor>();
+            using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            {
+                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddSqlClientDependencyInstrumentation();
+            });
+
+            using (var activityListener = new ActivityListener
+            {
+                ShouldListenTo = (activitySource) => activitySource.Name == SqlEventSourceListener.ActivitySourceName,
+            })
+            {
+                ActivitySource.AddActivityListener(activityListener);
+
+                fakeSqlEventSource.WriteBeginExecuteEvent("arg1");
+
+                fakeSqlEventSource.WriteEndExecuteEvent("arg1", "arg2", "arg3", "arg4");
+            }
+
+            Assert.Equal(0, activityProcessor.Invocations.Count);
+        }
+
+        private static void VerifyActivityData(CommandType commandType, string commandText, bool captureText, bool isFailure, string dataSource, Activity activity)
+        {
             Assert.Equal("master", activity.DisplayName);
             Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal("sql", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.ComponentKey).Value);
@@ -122,6 +231,46 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             {
                 Assert.Equal("Unknown", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
                 Assert.Contains(activity.Tags, t => t.Key == SpanAttributeConstants.StatusDescriptionKey);
+            }
+        }
+
+        [EventSource(Name = SqlEventSourceListener.AdoNetEventSourceName + "-FakeFriendly")]
+        private class FakeBehavingSqlEventSource : EventSource
+        {
+            [Event(SqlEventSourceListener.BeginExecuteEventId)]
+            public void WriteBeginExecuteEvent(int objectId, string dataSource, string databaseName, string commandText)
+            {
+                this.WriteEvent(SqlEventSourceListener.BeginExecuteEventId, objectId, dataSource, databaseName, commandText);
+            }
+
+            [Event(SqlEventSourceListener.EndExecuteEventId)]
+            public void WriteEndExecuteEvent(int objectId, int compositeState, int sqlExceptionNumber)
+            {
+                this.WriteEvent(SqlEventSourceListener.EndExecuteEventId, objectId, compositeState, sqlExceptionNumber);
+            }
+        }
+
+        [EventSource(Name = SqlEventSourceListener.AdoNetEventSourceName + "-FakeEvil")]
+        private class FakeMisbehavingSqlEventSource : EventSource
+        {
+            [Event(SqlEventSourceListener.BeginExecuteEventId)]
+            public void WriteBeginExecuteEvent(string arg1)
+            {
+                this.WriteEvent(SqlEventSourceListener.BeginExecuteEventId, arg1);
+            }
+
+            [Event(SqlEventSourceListener.EndExecuteEventId)]
+            public void WriteEndExecuteEvent(string arg1, string arg2, string arg3, string arg4)
+            {
+                this.WriteEvent(SqlEventSourceListener.EndExecuteEventId, arg1, arg2, arg3, arg4);
+            }
+
+            [Event(3)]
+            public void WriteUnknownEventWithNullPayload()
+            {
+                object[] args = null;
+
+                this.WriteEvent(3, args);
             }
         }
     }

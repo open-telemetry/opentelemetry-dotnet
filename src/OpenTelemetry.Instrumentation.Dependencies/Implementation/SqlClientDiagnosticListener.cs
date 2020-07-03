@@ -65,7 +65,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
                         if (command == null)
                         {
-                            InstrumentationEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
+                            InstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
                             return;
                         }
 
@@ -139,7 +139,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                             }
                             else
                             {
-                                InstrumentationEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
+                                InstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
                             }
                         }
 

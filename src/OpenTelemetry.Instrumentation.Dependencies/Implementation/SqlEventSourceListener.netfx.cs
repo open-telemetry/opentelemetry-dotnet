@@ -31,10 +31,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     {
         internal const string ActivitySourceName = "System.Data.SqlClient";
         internal const string ActivityName = ActivitySourceName + ".Execute";
-
-        private const string AdoNetEventSourceName = "Microsoft-AdoNet-SystemData";
-        private const int BeginExecuteEventId = 1;
-        private const int EndExecuteEventId = 2;
+        internal const string AdoNetEventSourceName = "Microsoft-AdoNet-SystemData";
+        internal const int BeginExecuteEventId = 1;
+        internal const int EndExecuteEventId = 2;
 
         private static readonly Version Version = typeof(SqlEventSourceListener).Assembly.GetName().Version;
         private static readonly ActivitySource SqlClientActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
@@ -59,7 +58,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
-            if (eventSource?.Name == AdoNetEventSourceName)
+            if (eventSource?.Name.StartsWith(AdoNetEventSourceName) == true)
             {
                 this.eventSource = eventSource;
                 this.EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)1);
@@ -70,12 +69,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            if (eventData?.Payload == null)
-            {
-                InstrumentationEventSource.Log.NullPayload(nameof(SqlEventSourceListener) + nameof(this.OnEventWritten));
-                return;
-            }
-
             try
             {
                 if (eventData.EventId == BeginExecuteEventId)
@@ -103,8 +96,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 [3] -> CommandText ([3] = CommandType == CommandType.StoredProcedure ? CommandText : string.Empty)
              */
 
-            if (eventData.Payload.Count < 4)
+            if ((eventData?.Payload?.Count ?? 0) < 4)
             {
+                InstrumentationEventSource.Log.InvalidPayload(nameof(SqlEventSourceListener), nameof(this.OnBeginExecute));
                 return;
             }
 
@@ -151,8 +145,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 [2] -> SqlExceptionNumber
              */
 
-            if (eventData.Payload.Count < 3)
+            if ((eventData?.Payload?.Count ?? 0) < 3)
             {
+                InstrumentationEventSource.Log.InvalidPayload(nameof(SqlEventSourceListener), nameof(this.OnEndExecute));
                 return;
             }
 
