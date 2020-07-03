@@ -39,6 +39,11 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             return Empty;
         };
 
+        private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
+        {
+            carrier[name] = value;
+        };
+
         [Fact]
         public void TraceContextFormatCanParseExampleFromSpec()
         {
@@ -141,6 +146,21 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var ctx = f.Extract(headers, Getter);
 
             Assert.Equal("k1=v1,k2=v2,k3=v3", ctx.TraceState);
+        }
+
+        [Fact]
+        public void TraceContextFormat_Inject_NoTracestate()
+        {
+            var traceId = ActivityTraceId.CreateRandom();
+            var spanId = ActivitySpanId.CreateRandom();
+            var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded);
+
+            var carrier = new Dictionary<string, string>();
+            var f = new TraceContextFormatActivity();
+            f.Inject(activityContext, carrier, Setter);
+
+            var expected = new Dictionary<string, string> { { "traceparent", $"00-{traceId.ToHexString()}-{spanId.ToHexString()}-01" } };
+            Assert.Equal(expected, carrier);
         }
     }
 }
