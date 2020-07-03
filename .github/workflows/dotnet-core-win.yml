@@ -19,6 +19,16 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.x
+
+    - name: Check cache
+      uses: actions/cache@v2
+      with:
+        path: | 
+          ~/.nuget/packages
+          !~/.nuget/packages/unwanted
+        key: ${{ matrix.version }}-windows-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ matrix.version }}-windows-nuget-
         
     - name: Install dependencies
       run: dotnet restore
