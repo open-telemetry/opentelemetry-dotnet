@@ -83,33 +83,5 @@ namespace OpenTelemetry.Trace.Configuration
                 processorConfigure.Invoke(b);
             });
         }
-
-        /// <summary>
-        /// Registers a Zipkin exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
-        /// </summary>
-        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseZipkinActivityExporter(this OpenTelemetryBuilder builder, Action<ZipkinTraceExporterOptions> configure)
-        {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            return builder.AddProcessorPipeline(pipeline =>
-            {
-                var options = new ZipkinTraceExporterOptions();
-                configure(options);
-
-                var activityExporter = new ZipkinActivityExporter(options);
-                pipeline.SetExporter(activityExporter);
-            });
-        }
     }
 }
