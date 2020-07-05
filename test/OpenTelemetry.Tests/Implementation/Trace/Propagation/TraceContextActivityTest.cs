@@ -39,6 +39,11 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             return Empty;
         };
 
+        private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
+        {
+            carrier[name] = value;
+        };
+
         [Fact]
         public void TraceContextFormatCanParseExampleFromSpec()
         {
@@ -141,6 +146,43 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var ctx = f.Extract(headers, Getter);
 
             Assert.Equal("k1=v1,k2=v2,k3=v3", ctx.TraceState);
+        }
+
+        [Fact]
+        public void TraceContextFormat_Inject_NoTracestate()
+        {
+            var traceId = ActivityTraceId.CreateRandom();
+            var spanId = ActivitySpanId.CreateRandom();
+            var expectedHeaders = new Dictionary<string, string>
+            {
+                { TraceParent, $"00-{traceId}-{spanId}-01" },
+            };
+
+            var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, traceState: null);
+            var carrier = new Dictionary<string, string>();
+            var f = new TraceContextFormatActivity();
+            f.Inject(activityContext, carrier, Setter);
+
+            Assert.Equal(expectedHeaders, carrier);
+        }
+
+        [Fact]
+        public void TraceContextFormat_Inject_WithTracestate()
+        {
+            var traceId = ActivityTraceId.CreateRandom();
+            var spanId = ActivitySpanId.CreateRandom();
+            var expectedHeaders = new Dictionary<string, string>
+            {
+                { TraceParent, $"00-{traceId}-{spanId}-01" },
+                { TraceState, $"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{traceId}-00f067aa0ba902b7-01" },
+            };
+
+            var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, expectedHeaders[TraceState]);
+            var carrier = new Dictionary<string, string>();
+            var f = new TraceContextFormatActivity();
+            f.Inject(activityContext, carrier, Setter);
+
+            Assert.Equal(expectedHeaders, carrier);
         }
     }
 }
