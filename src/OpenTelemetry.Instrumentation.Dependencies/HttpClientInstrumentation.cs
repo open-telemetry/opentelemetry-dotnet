@@ -22,7 +22,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
     /// <summary>
     /// Dependencies instrumentation.
     /// </summary>
-    public class HttpClientInstrumentation : IDisposable
+    internal class HttpClientInstrumentation : IDisposable
     {
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
