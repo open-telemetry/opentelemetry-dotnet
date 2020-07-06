@@ -196,26 +196,25 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return result;
         }
 
-        private static OtlpCommon.AttributeKeyValue ToOtlpAttribute(KeyValuePair<string, object> kvp)
+        private static OtlpCommon.KeyValue ToOtlpAttribute(KeyValuePair<string, object> kvp)
         {
             switch (kvp.Value)
             {
                 case string s:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, Type = OtlpCommon.AttributeKeyValue.Types.ValueType.String, StringValue = s };
+                    return new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { StringValue = s } };
                 case bool b:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Bool, BoolValue = b };
+                    return new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { BoolValue = b } };
                 case int i:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Int, IntValue = i };
+                    return new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { IntValue = i } };
                 case long l:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Int, IntValue = l };
+                    return new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { IntValue = l } };
                 case double d:
-                    return new OtlpCommon.AttributeKeyValue { Key = kvp.Key, Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Double, DoubleValue = d };
+                    return new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { DoubleValue = d } };
                 default:
-                    return new OtlpCommon.AttributeKeyValue
+                    return new OtlpCommon.KeyValue
                     {
                         Key = kvp.Key,
-                        Type = OtlpCommon.AttributeKeyValue.Types.ValueType.String,
-                        StringValue = kvp.Value == null ? string.Empty : kvp.Value.ToString(),
+                        Value = new OtlpCommon.AnyValue { StringValue = kvp.Value == null ? string.Empty : kvp.Value.ToString() },
                     };
             }
         }

@@ -22,7 +22,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
     /// <summary>
     /// SqlClient instrumentation.
     /// </summary>
-    public class SqlClientInstrumentation : IDisposable
+    internal class SqlClientInstrumentation : IDisposable
     {
         internal const string SqlClientDiagnosticListenerName = "SqlClientDiagnosticListener";
 

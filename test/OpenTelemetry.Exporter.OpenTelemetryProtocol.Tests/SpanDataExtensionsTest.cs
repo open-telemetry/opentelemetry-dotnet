@@ -84,8 +84,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Equal(2, otlpResourceSpans.Count());
 
-            var evenAttribKeyValue = new OtlpCommon.AttributeKeyValue { Key = "k0" };
-            evenAttribKeyValue.StringValue = "v0";
+            var evenAttribKeyValue = new OtlpCommon.KeyValue { Key = "k0", Value = new OtlpCommon.AnyValue { } };
+            evenAttribKeyValue.Value.StringValue = "v0";
             foreach (var resourceSpans in otlpResourceSpans)
             {
                 Assert.Single(resourceSpans.InstrumentationLibrarySpans);
@@ -195,7 +195,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
         private static void AssertOtlpAttributes(
             IDictionary<string, object> expectedAttributes,
-            RepeatedField<OtlpCommon.AttributeKeyValue> otlpAttributes)
+            RepeatedField<OtlpCommon.KeyValue> otlpAttributes)
         {
             Assert.Equal(expectedAttributes.Count, otlpAttributes.Count);
             foreach (var otlpAttrib in otlpAttributes)
@@ -205,24 +205,24 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
         }
 
-        private static void AssertOtlpAttributeValue(OtlpCommon.AttributeKeyValue akv, object originalValue)
+        private static void AssertOtlpAttributeValue(OtlpCommon.KeyValue akv, object originalValue)
         {
             switch (originalValue)
             {
                 case string s:
-                    Assert.Equal(akv.StringValue, s);
+                    Assert.Equal(akv.Value.StringValue, s);
                     break;
                 case bool b:
-                    Assert.Equal(akv.BoolValue, b);
+                    Assert.Equal(akv.Value.BoolValue, b);
                     break;
                 case long l:
-                    Assert.Equal(akv.IntValue, l);
+                    Assert.Equal(akv.Value.IntValue, l);
                     break;
                 case double d:
-                    Assert.Equal(akv.DoubleValue, d);
+                    Assert.Equal(akv.Value.DoubleValue, d);
                     break;
                 default:
-                    Assert.Equal(akv.StringValue, originalValue?.ToString());
+                    Assert.Equal(akv.Value.StringValue, originalValue?.ToString());
                     break;
             }
         }
