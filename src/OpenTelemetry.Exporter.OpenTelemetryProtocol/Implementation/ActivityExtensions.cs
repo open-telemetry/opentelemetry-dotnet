@@ -201,7 +201,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return otlpEvent;
         }
 
-        private static OtlpCommon.AttributeKeyValue ToOtlpAttribute(KeyValuePair<string, string> kvp)
+        private static OtlpCommon.KeyValue ToOtlpAttribute(KeyValuePair<string, string> kvp)
         {
             // TODO: enforce no duplicate keys?
             // TODO: reverse?
@@ -212,66 +212,56 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 return null;
             }
 
-            var attrib = new OtlpCommon.AttributeKeyValue { Key = kvp.Key };
+            var attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
 
             if (long.TryParse(kvp.Value, out var longValue))
             {
-                attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Int;
-                attrib.IntValue = longValue;
+                attrib.Value.IntValue = longValue;
             }
             else if (double.TryParse(kvp.Value, out var doubleValue))
             {
-                attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Double;
-                attrib.DoubleValue = doubleValue;
+                attrib.Value.DoubleValue = doubleValue;
             }
             else if (bool.TryParse(kvp.Value, out var boolValue))
             {
-                attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Bool;
-                attrib.BoolValue = boolValue;
+                attrib.Value.BoolValue = boolValue;
             }
             else
             {
-                attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.String;
-                attrib.StringValue = kvp.Value;
+                attrib.Value.StringValue = kvp.Value;
             }
 
             return attrib;
         }
 
-        private static OtlpCommon.AttributeKeyValue ToOtlpAttribute(KeyValuePair<string, object> kvp)
+        private static OtlpCommon.KeyValue ToOtlpAttribute(KeyValuePair<string, object> kvp)
         {
             if (kvp.Value == null)
             {
                 return null;
             }
 
-            var attrib = new OtlpCommon.AttributeKeyValue { Key = kvp.Key };
+            var attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
 
             switch (kvp.Value)
             {
                 case string s:
-                    attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.String;
-                    attrib.StringValue = s;
+                    attrib.Value.StringValue = s;
                     break;
                 case bool b:
-                    attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Bool;
-                    attrib.BoolValue = b;
+                    attrib.Value.BoolValue = b;
                     break;
                 case int i:
-                    attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Int;
-                    attrib.IntValue = i;
+                    attrib.Value.IntValue = i;
                     break;
                 case long l:
-                    attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Int;
-                    attrib.IntValue = l;
+                    attrib.Value.IntValue = l;
                     break;
                 case double d:
-                    attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.Double;
-                    attrib.DoubleValue = d;
+                    attrib.Value.DoubleValue = d;
                     break;
                 default:
-                    attrib.Type = OtlpCommon.AttributeKeyValue.Types.ValueType.String;
-                    attrib.StringValue = kvp.Value.ToString();
+                    attrib.Value.StringValue = kvp.Value.ToString();
                     break;
             }
 
