@@ -1,1 +1,3 @@
-﻿.proto files under Implementation\ from label v0.3.0 from https://github.com/open-telemetry/opentelemetry-proto/commit/6a4eb2fa6f25569910f7b17216e3a2087496bbce
+﻿.proto files under Implementation\ from https://github.com/open-telemetry/opentelemetry-proto/commit/1a931b4b57c34e7fd8f7dddcaa9b7587840e9c08
+
+Trace proto files marked as stable
