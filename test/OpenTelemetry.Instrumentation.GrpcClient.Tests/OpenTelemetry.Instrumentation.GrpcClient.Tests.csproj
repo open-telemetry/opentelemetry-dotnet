@@ -2,13 +2,6 @@
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry GrpcClient instrumentation</Description>
     <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
-
-    <!-- 
-      The CI fails when there are different versions of Grpc.Tools present in the project. 
-      This project intentionlly references Grpc.Tools version 2.25.0 to avoid this failure. This causes warning NU1605.
-      See: https://github.com/open-telemetry/opentelemetry-dotnet/pull/687#discussion_r446731210
-    -->
-    <NoWarn>$(NoWarn);NU1605</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +19,7 @@
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
 
     <PackageReference Include="Google.Protobuf" Version="3.12.3" />
-    <PackageReference Include="Grpc.AspNetCore" Version="2.30.0-pre1" />
+    <PackageReference Include="Grpc.AspNetCore.Server" Version="2.30.0-pre1" />
     <PackageReference Include="Grpc.Net.Client" Version="2.30.0-pre1" />
     <PackageReference Include="Grpc.Tools" Version="2.25.0" PrivateAssets="All" />
   </ItemGroup>
