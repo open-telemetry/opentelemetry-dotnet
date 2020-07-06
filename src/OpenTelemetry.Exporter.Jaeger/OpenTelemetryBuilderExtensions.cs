@@ -44,8 +44,8 @@ namespace OpenTelemetry.Trace.Configuration
                 configure?.Invoke(exporterOptions);
 
                 var activityExporter = new JaegerActivityExporter(exporterOptions);
-                pipeline.SetExporter(activityExporter);
                 processorConfigure?.Invoke(pipeline);
+                pipeline.SetExporter(activityExporter);
             });
         }
     }

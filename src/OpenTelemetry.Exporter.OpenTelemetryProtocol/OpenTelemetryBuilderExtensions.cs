@@ -44,8 +44,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
                 configure?.Invoke(exporterOptions);
 
                 var activityExporter = new OtlpActivityExporter(exporterOptions);
-                pipeline.SetExporter(activityExporter);
                 processorConfigure?.Invoke(pipeline);
+                pipeline.SetExporter(activityExporter);
             });
         }
     }

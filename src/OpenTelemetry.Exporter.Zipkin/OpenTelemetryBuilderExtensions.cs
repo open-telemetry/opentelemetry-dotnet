@@ -44,8 +44,8 @@ namespace OpenTelemetry.Trace.Configuration
                 configure?.Invoke(options);
 
                 var activityExporter = new ZipkinActivityExporter(options);
-                pipeline.SetExporter(activityExporter);
                 processorConfigure?.Invoke(pipeline);
+                pipeline.SetExporter(activityExporter);
             });
         }
     }
