@@ -1,0 +1,41 @@
+name: .NET Code Coverage
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+        
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: dotnet build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: dotnet test
+      run: dotnet test --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true
+
+    - name: Install report tool
+      run: dotnet tool install -g dotnet-reportgenerator-globaltool
+    
+    - name: Merging test results
+      run: reportgenerator -reports:TestResults/**/*.xml -targetdir:TestResults -reporttypes:Cobertura -verbosity:Verbose
+
+    - uses: codecov/codecov-action@v1
+      with:
+        file: TestResults/Cobertura.xml
