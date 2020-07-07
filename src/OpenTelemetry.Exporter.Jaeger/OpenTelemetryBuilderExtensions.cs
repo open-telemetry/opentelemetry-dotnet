@@ -15,23 +15,23 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter.Zipkin;
+using OpenTelemetry.Exporter.Jaeger;
 
 namespace OpenTelemetry.Trace.Configuration
 {
     /// <summary>
-    /// Extension methods to simplify registering of Zipkin exporter.
+    /// Extension methods to simplify registering a Jaeger exporter.
     /// </summary>
     public static class OpenTelemetryBuilderExtensions
     {
         /// <summary>
-        /// Registers a Zipkin exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
+        /// Registers a Jaeger exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
         /// </summary>
         /// <param name="builder"><see cref="OpenTelemetryBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseZipkinActivityExporter(this OpenTelemetryBuilder builder, Action<ZipkinTraceExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        public static OpenTelemetryBuilder UseJaegerActivityExporter(this OpenTelemetryBuilder builder, Action<JaegerExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
         {
             if (builder == null)
             {
@@ -40,10 +40,10 @@ namespace OpenTelemetry.Trace.Configuration
 
             return builder.AddProcessorPipeline(pipeline =>
             {
-                var options = new ZipkinTraceExporterOptions();
-                configure?.Invoke(options);
+                var exporterOptions = new JaegerExporterOptions();
+                configure?.Invoke(exporterOptions);
 
-                var activityExporter = new ZipkinActivityExporter(options);
+                var activityExporter = new JaegerActivityExporter(exporterOptions);
                 processorConfigure?.Invoke(pipeline);
                 pipeline.SetExporter(activityExporter);
             });
