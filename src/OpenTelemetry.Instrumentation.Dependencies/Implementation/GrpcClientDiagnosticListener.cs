@@ -15,22 +15,14 @@
 // </copyright>
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
-        // The Grpc.Net.Client library adds its own tags to the activity.
-        // These tags are used to source the tags added by the OpenTelemetry instrumentation.
-        private const string GrpcMethodTagName = "grpc.method";
-        private const string GrpcStatusCodeTagName = "grpc.status_code";
-
-        private static readonly Regex GrpcMethodRegex = new Regex(@"(?<service>\w+\.?\w*)/(?<method>\w+)", RegexOptions.Compiled);
         private static readonly PropertyInfo ActivityKindPropertyInfo = typeof(Activity).GetProperty("Kind");
 
         private readonly ActivitySourceAdapter activitySource;
@@ -56,46 +48,35 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 return;
             }
 
-            var grpcMethodTag = activity.Tags.FirstOrDefault(tag => tag.Key == GrpcMethodTagName);
-            var grpcMethod = grpcMethodTag.Value?.Trim('/');
+            var grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
 
             // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
             ActivityKindPropertyInfo.SetValue(activity, ActivityKind.Client);
-            activity.DisplayName = grpcMethod;
+            activity.DisplayName = grpcMethod?.Trim('/');
 
             this.activitySource.Start(activity);
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag("rpc.system", "grpc");
+                activity.AddTag(SpanAttributeConstants.RpcSystem, "grpc");
 
-                var match = GrpcMethodRegex.Match(grpcMethod);
-                if (match.Success)
+                if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
                 {
-                    var rpcService = match.Groups["service"].Value;
-                    if (!string.IsNullOrEmpty(rpcService))
-                    {
-                        activity.AddTag("rpc.service", rpcService);
-                    }
-
-                    var rpcMethod = match.Groups["method"].Value;
-                    if (!string.IsNullOrEmpty(rpcMethod))
-                    {
-                        activity.AddTag("rpc.method", rpcMethod);
-                    }
+                    activity.AddTag(SpanAttributeConstants.RpcService, rpcService);
+                    activity.AddTag(SpanAttributeConstants.RpcMethod, rpcMethod);
                 }
 
                 var uriHostNameType = Uri.CheckHostName(request.RequestUri.Host);
                 if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
                 {
-                    activity.AddTag("net.peer.ip", request.RequestUri.Host);
+                    activity.AddTag(SpanAttributeConstants.NetPeerIp, request.RequestUri.Host);
                 }
                 else
                 {
-                    activity.AddTag("net.peer.name", request.RequestUri.Host);
+                    activity.AddTag(SpanAttributeConstants.NetPeerName, request.RequestUri.Host);
                 }
 
-                activity.AddTag("net.peer.port", request.RequestUri.Port.ToString());
+                activity.AddTag(SpanAttributeConstants.NetPeerPort, request.RequestUri.Port.ToString());
             }
         }
 
@@ -103,15 +84,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                var status = Status.Unknown;
-
-                var grpcStatusCodeTag = activity.Tags.FirstOrDefault(tag => tag.Key == GrpcStatusCodeTagName).Value;
-                if (int.TryParse(grpcStatusCodeTag, out var statusCode))
-                {
-                    status = SpanHelper.ResolveSpanStatusForGrpcStatusCode(statusCode);
-                }
-
-                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                activity.AddTag(SpanAttributeConstants.StatusCodeKey, GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
             }
 
             this.activitySource.Stop(activity);
