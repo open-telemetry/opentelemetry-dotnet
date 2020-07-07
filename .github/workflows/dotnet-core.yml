@@ -1,6 +1,8 @@
 name: .NET
 
 on:
+  push:
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -21,7 +23,7 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.x
-        
+
     - name: Install dependencies
       run: dotnet restore
 
@@ -30,10 +32,10 @@ jobs:
 
     - name: dotnet test
       run: dotnet test -p:CollectCoverage=false --configuration Release --no-build --logger:"console;verbosity=detailed"
-          
-    - name: dotnet pack      
+
+    - name: dotnet pack
       run: dotnet pack OpenTelemetry.proj --configuration Release --no-build
-      
+
     - name: Publish Artifacts
       uses: actions/upload-artifact@v2
       with:
