@@ -1,6 +1,8 @@
 name: .NET Windows
 
 on:
+  push:
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -19,7 +21,7 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.x
-        
+
     - name: Install dependencies
       run: dotnet restore
 
