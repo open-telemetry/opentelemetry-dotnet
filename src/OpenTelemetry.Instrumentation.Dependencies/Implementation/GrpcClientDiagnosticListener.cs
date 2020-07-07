@@ -41,10 +41,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
-            const string EventNameSuffix = ".OnStartActivity";
             if (!(this.startRequestFetcher.Fetch(payload) is HttpRequestMessage request))
             {
-                InstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener) + EventNameSuffix);
+                InstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener), nameof(this.OnStartActivity));
                 return;
             }
 
