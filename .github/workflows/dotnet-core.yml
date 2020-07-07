@@ -29,10 +29,10 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: dotnet test
-      run: dotnet test -p:CollectCoverage=false --configuration Release --no-restore --logger:"console;verbosity=detailed"
-
+      run: dotnet test -p:CollectCoverage=false --configuration Release --no-build --logger:"console;verbosity=detailed"
+          
     - name: dotnet pack      
-      run: dotnet pack OpenTelemetry.proj --configuration Release --no-restore
+      run: dotnet pack OpenTelemetry.proj --configuration Release --no-build
       
     - name: Publish Artifacts
       uses: actions/upload-artifact@v2
