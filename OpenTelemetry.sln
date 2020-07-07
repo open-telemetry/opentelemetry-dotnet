@@ -35,7 +35,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Zipk
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".vsts", ".vsts", "{61188153-47FB-4567-AC9B-79B2435853EB}"
 	ProjectSection(SolutionItems) = preProject
-		.vsts\ci-build.yml = .vsts\ci-build.yml
 		.vsts\ci-myget-update.yml = .vsts\ci-myget-update.yml
 	EndProjectSection
 EndProject
