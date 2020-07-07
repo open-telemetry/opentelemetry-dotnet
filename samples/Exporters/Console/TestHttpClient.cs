@@ -17,6 +17,7 @@ using System;
 using System.Diagnostics;
 using System.Net.Http;
 using OpenTelemetry.Exporter.Console;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
 
 namespace Samples
@@ -29,6 +30,7 @@ namespace Samples
 
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddHttpClientDependencyInstrumentation()
+                .SetResource(Resources.CreateServiceResource("http-service-example"))
                 .AddActivitySource("http-client-test")
                 .UseConsoleActivityExporter(opt => opt.DisplayAsJson = false));
 

@@ -69,6 +69,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             string filter = null,
             bool restoreCurrentActivity = false)
         {
+            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var s = carrierFormat;
             IDisposable openTelemetry = null;
             RouteData routeData;
@@ -162,6 +163,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                         options.TextFormat = textFormat.Object;
                     }
                 })
+            .SetResource(expectedResource)
             .AddProcessorPipeline(p => p.AddProcessor(_ => activityProcessor.Object))))
             {
                 activity.Start();
@@ -251,6 +253,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(
                 HttpContext.Current.Request.UserAgent,
                 span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUserAgentKey).Value as string);
+
+            Assert.Equal(expectedResource, span.GetResource());
         }
 
         private class FakeAspNetDiagnosticSource : IDisposable
