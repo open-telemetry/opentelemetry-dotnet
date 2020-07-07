@@ -1,4 +1,4 @@
-﻿// <copyright file="TestExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestSpanExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,12 +22,12 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Testing.Export
 {
-    public class TestExporter : SpanExporter
+    public class TestSpanExporter : SpanExporter
     {
         private readonly ConcurrentQueue<SpanData> spanDataList = new ConcurrentQueue<SpanData>();
         private readonly Action<IEnumerable<SpanData>> onExport;
 
-        public TestExporter(Action<IEnumerable<SpanData>> onExport)
+        public TestSpanExporter(Action<IEnumerable<SpanData>> onExport)
         {
             this.onExport = onExport;
         }
