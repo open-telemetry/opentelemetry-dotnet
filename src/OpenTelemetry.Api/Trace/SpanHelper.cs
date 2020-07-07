@@ -107,5 +107,23 @@ namespace OpenTelemetry.Trace
 
             return newStatus;
         }
+
+        /// <summary>
+        /// Helper method that populates span properties from RPC status code according
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#status.
+        /// </summary>
+        /// <param name="statusCode">RPC status code.</param>
+        /// <returns>Resolved span <see cref="Status"/> for the Grpc status code.</returns>
+        public static Status ResolveSpanStatusForGrpcStatusCode(int statusCode)
+        {
+            var newStatus = Status.Unknown;
+
+            if (typeof(StatusCanonicalCode).IsEnumDefined(statusCode))
+            {
+                newStatus = new Status((StatusCanonicalCode)statusCode);
+            }
+
+            return newStatus;
+        }
     }
 }

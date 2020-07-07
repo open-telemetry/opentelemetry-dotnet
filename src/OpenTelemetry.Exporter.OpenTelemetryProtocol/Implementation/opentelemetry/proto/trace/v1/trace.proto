@@ -157,7 +157,7 @@ message Span {
   //     "/http/server_latency": 300
   //     "abc.com/myattribute": true
   //     "abc.com/score": 10.239
-  repeated opentelemetry.proto.common.v1.AttributeKeyValue attributes = 9;
+  repeated opentelemetry.proto.common.v1.KeyValue attributes = 9;
 
   // dropped_attributes_count is the number of attributes that were discarded. Attributes
   // can be discarded because their keys are too long or because there are too many
@@ -175,7 +175,7 @@ message Span {
     string name = 2;
 
     // attributes is a collection of attribute key/value pairs on the event.
-    repeated opentelemetry.proto.common.v1.AttributeKeyValue attributes = 3;
+    repeated opentelemetry.proto.common.v1.KeyValue attributes = 3;
 
     // dropped_attributes_count is the number of dropped attributes. If the value is 0,
     // then no attributes were dropped.
@@ -205,7 +205,7 @@ message Span {
     string trace_state = 3;
 
     // attributes is a collection of attribute key/value pairs on the link.
-    repeated opentelemetry.proto.common.v1.AttributeKeyValue attributes = 4;
+    repeated opentelemetry.proto.common.v1.KeyValue attributes = 4;
 
     // dropped_attributes_count is the number of dropped attributes. If the value is 0,
     // then no attributes were dropped.

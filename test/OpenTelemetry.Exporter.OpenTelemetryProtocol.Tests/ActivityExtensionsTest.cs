@@ -20,9 +20,11 @@ using System.Diagnostics;
 using System.Linq;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using Opentelemetry.Proto.Common.V1;
 #if NET452
 using OpenTelemetry.Internal;
 #endif
+using OpenTelemetry.Trace.Configuration;
 using Xunit;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
@@ -94,9 +96,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var otlpSpans = instrumentationLibrarySpans.Spans;
                 Assert.Equal(expectedSpanNames.Count, otlpSpans.Count);
 
+                var kv0 = new OtlpCommon.KeyValue { Key = "k0", Value = new AnyValue { StringValue = "v0" } };
+                var kv1 = new OtlpCommon.KeyValue { Key = "k1", Value = new AnyValue { StringValue = "v1" } };
+
                 var expectedTag = instrumentationLibrarySpans.InstrumentationLibrary.Name == "even"
-                    ? new OtlpCommon.AttributeKeyValue { Key = "k0", StringValue = "v0" }
-                    : new OtlpCommon.AttributeKeyValue { Key = "k1", StringValue = "v1" };
+                    ? kv0
+                    : kv1;
+
                 foreach (var otlpSpan in otlpSpans)
                 {
                     Assert.Contains(otlpSpan.Name, expectedSpanNames);
@@ -203,9 +209,43 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
         }
 
+        [Fact]
+        public void UseOpenTelemetryProtocolActivityExporterWithCustomActivityProcessor()
+        {
+            const string ActivitySourceName = "otlp.test";
+            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+
+            bool startCalled = false;
+            bool endCalled = false;
+
+            testActivityProcessor.StartAction =
+                (a) =>
+                {
+                    startCalled = true;
+                };
+
+            testActivityProcessor.EndAction =
+                (a) =>
+                {
+                    endCalled = true;
+                };
+
+            var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+                            .AddActivitySource(ActivitySourceName)
+                            .UseOpenTelemetryProtocolActivityExporter(
+                                null, p => p.AddProcessor((next) => testActivityProcessor)));
+
+            var source = new ActivitySource(ActivitySourceName);
+            var activity = source.StartActivity("Test Otlp Activity");
+            activity?.Stop();
+
+            Assert.True(startCalled);
+            Assert.True(endCalled);
+        }
+
         private static void AssertActivityTagsIntoOtlpAttributes(
             List<KeyValuePair<string, object>> expectedTags,
-            RepeatedField<OtlpCommon.AttributeKeyValue> otlpAttributes)
+            RepeatedField<OtlpCommon.KeyValue> otlpAttributes)
         {
             Assert.Equal(expectedTags.Count, otlpAttributes.Count);
             for (var i = 0; i < expectedTags.Count; i++)
@@ -217,7 +257,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
         private static void AssertOtlpAttributes(
             List<KeyValuePair<string, object>> expectedAttributes,
-            RepeatedField<OtlpCommon.AttributeKeyValue> otlpAttributes)
+            RepeatedField<OtlpCommon.KeyValue> otlpAttributes)
         {
             Assert.Equal(expectedAttributes.Count(), otlpAttributes.Count);
             for (int i = 0; i < otlpAttributes.Count; i++)
@@ -227,29 +267,24 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
         }
 
-        private static void AssertOtlpAttributeValue(object originalValue, OtlpCommon.AttributeKeyValue akv)
+        private static void AssertOtlpAttributeValue(object originalValue, OtlpCommon.KeyValue akv)
         {
             switch (originalValue)
             {
                 case string s:
-                    Assert.Equal(s, akv.StringValue);
-                    Assert.Equal(OtlpCommon.AttributeKeyValue.Types.ValueType.String, akv.Type);
+                    Assert.Equal(s, akv.Value.StringValue);
                     break;
                 case bool b:
-                    Assert.Equal(b, akv.BoolValue);
-                    Assert.Equal(OtlpCommon.AttributeKeyValue.Types.ValueType.Bool, akv.Type);
+                    Assert.Equal(b, akv.Value.BoolValue);
                     break;
                 case long l:
-                    Assert.Equal(l, akv.IntValue);
-                    Assert.Equal(OtlpCommon.AttributeKeyValue.Types.ValueType.Int, akv.Type);
+                    Assert.Equal(l, akv.Value.IntValue);
                     break;
                 case double d:
-                    Assert.Equal(d, akv.DoubleValue);
-                    Assert.Equal(OtlpCommon.AttributeKeyValue.Types.ValueType.Double, akv.Type);
+                    Assert.Equal(d, akv.Value.DoubleValue);
                     break;
                 default:
-                    Assert.Equal(originalValue.ToString(), akv.StringValue);
-                    Assert.Equal(OtlpCommon.AttributeKeyValue.Types.ValueType.String, akv.Type);
+                    Assert.Equal(originalValue.ToString(), akv.Value.StringValue);
                     break;
             }
         }

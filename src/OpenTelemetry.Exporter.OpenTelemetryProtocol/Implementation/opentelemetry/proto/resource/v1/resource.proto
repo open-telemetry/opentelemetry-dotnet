@@ -26,7 +26,7 @@ option go_package = "github.com/open-telemetry/opentelemetry-proto/gen/go/resour
 // Resource information.
 message Resource {
   // Set of labels that describe the resource.
-  repeated opentelemetry.proto.common.v1.AttributeKeyValue attributes = 1;
+  repeated opentelemetry.proto.common.v1.KeyValue attributes = 1;
 
   // dropped_attributes_count is the number of dropped attributes. If the value is 0, then
   // no attributes were dropped.

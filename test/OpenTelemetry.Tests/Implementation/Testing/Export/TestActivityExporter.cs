@@ -25,7 +25,7 @@ namespace OpenTelemetry.Testing.Export
 {
     public class TestActivityExporter : ActivityExporter
     {
-        private readonly ConcurrentQueue<Activity> spanDataList = new ConcurrentQueue<Activity>();
+        private readonly ConcurrentQueue<Activity> activities = new ConcurrentQueue<Activity>();
         private readonly Action<IEnumerable<Activity>> onExport;
 
         public TestActivityExporter(Action<IEnumerable<Activity>> onExport)
@@ -33,17 +33,24 @@ namespace OpenTelemetry.Testing.Export
             this.onExport = onExport;
         }
 
-        public Activity[] ExportedSpans => this.spanDataList.ToArray();
+        public Activity[] ExportedActivities => this.activities.ToArray();
 
         public bool WasShutDown { get; private set; } = false;
 
         public override Task<ExportResult> ExportAsync(IEnumerable<Activity> data, CancellationToken cancellationToken)
         {
+            // Added a sleep for zero milliseconds to respect cancellation time set by export timeout.
+            Thread.Sleep(0);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return default;
+            }
+
             this.onExport?.Invoke(data);
 
             foreach (var s in data)
             {
-                this.spanDataList.Enqueue(s);
+                this.activities.Enqueue(s);
             }
 
             return Task.FromResult(ExportResult.Success);
