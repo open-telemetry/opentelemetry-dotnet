@@ -36,6 +36,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [InlineData("Package.Service/Method", true, "Package.Service", "Method")]
         [InlineData("/Package.Service/Method", true, "Package.Service", "Method")]
         [InlineData("/ServiceWithNoPackage/Method", true, "ServiceWithNoPackage", "Method")]
+        [InlineData("/Some.Package.Service/Method", true, "Some.Package.Service", "Method")]
         [InlineData("Invalid", false, "", "")]
         public void GrpcTagHelper_TryParseRpcServiceAndRpcMethod(string grpcMethod, bool isSuccess, string expectedRpcService, string expectedRpcMethod)
         {
