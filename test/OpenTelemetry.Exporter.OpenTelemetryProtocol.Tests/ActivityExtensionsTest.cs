@@ -24,6 +24,7 @@ using Opentelemetry.Proto.Common.V1;
 #if NET452
 using OpenTelemetry.Internal;
 #endif
+using OpenTelemetry.Trace.Configuration;
 using Xunit;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
@@ -206,6 +207,40 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 AssertOtlpAttributes(childLinks[i].Attributes.ToList(), otlpSpan.Links[i].Attributes);
             }
+        }
+
+        [Fact]
+        public void UseOpenTelemetryProtocolActivityExporterWithCustomActivityProcessor()
+        {
+            const string ActivitySourceName = "otlp.test";
+            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+
+            bool startCalled = false;
+            bool endCalled = false;
+
+            testActivityProcessor.StartAction =
+                (a) =>
+                {
+                    startCalled = true;
+                };
+
+            testActivityProcessor.EndAction =
+                (a) =>
+                {
+                    endCalled = true;
+                };
+
+            var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+                            .AddActivitySource(ActivitySourceName)
+                            .UseOpenTelemetryProtocolActivityExporter(
+                                null, p => p.AddProcessor((next) => testActivityProcessor)));
+
+            var source = new ActivitySource(ActivitySourceName);
+            var activity = source.StartActivity("Test Otlp Activity");
+            activity?.Stop();
+
+            Assert.True(startCalled);
+            Assert.True(endCalled);
         }
 
         private static void AssertActivityTagsIntoOtlpAttributes(
