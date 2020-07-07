@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build-test:
+  build-test-pack:
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -28,7 +28,7 @@ jobs:
       run: dotnet restore
 
     - name: dotnet build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release --no-restore -p:Deterministic=true
 
     - name: dotnet test
       run: dotnet test -p:CollectCoverage=false --configuration Release --no-build --logger:"console;verbosity=detailed"

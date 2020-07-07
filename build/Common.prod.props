@@ -22,7 +22,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer">
+  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(Configuration)'=='Release'">
     <PropertyGroup>
       <RevisionNumber>$(MinVerVersion.Split(`.`)[3])</RevisionNumber>
       <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</AssemblyVersion>      
@@ -58,6 +58,14 @@
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(Deterministic)'=='true'">
+    <SourceRoot Include="$(MSBuildThisFileDirectory)/"/>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Deterministic)'=='true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>
