@@ -27,10 +27,15 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
+#if NETCOREAPP2_1
+using TestApp.AspNetCore._2._1;
+#else
 using TestApp.AspNetCore._3._1;
+#endif
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
@@ -57,11 +62,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan()
         {
+            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var spanProcessor = new Mock<ActivityProcessor>();
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry((builder) => builder.AddRequestInstrumentation()
-                .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
+                this.openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(
+                    (builder) => builder.AddRequestInstrumentation()
+                    .SetResource(expectedResource)
+                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
             }
 
             // Arrange
@@ -84,6 +92,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.Equal(ActivityKind.Server, span.Kind);
             Assert.Equal("/api/values", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal(expectedResource, span.GetResource());
         }
 
         [Fact]
@@ -207,8 +216,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, span.Kind);
-
-            // Assert.Equal("/api/values", span.Tags.GetValue("http.path"));
+            Assert.Equal("/api/values", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
         }
 
         public void Dispose()

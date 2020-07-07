@@ -50,6 +50,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 out var host,
                 out var port);
 
+            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var spanProcessor = new Mock<ActivityProcessor>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
@@ -57,6 +58,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (OpenTelemetrySdk.EnableOpenTelemetry(
                     (builder) => builder.AddHttpClientDependencyInstrumentation((opt) => opt.SetHttpFlavor = tc.SetHttpFlavor)
+                    .SetResource(expectedResource)
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 try
@@ -133,6 +135,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 // TODO: Fix this test. This is mostly broken because Status is stored in tags.
                 // Assert.Contains(span.Tags, i => i.Key == kv.Key && i.Value.Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
             }
+
+            Assert.Equal(expectedResource, span.GetResource());
         }
 
         [Fact]
