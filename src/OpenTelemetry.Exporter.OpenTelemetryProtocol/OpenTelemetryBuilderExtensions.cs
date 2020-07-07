@@ -15,23 +15,23 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter.Zipkin;
+using OpenTelemetry.Trace.Configuration;
 
-namespace OpenTelemetry.Trace.Configuration
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 {
     /// <summary>
-    /// Extension methods to simplify registering of Zipkin exporter.
+    /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter.
     /// </summary>
     public static class OpenTelemetryBuilderExtensions
     {
         /// <summary>
-        /// Registers a Zipkin exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
+        /// Enables the OpenTelemetry Protocol (OTLP) exporter.
         /// </summary>
-        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> builder to use.</param>
+        /// <param name="builder">Open Telemetry builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseZipkinActivityExporter(this OpenTelemetryBuilder builder, Action<ZipkinTraceExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        public static OpenTelemetryBuilder UseOpenTelemetryProtocolActivityExporter(this OpenTelemetryBuilder builder, Action<ExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
         {
             if (builder == null)
             {
@@ -40,10 +40,10 @@ namespace OpenTelemetry.Trace.Configuration
 
             return builder.AddProcessorPipeline(pipeline =>
             {
-                var options = new ZipkinTraceExporterOptions();
-                configure?.Invoke(options);
+                var exporterOptions = new ExporterOptions();
+                configure?.Invoke(exporterOptions);
 
-                var activityExporter = new ZipkinActivityExporter(options);
+                var activityExporter = new OtlpActivityExporter(exporterOptions);
                 processorConfigure?.Invoke(pipeline);
                 pipeline.SetExporter(activityExporter);
             });

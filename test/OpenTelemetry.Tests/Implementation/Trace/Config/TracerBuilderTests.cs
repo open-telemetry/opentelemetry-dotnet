@@ -56,7 +56,7 @@ namespace OpenTelemetry.Tests.Impl.Trace
             bool instrumentationFactoryCalled = true;
 
             var sampler = new ProbabilitySampler(0.1);
-            var exporter = new TestExporter(_ => { });
+            var exporter = new TestSpanExporter(_ => { });
             var options = new TracerConfiguration(1, 1, 1);
 
             builder

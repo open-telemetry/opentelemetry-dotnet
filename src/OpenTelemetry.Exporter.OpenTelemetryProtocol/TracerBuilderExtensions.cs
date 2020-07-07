@@ -83,33 +83,5 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
                 processorConfigure.Invoke(b);
             });
         }
-
-        /// <summary>
-        /// Enables the OpenTelemetry Protocol (OTLP) exporter.
-        /// </summary>
-        /// <param name="builder">Open Telemetry builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseOpenTelemetryProtocolActivityExporter(this OpenTelemetryBuilder builder, Action<ExporterOptions> configure)
-        {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            return builder.AddProcessorPipeline(pipeline =>
-            {
-                var exporterOptions = new ExporterOptions();
-                configure(exporterOptions);
-
-                var activityExporter = new OtlpActivityExporter(exporterOptions);
-                pipeline.SetExporter(activityExporter);
-            });
-        }
     }
 }
