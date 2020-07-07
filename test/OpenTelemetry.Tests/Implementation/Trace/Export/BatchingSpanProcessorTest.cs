@@ -39,15 +39,15 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ThrowsOnInvalidArguments()
         {
             Assert.Throws<ArgumentNullException>(() => new BatchingSpanProcessor(null));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new TestExporter(null), 0, TimeSpan.FromSeconds(5), 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new TestExporter(null), 2048, TimeSpan.FromSeconds(5), 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new TestExporter(null), 512, TimeSpan.FromSeconds(5), 513));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new TestSpanExporter(null), 0, TimeSpan.FromSeconds(5), 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new TestSpanExporter(null), 2048, TimeSpan.FromSeconds(5), 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchingSpanProcessor(new TestSpanExporter(null), 512, TimeSpan.FromSeconds(5), 513));
         }
 
         [Fact]
         public async Task ShutdownTwice()
         {
-            using var spanProcessor = new BatchingSpanProcessor(new TestExporter(null));
+            using var spanProcessor = new BatchingSpanProcessor(new TestSpanExporter(null));
             await spanProcessor.ShutdownAsync(CancellationToken.None);
 
             // does not throw
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public async Task ShutdownWithHugeScheduleDelay()
         {
             using var spanProcessor =
-                new BatchingSpanProcessor(new TestExporter(null), 128, TimeSpan.FromMinutes(1), 32);
+                new BatchingSpanProcessor(new TestSpanExporter(null), 128, TimeSpan.FromMinutes(1), 32);
             var sw = Stopwatch.StartNew();
             using (var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100)))
             {
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public void ExportDifferentSampledSpans()
         {
-            var spanExporter = new TestExporter(null);
+            var spanExporter = new TestSpanExporter(null);
             using var spanProcessor = new BatchingSpanProcessor(spanExporter, 128, DefaultDelay, 128);
             var span1 = this.CreateSampledEndedSpan(SpanName1, spanProcessor);
             var span2 = this.CreateSampledEndedSpan(SpanName2, spanProcessor);
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var exportStartTimes = new List<long>();
             var exportEndTimes = new List<long>();
-            var spanExporter = new TestExporter(_ =>
+            var spanExporter = new TestSpanExporter(_ =>
             {
                 exportStartTimes.Add(Stopwatch.GetTimestamp());
                 Thread.Sleep(50);
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void AddSpanAfterQueueIsExhausted()
         {
             int exportCalledCount = 0;
-            var spanExporter = new TestExporter(_ => Interlocked.Increment(ref exportCalledCount));
+            var spanExporter = new TestSpanExporter(_ => Interlocked.Increment(ref exportCalledCount));
             using var spanProcessor = new BatchingSpanProcessor(spanExporter, 1, TimeSpan.FromMilliseconds(100), 1);
             var spans = new List<SpanSdk>();
             for (int i = 0; i < 20; i++)
@@ -139,7 +139,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             var exporterCalled = new ManualResetEvent(false);
             int exportCalledCount = 0;
-            var spanExporter = new TestExporter(_ =>
+            var spanExporter = new TestSpanExporter(_ =>
             {
                 exporterCalled.Set();
                 Interlocked.Increment(ref exportCalledCount);
@@ -173,7 +173,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ExportNotSampledSpans()
         {
             int exportCalledCount = 0;
-            var spanExporter = new TestExporter(_ => Interlocked.Increment(ref exportCalledCount));
+            var spanExporter = new TestSpanExporter(_ => Interlocked.Increment(ref exportCalledCount));
             using var spanProcessor = new BatchingSpanProcessor(spanExporter, 128, DefaultDelay, 3);
             var span1 = this.CreateNotSampledEndedSpan(SpanName1, spanProcessor);
             var span2 = this.CreateSampledEndedSpan(SpanName2, spanProcessor);
@@ -195,7 +195,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ProcessorDoesNotBlockOnExporter()
         {
             var resetEvent = new ManualResetEvent(false);
-            var spanExporter = new TestExporter(_ => resetEvent.WaitOne(TimeSpan.FromSeconds(10)));
+            var spanExporter = new TestSpanExporter(_ => resetEvent.WaitOne(TimeSpan.FromSeconds(10)));
             using var factory = TracerFactory.Create(b => b
                 .AddProcessorPipeline(p => p
                     .SetExporter(spanExporter)
@@ -224,7 +224,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             const int batchSize = 2;
             int exportCalledCount = 0;
-            var spanExporter = new TestExporter(_ => Interlocked.Increment(ref exportCalledCount));
+            var spanExporter = new TestSpanExporter(_ => Interlocked.Increment(ref exportCalledCount));
             using var spanProcessor =
                 new BatchingSpanProcessor(spanExporter, 128, TimeSpan.FromMilliseconds(100), batchSize);
             var spans = new List<SpanSdk>();
@@ -252,7 +252,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
             // we'll need about 1.5 sec to export all spans
             // we export 100 spans in batches of 2, each export takes 30ms, in one thread
-            var spanExporter = new TestExporter(_ =>
+            var spanExporter = new TestSpanExporter(_ =>
             {
                 Interlocked.Increment(ref exportCalledCount);
                 Thread.Sleep(30);
@@ -283,7 +283,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             const int batchSize = 2;
             int exportCalledCount = 0;
-            var spanExporter = new TestExporter(_ => Interlocked.Increment(ref exportCalledCount));
+            var spanExporter = new TestSpanExporter(_ => Interlocked.Increment(ref exportCalledCount));
             var spans = new List<SpanSdk>();
             using (var spanProcessor = new BatchingSpanProcessor(spanExporter, 128, TimeSpan.FromMilliseconds(100), batchSize))
             {
@@ -305,7 +305,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Activity.Current = null;
         }
 
-        private SpanData[] WaitForSpans(TestExporter exporter, int spanCount, TimeSpan timeout)
+        private SpanData[] WaitForSpans(TestSpanExporter exporter, int spanCount, TimeSpan timeout)
         {
             var sw = Stopwatch.StartNew();
             while (exporter.ExportedSpans.Length < spanCount && sw.Elapsed <= timeout)

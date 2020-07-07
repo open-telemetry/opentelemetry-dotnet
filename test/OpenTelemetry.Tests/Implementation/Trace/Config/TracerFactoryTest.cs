@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var exporterCalledCount = 0;
 
-            var testExporter = new TestExporter(spans =>
+            var testExporter = new TestSpanExporter(spans =>
             {
                 exporterCalledCount++;
                 Assert.Single(spans);
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var exporterCalledCount = 0;
 
-            var testExporter = new TestExporter(spans =>
+            var testExporter = new TestSpanExporter(spans =>
             {
                 exporterCalledCount++;
                 Assert.Single(spans);
