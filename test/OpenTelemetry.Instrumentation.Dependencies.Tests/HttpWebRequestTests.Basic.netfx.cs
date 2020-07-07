@@ -165,16 +165,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (var activityListener = new ActivityListener
-            {
-                ShouldListenTo = (activitySource) => activitySource.Name == HttpWebRequestActivitySource.ActivitySourceName,
-            })
-            {
-                ActivitySource.AddActivityListener(activityListener);
-
-                using var c = new HttpClient();
-                await c.SendAsync(request);
-            }
+            using var c = new HttpClient();
+            await c.SendAsync(request);
 
             Assert.Equal(0, activityProcessor.Invocations.Count);
         }
@@ -193,16 +185,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 arg1 is HttpWebRequest request &&
                 request.RequestUri.OriginalString.Contains(this.url)));
 
-            using (var activityListener = new ActivityListener
-            {
-                ShouldListenTo = (activitySource) => activitySource.Name == HttpWebRequestActivitySource.ActivitySourceName,
-            })
-            {
-                ActivitySource.AddActivityListener(activityListener);
-
-                using var c = new HttpClient();
-                await c.GetAsync(this.url);
-            }
+            using var c = new HttpClient();
+            await c.GetAsync(this.url);
 
             Assert.Equal(0, spanProcessor.Invocations.Count);
         }

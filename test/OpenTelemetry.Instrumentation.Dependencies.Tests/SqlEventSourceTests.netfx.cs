@@ -61,35 +61,25 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 });
             });
 
-            string dataSource = null;
+            using SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
 
-            using (var activityListener = new ActivityListener
+            await sqlConnection.OpenAsync().ConfigureAwait(false);
+
+            string dataSource = sqlConnection.DataSource;
+
+            sqlConnection.ChangeDatabase("master");
+
+            using SqlCommand sqlCommand = new SqlCommand(commandText, sqlConnection)
             {
-                ShouldListenTo = (activitySource) => activitySource.Name == SqlEventSourceListener.ActivitySourceName,
-            })
+                CommandType = commandType,
+            };
+
+            try
             {
-                ActivitySource.AddActivityListener(activityListener);
-
-                using SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
-
-                await sqlConnection.OpenAsync().ConfigureAwait(false);
-
-                dataSource = sqlConnection.DataSource;
-
-                sqlConnection.ChangeDatabase("master");
-
-                using SqlCommand sqlCommand = new SqlCommand(commandText, sqlConnection)
-                {
-                    CommandType = commandType,
-                };
-
-                try
-                {
-                    await sqlCommand.ExecuteNonQueryAsync().ConfigureAwait(false);
-                }
-                catch
-                {
-                }
+                await sqlCommand.ExecuteNonQueryAsync().ConfigureAwait(false);
+            }
+            catch
+            {
             }
 
             Assert.Equal(2, activityProcessor.Invocations.Count);
@@ -120,28 +110,20 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             int objectId = Guid.NewGuid().GetHashCode();
 
-            using (var activityListener = new ActivityListener
-            {
-                ShouldListenTo = (activitySource) => activitySource.Name == SqlEventSourceListener.ActivitySourceName,
-            })
-            {
-                ActivitySource.AddActivityListener(activityListener);
+            fakeSqlEventSource.WriteBeginExecuteEvent(objectId, "127.0.0.1", "master", commandType == CommandType.StoredProcedure ? commandText : string.Empty);
 
-                fakeSqlEventSource.WriteBeginExecuteEvent(objectId, "127.0.0.1", "master", commandType == CommandType.StoredProcedure ? commandText : string.Empty);
+            // success is stored in the first bit in compositeState 0b001
+            int successFlag = !isFailure ? 1 : 0;
 
-                // success is stored in the first bit in compositeState 0b001
-                int successFlag = !isFailure ? 1 : 0;
+            // isSqlException is stored in the second bit in compositeState 0b010
+            int isSqlExceptionFlag = sqlExceptionNumber > 0 ? 2 : 0;
 
-                // isSqlException is stored in the second bit in compositeState 0b010
-                int isSqlExceptionFlag = sqlExceptionNumber > 0 ? 2 : 0;
+            // synchronous state is stored in the third bit in compositeState 0b100
+            int synchronousFlag = false ? 4 : 0;
 
-                // synchronous state is stored in the third bit in compositeState 0b100
-                int synchronousFlag = false ? 4 : 0;
+            int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
 
-                int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
-
-                fakeSqlEventSource.WriteEndExecuteEvent(objectId, compositeState, sqlExceptionNumber);
-            }
+            fakeSqlEventSource.WriteEndExecuteEvent(objectId, compositeState, sqlExceptionNumber);
 
             Assert.Equal(2, activityProcessor.Invocations.Count);
 
@@ -162,15 +144,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 b.AddSqlClientDependencyInstrumentation();
             });
 
-            using (var activityListener = new ActivityListener
-            {
-                ShouldListenTo = (activitySource) => activitySource.Name == SqlEventSourceListener.ActivitySourceName,
-            })
-            {
-                ActivitySource.AddActivityListener(activityListener);
-
-                fakeSqlEventSource.WriteUnknownEventWithNullPayload();
-            }
+            fakeSqlEventSource.WriteUnknownEventWithNullPayload();
 
             Assert.Equal(0, activityProcessor.Invocations.Count);
         }
@@ -187,17 +161,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 b.AddSqlClientDependencyInstrumentation();
             });
 
-            using (var activityListener = new ActivityListener
-            {
-                ShouldListenTo = (activitySource) => activitySource.Name == SqlEventSourceListener.ActivitySourceName,
-            })
-            {
-                ActivitySource.AddActivityListener(activityListener);
+            fakeSqlEventSource.WriteBeginExecuteEvent("arg1");
 
-                fakeSqlEventSource.WriteBeginExecuteEvent("arg1");
-
-                fakeSqlEventSource.WriteEndExecuteEvent("arg1", "arg2", "arg3", "arg4");
-            }
+            fakeSqlEventSource.WriteEndExecuteEvent("arg1", "arg2", "arg3", "arg4");
 
             Assert.Equal(0, activityProcessor.Invocations.Count);
         }
