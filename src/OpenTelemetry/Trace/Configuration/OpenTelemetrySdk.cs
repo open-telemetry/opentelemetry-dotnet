@@ -84,7 +84,9 @@ namespace OpenTelemetry.Trace.Configuration
                 activityProcessor = new BroadcastActivityProcessor(processors);
             }
 
-            var activitySource = new ActivitySourceAdapter(sampler, activityProcessor);
+            openTelemetrySDK.resource = openTelemetryBuilder.Resource;
+
+            var activitySource = new ActivitySourceAdapter(sampler, activityProcessor, openTelemetrySDK.resource);
 
             if (openTelemetryBuilder.InstrumentationFactories != null)
             {
@@ -93,8 +95,6 @@ namespace OpenTelemetry.Trace.Configuration
                     openTelemetrySDK.instrumentations.Add(instrumentation.Factory(activitySource));
                 }
             }
-
-            openTelemetrySDK.resource = openTelemetryBuilder.Resource;
 
             // This is what subscribes to Activities.
             // Think of this as the replacement for DiagnosticListener.AllListeners.Subscribe(onNext => diagnosticListener.Subscribe(..));

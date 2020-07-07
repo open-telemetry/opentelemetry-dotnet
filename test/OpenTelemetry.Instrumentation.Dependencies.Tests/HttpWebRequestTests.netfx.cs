@@ -47,9 +47,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 out var host,
                 out var port);
 
+            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var activityProcessor = new Mock<ActivityProcessor>();
             using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
             {
+                b.SetResource(expectedResource);
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestDependencyInstrumentation();
             });
@@ -156,6 +158,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
                 Assert.Equal(value, tag.Value);
             }
+
+            Assert.Equal(expectedResource, activity.GetResource());
         }
 
         [Fact]

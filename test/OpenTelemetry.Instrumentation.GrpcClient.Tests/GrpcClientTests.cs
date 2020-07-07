@@ -51,6 +51,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             var uri = new Uri($"{baseAddress}:{this.fixture.Port}");
             var uriHostNameType = Uri.CheckHostName(uri.Host);
 
+            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var spanProcessor = new Mock<ActivityProcessor>();
 
             var parent = new Activity("parent")
@@ -59,6 +60,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             using (OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder
                     .AddGrpcClientDependencyInstrumentation()
+                    .SetResource(expectedResource)
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var channel = GrpcChannel.ForAddress(uri);
@@ -93,6 +95,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
 
             Assert.Equal(uri.Port.ToString(), span.Tags.FirstOrDefault(i => i.Key == "net.peer.port").Value);
             Assert.Equal("Ok", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            Assert.Equal(expectedResource, span.GetResource());
         }
 
         [Fact]

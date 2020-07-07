@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace
@@ -32,11 +33,13 @@ namespace OpenTelemetry.Trace
     {
         private ActivitySampler activitySampler;
         private ActivityProcessor activityProcessor;
+        private Resource resource;
 
-        internal ActivitySourceAdapter(ActivitySampler activitySampler, ActivityProcessor activityProcessor)
+        internal ActivitySourceAdapter(ActivitySampler activitySampler, ActivityProcessor activityProcessor, Resource resource)
         {
             this.activitySampler = activitySampler;
             this.activityProcessor = activityProcessor;
+            this.resource = resource;
         }
 
         private ActivitySourceAdapter()
@@ -48,6 +51,7 @@ namespace OpenTelemetry.Trace
             this.RunGetRequestedData(activity);
             if (activity.IsAllDataRequested)
             {
+                activity.SetResource(this.resource);
                 this.activityProcessor.OnStart(activity);
             }
         }
