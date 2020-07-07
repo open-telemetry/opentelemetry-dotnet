@@ -101,6 +101,38 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentati
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests", "test\OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests\OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj", "{7C4026CA-6434-4762-8B77-D657EAEE1325}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F1D0972B-38CF-49C2-9F4B-4C5DE02FB71D}"
+	ProjectSection(SolutionItems) = preProject
+		.github\CODEOWNERS = .github\CODEOWNERS
+		.github\PULL_REQUEST_TEMPLATE.md = .github\PULL_REQUEST_TEMPLATE.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{A533C800-3DC3-4D04-90A7-0CE7A1E6BDB3}"
+	ProjectSection(SolutionItems) = preProject
+		.github\ISSUE_TEMPLATE\bug_report.md = .github\ISSUE_TEMPLATE\bug_report.md
+		.github\ISSUE_TEMPLATE\feature_request.md = .github\ISSUE_TEMPLATE\feature_request.md
+		.github\ISSUE_TEMPLATE\question.md = .github\ISSUE_TEMPLATE\question.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\dotnet-core-linux.yml = .github\workflows\dotnet-core-linux.yml
+		.github\workflows\dotnet-core-win.yml = .github\workflows\dotnet-core-win.yml
+		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C1542297-8763-4DF4-957C-489ED771C21D}"
+	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
+		src\Directory.Build.targets = src\Directory.Build.targets
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D2E73927-5966-445C-94E9-EFE6F269C8D5}"
+	ProjectSection(SolutionItems) = preProject
+		test\Directory.Build.props = test\Directory.Build.props
+		test\Directory.Build.targets = test\Directory.Build.targets
+	EndProjectSection
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.GrpcClient.Tests", "test\OpenTelemetry.Instrumentation.GrpcClient.Tests\OpenTelemetry.Instrumentation.GrpcClient.Tests.csproj", "{305E9DFD-E73B-4A28-8769-795C25551020}"
 EndProject
 Global
@@ -243,6 +275,10 @@ Global
 		{47318988-CA8B-4C81-B55D-2FA11D295A49} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{25C06046-C7D0-46B4-AAAC-90C50C43DE7A} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{9A4E3A68-904B-4835-A3C8-F664B73098DB} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
+		{A533C800-3DC3-4D04-90A7-0CE7A1E6BDB3} = {F1D0972B-38CF-49C2-9F4B-4C5DE02FB71D}
+		{E69578EB-B456-4062-A645-877CD964528B} = {F1D0972B-38CF-49C2-9F4B-4C5DE02FB71D}
+		{C1542297-8763-4DF4-957C-489ED771C21D} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
+		{D2E73927-5966-445C-94E9-EFE6F269C8D5} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

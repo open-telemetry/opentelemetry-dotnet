@@ -135,6 +135,9 @@ namespace OpenTelemetry.Trace.Configuration
             configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
 
             builder.AddInstrumentation((activitySource) => new SqlClientInstrumentation(activitySource, sqlOptions));
+#if NETFRAMEWORK
+            builder.AddActivitySource(SqlEventSourceListener.ActivitySourceName);
+#endif
 
             return builder;
         }

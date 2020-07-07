@@ -98,7 +98,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("library.name", JaegerTagType.STRING, vStr: activitySource.Name));
                 if (!string.IsNullOrEmpty(activitySource.Version))
                 {
-                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("library.version", JaegerTagType.STRING, vStr: activitySource.Name));
+                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("library.version", JaegerTagType.STRING, vStr: activitySource.Version));
                 }
             }
 
