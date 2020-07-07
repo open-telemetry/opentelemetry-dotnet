@@ -17,7 +17,6 @@ using System;
 using System.Data;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
@@ -32,7 +31,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         internal const string SqlDataWriteCommandError = "System.Data.SqlClient.WriteCommandError";
         internal const string SqlMicrosoftWriteCommandError = "Microsoft.Data.SqlClient.WriteCommandError";
 
-        private const string DatabaseStatementTypeSpanAttributeKey = "db.statementType";
+        internal const string MicrosoftSqlServerDatabaseSystemName = "mssql";
 
         private readonly PropertyFetcher commandFetcher = new PropertyFetcher("Command");
         private readonly PropertyFetcher connectionFetcher = new PropertyFetcher("Connection");
@@ -66,7 +65,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
                         if (command == null)
                         {
-                            InstrumentationEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
+                            InstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
                             return;
                         }
 
@@ -85,17 +84,16 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                             var commandText = this.commandTextFetcher.Fetch(command);
 
                             activity.AddTag(SpanAttributeConstants.ComponentKey, "sql");
-                            activity.AddTag(SpanAttributeConstants.DatabaseTypeKey, "sql");
+                            activity.AddTag(SpanAttributeConstants.DatabaseSystemKey, MicrosoftSqlServerDatabaseSystemName);
                             activity.AddTag(SpanAttributeConstants.PeerServiceKey, (string)dataSource);
-                            activity.AddTag(SpanAttributeConstants.DatabaseInstanceKey, (string)database);
+                            activity.AddTag(SpanAttributeConstants.DatabaseNameKey, (string)database);
 
                             if (this.commandTypeFetcher.Fetch(command) is CommandType commandType)
                             {
-                                activity.AddTag(DatabaseStatementTypeSpanAttributeKey, commandType.ToString());
-
                                 switch (commandType)
                                 {
                                     case CommandType.StoredProcedure:
+                                        activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
                                         if (this.options.CaptureStoredProcedureCommandName)
                                         {
                                             activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, (string)commandText);
@@ -104,11 +102,16 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                         break;
 
                                     case CommandType.Text:
+                                        activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.Text));
                                         if (this.options.CaptureTextCommandContent)
                                         {
                                             activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, (string)commandText);
                                         }
 
+                                        break;
+
+                                    case CommandType.TableDirect:
+                                        activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.TableDirect));
                                         break;
                                 }
                             }
@@ -136,7 +139,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                             }
                             else
                             {
-                                InstrumentationEventSource.Log.NullPayload($"{nameof(SqlClientDiagnosticListener)}-{name}");
+                                InstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
                             }
                         }
 

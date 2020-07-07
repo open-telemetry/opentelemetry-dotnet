@@ -48,12 +48,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
-            const string EventNameSuffix = ".OnStartActivity";
             var context = this.startContextFetcher.Fetch(payload) as HttpContext;
 
             if (context == null)
             {
-                InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
+                InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
                 return;
             }
 
@@ -120,13 +119,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
-            const string EventNameSuffix = ".OnStopActivity";
-
             if (activity.IsAllDataRequested)
             {
                 if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
                 {
-                    InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
+                    InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
                     return;
                 }
 

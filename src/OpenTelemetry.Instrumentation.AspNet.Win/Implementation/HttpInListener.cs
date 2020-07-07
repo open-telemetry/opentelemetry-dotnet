@@ -40,12 +40,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
-            const string EventNameSuffix = ".OnStartActivity";
-
             var context = HttpContext.Current;
             if (context == null)
             {
-                InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
+                InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
                 return;
             }
 
@@ -114,8 +112,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
-            const string EventNameSuffix = ".OnStopActivity";
-
             Activity activityToEnrich = activity;
 
             if (!(this.options.TextFormat is TraceContextFormatActivity))
@@ -139,7 +135,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 var context = HttpContext.Current;
                 if (context == null)
                 {
-                    InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener) + EventNameSuffix);
+                    InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
                     return;
                 }
 

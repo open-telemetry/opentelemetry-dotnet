@@ -62,10 +62,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
-            const string EventNameSuffix = ".OnStartActivity";
             if (!(this.startRequestFetcher.Fetch(payload) is HttpRequestMessage request))
             {
-                InstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
+                InstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnStartActivity));
                 return;
             }
 
@@ -141,13 +140,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         public override void OnException(Activity activity, object payload)
         {
-            const string EventNameSuffix = ".OnException";
-
             if (activity.IsAllDataRequested)
             {
                 if (!(this.stopExceptionFetcher.Fetch(payload) is Exception exc))
                 {
-                    InstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener) + EventNameSuffix);
+                    InstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnException));
                     return;
                 }
 
