@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <ItemGroup>
-    <PackageReference Include="MinVer" Version="2.0.0">
+    <PackageReference Include="MinVer" Version="2.3.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -21,6 +21,13 @@
     <DefineConstants>$(DefineConstants);SIGNED</DefineConstants>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
+
+  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer">
+    <PropertyGroup>
+      <RevisionNumber>$(MinVerVersion.Split(`.`)[3])</RevisionNumber>
+      <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</AssemblyVersion>      
+    </PropertyGroup>
+  </Target>
 
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)/stylecop.json" />
