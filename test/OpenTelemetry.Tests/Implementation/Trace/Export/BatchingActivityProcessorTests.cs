@@ -354,7 +354,7 @@ namespace OpenTelemetry.Trace.Export.Test
             }
 
             Assert.Equal(activities.Count, activityExporter.ExportedActivities.Length);
-            Assert.Equal(exportCalledCount, activities.Count / batchSize);
+            Assert.InRange(exportCalledCount, activities.Count / batchSize, activities.Count);
         }
 
         [Fact]
