@@ -4,18 +4,5 @@ This is a simple exporter that that JSON serializes collected spans and prints t
 
 **Note** This is not intended as a production tool
 
-## Options
-
-| Parameter | Description | Default |
-| - | - | - |
-| `-p` or `--pretty` | Specify if the output should be pretty printed | `false` |
-
-## Examples
-
-The default output of the test will be compressed JSON.
-
-`dotnet run -p samples/Exporters/Exporters.csproj console`
-
-To run the test with expanded JSON, you can use the `--pretty` flag like this.
-
-`dotnet run -p samples/Exporters/Exporters.csproj console --pretty`
+```
+```

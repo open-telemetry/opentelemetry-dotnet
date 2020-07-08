@@ -37,7 +37,7 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, ZPagesOptions, ConsoleOptions, ConsoleActivityOptions, OtlpOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, ZPagesOptions, ConsoleActivityOptions, OtlpOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port, options.UseActivitySource),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri, options.UseActivitySource),
@@ -45,7 +45,6 @@ namespace Samples
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (ZPagesOptions options) => TestZPages.Run(),
-                    (ConsoleOptions options) => TestConsole.Run(options),
                     (ConsoleActivityOptions options) => TestConsoleActivity.Run(options),
                     (OtlpOptions options) => TestOtlp.Run(options.Endpoint, options.UseActivitySource),
                     errs => 1);
@@ -107,13 +106,6 @@ namespace Samples
     [Verb("zpages", HelpText = "Specify the options required to test ZPages")]
     internal class ZPagesOptions
     {
-    }
-
-    [Verb("console", HelpText = "Specify the options required to test console exporter")]
-    internal class ConsoleOptions
-    {
-        [Option('p', "pretty", HelpText = "Specify if the output should be pretty printed (default: true)", Default = true)]
-        public bool Pretty { get; set; }
     }
 
     [Verb("consoleactivity", HelpText = "Specify the options required to test console activity exporter")]

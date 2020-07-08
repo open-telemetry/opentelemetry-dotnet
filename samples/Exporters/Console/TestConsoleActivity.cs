@@ -36,7 +36,7 @@ namespace Samples
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleActivityExporter(opt => opt.DisplayAsJson = options.DisplayAsJson,
                                                 (p) => p.AddProcessor((next) => new MyProcessor(next))));
-  
+
             // The above line is required only in Applications
             // which decide to use OT.
 
