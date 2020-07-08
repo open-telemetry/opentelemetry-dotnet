@@ -132,7 +132,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
                 activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
+
+                var statusDescription = response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase;
+                if (!string.IsNullOrEmpty(statusDescription))
+                {
+                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
+                }
             }
 
             if (activity.OperationName.Equals(ActivityNameByHttpInListener))

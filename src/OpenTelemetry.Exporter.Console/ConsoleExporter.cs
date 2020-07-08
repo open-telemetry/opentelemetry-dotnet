@@ -15,35 +15,100 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Console
 {
-    public class ConsoleExporter : SpanExporter
+    public class ConsoleExporter : ActivityExporter
     {
         private readonly JsonSerializerOptions serializerOptions;
+        private bool displayAsJson;
 
         public ConsoleExporter(ConsoleExporterOptions options)
         {
-            this.serializerOptions = new JsonSerializerOptions
+            this.serializerOptions = new JsonSerializerOptions()
             {
-                WriteIndented = options.Pretty,
+                WriteIndented = true,
             };
+
+            this.displayAsJson = options.DisplayAsJson;
 
             this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
             this.serializerOptions.Converters.Add(new ActivitySpanIdConverter());
             this.serializerOptions.Converters.Add(new ActivityTraceIdConverter());
         }
 
-        public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync(IEnumerable<Activity> activityBatch, CancellationToken cancellationToken)
         {
-            foreach (var span in batch)
+            foreach (var activity in activityBatch)
             {
-                System.Console.WriteLine(JsonSerializer.Serialize(span, this.serializerOptions));
+                if (this.displayAsJson)
+                {
+                    System.Console.WriteLine(JsonSerializer.Serialize(activity, this.serializerOptions));
+                }
+                else
+                {
+                    System.Console.WriteLine("Activity ID - " + activity.Id);
+                    if (!string.IsNullOrEmpty(activity.ParentId))
+                    {
+                        System.Console.WriteLine("Activity ParentId - " + activity.ParentId);
+                    }
+
+                    System.Console.WriteLine("Activity DisplayName - " + activity.DisplayName);
+                    System.Console.WriteLine("Activity Kind - " + activity.Kind);
+                    System.Console.WriteLine("Activity StartTime - " + activity.StartTimeUtc);
+                    System.Console.WriteLine("Activity Duration - " + activity.Duration);
+                    if (activity.Tags.Count() > 0)
+                    {
+                        System.Console.WriteLine("Activity Tags");
+                        foreach (var tag in activity.Tags)
+                        {
+                            System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
+                        }
+                    }
+
+                    if (activity.Events.Any())
+                    {
+                        System.Console.WriteLine("Activity Events");
+                        foreach (var activityEvent in activity.Events)
+                        {
+                            System.Console.WriteLine($"Event Name: {activityEvent.Name} TimeStamp: {activityEvent.Timestamp}");
+                            foreach (var attribute in activityEvent.Attributes)
+                            {
+                                System.Console.WriteLine($"\t {attribute.Key} : {attribute.Value}");
+                            }
+                        }
+                    }
+
+                    if (activity.Baggage.Any())
+                    {
+                        System.Console.WriteLine("Activity Baggage");
+                        foreach (var baggage in activity.Baggage)
+                        {
+                            System.Console.WriteLine($"\t {baggage.Key} : {baggage.Value}");
+                        }
+                    }
+
+                    var resource = activity.GetResource();
+                    if (resource != Resource.Empty)
+                    {
+                        System.Console.WriteLine("Resource associated with Activity");
+                        foreach (var resourceAttribute in resource.Attributes)
+                        {
+                            System.Console.WriteLine($"\t {resourceAttribute.Key} : {resourceAttribute.Value}");
+                        }
+                    }
+
+                    System.Console.WriteLine();
+                }
             }
 
             return Task.FromResult(ExportResult.Success);
