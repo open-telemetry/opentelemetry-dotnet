@@ -27,13 +27,13 @@ namespace Samples
         /// Main method - invoke this using command line.
         /// For example:
         ///
-        /// dotnet Exporters.dll console
-        /// dotnet Exporters.dll zipkin -u http://localhost:9411/api/v2/spans
-        /// dotnet Exporters.dll jaeger -h localhost -p 6831
-        /// dotnet Exporters.dll prometheus -i 15 -p 9184 -d 2
+        /// dotnet run -p Exporters.csproj console
+        /// dotnet run -p Exporters.csproj zipkin -u http://localhost:9411/api/v2/spans
+        /// dotnet run -p Exporters.csproj jaeger -h localhost -p 6831
+        /// dotnet run -p Exporters.csproj prometheus -i 15 -p 9184 -d 2
         ///
-        /// The above must be run from the project bin folder
-        /// (eg: C:\repos\opentelemetry-dotnet\src\samples\Exporters\Console\bin\Debug\netcoreapp3.1).
+        /// The above must be run from the project root folder
+        /// (eg: C:\repos\opentelemetry-dotnet\src\samples\Exporters\Console\).
         /// </summary>
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
