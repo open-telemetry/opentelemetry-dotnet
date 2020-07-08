@@ -39,6 +39,7 @@ namespace OpenTelemetry.Trace.Configuration
 
             builder.AddHttpClientDependencyInstrumentation();
             builder.AddSqlClientDependencyInstrumentation();
+            builder.AddGrpcClientDependencyInstrumentation();
 #if NETFRAMEWORK
             builder.AddHttpWebRequestDependencyInstrumentation();
 #endif
@@ -64,6 +65,7 @@ namespace OpenTelemetry.Trace.Configuration
 
             builder.AddHttpClientDependencyInstrumentation(configureHttpClientInstrumentationOptions);
             builder.AddSqlClientDependencyInstrumentation(configureSqlClientInstrumentationOptions);
+            builder.AddGrpcClientDependencyInstrumentation();
 #if NETFRAMEWORK
             builder.AddHttpWebRequestDependencyInstrumentation();
 #endif
@@ -133,7 +135,27 @@ namespace OpenTelemetry.Trace.Configuration
             configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
 
             builder.AddInstrumentation((activitySource) => new SqlClientInstrumentation(activitySource, sqlOptions));
+#if NETFRAMEWORK
+            builder.AddActivitySource(SqlEventSourceListener.ActivitySourceName);
+#endif
 
+            return builder;
+        }
+
+        /// <summary>
+        /// Enables the outgoing requests automatic data collection for GrpcClient.
+        /// </summary>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder AddGrpcClientDependencyInstrumentation(
+            this OpenTelemetryBuilder builder)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            builder.AddInstrumentation((activitySource) => new GrpcClientInstrumentation(activitySource));
             return builder;
         }
 

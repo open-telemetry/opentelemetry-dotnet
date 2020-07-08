@@ -25,12 +25,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     {
         private static readonly Dictionary<string, int> PeerServiceKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
-            [SpanAttributeConstants.PeerServiceKey] = 0, // peer.service primary.
-            ["net.peer.name"] = 1, // peer.service first alternative.
-            ["peer.hostname"] = 2, // peer.service second alternative.
-            ["peer.address"] = 2, // peer.service second alternative.
+            [SpanAttributeConstants.PeerServiceKey] = 0, // priority 0 (highest).
+            [SpanAttributeConstants.NetPeerName] = 1,
+            [SpanAttributeConstants.NetPeerIp] = 2,
+            ["peer.hostname"] = 2,
+            ["peer.address"] = 2,
             ["http.host"] = 3, // peer.service for Http.
-            ["db.instance"] = 4, // peer.service for Redis.
+            ["db.instance"] = 3, // peer.service for Redis.
         };
 
         private static readonly DictionaryEnumerator<string, string, TagState>.ForEachDelegate ProcessActivityTagRef = ProcessActivityTag;
@@ -98,7 +99,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("library.name", JaegerTagType.STRING, vStr: activitySource.Name));
                 if (!string.IsNullOrEmpty(activitySource.Version))
                 {
-                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("library.version", JaegerTagType.STRING, vStr: activitySource.Name));
+                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("library.version", JaegerTagType.STRING, vStr: activitySource.Version));
                 }
             }
 

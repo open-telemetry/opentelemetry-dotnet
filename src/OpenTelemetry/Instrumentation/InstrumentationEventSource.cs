@@ -67,16 +67,16 @@ namespace OpenTelemetry.Instrumentation
             this.UnknownErrorProcessingEvent(handlerName, eventName, ToInvariantString(ex));
         }
 
-        [Event(4, Message = "Unknown error processing event '{0}' from handler '{1}', Exception: {2}", Level = EventLevel.Error)]
+        [Event(4, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
         public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
         {
             this.WriteEvent(4, handlerName, eventName, ex);
         }
 
-        [Event(5, Message = "Payload is NULL in '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
-        public void NullPayload(string eventName)
+        [Event(5, Message = "Payload is NULL in event '{1}' from handler '{0}', span will not be recorded.", Level = EventLevel.Warning)]
+        public void NullPayload(string handlerName, string eventName)
         {
-            this.WriteEvent(5, eventName);
+            this.WriteEvent(5, handlerName, eventName);
         }
 
         [Event(6, Message = "Request is filtered out.", Level = EventLevel.Verbose)]
@@ -98,6 +98,12 @@ namespace OpenTelemetry.Instrumentation
         public void ExceptionInitializingInstrumentation(string instrumentationType, string ex)
         {
             this.WriteEvent(7, instrumentationType, ex);
+        }
+
+        [Event(8, Message = "Payload is invalid in event '{1}' from handler '{0}', span will not be recorded.", Level = EventLevel.Warning)]
+        public void InvalidPayload(string handlerName, string eventName)
+        {
+            this.WriteEvent(8, handlerName, eventName);
         }
 
         /// <summary>

@@ -127,7 +127,7 @@ namespace OpenTelemetry.Context.Propagation
             setter(carrier, TraceParent, traceparent);
 
             string tracestateStr = activityContext.TraceState;
-            if ((tracestateStr?.Length ?? 0) > 0)
+            if (tracestateStr?.Length > 0)
             {
                 setter(carrier, TraceState, tracestateStr);
             }

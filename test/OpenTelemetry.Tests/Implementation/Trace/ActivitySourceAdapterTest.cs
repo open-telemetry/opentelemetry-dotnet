@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Tests.Implementation.Testing.Export;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -26,6 +27,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
     {
         private TestSampler testSampler;
         private TestActivityProcessor testProcessor;
+        private Resource testResource = Resources.Resources.CreateServiceResource("test-resource");
         private ActivitySourceAdapter activitySourceAdapter;
 
         static ActivitySourceAdapterTest()
@@ -38,7 +40,19 @@ namespace OpenTelemetry.Tests.Implementation.Trace
         {
             this.testSampler = new TestSampler();
             this.testProcessor = new TestActivityProcessor();
-            this.activitySourceAdapter = new ActivitySourceAdapter(this.testSampler, this.testProcessor);
+            this.activitySourceAdapter = new ActivitySourceAdapter(this.testSampler, this.testProcessor, this.testResource);
+        }
+
+        [Fact]
+        public void ActivitySourceAdapterSetsResource()
+        {
+            var activity = new Activity("test");
+            activity.Start();
+            this.activitySourceAdapter.Start(activity);
+            activity.Stop();
+            this.activitySourceAdapter.Stop(activity);
+
+            Assert.Equal(this.testResource, activity.GetResource());
         }
 
         [Theory]

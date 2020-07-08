@@ -22,7 +22,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
     /// <summary>
     /// Asp.Net Requests instrumentation.
     /// </summary>
-    public class AspNetInstrumentation : IDisposable
+    internal class AspNetInstrumentation : IDisposable
     {
         internal const string AspNetDiagnosticListenerName = "Microsoft.AspNet.TelemetryCorrelation";
 

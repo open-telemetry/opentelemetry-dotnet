@@ -22,51 +22,28 @@ namespace OpenTelemetry.Exporter.Console
     public static class OpenTelemetryBuilderExtensions
     {
         /// <summary>
-        /// Adds new processing pipeline and registers a ConsoleActivity exporter to it.
-        /// </summary>
-        /// <param name="builder">Open Telemetry builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseConsoleActivityExporter(this OpenTelemetryBuilder builder, Action<ConsoleActivityExporterOptions> configure)
-        {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            var exporterOptions = new ConsoleActivityExporterOptions();
-            configure(exporterOptions);
-            var consoleExporter = new ConsoleActivityExporter(exporterOptions);
-            return builder.AddProcessorPipeline(pipeline => pipeline.SetExporter(consoleExporter));
-        }
-
-        /// <summary>
         /// Registers a ConsoleActivity exporter to a processing pipeline.
         /// </summary>
-        /// <param name="builder">ActivityProcessorPipelineBuilder to use.</param>
+        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
-        /// <returns>The instance of <see cref="ActivityProcessorPipelineBuilder"/> to chain the calls.</returns>
-        public static ActivityProcessorPipelineBuilder UseConsoleActivityExporter(this ActivityProcessorPipelineBuilder builder, Action<ConsoleActivityExporterOptions> configure)
+        /// <param name="processorConfigure">Activity processor configuration.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
+        public static OpenTelemetryBuilder UseConsoleActivityExporter(this OpenTelemetryBuilder builder, Action<ConsoleActivityExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            if (configure == null)
+            return builder.AddProcessorPipeline(pipeline =>
             {
-                throw new ArgumentNullException(nameof(configure));
-            }
+                var exporterOptions = new ConsoleActivityExporterOptions();
+                configure?.Invoke(exporterOptions);
 
-            var exporterOptions = new ConsoleActivityExporterOptions();
-            configure(exporterOptions);
-            var consoleExporter = new ConsoleActivityExporter(exporterOptions);
-            return builder.SetExporter(consoleExporter);
+                var consoleExporter = new ConsoleActivityExporter(exporterOptions);
+                processorConfigure?.Invoke(pipeline);
+                pipeline.SetExporter(consoleExporter);
+            });
         }
     }
 }

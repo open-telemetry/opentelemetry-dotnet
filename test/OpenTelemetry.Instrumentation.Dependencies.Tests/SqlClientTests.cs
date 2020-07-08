@@ -117,8 +117,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
 
             Assert.Equal("sql", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value);
-            Assert.Equal("sql", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseTypeKey).Value);
-            Assert.Equal("master", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseInstanceKey).Value);
+            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseSystemKey).Value);
+            Assert.Equal("master", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseNameKey).Value);
 
             switch (commandType)
             {
@@ -205,8 +205,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal("Unknown", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
             Assert.Equal("Boom!", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
             Assert.Equal("sql", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value);
-            Assert.Equal("sql", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseTypeKey).Value);
-            Assert.Equal("master", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseInstanceKey).Value);
+            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseSystemKey).Value);
+            Assert.Equal("master", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseNameKey).Value);
             Assert.Equal("SP_GetOrders", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
             Assert.Equal("(localdb)\\MSSQLLocalDB", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.PeerServiceKey).Value);
         }

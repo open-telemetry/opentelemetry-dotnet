@@ -40,9 +40,18 @@ namespace OpenTelemetry.Trace
         public const string HttpRouteKey = "http.route";
         public const string HttpFlavorKey = "http.flavor";
 
-        public const string DatabaseTypeKey = "db.type";
-        public const string DatabaseInstanceKey = "db.instance";
+        public const string DatabaseSystemKey = "db.system";
+        public const string DatabaseNameKey = "db.name";
         public const string DatabaseStatementKey = "db.statement";
+        public const string DatabaseStatementTypeKey = "db.statement_type";
+
+        public const string RpcSystem = "rpc.system";
+        public const string RpcService = "rpc.service";
+        public const string RpcMethod = "rpc.method";
+
+        public const string NetPeerIp = "net.peer.ip";
+        public const string NetPeerName = "net.peer.name";
+        public const string NetPeerPort = "net.peer.port";
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
