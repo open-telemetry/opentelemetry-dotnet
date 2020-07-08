@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter.Console
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseConsoleActivityExporter(this OpenTelemetryBuilder builder, Action<ConsoleActivityExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        public static OpenTelemetryBuilder UseConsoleExporter(this OpenTelemetryBuilder builder, Action<ConsoleExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
         {
             if (builder == null)
             {
@@ -37,10 +37,10 @@ namespace OpenTelemetry.Exporter.Console
 
             return builder.AddProcessorPipeline(pipeline =>
             {
-                var exporterOptions = new ConsoleActivityExporterOptions();
+                var exporterOptions = new ConsoleExporterOptions();
                 configure?.Invoke(exporterOptions);
 
-                var consoleExporter = new ConsoleActivityExporter(exporterOptions);
+                var consoleExporter = new ConsoleExporter(exporterOptions);
                 processorConfigure?.Invoke(pipeline);
                 pipeline.SetExporter(consoleExporter);
             });

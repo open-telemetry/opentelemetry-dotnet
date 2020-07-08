@@ -93,8 +93,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [InlineData(CommandType.Text, "select 1/1", false)]
         [InlineData(CommandType.Text, "select 1/0", false, true)]
         [InlineData(CommandType.StoredProcedure, "sp_who", false)]
-        [InlineData(CommandType.StoredProcedure, "sp_who", true)]
-        public void EventSourceFakeTests(CommandType commandType, string commandText, bool captureText, bool isFailure = false, int sqlExceptionNumber = 0)
+        [InlineData(CommandType.StoredProcedure, "sp_who", true, false, 0, true)]
+        public void EventSourceFakeTests(
+            CommandType commandType,
+            string commandText,
+            bool captureText,
+            bool isFailure = false,
+            int sqlExceptionNumber = 0,
+            bool enableConnectionLevelAttributes = false)
         {
             using FakeBehavingSqlEventSource fakeSqlEventSource = new FakeBehavingSqlEventSource();
 
@@ -105,6 +111,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 b.AddSqlClientDependencyInstrumentation(options =>
                 {
                     options.CaptureStoredProcedureCommandName = captureText;
+                    options.EnableConnectionLevelAttributes = enableConnectionLevelAttributes;
                 });
             });
 
@@ -129,7 +136,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            VerifyActivityData(commandType, commandText, captureText, isFailure, "127.0.0.1", activity);
+            VerifyActivityData(commandType, commandText, captureText, isFailure, "127.0.0.1", activity, enableConnectionLevelAttributes);
         }
 
         [Fact]
@@ -168,13 +175,48 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(0, activityProcessor.Invocations.Count);
         }
 
-        private static void VerifyActivityData(CommandType commandType, string commandText, bool captureText, bool isFailure, string dataSource, Activity activity)
+        private static void VerifyActivityData(
+            CommandType commandType,
+            string commandText,
+            bool captureText,
+            bool isFailure,
+            string dataSource,
+            Activity activity,
+            bool enableConnectionLevelAttributes = false)
         {
             Assert.Equal("master", activity.DisplayName);
             Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal("sql", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.ComponentKey).Value);
             Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseSystemKey).Value);
-            Assert.Equal(dataSource, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.PeerServiceKey).Value);
+
+            if (!enableConnectionLevelAttributes)
+            {
+                Assert.Equal(dataSource, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.PeerServiceKey).Value);
+            }
+            else
+            {
+                var connectionDetails = SqlClientInstrumentationOptions.ParseDataSource(dataSource);
+
+                if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
+                {
+                    Assert.Equal(connectionDetails.ServerHostName, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.NetPeerName).Value);
+                }
+                else
+                {
+                    Assert.Equal(connectionDetails.ServerIpAddress, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.NetPeerIp).Value);
+                }
+
+                if (!string.IsNullOrEmpty(connectionDetails.InstanceName))
+                {
+                    Assert.Equal(connectionDetails.InstanceName, activity.Tags.FirstOrDefault(t => t.Key == SqlClientInstrumentationOptions.MicrosoftSqlServerDatabaseInstanceName).Value);
+                }
+
+                if (!string.IsNullOrEmpty(connectionDetails.Port))
+                {
+                    Assert.Equal(connectionDetails.Port, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.NetPeerPort).Value);
+                }
+            }
+
             Assert.Equal("master", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseNameKey).Value);
             Assert.Equal(commandType.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseStatementTypeKey).Value);
             if (commandType == CommandType.StoredProcedure)
