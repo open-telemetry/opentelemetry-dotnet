@@ -33,7 +33,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         private static readonly Dictionary<string, int> RemoteEndpointServiceNameKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
             [SpanAttributeConstants.PeerServiceKey] = 0, // RemoteEndpoint.ServiceName primary.
-            ["net.peer.name"] = 1, // RemoteEndpoint.ServiceName first alternative.
+            [SpanAttributeConstants.NetPeerName] = 1, // RemoteEndpoint.ServiceName first alternative.
+            [SpanAttributeConstants.NetPeerIp] = 2, // RemoteEndpoint.ServiceName second alternative.
             ["peer.hostname"] = 2, // RemoteEndpoint.ServiceName second alternative.
             ["peer.address"] = 2, // RemoteEndpoint.ServiceName second alternative.
             ["http.host"] = 3, // RemoteEndpoint.ServiceName for Http.
