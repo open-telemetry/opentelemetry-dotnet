@@ -134,7 +134,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
 
                 var statusDescription = response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase;
-                if (string.IsNullOrEmpty(statusDescription))
+                if (!string.IsNullOrEmpty(statusDescription))
                 {
                     activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
                 }
