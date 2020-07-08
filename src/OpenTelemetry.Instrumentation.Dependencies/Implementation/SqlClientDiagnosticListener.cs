@@ -85,8 +85,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
                             activity.AddTag(SpanAttributeConstants.ComponentKey, "sql");
                             activity.AddTag(SpanAttributeConstants.DatabaseSystemKey, MicrosoftSqlServerDatabaseSystemName);
-                            activity.AddTag(SpanAttributeConstants.PeerServiceKey, (string)dataSource);
                             activity.AddTag(SpanAttributeConstants.DatabaseNameKey, (string)database);
+
+                            this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
 
                             if (this.commandTypeFetcher.Fetch(command) is CommandType commandType)
                             {
