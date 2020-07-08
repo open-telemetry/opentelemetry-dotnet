@@ -133,6 +133,11 @@ namespace Samples
             {
                 return this.next.ShutdownAsync(cancellationToken);
             }
+
+            public override Task ForceFlushAsync(CancellationToken cancellationToken)
+            {
+                return this.next.ForceFlushAsync(cancellationToken);
+            }
         }
     }
 }

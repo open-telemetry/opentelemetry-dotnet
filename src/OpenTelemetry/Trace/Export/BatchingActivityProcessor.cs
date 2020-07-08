@@ -140,12 +140,7 @@ namespace OpenTelemetry.Trace.Export
                 this.cts.Dispose();
                 this.cts = null;
 
-                // if there are more items, continue until cancellation token allows
-                while (this.currentQueueSize > 0 && !cancellationToken.IsCancellationRequested)
-                {
-                    await this.ExportBatchAsync(cancellationToken).ConfigureAwait(false);
-                }
-
+                await this.ForceFlushAsync(cancellationToken);
                 await this.exporter.ShutdownAsync(cancellationToken);
 
                 // there is no point in waiting for a worker task if cancellation happens
@@ -154,6 +149,14 @@ namespace OpenTelemetry.Trace.Export
                 // ExportBatchAsync must never throw, we are here either because it was cancelled
                 // or because there are no items left
                 OpenTelemetrySdkEventSource.Log.ShutdownEvent(this.currentQueueSize);
+            }
+        }
+
+        public override async Task ForceFlushAsync(CancellationToken cancellationToken)
+        {
+            while (this.currentQueueSize > 0 && !cancellationToken.IsCancellationRequested)
+            {
+                await this.ExportBatchAsync(cancellationToken).ConfigureAwait(false);
             }
         }
 
