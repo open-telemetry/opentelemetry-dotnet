@@ -27,6 +27,7 @@ namespace Samples
         /// Main method - invoke this using command line.
         /// For example:
         ///
+        /// dotnet Exporters.dll console
         /// dotnet Exporters.dll zipkin -u http://localhost:9411/api/v2/spans
         /// dotnet Exporters.dll jaeger -h localhost -p 6831
         /// dotnet Exporters.dll prometheus -i 15 -p 9184 -d 2
@@ -37,7 +38,7 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, ZPagesOptions, ConsoleActivityOptions, OtlpOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port, options.UseActivitySource),
                     (ZipkinOptions options) => TestZipkin.Run(options.Uri, options.UseActivitySource),
@@ -45,7 +46,7 @@ namespace Samples
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (ZPagesOptions options) => TestZPages.Run(),
-                    (ConsoleActivityOptions options) => TestConsoleActivity.Run(options),
+                    (ConsoleOptions options) => TestConsoleExporter.Run(options),
                     (OtlpOptions options) => TestOtlp.Run(options.Endpoint, options.UseActivitySource),
                     errs => 1);
 
@@ -108,8 +109,8 @@ namespace Samples
     {
     }
 
-    [Verb("consoleactivity", HelpText = "Specify the options required to test console activity exporter")]
-    internal class ConsoleActivityOptions
+    [Verb("console", HelpText = "Specify the options required to test console exporter")]
+    internal class ConsoleOptions
     {
         [Option('p', "displayasjson", HelpText = "Specify if the output should be displayed as json or not (default: false)", Default = false)]
         public bool DisplayAsJson { get; set; }

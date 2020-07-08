@@ -1,4 +1,4 @@
-﻿// <copyright file="ConsoleActivityExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ConsoleExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,12 +27,12 @@ using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Console
 {
-    public class ConsoleActivityExporter : ActivityExporter
+    public class ConsoleExporter : ActivityExporter
     {
         private readonly JsonSerializerOptions serializerOptions;
         private bool displayAsJson;
 
-        public ConsoleActivityExporter(ConsoleActivityExporterOptions options)
+        public ConsoleExporter(ConsoleExporterOptions options)
         {
             this.serializerOptions = new JsonSerializerOptions()
             {

@@ -1,4 +1,4 @@
-﻿// <copyright file="ConsoleActivityExporterOptions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ConsoleExporterOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Exporter.Console
 {
-    public class ConsoleActivityExporterOptions
+    public class ConsoleExporterOptions
     {
         public bool DisplayAsJson { get; set; }
     }
