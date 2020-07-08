@@ -62,7 +62,6 @@ namespace OpenTelemetry.Exporter.Console
                         System.Console.WriteLine("Activity ParentId - " + activity.ParentId);
                     }
 
-                    System.Console.WriteLine("Activity OperationName - " + activity.OperationName);
                     System.Console.WriteLine("Activity DisplayName - " + activity.DisplayName);
                     System.Console.WriteLine("Activity Kind - " + activity.Kind);
                     System.Console.WriteLine("Activity StartTime - " + activity.StartTimeUtc);
@@ -108,7 +107,7 @@ namespace OpenTelemetry.Exporter.Console
                         }
                     }
 
-                    System.Console.WriteLine("\n");
+                    System.Console.WriteLine();
                 }
             }
 
