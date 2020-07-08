@@ -32,7 +32,7 @@ namespace Samples
                 (builder) => builder.AddHttpClientDependencyInstrumentation()
                 .SetResource(Resources.CreateServiceResource("http-service-example"))
                 .AddActivitySource("http-client-test")
-                .UseConsoleActivityExporter(opt => opt.DisplayAsJson = false));
+                .UseConsoleExporter(opt => opt.DisplayAsJson = false));
 
             var source = new ActivitySource("http-client-test");
             using (var parent = source.StartActivity("incoming request", ActivityKind.Server))
