@@ -154,9 +154,11 @@ namespace OpenTelemetry.Trace.Export
 
         public override async Task ForceFlushAsync(CancellationToken cancellationToken)
         {
-            while (this.currentQueueSize > 0 && !cancellationToken.IsCancellationRequested)
+            var queueSize = this.currentQueueSize;
+            while (queueSize > 0 && !cancellationToken.IsCancellationRequested)
             {
                 await this.ExportBatchAsync(cancellationToken).ConfigureAwait(false);
+                queueSize = queueSize - this.maxExportBatchSize;
             }
         }
 
