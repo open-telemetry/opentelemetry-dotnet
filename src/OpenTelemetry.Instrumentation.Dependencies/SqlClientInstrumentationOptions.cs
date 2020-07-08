@@ -29,7 +29,15 @@ namespace OpenTelemetry.Instrumentation.Dependencies
     {
         internal const string MicrosoftSqlServerDatabaseInstanceName = "db.mssql.instance_name";
 
-        private static readonly Regex DataSourceRegex = new Regex("^(.*?)(?:[\\\\,]|$)\\s*(.*?)(?:,|$)\\s*(.*)$", RegexOptions.Compiled);
+        /*
+         * Match...
+         *  serverName
+         *  serverName[ ]\\[ ]instanceName
+         *  serverName[ ],[ ]port
+         *  serverName[ ]\\[ ]instanceName[ ],[ ]port
+         * [ ] can be any number of white-space, SQL allows it for some reason.
+         */
+        private static readonly Regex DataSourceRegex = new Regex("^(.*?)\\s*(?:[\\\\,]|$)\\s*(.*?)\\s*(?:,|$)\\s*(.*)$", RegexOptions.Compiled);
         private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new ConcurrentDictionary<string, SqlConnectionDetails>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>

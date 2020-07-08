@@ -32,13 +32,13 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private static readonly Dictionary<string, int> RemoteEndpointServiceNameKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
-            [SpanAttributeConstants.PeerServiceKey] = 0, // RemoteEndpoint.ServiceName primary.
-            [SpanAttributeConstants.NetPeerName] = 1, // RemoteEndpoint.ServiceName first alternative.
-            [SpanAttributeConstants.NetPeerIp] = 2, // RemoteEndpoint.ServiceName second alternative.
-            ["peer.hostname"] = 2, // RemoteEndpoint.ServiceName second alternative.
-            ["peer.address"] = 2, // RemoteEndpoint.ServiceName second alternative.
+            [SpanAttributeConstants.PeerServiceKey] = 0, // priority 0 (highest).
+            [SpanAttributeConstants.NetPeerName] = 1,
+            [SpanAttributeConstants.NetPeerIp] = 2,
+            ["peer.hostname"] = 2,
+            ["peer.address"] = 2,
             ["http.host"] = 3, // RemoteEndpoint.ServiceName for Http.
-            ["db.instance"] = 4, // RemoteEndpoint.ServiceName for Redis.
+            ["db.instance"] = 3, // RemoteEndpoint.ServiceName for Redis.
         };
 
         private static readonly string InvalidSpanId = default(ActivitySpanId).ToHexString();

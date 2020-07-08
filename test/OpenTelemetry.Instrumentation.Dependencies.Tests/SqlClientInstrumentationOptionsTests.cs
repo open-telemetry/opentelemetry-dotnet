@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [InlineData("127.0.0.1", null, "127.0.0.1", null, null)]
         [InlineData("127.0.0.1,1433", null, "127.0.0.1", null, null)]
         [InlineData("127.0.0.1, 1818", null, "127.0.0.1", null, "1818")]
-        [InlineData("127.0.0.1\\instanceName", null, "127.0.0.1", "instanceName", null)]
+        [InlineData("127.0.0.1  \\  instanceName", null, "127.0.0.1", "instanceName", null)]
         [InlineData("127.0.0.1\\instanceName, 1818", null, "127.0.0.1", "instanceName", "1818")]
         public void ParseDataSourceTests(
             string dataSource,
