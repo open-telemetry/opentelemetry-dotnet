@@ -81,7 +81,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.AddSingleton(s => createSdk());
-            AddOpenTelemetryCore(services);
+            AddOpenTelemetryInternal(services);
 
             return services;
         }
@@ -105,12 +105,12 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.AddSingleton(s => createSdk(s));
-            AddOpenTelemetryCore(services);
+            AddOpenTelemetryInternal(services);
 
             return services;
         }
 
-        private static void AddOpenTelemetryCore(IServiceCollection services)
+        private static void AddOpenTelemetryInternal(IServiceCollection services)
         {
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
         }
