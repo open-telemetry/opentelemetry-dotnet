@@ -55,8 +55,6 @@ namespace OpenTelemetry.Exporter.Jaeger
 
                 foreach (var activity in activityBatch)
                 {
-                    // TODO: group by activity source
-
                     // avoid cancelling here: this is no return point: if we reached this point
                     // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
                     await this.JaegerAgentUdpBatcher.AppendAsync(activity.ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
