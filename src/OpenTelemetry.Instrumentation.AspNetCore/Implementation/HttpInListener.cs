@@ -110,10 +110,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
                 activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
+                activity.AddTag(SpanAttributeConstants.HttpUrlKey, GetUri(request));
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
-                activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, userAgent);
-                activity.AddTag(SpanAttributeConstants.HttpUrlKey, GetUri(request));
+                if (!string.IsNullOrEmpty(userAgent))
+                {
+                    activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, userAgent);
+                }
             }
         }
 
