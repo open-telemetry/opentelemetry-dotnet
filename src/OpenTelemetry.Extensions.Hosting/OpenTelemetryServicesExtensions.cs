@@ -80,7 +80,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(createSdk));
             }
 
-            services.AddSingleton(createSdk());
+            services.AddSingleton(s => createSdk());
             AddOpenTelemetryCore(services);
 
             return services;
