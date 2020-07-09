@@ -18,7 +18,7 @@ namespace OpenTelemetry.Exporter.AspNet
             this.openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddDependencyInstrumentation()
                 .AddRequestInstrumentation()
-                .UseJaegerActivityExporter(c =>
+                .UseJaegerExporter(c =>
                 {
                     c.AgentHost = "localhost";
                     c.AgentPort = 6831;

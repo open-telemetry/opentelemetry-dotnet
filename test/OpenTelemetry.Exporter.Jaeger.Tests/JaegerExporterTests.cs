@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerTraceExporterTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,57 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Collections.Generic;
+using System.Diagnostics;
+
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace.Configuration;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Tests
 {
-    public class JaegerTraceExporterTests
+    public class JaegerExporterTests
     {
+        [Fact]
+        public void UseJaegerExporterWithCustomActivityProcessor()
+        {
+            const string ActivitySourceName = "jaeger.test";
+            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+
+            bool startCalled = false;
+            bool endCalled = false;
+
+            testActivityProcessor.StartAction =
+                (a) =>
+                {
+                    startCalled = true;
+                };
+
+            testActivityProcessor.EndAction =
+                (a) =>
+                {
+                    endCalled = true;
+                };
+
+            var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+                            .AddActivitySource(ActivitySourceName)
+                            .UseJaegerExporter(
+                                null, p => p.AddProcessor((next) => testActivityProcessor)));
+
+            var source = new ActivitySource(ActivitySourceName);
+            var activity = source.StartActivity("Test Jaeger Activity");
+            activity?.Stop();
+
+            Assert.True(startCalled);
+            Assert.True(endCalled);
+        }
+
         [Fact]
         public void JaegerTraceExporter_ctor_NullServiceNameAllowed()
         {
-            using var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions
+            using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions
             {
                 ServiceName = null,
             });
@@ -35,7 +73,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public void JaegerTraceExporter_ApplyLibraryResource_UpdatesServiceName()
         {
-            using var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions());
+            using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
 
             process.ServiceName = "TestService";
@@ -56,7 +94,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public void JaegerTraceExporter_ApplyLibraryResource_CreatesTags()
         {
-            using var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions());
+            using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
 
             jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
@@ -72,7 +110,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public void JaegerTraceExporter_ApplyLibraryResource_CombinesTags()
         {
-            using var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions());
+            using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
 
             process.Tags = new Dictionary<string, JaegerTag> { ["Tag1"] = new KeyValuePair<string, object>("Tag1", "value1").ToJaegerTag() };
@@ -91,7 +129,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         [Fact]
         public void JaegerTraceExporter_ApplyLibraryResource_IgnoreLibraryResources()
         {
-            using var jaegerTraceExporter = new JaegerTraceExporter(new JaegerExporterOptions());
+            using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
 
             jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
