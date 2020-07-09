@@ -140,7 +140,7 @@ namespace OpenTelemetry.Trace.Export
                 this.cts.Dispose();
                 this.cts = null;
 
-                await this.ForceFlushAsync(cancellationToken);
+                await this.ForceFlushAsync(cancellationToken).ConfigureAwait(false);
                 await this.exporter.ShutdownAsync(cancellationToken);
 
                 // there is no point in waiting for a worker task if cancellation happens
