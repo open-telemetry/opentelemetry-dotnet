@@ -24,80 +24,31 @@ namespace Samples
 {
     internal class TestZipkin
     {
-        internal static object Run(string zipkinUri, bool useActivitySource)
+        internal static object Run(string zipkinUri)
         {
-            if (useActivitySource)
-            {
-                // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
-                // and use the Zipkin exporter.
-                using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
-                    builder => builder
-                        .AddActivitySource("Samples.SampleServer")
-                        .AddActivitySource("Samples.SampleClient")
-                        .UseZipkinActivityExporter(o =>
-                        {
-                            o.ServiceName = "test-zipkin";
-                            o.Endpoint = new Uri(zipkinUri);
-                        }));
-
-                using (var sample = new InstrumentationWithActivitySource())
-                {
-                    sample.Start();
-
-                    Console.WriteLine("Sample is running on the background, press ENTER to stop");
-                    Console.ReadLine();
-                }
-            }
-            else
-            {
-                // Configure exporter to export traces to Zipkin
-                using (var tracerFactory = TracerFactory.Create(builder => builder
-                .UseZipkin(o =>
-                {
-                    o.ServiceName = "test-zipkin";
-                    o.Endpoint = new Uri(zipkinUri);
-                })))
-                {
-                    var tracer = tracerFactory.GetTracer("zipkin-test");
-
-                    // Create a scoped span. It will end automatically when using statement ends
-                    using (tracer.WithSpan(tracer.StartSpan("Main")))
+            // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
+            // and use the Zipkin exporter.
+            using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+                builder => builder
+                    .AddActivitySource("Samples.SampleServer")
+                    .AddActivitySource("Samples.SampleClient")
+                    .UseZipkinActivityExporter(o =>
                     {
-                        Console.WriteLine("About to do a busy work");
-                        for (var i = 0; i < 10; i++)
-                        {
-                            DoWork(i, tracer);
-                        }
-                    }
-                }
+                        o.ServiceName = "test-zipkin";
+                        o.Endpoint = new Uri(zipkinUri);
+                    }));
+
+            using (var sample = new InstrumentationWithActivitySource())
+            {
+                sample.Start();
+
+                Console.WriteLine("Traces are being created and exported" +
+                    "to Zipkin in the background. Use Zipkin to view them." +
+                    "Press ENTER to stop.");
+                Console.ReadLine();
             }
 
             return null;
-        }
-
-        private static void DoWork(int i, Tracer tracer)
-        {
-            // Start another span. If another span was already started, it'll use that span as the parent span.
-            // In this example, the main method already started a span, so that'll be the parent span, and this will be
-            // a child span.
-            using (tracer.StartActiveSpan("DoWork", out var span))
-            {
-                // Simulate some work.
-                try
-                {
-                    Console.WriteLine("Doing busy work");
-                    Thread.Sleep(1000);
-                }
-                catch (ArgumentOutOfRangeException e)
-                {
-                    // Set status upon error
-                    span.Status = Status.Internal.WithDescription(e.ToString());
-                }
-
-                // Annotate our span to capture metadata about our operation
-                var attributes = new Dictionary<string, object> { { "use", "demo" } };
-                span.AddEvent(new Event("Invoking DoWork", attributes));
-            }
         }
     }
 }

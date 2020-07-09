@@ -25,47 +25,9 @@ namespace Samples
 {
     internal static class TestOtlp
     {
-        internal static object Run(string endpoint, bool useActivitySource)
+        internal static object Run(string endpoint)
         {
-            if (useActivitySource)
-            {
-                return RunWithActivitySource(endpoint);
-            }
-
-            return RunWithSdk(endpoint);
-        }
-
-        private static object RunWithSdk(string endpoint)
-        {
-            var headers = new Metadata
-            {
-                { "test", "test-header" },
-            };
-
-            using var tracerFactory = TracerFactory.Create(builder => builder
-                .SetResource(Resources.CreateServiceResource("otlp-test"))
-                .UseOpenTelemetryProtocolExporter(config =>
-                {
-                    config.Endpoint = endpoint;
-                    config.Headers = headers;
-                }));
-            var tracer = tracerFactory.GetTracer("otlp.test.tracer");
-
-            using (tracer.StartActiveSpan("parent", out var parent))
-            {
-                tracer.CurrentSpan.SetAttribute("key", 123);
-                tracer.CurrentSpan.AddEvent("test-event");
-
-                using (tracer.StartActiveSpan("child", out var child))
-                {
-                    child.SetAttribute("key", "value");
-                }
-            }
-
-            Console.WriteLine("Done... wait for events to arrive to backend!");
-            Console.ReadLine();
-
-            return null;
+            return RunWithActivitySource(endpoint);
         }
 
         private static object RunWithActivitySource(string endpoint)
@@ -84,7 +46,9 @@ namespace Samples
             {
                 sample.Start();
 
-                Console.WriteLine("Sample is running on the background, press ENTER to stop");
+                Console.WriteLine("Traces are being created and exported" +
+                    "to OTLP in the background." +
+                    "Press ENTER to stop.");
                 Console.ReadLine();
             }
 
