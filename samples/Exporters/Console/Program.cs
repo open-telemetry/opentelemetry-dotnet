@@ -47,7 +47,7 @@ namespace Samples
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (ZPagesOptions options) => TestZPages.Run(),
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
-                    (OtlpOptions options) => TestOtlp.Run(options.Endpoint),
+                    (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
                     errs => 1);
 
             Console.ReadLine();
