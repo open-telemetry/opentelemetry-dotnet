@@ -26,7 +26,11 @@ using Moq;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
+#if NETCOREAPP2_1
+using TestApp.AspNetCore._2._1;
+#else
 using TestApp.AspNetCore._3._1;
+#endif
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
@@ -52,7 +56,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl());
-                        services.AddOpenTelemetrySdk((builder) => builder.AddRequestInstrumentation()
+                        services.AddOpenTelemetry((builder) => builder.AddRequestInstrumentation()
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
                     }))
                 .CreateClient())

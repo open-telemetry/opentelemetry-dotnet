@@ -19,10 +19,22 @@ jobs:
       with:
         fetch-depth: 0 # fetching all
 
-    - name: Setup .NET Core
+    - name: Setup .NET Core 2.1
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.x
+        dotnet-version: 2.1.807
+
+    - name: Setup .NET Core 3.1
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.301
+    
+    # For linux, we have to apply a workaround to enable both dotnet versions at same time
+    - name: .net SxS
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        rsync -a ${DOTNET_ROOT/3.1.301/2.1.807}/* $DOTNET_ROOT/
 
     - name: Install dependencies
       run: dotnet restore

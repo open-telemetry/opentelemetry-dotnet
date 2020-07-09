@@ -1,4 +1,4 @@
-﻿// <copyright file="TestConsoleActivity.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestConsoleExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,18 +25,18 @@ using OpenTelemetry.Trace.Export;
 
 namespace Samples
 {
-    internal class TestConsoleActivity
+    internal class TestConsoleExporter
     {
-        internal static object Run(ConsoleActivityOptions options)
+        internal static object Run(ConsoleOptions options)
         {
             // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
             // and use a single pipeline with a custom MyProcessor, and Console exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
-                    .UseConsoleActivityExporter(opt => opt.DisplayAsJson = options.DisplayAsJson,
+                    .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson,
                                                 (p) => p.AddProcessor((next) => new MyProcessor(next))));
-  
+
             // The above line is required only in Applications
             // which decide to use OT.
 
@@ -94,6 +94,8 @@ namespace Samples
                     parent?.AddTag("http.status_code", "500");
                 }
             }
+
+            Console.WriteLine("Press Enter key to exit.");
 
             return null;
         }

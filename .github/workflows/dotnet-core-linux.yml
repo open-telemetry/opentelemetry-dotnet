@@ -12,15 +12,25 @@ jobs:
 
     strategy:
       matrix:
-        version: [netcoreapp3.1]
+        version: [netcoreapp2.1,netcoreapp3.1]
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Setup .NET Core
+    - name: Setup .NET Core 2.1
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.x
+        dotnet-version: 2.1.807
+
+    - name: Setup .NET Core 3.1
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.301
+    
+    # For linux, we have to apply a workaround to enable both dotnet versions at same time
+    - name: .net SxS
+      run: |
+        rsync -a ${DOTNET_ROOT/3.1.301/2.1.807}/* $DOTNET_ROOT/
 
     - name: Install dependencies
       run: dotnet restore
