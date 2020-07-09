@@ -102,7 +102,7 @@ namespace OpenTelemetry.Trace.Configuration
         }
 
         /// <summary>
-        /// Adds auto-instrumentations for spans.
+        /// Adds auto-instrumentations for activity.
         /// </summary>
         /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
         /// <param name="instrumentationFactory">Function that builds instrumentation.</param>

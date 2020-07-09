@@ -1,4 +1,4 @@
-﻿// <copyright file="HostingIntergrationOpenTelemetrySdkTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HostingExtensionsTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,17 +23,17 @@ using Xunit;
 
 namespace OpenTelemetry.Extensions.Hosting
 {
-    public class HostingIntergrationOpenTelemetrySdkTests
+    public class HostingExtensionsTests
     {
         [Fact]
-        public async Task AddOpenTelemetry_RegisterInstrumentation_InstrumentationCreatedAndDisposed()
+        public async Task AddOpenTelemetryInstrumentationCreationAndDisposal()
         {
             var testInstrumentation = new TestInstrumentation();
             var callbackRun = false;
 
             var builder = new HostBuilder().ConfigureServices(services =>
             {
-                services.AddOpenTelemetrySdk(builder =>
+                services.AddOpenTelemetry(builder =>
                 {
                     builder.AddInstrumentation((activitySource) =>
                     {
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Extensions.Hosting
         {
             var builder = new HostBuilder().ConfigureServices(services =>
             {
-                services.AddOpenTelemetrySdk();
+                services.AddOpenTelemetry();
             });
 
             var host = builder.Build();
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Extensions.Hosting
 
             var services = new ServiceCollection();
             services.AddSingleton(testInstrumentation);
-            services.AddOpenTelemetrySdk((provider, builder) =>
+            services.AddOpenTelemetry((provider, builder) =>
             {
                 builder.AddInstrumentation<TestInstrumentation>((activitySource) => provider.GetRequiredService<TestInstrumentation>());
             });

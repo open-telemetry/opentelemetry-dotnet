@@ -39,7 +39,7 @@ namespace API
             // Switch between Zipkin/Jaeger by commenting out one of the following.
 
             /*
-            services.AddOpenTelemetrySdk((builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
+            services.AddOpenTelemetry((builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
                 .UseJaegerActivityExporter(o =>
                 {
                     o.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
@@ -48,7 +48,7 @@ namespace API
                 }));
             */
 
-            services.AddOpenTelemetrySdk((builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
+            services.AddOpenTelemetry((builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
                 .UseZipkinActivityExporter(o =>
                 {
                     o.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
