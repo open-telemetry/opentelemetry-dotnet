@@ -40,14 +40,14 @@ namespace Samples
         {
             Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
                 .MapResult(
-                    (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port, options.UseActivitySource),
-                    (ZipkinOptions options) => TestZipkin.Run(options.Uri, options.UseActivitySource),
+                    (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
+                    (ZipkinOptions options) => TestZipkin.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheus.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (ZPagesOptions options) => TestZPages.Run(),
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
-                    (OtlpOptions options) => TestOtlp.Run(options.Endpoint, options.UseActivitySource),
+                    (OtlpOptions options) => TestOtlp.Run(options.Endpoint),
                     errs => 1);
 
             Console.ReadLine();
@@ -64,9 +64,6 @@ namespace Samples
 
         [Option('p', "port", HelpText = "Port of the Jaeger Agent", Default = 6831)]
         public int Port { get; set; }
-
-        [Option('a', "activity", HelpText = "Set it to true to export ActivitySource data", Default = false)]
-        public bool UseActivitySource { get; set; }
     }
 
     [Verb("zipkin", HelpText = "Specify the options required to test Zipkin exporter")]
@@ -74,9 +71,6 @@ namespace Samples
     {
         [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
         public string Uri { get; set; }
-
-        [Option('a', "activity", HelpText = "Set it to true to export ActivitySource data", Default = false)]
-        public bool UseActivitySource { get; set; }
     }
 
     [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
@@ -121,9 +115,6 @@ namespace Samples
     {
         [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "localhost:55680")]
         public string Endpoint { get; set; }
-
-        [Option('a', "activity", HelpText = "Set it to true to export ActivitySource data", Default = false)]
-        public bool UseActivitySource { get; set; }
     }
 
 #pragma warning restore SA1402 // File may only contain a single type
