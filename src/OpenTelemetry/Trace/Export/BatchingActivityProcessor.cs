@@ -160,6 +160,8 @@ namespace OpenTelemetry.Trace.Export
                 await this.ExportBatchAsync(cancellationToken).ConfigureAwait(false);
                 queueSize = queueSize - this.maxExportBatchSize;
             }
+
+            OpenTelemetrySdkEventSource.Log.ForceFlushCompleted(this.currentQueueSize);
         }
 
         public void Dispose()
