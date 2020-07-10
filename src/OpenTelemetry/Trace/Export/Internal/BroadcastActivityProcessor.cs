@@ -84,6 +84,17 @@ namespace OpenTelemetry.Trace.Export.Internal
             return Task.WhenAll(tasks);
         }
 
+        public override Task ForceFlushAsync(CancellationToken cancellationToken)
+        {
+            var tasks = new List<Task>(this.processors.Count());
+            foreach (var processor in this.processors)
+            {
+                tasks.Add(processor.ForceFlushAsync(cancellationToken));
+            }
+
+            return Task.WhenAll(tasks);
+        }
+
         public void Dispose()
         {
             foreach (var processor in this.processors)

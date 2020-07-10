@@ -107,6 +107,17 @@ namespace OpenTelemetry.Trace.Export.Test
         }
 
         [Fact]
+        public async Task ForceFlushReturnsCompletedTask()
+        {
+            var activityProcessor = new SimpleActivityProcessor(new TestActivityExporter(null));
+
+            var forceFlushTask = activityProcessor.ForceFlushAsync(CancellationToken.None);
+            await forceFlushTask;
+
+            Assert.True(forceFlushTask.IsCompleted);
+        }
+
+        [Fact]
         public void ExportDifferentSampledSpans()
         {
             var span1 = this.CreateSampledEndedSpan(SpanName1);

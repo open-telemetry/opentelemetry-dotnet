@@ -39,6 +39,8 @@ namespace OpenTelemetry.Tests.Implementation.Testing.Export
 
         public bool ShutdownCalled { get; private set; } = false;
 
+        public bool ForceFlushCalled { get; private set; } = false;
+
         public bool DisposedCalled { get; private set; } = false;
 
         public override void OnStart(Activity span)
@@ -54,6 +56,16 @@ namespace OpenTelemetry.Tests.Implementation.Testing.Export
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             this.ShutdownCalled = true;
+#if NET452
+            return Task.FromResult(0);
+#else
+            return Task.CompletedTask;
+#endif
+        }
+
+        public override Task ForceFlushAsync(CancellationToken cancellationToken)
+        {
+            this.ForceFlushCalled = true;
 #if NET452
             return Task.FromResult(0);
 #else
