@@ -17,10 +17,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Testing.Export;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Samplers;
 using Xunit;
@@ -274,21 +277,36 @@ namespace OpenTelemetry.Trace.Export.Test
                                         .SetSampler(new AlwaysOnActivitySampler())
                                         .AddProcessorPipeline(pp => pp.AddProcessor(ap => activityProcessor)));
 
-            var activities = new List<Activity>();
-            for (int i = 0; i < 100; i++)
+            using (var testListener = new TestEventListener())
             {
-                activities.Add(this.CreateActivity(i.ToString()));
-            }
+                // Enable events from OpenTelemetrySDK.
+                testListener.EnableEvents(OpenTelemetrySdkEventSource.Log, EventLevel.Verbose);
+                var activities = new List<Activity>();
+                for (int i = 0; i < 100; i++)
+                {
+                    activities.Add(this.CreateActivity(i.ToString()));
+                }
 
-            Assert.True(activityExporter.ExportedActivities.Length < activities.Count);
-            using (var cts = new CancellationTokenSource(DefaultTimeout))
-            {
-                await activityProcessor.ShutdownAsync(cts.Token);
-            }
+                Assert.True(activityExporter.ExportedActivities.Length < activities.Count);
+                using (var cts = new CancellationTokenSource(DefaultTimeout))
+                {
+                    await activityProcessor.ShutdownAsync(cts.Token);
+                }
 
-            Assert.True(activityExporter.WasShutDown);
-            Assert.Equal(activities.Count, activityExporter.ExportedActivities.Length);
-            Assert.InRange(exportCalledCount, activities.Count / batchSize, activities.Count);
+                // Get the shutdown event.
+                var shutdownEvent = testListener.Events.Where((e) => e.EventId == 2).First();
+
+                int droppedCount = 0;
+                if (shutdownEvent != null)
+                {
+                    // There is a single payload which is the number of items left in buffer a shutdown.
+                    droppedCount = (int)shutdownEvent.Payload[0];
+                }
+
+                Assert.True(activityExporter.WasShutDown);
+                Assert.Equal(activities.Count, droppedCount + activityExporter.ExportedActivities.Length);
+                Assert.InRange(exportCalledCount, activities.Count / batchSize, activities.Count);
+            }
         }
 
         [Fact]
