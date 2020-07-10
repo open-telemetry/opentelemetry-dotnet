@@ -14,14 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
 using System.Threading.Tasks;
-
-using Moq;
-
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
 
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
@@ -37,15 +30,6 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
         {
             // connect to the server
             var connection = ConnectionMultiplexer.Connect("localhost:6379");
-
-            var spanProcessor = new Mock<ActivityProcessor>();
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
-                   (builder) =>
-                    builder
-                        .AddRedisInstrumentation(connection)
-                        .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
-            {
-            }
 
             using var instrumentation = new StackExchangeRedisCallsInstrumentation(connection, new StackExchangeRedisCallsInstrumentationOptions());
             var profilerFactory = instrumentation.GetProfilerSessionsFactory();

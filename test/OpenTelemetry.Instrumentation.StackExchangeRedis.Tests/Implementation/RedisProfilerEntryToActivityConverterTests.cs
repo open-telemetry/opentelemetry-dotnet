@@ -19,13 +19,32 @@ using System.Diagnostics;
 using System.Linq;
 using Moq;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
+using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 {
-    public class RedisProfilerEntryToActivityConverterTests
+    public class RedisProfilerEntryToActivityConverterTests : IDisposable
     {
+        private readonly ConnectionMultiplexer connection;
+        private readonly IDisposable sdk;
+
+        public RedisProfilerEntryToActivityConverterTests()
+        {
+            this.connection = ConnectionMultiplexer.Connect("localhost:6379");
+
+            this.sdk = OpenTelemetrySdk.EnableOpenTelemetry(
+                (builder) => builder.AddRedisInstrumentation(this.connection));
+        }
+
+        public void Dispose()
+        {
+            this.sdk.Dispose();
+            this.connection.Dispose();
+        }
+
         [Fact]
         public void DrainSessionUsesCommandAsName()
         {
