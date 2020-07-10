@@ -32,12 +32,19 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             }
 
             var activity = StackExchangeRedisCallsInstrumentation.ActivitySource.StartActivity(
-                name,
+                StackExchangeRedisCallsInstrumentation.ActivityName,
                 ActivityKind.Client,
                 parentActivity?.Context ?? default,
                 startTime: command.CommandCreated);
 
-            if (activity?.IsAllDataRequested == true)
+            if (activity == null)
+            {
+                return null;
+            }
+
+            activity.DisplayName = name;
+
+            if (activity.IsAllDataRequested == true)
             {
                 // see https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md
 
@@ -54,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
                 activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok));
                 activity.AddTag(SpanAttributeConstants.DatabaseSystemKey, "redis");
-                activity.AddTag("db.redis.flags", command.Flags.ToString());
+                activity.AddTag(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName, command.Flags.ToString());
 
                 if (command.Command != null)
                 {
@@ -69,13 +76,18 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                         activity.AddTag(SpanAttributeConstants.NetPeerIp, ipEndPoint.Address.ToString());
                         activity.AddTag(SpanAttributeConstants.NetPeerPort, ipEndPoint.Port.ToString());
                     }
+                    else if (command.EndPoint is DnsEndPoint dnsEndPoint)
+                    {
+                        activity.AddTag(SpanAttributeConstants.NetPeerName, dnsEndPoint.Host);
+                        activity.AddTag(SpanAttributeConstants.NetPeerPort, dnsEndPoint.Port.ToString());
+                    }
                     else
                     {
                         activity.AddTag(SpanAttributeConstants.PeerServiceKey, command.EndPoint.ToString());
                     }
                 }
 
-                activity.AddTag("db.redis.database_index", command.Db.ToString());
+                activity.AddTag(StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName, command.Db.ToString());
 
                 // TODO: deal with the re-transmission
                 // command.RetransmissionOf;
@@ -92,7 +104,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 activity.SetEndTime(command.CommandCreated + command.ElapsedTime);
             }
 
-            activity?.Stop();
+            activity.Stop();
 
             return activity;
         }

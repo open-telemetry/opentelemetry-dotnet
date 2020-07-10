@@ -16,7 +16,7 @@
 using System;
 using Xunit;
 
-namespace OpenTelemetry.Instrumentation.Dependencies.Tests
+namespace OpenTelemetry.Internal.Test
 {
     public class SkipUnlessEnvVarFoundTheoryAttribute : TheoryAttribute
     {

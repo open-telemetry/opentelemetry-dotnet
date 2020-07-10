@@ -18,7 +18,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation;
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
@@ -30,6 +29,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
     /// </summary>
     public class StackExchangeRedisCallsInstrumentation : IDisposable
     {
+        internal const string RedisDatabaseIndexKeyName = "db.redis.database_index";
+        internal const string RedisFlagsKeyName = "db.redis.flags";
         internal const string ActivitySourceName = "StackExchange.Redis";
         internal const string ActivityName = ActivitySourceName + ".Execute";
         internal static readonly Version Version = typeof(StackExchangeRedisCallsInstrumentation).Assembly.GetName().Version;

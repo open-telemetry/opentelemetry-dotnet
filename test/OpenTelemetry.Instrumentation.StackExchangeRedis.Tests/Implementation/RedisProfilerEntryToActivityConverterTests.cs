@@ -26,6 +26,7 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 {
+    [Collection("Redis")]
     public class RedisProfilerEntryToActivityConverterTests : IDisposable
     {
         private readonly ConnectionMultiplexer connection;
@@ -33,13 +34,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
         public RedisProfilerEntryToActivityConverterTests()
         {
-            var connectionOptions = new ConfigurationOptions
-            {
-                AbortOnConnectFail = false,
-            };
-            connectionOptions.EndPoints.Add("localhost:6379");
-
-            this.connection = ConnectionMultiplexer.Connect(connectionOptions);
+            this.connection = ConnectionMultiplexer.Connect("localhost:6379");
 
             this.sdk = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddRedisInstrumentation(this.connection));
@@ -110,14 +105,14 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             var activity = new Activity("redis-profiler");
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
-            var expectedFlags = StackExchange.Redis.CommandFlags.FireAndForget |
-                                StackExchange.Redis.CommandFlags.NoRedirect;
+            var expectedFlags = CommandFlags.FireAndForget |
+                                CommandFlags.NoRedirect;
             profiledCommand.Setup(m => m.Flags).Returns(expectedFlags);
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.Tags, kvp => kvp.Key == "db.redis.flags");
-            Assert.Equal("None, FireAndForget, NoRedirect", result.Tags.FirstOrDefault(kvp => kvp.Key == "db.redis.flags").Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName);
+            Assert.Equal("PreferMaster, FireAndForget, NoRedirect", result.Tags.FirstOrDefault(kvp => kvp.Key == StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName).Value);
         }
     }
 }
