@@ -277,7 +277,7 @@ namespace OpenTelemetry.Trace.Export.Test
                                         .SetSampler(new AlwaysOnActivitySampler())
                                         .AddProcessorPipeline(pp => pp.AddProcessor(ap => activityProcessor)));
 
-            using var testListener = new InMemoryEventListener();
+            using var inMemoryEventListener = new InMemoryEventListener();
             var activities = new List<Activity>();
             for (int i = 0; i < 100; i++)
             {
@@ -293,7 +293,7 @@ namespace OpenTelemetry.Trace.Export.Test
             // Get the shutdown event.
             // 2 is the EventId for OpenTelemetrySdkEventSource.ShutdownEvent
             // TODO: Expose event ids as internal, so tests can access them more reliably.
-            var shutdownEvent = testListener.Events.Where((e) => e.EventId == 2).First();
+            var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 2).First();
 
             int droppedCount = 0;
             if (shutdownEvent != null)
