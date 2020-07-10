@@ -357,6 +357,7 @@ namespace OpenTelemetry.Trace.Export.Test
                 .SetSampler(new AlwaysOnActivitySampler())
                 .AddProcessorPipeline(pp => pp.AddProcessor(ap => activityProcessor)));
 
+            using var inMemoryEventListener = new InMemoryEventListener();
             var activities = new List<Activity>();
             for (int i = 0; i < 100; i++)
             {
@@ -369,7 +370,19 @@ namespace OpenTelemetry.Trace.Export.Test
                 await activityProcessor.ForceFlushAsync(cts.Token);
             }
 
-            Assert.Equal(activities.Count, activityExporter.ExportedActivities.Length);
+            // Get the shutdown event.
+            // 2 is the EventId for OpenTelemetrySdkEventSource.ShutdownEvent
+            // TODO: Expose event ids as internal, so tests can access them more reliably.
+            var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 2).First();
+
+            int droppedCount = 0;
+            if (shutdownEvent != null)
+            {
+                // There is a single payload which is the number of items left in buffer a shutdown.
+                droppedCount = (int)shutdownEvent.Payload[0];
+            }
+
+            Assert.Equal(activities.Count, activityExporter.ExportedActivities.Length + droppedCount);
             Assert.InRange(exportCalledCount, activities.Count / batchSize, activities.Count);
         }
 
