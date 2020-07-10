@@ -1,4 +1,4 @@
-﻿// <copyright file="TestOtlp.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestOtlpExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +15,13 @@
 // </copyright>
 
 using System;
-using Grpc.Core;
+
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
 namespace Samples
 {
-    internal static class TestOtlp
+    internal static class TestOtlpExporter
     {
         internal static object Run(string endpoint)
         {
@@ -38,7 +36,7 @@ namespace Samples
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")
                     .AddActivitySource("Samples.SampleClient")
-                    .UseOpenTelemetryProtocolActivityExporter(opt => opt.Endpoint = endpoint));
+                    .UseOtlpExporter(opt => opt.Endpoint = endpoint));
 
             // The above line is required only in Applications
             // which decide to use OT.
