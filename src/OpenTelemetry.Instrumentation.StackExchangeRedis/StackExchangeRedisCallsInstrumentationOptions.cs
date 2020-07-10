@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 {
@@ -23,7 +24,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
     public class StackExchangeRedisCallsInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets the maximum time that should elapse between flushing the internal buffer to the configured Jaeger agent. Default value: 00:00:10.
+        /// Gets or sets the maximum time that should elapse between flushing the internal buffer of Redis profiling sessions and creating <see cref="Activity"/> objects. Default value: 00:00:10.
         /// </summary>
         public TimeSpan MaxFlushInterval { get; set; } = TimeSpan.FromSeconds(10);
     }
