@@ -1,4 +1,4 @@
-﻿// <copyright file="TestOtlp.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestZipkinExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,39 +15,35 @@
 // </copyright>
 
 using System;
-using Grpc.Core;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
-using OpenTelemetry.Resources;
+using System.Collections.Generic;
+using System.Threading;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
 namespace Samples
 {
-    internal static class TestOtlp
+    internal class TestZipkinExporter
     {
-        internal static object Run(string endpoint)
-        {
-            return RunWithActivitySource(endpoint);
-        }
-
-        private static object RunWithActivitySource(string endpoint)
+        internal static object Run(string zipkinUri)
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
-            // and use OTLP exporter.
+            // and use the Zipkin exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")
                     .AddActivitySource("Samples.SampleClient")
-                    .UseOpenTelemetryProtocolActivityExporter(opt => opt.Endpoint = endpoint));
+                    .UseZipkinExporter(o =>
+                    {
+                        o.ServiceName = "test-zipkin";
+                        o.Endpoint = new Uri(zipkinUri);
+                    }));
 
-            // The above line is required only in Applications
-            // which decide to use OT.
             using (var sample = new InstrumentationWithActivitySource())
             {
                 sample.Start();
 
                 Console.WriteLine("Traces are being created and exported" +
-                    "to OTLP in the background." +
+                    "to Zipkin in the background. Use Zipkin to view them." +
                     "Press ENTER to stop.");
                 Console.ReadLine();
             }

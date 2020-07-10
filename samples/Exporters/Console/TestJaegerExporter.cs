@@ -1,4 +1,4 @@
-﻿// <copyright file="TestZipkin.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestJaegerExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,37 +13,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-
 using System;
-using System.Collections.Generic;
-using System.Threading;
-using OpenTelemetry.Trace;
+
 using OpenTelemetry.Trace.Configuration;
 
 namespace Samples
 {
-    internal class TestZipkin
+    internal class TestJaegerExporter
     {
-        internal static object Run(string zipkinUri)
+        internal static object Run(string host, int port)
+        {
+            return RunWithActivity(host, port);
+        }
+
+        internal static object RunWithActivity(string host, int port)
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
-            // and use the Zipkin exporter.
+            // and use the Jaeger exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")
                     .AddActivitySource("Samples.SampleClient")
-                    .UseZipkinActivityExporter(o =>
+                    .UseJaegerExporter(o =>
                     {
-                        o.ServiceName = "test-zipkin";
-                        o.Endpoint = new Uri(zipkinUri);
+                        o.ServiceName = "jaeger-test";
+                        o.AgentHost = host;
+                        o.AgentPort = port;
                     }));
+
+            // The above lines are required only in Applications
+            // which decide to use OT.
 
             using (var sample = new InstrumentationWithActivitySource())
             {
                 sample.Start();
 
                 Console.WriteLine("Traces are being created and exported" +
-                    "to Zipkin in the background. Use Zipkin to view them." +
+                    "to Jaeger in the background. Use Jaeger to view them." +
                     "Press ENTER to stop.");
                 Console.ReadLine();
             }

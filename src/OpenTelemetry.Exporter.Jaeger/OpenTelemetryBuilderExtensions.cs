@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseJaegerActivityExporter(this OpenTelemetryBuilder builder, Action<JaegerExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        public static OpenTelemetryBuilder UseJaegerExporter(this OpenTelemetryBuilder builder, Action<JaegerExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
         {
             if (builder == null)
             {
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace.Configuration
                 var exporterOptions = new JaegerExporterOptions();
                 configure?.Invoke(exporterOptions);
 
-                var activityExporter = new JaegerActivityExporter(exporterOptions);
+                var activityExporter = new JaegerExporter(exporterOptions);
                 processorConfigure?.Invoke(pipeline);
                 pipeline.SetExporter(activityExporter);
             });

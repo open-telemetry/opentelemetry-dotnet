@@ -75,6 +75,16 @@ namespace OpenTelemetry.Trace.Export
 #endif
         }
 
+        /// <inheritdoc />
+        public override Task ForceFlushAsync(CancellationToken cancellationToken)
+        {
+#if NET452
+            return Task.FromResult(0);
+#else
+            return Task.CompletedTask;
+#endif
+        }
+
         public void Dispose()
         {
             this.Dispose(true);

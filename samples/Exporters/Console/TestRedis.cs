@@ -42,7 +42,7 @@ namespace Samples
             // Configure exporter to export traces to Zipkin
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 builder => builder
-                    .UseZipkinActivityExporter(o =>
+                    .UseZipkinExporter(o =>
                     {
                         o.ServiceName = "redis-test";
                         o.Endpoint = new Uri(zipkinUri);

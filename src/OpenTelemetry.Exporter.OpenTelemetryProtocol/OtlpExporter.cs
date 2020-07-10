@@ -1,4 +1,4 @@
-﻿// <copyright file="TraceExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="OtlpExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,40 +25,41 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Trace.Export;
 
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
-using OtlpTrace = Opentelemetry.Proto.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 {
     /// <summary>
-    /// The trace exporter using the OpenTelemetry protocol (OTLP).
+    /// Exporter consuming <see cref="Activity"/> and exporting the data using
+    /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    internal class TraceExporter
+    public class OtlpExporter : ActivityExporter
     {
         private readonly Channel channel;
         private readonly OtlpCollector.TraceService.TraceServiceClient traceClient;
         private readonly Metadata headers;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TraceExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
-        internal TraceExporter(ExporterOptions options)
+        public OtlpExporter(OtlpExporterOptions options)
         {
             this.headers = options.Headers;
             this.channel = new Channel(options.Endpoint, options.Credentials);
             this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
         }
 
-        internal async Task<ExportResult> ExportAsync(
-            IEnumerable<OtlpTrace.ResourceSpans> resourceSpansList,
+        /// <inheritdoc/>
+        public override async Task<ExportResult> ExportAsync(
+            IEnumerable<Activity> activityBatch,
             CancellationToken cancellationToken)
         {
-            var spanExportRequest = new OtlpCollector.ExportTraceServiceRequest();
-            spanExportRequest.ResourceSpans.AddRange(resourceSpansList);
+            var exporterRequest = new OtlpCollector.ExportTraceServiceRequest();
+            exporterRequest.ResourceSpans.AddRange(activityBatch.ToOtlpResourceSpans());
 
             try
             {
-                await this.traceClient.ExportAsync(spanExportRequest, headers: this.headers, cancellationToken: cancellationToken);
+                await this.traceClient.ExportAsync(exporterRequest, headers: this.headers, cancellationToken: cancellationToken);
             }
             catch (RpcException ex)
             {
@@ -69,7 +71,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             return ExportResult.Success;
         }
 
-        internal async Task ShutdownAsync(CancellationToken cancellationToken)
+        /// <inheritdoc/>
+        public override async Task ShutdownAsync(CancellationToken cancellationToken)
         {
             await this.channel.ShutdownAsync().ConfigureAwait(false);
         }

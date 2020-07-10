@@ -330,6 +330,34 @@ namespace OpenTelemetry.Trace.Export.Test
         }
 
         [Fact]
+        public async Task ForceExport()
+        {
+            const int batchSize = 2;
+            int exportCalledCount = 0;
+            var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(100), DefaultTimeout, batchSize);
+            var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+                .AddActivitySource(ActivitySourceName)
+                .SetSampler(new AlwaysOnActivitySampler())
+                .AddProcessorPipeline(pp => pp.AddProcessor(ap => activityProcessor)));
+
+            var activities = new List<Activity>();
+            for (int i = 0; i < 100; i++)
+            {
+                activities.Add(this.CreateActivity(i.ToString()));
+            }
+
+            Assert.True(activityExporter.ExportedActivities.Length < activities.Count);
+            using (var cts = new CancellationTokenSource(DefaultTimeout))
+            {
+                await activityProcessor.ForceFlushAsync(cts.Token);
+            }
+
+            Assert.Equal(activities.Count, activityExporter.ExportedActivities.Length);
+            Assert.InRange(exportCalledCount, activities.Count / batchSize, activities.Count);
+        }
+
+        [Fact]
         public void DisposeFlushes()
         {
             const int batchSize = 1;

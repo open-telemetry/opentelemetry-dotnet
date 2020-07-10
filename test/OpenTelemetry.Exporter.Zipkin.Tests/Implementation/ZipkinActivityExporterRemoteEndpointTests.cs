@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         public void ZipkinSpanConverterTest_GenerateActivity_RemoteEndpointOmittedByDefault()
         {
             // Arrange
-            var activity = ZipkinActivityExporterTests.CreateTestActivity();
+            var activity = ZipkinExporterTests.CreateTestActivity();
 
             // Act & Assert
             var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         public void ZipkinSpanConverterTest_GenerateActivity_RemoteEndpointResolution()
         {
             // Arrange
-            var activity = ZipkinActivityExporterTests.CreateTestActivity(
+            var activity = ZipkinExporterTests.CreateTestActivity(
                 additionalAttributes: new Dictionary<string, object>
                 {
                     ["net.peer.name"] = "RemoteServiceName",
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         public void ZipkinSpanConverterTest_GenerateActivity_RemoteEndpointResolutionPriority()
         {
             // Arrange
-            var activity = ZipkinActivityExporterTests.CreateTestActivity(
+            var activity = ZipkinExporterTests.CreateTestActivity(
                 additionalAttributes: new Dictionary<string, object>
                 {
                     ["http.host"] = "DiscardedRemoteServiceName",
