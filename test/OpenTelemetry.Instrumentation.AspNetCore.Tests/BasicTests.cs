@@ -31,7 +31,11 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
+#if NETCOREAPP2_1
+using TestApp.AspNetCore._2._1;
+#else
 using TestApp.AspNetCore._3._1;
+#endif
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests

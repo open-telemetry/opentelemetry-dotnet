@@ -42,5 +42,12 @@ namespace OpenTelemetry.Trace.Export
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Returns <see cref="Task"/>.</returns>
         public abstract Task ShutdownAsync(CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Flushes all activities that have not yet been processed.
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Returns <see cref="Task"/>.</returns>
+        public abstract Task ForceFlushAsync(CancellationToken cancellationToken);
     }
 }

@@ -110,10 +110,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
                 activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
+                activity.AddTag(SpanAttributeConstants.HttpUrlKey, GetUri(request));
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
-                activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, userAgent);
-                activity.AddTag(SpanAttributeConstants.HttpUrlKey, GetUri(request));
+                if (!string.IsNullOrEmpty(userAgent))
+                {
+                    activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, userAgent);
+                }
             }
         }
 
@@ -132,7 +135,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
                 activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase);
+
+                var statusDescription = response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase;
+                if (!string.IsNullOrEmpty(statusDescription))
+                {
+                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
+                }
             }
 
             if (activity.OperationName.Equals(ActivityNameByHttpInListener))

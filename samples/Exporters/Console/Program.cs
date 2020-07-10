@@ -27,27 +27,27 @@ namespace Samples
         /// Main method - invoke this using command line.
         /// For example:
         ///
-        /// dotnet Exporters.dll zipkin -u http://localhost:9411/api/v2/spans
-        /// dotnet Exporters.dll jaeger -h localhost -p 6831
-        /// dotnet Exporters.dll prometheus -i 15 -p 9184 -d 2
+        /// dotnet run -p Exporters.csproj console
+        /// dotnet run -p Exporters.csproj zipkin -u http://localhost:9411/api/v2/spans
+        /// dotnet run -p Exporters.csproj jaeger -h localhost -p 6831
+        /// dotnet run -p Exporters.csproj prometheus -i 15 -p 9184 -d 2
         ///
-        /// The above must be run from the project bin folder
-        /// (eg: C:\repos\opentelemetry-dotnet\src\samples\Exporters\Console\bin\Debug\netcoreapp3.1).
+        /// The above must be run from the project root folder
+        /// (eg: C:\repos\opentelemetry-dotnet\src\samples\Exporters\Console\).
         /// </summary>
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, ZPagesOptions, ConsoleOptions, ConsoleActivityOptions, OtlpOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
                 .MapResult(
-                    (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port, options.UseActivitySource),
-                    (ZipkinOptions options) => TestZipkin.Run(options.Uri, options.UseActivitySource),
+                    (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
+                    (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheus.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (ZPagesOptions options) => TestZPages.Run(),
-                    (ConsoleOptions options) => TestConsole.Run(options),
-                    (ConsoleActivityOptions options) => TestConsoleActivity.Run(options),
-                    (OtlpOptions options) => TestOtlp.Run(options.Endpoint, options.UseActivitySource),
+                    (ConsoleOptions options) => TestConsoleExporter.Run(options),
+                    (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
                     errs => 1);
 
             Console.ReadLine();
@@ -64,9 +64,6 @@ namespace Samples
 
         [Option('p', "port", HelpText = "Port of the Jaeger Agent", Default = 6831)]
         public int Port { get; set; }
-
-        [Option('a', "activity", HelpText = "Set it to true to export ActivitySource data", Default = false)]
-        public bool UseActivitySource { get; set; }
     }
 
     [Verb("zipkin", HelpText = "Specify the options required to test Zipkin exporter")]
@@ -74,9 +71,6 @@ namespace Samples
     {
         [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
         public string Uri { get; set; }
-
-        [Option('a', "activity", HelpText = "Set it to true to export ActivitySource data", Default = false)]
-        public bool UseActivitySource { get; set; }
     }
 
     [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
@@ -112,13 +106,6 @@ namespace Samples
     [Verb("console", HelpText = "Specify the options required to test console exporter")]
     internal class ConsoleOptions
     {
-        [Option('p', "pretty", HelpText = "Specify if the output should be pretty printed (default: true)", Default = true)]
-        public bool Pretty { get; set; }
-    }
-
-    [Verb("consoleactivity", HelpText = "Specify the options required to test console activity exporter")]
-    internal class ConsoleActivityOptions
-    {
         [Option('p', "displayasjson", HelpText = "Specify if the output should be displayed as json or not (default: false)", Default = false)]
         public bool DisplayAsJson { get; set; }
     }
@@ -128,9 +115,6 @@ namespace Samples
     {
         [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "localhost:55680")]
         public string Endpoint { get; set; }
-
-        [Option('a', "activity", HelpText = "Set it to true to export ActivitySource data", Default = false)]
-        public bool UseActivitySource { get; set; }
     }
 
 #pragma warning restore SA1402 // File may only contain a single type

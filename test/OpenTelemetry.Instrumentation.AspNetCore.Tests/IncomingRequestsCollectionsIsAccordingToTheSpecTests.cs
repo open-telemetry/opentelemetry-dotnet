@@ -18,15 +18,23 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+
 using Moq;
+
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
+#if NETCOREAPP2_1
+using TestApp.AspNetCore._2._1;
+#else
 using TestApp.AspNetCore._3._1;
+#endif
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
@@ -41,8 +49,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             this.factory = factory;
         }
 
-        [Fact]
-        public async Task SuccessfulTemplateControllerCallGeneratesASpan()
+        [Theory]
+        [InlineData("/api/values", "user-agent", 503, "503")]
+        [InlineData("/api/values", null, 503, null)]
+        public async Task SuccessfulTemplateControllerCallGeneratesASpan(
+            string urlPath,
+            string userAgent,
+            int statusCode,
+            string reasonPhrase)
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
@@ -51,16 +65,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
-                        services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl());
-                        services.AddOpenTelemetrySdk((builder) => builder.AddRequestInstrumentation()
+                        services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
+                        services.AddOpenTelemetry((builder) => builder.AddRequestInstrumentation()
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
                     }))
                 .CreateClient())
             {
                 try
                 {
+                    if (!string.IsNullOrEmpty(userAgent))
+                    {
+                        client.DefaultRequestHeaders.Add("User-Agent", userAgent);
+                    }
+
                     // Act
-                    var response = await client.GetAsync("/api/values");
+                    var response = await client.GetAsync(urlPath);
                 }
                 catch (Exception)
                 {
@@ -85,15 +104,45 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, span.Kind);
-            Assert.Equal("/api/values", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
-            Assert.Equal("503", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpStatusCodeKey).Value);
+            Assert.Equal("localhost:", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value);
+            Assert.Equal("GET", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpMethodKey).Value);
+            Assert.Equal(urlPath, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal($"http://localhost{urlPath}", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value);
+            Assert.Equal(statusCode.ToString(), span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpStatusCodeKey).Value);
+
+            Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(statusCode);
+            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode), span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            this.ValidateTagValue(span, SpanAttributeConstants.StatusDescriptionKey, reasonPhrase);
+            this.ValidateTagValue(span, SpanAttributeConstants.HttpUserAgentKey, userAgent);
+        }
+
+        private void ValidateTagValue(Activity activity, string attribute, string expectedValue)
+        {
+            if (string.IsNullOrEmpty(expectedValue))
+            {
+                Assert.True(activity.Tags.All(i => i.Key != attribute));
+            }
+            else
+            {
+                Assert.Equal(expectedValue, activity.Tags.FirstOrDefault(i => i.Key == attribute).Value);
+            }
         }
 
         public class TestCallbackMiddlewareImpl : CallbackMiddleware.CallbackMiddlewareImpl
         {
+            private readonly int statusCode;
+            private readonly string reasonPhrase;
+
+            public TestCallbackMiddlewareImpl(int statusCode, string reasonPhrase)
+            {
+                this.statusCode = statusCode;
+                this.reasonPhrase = reasonPhrase;
+            }
+
             public override async Task<bool> ProcessAsync(HttpContext context)
             {
-                context.Response.StatusCode = 503;
+                context.Response.StatusCode = this.statusCode;
+                context.Response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase = this.reasonPhrase;
                 await context.Response.WriteAsync("empty");
                 return false;
             }

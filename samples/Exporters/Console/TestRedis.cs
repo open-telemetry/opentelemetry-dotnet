@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Instrumentation.StackExchangeRedis;
 using OpenTelemetry.Trace;
@@ -31,46 +32,47 @@ namespace Samples
             var connection = ConnectionMultiplexer.Connect("localhost:6379");
 
             // Configure exporter to export traces to Zipkin
-            using var tracerFactory = TracerFactory.Create(builder => builder
-                .UseZipkin(o =>
-                {
-                    o.ServiceName = "redis-test";
-                    o.Endpoint = new Uri(zipkinUri);
-                })
-                .AddInstrumentation(t =>
-                {
-                    var instrumentation = new StackExchangeRedisCallsInstrumentation(t);
-                    connection.RegisterProfiler(instrumentation.GetProfilerSessionsFactory());
-                    return instrumentation;
-                }));
-            var tracer = tracerFactory.GetTracer("redis-test");
+            using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+                builder => builder
+                    .UseZipkinExporter(o =>
+                    {
+                        o.ServiceName = "redis-test";
+                        o.Endpoint = new Uri(zipkinUri);
+                    })
+                    // TODO: Uncomment when we change Redis to Activity mode
+                    // .AddInstrumentation(t =>
+                    // {
+                    //    var instrumentation = new StackExchangeRedisCallsInstrumentation(t);
+                    //    connection.RegisterProfiler(instrumentation.GetProfilerSessionsFactory());
+                    //    return instrumentation;
+                    // })
+                    .AddActivitySource("redis-test"));
+
+            ActivitySource activitySource = new ActivitySource("redis-test");
 
             // select a database (by default, DB = 0)
             var db = connection.GetDatabase();
 
-            // Create a scoped span. It will end automatically when using statement ends
-            using (tracer.StartActiveSpan("Main", out _))
+            // Create a scoped activity. It will end automatically when using statement ends
+            using (activitySource.StartActivity("Main"))
             {
                 Console.WriteLine("About to do a busy work");
                 for (var i = 0; i < 10; i++)
                 {
-                    DoWork(db, tracer);
+                    DoWork(db, activitySource);
                 }
             }
 
             return null;
         }
 
-        private static void DoWork(IDatabase db, Tracer tracer)
+        private static void DoWork(IDatabase db, ActivitySource activitySource)
         {
-            // Start another span. If another span was already started, it'll use that span as the parent span.
-            // In this example, the main method already started a span, so that'll be the parent span, and this will be
-            // a child span.
-            using (tracer.WithSpan(tracer.StartSpan("DoWork")))
+            // Start another activity. If another activity was already started, it'll use that activity as the parent activity.
+            // In this example, the main method already started a activity, so that'll be the parent activity, and this will be
+            // a child activity.
+            using (Activity activity = activitySource.StartActivity("DoWork"))
             {
-                // Simulate some work.
-                var span = tracer.CurrentSpan;
-
                 try
                 {
                     db.StringSet("key", "value " + DateTime.Now.ToLongDateString());
@@ -86,15 +88,16 @@ namespace Samples
                 catch (ArgumentOutOfRangeException e)
                 {
                     // Set status upon error
-                    span.Status = Status.Internal.WithDescription(e.ToString());
+                    activity.AddTag("ot.status", SpanHelper.GetCachedCanonicalCodeString(Status.Internal.CanonicalCode));
+                    activity.AddTag("ot.status_description", e.ToString());
                 }
 
-                // Annotate our span to capture metadata about our operation
+                // Annotate our activity to capture metadata about our operation
                 var attributes = new Dictionary<string, object>
                 {
                     { "use", "demo" },
                 };
-                span.AddEvent(new Event("Invoking DoWork", attributes));
+                activity.AddEvent(new ActivityEvent("Invoking DoWork", attributes));
             }
         }
     }
