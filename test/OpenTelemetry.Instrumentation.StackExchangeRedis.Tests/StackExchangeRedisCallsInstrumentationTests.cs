@@ -18,17 +18,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-
 using Moq;
-
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
-
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
-
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests

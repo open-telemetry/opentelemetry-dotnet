@@ -17,6 +17,8 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using Moq;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
@@ -47,7 +49,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
         }
 
         [Fact]
-        public void DrainSessionUsesCommandAsName()
+        public void ProfilerCommandToActivity_UsesCommandAsName()
         {
             var activity = new Activity("redis-profiler");
             var profiledCommand = new Mock<IProfiledCommand>();
@@ -60,7 +62,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
         }
 
         [Fact]
-        public void ProfiledCommandToSpanUsesTimestampAsStartTime()
+        public void ProfilerCommandToActivity_UsesTimestampAsStartTime()
         {
             var now = DateTimeOffset.Now;
             var activity = new Activity("redis-profiler");
@@ -73,7 +75,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
         }
 
         [Fact]
-        public void ProfiledCommandToSpanSetsDbTypeAttributeAsRedis()
+        public void ProfilerCommandToActivity_SetsDbTypeAttributeAsRedis()
         {
             var activity = new Activity("redis-profiler");
             var profiledCommand = new Mock<IProfiledCommand>();
@@ -86,7 +88,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
         }
 
         [Fact]
-        public void ProfiledCommandToSpanUsesCommandAsDbStatementAttribute()
+        public void ProfilerCommandToActivity_UsesCommandAsDbStatementAttribute()
         {
             var activity = new Activity("redis-profiler");
             var profiledCommand = new Mock<IProfiledCommand>();
@@ -100,7 +102,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
         }
 
         [Fact]
-        public void ProfiledCommandToSpanUsesFlagsForFlagsAttribute()
+        public void ProfilerCommandToActivity_UsesFlagsForFlagsAttribute()
         {
             var activity = new Activity("redis-profiler");
             var profiledCommand = new Mock<IProfiledCommand>();
@@ -114,5 +116,57 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             Assert.Contains(result.Tags, kvp => kvp.Key == StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName);
             Assert.Equal("PreferMaster, FireAndForget, NoRedirect", result.Tags.FirstOrDefault(kvp => kvp.Key == StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName).Value);
         }
+
+        [Fact]
+        public void ProfilerCommandToActivity_UsesIpEndPointAsEndPoint()
+        {
+            long address = 1;
+            int port = 2;
+
+            var activity = new Activity("redis-profiler");
+            IPEndPoint ipLocalEndPoint = new IPEndPoint(address, port);
+            var profiledCommand = new Mock<IProfiledCommand>();
+            profiledCommand.Setup(m => m.EndPoint).Returns(ipLocalEndPoint);
+
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+
+            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.NetPeerIp);
+            Assert.Equal($"{address}.0.0.0", result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.NetPeerIp).Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.NetPeerPort);
+            Assert.Equal($"{port}", result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.NetPeerPort).Value);
+        }
+
+        [Fact]
+        public void ProfilerCommandToActivity_UsesDnsEndPointAsEndPoint()
+        {
+            var dnsEndPoint = new DnsEndPoint("https://opentelemetry.io/", 443);
+
+            var activity = new Activity("redis-profiler");
+            var profiledCommand = new Mock<IProfiledCommand>();
+            profiledCommand.Setup(m => m.EndPoint).Returns(dnsEndPoint);
+
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+
+            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.NetPeerName);
+            Assert.Equal(dnsEndPoint.Host, result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.NetPeerName).Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.NetPeerPort);
+            Assert.Equal(dnsEndPoint.Port.ToString(), result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.NetPeerPort).Value);
+        }
+
+#if !NET461
+        [Fact]
+        public void ProfilerCommandToActivity_UsesOtherEndPointAsEndPoint()
+        {
+            var unixEndPoint = new UnixDomainSocketEndPoint("https://opentelemetry.io/");
+            var activity = new Activity("redis-profiler");
+            var profiledCommand = new Mock<IProfiledCommand>();
+            profiledCommand.Setup(m => m.EndPoint).Returns(unixEndPoint);
+
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+
+            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.PeerServiceKey);
+            Assert.Equal(unixEndPoint.ToString(), result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.PeerServiceKey).Value);
+        }
+#endif
     }
 }
