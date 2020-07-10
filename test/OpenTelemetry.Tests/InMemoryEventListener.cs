@@ -1,4 +1,4 @@
-﻿// <copyright file="TestEventListener.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="InMemoryEventListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,15 +19,21 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Text;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Tests
 {
     /// <summary>
-    /// Uses in unit tests to listen to the SDK EventSource events.
+    /// Used in unit tests to listen to the SDK EventSource events.
     /// </summary>
-    public class TestEventListener : EventListener
+    public class InMemoryEventListener : EventListener
     {
         public ConcurrentQueue<EventWrittenEventArgs> Events = new ConcurrentQueue<EventWrittenEventArgs>();
+
+        public InMemoryEventListener(EventLevel minLevel = EventLevel.Verbose)
+        {
+            this.EnableEvents(OpenTelemetrySdkEventSource.Log, minLevel);
+        }
 
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
