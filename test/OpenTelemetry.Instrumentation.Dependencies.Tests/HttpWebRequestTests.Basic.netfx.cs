@@ -171,14 +171,15 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(0, activityProcessor.Invocations.Count);
         }
 
-        [Fact]
+        [Fact(Skip = "HttpWebRequest instrumentation has no way to pass options and no ability to filter now.")]
         public async Task HttpDependenciesInstrumentationFiltersOutRequests()
         {
-            var spanProcessor = new Mock<SpanProcessor>();
-
-            var tracer = TracerFactory.Create(b => b
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
+            var activityProcessor = new Mock<ActivityProcessor>();
+            using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            {
+                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddHttpWebRequestDependencyInstrumentation();
+            });
 
             var options = new HttpClientInstrumentationOptions((activityName, arg1, _)
                 => !(activityName == HttpWebRequestActivitySource.ActivityName &&
@@ -188,7 +189,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             using var c = new HttpClient();
             await c.GetAsync(this.url);
 
-            Assert.Equal(0, spanProcessor.Invocations.Count);
+            Assert.Equal(0, activityProcessor.Invocations.Count);
         }
     }
 }
