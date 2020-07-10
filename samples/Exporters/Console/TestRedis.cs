@@ -27,8 +27,17 @@ namespace Samples
     {
         internal static object Run(string zipkinUri)
         {
-            // connect to the server
-            var connection = ConnectionMultiplexer.Connect("localhost:6379");
+            /*
+             * Setup redis service inside local docker.
+             * docker run --name opentelemetry-redis-test -d -p 6379:6379 redis
+             * docker exec -it opentelemetry-redis-test sh
+             * redis-cli
+             * set bind 0.0.0.0
+             * save
+             */
+
+            // connect to the redis server. The default port 6379 will be used.
+            var connection = ConnectionMultiplexer.Connect("localhost");
 
             // Configure exporter to export traces to Zipkin
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
