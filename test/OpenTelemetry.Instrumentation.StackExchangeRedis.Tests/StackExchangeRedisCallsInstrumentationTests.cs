@@ -14,32 +14,47 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using System.Threading.Tasks;
+
 using Moq;
+
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
+
+using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
+
 using Xunit;
 
-namespace OpenTelemetry.Instrumentation.StackExchangeRedis
+namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 {
     public class StackExchangeRedisCallsInstrumentationTests
     {
         [Fact]
-        public void ProfilerSessionUsesTheSameDefault()
+        public async void ProfilerSessionUsesTheSameDefault()
         {
-            // var spanProcessor = new Mock<SpanProcessor>();
-            // var tracer = TracerFactory.Create(b => b
-            //         .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-            //     .GetTracer(null);
-            // using var instrumentation = new StackExchangeRedisCallsInstrumentation(tracer);
-            // var profilerFactory = instrumentation.GetProfilerSessionsFactory();
-            // var first = profilerFactory();
-            // var second = profilerFactory();
-            // ProfilingSession third = null;
-            // await Task.Delay(1).ContinueWith((t) => { third = profilerFactory(); });
-            // Assert.Equal(first, second);
-            // Assert.Equal(second, third);
+            // connect to the server
+            var connection = ConnectionMultiplexer.Connect("localhost:6379");
+
+            var spanProcessor = new Mock<ActivityProcessor>();
+            using (OpenTelemetrySdk.EnableOpenTelemetry(
+                   (builder) =>
+                    builder
+                        .AddRedisInstrumentation(connection)
+                        .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+            {
+            }
+
+            using var instrumentation = new StackExchangeRedisCallsInstrumentation(connection, new StackExchangeRedisCallsInstrumentationOptions());
+            var profilerFactory = instrumentation.GetProfilerSessionsFactory();
+            var first = profilerFactory();
+            var second = profilerFactory();
+            ProfilingSession third = null;
+            await Task.Delay(1).ContinueWith((t) => { third = profilerFactory(); });
+            Assert.Equal(first, second);
+            Assert.Equal(second, third);
         }
     }
 }
