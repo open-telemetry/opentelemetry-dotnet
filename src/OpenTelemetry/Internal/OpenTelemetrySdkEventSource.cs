@@ -219,6 +219,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(21, exportResult);
         }
 
+        [Event(22, Message = "ForceFlush complete. '{0}' spans left in queue unprocessed.", Level = EventLevel.Informational)]
+        public void ForceFlushCompleted(int spansLeftUnprocessed)
+        {
+            this.WriteEvent(22, spansLeftUnprocessed);
+        }
+
         /// <summary>
         /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
         /// appropriate for diagnostics tracing.

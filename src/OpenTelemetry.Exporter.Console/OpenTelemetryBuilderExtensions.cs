@@ -15,9 +15,9 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Exporter.Console;
 
-namespace OpenTelemetry.Exporter.Console
+namespace OpenTelemetry.Trace.Configuration
 {
     public static class OpenTelemetryBuilderExtensions
     {
