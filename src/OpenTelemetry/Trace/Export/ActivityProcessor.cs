@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace.Export
         public abstract Task ShutdownAsync(CancellationToken cancellationToken);
 
         /// <summary>
-        /// Flushes all activity objects that have been queued for processing.
+        /// Flushes all activities that have not yet been processed.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Returns <see cref="Task"/>.</returns>
