@@ -16,9 +16,11 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
@@ -31,37 +33,37 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
     /// </summary>
     public class StackExchangeRedisCallsInstrumentation : IDisposable
     {
-        private readonly Tracer tracer;
+        /// <summary>
+        /// ActivitySource name.
+        /// </summary>
+        public const string ActivitySourceName = "OpenTelemetry.Instrumentation.StackExchangeRedis";
+
+        private static readonly Version Version = typeof(StackExchangeRedisCallsInstrumentation).Assembly.GetName().Version;
+        private static readonly ActivitySource RedisActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly CancellationToken cancellationToken;
-
         private readonly ProfilingSession defaultSession = new ProfilingSession();
-        private readonly ConcurrentDictionary<TelemetrySpan, ProfilingSession> cache = new ConcurrentDictionary<TelemetrySpan, ProfilingSession>();
-
-        private readonly PropertyInfo spanEndTimestampInfo;
+        private readonly ConcurrentDictionary<Activity, ProfilingSession> cache = new ConcurrentDictionary<Activity, ProfilingSession>();
+        private readonly PropertyInfo activityDurationInfo;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StackExchangeRedisCallsInstrumentation"/> class.
         /// </summary>
-        /// <param name="tracer">Tracer to record traced with.</param>
-        public StackExchangeRedisCallsInstrumentation(Tracer tracer)
+        public StackExchangeRedisCallsInstrumentation()
         {
-            this.tracer = tracer;
-
             this.cancellationTokenSource = new CancellationTokenSource();
             this.cancellationToken = this.cancellationTokenSource.Token;
-            var spanType = typeof(TracerFactory).Assembly.GetType("OpenTelemetry.Trace.SpanSdk");
 
-            this.spanEndTimestampInfo = spanType?.GetProperty("EndTimestamp");
-            if (this.spanEndTimestampInfo == null)
+            this.activityDurationInfo = typeof(Activity)?.GetProperty("Duration");
+            if (this.activityDurationInfo == null)
             {
-                throw new ArgumentException("OpenTelemetry.Trace.SpanSdk.EndTimestamp property is missing");
+                throw new ArgumentException("Activity.Duration property is missing");
             }
 
-            if (this.spanEndTimestampInfo.PropertyType != typeof(DateTimeOffset))
+            if (this.activityDurationInfo.PropertyType != typeof(TimeSpan))
             {
-                throw new ArgumentException("OpenTelemetry.Trace.SpanSdk.EndTimestamp property is not of DateTimeOffset type");
+                throw new ArgumentException("Activity.Duration property is not of TimeSpan type");
             }
 
             Task.Factory.StartNew(this.DumpEntries, TaskCreationOptions.LongRunning, this.cancellationToken);
@@ -80,7 +82,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
             // require any locking and can redis the number of buffered sessions significantly.
             return () =>
             {
-                var span = this.tracer.CurrentSpan;
+                var span = Activity.Current;
 
                 // when there are no spans in current context - BlankSpan will be returned
                 // BlankSpan has invalid context. It's OK to use a single profiler session
@@ -89,7 +91,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
                 // It would be great to allow to check sampling here, but it is impossible
                 // with the current model to start a new trace id here - no way to pass it
                 // to the resulting Span.
-                if (span == null || !span.Context.IsValid)
+                if (span == null || !span.Context.IsValid())
                 {
                     return this.defaultSession;
                 }
@@ -113,7 +115,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         {
             while (!this.cancellationToken.IsCancellationRequested)
             {
-                RedisProfilerEntryToSpanConverter.DrainSession(this.tracer, null, this.defaultSession.FinishProfiling());
+                RedisProfilerEntryToSpanConverter.DrainSession(RedisActivitySource, null, this.defaultSession.FinishProfiling());
 
                 foreach (var entry in this.cache)
                 {
@@ -121,7 +123,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
                     ProfilingSession session;
 
                     // Redis instrumentation needs a hack to know that current span has ended (it's not tracing-friendly)
-                    var endTimestamp = (DateTimeOffset)this.spanEndTimestampInfo.GetValue(span);
+                    var endTimestamp = (TimeSpan)this.activityDurationInfo.GetValue(span);
                     if (endTimestamp != default)
                     {
                         this.cache.TryRemove(span, out session);
@@ -133,7 +135,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 
                     if (session != null)
                     {
-                        RedisProfilerEntryToSpanConverter.DrainSession(this.tracer, span, session.FinishProfiling());
+                        RedisProfilerEntryToSpanConverter.DrainSession(RedisActivitySource, span, session.FinishProfiling());
                     }
                 }
 

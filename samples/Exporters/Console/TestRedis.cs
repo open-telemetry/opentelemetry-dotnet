@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry.Exporter.Console;
 using OpenTelemetry.Instrumentation.StackExchangeRedis;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
@@ -43,18 +44,14 @@ namespace Samples
             // Configure exporter to export traces to Zipkin
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 builder => builder
-                    .UseZipkinExporter(o =>
+                    .UseConsoleExporter()
+                    .AddActivitySource(StackExchangeRedisCallsInstrumentation.ActivitySourceName)
+                    .AddInstrumentation(t =>
                     {
-                        o.ServiceName = "redis-test";
-                        o.Endpoint = new Uri(zipkinUri);
+                        var instrumentation = new StackExchangeRedisCallsInstrumentation();
+                        connection.RegisterProfiler(instrumentation.GetProfilerSessionsFactory());
+                        return instrumentation;
                     })
-                    // TODO: Uncomment when we change Redis to Activity mode
-                    // .AddInstrumentation(t =>
-                    // {
-                    //    var instrumentation = new StackExchangeRedisCallsInstrumentation(t);
-                    //    connection.RegisterProfiler(instrumentation.GetProfilerSessionsFactory());
-                    //    return instrumentation;
-                    // })
                     .AddActivitySource("redis-test"));
 
             ActivitySource activitySource = new ActivitySource("redis-test");
@@ -100,8 +97,8 @@ namespace Samples
                 catch (ArgumentOutOfRangeException e)
                 {
                     // Set status upon error
-                    activity.AddTag("ot.status", SpanHelper.GetCachedCanonicalCodeString(Status.Internal.CanonicalCode));
-                    activity.AddTag("ot.status_description", e.ToString());
+                    activity?.AddTag("ot.status", SpanHelper.GetCachedCanonicalCodeString(Status.Internal.CanonicalCode));
+                    activity?.AddTag("ot.status_description", e.ToString());
                 }
 
                 // Annotate our activity to capture metadata about our operation
@@ -109,7 +106,7 @@ namespace Samples
                 {
                     { "use", "demo" },
                 };
-                activity.AddEvent(new ActivityEvent("Invoking DoWork", attributes));
+                activity?.AddEvent(new ActivityEvent("Invoking DoWork", attributes));
             }
         }
     }

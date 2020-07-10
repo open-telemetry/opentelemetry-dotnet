@@ -28,12 +28,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         [Fact]
         public async void ProfilerSessionUsesTheSameDefault()
         {
-            var spanProcessor = new Mock<SpanProcessor>();
-            var tracer = TracerFactory.Create(b => b
-                    .AddProcessorPipeline(p => p.AddProcessor(_ => spanProcessor.Object)))
-                .GetTracer(null);
-
-            using var instrumentation = new StackExchangeRedisCallsInstrumentation(tracer);
+            using var instrumentation = new StackExchangeRedisCallsInstrumentation();
             var profilerFactory = instrumentation.GetProfilerSessionsFactory();
             var first = profilerFactory();
             var second = profilerFactory();

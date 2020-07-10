@@ -21,7 +21,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 {
     internal static class AttributesExtensions
     {
-        public static object GetValue(this IEnumerable<KeyValuePair<string, object>> attributes, string key)
+        public static object GetValue(this IEnumerable<KeyValuePair<string, string>> attributes, string key)
         {
             return attributes.FirstOrDefault(kvp => kvp.Key == key).Value;
         }

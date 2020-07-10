@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System.Collections.Generic;
+using System.Diagnostics;
 using OpenTelemetry.Trace;
 using StackExchange.Redis.Profiling;
 
@@ -21,7 +22,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 {
     internal static class RedisProfilerEntryToSpanConverter
     {
-        public static TelemetrySpan ProfilerCommandToSpan(Tracer tracer, TelemetrySpan parentSpan, IProfiledCommand command)
+        public static Activity ProfilerCommandToSpan(ActivitySource redisActivitySource, Activity parentSpan, IProfiledCommand command)
         {
             var name = command.Command; // Example: SET;
             if (string.IsNullOrEmpty(name))
@@ -29,8 +30,17 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 name = "name";
             }
 
-            var span = tracer.StartSpan(name, parentSpan, SpanKind.Client, new SpanCreationOptions { StartTimestamp = command.CommandCreated });
-            if (span.IsRecording)
+            Activity activity = null;
+            if (parentSpan != null)
+            {
+                activity = redisActivitySource.StartActivity(name, ActivityKind.Client, parentSpan.Context, null, null, command.CommandCreated);
+            }
+            else
+            {
+                activity = redisActivitySource.StartActivity(name, ActivityKind.Client, null, null, null, command.CommandCreated);
+            }
+
+            if (activity != null && activity.IsAllDataRequested)
             {
                 // use https://github.com/opentracing/specification/blob/master/semantic_conventions.md for now
 
@@ -45,20 +55,21 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 // Total:
                 // command.ElapsedTime;             // 00:00:32.4988020
 
-                span.Status = Status.Ok;
-                span.SetAttribute("db.type", "redis");
-                span.SetAttribute("redis.flags", command.Flags.ToString());
+                // TODO once status is supported.
+                // span.Status = Status.Ok;
+                activity.AddTag("db.type", "redis");
+                activity.AddTag("redis.flags", command.Flags.ToString());
 
                 if (command.Command != null)
                 {
                     // Example: "db.statement": SET;
-                    span.SetAttribute("db.statement", command.Command);
+                    activity.AddTag("db.statement", command.Command);
                 }
 
                 if (command.EndPoint != null)
                 {
                     // Example: "db.instance": Unspecified/localhost:6379[0]
-                    span.SetAttribute("db.instance", string.Concat(command.EndPoint, "[", command.Db, "]"));
+                    activity.AddTag("db.instance", string.Concat(command.EndPoint, "[", command.Db, "]"));
                 }
 
                 // TODO: deal with the re-transmission
@@ -69,21 +80,22 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 var send = enqueued.Add(command.EnqueuedToSending);
                 var response = send.Add(command.SentToResponse);
 
-                span.AddEvent(new Event("Enqueued", enqueued));
-                span.AddEvent(new Event("Sent", send));
-                span.AddEvent(new Event("ResponseReceived", response));
+                activity.AddEvent(new ActivityEvent("Enqueued", enqueued));
+                activity.AddEvent(new ActivityEvent("Sent", send));
+                activity.AddEvent(new ActivityEvent("ResponseReceived", response));
 
-                span.End(command.CommandCreated.Add(command.ElapsedTime));
+                activity.SetEndTime(command.CommandCreated.Add(command.ElapsedTime));
+                activity.Stop();
             }
 
-            return span;
+            return activity;
         }
 
-        public static void DrainSession(Tracer tracer, TelemetrySpan parentSpan, IEnumerable<IProfiledCommand> sessionCommands)
+        public static void DrainSession(ActivitySource redisActivitySource, Activity parentSpan, IEnumerable<IProfiledCommand> sessionCommands)
         {
             foreach (var command in sessionCommands)
             {
-                ProfilerCommandToSpan(tracer, parentSpan, command);
+                ProfilerCommandToSpan(redisActivitySource, parentSpan, command);
             }
         }
     }
