@@ -254,6 +254,15 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
                 return Task.CompletedTask;
 #endif
             }
+
+            public override Task ForceFlushAsync(CancellationToken cancellationToken)
+            {
+#if NET452
+                return Task.FromResult(0);
+#else
+                return Task.CompletedTask;
+#endif
+            }
         }
     }
 }
