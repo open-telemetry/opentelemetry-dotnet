@@ -48,7 +48,13 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
         [InlineData("value1")]
         public void SuccessfulCommandTest(string value)
         {
-            using var connection = ConnectionMultiplexer.Connect(RedisEndPoint);
+            var connectionOptions = new ConfigurationOptions
+            {
+                AbortOnConnectFail = true,
+            };
+            connectionOptions.EndPoints.Add(RedisEndPoint);
+
+            using var connection = ConnectionMultiplexer.Connect(connectionOptions);
 
             var activityProcessor = new Mock<ActivityProcessor>();
             using (OpenTelemetrySdk.EnableOpenTelemetry(b =>
@@ -80,7 +86,13 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
         [Fact]
         public async void ProfilerSessionUsesTheSameDefault()
         {
-            var connection = ConnectionMultiplexer.Connect("localhost:6379");
+            var connectionOptions = new ConfigurationOptions
+            {
+                AbortOnConnectFail = false,
+            };
+            connectionOptions.EndPoints.Add("localhost:6379");
+
+            var connection = ConnectionMultiplexer.Connect(connectionOptions);
 
             using var instrumentation = new StackExchangeRedisCallsInstrumentation(connection, new StackExchangeRedisCallsInstrumentationOptions());
             var profilerFactory = instrumentation.GetProfilerSessionsFactory();
