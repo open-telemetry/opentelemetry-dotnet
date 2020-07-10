@@ -33,7 +33,13 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
         public RedisProfilerEntryToActivityConverterTests()
         {
-            this.connection = ConnectionMultiplexer.Connect("localhost:6379");
+            var connectionOptions = new ConfigurationOptions
+            {
+                AbortOnConnectFail = false,
+            };
+            connectionOptions.EndPoints.Add("localhost:6379");
+
+            this.connection = ConnectionMultiplexer.Connect(connectionOptions);
 
             this.sdk = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddRedisInstrumentation(this.connection));

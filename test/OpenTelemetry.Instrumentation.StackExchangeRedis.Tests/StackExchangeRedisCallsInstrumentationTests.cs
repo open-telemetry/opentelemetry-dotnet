@@ -28,8 +28,13 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
         [Fact]
         public async void ProfilerSessionUsesTheSameDefault()
         {
-            // connect to the server
-            var connection = ConnectionMultiplexer.Connect("localhost:6379");
+            var connectionOptions = new ConfigurationOptions
+            {
+                AbortOnConnectFail = false,
+            };
+            connectionOptions.EndPoints.Add("localhost:6379");
+
+            var connection = ConnectionMultiplexer.Connect(connectionOptions);
 
             using var instrumentation = new StackExchangeRedisCallsInstrumentation(connection, new StackExchangeRedisCallsInstrumentationOptions());
             var profilerFactory = instrumentation.GetProfilerSessionsFactory();
