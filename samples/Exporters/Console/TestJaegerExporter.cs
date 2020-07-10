@@ -1,4 +1,4 @@
-﻿// <copyright file="TestJaeger.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestJaegerExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,14 +14,12 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Collections.Generic;
-using System.Threading;
-using OpenTelemetry.Trace;
+
 using OpenTelemetry.Trace.Configuration;
 
 namespace Samples
 {
-    internal class TestJaeger
+    internal class TestJaegerExporter
     {
         internal static object Run(string host, int port)
         {
@@ -36,7 +34,7 @@ namespace Samples
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")
                     .AddActivitySource("Samples.SampleClient")
-                    .UseJaegerActivityExporter(o =>
+                    .UseJaegerExporter(o =>
                     {
                         o.ServiceName = "jaeger-test";
                         o.AgentHost = host;
@@ -50,9 +48,7 @@ namespace Samples
             {
                 sample.Start();
 
-                Console.WriteLine("Traces are being created and exported" +
-                    "to Jaeger in the background. Use Jaeger to view them." +
-                    "Press ENTER to stop.");
+                Console.WriteLine("Sample is running on the background, press ENTER to stop");
                 Console.ReadLine();
             }
 
