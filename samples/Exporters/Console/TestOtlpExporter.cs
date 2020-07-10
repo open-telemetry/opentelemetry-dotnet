@@ -1,4 +1,4 @@
-﻿// <copyright file="TestJaeger.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestOtlpExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,45 +13,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
-using System.Collections.Generic;
-using System.Threading;
-using OpenTelemetry.Trace;
+
+using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Trace.Configuration;
 
 namespace Samples
 {
-    internal class TestJaeger
+    internal static class TestOtlpExporter
     {
-        internal static object Run(string host, int port)
+        internal static object Run(string endpoint)
         {
-            return RunWithActivity(host, port);
+            return RunWithActivitySource(endpoint);
         }
 
-        internal static object RunWithActivity(string host, int port)
+        private static object RunWithActivitySource(string endpoint)
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
-            // and use the Jaeger exporter.
+            // and use OTLP exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")
                     .AddActivitySource("Samples.SampleClient")
-                    .UseJaegerActivityExporter(o =>
-                    {
-                        o.ServiceName = "jaeger-test";
-                        o.AgentHost = host;
-                        o.AgentPort = port;
-                    }));
+                    .UseOtlpExporter(opt => opt.Endpoint = endpoint));
 
-            // The above lines are required only in Applications
+            // The above line is required only in Applications
             // which decide to use OT.
-
             using (var sample = new InstrumentationWithActivitySource())
             {
                 sample.Start();
 
                 Console.WriteLine("Traces are being created and exported" +
-                    "to Jaeger in the background. Use Jaeger to view them." +
+                    "to OTLP in the background." +
                     "Press ENTER to stop.");
                 Console.ReadLine();
             }

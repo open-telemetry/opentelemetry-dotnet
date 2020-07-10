@@ -40,14 +40,14 @@ namespace Samples
         {
             Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
                 .MapResult(
-                    (JaegerOptions options) => TestJaeger.Run(options.Host, options.Port),
-                    (ZipkinOptions options) => TestZipkin.Run(options.Uri),
+                    (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
+                    (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheus.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (ZPagesOptions options) => TestZPages.Run(),
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
-                    (OtlpOptions options) => TestOtlp.Run(options.Endpoint),
+                    (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
                     errs => 1);
 
             Console.ReadLine();

@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseOpenTelemetryProtocolActivityExporter(this OpenTelemetryBuilder builder, Action<ExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        public static OpenTelemetryBuilder UseOtlpExporter(this OpenTelemetryBuilder builder, Action<OtlpExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
         {
             if (builder == null)
             {
@@ -40,10 +40,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 
             return builder.AddProcessorPipeline(pipeline =>
             {
-                var exporterOptions = new ExporterOptions();
+                var exporterOptions = new OtlpExporterOptions();
                 configure?.Invoke(exporterOptions);
 
-                var activityExporter = new OtlpActivityExporter(exporterOptions);
+                var activityExporter = new OtlpExporter(exporterOptions);
                 processorConfigure?.Invoke(pipeline);
                 pipeline.SetExporter(activityExporter);
             });
