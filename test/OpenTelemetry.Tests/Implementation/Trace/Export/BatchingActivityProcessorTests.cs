@@ -293,7 +293,7 @@ namespace OpenTelemetry.Trace.Export.Test
             // Get the shutdown event.
             // 22 is the EventId for OpenTelemetrySdkEventSource.ForceFlushCompleted
             // TODO: Expose event ids as internal, so tests can access them more reliably.
-            var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 2).First();
+            var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 22).First();
 
             int droppedCount = 0;
             if (shutdownEvent != null)
