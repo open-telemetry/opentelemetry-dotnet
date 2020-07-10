@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinActivityExporterTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZipkinExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests
 {
-    public class ZipkinActivityExporterTests : IDisposable
+    public class ZipkinExporterTests : IDisposable
     {
         private const string TraceId = "e8ea7e9ac72de94e91fabc613f9686b2";
         private static readonly ConcurrentDictionary<Guid, string> Responses = new ConcurrentDictionary<Guid, string>();
@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         private readonly string testServerHost;
         private readonly int testServerPort;
 
-        static ZipkinActivityExporterTests()
+        static ZipkinExporterTests()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             ActivitySource.AddActivityListener(listener);
         }
 
-        public ZipkinActivityExporterTests()
+        public ZipkinExporterTests()
         {
             this.testServer = TestHttpServer.RunServer(
                 ctx => ProcessServerRequest(ctx),
@@ -88,14 +88,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async Task ZipkinActivityExporterIntegrationTest(bool useShortTraceIds)
+        public async Task ZipkinExporterIntegrationTest(bool useShortTraceIds)
         {
             var batchActivity = new List<Activity> { CreateTestActivity() };
 
             Guid requestId = Guid.NewGuid();
 
-            ZipkinActivityExporter exporter = new ZipkinActivityExporter(
-                new ZipkinTraceExporterOptions
+            ZipkinExporter exporter = new ZipkinExporter(
+                new ZipkinExporterOptions
                 {
                     Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
                     UseShortTraceIds = useShortTraceIds,
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         }
 
         [Fact]
-        public void UseZipkinActivityExporterWithCustomActivityProcessor()
+        public void UseZipkinExporterWithCustomActivityProcessor()
         {
             const string ActivitySourceName = "zipkin.test";
             Guid requestId = Guid.NewGuid();
@@ -153,7 +153,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                             .AddActivitySource(ActivitySourceName)
-                            .UseZipkinActivityExporter(
+                            .UseZipkinExporter(
                                 o =>
                             {
                                 o.ServiceName = "test-zipkin";

@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinActivityExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZipkinExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,17 +37,17 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// <summary>
     /// Zipkin exporter.
     /// </summary>
-    public class ZipkinActivityExporter : ActivityExporter
+    public class ZipkinExporter : ActivityExporter
     {
-        private readonly ZipkinTraceExporterOptions options;
+        private readonly ZipkinExporterOptions options;
         private readonly HttpClient httpClient;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ZipkinActivityExporter"/> class.
+        /// Initializes a new instance of the <see cref="ZipkinExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options.</param>
         /// <param name="client">Http client to use to upload telemetry.</param>
-        public ZipkinActivityExporter(ZipkinTraceExporterOptions options, HttpClient client = null)
+        public ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
         {
             this.options = options;
             this.LocalEndpoint = this.GetLocalZipkinEndpoint();
@@ -177,7 +177,7 @@ namespace OpenTelemetry.Exporter.Zipkin
                 CharSet = "utf-8",
             };
 
-            private readonly ZipkinActivityExporter exporter;
+            private readonly ZipkinExporter exporter;
             private readonly IEnumerable<Activity> batchActivity;
 
 #if NET452
@@ -186,7 +186,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             private Utf8JsonWriter writer;
 #endif
 
-            public JsonContent(ZipkinActivityExporter exporter, IEnumerable<Activity> batchActivity)
+            public JsonContent(ZipkinExporter exporter, IEnumerable<Activity> batchActivity)
             {
                 this.exporter = exporter;
                 this.batchActivity = batchActivity;

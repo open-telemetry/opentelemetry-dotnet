@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseZipkinActivityExporter(this OpenTelemetryBuilder builder, Action<ZipkinTraceExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        public static OpenTelemetryBuilder UseZipkinExporter(this OpenTelemetryBuilder builder, Action<ZipkinExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
         {
             if (builder == null)
             {
@@ -40,12 +40,12 @@ namespace OpenTelemetry.Trace.Configuration
 
             return builder.AddProcessorPipeline(pipeline =>
             {
-                var options = new ZipkinTraceExporterOptions();
+                var options = new ZipkinExporterOptions();
                 configure?.Invoke(options);
 
-                var activityExporter = new ZipkinActivityExporter(options);
+                var exporter = new ZipkinExporter(options);
                 processorConfigure?.Invoke(pipeline);
-                pipeline.SetExporter(activityExporter);
+                pipeline.SetExporter(exporter);
             });
         }
     }

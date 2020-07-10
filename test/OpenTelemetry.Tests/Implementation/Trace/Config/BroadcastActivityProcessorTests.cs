@@ -148,5 +148,22 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             Assert.True(processor1.DisposedCalled);
             Assert.True(processor2.DisposedCalled);
         }
+
+        [Fact]
+        public void BroadcastProcessor_ForceFlush()
+        {
+            var processor1 = new TestActivityProcessor(null, null);
+            var processor2 = new TestActivityProcessor(null, null);
+
+            var broadcastProcessor = new BroadcastActivityProcessor(new[] { processor1, processor2 });
+
+            broadcastProcessor.ForceFlushAsync(default);
+            Assert.True(processor1.ForceFlushCalled);
+            Assert.True(processor2.ForceFlushCalled);
+
+            broadcastProcessor.Dispose();
+            Assert.True(processor1.DisposedCalled);
+            Assert.True(processor2.DisposedCalled);
+        }
     }
 }

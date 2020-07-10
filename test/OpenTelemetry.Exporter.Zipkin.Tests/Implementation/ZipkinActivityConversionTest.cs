@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         public void ZipkinActivityConversion_ToZipkinSpan_AllPropertiesSet()
         {
             // Arrange
-            var activity = ZipkinActivityExporterTests.CreateTestActivity();
+            var activity = ZipkinExporterTests.CreateTestActivity();
 
             // Act & Assert
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         public void ZipkinActivityConversion_ToZipkinSpan_NoEvents()
         {
             // Arrange
-            var activity = ZipkinActivityExporterTests.CreateTestActivity(addEvents: false);
+            var activity = ZipkinExporterTests.CreateTestActivity(addEvents: false);
 
             // Act & Assert
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
