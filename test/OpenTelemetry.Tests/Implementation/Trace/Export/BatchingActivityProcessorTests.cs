@@ -298,7 +298,7 @@ namespace OpenTelemetry.Trace.Export.Test
             int droppedCount = 0;
             if (shutdownEvent != null)
             {
-                // There is a single payload which is the number of items left in buffer a shutdown.
+                // There is a single payload which is the number of items left in buffer at shutdown.
                 droppedCount = (int)shutdownEvent.Payload[0];
             }
 
@@ -335,7 +335,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
             Assert.True(activityExporter.ExportedActivities.Length < activities.Count);
 
-            // we won't bs able to export all before cancellation will fire
+            // we won't be able to export all before cancellation will fire
             using (var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200)))
             {
                 await activityProcessor.ShutdownAsync(cts.Token);
@@ -378,7 +378,7 @@ namespace OpenTelemetry.Trace.Export.Test
             int droppedCount = 0;
             if (shutdownEvent != null)
             {
-                // There is a single payload which is the number of items left in buffer a shutdown.
+                // There is a single payload which is the number of items left in buffer at shutdown.
                 droppedCount = (int)shutdownEvent.Payload[0];
             }
 
