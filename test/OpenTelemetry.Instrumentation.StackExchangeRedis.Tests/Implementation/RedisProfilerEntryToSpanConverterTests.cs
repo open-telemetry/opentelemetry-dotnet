@@ -15,10 +15,10 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
+using System.Linq;
 using Moq;
-using OpenTelemetry.Instrumentation.StackExchangeRedis.Tests;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
 using StackExchange.Redis.Profiling;
 using Xunit;
 
@@ -26,67 +26,73 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 {
     public class RedisProfilerEntryToSpanConverterTests
     {
-        private readonly Tracer tracer;
-
-        public RedisProfilerEntryToSpanConverterTests()
-        {
-            this.tracer = TracerFactory.Create(b => { }).GetTracer(null);
-        }
-
         [Fact]
         public void DrainSessionUsesCommandAsName()
         {
+            var activity = new Activity("redis-profiler");
             var profiledCommand = new Mock<IProfiledCommand>();
-
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             profiledCommand.Setup(m => m.Command).Returns("SET");
 
-            var result = (SpanSdk)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object);
-            Assert.Equal("SET", result.Name);
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+
+            Assert.Equal("SET", result.DisplayName);
         }
 
         [Fact]
         public void ProfiledCommandToSpanUsesTimestampAsStartTime()
         {
-            var profiledCommand = new Mock<IProfiledCommand>();
             var now = DateTimeOffset.Now;
+            var activity = new Activity("redis-profiler");
+            var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.CommandCreated).Returns(now.DateTime);
-            var result = (SpanSdk)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object);
-            Assert.Equal(now, result.StartTimestamp);
+
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+
+            Assert.Equal(now, result.StartTimeUtc);
         }
 
         [Fact]
         public void ProfiledCommandToSpanSetsDbTypeAttributeAsRedis()
         {
+            var activity = new Activity("redis-profiler");
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
-            var result = (SpanSdk)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object);
-            Assert.Contains(result.Attributes, kvp => kvp.Key == "db.type");
-            Assert.Equal("redis", result.Attributes.GetValue("db.type"));
+
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+
+            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.DatabaseSystemKey);
+            Assert.Equal("redis", result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.DatabaseSystemKey).Value);
         }
 
         [Fact]
         public void ProfiledCommandToSpanUsesCommandAsDbStatementAttribute()
         {
+            var activity = new Activity("redis-profiler");
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             profiledCommand.Setup(m => m.Command).Returns("SET");
-            var result = (SpanSdk)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object);
-            Assert.Contains(result.Attributes, kvp => kvp.Key == "db.statement");
-            Assert.Equal("SET", result.Attributes.GetValue("db.statement"));
+
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+
+            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.DatabaseStatementKey);
+            Assert.Equal("SET", result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
         }
 
         [Fact]
         public void ProfiledCommandToSpanUsesFlagsForFlagsAttribute()
         {
+            var activity = new Activity("redis-profiler");
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             var expectedFlags = StackExchange.Redis.CommandFlags.FireAndForget |
                                 StackExchange.Redis.CommandFlags.NoRedirect;
             profiledCommand.Setup(m => m.Flags).Returns(expectedFlags);
-            var result = (SpanSdk)RedisProfilerEntryToSpanConverter.ProfilerCommandToSpan(this.tracer, null, profiledCommand.Object);
-            Assert.Contains(result.Attributes, kvp => kvp.Key == "redis.flags");
-            Assert.Equal("None, FireAndForget, NoRedirect", result.Attributes.GetValue("redis.flags"));
+
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+
+            Assert.Contains(result.Tags, kvp => kvp.Key == "db.redis.flags");
+            Assert.Equal("None, FireAndForget, NoRedirect", result.Tags.FirstOrDefault(kvp => kvp.Key == "db.redis.flags").Value);
         }
     }
 }

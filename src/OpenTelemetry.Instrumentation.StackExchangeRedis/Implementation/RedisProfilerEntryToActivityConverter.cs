@@ -52,7 +52,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 // Total:
                 // command.ElapsedTime;             // 00:00:32.4988020
 
-                activity.AddTag("ot.status_code", SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok));
+                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok));
                 activity.AddTag(SpanAttributeConstants.DatabaseSystemKey, "redis");
                 activity.AddTag("db.redis.flags", command.Flags.ToString());
 

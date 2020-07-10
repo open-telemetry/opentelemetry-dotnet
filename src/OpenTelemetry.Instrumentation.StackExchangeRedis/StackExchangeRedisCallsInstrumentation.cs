@@ -32,8 +32,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
     {
         internal const string ActivitySourceName = "StackExchange.Redis";
         internal const string ActivityName = ActivitySourceName + ".Execute";
+        internal static readonly Version Version = typeof(StackExchangeRedisCallsInstrumentation).Assembly.GetName().Version;
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
-        private static readonly Version Version = typeof(StackExchangeRedisCallsInstrumentation).Assembly.GetName().Version;
 
         private readonly StackExchangeRedisCallsInstrumentationOptions options;
         private readonly EventWaitHandle stopHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
