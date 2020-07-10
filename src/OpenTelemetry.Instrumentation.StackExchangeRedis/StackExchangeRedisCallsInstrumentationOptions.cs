@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 
 namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 {
@@ -21,5 +22,9 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
     /// </summary>
     public class StackExchangeRedisCallsInstrumentationOptions
     {
+        /// <summary>
+        /// Gets or sets the maximum time that should elapse between flushing the internal buffer to the configured Jaeger agent. Default value: 00:00:10.
+        /// </summary>
+        public TimeSpan MaxFlushInterval { get; set; } = TimeSpan.FromSeconds(10);
     }
 }
