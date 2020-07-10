@@ -30,6 +30,8 @@ namespace Samples
             /*
              * Setup redis service inside local docker.
              * docker run --name opentelemetry-redis-test -d -p 6379:6379 redis
+             * 
+             * If you face any issue with the first command, do the following ones:
              * docker exec -it opentelemetry-redis-test sh
              * redis-cli
              * set bind 0.0.0.0

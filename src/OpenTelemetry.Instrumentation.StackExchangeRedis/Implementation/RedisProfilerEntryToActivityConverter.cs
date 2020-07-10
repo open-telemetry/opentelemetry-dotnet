@@ -28,11 +28,11 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             var name = command.Command; // Example: SET;
             if (string.IsNullOrEmpty(name))
             {
-                name = "name";
+                name = StackExchangeRedisCallsInstrumentation.ActivityName;
             }
 
             var activity = StackExchangeRedisCallsInstrumentation.ActivitySource.StartActivity(
-                StackExchangeRedisCallsInstrumentation.ActivityName,
+                name,
                 ActivityKind.Client,
                 parentActivity?.Context ?? default,
                 startTime: command.CommandCreated);
@@ -41,8 +41,6 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             {
                 return null;
             }
-
-            activity.DisplayName = name;
 
             if (activity.IsAllDataRequested == true)
             {

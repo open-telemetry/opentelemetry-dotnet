@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace.Configuration
     public static class OpenTelemetryBuilderExtensions
     {
         /// <summary>
-        /// Enables the outgoing requests automatic data collection for all supported activity sources.
+        /// Enables the outgoing requests automatic data collection for Redis.
         /// </summary>
         /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
         /// <param name="connection"><see cref="ConnectionMultiplexer"/> to instrument.</param>
