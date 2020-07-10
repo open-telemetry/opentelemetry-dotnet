@@ -1,4 +1,4 @@
-﻿// <copyright file="TestZipkin.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestZipkinExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ using OpenTelemetry.Trace.Configuration;
 
 namespace Samples
 {
-    internal class TestZipkin
+    internal class TestZipkinExporter
     {
         internal static object Run(string zipkinUri)
         {
@@ -32,7 +32,7 @@ namespace Samples
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")
                     .AddActivitySource("Samples.SampleClient")
-                    .UseZipkinActivityExporter(o =>
+                    .UseZipkinExporter(o =>
                     {
                         o.ServiceName = "test-zipkin";
                         o.Endpoint = new Uri(zipkinUri);

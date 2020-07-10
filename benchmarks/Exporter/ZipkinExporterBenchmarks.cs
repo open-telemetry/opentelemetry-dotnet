@@ -21,8 +21,7 @@ using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Exporter.Zipkin;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
+using System.Linq;
 
 namespace Benchmarks.Exporter
 {
@@ -33,9 +32,9 @@ namespace Benchmarks.Exporter
     public class ZipkinExporterBenchmarks
     {
         [Params(2000, 5000)]
-        public int NumberOfSpans { get; set; }
+        public int NumberOfActivities { get; set; }
 
-        private SpanData testSpan;
+        private Activity testActivity;
 
         private IDisposable server;
         private string serverHost;
@@ -44,7 +43,7 @@ namespace Benchmarks.Exporter
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.testSpan = this.CreateTestSpan();
+            this.testActivity = this.CreateTestActivity();
             this.server = TestHttpServer.RunServer(
                 (ctx) =>
                 {
@@ -64,78 +63,88 @@ namespace Benchmarks.Exporter
         [Benchmark]
         public async Task ZipkinExporter_ExportAsync()
         {
-            var zipkinExporter = new ZipkinTraceExporter(
-                new ZipkinTraceExporterOptions
+            var zipkinExporter = new ZipkinExporter(
+                new ZipkinExporterOptions
                 {
                     Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),
                 });
 
-            var spans = new List<SpanData>();
-            for (int i = 0; i < this.NumberOfSpans; i++)
+            var activities = new List<Activity>(this.NumberOfActivities);
+            for (int i = 0; i < this.NumberOfActivities; i++)
             {
-                spans.Add(this.testSpan);
+                activities.Add(this.testActivity);
             }
 
-            await zipkinExporter.ExportAsync(spans, CancellationToken.None).ConfigureAwait(false);
+            await zipkinExporter.ExportAsync(activities, CancellationToken.None).ConfigureAwait(false);
         }
 
-        private SpanData CreateTestSpan()
+        private Activity CreateTestActivity()
         {
-            var startTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
+            var startTimestamp = DateTime.UtcNow;
             var endTimestamp = startTimestamp.AddSeconds(60);
-            var eventTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
-
+            var eventTimestamp = DateTime.UtcNow;
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
-            var spanId = ActivitySpanId.CreateFromString("6a69db47429ea340".AsSpan());
+
             var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
+
             var attributes = new Dictionary<string, object>
             {
-                { "stringKey", "value"},
-                { "longKey", 1L},
+                { "stringKey", "value" },
+                { "longKey", 1L },
                 { "longKey2", 1 },
-                { "doubleKey", 1D},
-                { "doubleKey2", 1F},
-                { "boolKey", true},
+                { "doubleKey", 1D },
+                { "doubleKey2", 1F },
+                { "boolKey", true },
             };
-            var events = new List<Event>
+
+            var events = new List<ActivityEvent>
             {
-                new Event(
+                new ActivityEvent(
                     "Event1",
                     eventTimestamp,
                     new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }
-                ),
-                new Event(
+                    }),
+                new ActivityEvent(
                     "Event2",
                     eventTimestamp,
                     new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }
-                ),
+                    }),
             };
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            var link = new Link(new SpanContext(
-                    traceId,
-                    linkedSpanId,
-                    ActivityTraceFlags.Recorded));
+            var activitySource = new ActivitySource(nameof(CreateTestActivity));
 
-            return new SpanData(
+            var tags = attributes.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()));
+            var links = new[]
+                    {
+                        new ActivityLink(new ActivityContext(
+                            traceId,
+                            linkedSpanId,
+                            ActivityTraceFlags.Recorded)),
+                    };
+
+            var activity = activitySource.StartActivity(
                 "Name",
-                new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded),
-                parentSpanId,
-                SpanKind.Client,
-                startTimestamp,
-                attributes,
-                events,
-                new[] { link, },
-                null,
-                Status.Ok,
-                endTimestamp);
+                ActivityKind.Client,
+                parentContext: new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
+                tags,
+                links,
+                startTime: startTimestamp);
+
+            foreach (var evnt in events)
+            {
+                activity.AddEvent(evnt);
+            }
+
+            activity.SetEndTime(endTimestamp);
+            activity.Stop();
+
+            return activity;
         }
     }
 }

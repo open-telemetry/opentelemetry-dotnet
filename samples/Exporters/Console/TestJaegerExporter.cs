@@ -48,7 +48,9 @@ namespace Samples
             {
                 sample.Start();
 
-                Console.WriteLine("Sample is running on the background, press ENTER to stop");
+                Console.WriteLine("Traces are being created and exported" +
+                    "to Jaeger in the background. Use Jaeger to view them." +
+                    "Press ENTER to stop.");
                 Console.ReadLine();
             }
 
