@@ -232,7 +232,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                             .AddActivitySource(ActivitySourceName)
-                            .UseOpenTelemetryProtocolActivityExporter(
+                            .UseOtlpExporter(
                                 null, p => p.AddProcessor((next) => testActivityProcessor)));
 
             var source = new ActivitySource(ActivitySourceName);
