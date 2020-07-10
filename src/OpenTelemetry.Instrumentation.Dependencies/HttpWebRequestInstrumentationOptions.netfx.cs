@@ -54,7 +54,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <summary>
         /// Gets or sets an optional callback method for filtering HttpClient requests that are sent through the instrumentation.
         /// </summary>
-        public Func<HttpWebRequest, bool> FilterFunc { get; set; }
+        internal Func<HttpWebRequest, bool> FilterFunc { get; set; }
 
         internal bool EventFilter(HttpWebRequest request)
         {
