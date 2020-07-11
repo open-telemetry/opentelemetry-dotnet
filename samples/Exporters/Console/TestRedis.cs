@@ -30,7 +30,7 @@ namespace Samples
             /*
              * Setup redis service inside local docker.
              * docker run --name opentelemetry-redis-test -d -p 6379:6379 redis
-             * 
+             *
              * If you face any issue with the first command, do the following ones:
              * docker exec -it opentelemetry-redis-test sh
              * redis-cli
@@ -92,8 +92,8 @@ namespace Samples
                 catch (ArgumentOutOfRangeException e)
                 {
                     // Set status upon error
-                    activity.AddTag("ot.status_code", SpanHelper.GetCachedCanonicalCodeString(Status.Internal.CanonicalCode));
-                    activity.AddTag("ot.status_description", e.ToString());
+                    activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(Status.Internal.CanonicalCode));
+                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, e.ToString());
                 }
 
                 // Annotate our activity to capture metadata about our operation

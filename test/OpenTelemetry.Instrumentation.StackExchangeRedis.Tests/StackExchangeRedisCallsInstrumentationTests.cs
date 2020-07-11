@@ -117,7 +117,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
                 Assert.Equal("GET", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
             }
 
-            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok), activity.Tags.FirstOrDefault(t => t.Key == "ot.status_code").Value);
+            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok), activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
             Assert.Equal("redis", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseSystemKey).Value);
             Assert.Equal("0", activity.Tags.FirstOrDefault(t => t.Key == StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName).Value);
 
