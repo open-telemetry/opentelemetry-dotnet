@@ -19,13 +19,13 @@ using System.Linq;
 using Greet;
 using Grpc.Net.Client;
 using Moq;
-using OpenTelemetry.Instrumentation.GrpcClient.Tests.Services;
+using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
 
-namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
+namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
     public class GrpcClientTests : IClassFixture<GrpcFixture<GreeterService>>
     {

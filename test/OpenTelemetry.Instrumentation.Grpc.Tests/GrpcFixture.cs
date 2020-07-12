@@ -20,7 +20,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
+namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
     public class GrpcFixture<TService> : IDisposable
         where TService : class
