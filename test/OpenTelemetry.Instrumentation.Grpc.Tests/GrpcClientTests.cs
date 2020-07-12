@@ -33,10 +33,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
         public GrpcClientTests(GrpcFixture<GreeterService> fixture)
         {
-            // Allows gRPC client to call insecure gRPC services
-            // https://docs.microsoft.com/en-us/aspnet/core/grpc/troubleshoot?view=aspnetcore-3.1#call-insecure-grpc-services-with-net-core-client
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
 
             this.fixture = fixture;
