@@ -4,6 +4,7 @@
     <TargetFrameworks>netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
   </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="..\OpenTelemetry.Tests\Implementation\Internal\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="Implementation\SkipUnlessEnvVarFoundTheoryAttribute.cs" />
   </ItemGroup>
